@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer3ExhibitionStoreBinding } from './hooks/useLayer3DetailStoreBindings';
 import { Bot, Clock, Play, SlidersHorizontal, Users } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
@@ -78,7 +79,8 @@ const DEFAULT_DURATION_OPTIONS: Array<{ label: string; value: ExhibitionDuration
  * 4. Advanced Settings — full-width long bar button (disabled)
  * 5. Start Exhibition Match — primary action button
  */
-export const Layer3ExhibitionRecipe: React.FC<Layer3ExhibitionRecipeProps> = React.memo(({
+export const Layer3ExhibitionRecipe: React.FC<Layer3ExhibitionRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = true,
   config: controlledConfigProp,
   settings: controlledSettingsProp,
@@ -94,7 +96,7 @@ export const Layer3ExhibitionRecipe: React.FC<Layer3ExhibitionRecipeProps> = Rea
   onNavigateAdvancedMutators: _onNavigateAdvancedMutators,
   onBack = () => {},
   className = '',
-}) => {
+} = useLayer3ExhibitionStoreBinding(rawProps);
   const [internalConfig, setInternalConfig] = useState<ExhibitionBotSetupConfig>({
     format: defaultConfig?.format ?? defaultFormat,
     difficulty: defaultConfig?.difficulty ?? defaultDifficulty,

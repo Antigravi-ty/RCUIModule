@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLayer2SettingsStoreBinding } from './hooks/useSettingsStoreBinding';
 import {
   Gamepad2,
   Monitor,
@@ -168,7 +169,8 @@ export interface Layer2SettingsRecipeProps extends AudioDebugTelemetryProps {
  * 4. Advanced (`Sliders`) — includes the Developer Settings bridge toggle
  * 5. Developer (`Terminal`) — visible when developerMode is true or activeTab === 'developer'
  */
-export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
+export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = (rawProps) => {
+  const {
   isLight = false, onBack,
   onNavigateTrainingDetail, onNavigateKeybindingsDetail, onNavigateTrajectoryDetail, onNavigateTrajectory,
   onNavigateCameraDetail, onNavigateCameraSettings, onNavigateAudioDetail,
@@ -200,7 +202,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   observeSafeAreaBoundary, defaultObserveSafeAreaBoundary, onObserveSafeAreaBoundaryChange,
   cameraConfig, onCameraConfigChange, trajectoryConfig, onTrajectoryConfigChange,
   sizing: propSizing,
-}) => {
+} = useLayer2SettingsStoreBinding(rawProps);
   const resolvedPropDevMode = propDevMode ?? developerModeEnabled;
   const [internalSubView, setInternalSubView] = useState<
     null | 'trajectory' | 'training' | 'camera' | 'keybindings'

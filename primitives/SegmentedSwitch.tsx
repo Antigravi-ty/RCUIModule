@@ -15,7 +15,8 @@ export type SegmentedRadius = 'sm' | 'md' | 'lg' | 'none';
 
 export interface SegmentedSwitchProps {
   value: string;
-  onValueChange: (val: string) => void;
+  onValueChange?: (val: any) => void;
+  onChange?: (val: any) => void;
   options: SegmentedSwitchOption[];
   id?: string;
   ariaLabel?: string;
@@ -52,6 +53,7 @@ export interface SegmentedSwitchProps {
 export const SegmentedSwitch: React.FC<SegmentedSwitchProps> = React.memo(({
   value,
   onValueChange,
+  onChange,
   options,
   id,
   ariaLabel = 'Segmented Switch',
@@ -133,7 +135,7 @@ export const SegmentedSwitch: React.FC<SegmentedSwitchProps> = React.memo(({
             type="button"
             role="radio"
             aria-checked={isSelected}
-            onClick={() => onValueChange(opt.value)}
+            onClick={() => (onValueChange ?? onChange)?.(opt.value)}
             className={`group relative inline-flex items-center justify-center gap-1.5 ${itemPadding} ${itemRadius} ${getItemLayout()} transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 cursor-pointer ${
               isSelected
                 ? isLight

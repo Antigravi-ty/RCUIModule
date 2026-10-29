@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer3DevActiveTunersStoreBinding } from './hooks/useDevRecipesStoreBindings';
 import {
   Box,
   Car,
@@ -73,7 +74,8 @@ export interface Layer3DevActiveTunersRecipeProps {
  * [Recipe] Layer 3 Active Tuners (Developer Tier)
  * Unified compact borderless setting rows + FloatingWindowCard launchers + PhaseVariationMatrix.
  */
-export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipeProps> = ({
+export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipeProps> = (rawProps) => {
+  const {
   isLight = false,
   onBack,
   onNavigateAdvancedAudio,
@@ -89,7 +91,7 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
   onSelectBoostPhase,
   onSelectAllBoostPhases,
   sizing: propSizing,
-}) => {
+} = useLayer3DevActiveTunersStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
   const [localWsOffset, setLocalWsOffset] = useState<number>(10);
   const [localCarBallMode, setLocalCarBallMode] = useState<string>('vehicle_body');

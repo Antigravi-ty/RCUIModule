@@ -2,7 +2,7 @@ import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback 
 import {
   CountdownFlashTransientState,
   CountdownFlashTransientListener,
-} from './types';
+} from '../stores/hudTransientTypes';
 
 export interface KickoffCountdownFlashHandle {
   /** Imperatively push countdown flash value (`4 | 3 | 2 | 1 | 0 | null`) with 0 React re-renders */

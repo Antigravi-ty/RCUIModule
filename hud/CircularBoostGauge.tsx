@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
-import { BoostTransientListener } from './types';
+import { BoostTransientListener } from '../stores/hudTransientTypes';
 import { useBoostGaugeStore } from '../stores/boostGaugeStore';
 
 export type BoostColorScheme = 'classic-4' | 'step-12';

@@ -3,7 +3,7 @@ import { MonitorPlay, Ruler, Gauge, Router } from 'lucide-react';
 import {
   CompactTelemetryTransientSnapshot,
   CompactTelemetryTransientListener,
-} from './types';
+} from '../stores/hudTransientTypes';
 
 export type TelemetryMetricVisibilityMode = 'off' | 'always';
 

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
-import { SpeedTransientListener } from './types';
+import { SpeedTransientListener } from '../stores/hudTransientTypes';
 
 export interface VelocityProgressBarHandle {
   /** Imperatively update velocity (0 ~ 2300 uu/s) at 120Hz+ with zero React re-renders */

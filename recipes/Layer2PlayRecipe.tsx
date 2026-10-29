@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer2PlayStoreBinding } from './hooks/useMainMenuAndPlayStoreBindings';
 import { Bot, Server, Wifi, PencilRuler, BookOpen, SlidersHorizontal } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { PlayModeCard } from '../layout/PlayModeCard';
@@ -107,7 +108,8 @@ export const PLAY_MODES: PlayModeDef[] = [
  * Row 1: Exhibition | Host Match | Join Room (Separate dedicated Layer 3 pages!)
  * Row 2: Self-Training | Host-Training | Advanced
  */
-export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = ({
+export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = (rawProps) => {
+  const {
   isLight = false,
   onBack = () => {},
   onSelectMode,
@@ -117,7 +119,7 @@ export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = ({
   onSelectSelfTraining,
   cardVariant,
   cardStyleParams,
-}) => {
+} = useLayer2PlayStoreBinding(rawProps);
   const { panels } = useMenuLayoutStore();
   const sizing = panels['layer2-play'];
   const storeCardStyle = usePlayCardStyleStore();

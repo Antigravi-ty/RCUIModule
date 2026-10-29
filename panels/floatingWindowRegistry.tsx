@@ -157,8 +157,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <VehicleModelOffsetTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
+        activeTab={activeTab as any}
+        onTabChange={onTabChange as any}
       />
     ),
   },
@@ -169,8 +169,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <VehicleGlobalFxTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
+        activeTab={activeTab as any}
+        onTabChange={onTabChange as any}
       />
     ),
   },
@@ -186,8 +186,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <AtmosphereFxTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
+        activeTab={activeTab as any}
+        onTabChange={onTabChange as any}
       />
     ),
   },
@@ -198,8 +198,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <SubsystemIsolationLabFloatingWindow
         isLight={isLight}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
+        activeTab={activeTab as any}
+        onTabChange={onTabChange as any}
       />
     ),
   },
@@ -240,8 +240,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <BoostPadTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
+        activeTab={activeTab as any}
+        onTabChange={onTabChange as any}
       />
     ),
   },
@@ -252,8 +252,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <DriftwoodsTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
+        activeTab={activeTab as any}
+        onTabChange={onTabChange as any}
       />
     ),
   },

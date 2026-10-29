@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { UI_EASING } from '../tokens/spacing';
 
-export type ToggleVariant = 'green' | 'black' | 'neutral' | 'orange' | 'amber';
+export type ToggleVariant = 'green' | 'black' | 'neutral' | 'orange' | 'amber' | 'emerald' | 'sky' | 'cyan' | 'default';
 
 export interface ToggleSwitchProps {
   checked: boolean;

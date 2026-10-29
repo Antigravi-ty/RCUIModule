@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAppStore } from '../stores/appStore';
 import { Palette, Sparkles, Car, Tag, Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
@@ -34,7 +35,9 @@ export interface Layer3DevCalibratedPresetsRecipeProps {
  */
 export const Layer3DevCalibratedPresetsRecipe: React.FC<
   Layer3DevCalibratedPresetsRecipeProps
-> = ({ isLight = false, onBack, sizing: propSizing }) => {
+> = ({ isLight = false, onBack: propOnBack, sizing: propSizing }) => {
+  const storeGoBack = useAppStore((s) => s.goBack);
+  const onBack = propOnBack ?? storeGoBack;
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
   const storeSizing = useMenuLayoutStore(
     (s) =>

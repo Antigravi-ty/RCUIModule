@@ -1,61 +1,98 @@
-import React, { useState } from 'react';
-import { RotateCcw, Gauge, Eye, Keyboard, Sparkles, Play } from 'lucide-react';
-import { SliderControl } from '../../primitives/SliderControl';
+import React from 'react';
+import {
+  RotateCcw,
+  Gauge,
+  Eye,
+  Keyboard,
+  Sparkles,
+  Play,
+} from 'lucide-react';
+import {
+  useKickoffTrainingStore,
+  KICKOFF_SPAWNS,
+  type KickoffSubMode,
+  type KickoffSpeedPreset,
+  type KickoffGhostPlacement,
+} from '../../stores/kickoffTrainingStore';
+import { useAppStore } from '../../stores/appStore';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
+import { SliderControl } from '../../primitives/SliderControl';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
-import { quickNotification } from '../../stores/quickNotificationStore';
 
-const KICKOFF_SPAWNS = [
-  { id: 'diag-right', index: 0, key: '1', shortLabel: 'Diag R', label: '1 · Diagonal Right' },
-  { id: 'diag-left', index: 1, key: '2', shortLabel: 'Diag L', label: '2 · Diagonal Left' },
-  { id: 'back-center', index: 2, key: '3', shortLabel: 'Center', label: '3 · Back Center' },
-  { id: 'back-right', index: 3, key: '4', shortLabel: 'Back R', label: '4 · Back Off-Center Right' },
-  { id: 'back-left', index: 4, key: '5', shortLabel: 'Back L', label: '5 · Back Off-Center Left' },
-];
+export interface KickoffTrainingFloatingWindowProps {
+  isLight?: boolean;
+  active?: boolean;
+}
 
-/**
- * 12. [Dev] Kickoff Spawn Slot & Mirror Configurator (`kickoff-training-config`)
- * Standalone L6 Floating Window Panel — 5-Slot Spawn Selector, Sub-Modes, Speed N/120Hz, Ghost/Solid Mode & First-Touch Benchmark.
- */
-export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = React.memo(({ isLight = false }) => {
-  const [isInKickoffTraining, setIsInKickoffTraining] = useState(true);
-  const [spawnIndex, setSpawnIndex] = useState(0);
-  const [subMode, setSubMode] = useState<'instant' | 'easy-learning' | 'realistic'>('instant');
-  const [realisticWaitTicks, setRealisticWaitTicks] = useState(180);
-  const [speedPreset, setSpeedPreset] = useState<'100' | '50' | '25' | '75' | 'custom'>('100');
-  const [customPhysicsRate, setCustomPhysicsRate] = useState(90);
-  const [ghostPlacement, setGhostPlacement] = useState<'same' | 'opposite'>('same');
-  const [ghostModeEnabled, setGhostModeEnabled] = useState(true);
-  const [showGhostCar, setShowGhostCar] = useState(true);
-  const [showGhostBall, setShowGhostBall] = useState(true);
-  const [showKeyboardOverlay, setShowKeyboardOverlay] = useState(true);
-  const [showFallingNotes, setShowFallingNotes] = useState(true);
+export const KickoffTrainingFloatingWindow: React.FC<KickoffTrainingFloatingWindowProps> = ({
+  isLight = false,
+}) => {
+  const {
+    subMode,
+    spawnIndex,
+    speedPreset,
+    customPhysicsRate,
+    effectivePhysicsRate,
+    realisticWaitTicks,
+    ghostPlacement,
+    ghostModeEnabled,
+    showGhostCar,
+    showGhostBall,
+    showKeyboardOverlay,
+    showFallingNotes,
+    phase,
+    episodeTick,
+    decisionStep,
+    requiredKeyStr,
+    aiTouchTick,
+    playerTouchTick,
+    lastDeltaTicks,
+    setSubMode,
+    setSpawnIndex,
+    setSpeedPreset,
+    setCustomPhysicsRate,
+    setRealisticWaitTicks,
+    setGhostPlacement,
+    setGhostModeEnabled,
+    setShowGhostCar,
+    setShowGhostBall,
+    setShowKeyboardOverlay,
+    setShowFallingNotes,
+    triggerResetSpawn,
+  } = useKickoffTrainingStore();
 
+  const matchMode = useAppStore((s) => s.matchMode);
+  const bridge = useAppStore((s) => s.bridge);
+  const isInKickoffTraining = matchMode === 'kickoff-training';
   const isSameSideSolid = !ghostModeEnabled && ghostPlacement === 'same';
-  const effectivePhysicsRate =
-    speedPreset === 'custom'
-      ? customPhysicsRate
-      : Math.round((Number(speedPreset) / 100) * 120);
 
   const cardBg = isLight
-    ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
-    : 'bg-neutral-900/60 border-neutral-800 text-neutral-200';
+    ? 'bg-neutral-50/90 border-neutral-200 text-neutral-800'
+    : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
+
   const subPanelBg = isLight
-    ? 'bg-white border-neutral-200 text-neutral-800'
+    ? 'bg-white border-neutral-200/90 text-neutral-800'
     : 'bg-neutral-950/50 border-neutral-800 text-neutral-200';
+
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
   return (
-    <div className="p-3.5 flex flex-col gap-2.5 text-xs select-none">
+    <div className="flex flex-col gap-2.5 select-none text-xs">
       {/* Mode Status & Quick Launch / Reset Header */}
       <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 ${cardBg}`}>
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1.5">
             <span
               className={`h-2 w-2 rounded-full shrink-0 ${
-                isInKickoffTraining ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                isInKickoffTraining
+                  ? isLight
+                    ? 'bg-emerald-500 animate-pulse'
+                    : 'bg-emerald-400 animate-pulse'
+                  : isLight
+                  ? 'bg-amber-500'
+                  : 'bg-amber-400'
               }`}
             />
             <span className="font-bold text-xs truncate">
@@ -64,33 +101,36 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
           </div>
           <span className={`text-[10px] font-mono truncate mt-0.5 ${mutedText}`}>
             {isInKickoffTraining
-              ? 'Phase: SPRINT · Tick #144 (Step #36)'
+              ? `Phase: ${phase.toUpperCase()} · Tick #${episodeTick} (Step #${decisionStep})`
               : 'Click Enter Mode to activate PPO Kickoff Training'}
           </span>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              setIsInKickoffTraining(true);
-              quickNotification.info('Reset Kickoff Spawn episode (R).');
-            }}
-            isLight={isLight}
-          >
-            {isInKickoffTraining ? (
-              <>
-                <RotateCcw className="h-3.5 w-3.5 mr-1 inline" />
-                <span>Reset</span>
-              </>
-            ) : (
-              <>
-                <Play className="h-3.5 w-3.5 mr-1 inline fill-current" />
-                <span>Enter Mode</span>
-              </>
-            )}
-          </Button>
+          {isInKickoffTraining ? (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={triggerResetSpawn}
+              isLight={isLight}
+              className="gap-1.5 px-2.5 py-1 text-[11px] font-semibold"
+              title="Reset current kickoff spawn (R)"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Reset</span>
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => bridge.onStartKickoffTraining?.()}
+              isLight={isLight}
+              className="gap-1.5 px-2.5 py-1 text-[11px] font-semibold"
+            >
+              <Play className="h-3.5 w-3.5 fill-current" />
+              <span>Enter Mode</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -100,7 +140,7 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
           <span className={`font-semibold text-[11px] uppercase tracking-wider ${mutedText}`}>
             Kickoff Spawn Position (Hotkeys 1–5)
           </span>
-          <Badge variant="default" isLight={isLight}>
+          <Badge variant="neutral" size="sm" isLight={isLight} className="font-mono text-[10px]">
             {isSameSideSolid
               ? `You: ${KICKOFF_SPAWNS[spawnIndex]?.shortLabel} · AI: ${KICKOFF_SPAWNS[4 - spawnIndex]?.shortLabel}`
               : KICKOFF_SPAWNS[spawnIndex]?.label}
@@ -117,20 +157,29 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
                 type="button"
                 disabled={disabled}
                 onClick={() => !disabled && setSpawnIndex(sp.index)}
+                title={
+                  disabled
+                    ? 'Spawn 3 (Center Back) is disabled in Same-Side Solid Mode because two physical cars on the symmetry axis would overlap.'
+                    : sp.label
+                }
                 className={`py-1.5 px-1 rounded-lg border font-mono text-[11px] font-bold flex flex-col items-center justify-center transition-all ${
                   disabled
-                    ? 'opacity-40 cursor-not-allowed border-neutral-700/40'
+                    ? isLight
+                      ? 'bg-neutral-100 border-neutral-200 text-neutral-300 opacity-45 cursor-not-allowed'
+                      : 'bg-neutral-900/40 border-neutral-800 text-neutral-600 opacity-45 cursor-not-allowed'
                     : active
                     ? isLight
-                      ? 'bg-neutral-900 border-neutral-900 text-white cursor-pointer'
-                      : 'bg-white border-white text-neutral-950 cursor-pointer'
+                      ? 'bg-neutral-900 border-neutral-900 text-white shadow-xs cursor-pointer active:scale-95'
+                      : 'bg-white border-white text-neutral-950 shadow-xs cursor-pointer active:scale-95'
                     : isLight
-                    ? 'bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700 cursor-pointer'
-                    : 'bg-neutral-900/80 hover:bg-neutral-800 border-neutral-700 text-neutral-300 cursor-pointer'
+                    ? 'bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700 cursor-pointer active:scale-95'
+                    : 'bg-neutral-900/80 hover:bg-neutral-800 border-neutral-700 text-neutral-300 cursor-pointer active:scale-95'
                 }`}
               >
                 <span className="text-xs font-black">{sp.key}</span>
-                <span className="text-[9px] opacity-75">{disabled ? 'N/A' : sp.shortLabel}</span>
+                <span className="text-[9px] opacity-75">
+                  {disabled ? 'N/A' : sp.shortLabel}
+                </span>
               </button>
             );
           })}
@@ -141,19 +190,20 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
       <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-sky-400" />
+            <Sparkles className={`h-3.5 w-3.5 ${isLight ? 'text-sky-600' : 'text-sky-400'}`} />
             <span className="font-semibold text-[11px]">Training Sub-Mode</span>
           </div>
-          <Badge variant="info" isLight={isLight}>
-            {subMode.toUpperCase()}
+          <Badge variant="default" size="sm" isLight={isLight} className="font-mono text-[10px] uppercase">
+            {subMode}
           </Badge>
         </div>
 
         <SegmentedSwitch
           value={subMode}
+          fullWidth
           size="sm"
           isLight={isLight}
-          onValueChange={(val) => setSubMode(val as typeof subMode)}
+          onValueChange={(val) => setSubMode(val as KickoffSubMode)}
           options={[
             { value: 'instant', label: 'Instant' },
             { value: 'easy-learning', label: 'Easy Learning' },
@@ -170,6 +220,7 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
             'Runs a configurable KICKOFF_WILL_START countdown (in 0.25s / 30-frame steps up to 4.0s) before unlocking controls.'}
         </p>
 
+        {/* Realistic Countdown Duration Slider (30-frame / 0.25s steps up to 480 frames / 4.00s) */}
         {subMode === 'realistic' && (
           <div className={`p-2.5 rounded-lg border ${subPanelBg}`}>
             <SliderControl
@@ -180,8 +231,10 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
               max={480}
               step={30}
               unit="f"
-              onChange={setRealisticWaitTicks}
+              showStepper={true}
+              colorScheme="neutral"
               isLight={isLight}
+              onChange={(val) => setRealisticWaitTicks(val)}
             />
           </div>
         )}
@@ -191,19 +244,20 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
       <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Gauge className="h-3.5 w-3.5 text-amber-400" />
+            <Gauge className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
             <span className="font-semibold text-[11px]">Simulation Speed (N / 120 Hz)</span>
           </div>
-          <Badge variant="default" isLight={isLight}>
+          <Badge variant="neutral" size="sm" isLight={isLight} className="font-mono text-[10px]">
             {effectivePhysicsRate}/120 ({((effectivePhysicsRate / 120) * 100).toFixed(1)}%)
           </Badge>
         </div>
 
         <SegmentedSwitch
           value={speedPreset}
+          fullWidth
           size="sm"
           isLight={isLight}
-          onValueChange={(val) => setSpeedPreset(val as typeof speedPreset)}
+          onValueChange={(val) => setSpeedPreset(val as KickoffSpeedPreset)}
           options={[
             { value: '100', label: '100%' },
             { value: '50', label: '50%' },
@@ -223,23 +277,28 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
               max={120}
               step={1}
               unit="/120"
-              onChange={setCustomPhysicsRate}
+              showStepper={true}
+              colorScheme="neutral"
               isLight={isLight}
+              onChange={(val) => setCustomPhysicsRate(val)}
             />
           </div>
         )}
       </div>
 
-      {/* 4. Ghost Placement & Overlay Toggles */}
+      {/* 4. Ghost Placement (Same Position vs Opposite Side), Ghost Mode ON/OFF & Overlay Toggles */}
       <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Eye className="h-3.5 w-3.5 text-sky-400" />
-            <span className="font-semibold text-[11px]">AI Ghost / Solid Opponent &amp; Overlay</span>
+            <Eye className={`h-3.5 w-3.5 ${isLight ? 'text-sky-600' : 'text-sky-400'}`} />
+            <span className="font-semibold text-[11px]">AI Ghost / Solid Opponent & Overlay</span>
           </div>
-          <span className={`font-mono text-[10px] ${mutedText}`}>Target: W + Boost + AirRollL</span>
+          <span className={`font-mono text-[10px] ${mutedText}`}>
+            Target: {requiredKeyStr}
+          </span>
         </div>
 
+        {/* AI Spawn Side: Same Position (Default) vs Opposite Side */}
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between text-[10px]">
             <span className={`font-semibold ${mutedText}`}>AI Spawn Side</span>
@@ -253,9 +312,10 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
           </div>
           <SegmentedSwitch
             value={ghostPlacement}
+            fullWidth
             size="sm"
             isLight={isLight}
-            onValueChange={(val) => setGhostPlacement(val as 'same' | 'opposite')}
+            onValueChange={(val) => setGhostPlacement(val as KickoffGhostPlacement)}
             options={[
               { value: 'same', label: 'Same Position' },
               { value: 'opposite', label: 'Opposite Side' },
@@ -263,6 +323,7 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
           />
         </div>
 
+        {/* Ghost Mode ON (Translucent) vs OFF (Solid Physical Collision Car) */}
         <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${subPanelBg}`}>
           <div className="flex flex-col min-w-0 pr-2">
             <span className="text-[11px] font-semibold">
@@ -276,7 +337,12 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
                 : 'Same-side physical kickoff (1↔5, 2↔4; pos 3 disabled)'}
             </span>
           </div>
-          <ToggleSwitch checked={ghostModeEnabled} onCheckedChange={setGhostModeEnabled} isLight={isLight} />
+          <ToggleSwitch
+            checked={ghostModeEnabled}
+            onCheckedChange={setGhostModeEnabled}
+            isLight={isLight}
+            variant="neutral"
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-2 pt-0.5">
@@ -291,6 +357,7 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
               onCheckedChange={setShowGhostCar}
               disabled={!ghostModeEnabled}
               isLight={isLight}
+              variant="neutral"
             />
           </div>
 
@@ -305,20 +372,31 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
               onCheckedChange={setShowGhostBall}
               disabled={!ghostModeEnabled}
               isLight={isLight}
+              variant="neutral"
             />
           </div>
 
           <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${subPanelBg}`}>
             <span className="text-[11px] font-medium flex items-center gap-1">
-              <Keyboard className="h-3 w-3 text-emerald-400" />
+              <Keyboard className={`h-3 w-3 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
               <span>Key Overlay</span>
             </span>
-            <ToggleSwitch checked={showKeyboardOverlay} onCheckedChange={setShowKeyboardOverlay} isLight={isLight} />
+            <ToggleSwitch
+              checked={showKeyboardOverlay}
+              onCheckedChange={setShowKeyboardOverlay}
+              isLight={isLight}
+              variant="neutral"
+            />
           </div>
 
           <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${subPanelBg}`}>
             <span className="text-[11px] font-medium">Falling Notes</span>
-            <ToggleSwitch checked={showFallingNotes} onCheckedChange={setShowFallingNotes} isLight={isLight} />
+            <ToggleSwitch
+              checked={showFallingNotes}
+              onCheckedChange={setShowFallingNotes}
+              isLight={isLight}
+              variant="neutral"
+            />
           </div>
         </div>
       </div>
@@ -326,13 +404,32 @@ export const KickoffTrainingFloatingWindow: React.FC<{ isLight?: boolean }> = Re
       {/* Live First-Touch Benchmark Footer */}
       <div className={`px-3 py-2 rounded-xl border font-mono text-[10px] flex items-center justify-between ${cardBg}`}>
         <span>
-          PPO AI Touch: <strong className="text-sky-400">1.875s (225f)</strong>
+          PPO AI Touch:{' '}
+          <strong className={isLight ? 'text-sky-600' : 'text-sky-400'}>
+            {aiTouchTick ? `${(aiTouchTick / 120).toFixed(3)}s (${aiTouchTick}f)` : '--'}
+          </strong>
         </span>
         <span>
-          Your Touch: <strong className="text-emerald-400">1.867s (224f · -1f Faster)</strong>
+          Your Touch:{' '}
+          <strong
+            className={
+              playerTouchTick
+                ? lastDeltaTicks !== null && lastDeltaTicks <= 0
+                  ? isLight
+                    ? 'text-emerald-600'
+                    : 'text-emerald-400'
+                  : isLight
+                  ? 'text-amber-600'
+                  : 'text-amber-400'
+                : mutedText
+            }
+          >
+            {playerTouchTick
+              ? `${(playerTouchTick / 120).toFixed(3)}s (${playerTouchTick}f)`
+              : 'Pending'}
+          </strong>
         </span>
       </div>
     </div>
   );
-});
-KickoffTrainingFloatingWindow.displayName = 'KickoffTrainingFloatingWindow';
+};

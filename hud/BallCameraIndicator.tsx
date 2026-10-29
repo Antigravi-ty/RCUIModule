@@ -1,6 +1,6 @@
 import React, { memo, forwardRef, useRef, useEffect, useImperativeHandle, useCallback } from 'react';
 import { KeycapBadge } from '../primitives/KeycapBadge';
-import { BallCamTransientListener } from './types';
+import { BallCamTransientListener } from '../stores/hudTransientTypes';
 
 export interface BallCameraIndicatorHandle {
   /** Imperatively toggle or set BallCam active state with zero React re-render */

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
-import { FlipTransientState, FlipTransientListener } from './types';
+import { FlipTransientState, FlipTransientListener } from '../stores/hudTransientTypes';
 
 export interface FlipIndicatorPillHandle {
   /** Imperatively update flip countdown state at 120Hz with zero React re-renders */

@@ -7,7 +7,7 @@ import {
   EdgeRosterHudState,
   HudRosterViewMode,
   RosterTransientListener,
-} from './hudTransientChannel';
+} from '../stores/hudTransientChannel';
 import { BombEmojiSvg, buildSvgDropShadowFilter } from '../primitives/packagedSvgIcons';
 
 export interface EdgePlayerHudStripHandle {

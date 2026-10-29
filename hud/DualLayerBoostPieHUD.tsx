@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
-import { BoostTransientListener } from './types';
+import { BoostTransientListener } from '../stores/hudTransientTypes';
 import { BoostColorScheme, getBoostSegmentColor } from './CircularBoostGauge';
 
 export interface DualLayerBoostPieHandle {

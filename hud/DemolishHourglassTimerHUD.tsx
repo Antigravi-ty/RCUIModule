@@ -2,7 +2,7 @@ import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback 
 import {
   RespawnTimerTransientState,
   RespawnTimerTransientListener,
-} from './types';
+} from '../stores/hudTransientTypes';
 
 export interface DemolishHourglassTimerHandle {
   /** Imperatively push respawn timer state at 120Hz with 0 React re-renders */

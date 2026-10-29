@@ -3,7 +3,7 @@ import {
   ScoreboardTransientListener,
   SeriesSlotWinner,
   StepperScoreboardState,
-} from './types';
+} from '../stores/hudTransientTypes';
 
 export interface StepperScoreboardHandle {
   /** Imperatively push scoreboard state to DOM refs with zero React re-renders */

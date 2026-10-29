@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer3KickoffTrainingStoreBinding } from './hooks/useLayer3DetailStoreBindings';
 import { Check, Clock, Compass, Crosshair, Ghost, GraduationCap, Play, Zap } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
@@ -75,7 +76,8 @@ const DRILL_MODE_CARDS: Array<{
  * 4. Kickoff Training (PPO) — single-line FloatingWindowCard spawner (Rhythm Note Highway toggle resides inside the Floating Window)
  * 5. Start Kickoff Drill — primary action button
  */
-export const Layer3KickoffTrainingRecipe: React.FC<Layer3KickoffTrainingRecipeProps> = React.memo(({
+export const Layer3KickoffTrainingRecipe: React.FC<Layer3KickoffTrainingRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = true,
   config: controlledConfigProp,
   settings: controlledSettingsProp,
@@ -85,7 +87,7 @@ export const Layer3KickoffTrainingRecipe: React.FC<Layer3KickoffTrainingRecipePr
   onStartTraining,
   onBack = () => {},
   className = '',
-}) => {
+} = useLayer3KickoffTrainingStoreBinding(rawProps);
   const [internalConfig, setInternalConfig] = useState<KickoffTrainingConfig>({
     ...DEFAULT_KICKOFF_TRAINING_CONFIG,
     ...defaultConfig,

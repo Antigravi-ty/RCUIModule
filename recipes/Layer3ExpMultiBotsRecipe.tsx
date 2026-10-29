@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer3ExpMultiBotsStoreBinding } from './hooks/useDevRecipesStoreBindings';
 import { Card } from '../layout/Card';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
@@ -49,7 +50,8 @@ export interface Layer3ExpMultiBotsRecipeProps {
   className?: string;
 }
 
-export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> = React.memo(({
+export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = true,
   defaultBlueSlots = DEFAULT_BLUE_TEAM_SLOTS,
   defaultOrangeSlots = DEFAULT_ORANGE_TEAM_SLOTS,
@@ -83,7 +85,7 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
   onEnterGame,
   onBack = () => {},
   className = '',
-}) => {
+} = useLayer3ExpMultiBotsStoreBinding(rawProps);
   const [internalBlueSlots, setInternalBlueSlots] = useState<TeamRosterSlotConfig[]>(defaultBlueSlots);
   const [internalOrangeSlots, setInternalOrangeSlots] = useState<TeamRosterSlotConfig[]>(defaultOrangeSlots);
   const [internalActiveCameraCarIndex, setInternalActiveCameraCarIndex] = useState<number>(0);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAppStore } from '../stores/appStore';
 import { Ghost, Play } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
@@ -43,9 +44,11 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   defaultConfig,
   onStartTraining,
   onNavigateGarageSync,
-  onBack = () => {},
+  onBack: propOnBack,
   className = '',
 }) => {
+  const storeGoBack = useAppStore((s) => s.goBack);
+  const onBack = propOnBack ?? storeGoBack;
   const [playerName, setPlayerName] = useState<string>(
     defaultConfig?.playerName ?? `Player${Math.floor(1000 + Math.random() * 9000)}`
   );

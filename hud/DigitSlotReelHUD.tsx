@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
-import { BoostTransientListener } from './types';
+import { BoostTransientListener } from '../stores/hudTransientTypes';
 
 export interface DigitSlotReelHandle {
   /** Imperatively update 3-digit slot reels (`0..999`) at 120Hz with 0 React re-renders */

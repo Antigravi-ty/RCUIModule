@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLayer3JoinRoomStoreBinding } from './hooks/useOnlineRecipesStoreBindings';
 import { Eye, Wifi } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
@@ -104,7 +105,8 @@ export interface Layer3JoinRoomRecipeProps {
  * 3. 5-step connection progress bar (`OnlineRoomCreationProgress`) when clicking `Join Room`
  * 4. Primary bottom action button: `Join Room`
  */
-export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.memo(({
+export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = false,
   config: controlledConfigProp,
   settings: controlledSettingsProp,
@@ -125,7 +127,7 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
   onCancelJoin,
   onNavigateGarageSync,
   onBack = () => {},
-}) => {
+} = useLayer3JoinRoomStoreBinding(rawProps);
   const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
   const sizing = panels['layer3-join-room'];
   const { rowGap, paddingX } = useSettingActionRowStore();

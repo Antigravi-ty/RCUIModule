@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useImperativeHandle, forwardRef, useCallback 
 import {
   ReplayBannerTransientState,
   ReplayBannerTransientListener,
-} from './types';
+} from '../stores/hudTransientTypes';
 
 export type ReplayBannerPhase = 'goal' | 'replay' | 'podium' | 'ended';
 export type ReplayCameraMode = 'director' | 'pov';

@@ -74,6 +74,7 @@ export interface SliderControlProps {
    * Whether to subscribe to `TunerPrecisionContext` (from `PrecisionDigitPicker`) when focused.
    */
   usePrecisionContext?: boolean;
+  extraAction?: React.ReactNode;
   className?: string;
 }
 

@@ -16,6 +16,7 @@ export {
 
 import {
   DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT,
+  createInitialNetworkDiagnosticsState,
   type DiagnosticProbeTelemetry,
   type DiagnosticBufferSnapshot,
   type DiagnosticDumpExportOptions,
@@ -26,6 +27,7 @@ import {
 
 export {
   DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT,
+  createInitialNetworkDiagnosticsState,
   type DiagnosticProbeTelemetry,
   type DiagnosticBufferSnapshot,
   type DiagnosticDumpExportOptions,
@@ -36,57 +38,7 @@ export {
 
 const stressSim = new NetworkStressSimulator();
 
-let state: NetworkDiagnosticsState = {
-  metrics: {
-    rttMs: 0,
-    uplinkMs: 0,
-    downlinkMs: 0,
-    jitterMs: 0,
-    clientLeadTicks: 0,
-    serverTick: 0,
-    clientTick: 0,
-    deltaTicks: 0,
-    mispredictions: 0,
-    corrections: 0,
-    packetLossPct: 0,
-    extraUplinkMs: 0,
-    extraDownlinkMs: 0,
-    extraRttMs: 0,
-    extraLatencyMs: 0,
-    burstDropCount: 5,
-    burstDropEnabled: false,
-    burstPeriodMs: 2000,
-    burstDurationMs: 750,
-    burstDurationPct: 37,
-    connected: false,
-    inputBufferDepth: 0,
-    rollbackWindow: 0,
-    lastErrorUu: 0,
-    maxErrorUu: 0,
-    opponentRttMs: 0,
-    visualSmoothing: false,
-    adjustStepMs: 50,
-    reportRates: 'S: 120Hz / C: 120Hz',
-    stressPresetId: NETWORK_STRESS_PRESETS.IDEAL_LAN.id,
-    impairmentPresetId: NETWORK_STRESS_PRESETS.IDEAL_LAN.id,
-    qualityScore: 100,
-    qualityGrade: 'A',
-    healthState: CONNECTION_HEALTH_STATES.HEALTHY,
-    packetAgeMs: 0,
-    neutralFallbackActive: false,
-    disconnectEvicted: false,
-    zeroGFleetEnabled: false,
-    zeroGAnchorMode: ZERO_G_ANCHOR_MODES.Z_HOVER,
-    observationTarget: 0,
-    lobbyGhostMode: false,
-    testCarAudioEnabled: false,
-    probeTelemetry: [],
-    diagnosticBuffers: { ...DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT },
-  },
-  reconcilerRef: null,
-  channelRef: null,
-  bridge: {},
-};
+let state: NetworkDiagnosticsState = createInitialNetworkDiagnosticsState();
 
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((cb) => cb());

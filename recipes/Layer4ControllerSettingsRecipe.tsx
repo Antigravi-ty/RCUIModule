@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLayer4ControllerSettingsStoreBinding } from './hooks/useLayer4StoreBindings';
 import { Gamepad2 } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { Badge } from '../primitives/Badge';
@@ -86,9 +87,8 @@ const STICK_AXIS_OPTIONS: Array<{ value: StickAxisOption; label: string }> = [
   { value: 'right-y', label: 'Right Stick Y' },
 ];
 
-export const Layer4ControllerSettingsRecipe: React.FC<
-  Layer4ControllerSettingsRecipeProps
-> = React.memo(({
+export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = false,
   developerMode = false,
   config: controlledConfigProp,
@@ -103,7 +103,7 @@ export const Layer4ControllerSettingsRecipe: React.FC<
   onReset,
   onBack = () => {},
   className = '',
-}) => {
+} = useLayer4ControllerSettingsStoreBinding(rawProps);
   const { rowGap } = useSettingActionRowStore();
   const sizing = useMenuLayoutStore(
     (s) => s.panels?.['layer4-controller-settings'] ?? DEFAULT_PANEL_SIZING['layer4-controller-settings']

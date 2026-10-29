@@ -2,7 +2,7 @@ import React, { useEffect, useId, useRef, forwardRef, useImperativeHandle, useCa
 import {
   ReplayFooterTransientState,
   ReplayFooterTransientListener,
-} from './types';
+} from '../stores/hudTransientTypes';
 
 export interface TemporalReplayData {
   scorerName: string;

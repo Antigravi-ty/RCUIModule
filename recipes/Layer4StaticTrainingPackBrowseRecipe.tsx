@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useLayer4StaticTrainingPackBrowseStoreBinding } from './hooks/useStaticTrainingStoreBindings';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { DEFAULT_PANEL_SIZING, useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
@@ -122,9 +123,8 @@ async function decodeRCSPackText(file: File): Promise<string> {
  *   - Upper section: Import .RCSPack & Create Pack toolbar (`StaticTrainingPackToolbar`)
  *   - Lower section: Selected Pack Metadata & Actions (`StaticTrainingPackMetadataInspector`)
  */
-export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
-  Layer4StaticTrainingPackBrowseRecipeProps
-> = React.memo(({
+export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTrainingPackBrowseRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = false,
   packs: controlledPacks,
   selectedPackUuid: controlledSelectedUuid,
@@ -147,7 +147,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
   onImportPack,
   onExportPack,
   className = '',
-}) => {
+} = useLayer4StaticTrainingPackBrowseStoreBinding(rawProps);
   const sizing = useMenuLayoutStore(
     (s) => s.panels?.['layer4-static-training-pack'] ?? DEFAULT_PANEL_SIZING['layer4-static-training-pack']
   );

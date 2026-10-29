@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLayer2GarageStoreBinding } from './hooks/useMainMenuAndPlayStoreBindings';
 import {
   Car,
   Palette,
@@ -74,7 +75,8 @@ export interface Layer2GarageRecipeProps {
  * 4. Anthem (`GarageAnthemTab`): Anthem selection or Under Development placeholder
  * 5. Sync (`cloud-sync`): Server-bound customization sync & profile synchronization
  */
-export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = ({
+export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) => {
+  const {
   isLight = false,
   onBack = () => {},
   initialTab = 'car',
@@ -101,7 +103,7 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = ({
   defaultSelectedAnthem = 'random',
   onSelectAnthem,
   anthemAvailable = false,
-}) => {
+} = useLayer2GarageStoreBinding(rawProps);
   const { panels, panelBodyPaddingX } = useMenuLayoutStore();
   const sizing = panels['layer2-garage'];
   const normalizeTab = (t?: string) => {

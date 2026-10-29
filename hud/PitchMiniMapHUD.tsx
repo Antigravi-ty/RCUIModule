@@ -2,7 +2,7 @@ import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback 
 import {
   MiniMapTransientState,
   MiniMapTransientListener,
-} from './types';
+} from '../stores/hudTransientTypes';
 
 export interface MiniMapBoostPad {
   id: number;

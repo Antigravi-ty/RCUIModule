@@ -1,104 +1,97 @@
 import React, { useState } from 'react';
-import { Crosshair, Compass, Wind, RotateCcw, Activity, Copy, Check } from 'lucide-react';
+import {
+  Crosshair,
+  Compass,
+  Wind,
+  RotateCcw,
+  Activity,
+  Copy,
+  Check,
+} from 'lucide-react';
+import {
+  reachabilityStore,
+  useReachabilityStore,
+  type GroundReachabilityMode,
+  type AerialReachabilityMode,
+  type InterceptCrossOrientation,
+} from '../../stores/reachabilityStore';
+import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { SliderControl } from '../../primitives/SliderControl';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
-import { ToggleSwitch } from '../../primitives/ToggleSwitch';
-import { quickNotification } from '../../stores/quickNotificationStore';
 
-/**
- * 6. [Dev] Reachability & Intercept Cone Tuner (`reachability-tuner`)
- * Standalone L6 Floating Window Panel — Ground Reachability LUT, Aerial 3D Spacetime Horn & Optimal Intercept 3D Cross.
- */
-export const ReachabilityTunerFloatingWindow: React.FC<{ isLight?: boolean }> = React.memo(({ isLight = false }) => {
-  const [enabled, setEnabled] = useState(true);
+export interface ReachabilityTunerFloatingWindowProps {
+  isLight?: boolean;
+  active?: boolean;
+}
+
+export const ReachabilityTunerFloatingWindow: React.FC<ReachabilityTunerFloatingWindowProps> = ({
+  isLight = false,
+}) => {
+  const { config, telemetry } = useReachabilityStore();
   const [copiedJson, setCopiedJson] = useState(false);
 
-  // 1. Ground Reachability
-  const [showGround, setShowGround] = useState(true);
-  const [groundMode, setGroundMode] = useState<'lut' | 'analytical'>('lut');
-  const [groundFillOpacity, setGroundFillOpacity] = useState(18);
-
-  // 2. Aerial 3D Spacetime Horn
-  const [showAerial, setShowAerial] = useState(true);
-  const [aerialMode, setAerialMode] = useState<'funnel' | 'bubbles'>('funnel');
-  const [aerialOpacity, setAerialOpacity] = useState(28);
-  const [aerialShowRings, setAerialShowRings] = useState(true);
-  const [includeJumpImpulse, setIncludeJumpImpulse] = useState(true);
-
-  // 3. Optimal Intercept 3D Cross
-  const [showIntercept, setShowIntercept] = useState(true);
-  const [crossOrientation, setCrossOrientation] = useState<'world' | 'trajectory'>('world');
-  const [crossArmLength, setCrossArmLength] = useState(50);
-  const [crossThickness, setCrossThickness] = useState(5);
-  const [showClosestWhenUnreachable, setShowClosestWhenUnreachable] = useState(true);
-
   const cardBg = isLight
-    ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
-    : 'bg-neutral-900/60 border-neutral-800 text-neutral-200';
+    ? 'bg-neutral-50/90 border-neutral-200 text-neutral-800'
+    : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
-  const resetDefaults = () => {
-    setEnabled(true);
-    setShowGround(true);
-    setGroundMode('lut');
-    setGroundFillOpacity(18);
-    setShowAerial(true);
-    setAerialMode('funnel');
-    setAerialOpacity(28);
-    setAerialShowRings(true);
-    setIncludeJumpImpulse(true);
-    setShowIntercept(true);
-    setCrossOrientation('world');
-    setCrossArmLength(50);
-    setCrossThickness(5);
-    setShowClosestWhenUnreachable(true);
-    quickNotification.info('Reset Reachability & Intercept parameters to defaults.');
+  const isReachable = telemetry.interceptStatus === 'reachable';
+  const isFallback = telemetry.interceptStatus === 'closest-fallback';
+  const centralityPct = Math.round((telemetry.interceptCentrality ?? 0) * 100);
+
+  const handleCopyJson = async () => {
+    const jsonStr = JSON.stringify(config, null, 2);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(jsonStr);
+      } else if (typeof document !== 'undefined') {
+        const ta = document.createElement('textarea');
+        ta.value = jsonStr;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopiedJson(true);
+      setTimeout(() => setCopiedJson(false), 1800);
+    } catch (err) {
+      console.warn('[ReachabilityTuner] Failed to copy JSON config:', err);
+    }
   };
 
-  const handleCopyJson = () => {
-    const config = {
-      enabled,
-      showGround,
-      groundMode,
-      groundFillOpacity: groundFillOpacity / 100,
-      showAerial,
-      aerialMode,
-      aerialOpacity: aerialOpacity / 100,
-      aerialShowRings,
-      includeJumpImpulse,
-      showIntercept,
-      crossOrientation,
-      crossArmLength,
-      crossThickness,
-      showClosestWhenUnreachable,
-    };
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(JSON.stringify(config, null, 2)).catch(() => {});
+  const paceBadge = (() => {
+    if (!isReachable) return { label: 'UNREACHABLE', cls: 'text-rose-400' };
+    if (telemetry.interceptPaceStatus === 'sweet-spot') {
+      return { label: `CORE ${centralityPct}% (SWEET SPOT)`, cls: 'text-emerald-400' };
     }
-    setCopiedJson(true);
-    setTimeout(() => setCopiedJson(false), 1800);
-    quickNotification.success('Copied ReachabilityConfig JSON.');
-  };
+    if (telemetry.interceptPaceStatus === 'overshoot') {
+      return { label: `EDGE ${centralityPct}% (TOO FAST)`, cls: 'text-rose-400' };
+    }
+    return {
+      label: `HORN ${centralityPct}% (CATCHING)`,
+      cls: centralityPct >= 40 ? 'text-amber-400' : 'text-rose-400',
+    };
+  })();
 
   return (
-    <div className="p-3.5 flex flex-col gap-2.5 text-xs select-none">
+    <div className="flex flex-col gap-2.5 select-none text-xs">
       {/* Master Switch, Copy JSON & Reset Header Card */}
       <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 ${cardBg}`}>
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-xs">Reachability &amp; Intercept System</span>
+            <span className="font-bold text-xs">Reachability & Intercept System</span>
             <span
               className={`text-[10px] font-mono px-1.5 py-0.5 rounded border font-semibold ${
-                enabled
+                config.enabled
                   ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
                   : 'bg-neutral-500/15 border-neutral-500/30 text-neutral-400'
               }`}
             >
-              {enabled ? 'ACTIVE' : 'DISABLED'}
+              {config.enabled ? 'ACTIVE' : 'DISABLED'}
             </span>
           </div>
           <span className={`text-[10px] mt-0.5 truncate ${mutedText}`}>
-            Optimal 3D Cross (50 UU / 5 UU) · Horn Centrality Color
+            Default off · Optimal 3D Cross (50 UU / 5 UU) · Horn Centrality Color
           </span>
         </div>
 
@@ -106,12 +99,13 @@ export const ReachabilityTunerFloatingWindow: React.FC<{ isLight?: boolean }> = 
           <button
             type="button"
             onClick={handleCopyJson}
+            title="Copy current ReachabilityConfig JSON to clipboard"
             className={`px-2 py-1 rounded-lg border text-[10px] font-mono flex items-center gap-1 transition-colors cursor-pointer ${
               copiedJson
                 ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
                 : isLight
-                ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
-                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-600 text-neutral-300'
+                  ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
+                  : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-600 text-neutral-300'
             }`}
           >
             {copiedJson ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -119,7 +113,7 @@ export const ReachabilityTunerFloatingWindow: React.FC<{ isLight?: boolean }> = 
           </button>
           <button
             type="button"
-            onClick={resetDefaults}
+            onClick={() => reachabilityStore.resetConfig()}
             title="Reset parameters to defaults"
             className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
               isLight
@@ -129,7 +123,11 @@ export const ReachabilityTunerFloatingWindow: React.FC<{ isLight?: boolean }> = 
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
-          <ToggleSwitch checked={enabled} onChange={setEnabled} isLight={isLight} />
+          <ToggleSwitch
+            checked={config.enabled}
+            onChange={(val) => reachabilityStore.updateConfig({ enabled: val })}
+            isLight={isLight}
+          />
         </div>
       </div>
 
@@ -138,36 +136,58 @@ export const ReachabilityTunerFloatingWindow: React.FC<{ isLight?: boolean }> = 
         <div className="flex items-center justify-between border-b border-neutral-500/20 pb-1.5">
           <div className="flex items-center gap-1.5">
             <Activity className="h-3.5 w-3.5 text-emerald-400" />
-            <span className="font-bold text-[11px]">Live 120Hz Telemetry &amp; Compute Cost</span>
+            <span className="font-bold text-[11px]">Live 120Hz Telemetry & Compute Cost</span>
           </div>
           <span className="font-mono text-[10px] text-emerald-400 font-semibold">
-            {enabled ? '1.4 µs/frame' : '0.0 µs (Idle)'}
+            {config.enabled ? `${telemetry.computeTimeUs.toFixed(1)} µs/frame` : '0.0 µs (Idle)'}
           </span>
         </div>
 
         <div className="grid grid-cols-3 gap-1.5 font-mono text-[10px]">
-          <div className="p-1.5 rounded-lg bg-black/10 dark:bg-black/25 border border-neutral-500/15 flex flex-col">
+          <div className="p-1.5 rounded-lg bg-black/20 border border-white/5 flex flex-col">
             <span className={mutedText}>Surface State</span>
-            <span className="font-bold text-emerald-400">ON GROUND</span>
+            <span className={`font-bold ${telemetry.isOnGround ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {telemetry.isOnGround ? 'ON GROUND' : 'AIRBORNE'}
+            </span>
           </div>
-          <div className="p-1.5 rounded-lg bg-black/10 dark:bg-black/25 border border-neutral-500/15 flex flex-col">
+          <div className="p-1.5 rounded-lg bg-black/20 border border-white/5 flex flex-col">
             <span className={mutedText}>Live Boost</span>
-            <span className="font-bold text-amber-400">68.0 / 100</span>
+            <span className="font-bold text-amber-400">{telemetry.boostAmount.toFixed(1)} / 100</span>
           </div>
-          <div className="p-1.5 rounded-lg bg-black/10 dark:bg-black/25 border border-neutral-500/15 flex flex-col">
+          <div className="p-1.5 rounded-lg bg-black/20 border border-white/5 flex flex-col">
             <span className={mutedText}>Intercept ETA</span>
-            <span className="font-bold text-emerald-400">1.42s (HIT)</span>
+            <span
+              className={`font-bold ${
+                isReachable
+                  ? centralityPct >= 70
+                    ? 'text-emerald-400'
+                    : centralityPct >= 35
+                      ? 'text-amber-400'
+                      : 'text-rose-400'
+                  : isFallback
+                    ? 'text-rose-400'
+                    : 'text-neutral-400'
+              }`}
+            >
+              {telemetry.interceptStatus === 'none'
+                ? '—'
+                : `${telemetry.interceptTimeSec.toFixed(2)}s (${isReachable ? 'HIT' : 'GAP'})`}
+            </span>
           </div>
         </div>
 
-        {enabled && showIntercept && (
+        {config.enabled && config.showIntercept && telemetry.interceptStatus !== 'none' && (
           <div className="flex flex-col gap-1 text-[10px] font-mono pt-0.5 px-0.5">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-emerald-400">CORE 82% (SWEET SPOT)</span>
-              <span className="text-sky-400">Min Boost: 34</span>
+              <span className={`font-semibold ${paceBadge.cls}`}>{paceBadge.label}</span>
+              <span className="text-sky-400">
+                Min Boost: {telemetry.interceptMinBoost.toFixed(0)}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className={mutedText}>Cross XYZ: [-420, 1180, 642] UU</span>
+              <span className={mutedText}>
+                Cross XYZ: [{telemetry.interceptPos[0]}, {telemetry.interceptPos[1]}, {telemetry.interceptPos[2]}]
+              </span>
             </div>
           </div>
         )}
@@ -185,33 +205,36 @@ export const ReachabilityTunerFloatingWindow: React.FC<{ isLight?: boolean }> = 
               </span>
             </div>
           </div>
-          <ToggleSwitch checked={showGround} onChange={setShowGround} isLight={isLight} />
+          <ToggleSwitch
+            checked={config.showGround}
+            onChange={(val) => reachabilityStore.updateConfig({ showGround: val })}
+            isLight={isLight}
+          />
         </div>
 
-        {showGround && (
-          <div className="flex flex-col gap-2 pt-1.5 border-t border-neutral-500/20">
+        {config.showGround && (
+          <div className="flex flex-col gap-2 pt-1 border-t border-neutral-500/20">
             <div className="flex items-center justify-between gap-2">
               <span className={`text-[11px] ${mutedText}`}>Solver Engine</span>
               <SegmentedSwitch
-                value={groundMode}
-                onValueChange={(v) => setGroundMode(v as 'lut' | 'analytical')}
+                value={config.groundMode}
+                onChange={(v) => reachabilityStore.updateConfig({ groundMode: v as GroundReachabilityMode })}
                 options={[
                   { value: 'lut', label: 'WASM 3D LUT (1.4µs)' },
                   { value: 'analytical', label: 'Analytical' },
                 ]}
-                size="sm"
                 isLight={isLight}
               />
             </div>
 
             <SliderControl
               label="Ground Fan Opacity"
-              value={groundFillOpacity}
+              value={Math.round(config.groundFillOpacity * 100)}
               min={4}
               max={50}
               step={1}
               unit="%"
-              onChange={setGroundFillOpacity}
+              onChange={(val) => reachabilityStore.updateConfig({ groundFillOpacity: val / 100 })}
               isLight={isLight}
             />
           </div>
@@ -230,49 +253,62 @@ export const ReachabilityTunerFloatingWindow: React.FC<{ isLight?: boolean }> = 
               </span>
             </div>
           </div>
-          <ToggleSwitch checked={showAerial} onChange={setShowAerial} isLight={isLight} />
+          <ToggleSwitch
+            checked={config.showAerial}
+            onChange={(val) => reachabilityStore.updateConfig({ showAerial: val })}
+            isLight={isLight}
+          />
         </div>
 
-        {showAerial && (
-          <div className="flex flex-col gap-2 pt-1.5 border-t border-neutral-500/20">
+        {config.showAerial && (
+          <div className="flex flex-col gap-2 pt-1 border-t border-neutral-500/20">
             <div className="flex items-center justify-between gap-2">
               <span className={`text-[11px] ${mutedText}`}>3D Geometry Mode</span>
               <SegmentedSwitch
-                value={aerialMode}
-                onValueChange={(v) => setAerialMode(v as 'funnel' | 'bubbles')}
+                value={config.aerialMode}
+                onChange={(v) => reachabilityStore.updateConfig({ aerialMode: v as AerialReachabilityMode })}
                 options={[
                   { value: 'funnel', label: 'Continuous Horn' },
                   { value: 'bubbles', label: '1s/2s/3s Bubbles' },
                 ]}
-                size="sm"
                 isLight={isLight}
               />
             </div>
 
             <SliderControl
               label="Horn Mesh Opacity"
-              value={aerialOpacity}
+              value={Math.round(config.aerialOpacity * 100)}
               min={5}
               max={65}
               step={1}
               unit="%"
-              onChange={setAerialOpacity}
+              onChange={(val) => reachabilityStore.updateConfig({ aerialOpacity: val / 100 })}
               isLight={isLight}
             />
 
             <div className="flex items-center justify-between py-0.5">
-              <span className={`text-[11px] ${mutedText}`}>Show 1s/2s/3s Rings &amp; Guide Rails</span>
-              <ToggleSwitch checked={aerialShowRings} onChange={setAerialShowRings} isLight={isLight} />
+              <span className={`text-[11px] ${mutedText}`}>Show 1s/2s/3s Rings & Guide Rails</span>
+              <ToggleSwitch
+                checked={config.aerialShowRings}
+                onChange={(val) =>
+                  reachabilityStore.updateConfig({ aerialShowRings: val, aerialShowRails: val })
+                }
+                isLight={isLight}
+              />
             </div>
 
             <div className="flex items-center justify-between py-0.5">
               <div className="flex flex-col">
                 <span className={`text-[11px] ${mutedText}`}>Include Min 1st-Jump Impulse (328 UU/s)</span>
                 <span className="text-[9px] text-neutral-500">
-                  Predicts ground-to-air using lowest tap-jump velocity
+                  Default on: predicts ground-to-air using lowest tap-jump velocity
                 </span>
               </div>
-              <ToggleSwitch checked={includeJumpImpulse} onChange={setIncludeJumpImpulse} isLight={isLight} />
+              <ToggleSwitch
+                checked={config.includeJumpImpulse}
+                onChange={(val) => reachabilityStore.updateConfig({ includeJumpImpulse: val })}
+                isLight={isLight}
+              />
             </div>
           </div>
         )}
@@ -290,52 +326,57 @@ export const ReachabilityTunerFloatingWindow: React.FC<{ isLight?: boolean }> = 
               </span>
             </div>
           </div>
-          <ToggleSwitch checked={showIntercept} onChange={setShowIntercept} isLight={isLight} />
+          <ToggleSwitch
+            checked={config.showIntercept}
+            onChange={(val) => reachabilityStore.updateConfig({ showIntercept: val })}
+            isLight={isLight}
+          />
         </div>
 
-        {showIntercept && (
-          <div className="flex flex-col gap-2 pt-1.5 border-t border-neutral-500/20">
+        {config.showIntercept && (
+          <div className="flex flex-col gap-2 pt-1 border-t border-neutral-500/20">
             <div className="flex items-center justify-between gap-2">
               <span className={`text-[11px] ${mutedText}`}>Orthogonal Axes</span>
               <SegmentedSwitch
-                value={crossOrientation}
-                onValueChange={(v) => setCrossOrientation(v as 'world' | 'trajectory')}
+                value={config.crossOrientation}
+                onChange={(v) =>
+                  reachabilityStore.updateConfig({ crossOrientation: v as InterceptCrossOrientation })
+                }
                 options={[
                   { value: 'world', label: 'World XYZ' },
                   { value: 'trajectory', label: 'Ball Tangent' },
                 ]}
-                size="sm"
                 isLight={isLight}
               />
             </div>
 
             <SliderControl
               label="Cross Arm Length"
-              value={crossArmLength}
+              value={config.crossArmLength}
               min={20}
               max={380}
               step={5}
               unit=" UU"
-              onChange={setCrossArmLength}
+              onChange={(val) => reachabilityStore.updateConfig({ crossArmLength: val })}
               isLight={isLight}
             />
 
             <SliderControl
               label="Cross Line Thickness"
-              value={crossThickness}
+              value={config.crossThickness}
               min={1}
               max={36}
               step={1}
               unit=" UU"
-              onChange={setCrossThickness}
+              onChange={(val) => reachabilityStore.updateConfig({ crossThickness: val })}
               isLight={isLight}
             />
 
             <div className="flex items-center justify-between py-0.5">
               <span className={`text-[11px] ${mutedText}`}>Show Closest Point When Unreachable</span>
               <ToggleSwitch
-                checked={showClosestWhenUnreachable}
-                onChange={setShowClosestWhenUnreachable}
+                checked={config.showClosestWhenUnreachable}
+                onChange={(val) => reachabilityStore.updateConfig({ showClosestWhenUnreachable: val })}
                 isLight={isLight}
               />
             </div>
@@ -344,5 +385,4 @@ export const ReachabilityTunerFloatingWindow: React.FC<{ isLight?: boolean }> = 
       </div>
     </div>
   );
-});
-ReachabilityTunerFloatingWindow.displayName = 'ReachabilityTunerFloatingWindow';
+};

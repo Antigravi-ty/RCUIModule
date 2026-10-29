@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { useAppStore } from '../stores/appStore';
 import {
   Keyboard,
   Gamepad2,
@@ -353,8 +354,8 @@ export const ControlsBindingTable: React.FC<{
  */
 export const Layer3KeybindingsRecipe: React.FC<Layer3KeybindingsRecipeProps> = ({
   isLight = false,
-  onBack = () => {},
-  onNavigateAdvancedController,
+  onBack: propOnBack,
+  onNavigateAdvancedController: propNavigateAdvCtrl,
   onNavigateAdvanced,
   standalone = false,
   sizing: propSizing,
@@ -365,7 +366,10 @@ export const Layer3KeybindingsRecipe: React.FC<Layer3KeybindingsRecipeProps> = (
     (s) => s.panels?.['layer3-keybindings'] ?? DEFAULT_PANEL_SIZING['layer3-keybindings']
   );
   const sizing = propSizing ?? storeSizing;
-  const resolvedNavigateAdvanced = onNavigateAdvancedController ?? onNavigateAdvanced;
+  const storeGoBack = useAppStore((s) => s.goBack);
+  const storeNavigate = useAppStore((s) => s.navigate);
+  const onBack = propOnBack ?? storeGoBack;
+  const resolvedNavigateAdvanced = propNavigateAdvCtrl ?? onNavigateAdvanced ?? (() => storeNavigate('advanced-controller'));
 
   if (!standalone) {
     return (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAppStore } from '../stores/appStore';
 import {
   Activity,
   Compass,
@@ -33,10 +34,12 @@ export interface Layer3AudioEqRecipeProps {
 export const Layer3AudioEqRecipe: React.FC<Layer3AudioEqRecipeProps> = ({
   isLight = false,
   developerMode = true,
-  onBack = () => {},
+  onBack: propOnBack,
   hasError: propHasError,
   onCheckNotification,
 }) => {
+  const storeGoBack = useAppStore((s) => s.goBack);
+  const onBack = propOnBack ?? storeGoBack;
   const { panels, simulateLayer3Error } = useMenuLayoutStore();
   const sizing = panels['layer3-audio-eq'];
   const showError = propHasError ?? simulateLayer3Error;

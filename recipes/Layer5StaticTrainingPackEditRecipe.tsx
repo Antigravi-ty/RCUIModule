@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useLayer5StaticTrainingPackEditStoreBinding } from './hooks/useStaticTrainingStoreBindings';
 import { Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { KeycapBadge } from '../primitives/KeycapBadge';
@@ -98,9 +99,8 @@ export interface Layer5StaticTrainingPackEditRecipeProps {
  *   Clicking the currently active `#number` in the rail expands back to the full Shot List.
  * - Footer: Displays live hover descriptions from any option or control in the list or detail inspector.
  */
-export const Layer5StaticTrainingPackEditRecipe: React.FC<
-  Layer5StaticTrainingPackEditRecipeProps
-> = ({
+export const Layer5StaticTrainingPackEditRecipe: React.FC<Layer5StaticTrainingPackEditRecipeProps> = (rawProps) => {
+  const {
   isLight = false,
   transparent = true,
   packTitle = 'Aerial Striker Pack',
@@ -123,7 +123,7 @@ export const Layer5StaticTrainingPackEditRecipe: React.FC<
   onExportSingleShot,
   onImportSingleShot,
   onCollapseDrawer,
-}) => {
+} = useLayer5StaticTrainingPackEditStoreBinding(rawProps);
   const [internalShots, setInternalShots] = useState<StaticTrainingShotItem[]>(
     INITIAL_TRAINING_SHOTS
   );

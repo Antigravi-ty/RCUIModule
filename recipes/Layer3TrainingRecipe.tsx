@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer3TrainingStoreBinding } from './hooks/useLayer3DetailStoreBindings';
 import { Zap, Box, Shield, History, CircleSlash2, Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
@@ -40,13 +41,14 @@ export interface Layer3TrainingRecipeProps {
  * 4. Goal Barrier Configurator: Single-line FloatingWindowCard spawner with colored Shield icon
  * 5. Rewinder Configurator: Single-line FloatingWindowCard spawner with colored History icon
  */
-export const Layer3TrainingRecipe: React.FC<Layer3TrainingRecipeProps> = ({
+export const Layer3TrainingRecipe: React.FC<Layer3TrainingRecipeProps> = (rawProps) => {
+  const {
   isLight = false,
   onBack,
   sizing: propSizing,
   gameplay: controlledGameplay,
   onUpdateGameplay,
-}) => {
+} = useLayer3TrainingStoreBinding(rawProps);
   const storeSizing = useMenuLayoutStore(
     (s) => s.panels?.['layer3-training'] ?? DEFAULT_PANEL_SIZING['layer3-training']
   );

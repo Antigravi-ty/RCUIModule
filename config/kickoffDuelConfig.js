@@ -176,3 +176,23 @@ export const PRECOMPUTED_MATRIX_RESULTS = [
     ],
   },
 ];
+
+export const RESPAWN_SPAWN_PRESETS = Object.freeze([
+  { id: 'far-left', slotIndex: 0, name: 'Far Left', label: 'Far Left', team0: { x: 2688, y: -4608, z: 17, yaw: Math.PI / 2 }, team1: { x: -2688, y: 4608, z: 17, yaw: -Math.PI / 2 } },
+  { id: 'inner-left', slotIndex: 1, name: 'Inner Left', label: 'Inner Left', team0: { x: 2304, y: -4608, z: 17, yaw: Math.PI / 2 }, team1: { x: -2304, y: 4608, z: 17, yaw: -Math.PI / 2 } },
+  { id: 'inner-right', slotIndex: 2, name: 'Inner Right', label: 'Inner Right', team0: { x: -2304, y: -4608, z: 17, yaw: Math.PI / 2 }, team1: { x: 2304, y: 4608, z: 17, yaw: -Math.PI / 2 } },
+  { id: 'far-right', slotIndex: 3, name: 'Far Right', label: 'Far Right', team0: { x: -2688, y: -4608, z: 17, yaw: Math.PI / 2 }, team1: { x: 2688, y: 4608, z: 17, yaw: -Math.PI / 2 } }
+]);
+
+export const HIDDEN_RESPAWN_SPAWN_PRESETS = Object.freeze([
+  { id: 'hidden-far-left', slotIndex: 0, name: 'Hidden Far Left', label: 'Hidden Far Left', team0: { x: 2688, y: -4096, z: 17, yaw: Math.PI / 2 }, team1: { x: -2688, y: 4096, z: 17, yaw: -Math.PI / 2 } },
+  { id: 'hidden-inner-left', slotIndex: 1, name: 'Hidden Inner Left', label: 'Hidden Inner Left', team0: { x: 2304, y: -4096, z: 17, yaw: Math.PI / 2 }, team1: { x: -2304, y: 4096, z: 17, yaw: -Math.PI / 2 } },
+  { id: 'hidden-inner-right', slotIndex: 2, name: 'Hidden Inner Right', label: 'Hidden Inner Right', team0: { x: -2304, y: -4096, z: 17, yaw: Math.PI / 2 }, team1: { x: 2304, y: 4096, z: 17, yaw: -Math.PI / 2 } },
+  { id: 'hidden-far-right', slotIndex: 3, name: 'Hidden Far Right', label: 'Hidden Far Right', team0: { x: -2688, y: -4096, z: 17, yaw: Math.PI / 2 }, team1: { x: 2688, y: 4096, z: 17, yaw: -Math.PI / 2 } }
+]);
+
+export function getDesiredRespawnPose(team = 0, slotIndex = 0) {
+  const clampedSlot = Math.max(0, Math.min(3, Math.trunc(slotIndex)));
+  const entry = RESPAWN_SPAWN_PRESETS[clampedSlot] || RESPAWN_SPAWN_PRESETS[0];
+  return Number(team) === 1 ? entry.team1 : entry.team0;
+}

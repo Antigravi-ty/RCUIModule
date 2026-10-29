@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer4AdvancedAudioStoreBinding } from './hooks/useLayer4StoreBindings';
 import { Flame, Disc, Trophy, Speaker } from 'lucide-react';
 import { Card } from '../layout/Card';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
@@ -50,7 +51,8 @@ const DEFAULT_GROUP_VOLUMES: Record<string, number> = {
   'ui-ambient': 100,
 };
 
-export const Layer4AdvancedAudioRecipe: React.FC<Layer4AdvancedAudioRecipeProps> = React.memo(({
+export const Layer4AdvancedAudioRecipe: React.FC<Layer4AdvancedAudioRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = true,
   boostSelection: controlledBoostSelection,
   defaultBoostSelection = { start: 'rush', loop: 'rush', end: 'rush' },
@@ -72,7 +74,7 @@ export const Layer4AdvancedAudioRecipe: React.FC<Layer4AdvancedAudioRecipeProps>
   onChange,
   onBack = () => {},
   className = '',
-}) => {
+} = useLayer4AdvancedAudioStoreBinding(rawProps);
   const { rowGap } = useSettingActionRowStore();
   const [internalBoostSelection, setInternalBoostSelection] =
     useState<PhaseVariationSelection>(defaultBoostSelection);

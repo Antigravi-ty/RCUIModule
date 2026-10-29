@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer2RoomHostControlStoreBinding } from './hooks/useOnlineRecipesStoreBindings';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { DEFAULT_PANEL_SIZING, useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
@@ -161,7 +162,8 @@ export interface Layer2RoomHostControlRecipeProps {
  * 5. `online-warmup-host` (`OnlineWarmupRoomView` role="host")
  * 6. `online-warmup-client` (`OnlineWarmupRoomView` role="client")
  */
-export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipeProps> = React.memo(({
+export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = true,
   roomCode = 'RL-8924',
   signalingState,
@@ -188,7 +190,7 @@ export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipePr
   onCloseRoom,
   onBack = () => {},
   className = '',
-}) => {
+} = useLayer2RoomHostControlStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const activeContextId = controlledContext ?? 'match-lobby-host';

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer1MainMenuStoreBinding } from './hooks/useMainMenuAndPlayStoreBindings';
 import {
   Play,
   Gamepad2,
@@ -138,7 +139,8 @@ const renderCustomRowIcon = (
  * [Recipe] Layer 1 Main Menu (Root / Width: 420px)
  * Driven by decoupled per-context specs (`layer1MenuContextSpecs.ts`) and `MainMenuRow` (`useMainMenuStyleStore`).
  */
-export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = ({
+export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawProps) => {
+  const {
   isLight = false,
   matchMode,
   contextVariation: propContextVariation,
@@ -167,7 +169,7 @@ export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = ({
   styleVariant,
   styleParams,
   className = '',
-}) => {
+} = useLayer1MainMenuStoreBinding(rawProps);
   const contextVariation = propContextVariation ?? contextMode;
   const onNavigateManageRoom = propNavigateManageRoom ?? onNavigateRoomControl;
   const onNavigateExpMultiBotsConfig = propNavigateExpMultiBotsConfig ?? onNavigateExpMultiBots;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useLayer3CameraStoreBinding } from './hooks/useLayer3DetailStoreBindings';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { dialogue } from '../compounds/Dialogue';
 import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
@@ -70,7 +71,8 @@ export interface Layer3CameraRecipeProps {
  * - Invert Swivel & Camera Shake use the tactile `<Checkbox>` primitive aligned on the spine or extracted into a special group.
  * - Reset Camera Defaults renders as a big icon+label action button that triggers a red double-check `Dialogue` confirmation.
  */
-export const Layer3CameraRecipe: React.FC<Layer3CameraRecipeProps> = React.memo(({
+export const Layer3CameraRecipe: React.FC<Layer3CameraRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = false,
   developerMode = false,
   settings: propSettings,
@@ -84,7 +86,7 @@ export const Layer3CameraRecipe: React.FC<Layer3CameraRecipeProps> = React.memo(
   onCollapsePreview,
   onBack = () => {},
   className = '',
-}) => {
+} = useLayer3CameraStoreBinding(rawProps);
   const controlledInput = propSettings ?? propConfig;
   const initialInput = defaultSettings ?? defaultConfig;
 

@@ -1,99 +1,122 @@
-import React, { useState } from 'react';
-import { Film } from 'lucide-react';
-import { SliderControl } from '../../primitives/SliderControl';
-import { ToggleSwitch } from '../../primitives/ToggleSwitch';
-import { ReplayDirectorKeyframeInspector } from './cards/ReplayDirectorKeyframeInspector';
-import { FloatingWindowToolbar } from '../FloatingWindowToolbar';
+import React, { useState, useEffect } from 'react';
+import { Film, RotateCcw, Download, Check } from 'lucide-react';
+import {
+  REPLAY_DIRECTOR_CONFIG,
+  updateReplayDirectorConfig,
+  resetReplayDirectorConfig,
+  subscribeReplayDirectorConfig,
+} from '../../config/replayDirectorConfig.js';
+import { Badge } from '../../primitives/Badge';
+import { Button } from '../../primitives/Button';
+import { ReplayDirectorOrientationCard } from './replay-director-tuner/ReplayDirectorOrientationCard';
+import { ReplayDirectorCameraCard } from './replay-director-tuner/ReplayDirectorCameraCard';
 
-/**
- * 5. [Dev] Replay Director Camera Tuner (`replay-director-tuner`)
- * Standalone L6 Floating Window Panel — uses L2 `ReplayDirectorKeyframeInspector`.
- */
-export const ReplayDirectorTunerFloatingWindow: React.FC<{ isLight?: boolean }> = React.memo(({ isLight = false }) => {
-  const [step, setStep] = useState(0.01);
-  const [preGoalLeadSec, setPreGoalLeadSec] = useState(3.2);
-  const [postGoalHoldSec, setPostGoalHoldSec] = useState(1.8);
-  const [orbitAngularSpeed, setOrbitAngularSpeed] = useState(24.0);
-  const [playbackSlomoRatio, setPlaybackSlomoRatio] = useState(0.65);
-  const [autoCutToScorerPov, setAutoCutToScorerPov] = useState(true);
+export interface ReplayDirectorTunerFloatingWindowProps {
+  isLight?: boolean;
+  active?: boolean;
+}
+
+export const ReplayDirectorTunerFloatingWindow: React.FC<ReplayDirectorTunerFloatingWindowProps> = ({
+  isLight = false,
+}) => {
+  const [cfg, setCfg] = useState(() => ({ ...REPLAY_DIRECTOR_CONFIG }));
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const unsubCfg = subscribeReplayDirectorConfig((next: typeof REPLAY_DIRECTOR_CONFIG) => {
+      setCfg({ ...next });
+    });
+    return () => {
+      unsubCfg();
+    };
+  }, []);
+
+  const handleParamChange = (key: keyof typeof REPLAY_DIRECTOR_CONFIG, val: number) => {
+    updateReplayDirectorConfig({ [key]: val });
+    setCfg({ ...REPLAY_DIRECTOR_CONFIG });
+  };
+
+  const handleResetAll = () => {
+    resetReplayDirectorConfig();
+    setCfg({ ...REPLAY_DIRECTOR_CONFIG });
+  };
+
+  const handleCopyJson = () => {
+    const json = JSON.stringify(REPLAY_DIRECTOR_CONFIG, null, 2);
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(json).catch((err) => {
+        console.warn('[ReplayDirectorTuner] Failed to copy director config JSON to clipboard:', err);
+      });
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+
+  const cardBg = isLight
+    ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
+    : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
+  const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
   return (
-    <div className="p-3.5 flex flex-col gap-3 text-xs select-none">
-      <FloatingWindowToolbar
-        title="Goal Replay Director & Keyframe Camera Tuner"
-        subtitle="Tunes keyframe insets (L/R/B/T), Look-At framing weights, and slomo timing"
-        step={step}
-        onStepChange={setStep}
-        presets={['Broadcast TV', 'Scorer POV Lock', 'Cinematic Crane']}
-        activePreset="Broadcast TV"
-        onReset={() => {
-          setPreGoalLeadSec(3.2);
-          setPostGoalHoldSec(1.8);
-          setOrbitAngularSpeed(24.0);
-          setPlaybackSlomoRatio(0.65);
-        }}
-        isLight={isLight}
-      />
-
-      <ReplayDirectorKeyframeInspector isLight={isLight} />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-        <SliderControl
-          label="Pre-Goal Rewind Lead (s)"
-          value={preGoalLeadSec}
-          min={1.0}
-          max={6.0}
-          step={step}
-          defaultValue={3.2}
-          onChange={setPreGoalLeadSec}
-          isLight={isLight}
-        />
-        <SliderControl
-          label="Post-Explosion Hold (s)"
-          value={postGoalHoldSec}
-          min={0.5}
-          max={4.0}
-          step={step}
-          defaultValue={1.8}
-          onChange={setPostGoalHoldSec}
-          isLight={isLight}
-        />
-        <SliderControl
-          label="Goal-Mouth Orbit Rate (°/s)"
-          value={orbitAngularSpeed}
-          min={0}
-          max={90}
-          step={1}
-          defaultValue={24.0}
-          onChange={setOrbitAngularSpeed}
-          isLight={isLight}
-        />
-        <SliderControl
-          label="Impact Slomo Dilation"
-          value={playbackSlomoRatio}
-          min={0.2}
-          max={1.0}
-          step={step}
-          defaultValue={0.65}
-          onChange={setPlaybackSlomoRatio}
-          isLight={isLight}
-        />
-        <div
-          className={`md:col-span-2 p-3 rounded-xl border flex items-center justify-between ${
-            isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/60 border-neutral-800'
-          }`}
-        >
-          <div className="flex flex-col gap-0.5">
-            <span className="font-semibold flex items-center gap-1.5">
-              <Film className="h-3.5 w-3.5 text-purple-400" />
-              <span>Auto-Cut to Scorer POV on Final Touch</span>
+    <div className="flex flex-col gap-2.5 select-none">
+      {/* Header Summary Card */}
+      <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 ${cardBg}`}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Film className="h-4 w-4 text-amber-400 shrink-0" />
+            <span className="font-bold text-xs truncate">
+              Replay Director AutoCam & Slow-Mo Tuner
             </span>
-            <span className="text-[10px] opacity-65">Switch from tripod director to scorer 0.6s before touch</span>
           </div>
-          <ToggleSwitch checked={autoCutToScorerPov} onChange={setAutoCutToScorerPov} ariaLabel="Auto-Cut to Scorer POV" isLight={isLight} />
+          <Badge variant="amber" size="sm" isLight={isLight} className="font-mono text-[10px]">
+            LIVE CONFIG
+          </Badge>
+        </div>
+        <p className={`text-[10px] leading-relaxed ${mutedText}`}>
+          Real-time tuning for <code>REPLAY_DIRECTOR_CONFIG</code> in{' '}
+          <code>replayDirectorConfig.js</code>. Import historical downloaded Director Pattern CSVs to
+          preview, scrub, and exit in the 3D Arena, or adjust damping rates, corridor distances,
+          2-touch anticipation, and slow-motion plateaus live.
+        </p>
+
+        <div className="flex items-center justify-between gap-1.5 pt-1">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleResetAll}
+            isLight={isLight}
+            className="gap-1 py-1 text-[10px]"
+          >
+            <RotateCcw className="h-3 w-3 text-amber-400 shrink-0" />
+            <span>Reset Defaults</span>
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleCopyJson}
+            isLight={isLight}
+            className="gap-1 py-1 text-[10px]"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+                <span>Copied JSON!</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-3 w-3 text-sky-400 shrink-0" />
+                <span>Copy Config JSON</span>
+              </>
+            )}
+          </Button>
         </div>
       </div>
+
+      <ReplayDirectorOrientationCard isLight={isLight} />
+      <ReplayDirectorCameraCard cfg={cfg} onParamChange={handleParamChange} isLight={isLight} />
     </div>
   );
-});
-ReplayDirectorTunerFloatingWindow.displayName = 'ReplayDirectorTunerFloatingWindow';
+};
+
+export default ReplayDirectorTunerFloatingWindow;

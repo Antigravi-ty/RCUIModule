@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer3BallTrajectoryStoreBinding } from './hooks/useLayer3DetailStoreBindings';
 import { Cpu, Palette } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
@@ -71,7 +72,8 @@ export interface Layer3BallTrajectoryRecipeProps {
  * - Trajectory Pattern Mode & Line Color Tone split into 2-line stacked rows with full-width SegmentedSwitch
  * - Iconless inline sliders with expanded label room so titles never truncate
  */
-export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProps> = ({
+export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProps> = (rawProps) => {
+  const {
   isLight = false,
   developerMode = false,
   onBack = () => {},
@@ -83,7 +85,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
   defaultSettings,
   onChange,
   onConfigChange,
-}) => {
+} = useLayer3BallTrajectoryStoreBinding(rawProps);
   const sizing = useMenuLayoutStore(
     (s) => s.panels?.['layer3-ball-trajectory'] ?? DEFAULT_PANEL_SIZING['layer3-ball-trajectory']
   );

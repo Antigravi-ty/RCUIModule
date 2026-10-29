@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer3DevSubsystemIsolationStoreBinding } from './hooks/useDevRecipesStoreBindings';
 import {
   Bot,
   Radio,
@@ -137,9 +138,8 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
  * [Recipe] Layer 3 Sandboxes — Isolated Subsystem Selector
  * Unified borderless single-line SettingActionRow list with tinted leading icons and inline [Play + Enter] buttons.
  */
-export const Layer3DevSubsystemIsolationRecipe: React.FC<
-  Layer3DevSubsystemIsolationRecipeProps
-> = ({
+export const Layer3DevSubsystemIsolationRecipe: React.FC<Layer3DevSubsystemIsolationRecipeProps> = (rawProps) => {
+  const {
   isLight = false,
   onBack,
   activeBenchId = null,
@@ -147,7 +147,7 @@ export const Layer3DevSubsystemIsolationRecipe: React.FC<
   onLaunchIsolationTab,
   onNavigateExpMultiBots,
   sizing: propSizing,
-}) => {
+} = useLayer3DevSubsystemIsolationStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const storeSizing = useMenuLayoutStore(

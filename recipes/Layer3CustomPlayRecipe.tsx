@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAppStore } from '../stores/appStore';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { UnderConstructionPlaceholder } from '../primitives/UnderConstructionPlaceholder';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
@@ -19,9 +20,11 @@ export const Layer3CustomPlayRecipe: React.FC<Layer3CustomPlayRecipeProps> = Rea
   isLight = true,
   title = 'CUSTOM',
   description = 'Custom game modes, mutator presets, and workshop rule builders are currently in development.',
-  onBack = () => {},
+  onBack: propOnBack,
   className = '',
 }) => {
+  const storeGoBack = useAppStore((s) => s.goBack);
+  const onBack = propOnBack ?? storeGoBack;
   const sizing = useMenuLayoutStore((s) => s.panels['layer3-custom-play']);
 
   return (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer4EventTriggerRulesStoreBinding } from './hooks/useLayer4StoreBindings';
 import {
   Timer,
   Waves,
@@ -106,9 +107,8 @@ const DEFAULT_EVENT_CATALOG_ITEMS: EventCatalogEntry[] = [
   { hex: '0x08', id: 'KICKOFF_COUNTDOWN', name: 'Kickoff Phase State Transition' },
 ];
 
-export const Layer4EventTriggerRulesRecipe: React.FC<
-  Layer4EventTriggerRulesRecipeProps
-> = React.memo(({
+export const Layer4EventTriggerRulesRecipe: React.FC<Layer4EventTriggerRulesRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = true,
   defaultRules = DEFAULT_TRIGGER_RULES,
   onChange,
@@ -139,7 +139,7 @@ export const Layer4EventTriggerRulesRecipe: React.FC<
   onDeselectAllEvents,
   onBack = () => {},
   className = '',
-}) => {
+} = useLayer4EventTriggerRulesStoreBinding(rawProps);
   const { rowGap } = useSettingActionRowStore();
   const [rules, setRules] = useState<EventTriggerRule[]>(defaultRules);
   // Audio Debounce & Shielding (3 sliders)

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLayer3DevUnderDevelopmentStoreBinding } from './hooks/useDevRecipesStoreBindings';
 import {
   AlertTriangle,
   Play,
@@ -57,9 +58,8 @@ export interface Layer3DevUnderDevelopmentRecipeProps {
  * [Recipe] Layer 3 Developer — 4. Under Development (Unstable / WIP Workspace)
  * Streamlined single-line rows and unified Per-Car Boost controls sharing SettingActionRowStore tokens.
  */
-export const Layer3DevUnderDevelopmentRecipe: React.FC<
-  Layer3DevUnderDevelopmentRecipeProps
-> = ({
+export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopmentRecipeProps> = (rawProps) => {
+  const {
   isLight = false,
   onBack,
   threeWheelsEnabled: propThreeWheels,
@@ -75,7 +75,7 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<
   perCarBoostConfigs: propBoostConfigs,
   onPerCarBoostConfigsChange,
   sizing: propSizing,
-}) => {
+} = useLayer3DevUnderDevelopmentStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
   const [localThreeWheels, setLocalThreeWheels] = useState<boolean>(false);
   const [localStadiumPreset, setLocalStadiumPreset] = useState<'standard' | 'throwback'>(

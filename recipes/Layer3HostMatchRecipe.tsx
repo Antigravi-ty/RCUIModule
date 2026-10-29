@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLayer3HostMatchStoreBinding } from './hooks/useOnlineRecipesStoreBindings';
 import {
   Bot,
   ChevronDown,
@@ -111,13 +112,14 @@ export const formatMatchDurationLabel = (seconds: number): string => {
  *      - Full-width "Advanced Settings" bar button
  * 4. 5-step creation progress bar on "Create & Host" (Stage Name left, X/5 right, Description below, Progress Bar at bottom, with Error Simulation)
  */
-export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React.memo(({
+export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = false, config: controlledConfigProp, settings: controlledSettingsProp,
   defaultConfig, onChange, onConfigChange, onBack = () => {}, onNavigateGarageSync,
   onNavigateAdvancedSettings, onStartHost, onCancelHost, onRetryHost,
   progressStatus: controlledProgressStatus, currentStep: controlledCurrentStep,
   onProgressStatusChange, onCurrentStepChange, steps,
-}) => {
+} = useLayer3HostMatchStoreBinding(rawProps);
   const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
   const sizing = panels['layer3-host-match'];
   const { titleFontSize, rowGap, paddingX } = useSettingActionRowStore();

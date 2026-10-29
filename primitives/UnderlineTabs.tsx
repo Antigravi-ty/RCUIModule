@@ -14,8 +14,9 @@ export interface TabItem {
 export interface UnderlineTabsProps {
   items?: TabItem[];
   tabs?: TabItem[];
-  activeId: string;
-  onChange?: (id: string) => void;
+  activeId?: string;
+  activeTab?: string;
+  onChange?: (id: any) => void;
   onSelect?: (id: string) => void;
   id?: string;
   isLight?: boolean;
@@ -67,6 +68,7 @@ export const UnderlineTabs: React.FC<UnderlineTabsProps> = React.memo(({
   items: propItems,
   tabs,
   activeId,
+  activeTab,
   onChange: propOnChange,
   onSelect,
   id,
@@ -161,7 +163,7 @@ export const UnderlineTabs: React.FC<UnderlineTabsProps> = React.memo(({
       } ${className}`}
     >
       {items.map((tab) => {
-        const isActive = tab.id === activeId;
+        const isActive = tab.id === (activeId ?? activeTab);
         const renderedIcon = renderTabIcon(tab.icon);
         return (
           <button

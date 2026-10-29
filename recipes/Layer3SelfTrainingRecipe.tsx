@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLayer3SelfTrainingStoreBinding } from './hooks/useLayer3DetailStoreBindings';
 import {
   Barrel,
   FileVideoCamera,
@@ -94,12 +95,13 @@ export interface Layer3SelfTrainingRecipeProps {
  * 4. Kickoff Training (`Barrel` / `barrel`)
  * 5. Replay Viewer (`FileVideoCamera` / `file-video-camera`)
  */
-export const Layer3SelfTrainingRecipe: React.FC<Layer3SelfTrainingRecipeProps> = React.memo(({
+export const Layer3SelfTrainingRecipe: React.FC<Layer3SelfTrainingRecipeProps> = React.memo((rawProps) => {
+  const {
   isLight = true,
   onSelectMode,
   onBack = () => {},
   className = '',
-}) => {
+} = useLayer3SelfTrainingStoreBinding(rawProps);
   const sizing = useMenuLayoutStore((s) => s.panels['layer3-self-training']);
   const menuStyle = useMainMenuStyleStore();
 

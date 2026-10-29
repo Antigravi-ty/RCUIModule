@@ -3,7 +3,7 @@ import {
   KickoffKeyId,
   KickoffTransientFrame,
   KickoffTransientListener,
-} from './types';
+} from '../stores/hudTransientTypes';
 import {
   KICKOFF_RHYTHM_KEY_ORDER,
   KickoffSpawnPreset,

@@ -1,4 +1,4 @@
-import type { KickoffKeyId } from './types';
+import type { KickoffKeyId } from '../stores/hudTransientTypes';
 
 export const KICKOFF_RHYTHM_KEY_ORDER: KickoffKeyId[] = [
   'Shift',
