@@ -4,7 +4,7 @@ import {
   TunerRow,
   TunerSegmentedControl,
   TunerToggleRow,
-} from '../../../compounds/tuner/TunerControls';
+} from '../../../compounds/TunerControls';
 
 export interface DriftwoodsGroundSurfaceSectionProps {
   ground: DriftwoodsGroundConfig;

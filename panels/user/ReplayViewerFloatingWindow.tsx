@@ -16,6 +16,7 @@ import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { SettingActionRow } from '../../compounds/SettingActionRow';
 import { SettingSliderRow } from '../../compounds/SettingSliderRow';
 import { quickNotification } from '../../stores/quickNotificationStore';
+import { useReplayViewerPanelStoreBindings } from './useUserPanelStoreBindings';
 
 export type PlaybackSpeedPreset = '100' | '75' | '50' | '25' | 'custom';
 export type DownCounterOption = '3' | '2' | '1' | '0';
@@ -33,6 +34,7 @@ export interface ReplayViewerState {
 
 export interface ReplayViewerFloatingWindowProps {
   isLight?: boolean;
+  active?: boolean;
   /** Controlled replay file name */
   fileName?: string;
   /** Controlled current frame cursor */
@@ -100,41 +102,42 @@ const RECENT_CLIPS = [
  * 6. Row 8: `Down Counter` (`Timer` icon + Segmented Control `3 | 2 | 1 | 0`, default `0`)
  */
 export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProps> = React.memo(
-  ({
-    isLight = false,
-    fileName: controlledFileName,
-    cursorFrame: controlledCursorFrame,
-    defaultCursorFrame = 420,
-    totalFrames: controlledTotalFrames,
-    isPlaying: controlledIsPlaying,
-    defaultIsPlaying = false,
-    isIntervening: controlledIsIntervening,
-    defaultIsIntervening = false,
-    playbackPreset: controlledPlaybackPreset,
-    defaultPlaybackPreset = '100',
-    customSpeedPct: controlledCustomSpeedPct,
-    defaultCustomSpeedPct = 60,
-    downCounter: controlledDownCounter,
-    defaultDownCounter = '0',
-    incidentMarkers = DEFAULT_REPLAY_INCIDENT_MARKERS,
-    signalMarkers = DEFAULT_REPLAY_SIGNAL_MARKERS,
-    onLoadReplayFile,
-    onLoadRecentReplay,
-    onPlay,
-    onPause,
-    onPlayingChange,
-    onSeekFrame,
-    onStepFrame,
-    onRewindPressStart,
-    onRewindPressEnd,
-    onForwardPressStart,
-    onForwardPressEnd,
-    onPlaybackSpeedChange,
-    onInterveneFromHere,
-    onBackToReplay,
-    onDownCounterChange,
-    onChange,
-  }) => {
+  (rawProps) => {
+    const {
+      isLight = false,
+      fileName: controlledFileName,
+      cursorFrame: controlledCursorFrame,
+      defaultCursorFrame = 420,
+      totalFrames: controlledTotalFrames,
+      isPlaying: controlledIsPlaying,
+      defaultIsPlaying = false,
+      isIntervening: controlledIsIntervening,
+      defaultIsIntervening = false,
+      playbackPreset: controlledPlaybackPreset,
+      defaultPlaybackPreset = '100',
+      customSpeedPct: controlledCustomSpeedPct,
+      defaultCustomSpeedPct = 60,
+      downCounter: controlledDownCounter,
+      defaultDownCounter = '0',
+      incidentMarkers = DEFAULT_REPLAY_INCIDENT_MARKERS,
+      signalMarkers = DEFAULT_REPLAY_SIGNAL_MARKERS,
+      onLoadReplayFile,
+      onLoadRecentReplay,
+      onPlay,
+      onPause,
+      onPlayingChange,
+      onSeekFrame,
+      onStepFrame,
+      onRewindPressStart,
+      onRewindPressEnd,
+      onForwardPressStart,
+      onForwardPressEnd,
+      onPlaybackSpeedChange,
+      onInterveneFromHere,
+      onBackToReplay,
+      onDownCounterChange,
+      onChange,
+    } = useReplayViewerPanelStoreBindings(rawProps);
     const [clipIndex, setClipIndex] = useState<number>(0);
     const activeClip = RECENT_CLIPS[clipIndex];
     const fileName = controlledFileName ?? activeClip.name;

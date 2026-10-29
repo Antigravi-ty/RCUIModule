@@ -2,7 +2,7 @@ import React from 'react';
 import { RotateCcw } from 'lucide-react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
-import { TunerColorRow } from '../../../compounds/tuner/TunerControls';
+import { TunerColorRow } from '../../../compounds/TunerControls';
 import { DEFAULT_EXPERIMENTAL_WALL_FX_CONFIG } from '../../../config/atmosphereFxConfig.js';
 
 export interface OuterRingCardProps {

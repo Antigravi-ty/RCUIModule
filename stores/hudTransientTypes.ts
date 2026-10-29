@@ -82,6 +82,8 @@ export interface EdgePlayerSlotState {
   demoRespawnTotalSec?: number;
   /** Optional timestamp (performance.now()) when demolish started; if omitted/0, FIFO falls back to demoRespawnRemainingSec ascending */
   demolishedAtMs?: number;
+  /** Whether this player has voted to skip the Goal Replay (renders an inward-facing green SVG glow ready badge) */
+  replaySkipReady?: boolean;
 }
 
 export interface EdgeRosterHudState {

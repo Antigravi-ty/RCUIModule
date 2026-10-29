@@ -14,6 +14,7 @@ import {
   RewinderTransportProgressSection,
   type RewinderBadgeState,
 } from './rewinder/RewinderTransportProgressSection';
+import { useRewinderPanelStoreBindings } from './useUserPanelStoreBindings';
 
 export type { RewinderBadgeState };
 export type RewinderDownCounterOption = '3' | '2' | '1' | '0';
@@ -31,6 +32,7 @@ export interface RewinderConfiguratorState {
 
 export interface RewinderConfiguratorFloatingWindowProps {
   isLight?: boolean;
+  active?: boolean;
   /** Controlled status ('idle' | 'recording' | 'stopped' | 'error') */
   status?: RewinderBadgeState;
   defaultStatus?: RewinderBadgeState;
@@ -82,39 +84,40 @@ const BUFFER_WARMUP_FRAMES = 120; // 1.00s @ 120Hz required before rewind is sel
  * Standalone L6 Floating Window Panel — 100% isolated from other panels.
  */
 export const RewinderConfiguratorFloatingWindow: React.FC<RewinderConfiguratorFloatingWindowProps> = React.memo(
-  ({
-    isLight = false,
-    status: controlledStatus,
-    defaultStatus = 'stopped',
-    recordedFrames: controlledRecordedFrames,
-    defaultRecordedFrames = 600,
-    cursorFrame: controlledCursorFrame,
-    defaultCursorFrame = 360,
-    releaseMarkerFrame: controlledReleaseMarkerFrame,
-    defaultReleaseMarkerFrame = 360,
-    downCounter: controlledDownCounter,
-    defaultDownCounter = '0',
-    shuttlePreset: controlledShuttlePreset,
-    defaultShuttlePreset = '100',
-    customShuttleSpeed: controlledCustomShuttleSpeed,
-    defaultCustomShuttleSpeed = 60,
-    onStartNewRecording,
-    onStopRecording,
-    onStatusChange,
-    onSeekFrame,
-    onStepFrame,
-    onRewindPressStart,
-    onRewindPressEnd,
-    onForwardPressStart,
-    onForwardPressEnd,
-    onResumeFromHere,
-    onClear,
-    onImportReplay,
-    onExportReplay,
-    onDownCounterChange,
-    onShuttleSpeedChange,
-    onChange,
-  }) => {
+  (rawProps) => {
+    const {
+      isLight = false,
+      status: controlledStatus,
+      defaultStatus = 'stopped',
+      recordedFrames: controlledRecordedFrames,
+      defaultRecordedFrames = 600,
+      cursorFrame: controlledCursorFrame,
+      defaultCursorFrame = 360,
+      releaseMarkerFrame: controlledReleaseMarkerFrame,
+      defaultReleaseMarkerFrame = 360,
+      downCounter: controlledDownCounter,
+      defaultDownCounter = '0',
+      shuttlePreset: controlledShuttlePreset,
+      defaultShuttlePreset = '100',
+      customShuttleSpeed: controlledCustomShuttleSpeed,
+      defaultCustomShuttleSpeed = 60,
+      onStartNewRecording,
+      onStopRecording,
+      onStatusChange,
+      onSeekFrame,
+      onStepFrame,
+      onRewindPressStart,
+      onRewindPressEnd,
+      onForwardPressStart,
+      onForwardPressEnd,
+      onResumeFromHere,
+      onClear,
+      onImportReplay,
+      onExportReplay,
+      onDownCounterChange,
+      onShuttleSpeedChange,
+      onChange,
+    } = useRewinderPanelStoreBindings(rawProps);
     const [internalStatus, setInternalStatus] = useState<RewinderBadgeState>(defaultStatus);
     const [internalRecordedFrames, setInternalRecordedFrames] =
       useState<number>(defaultRecordedFrames);

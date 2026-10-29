@@ -5,7 +5,7 @@ import {
   TunerRow,
   TunerColorRow,
   TunerToggleRow
-} from '../../../compounds/tuner/TunerControls';
+} from '../../../compounds/TunerControls';
 import {
   CubicBezierCurveEditor,
   type CubicBezierPreset

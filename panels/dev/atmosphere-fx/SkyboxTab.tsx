@@ -2,7 +2,7 @@ import React from 'react';
 import { RotateCcw, ChevronLeft, ChevronRight, Globe, Compass } from 'lucide-react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
-import { TunerColorRow } from '../../../compounds/tuner/TunerControls';
+import { TunerColorRow } from '../../../compounds/TunerControls';
 import { SkyboxAuxLayersCard } from './SkyboxAuxLayersCard';
 import { SkyboxLowerHemisphereSection } from './SkyboxLowerHemisphereSection';
 import {

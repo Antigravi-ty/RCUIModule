@@ -23,7 +23,7 @@ import { DriftwoodsSurfacesTab } from './driftwoods-tuner/DriftwoodsSurfacesTab'
 import { DriftwoodsTransparentTab } from './driftwoods-tuner/DriftwoodsTransparentTab';
 import { DriftwoodsPerformanceTab } from './driftwoods-tuner/DriftwoodsPerformanceTab';
 import { TunerPrecisionContext, PrecisionDigitPicker } from '../../primitives/PrecisionDigitPicker';
-import { TunerRow } from '../../compounds/tuner/TunerControls';
+import { TunerRow } from '../../compounds/TunerControls';
 
 export interface DriftwoodsTunerFloatingWindowProps {
   isLight?: boolean;

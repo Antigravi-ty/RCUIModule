@@ -4,6 +4,7 @@ import { GoalBarrier2DEditor, type GoalBarrierSelectionMode, type GoalBarrierPre
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { SettingActionRow } from '../../compounds/SettingActionRow';
 import { SettingSliderRow } from '../../compounds/SettingSliderRow';
+import { useGoalBarrierPanelStoreBindings } from './useUserPanelStoreBindings';
 
 export type GoalBarrierPlacement = 'none' | 'both' | 'orange' | 'blue';
 
@@ -17,6 +18,7 @@ export interface GoalBarrierConfigState {
 
 export interface GoalBarrierConfiguratorFloatingWindowProps {
   isLight?: boolean;
+  active?: boolean;
   /** Controlled placement ('none' | 'both' | 'orange' | 'blue') */
   placement?: GoalBarrierPlacement;
   defaultPlacement?: GoalBarrierPlacement;
@@ -49,24 +51,25 @@ export interface GoalBarrierConfiguratorFloatingWindowProps {
  * 3. Row 5: `Cloudy` (`cloudy`) icon + `Opacity` + Slider (no `-`/`+` steppers) + editable percentage input (Enter to confirm).
  */
 export const GoalBarrierConfiguratorFloatingWindow: React.FC<GoalBarrierConfiguratorFloatingWindowProps> = React.memo(
-  ({
-    isLight = false,
-    placement: controlledPlacement,
-    defaultPlacement = 'both',
-    onPlacementChange,
-    selectionMode: controlledSelectionMode,
-    defaultSelectionMode = 'new',
-    onSelectionModeChange,
-    opacityPct: controlledOpacityPct,
-    defaultOpacityPct = 65,
-    onOpacityPctChange,
-    grid: controlledGrid,
-    defaultGrid,
-    onGridChange,
-    onApplyPreset,
-    onClear,
-    onChange,
-  }) => {
+  (rawProps) => {
+    const {
+      isLight = false,
+      placement: controlledPlacement,
+      defaultPlacement = 'both',
+      onPlacementChange,
+      selectionMode: controlledSelectionMode,
+      defaultSelectionMode = 'new',
+      onSelectionModeChange,
+      opacityPct: controlledOpacityPct,
+      defaultOpacityPct = 65,
+      onOpacityPctChange,
+      grid: controlledGrid,
+      defaultGrid,
+      onGridChange,
+      onApplyPreset,
+      onClear,
+      onChange,
+    } = useGoalBarrierPanelStoreBindings(rawProps);
     const [internalPlacement, setInternalPlacement] =
       useState<GoalBarrierPlacement>(defaultPlacement);
     const [internalSelectionMode, setInternalSelectionMode] =

@@ -1,7 +1,7 @@
 import React from 'react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
-import { TunerColorRow } from '../../../compounds/tuner/TunerControls';
+import { TunerColorRow } from '../../../compounds/TunerControls';
 import { DEFAULT_SKYBOX_CONFIG } from '../../../config/skyboxConfig.js';
 
 export interface SkyboxLowerHemisphereSectionProps {

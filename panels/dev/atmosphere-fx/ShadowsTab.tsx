@@ -3,7 +3,7 @@ import { RotateCcw, Compass, Sun, Lightbulb, Globe } from 'lucide-react';
 import { SegmentedSwitch } from '../../../primitives/SegmentedSwitch';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
-import { TunerColorRow } from '../../../compounds/tuner/TunerControls';
+import { TunerColorRow } from '../../../compounds/TunerControls';
 import { DEFAULT_SHADOW_CONFIG } from '../../../config/atmosphereFxConfig.js';
 
 export interface ShadowsTabProps {

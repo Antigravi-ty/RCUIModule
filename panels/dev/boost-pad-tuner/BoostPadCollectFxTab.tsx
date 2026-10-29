@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Zap, Play, Sparkles, Copy, Check, CircleDot, Flame } from 'lucide-react';
 import { useAppStore } from '../../../stores/appStore';
 import { type BoostPadTunerConfig } from '../../../config/uiConfig';
-import { TunerRow } from '../../../compounds/tuner/TunerControls';
+import { TunerRow } from '../../../compounds/TunerControls';
 import { CubicBezierCurveEditor } from '../../../charts/CubicBezierCurveEditor';
 import { OrbTrajectoryChart } from './OrbTrajectoryChart';
 

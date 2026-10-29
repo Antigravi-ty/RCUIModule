@@ -27,7 +27,7 @@ import {
   CubicBezierCurveEditor,
   type CubicBezierPreset,
 } from '../../charts/CubicBezierCurveEditor';
-import { TunerColorRow } from '../../compounds/tuner/TunerControls';
+import { TunerColorRow } from '../../compounds/TunerControls';
 
 export interface GoalVolumeTunerFloatingWindowProps {
   isLight?: boolean;

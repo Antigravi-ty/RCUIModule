@@ -6,7 +6,7 @@ import {
 import {
   TunerRow,
   TunerToggleRow,
-} from '../../../compounds/tuner/TunerControls';
+} from '../../../compounds/TunerControls';
 
 export interface DriftwoodsOklchSyncSectionProps {
   ground: DriftwoodsGroundConfig;

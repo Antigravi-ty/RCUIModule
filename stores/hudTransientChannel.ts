@@ -72,6 +72,7 @@ const makeInitialPlayer = (
 ) => ({
   slotKey, team, name, boostAmount, exists: true, isSelf, isFocusedPov: isSelf,
   isDemolished: false, demoRespawnRemainingSec: 0, demoRespawnTotalSec: 3.0, demolishedAtMs: 0,
+  replaySkipReady: false,
 });
 
 export const DEFAULT_INITIAL_ROSTER: EdgeRosterHudState = {

@@ -2,7 +2,7 @@ import React from 'react';
 import { SegmentedSwitch } from '../../../primitives/SegmentedSwitch';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
-import { TunerColorRow } from '../../../compounds/tuner/TunerControls';
+import { TunerColorRow } from '../../../compounds/TunerControls';
 
 export interface LampsBrakeTabProps {
   descriptor: any;

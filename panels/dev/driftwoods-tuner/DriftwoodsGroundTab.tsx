@@ -19,7 +19,7 @@ import {
   TunerColorRow,
   TunerToggleRow,
   TunerSegmentedControl,
-} from '../../../compounds/tuner/TunerControls';
+} from '../../../compounds/TunerControls';
 import { DriftwoodsOklchSyncSection } from './DriftwoodsOklchSyncSection';
 import { DriftwoodsGroundSurfaceSection } from './DriftwoodsGroundSurfaceSection';
 

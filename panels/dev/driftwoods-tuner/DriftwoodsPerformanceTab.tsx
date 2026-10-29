@@ -1,7 +1,7 @@
 import React from 'react';
 import { Zap, Cpu, CheckCircle2, Trash2 } from 'lucide-react';
 import type { DriftwoodsTunerConfig } from '../../../config/driftwoodsConfig';
-import { TunerToggleRow } from '../../../compounds/tuner/TunerControls';
+import { TunerToggleRow } from '../../../compounds/TunerControls';
 
 export interface DriftwoodsPerformanceTabProps {
   config: DriftwoodsTunerConfig;

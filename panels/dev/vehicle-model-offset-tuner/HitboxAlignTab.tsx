@@ -7,7 +7,7 @@ import {
   useTunerPrecision,
 } from '../../../primitives/PrecisionDigitPicker';
 import { ReferenceOverlayCard } from './ReferenceOverlayCard';
-import { CameraSwivelSimulatorCard } from './CameraSwivelSimulatorCard';
+import { CameraSwivelSimulatorCard } from '../../../compounds/CameraSwivelSimulatorCard';
 
 export interface HitboxAlignTabProps {
   descriptor: any;

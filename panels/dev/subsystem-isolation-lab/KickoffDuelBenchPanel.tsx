@@ -22,7 +22,7 @@ import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { Badge } from '../../../primitives/Badge';
 import { Button } from '../../../primitives/Button';
 import { KickoffDuelDiagnosticsCard } from './KickoffDuelDiagnosticsCard';
-import { KickoffDuelMatrixCard } from './KickoffDuelMatrixCard';
+import { KickoffDuelMatrixCard } from '../../../compounds/KickoffDuelMatrixCard';
 
 export interface KickoffDuelBenchPanelProps {
   isLight: boolean;

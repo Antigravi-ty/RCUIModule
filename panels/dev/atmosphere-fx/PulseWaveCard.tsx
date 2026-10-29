@@ -6,7 +6,7 @@ import {
   PrecisionDigitPicker,
   useTunerPrecision,
 } from '../../../primitives/PrecisionDigitPicker';
-import { TunerColorRow } from '../../../compounds/tuner/TunerControls';
+import { TunerColorRow } from '../../../compounds/TunerControls';
 import {
   CubicBezierCurveEditor,
   type CubicBezierPreset,

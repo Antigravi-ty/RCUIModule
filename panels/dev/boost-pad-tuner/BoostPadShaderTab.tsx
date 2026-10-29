@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sliders, Circle, Moon } from 'lucide-react';
 import { type BoostPadTunerConfig } from '../../../config/uiConfig';
-import { TunerRow, TunerColorRow, TunerToggleRow } from '../../../compounds/tuner/TunerControls';
+import { TunerRow, TunerColorRow, TunerToggleRow } from '../../../compounds/TunerControls';
 
 export interface BoostPadShaderTabProps {
   tuner: BoostPadTunerConfig;

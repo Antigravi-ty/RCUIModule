@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Compass, Copy, Check } from 'lucide-react';
 import { type BoostPadTunerConfig } from '../../../config/uiConfig';
-import { TunerRow } from '../../../compounds/tuner/TunerControls';
+import { TunerRow } from '../../../compounds/TunerControls';
 import { computeAllPadRotations, exportRotationsAsCode } from '../../../config/boostPadGeometry.js';
 
 export interface BoostPadRotationsTabProps {

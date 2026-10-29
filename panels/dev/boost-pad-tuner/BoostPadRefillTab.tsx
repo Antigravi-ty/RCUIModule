@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Hourglass, Play, Sparkles } from 'lucide-react';
 import { useAppStore } from '../../../stores/appStore';
 import { type BoostPadTunerConfig } from '../../../config/uiConfig';
-import { TunerRow, TunerColorRow, TunerToggleRow } from '../../../compounds/tuner/TunerControls';
+import { TunerRow, TunerColorRow, TunerToggleRow } from '../../../compounds/TunerControls';
 
 export interface BoostPadRefillTabProps {
   tuner: BoostPadTunerConfig;

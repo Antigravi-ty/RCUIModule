@@ -43,7 +43,9 @@ export interface EdgePlayerHudStripProps {
 }
 
 interface CardDomRefs {
+  rowWrapEl: HTMLDivElement | null;
   cardEl: HTMLDivElement | null;
+  skipBadgeEl: HTMLDivElement | null;
   keyBadgeEl: HTMLDivElement | null;
   nameEl: HTMLSpanElement | null;
   selfTagEl: HTMLSpanElement | null;
@@ -59,35 +61,23 @@ const KEY_BADGE_WIDTH_PX = 28;
 const DEMO_EXTEND_PX = 10;
 const CARD_ROW_PITCH_PX = 45; // 37px card height (32px row + 5px bar) + 8px gap-2
 const MAX_TEAM_SLOTS = 5; // Supports 1v1, 2v2, 3v3, 2v4, 1v5 (up to 6 total match cars)
+const SKIP_GLOW_FILTER = buildSvgDropShadowFilter('#10B981', 6, 115);
 
 function createEmptyCardRefs(defaultKey: 1 | 2 | 3 | 4 | 5 | 6): CardDomRefs {
   return {
-    cardEl: null,
-    keyBadgeEl: null,
-    nameEl: null,
-    selfTagEl: null,
-    boostTextEl: null,
-    demoCrossEl: null,
-    demoBombWrapEl: null,
-    barTrackEl: null,
-    barFillEl: null,
-    currentSlotKey: defaultKey,
+    rowWrapEl: null, cardEl: null, skipBadgeEl: null, keyBadgeEl: null,
+    nameEl: null, selfTagEl: null, boostTextEl: null, demoCrossEl: null,
+    demoBombWrapEl: null, barTrackEl: null, barFillEl: null, currentSlotKey: defaultKey,
   };
 }
 
 const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerHudStripProps>(
   (
     {
-      side,
-      viewMode = 'player-live',
-      players,
+      side, viewMode = 'player-live', players,
       teamColor = side === 'left' ? '#2563EB' : '#EA580C',
       barColor = side === 'left' ? '#3B82F6' : '#F97316',
-      isLight = true,
-      demoIndicatorConfig,
-      onSelectSlot,
-      subscribeRoster,
-      className = '',
+      isLight = true, demoIndicatorConfig, onSelectSlot, subscribeRoster, className = '',
     },
     ref
   ) => {
@@ -103,7 +93,6 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
     const defaultPlayers =
       players ??
       (side === 'left' ? DEFAULT_INITIAL_ROSTER.leftPlayers : DEFAULT_INITIAL_ROSTER.rightPlayers);
-
     const isRight = side === 'right';
 
     const applySlotDom = useCallback(
@@ -116,54 +105,47 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
         resolvedDemoCfg: EdgeDemoIndicatorConfig
       ) => {
         const {
-          cardEl,
-          keyBadgeEl,
-          nameEl,
-          selfTagEl,
-          boostTextEl,
-          demoCrossEl,
-          demoBombWrapEl,
-          barTrackEl,
-          barFillEl,
+          rowWrapEl, cardEl, skipBadgeEl, keyBadgeEl, nameEl, selfTagEl,
+          boostTextEl, demoCrossEl, demoBombWrapEl, barTrackEl, barFillEl,
         } = refs;
-        if (!cardEl) return;
+        if (!cardEl || !rowWrapEl) return;
 
         const exists = slot !== undefined && slot.exists !== false;
         if (!exists || !slot) {
-          cardEl.style.display = 'none';
+          rowWrapEl.style.display = 'none';
           return;
         }
-        cardEl.style.display = 'flex';
+        rowWrapEl.style.display = 'flex';
         refs.currentSlotKey = slot.slotKey;
 
         const isDemo = Boolean(slot.isDemolished);
         const isFocused = Boolean(slot.isFocusedPov);
         const isReplayOrSpec = currentMode === 'goal-replay' || currentMode === 'spectator';
 
+        if (skipBadgeEl) {
+          const showSkipReady = Boolean(slot.replaySkipReady);
+          skipBadgeEl.style.display = showSkipReady ? 'flex' : 'none';
+        }
+
         if (side === 'left') {
           const baseOffsetPx = isReplayOrSpec ? 0 : -KEY_BADGE_WIDTH_PX;
           const demoOffsetPx = !isReplayOrSpec && isDemo ? DEMO_EXTEND_PX : 0;
-          cardEl.style.transform = `translate3d(${baseOffsetPx + demoOffsetPx}px, 0px, 0)`;
-          cardEl.style.opacity = '1';
+          rowWrapEl.style.transform = `translate3d(${baseOffsetPx + demoOffsetPx}px, 0px, 0)`;
+          rowWrapEl.style.opacity = '1';
         } else {
-          // Right side:
-          // - In Replay / Spectator: all existing players shown at x=0, y=0
-          // - In Player Live: hidden off-screen to the right UNLESS demolished!
-          //   When demolished, slides in with key badge tucked off-screen (+KEY_BADGE_WIDTH_PX - DEMO_EXTEND_PX)
-          //   and translates vertically to `visualRowIndex` (top-compacted FIFO order!).
           if (!isReplayOrSpec) {
             if (isDemo) {
               const targetX = KEY_BADGE_WIDTH_PX - DEMO_EXTEND_PX;
               const deltaY = (visualRowIndex - slotIndex) * CARD_ROW_PITCH_PX;
-              cardEl.style.transform = `translate3d(${targetX}px, ${deltaY}px, 0)`;
-              cardEl.style.opacity = '1';
+              rowWrapEl.style.transform = `translate3d(${targetX}px, ${deltaY}px, 0)`;
+              rowWrapEl.style.opacity = '1';
             } else {
-              cardEl.style.transform = 'translate3d(105%, 0px, 0)';
-              cardEl.style.opacity = '0';
+              rowWrapEl.style.transform = 'translate3d(105%, 0px, 0)';
+              rowWrapEl.style.opacity = '0';
             }
           } else {
-            cardEl.style.transform = 'translate3d(0px, 0px, 0)';
-            cardEl.style.opacity = '1';
+            rowWrapEl.style.transform = 'translate3d(0px, 0px, 0)';
+            rowWrapEl.style.opacity = '1';
           }
         }
 
@@ -191,8 +173,6 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           if (keyBadgeEl.textContent !== slotKeyStr) {
             keyBadgeEl.textContent = slotKeyStr;
           }
-          // During Player Live, keep the 1-6 key badge completely invisible (opacity 0, transparent border)
-          // so that even when a demolished card extends 10px inward, the key badge seam never peeks into view!
           keyBadgeEl.style.opacity = isReplayOrSpec ? '1' : '0';
           keyBadgeEl.style.borderColor = isReplayOrSpec ? 'rgba(0, 0, 0, 0.10)' : 'transparent';
 
@@ -305,7 +285,6 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           ...(demoIndicatorConfig ?? {}),
         };
 
-        // Precompute existing slot indices and FIFO demolished opponent ranks (supports 1..5 slots per side)
         let existingRankCounter = 0;
         const existingRanks: number[] = [0, 1, 2, 3, 4];
         for (let i = 0; i < MAX_TEAM_SLOTS; i++) {
@@ -317,9 +296,6 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           }
         }
 
-        // If right-side Player Live auto-compaction is enabled, sort demolished opponents in FIFO order:
-        // Primary key: `demolishedAtMs` ascending (if > 0)
-        // Fallback key (for C++ WASM direct `demoRespawnTimer` without JS timestamp): `demoRespawnRemainingSec` ascending!
         const demoVisualRanks: number[] = [...existingRanks];
         if (isLiveRightCompact) {
           const demoIndices: number[] = [];
@@ -332,14 +308,10 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           demoIndices.sort((a, b) => {
             const tA = list[a]?.demolishedAtMs ?? 0;
             const tB = list[b]?.demolishedAtMs ?? 0;
-            if (tA > 0 && tB > 0 && tA !== tB) {
-              return tA - tB;
-            }
+            if (tA > 0 && tB > 0 && tA !== tB) return tA - tB;
             const remA = list[a]?.demoRespawnRemainingSec ?? 3.0;
             const remB = list[b]?.demoRespawnRemainingSec ?? 3.0;
-            if (Math.abs(remA - remB) > 0.001) {
-              return remA - remB;
-            }
+            if (Math.abs(remA - remB) > 0.001) return remA - remB;
             return a - b;
           });
           for (let r = 0; r < demoIndices.length; r++) {
@@ -352,12 +324,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           const refs = cardRefs.current[i];
           if (refs) {
             applySlotDom(
-              slot,
-              refs,
-              roster.viewMode,
-              existingRanks[i],
-              demoVisualRanks[i],
-              resolvedDemoCfg
+              slot, refs, roster.viewMode, existingRanks[i], demoVisualRanks[i], resolvedDemoCfg
             );
           }
         }
@@ -365,19 +332,12 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
       [side, applySlotDom, demoIndicatorConfig]
     );
 
-    useImperativeHandle(
-      ref,
-      () => ({
-        setRoster: applyRoster,
-      }),
-      [applyRoster]
-    );
+    useImperativeHandle(ref, () => ({ setRoster: applyRoster }), [applyRoster]);
 
     useEffect(() => {
       if (subscribeRoster) {
         return subscribeRoster(applyRoster);
       }
-
       const resolvedDemoCfg: EdgeDemoIndicatorConfig = {
         ...DEFAULT_DEMO_INDICATOR_CONFIG,
         ...(demoIndicatorConfig ?? {}),
@@ -395,7 +355,6 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
 
     const shapeClass =
       side === 'left' ? 'rounded-r-[9px] rounded-l-none' : 'rounded-l-[9px] rounded-r-none';
-
     const initialDemoCfg: EdgeDemoIndicatorConfig = {
       ...DEFAULT_DEMO_INDICATOR_CONFIG,
       ...(demoIndicatorConfig ?? {}),
@@ -413,160 +372,204 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
         {[0, 1, 2, 3, 4].map((idx) => {
           const initialSlot = defaultPlayers[idx];
           const fallbackKey = Math.min(6, Math.max(1, side === 'left' ? idx + 1 : idx + 4)) as
-            | 1
-            | 2
-            | 3
-            | 4
-            | 5
-            | 6;
+            | 1 | 2 | 3 | 4 | 5 | 6;
           const slotKey = initialSlot?.slotKey ?? fallbackKey;
 
           return (
             <div
               key={idx}
               ref={(el) => {
-                cardRefs.current[idx].cardEl = el;
+                cardRefs.current[idx].rowWrapEl = el;
               }}
-              onClick={() => onSelectSlot?.(cardRefs.current[idx].currentSlotKey)}
-              title={`Press [${slotKey}] to observe ${initialSlot?.name ?? `Player ${slotKey}`}`}
-              className={`group relative flex flex-col overflow-hidden cursor-pointer will-change-transform transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${shapeClass}`}
+              className={`flex items-center gap-1.5 will-change-transform transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                isRight ? 'flex-row-reverse' : 'flex-row'
+              }`}
               style={{
-                width: '196px',
                 display: initialSlot && initialSlot.exists !== false ? 'flex' : 'none',
               }}
             >
               <div
-                className={`flex items-center h-[32px] w-full ${
-                  isRight ? 'flex-row-reverse' : 'flex-row'
-                }`}
+                ref={(el) => {
+                  cardRefs.current[idx].cardEl = el;
+                }}
+                onClick={() => onSelectSlot?.(cardRefs.current[idx].currentSlotKey)}
+                title={`Press [${slotKey}] to observe ${initialSlot?.name ?? `Player ${slotKey}`}`}
+                className={`group relative flex flex-col overflow-hidden cursor-pointer ${shapeClass}`}
+                style={{ width: '196px' }}
               >
                 <div
+                  className={`flex items-center h-[32px] w-full ${
+                    isRight ? 'flex-row-reverse' : 'flex-row'
+                  }`}
+                >
+                  <div
+                    ref={(el) => {
+                      cardRefs.current[idx].keyBadgeEl = el;
+                    }}
+                    className={`flex items-center justify-center shrink-0 h-full text-[11px] font-normal tabular-nums ${
+                      isRight ? 'border-l' : 'border-r'
+                    } border-black/10 transition-colors duration-200`}
+                    style={{ width: `${KEY_BADGE_WIDTH_PX}px`, fontWeight: 400 }}
+                  >
+                    {slotKey}
+                  </div>
+
+                  <div
+                    className={`flex items-center gap-1 min-w-0 flex-1 ${
+                      isRight
+                        ? 'flex-row-reverse pr-2.5 pl-1.5 justify-start'
+                        : 'flex-row pl-2.5 pr-1.5 justify-start'
+                    }`}
+                  >
+                    <span
+                      ref={(el) => {
+                        cardRefs.current[idx].nameEl = el;
+                      }}
+                      className={`truncate text-[12px] leading-tight tracking-tight ${
+                        isRight ? 'text-right' : 'text-left'
+                      }`}
+                      style={{ fontWeight: 400 }}
+                    >
+                      {initialSlot?.name ?? `Player ${slotKey}`}
+                    </span>
+                    <span
+                      ref={(el) => {
+                        cardRefs.current[idx].selfTagEl = el;
+                      }}
+                      className="shrink-0 px-1 py-[1px] rounded text-[8px] uppercase tracking-wider bg-black/20 text-current opacity-80"
+                      style={{ display: initialSlot?.isSelf ? 'inline-block' : 'none' }}
+                    >
+                      YOU
+                    </span>
+                  </div>
+
+                  <div
+                    className={`flex items-center shrink-0 ${
+                      isRight ? 'justify-start pl-2.5 pr-1' : 'justify-end pr-2.5 pl-1'
+                    }`}
+                  >
+                    <span
+                      ref={(el) => {
+                        cardRefs.current[idx].boostTextEl = el;
+                      }}
+                      className={`inline-block w-[3ch] text-[13px] leading-none tabular-nums tracking-tight ${
+                        isRight ? 'text-left' : 'text-right'
+                      }`}
+                      style={{ fontWeight: 400 }}
+                    >
+                      {initialSlot?.boostAmount ?? 100}
+                    </span>
+
+                    <span
+                      ref={(el) => {
+                        cardRefs.current[idx].demoCrossEl = el;
+                      }}
+                      className={`items-center min-w-[3ch] overflow-visible text-[15px] leading-none font-bold ${
+                        isRight ? 'justify-start text-left' : 'justify-end text-right'
+                      }`}
+                      style={{
+                        display: 'none',
+                        color: initialDemoCfg.color,
+                        filter: buildSvgDropShadowFilter(
+                          initialDemoCfg.glowColor,
+                          initialDemoCfg.glowBlurPx,
+                          initialDemoCfg.glowIntensityPct
+                        ),
+                      }}
+                    >
+                      x
+                    </span>
+
+                    <span
+                      ref={(el) => {
+                        cardRefs.current[idx].demoBombWrapEl = el;
+                      }}
+                      className={`items-center min-w-[3ch] overflow-visible leading-none ${
+                        isRight ? 'justify-start text-left' : 'justify-end text-right'
+                      }`}
+                      style={{
+                        display: 'none',
+                        color: initialDemoCfg.color,
+                        filter: buildSvgDropShadowFilter(
+                          initialDemoCfg.glowColor,
+                          initialDemoCfg.glowBlurPx,
+                          initialDemoCfg.glowIntensityPct
+                        ),
+                      }}
+                    >
+                      <BombEmojiSvg
+                        size={initialDemoCfg.sizePx}
+                        color={initialDemoCfg.color}
+                        strokeWidth={initialDemoCfg.strokeWidth}
+                      />
+                    </span>
+                  </div>
+                </div>
+
+                <div
                   ref={(el) => {
-                    cardRefs.current[idx].keyBadgeEl = el;
+                    cardRefs.current[idx].barTrackEl = el;
                   }}
-                  className={`flex items-center justify-center shrink-0 h-full text-[11px] font-normal tabular-nums ${
-                    isRight ? 'border-l' : 'border-r'
-                  } border-black/10 transition-colors duration-200`}
-                  style={{
-                    width: `${KEY_BADGE_WIDTH_PX}px`,
-                    fontWeight: 400,
-                  }}
+                  className="relative w-full h-[5px] bg-[#09090B] overflow-hidden"
                 >
-                  {slotKey}
-                </div>
-
-                <div
-                  className={`flex items-center gap-1 min-w-0 flex-1 ${
-                    isRight
-                      ? 'flex-row-reverse pr-2.5 pl-1.5 justify-start'
-                      : 'flex-row pl-2.5 pr-1.5 justify-start'
-                  }`}
-                >
-                  <span
+                  <div
                     ref={(el) => {
-                      cardRefs.current[idx].nameEl = el;
+                      cardRefs.current[idx].barFillEl = el;
                     }}
-                    className={`truncate text-[12px] leading-tight tracking-tight ${
-                      isRight ? 'text-right' : 'text-left'
-                    }`}
-                    style={{ fontWeight: 400 }}
-                  >
-                    {initialSlot?.name ?? `Player ${slotKey}`}
-                  </span>
-                  <span
-                    ref={(el) => {
-                      cardRefs.current[idx].selfTagEl = el;
-                    }}
-                    className="shrink-0 px-1 py-[1px] rounded text-[8px] uppercase tracking-wider bg-black/20 text-current opacity-80"
-                    style={{ display: initialSlot?.isSelf ? 'inline-block' : 'none' }}
-                  >
-                    YOU
-                  </span>
-                </div>
-
-                <div
-                  className={`flex items-center shrink-0 ${
-                    isRight ? 'justify-start pl-2.5 pr-1' : 'justify-end pr-2.5 pl-1'
-                  }`}
-                >
-                  <span
-                    ref={(el) => {
-                      cardRefs.current[idx].boostTextEl = el;
-                    }}
-                    className={`inline-block w-[3ch] text-[13px] leading-none tabular-nums tracking-tight ${
-                      isRight ? 'text-left' : 'text-right'
-                    }`}
-                    style={{ fontWeight: 400 }}
-                  >
-                    {initialSlot?.boostAmount ?? 100}
-                  </span>
-
-                  {/* Classic Red Cross ('cross') indicator */}
-                  <span
-                    ref={(el) => {
-                      cardRefs.current[idx].demoCrossEl = el;
-                    }}
-                    className={`items-center min-w-[3ch] overflow-visible text-[15px] leading-none font-bold ${
-                      isRight ? 'justify-start text-left' : 'justify-end text-right'
-                    }`}
+                    className={`h-full w-full ${
+                      isRight ? 'origin-right' : 'origin-left'
+                    } will-change-transform transition-colors duration-150`}
                     style={{
-                      display: 'none',
-                      color: initialDemoCfg.color,
-                      filter: buildSvgDropShadowFilter(
-                        initialDemoCfg.glowColor,
-                        initialDemoCfg.glowBlurPx,
-                        initialDemoCfg.glowIntensityPct
-                      ),
+                      backgroundColor: barColor,
+                      transform: `scaleX(${((initialSlot?.boostAmount ?? 100) / 100).toFixed(3)})`,
                     }}
-                  >
-                    x
-                  </span>
-
-                  {/* Packaged Bomb Emoji SVG ('bomb-svg') indicator */}
-                  <span
-                    ref={(el) => {
-                      cardRefs.current[idx].demoBombWrapEl = el;
-                    }}
-                    className={`items-center min-w-[3ch] overflow-visible leading-none ${
-                      isRight ? 'justify-start text-left' : 'justify-end text-right'
-                    }`}
-                    style={{
-                      display: 'none',
-                      color: initialDemoCfg.color,
-                      filter: buildSvgDropShadowFilter(
-                        initialDemoCfg.glowColor,
-                        initialDemoCfg.glowBlurPx,
-                        initialDemoCfg.glowIntensityPct
-                      ),
-                    }}
-                  >
-                    <BombEmojiSvg
-                      size={initialDemoCfg.sizePx}
-                      color={initialDemoCfg.color}
-                      strokeWidth={initialDemoCfg.strokeWidth}
-                    />
-                  </span>
+                  />
                 </div>
               </div>
 
+              {/* Inward-facing Goal Replay Skip / Ready Square with Green SVG Glow */}
               <div
                 ref={(el) => {
-                  cardRefs.current[idx].barTrackEl = el;
+                  cardRefs.current[idx].skipBadgeEl = el;
                 }}
-                className="relative w-full h-[5px] bg-[#09090B] overflow-hidden"
+                data-ui-element={`hud-edge-player-skip-ready-${slotKey}`}
+                title={`Player #${slotKey} Ready / Skip Goal Replay`}
+                className="w-[37px] h-[37px] rounded-[9px] shrink-0 items-center justify-center transition-all duration-200"
+                style={{
+                  display: initialSlot?.replaySkipReady ? 'flex' : 'none',
+                  backgroundColor: isLight
+                    ? 'rgba(255, 255, 255, 0.96)'
+                    : 'rgba(20, 20, 25, 0.95)',
+                  boxShadow:
+                    '0 0 0 1.5px #10B981, 0 0 12px rgba(16, 185, 129, 0.45), inset 0 0 8px rgba(16, 185, 129, 0.22)',
+                }}
               >
-                <div
-                  ref={(el) => {
-                    cardRefs.current[idx].barFillEl = el;
-                  }}
-                  className={`h-full w-full ${
-                    isRight ? 'origin-right' : 'origin-left'
-                  } will-change-transform transition-colors duration-150`}
-                  style={{
-                    backgroundColor: barColor,
-                    transform: `scaleX(${((initialSlot?.boostAmount ?? 100) / 100).toFixed(3)})`,
-                  }}
-                />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ color: '#10B981', filter: SKIP_GLOW_FILTER }}
+                >
+                  <rect
+                    x="3.5"
+                    y="3.5"
+                    width="17"
+                    height="17"
+                    rx="4.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="rgba(16, 185, 129, 0.16)"
+                  />
+                  <path
+                    d="M7.75 12.25L10.75 15.25L16.5 9.25"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
             </div>
           );
