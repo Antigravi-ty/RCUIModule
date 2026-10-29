@@ -1,8 +1,8 @@
 import React from 'react';
 import { Check, Sliders } from 'lucide-react';
 import { Badge } from '../../primitives/Badge';
-import { floatingStore } from '../../tokens/floatingStore';
-import { VEHICLE_MODEL_OFFSET_TUNER_PRESET } from '../../tokens/floatingPresets';
+import { floatingStore } from '../../stores/floatingStore';
+import { VEHICLE_MODEL_OFFSET_TUNER_PRESET } from '../../stores/floatingPresets';
 import { CARS } from './garageConstants';
 
 export interface GarageCarTabProps {

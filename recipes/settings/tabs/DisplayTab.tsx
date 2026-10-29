@@ -13,7 +13,7 @@ import {
 import { SettingSliderRow } from '../../../compounds/SettingSliderRow';
 import { SettingSegmentedRow } from '../../../compounds/SettingSegmentedRow';
 import { SettingPresetCustomRow } from '../../../compounds/SettingPresetCustomRow';
-import { useSettingActionRowStore } from '../../../tokens/settingRowStore';
+import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 
 export type MenuPowerSaveOption = 'extreme' | '15' | '30' | 'disable' | 'freeze' | 'match';
 export type FpsTargetOption = '30' | '60' | '75' | '90' | '120' | '240' | 'unlimited' | 'custom' | string;

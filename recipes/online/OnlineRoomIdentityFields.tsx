@@ -1,6 +1,6 @@
 import React from 'react';
 import { Lock, Shuffle } from 'lucide-react';
-import { useSettingActionRowStore } from '../../tokens/settingRowStore';
+import { useSettingActionRowStore } from '../../stores/settingRowStore';
 
 export interface OnlineRoomIdentityFieldsProps {
   playerName: string;

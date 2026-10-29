@@ -6,7 +6,7 @@ import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 import { KeycapBadge } from '../../primitives/KeycapBadge';
 import { TeamRosterCard, DEFAULT_BLUE_TEAM_SLOTS, DEFAULT_ORANGE_TEAM_SLOTS, TeamRosterSlotConfig, BotPolicyId, DEFAULT_CAR_COLOR_PALETTE } from '../../compounds/TeamRosterCard';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 /**
  * 9. [Dev] Experimental Multi-Bots Roster (`experimental-multi-bots`)

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Ear, Terminal, Volume2, RefreshCw, Activity } from 'lucide-react';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
-import { useSettingActionRowStore } from '../../../tokens/settingRowStore';
+import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 
 export interface AudioDebugTelemetryProps {
   audioDebugEnabled?: boolean;

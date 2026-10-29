@@ -5,7 +5,7 @@ import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { Button } from '../../primitives/Button';
 import { FloatingWindowToolbar } from '../FloatingWindowToolbar';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 /**
  * 4. [Dev] Goal Volume & Blast Impulse Tuner (`goal-volume-tuner`)

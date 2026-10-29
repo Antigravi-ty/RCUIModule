@@ -8,9 +8,9 @@ import {
 } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SettingActionRow } from '../compounds/SettingActionRow';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
-import type { PanelSizingConfig } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
+import type { PanelSizingConfig } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import {
   ActionBinding,
   INITIAL_BINDINGS,

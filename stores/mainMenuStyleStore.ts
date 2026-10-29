@@ -11,7 +11,7 @@ import {
   type JetBrainsMonoFontWeight,
   type PlayCardIconColorToken,
   type PlayCardIconColorValue,
-} from './colors';
+} from '../tokens/colors';
 
 export type MainMenuIconColorToken = PlayCardIconColorToken;
 export type MainMenuIconColorValue = PlayCardIconColorValue;

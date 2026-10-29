@@ -9,11 +9,11 @@ import {
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { MenuContainer } from '../layout/MenuContainer';
 import { MainMenuRow } from '../layout/MainMenuRow';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
   useMainMenuStyleStore,
   type MainMenuItemSlotId,
-} from '../tokens/mainMenuStyleStore';
+} from '../stores/mainMenuStyleStore';
 
 export type SelfTrainingModeId =
   | 'free-play'

@@ -15,14 +15,14 @@ import {
 import { PanelContainer, PanelContent } from '../layout/Panel';
 import { MainMenuRow } from '../layout/MainMenuRow';
 import { MenuContainer, MenuDivider } from '../layout/MenuContainer';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
-import type { PanelSizingConfig } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
+import type { PanelSizingConfig } from '../stores/menuLayoutStore';
 import {
   useMainMenuStyleStore,
   resolveMainMenuTitleTypography,
   type MainMenuStyleParams,
   type MainMenuStyleVariant,
-} from '../tokens/mainMenuStyleStore';
+} from '../stores/mainMenuStyleStore';
 import {
   LAYER1_CONTEXT_VARIATIONS,
   LAYER1_CONTEXT_GROUPS,

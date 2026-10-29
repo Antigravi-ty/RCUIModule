@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
-import { DEFAULT_PANEL_SIZING, useMenuLayoutStore } from '../tokens/menuLayoutStore';
+import { DEFAULT_PANEL_SIZING, useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
   StaticTrainingPackFolderList,
   type StaticPackDownCounterOption,

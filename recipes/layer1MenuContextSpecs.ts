@@ -1,7 +1,7 @@
 import {
   normalizeMainMenuContextMode,
   type MainMenuIconColorValue,
-} from '../tokens/mainMenuStyleStore';
+} from '../stores/mainMenuStyleStore';
 
 export type CanonicalLayer1ContextVariation =
   | 'freeplay'

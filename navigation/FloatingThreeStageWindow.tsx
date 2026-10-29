@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useFloatingStore, type FloatingWindowItem, type FloatingStoreInstance, } from '../tokens/floatingStore';
-import { useMenuLayoutStore, resolvePanelHeaderBackBtnGeometry, } from '../tokens/menuLayoutStore';
-import { useFloatingThreeStageStore, type FloatingThreeStageConfig, } from '../tokens/floatingThreeStageStore';
+import { useFloatingStore, type FloatingWindowItem, type FloatingStoreInstance, } from '../stores/floatingStore';
+import { useMenuLayoutStore, resolvePanelHeaderBackBtnGeometry, } from '../stores/menuLayoutStore';
+import { useFloatingThreeStageStore, type FloatingThreeStageConfig, } from '../stores/floatingThreeStageStore';
 import { CornerCurvedDragger, type CornerCurvedDraggerProps, } from './CornerCurvedDragger';
 import { FloatingThreeStageHeader, FloatingThreeStageFooterAndResizers, } from './FloatingThreeStageChrome';
 export interface FloatingThreeStageRenderContext {

@@ -15,7 +15,7 @@ import { KeycapBadge } from '../../primitives/KeycapBadge';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { SettingActionRow } from '../../compounds/SettingActionRow';
 import { SettingSliderRow } from '../../compounds/SettingSliderRow';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 export type PlaybackSpeedPreset = '100' | '75' | '50' | '25' | 'custom';
 export type DownCounterOption = '3' | '2' | '1' | '0';

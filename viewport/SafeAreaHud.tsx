@@ -1,5 +1,5 @@
 import React from 'react';
-import { useViewportStore, viewportStore } from './viewportStore';
+import { useViewportStore, viewportStore } from '../stores/viewportStore';
 import { EyeOff } from 'lucide-react';
 
 export interface SafeAreaHudProps {

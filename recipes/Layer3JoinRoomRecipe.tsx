@@ -3,8 +3,8 @@ import { Eye, Wifi } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { dispatchOnlineRoomErrorNotification } from './Layer3OnlineWarmupRecipe';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
@@ -185,7 +185,6 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
     onCurrentStepChange?.(nextStep);
   };
 
-  const [simulateStepError, setSimulateStepError] = useState<boolean>(false);
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearStepTimer = () => {
@@ -252,20 +251,7 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
   };
 
   const handleJoin = () => {
-    startJoinSequence(simulateStepError || simulateLayer3Error);
-  };
-
-  const handleToggleSimulateError = (next: boolean) => {
-    setSimulateStepError(next);
-    if (next && progressStatus !== 'idle') {
-      clearStepTimer();
-      setProgressStatus('error');
-      setToken('simulateLayer3Error', true);
-      dispatchOnlineRoomErrorNotification();
-    } else if (!next && progressStatus === 'error') {
-      setProgressStatus('running');
-      setToken('simulateLayer3Error', false);
-    }
+    startJoinSequence(simulateLayer3Error);
   };
 
   return (
@@ -323,15 +309,6 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
               totalSteps={steps?.length ?? 5}
               steps={steps}
               status={progressStatus}
-              simulateError={simulateStepError || simulateLayer3Error}
-              onToggleSimulateError={handleToggleSimulateError}
-              onSelectStep={(step) => {
-                clearStepTimer();
-                setCurrentStep(step);
-                if (progressStatus === 'completed' && step < (steps?.length ?? 5)) {
-                  setProgressStatus('running');
-                }
-              }}
               onRetry={() => {
                 onRetryJoin?.();
                 startJoinSequence(false);

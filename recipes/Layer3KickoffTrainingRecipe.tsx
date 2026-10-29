@@ -3,9 +3,9 @@ import { Check, Clock, Compass, Crosshair, Ghost, GraduationCap, Play, Zap } fro
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
-import { KICKOFF_TRAINING_PRESET } from '../tokens/floatingPresets';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { KICKOFF_TRAINING_PRESET } from '../stores/floatingPresets';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 
 export type KickoffSubMode = 'instant' | 'easy-learning' | 'realistic';

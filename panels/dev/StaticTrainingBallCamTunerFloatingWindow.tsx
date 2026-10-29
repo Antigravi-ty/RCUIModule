@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Camera, Eye, Download, Copy, Check, RotateCcw, ArrowLeftRight } from 'lucide-react';
 import { SliderControl } from '../../primitives/SliderControl';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 /**
  * 2. [Dev] Static Training Ball Cam Tuner (`static-training-ball-cam-tuner`)

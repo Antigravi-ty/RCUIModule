@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { AccentColor, ACCENT_THEMES, AccentThemeToken } from './colors';
+import { AccentColor, ACCENT_THEMES, AccentThemeToken } from '../tokens/colors';
 import { syncBridge as crossClientSync } from './syncBridge';
 
 export interface AccentThemeState {

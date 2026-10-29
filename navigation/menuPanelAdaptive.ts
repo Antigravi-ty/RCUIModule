@@ -15,7 +15,7 @@
  *    compresses width/height (activating internal scroll) when the screen/canvas is small.
  */
 
-import type { PanelSizingConfig } from '../tokens/menuLayoutStore';
+import type { PanelSizingConfig } from '../stores/menuLayoutStore';
 import type { ContainerBounds } from './floatingWindowGeometry';
 import {
   measureIntrinsicMinWidth,

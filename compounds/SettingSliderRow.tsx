@@ -3,7 +3,7 @@ import * as SliderPrimitive from '@radix-ui/react-slider';
 import { Minus, Plus } from 'lucide-react';
 import { SliderControl, type SliderColorScheme } from '../primitives/SliderControl';
 import { SettingActionRow } from './SettingActionRow';
-import { useSettingActionRowStore, type SliderRowLayout } from '../tokens/settingRowStore';
+import { useSettingActionRowStore, type SliderRowLayout } from '../stores/settingRowStore';
 import { getDecimalPlaces } from '../primitives/PrecisionDigitPicker';
 
 export interface SettingSliderRowProps {

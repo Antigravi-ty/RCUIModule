@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Info, Minus } from 'lucide-react';
-import type { FloatingWindowItem } from '../tokens/floatingStore';
+import type { FloatingWindowItem } from '../stores/floatingStore';
 import { getFloatingWindowIcon } from './FloatingWindowIcon';
 import { CornerCurvedDragger } from './CornerCurvedDragger';
 import type { ContainerBounds } from './floatingWindowGeometry';

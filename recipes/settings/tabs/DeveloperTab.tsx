@@ -11,7 +11,7 @@ import {
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../../../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../../../compounds/SettingToggleRow';
-import { useSettingActionRowStore } from '../../../tokens/settingRowStore';
+import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import type { BallOpacityMode } from './GameplayTab';
 
 export type { BallOpacityMode } from './GameplayTab';

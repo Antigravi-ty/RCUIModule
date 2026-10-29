@@ -15,9 +15,9 @@ import { ToggleSwitch } from '../primitives/ToggleSwitch';
 import { SettingActionRow } from '../compounds/SettingActionRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
-import type { PanelSizingConfig } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
+import type { PanelSizingConfig } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 
 export interface PerCarBoostConfig {
   unlimitedBoost: boolean;

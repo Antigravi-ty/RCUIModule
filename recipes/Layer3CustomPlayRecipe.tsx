@@ -1,7 +1,7 @@
 import React from 'react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { UnderConstructionPlaceholder } from '../primitives/UnderConstructionPlaceholder';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 
 export interface Layer3CustomPlayRecipeProps {
   isLight?: boolean;

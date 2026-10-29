@@ -5,7 +5,7 @@ import { SettingActionRow } from './SettingActionRow';
 import {
   useSettingActionRowStore,
   type PresetCustomVariation,
-} from '../tokens/settingRowStore';
+} from '../stores/settingRowStore';
 import { getDecimalPlaces } from '../primitives/PrecisionDigitPicker';
 
 export interface PresetNumberOption {

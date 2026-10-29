@@ -56,12 +56,6 @@ export interface OnlineRoomCreationProgressProps {
   totalSteps?: number;
   /** Current status ('idle' | 'running' | 'completed' | 'error') */
   status: CreationProgressStatus;
-  /** Whether error simulation is armed */
-  simulateError?: boolean;
-  /** Toggle error simulation */
-  onToggleSimulateError?: (next: boolean) => void;
-  /** Jump to a specific step for storybook inspection */
-  onSelectStep?: (step: number) => void;
   /** Retry callback when in error or completed state */
   onRetry?: () => void;
   /** Cancel / reset callback */
@@ -72,20 +66,10 @@ export interface OnlineRoomCreationProgressProps {
   className?: string;
 }
 
-/**
- * Decoupled 5-Step Room Creation Progress Box:
- * - Row 1: Left = Stage Name (``), Right = `X / 5` (``)
- * - Row 2: Step `description`
- * - Row 3: Animated Progress Bar (``)
- * - Interactive Storybook controls: Simulate Error toggle & step switcher
- */
 export const OnlineRoomCreationProgress: React.FC<OnlineRoomCreationProgressProps> = React.memo(({
   currentStep,
   totalSteps = 5,
   status,
-  simulateError = false,
-  onToggleSimulateError,
-  onSelectStep,
   onRetry,
   onCancel,
   steps = DEFAULT_HOST_CREATION_STEPS,

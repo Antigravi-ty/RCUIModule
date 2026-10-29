@@ -5,7 +5,7 @@ import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
 import { SliderControl } from '../primitives/SliderControl';
 import { ToggleSwitch } from '../primitives/ToggleSwitch';
 import { TeamRosterCard, TeamRosterSlotConfig, BotPolicyId, CarColorSwatch, DEFAULT_BLUE_TEAM_SLOTS, DEFAULT_ORANGE_TEAM_SLOTS } from '../compounds/TeamRosterCard';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 
 export interface Layer3ExpMultiBotsRecipeProps {
   isLight?: boolean;

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useViewportStore, viewportStore } from './viewportStore';
+import { useViewportStore, viewportStore } from '../stores/viewportStore';
 import { SafeAreaHud } from './SafeAreaHud';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 

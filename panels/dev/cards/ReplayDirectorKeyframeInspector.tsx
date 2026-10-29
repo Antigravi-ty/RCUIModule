@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { Badge } from '../../../primitives/Badge';
-import { quickNotification } from '../../../tokens/quickNotificationStore';
+import { quickNotification } from '../../../stores/quickNotificationStore';
 
 export interface AnomalyPeakChip {
   id: string;

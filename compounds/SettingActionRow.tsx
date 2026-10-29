@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { lookupLucideIcon } from '../primitives/iconLookup';
 
 export interface SettingActionRowProps {

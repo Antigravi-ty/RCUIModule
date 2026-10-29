@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { BoostTransientListener } from './types';
-import { useBoostGaugeStore } from '../tokens/boostGaugeStore';
+import { useBoostGaugeStore } from '../stores/boostGaugeStore';
 
 export type BoostColorScheme = 'classic-4' | 'step-12';
 export type BoostColorMode = 'standard' | 'inverted' | 'ring-only';

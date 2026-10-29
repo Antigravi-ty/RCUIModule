@@ -5,7 +5,7 @@ import { Checkbox } from '../../primitives/Checkbox';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { SettingActionRow } from '../../compounds/SettingActionRow';
 import { getDecimalPlaces } from '../../primitives/PrecisionDigitPicker';
-import type { CameraSettingsStyleConfig } from '../../tokens/cameraSettingsStyleStore';
+import type { CameraSettingsStyleConfig } from '../../stores/cameraSettingsStyleStore';
 import {
   CAMERA_BOOLEAN_SPECS,
   resolveSliderFillClass,

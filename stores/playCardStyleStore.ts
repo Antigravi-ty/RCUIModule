@@ -11,7 +11,7 @@ import {
   type JetBrainsMonoFontWeight,
   type PlayCardIconColorToken,
   type PlayCardIconColorValue,
-} from './colors';
+} from '../tokens/colors';
 
 export {
   JETBRAINS_MONO_WEIGHT_OPTIONS,

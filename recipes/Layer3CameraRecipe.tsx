@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { dialogue } from '../compounds/Dialogue';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
 import {
   useCameraSettingsStyleStore,
   DEFAULT_CAMERA_SETTINGS_STYLE_CONFIG,
   type CameraSettingsStyleConfig,
-} from '../tokens/cameraSettingsStyleStore';
+} from '../stores/cameraSettingsStyleStore';
 import {
   CAMERA_SLIDER_SPECS,
   DEFAULT_CAMERA_CONFIG,

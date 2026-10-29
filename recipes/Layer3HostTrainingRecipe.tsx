@@ -3,8 +3,8 @@ import { Ghost, Play } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { dispatchOnlineRoomErrorNotification } from './Layer3OnlineWarmupRecipe';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
@@ -67,7 +67,6 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   // 5-Step Creation Progress State
   const [progressStatus, setProgressStatus] = useState<CreationProgressStatus>('idle');
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [simulateStepError, setSimulateStepError] = useState<boolean>(false);
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearStepTimer = () => {
@@ -125,19 +124,6 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
         return next;
       });
     }, 520);
-  };
-
-  const handleToggleSimulateError = (next: boolean) => {
-    setSimulateStepError(next);
-    if (next && progressStatus !== 'idle') {
-      clearStepTimer();
-      setProgressStatus('error');
-      setToken('simulateLayer3Error', true);
-      dispatchOnlineRoomErrorNotification();
-    } else if (!next && progressStatus === 'error') {
-      setProgressStatus('running');
-      setToken('simulateLayer3Error', false);
-    }
   };
 
   return (
@@ -206,15 +192,6 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
               currentStep={currentStep}
               totalSteps={5}
               status={progressStatus}
-              simulateError={simulateStepError || simulateLayer3Error}
-              onToggleSimulateError={handleToggleSimulateError}
-              onSelectStep={(step) => {
-                clearStepTimer();
-                setCurrentStep(step);
-                if (progressStatus === 'completed' && step < 5) {
-                  setProgressStatus('running');
-                }
-              }}
               onRetry={() => startStepSequence(false)}
               onCancel={() => {
                 clearStepTimer();
@@ -231,7 +208,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => startStepSequence(simulateStepError || simulateLayer3Error)}
+              onClick={() => startStepSequence(simulateLayer3Error)}
               onMouseEnter={() =>
                 setHoveredDesc('Create & Host: Launch the 5-step shared training session initialization.')
               }

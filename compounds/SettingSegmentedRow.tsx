@@ -2,7 +2,7 @@ import React from 'react';
 import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
 import { DropdownMenu } from './DropdownMenu';
 import { SettingActionRow } from './SettingActionRow';
-import { useSettingActionRowStore, type SegmentedRowLayout } from '../tokens/settingRowStore';
+import { useSettingActionRowStore, type SegmentedRowLayout } from '../stores/settingRowStore';
 
 export interface SettingSegmentedOption {
   value: string;

@@ -6,7 +6,7 @@ import { SettingActionRow } from './SettingActionRow';
 import {
   useSettingActionRowStore,
   type TelemetryNestedVariation,
-} from '../tokens/settingRowStore';
+} from '../stores/settingRowStore';
 
 export type TelemetryDisplayMode = 'off' | 'on_demand' | 'always';
 export type TelemetryLatencyDetailMode = 'simple' | 'advanced';

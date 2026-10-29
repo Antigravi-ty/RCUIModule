@@ -22,8 +22,8 @@ import {
   EventFilterMatrix,
   EventCatalogEntry,
 } from '../compounds/tuner/EventFilterMatrix';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 
 export interface EventTriggerRule {
   id: string;

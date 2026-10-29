@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
-import { quickNotification } from '../../../tokens/quickNotificationStore';
+import { quickNotification } from '../../../stores/quickNotificationStore';
 
 export interface ReferenceOverlaySample {
   name: string;

@@ -19,9 +19,9 @@ import {
 } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { PhaseVariationMatrix } from '../compounds/PhaseVariationMatrix';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
-import type { PanelSizingConfig } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
+import type { PanelSizingConfig } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import {
   DIAGNOSTIC_DUMP_PRESET,
   STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
@@ -35,7 +35,7 @@ import {
   CAMERA_DETERMINISM_PRESET,
   CLOCK_PACING_TUNER_PRESET,
   NETWORK_STRESS_INJECTION_PRESET,
-} from '../tokens/floatingPresets';
+} from '../stores/floatingPresets';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 import { SettingActionRow } from '../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';

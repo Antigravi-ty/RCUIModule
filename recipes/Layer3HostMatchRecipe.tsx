@@ -12,8 +12,8 @@ import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layou
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SliderControl } from '../primitives/SliderControl';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { dispatchOnlineRoomErrorNotification } from './Layer3OnlineWarmupRecipe';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
@@ -180,7 +180,6 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
     onCurrentStepChange?.(nextStep);
   };
 
-  const [simulateStepError, setSimulateStepError] = useState<boolean>(false);
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearStepTimer = () => {
@@ -235,7 +234,6 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
       setInternalCurrentStep((prev) => {
         const next = prev + 1;
         onCurrentStepChange?.(next);
-        // If error simulation is active, fail at Step 3/5 (Registering Room Code & Key)
         if (willFail && next === 3) {
           clearStepTimer();
           setProgressStatus('error');
@@ -259,20 +257,7 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
   };
 
   const handleCreateHost = () => {
-    startStepSequence(simulateStepError || simulateLayer3Error);
-  };
-
-  const handleToggleSimulateError = (next: boolean) => {
-    setSimulateStepError(next);
-    if (next && progressStatus !== 'idle') {
-      clearStepTimer();
-      setProgressStatus('error');
-      setToken('simulateLayer3Error', true);
-      dispatchOnlineRoomErrorNotification();
-    } else if (!next && progressStatus === 'error') {
-      setProgressStatus('running');
-      setToken('simulateLayer3Error', false);
-    }
+    startStepSequence(simulateLayer3Error);
   };
 
   return (
@@ -511,15 +496,6 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
               totalSteps={steps?.length ?? 5}
               steps={steps}
               status={progressStatus}
-              simulateError={simulateStepError || simulateLayer3Error}
-              onToggleSimulateError={handleToggleSimulateError}
-              onSelectStep={(step) => {
-                clearStepTimer();
-                setCurrentStep(step);
-                if (progressStatus === 'completed' && step < (steps?.length ?? 5)) {
-                  setProgressStatus('running');
-                }
-              }}
               onRetry={() => {
                 onRetryHost?.();
                 startStepSequence(false);

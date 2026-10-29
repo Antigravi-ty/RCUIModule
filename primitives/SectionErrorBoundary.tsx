@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShieldAlert, RotateCcw } from 'lucide-react';
-import { syncBridge as crossClientSync } from '../tokens/syncBridge';
+import { syncBridge as crossClientSync } from '../stores/syncBridge';
 
 export interface SectionErrorBoundaryProps {
   children: React.ReactNode;

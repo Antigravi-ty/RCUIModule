@@ -1,7 +1,7 @@
 import React, { useRef, useId } from 'react';
 import { motion } from 'framer-motion';
 import { UI_EASING } from '../tokens/spacing';
-import { useUnderlineTabsStore, type UnderlineTabsFontFamily, type UnderlineTabsFontWeight } from '../tokens/underlineTabsStore';
+import { useUnderlineTabsStore, type UnderlineTabsFontFamily, type UnderlineTabsFontWeight } from '../stores/underlineTabsStore';
 
 export interface TabItem {
   id: string;

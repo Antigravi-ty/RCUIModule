@@ -4,7 +4,7 @@ import {
   useFloatingStore,
   type FloatingWindowItem,
   type FloatingStoreInstance,
-} from '../tokens/floatingStore';
+} from '../stores/floatingStore';
 import type { ContainerBounds } from './floatingWindowGeometry';
 import {
   FloatingWindowInstance,

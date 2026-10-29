@@ -8,7 +8,7 @@ import {
 import {
   useQuickNotificationStore,
   QuickNotificationItem,
-} from '../tokens/quickNotificationStore';
+} from '../stores/quickNotificationStore';
 
 /**
  * Sequenced lifecycle states for the Notification Icon UI:

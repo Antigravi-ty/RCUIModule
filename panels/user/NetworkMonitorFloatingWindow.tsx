@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Wifi, Download, Pause, Play, User } from 'lucide-react';
 import { PacingOscilloscopeChart, PacingRingBuffer } from '../../charts/PacingOscilloscopeChart';
 import { Button } from '../../primitives/Button';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 export type NetworkSessionMode = 'online-client' | 'online-host' | 'single-player';
 

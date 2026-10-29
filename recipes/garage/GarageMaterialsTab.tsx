@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { SettingSegmentedRow } from '../../compounds/SettingSegmentedRow';
-import { useSettingActionRowStore } from '../../tokens/settingRowStore';
+import { useSettingActionRowStore } from '../../stores/settingRowStore';
 
 export interface VisualMaterialsConfig {
   ballStyle: 'football' | 'rocket-league';

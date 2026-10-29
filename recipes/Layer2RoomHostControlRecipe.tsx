@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
-import { DEFAULT_PANEL_SIZING, useMenuLayoutStore } from '../tokens/menuLayoutStore';
+import { DEFAULT_PANEL_SIZING, useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
   MatchLobbyRoomView,
   type LobbyPlayerSlot,
@@ -142,8 +142,6 @@ export interface Layer2RoomHostControlRecipeProps {
   /** Active online session context ('match-lobby-host' | 'match-lobby-client' | 'online-match-host' | 'online-match-client' | 'online-warmup-host' | 'online-warmup-client') */
   sessionContext?: OnlineSessionContextId;
   onSessionContextChange?: (ctx: OnlineSessionContextId) => void;
-  /** Whether to show the inline 6-mode context switcher bar inside the panel (useful in standalone 6A.8 preview) */
-  showContextSwitcher?: boolean;
   onStartMatch?: () => void;
   onEnterMatch?: () => void;
   onNavigateAdvancedSettings?: () => void;
@@ -183,8 +181,6 @@ export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipePr
   onTogglePause,
   topSlot,
   sessionContext: controlledContext,
-  onSessionContextChange,
-  showContextSwitcher = false,
   onStartMatch,
   onEnterMatch,
   onNavigateAdvancedSettings,
@@ -193,12 +189,9 @@ export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipePr
   onBack = () => {},
   className = '',
 }) => {
-  const [internalContext, setInternalContext] = useState<OnlineSessionContextId>(
-    controlledContext ?? 'match-lobby-host'
-  );
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
-  const activeContextId = controlledContext ?? internalContext;
+  const activeContextId = controlledContext ?? 'match-lobby-host';
   const activeSpec =
     ONLINE_SESSION_CONTEXT_SPECS.find((s) => s.id === activeContextId) ??
     ONLINE_SESSION_CONTEXT_SPECS[0];
@@ -206,11 +199,6 @@ export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipePr
   const sizing = useMenuLayoutStore(
     (s) => s.panels?.['layer2-room-host-control'] ?? DEFAULT_PANEL_SIZING['layer2-room-host-control']
   );
-
-  const handleSelectContext = (next: OnlineSessionContextId) => {
-    setInternalContext(next);
-    onSessionContextChange?.(next);
-  };
 
   const resolvedRoomCode =
     activeSpec.stage === 'warmup' && roomCode === 'RL-8924' ? 'TRN-409' : roomCode;
@@ -245,10 +233,7 @@ export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipePr
             testSfx={testSfx}
             onToggleTestSfx={onToggleTestSfx}
             onResetBall={onResetBall}
-            onStartMatch={() => {
-              onStartMatch?.();
-              handleSelectContext('online-match-host');
-            }}
+            onStartMatch={onStartMatch}
             onEnterMatch={onEnterMatch}
             onOpenNetHud={onOpenNetHud}
             onNavigateAdvancedSettings={onNavigateAdvancedSettings}

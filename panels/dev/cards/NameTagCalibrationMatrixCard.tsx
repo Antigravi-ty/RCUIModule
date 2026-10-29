@@ -10,7 +10,7 @@ import {
 import { SliderControl } from '../../../primitives/SliderControl';
 import { KeycapBadge } from '../../../primitives/KeycapBadge';
 import { Badge } from '../../../primitives/Badge';
-import { quickNotification } from '../../../tokens/quickNotificationStore';
+import { quickNotification } from '../../../stores/quickNotificationStore';
 
 export interface NameTagCarSlotSample {
   index: number;

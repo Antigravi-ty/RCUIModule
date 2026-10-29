@@ -2,9 +2,9 @@ import React from 'react';
 import { Plus, X, Activity } from 'lucide-react';
 import { Badge } from '../../../primitives/Badge';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
-import { useFloatingStore, floatingStore } from '../../../tokens/floatingStore';
-import { useSettingActionRowStore } from '../../../tokens/settingRowStore';
-import type { PresetConfig } from '../../../tokens/floatingPresets';
+import { useFloatingStore, floatingStore } from '../../../stores/floatingStore';
+import { useSettingActionRowStore } from '../../../stores/settingRowStore';
+import type { PresetConfig } from '../../../stores/floatingPresets';
 
 export interface DiagnosticWindowPayload {
   id: string;

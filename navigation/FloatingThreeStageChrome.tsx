@@ -8,9 +8,9 @@ import {
   X,
   MoveDiagonal2,
 } from 'lucide-react';
-import type { FloatingWindowItem } from '../tokens/floatingStore';
+import type { FloatingWindowItem } from '../stores/floatingStore';
 import type { BackBtnResolvedGeometry } from '../tokens/menuLayoutTokens';
-import type { FloatingThreeStageConfig } from '../tokens/floatingThreeStageStore';
+import type { FloatingThreeStageConfig } from '../stores/floatingThreeStageStore';
 import { KeycapBadge } from '../primitives/KeycapBadge';
 import { getFloatingWindowIcon } from './FloatingWindowIcon';
 import { CornerCurvedDragger } from './CornerCurvedDragger';

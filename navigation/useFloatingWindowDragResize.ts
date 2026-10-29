@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import type { FloatingWindowItem } from '../tokens/floatingStore';
-import { PRESET_WINDOWS } from '../tokens/floatingPresets';
+import type { FloatingWindowItem } from '../stores/floatingStore';
+import { PRESET_WINDOWS } from '../stores/floatingPresets';
 import {
   resolveClampedWindowGeometry,
   type ContainerBounds,

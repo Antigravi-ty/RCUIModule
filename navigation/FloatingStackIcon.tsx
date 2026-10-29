@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layers, X, Activity, Cpu, Monitor, Target, Sparkles, Sliders } from 'lucide-react';
-import { useFloatingStore, FloatingWindowItem, FlyingGhostState, type FloatingStoreInstance } from '../tokens/floatingStore';
+import { useFloatingStore, FloatingWindowItem, FlyingGhostState, type FloatingStoreInstance } from '../stores/floatingStore';
 import { UI_EASING } from '../tokens/easing';
 
 export interface FloatingStackIconProps {

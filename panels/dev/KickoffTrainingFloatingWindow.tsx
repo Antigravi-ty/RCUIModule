@@ -5,7 +5,7 @@ import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 const KICKOFF_SPAWNS = [
   { id: 'diag-right', index: 0, key: '1', shortLabel: 'Diag R', label: '1 · Diagonal Right' },

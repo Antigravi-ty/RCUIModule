@@ -8,7 +8,7 @@ import { SliderControl } from '../../primitives/SliderControl';
 import { KickoffDuelMatrixCard } from '../../compounds/KickoffDuelMatrixCard';
 import { DemolishRespawnSlotMatrix } from './cards/DemolishRespawnSlotMatrix';
 import { MultiTrackReplayTimeline } from '../../charts/MultiTrackReplayTimeline';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 const SUBSYSTEM_BENCHES = [
   {

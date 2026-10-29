@@ -18,14 +18,14 @@ import {
   PanelFooter,
 } from '../layout/Panel';
 import { SettingActionRow } from '../compounds/SettingActionRow';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
-import type { PanelSizingConfig } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
-import { floatingStore } from '../tokens/floatingStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
+import type { PanelSizingConfig } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { floatingStore } from '../stores/floatingStore';
 import {
   SUBSYSTEM_ISOLATION_LAB_PRESET,
   EXPERIMENTAL_MULTI_BOTS_PRESET,
-} from '../tokens/floatingPresets';
+} from '../stores/floatingPresets';
 
 export type DevTestLabTab =
   | 'probes'

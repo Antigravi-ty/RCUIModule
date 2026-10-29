@@ -3,7 +3,7 @@ import { Crosshair, Compass, Wind, RotateCcw, Activity, Copy, Check } from 'luci
 import { SliderControl } from '../../primitives/SliderControl';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 /**
  * 6. [Dev] Reachability & Intercept Cone Tuner (`reachability-tuner`)

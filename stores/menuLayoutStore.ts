@@ -8,9 +8,9 @@ import {
   type MenuLayoutTokens,
   type MenuPanelId,
   type PanelSizingConfig,
-} from './menuLayoutTokens';
+} from '../tokens/menuLayoutTokens';
 
-export * from './menuLayoutTokens';
+export * from '../tokens/menuLayoutTokens';
 
 const STORAGE_KEY = 'ui-storybook-menu-layout-tokens-v16';
 

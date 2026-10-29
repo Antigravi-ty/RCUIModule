@@ -4,7 +4,7 @@ import { SliderControl } from '../../primitives/SliderControl';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { Button } from '../../primitives/Button';
 import { FloatingWindowToolbar } from '../FloatingWindowToolbar';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 /**
  * 16. [Dev] Network Stress & Jitter Injection (`network-stress-injection`)

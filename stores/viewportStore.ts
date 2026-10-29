@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { syncBridge as crossClientSync } from '../tokens/syncBridge';
+import { syncBridge as crossClientSync } from './syncBridge';
 
 export interface ViewportMetrics {
   scaleFactor: number;

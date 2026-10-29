@@ -14,8 +14,8 @@ import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 
 export interface Layer3AudioEqRecipeProps {
   isLight?: boolean;

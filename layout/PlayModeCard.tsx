@@ -10,7 +10,7 @@ import {
   type PlayCardStyleVariant,
   type PlayCardIconColorValue,
   type PlayModeCardId,
-} from '../tokens/playCardStyleStore';
+} from '../stores/playCardStyleStore';
 
 export interface PlayModeCardProps {
   id: string;

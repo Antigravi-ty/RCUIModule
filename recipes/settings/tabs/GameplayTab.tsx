@@ -12,7 +12,7 @@ import { BounceSolidSvg } from '../../../primitives/packagedSvgIcons';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
 import { SettingToggleRow } from '../../../compounds/SettingToggleRow';
 import { SettingSegmentedRow } from '../../../compounds/SettingSegmentedRow';
-import { useSettingActionRowStore } from '../../../tokens/settingRowStore';
+import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import {
   useSettingsPacingStore,
   type ExperiencePriorityOption,

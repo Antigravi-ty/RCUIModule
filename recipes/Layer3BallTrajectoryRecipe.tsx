@@ -7,8 +7,8 @@ import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { BounceSolidSvg } from '../primitives/packagedSvgIcons';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 
 export interface TrajectoryConfig {
   enabled: boolean;

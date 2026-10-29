@@ -4,7 +4,7 @@ import { SettingActionRow } from './SettingActionRow';
 import {
   useSettingActionRowStore,
   type DevStatusAccentColor,
-} from '../tokens/settingRowStore';
+} from '../stores/settingRowStore';
 
 export interface SettingDeveloperStatusRowProps {
   /** Primary row title (default: 'Developer Settings') */

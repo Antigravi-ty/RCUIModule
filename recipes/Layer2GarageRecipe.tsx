@@ -9,7 +9,7 @@ import {
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { UnderlineTabs, TabItem } from '../primitives/UnderlineTabs';
 import { UnderConstructionPlaceholder } from '../primitives/UnderConstructionPlaceholder';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { GarageCarTab } from './garage/GarageCarTab';
 import { GarageColorTab, DEFAULT_BLUE_ORDER, DEFAULT_ORANGE_ORDER } from './garage/GarageColorTab';
 import { GarageMaterialsTab, type VisualMaterialsConfig } from './garage/GarageMaterialsTab';

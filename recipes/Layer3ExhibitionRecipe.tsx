@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Bot, Clock, Play, SlidersHorizontal, Users } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 
 export type BotDifficultyTier = 'nexto' | 'necto' | 'easy' | 'medium' | 'hard';
 export type ExhibitionMatchFormat = '1v1' | '2v2' | '3v3';

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Bot, Server, Wifi, PencilRuler, BookOpen, SlidersHorizontal } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { PlayModeCard } from '../layout/PlayModeCard';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
   usePlayCardStyleStore,
   type PlayCardStyleParams,
   type PlayCardStyleVariant,
-} from '../tokens/playCardStyleStore';
+} from '../stores/playCardStyleStore';
 
 export interface Layer2PlayRecipeProps {
   isLight?: boolean;

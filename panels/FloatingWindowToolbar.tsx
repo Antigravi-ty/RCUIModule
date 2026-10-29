@@ -1,7 +1,7 @@
 import React from 'react';
 import { Copy, RotateCcw, Download, Upload, Sliders } from 'lucide-react';
 import { PrecisionDigitPicker, PrecisionAccentColor } from '../primitives/PrecisionDigitPicker';
-import { quickNotification } from '../tokens/quickNotificationStore';
+import { quickNotification } from '../stores/quickNotificationStore';
 
 export interface FloatingWindowToolbarProps {
   title?: string;

@@ -15,13 +15,21 @@ export {
 };
 
 import {
+  DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT,
   type DiagnosticProbeTelemetry,
+  type DiagnosticBufferSnapshot,
+  type DiagnosticDumpExportOptions,
+  type NetworkDiagnosticsBridge,
   type NetworkMetrics,
   type NetworkDiagnosticsState,
 } from './networkDiagnosticsTypes';
 
 export {
+  DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT,
   type DiagnosticProbeTelemetry,
+  type DiagnosticBufferSnapshot,
+  type DiagnosticDumpExportOptions,
+  type NetworkDiagnosticsBridge,
   type NetworkMetrics,
   type NetworkDiagnosticsState,
 };
@@ -73,18 +81,19 @@ let state: NetworkDiagnosticsState = {
     lobbyGhostMode: false,
     testCarAudioEnabled: false,
     probeTelemetry: [],
+    diagnosticBuffers: { ...DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT },
   },
   reconcilerRef: null,
   channelRef: null,
-  runtimeRef: null,
+  bridge: {},
 };
 
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((cb) => cb());
 let isTriggeringBurstDrop = false;
 
-const resolveChannel = () => state.channelRef || state.runtimeRef?.networkChannel || null;
-const resolveReconciler = () => state.reconcilerRef || state.runtimeRef?.networkReconciler || null;
+const resolveChannel = () => state.channelRef || null;
+const resolveReconciler = () => state.reconcilerRef || null;
 
 function assertFiniteMetric(val: number, name: string) {
   if (val !== undefined && !Number.isFinite(val)) {
@@ -104,12 +113,31 @@ export const networkDiagnosticsStore = {
     return () => listeners.delete(listener);
   },
 
-  setSession: (reconciler: any, channel: any, runtime?: any) => {
+  registerBridge: (bridgePatch: Partial<NetworkDiagnosticsBridge>) => {
+    state = {
+      ...state,
+      bridge: {
+        ...state.bridge,
+        ...bridgePatch,
+      },
+    };
+  },
+
+  updateDiagnosticBuffers: (patch: Partial<DiagnosticBufferSnapshot>) => {
+    updateMetricsPatch({
+      diagnosticBuffers: {
+        ...state.metrics.diagnosticBuffers,
+        ...patch,
+      },
+    });
+  },
+
+  setSession: (reconciler: any, channel: any, bridgeOverride?: Partial<NetworkDiagnosticsBridge>) => {
     state = {
       ...state,
       reconcilerRef: reconciler,
       channelRef: channel,
-      runtimeRef: runtime ?? state.runtimeRef,
+      bridge: bridgeOverride ? { ...state.bridge, ...bridgeOverride } : state.bridge,
       metrics: {
         ...state.metrics,
         connected: Boolean(channel),
@@ -119,7 +147,6 @@ export const networkDiagnosticsStore = {
     if (reconciler) {
       const updateFn = (m: any) => {
         const ch = resolveChannel();
-        const rt = state.runtimeRef;
         const nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
         const extraUplinkMs = Math.max(0, Math.round(Number(m.extraUplinkMs ?? ch?.extraUplinkMs ?? stressSim.extraUplinkMs) || 0));
         const extraDownlinkMs = Math.max(0, Math.round(Number(m.extraDownlinkMs ?? ch?.extraDownlinkMs ?? stressSim.extraDownlinkMs) || 0));
@@ -162,15 +189,9 @@ export const networkDiagnosticsStore = {
           nowMs
         );
 
-        const zeroGFleetEnabled = Boolean(rt?.diagnosticsFleetController?.enabled ?? state.metrics.zeroGFleetEnabled);
-        const zeroGAnchorMode = rt?.diagnosticsFleetController?.anchorMode || state.metrics.zeroGAnchorMode;
-        const observationTarget = rt?.diagnosticObservationTarget ?? state.metrics.observationTarget;
-        const lobbyGhostMode = Boolean(rt?.lobbyGhostModeEnabled ?? state.metrics.lobbyGhostMode);
-        const testCarAudioEnabled = Boolean(rt?.testCarAudioEnabled ?? state.metrics.testCarAudioEnabled);
-
         let probeTelemetry = state.metrics.probeTelemetry;
-        if (zeroGFleetEnabled && rt?.sampleDiagnosticFleetTelemetry) {
-          probeTelemetry = (rt.sampleDiagnosticFleetTelemetry() || []) as DiagnosticProbeTelemetry[];
+        if (state.metrics.zeroGFleetEnabled && state.bridge.onSampleZeroGFleetTelemetry) {
+          probeTelemetry = state.bridge.onSampleZeroGFleetTelemetry() || [];
         }
 
         updateMetricsPatch({
@@ -205,11 +226,6 @@ export const networkDiagnosticsStore = {
           packetAgeMs: health.packetAgeMs,
           neutralFallbackActive: health.neutralFallbackActive,
           disconnectEvicted: health.disconnectEvicted,
-          zeroGFleetEnabled,
-          zeroGAnchorMode,
-          observationTarget,
-          lobbyGhostMode,
-          testCarAudioEnabled,
           probeTelemetry,
         });
       };
@@ -378,7 +394,7 @@ export const networkDiagnosticsStore = {
     const safePeriod = Math.max(1, Math.floor(state.metrics.burstPeriodMs || 2000));
     const safeDuration = Math.max(0, Math.min(safePeriod - 1, Math.floor(Number(durationMs) || 0)));
     const safePct = Math.min(99, Math.floor((safeDuration / safePeriod) * 100));
-    const nextEnabled = safeDuration > 0 ? true : false;
+    const nextEnabled = safeDuration > 0;
     stressSim.setStress(
       { burstDropEnabled: nextEnabled, burstPeriodMs: safePeriod, burstDurationMs: safeDuration },
       resolveChannel()
@@ -394,7 +410,7 @@ export const networkDiagnosticsStore = {
     const safePct = Math.max(0, Math.min(99, Math.floor(Number(pct) || 0)));
     const safePeriod = Math.max(1, Math.floor(state.metrics.burstPeriodMs || 2000));
     const safeDuration = Math.max(0, Math.min(safePeriod - 1, Math.floor((safePct / 100) * safePeriod)));
-    const nextEnabled = safeDuration > 0 ? true : false;
+    const nextEnabled = safeDuration > 0;
     stressSim.setStress(
       { burstDropEnabled: nextEnabled, burstPeriodMs: safePeriod, burstDurationMs: safeDuration },
       resolveChannel()
@@ -445,13 +461,10 @@ export const networkDiagnosticsStore = {
   },
 
   toggleZeroGFleet: async (forceEnabled?: boolean) => {
-    const rt = state.runtimeRef;
     const nextEnabled = forceEnabled !== undefined ? forceEnabled : !state.metrics.zeroGFleetEnabled;
-    if (rt?.toggleDiagnosticTestFleet) {
-      await rt.toggleDiagnosticTestFleet(nextEnabled, state.metrics.zeroGAnchorMode);
-    }
-    const probeTelemetry = nextEnabled && rt?.sampleDiagnosticFleetTelemetry
-      ? ((rt.sampleDiagnosticFleetTelemetry() || []) as DiagnosticProbeTelemetry[])
+    await state.bridge.onToggleZeroGFleet?.(nextEnabled, state.metrics.zeroGAnchorMode);
+    const probeTelemetry = nextEnabled && state.bridge.onSampleZeroGFleetTelemetry
+      ? (state.bridge.onSampleZeroGFleetTelemetry() || [])
       : [];
     updateMetricsPatch({
       zeroGFleetEnabled: nextEnabled,
@@ -461,26 +474,19 @@ export const networkDiagnosticsStore = {
   },
 
   setZeroGAnchorMode: async (anchorMode: string) => {
-    const rt = state.runtimeRef;
-    if (rt?.diagnosticsFleetController) {
-      rt.diagnosticsFleetController.anchorMode = anchorMode;
-      if (state.metrics.zeroGFleetEnabled && rt.spawnDiagnosticTestFleet) {
-        await rt.spawnDiagnosticTestFleet({ anchorMode });
-      }
-    }
+    await state.bridge.onSetZeroGAnchorMode?.(anchorMode);
     updateMetricsPatch({ zeroGAnchorMode: anchorMode });
   },
 
   setObservationTarget: (targetCarIndex: number) => {
     const idx = Math.max(0, Math.min(7, Math.floor(targetCarIndex)));
-    state.runtimeRef?.setDiagnosticObservationTarget?.(idx);
+    state.bridge.onSetObservationTarget?.(idx);
     updateMetricsPatch({ observationTarget: idx });
   },
 
   syncZeroGFleetState: (enabled: boolean) => {
-    const rt = state.runtimeRef;
-    const probeTelemetry = enabled && rt?.sampleDiagnosticFleetTelemetry
-      ? ((rt.sampleDiagnosticFleetTelemetry() || []) as DiagnosticProbeTelemetry[])
+    const probeTelemetry = enabled && state.bridge.onSampleZeroGFleetTelemetry
+      ? (state.bridge.onSampleZeroGFleetTelemetry() || [])
       : [];
     updateMetricsPatch({
       zeroGFleetEnabled: Boolean(enabled),
@@ -490,11 +496,7 @@ export const networkDiagnosticsStore = {
 
   setTestCarAudioEnabled: (enabled: boolean) => {
     const next = Boolean(enabled);
-    if (state.runtimeRef?.setTestCarAudioEnabled) {
-      state.runtimeRef.setTestCarAudioEnabled(next);
-    } else if (state.runtimeRef) {
-      state.runtimeRef.testCarAudioEnabled = next;
-    }
+    state.bridge.onSetTestCarAudioEnabled?.(next);
     updateMetricsPatch({ testCarAudioEnabled: next });
     return next;
   },
@@ -505,8 +507,45 @@ export const networkDiagnosticsStore = {
   },
 
   setLobbyGhostMode: (enabled: boolean) => {
-    state.runtimeRef?.setLobbyGhostMode?.(enabled, true);
+    state.bridge.onSetLobbyGhostMode?.(enabled);
     updateMetricsPatch({ lobbyGhostMode: Boolean(enabled) });
+  },
+
+  setDiagnosticMaxCapacity: (frames: number) => {
+    state.bridge.onSetDiagnosticMaxCapacity?.(frames);
+    networkDiagnosticsStore.updateDiagnosticBuffers({
+      maxClientFrames: frames,
+      clientOverflowPaused:
+        state.metrics.diagnosticBuffers.clientFrames < frames
+          ? false
+          : state.metrics.diagnosticBuffers.clientOverflowPaused,
+    });
+  },
+
+  setDiagnosticAutoPauseOverflow: (enabled: boolean) => {
+    state.bridge.onSetDiagnosticAutoPauseOverflow?.(enabled);
+    networkDiagnosticsStore.updateDiagnosticBuffers({ autoPauseOnOverflow: enabled });
+  },
+
+  toggleDiagnosticRecordingPause: () => {
+    const nextActive = !state.metrics.diagnosticBuffers.clientRecordingActive;
+    state.bridge.onToggleDiagnosticRecordingPause?.(nextActive);
+    networkDiagnosticsStore.updateDiagnosticBuffers({
+      clientRecordingActive: nextActive,
+      clientOverflowPaused: false,
+    });
+  },
+
+  clearDiagnosticBuffers: () => {
+    state.bridge.onClearDiagnosticBuffers?.();
+    networkDiagnosticsStore.updateDiagnosticBuffers({
+      clientFrames: 0,
+      telemetryTicks: 0,
+      serverFrames: 0,
+      clientOverflowPaused: false,
+      starvationCount: 0,
+      hardResyncCount: 0,
+    });
   },
 
   resetLatency: () => {
@@ -530,15 +569,13 @@ export const networkDiagnosticsStore = {
   },
 
   dumpNextPacket: () => {
-    if (state.runtimeRef?.dumpNextNetworkPacket) state.runtimeRef.dumpNextNetworkPacket();
+    if (state.bridge.onDumpNextPacket) state.bridge.onDumpNextPacket();
     else if (state.reconcilerRef?.dumpNextPacket) state.reconcilerRef.dumpNextPacket();
-    else console.warn('[networkDiagnosticsStore] dumpNextPacket unavailable: no runtime or reconciler instance');
   },
 
   dumpLatestPacket: () => {
-    if (state.runtimeRef?.dumpLatestNetworkPacket) state.runtimeRef.dumpLatestNetworkPacket();
+    if (state.bridge.onDumpLatestPacket) state.bridge.onDumpLatestPacket();
     else if (state.reconcilerRef?.dumpPacketDiagnostics) state.reconcilerRef.dumpPacketDiagnostics();
-    else console.warn('[networkDiagnosticsStore] dumpLatestPacket unavailable: no runtime or reconciler instance');
   },
 
   triggerBurstDrop: (count?: number) => {
@@ -546,7 +583,7 @@ export const networkDiagnosticsStore = {
     isTriggeringBurstDrop = true;
     try {
       const cnt = count ?? state.metrics.burstDropCount;
-      if (state.runtimeRef?.dropPacketBurst) state.runtimeRef.dropPacketBurst(cnt);
+      if (state.bridge.onTriggerBurstDrop) state.bridge.onTriggerBurstDrop(cnt);
       else if (state.channelRef?.forceDropNextInput) state.channelRef.forceDropNextInput(cnt);
     } finally {
       isTriggeringBurstDrop = false;

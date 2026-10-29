@@ -13,7 +13,7 @@ import {
   type MainMenuItemSlotId,
   type MainMenuIconColorValue,
   type MainMenuPlatformPreviewMode,
-} from '../tokens/mainMenuStyleStore';
+} from '../stores/mainMenuStyleStore';
 
 export interface MainMenuRowProps {
   id?: string;

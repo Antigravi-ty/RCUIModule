@@ -3,7 +3,7 @@ import { ArrowLeft, Info, Minimize2 } from 'lucide-react';
 import { KeycapBadge } from '../primitives/KeycapBadge';
 import { UI_RADIUS } from '../tokens/spacing';
 import { useInMorphContainer } from '../tokens/morphContext';
-import { useMenuLayoutStore, resolvePanelHeaderBackBtnGeometry, type PanelSizingConfig, type PanelSizingMode } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore, resolvePanelHeaderBackBtnGeometry, type PanelSizingConfig, type PanelSizingMode } from '../stores/menuLayoutStore';
 
 const PanelSizingModeContext = createContext<PanelSizingMode>('fixed');
 

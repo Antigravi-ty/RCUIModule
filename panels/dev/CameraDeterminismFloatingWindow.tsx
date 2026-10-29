@@ -4,7 +4,7 @@ import { SliderControl } from '../../primitives/SliderControl';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { Button } from '../../primitives/Button';
 import { CounterfactualComparisonStrip } from './cards/CounterfactualComparisonStrip';
-import { quickNotification } from '../../tokens/quickNotificationStore';
+import { quickNotification } from '../../stores/quickNotificationStore';
 
 /**
  * 15. [Dev] Camera Determinism & Quaternion Slerp Harness (`camera-determinism-harness`)

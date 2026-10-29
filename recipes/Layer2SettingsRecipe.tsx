@@ -10,8 +10,8 @@ import {
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { UnderlineTabs, TabItem } from '../primitives/UnderlineTabs';
 import { Badge } from '../primitives/Badge';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
-import type { PanelSizingConfig } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
+import type { PanelSizingConfig } from '../stores/menuLayoutStore';
 import type { DiagnosticWindowPayload } from './settings/components/FloatingWindowCard';
 import { GameplayTab, type GameplayConfig, type ClockPacingPriority, type BallOpacityMode } from './settings/tabs/GameplayTab';
 import { AudioTab, type AudioConfig } from './settings/tabs/AudioTab';

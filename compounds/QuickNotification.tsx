@@ -8,7 +8,7 @@ import type {
   QuickNotificationButtonVariant,
   QuickNotificationButtonFormat,
   QuickNotificationButtonConfig,
-} from '../tokens/notificationTypes';
+} from '../stores/notificationTypes';
 
 export type {
   QuickNotificationGlowLevel,

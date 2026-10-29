@@ -4,8 +4,8 @@ import { Card } from '../layout/Card';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
 import { PhaseVariationMatrix, PhaseVariationItem, PhaseVariationSelection, VariationPhaseId, DEFAULT_BOOST_VARIATION_ITEMS } from '../compounds/PhaseVariationMatrix';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 
 export const DEFAULT_RUMBLE_VARIATION_ITEMS: PhaseVariationItem[] = [
   { id: 'combustion', label: 'Low Combustion', isDefault: true },

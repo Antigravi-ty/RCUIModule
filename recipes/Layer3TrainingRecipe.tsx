@@ -4,14 +4,14 @@ import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layou
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
-import type { PanelSizingConfig } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
+import type { PanelSizingConfig } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import {
   GOAL_BARRIER_CONFIGURATOR_PRESET,
   REWINDER_CONFIGURATOR_PRESET,
   type PresetConfig,
-} from '../tokens/floatingPresets';
+} from '../stores/floatingPresets';
 
 export interface TrainingGameplayConfig {
   unlimitedBoost?: boolean;

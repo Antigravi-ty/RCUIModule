@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Palette, Sparkles, Car, Tag, Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
-import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutStore';
-import type { PanelSizingConfig } from '../tokens/menuLayoutStore';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useMenuLayoutStore, DEFAULT_PANEL_SIZING } from '../stores/menuLayoutStore';
+import type { PanelSizingConfig } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import {
   ATMOSPHERE_FX_TUNER_PRESET,
   VEHICLE_GLOBAL_FX_TUNER_PRESET,
   DRIFTWOODS_TUNER_PRESET,
   BOOST_PAD_TUNER_PRESET,
   NAME_TAG_TUNER_PRESET,
-} from '../tokens/floatingPresets';
+} from '../stores/floatingPresets';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 
 export interface Layer3DevCalibratedPresetsRecipeProps {

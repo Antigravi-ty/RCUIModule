@@ -1,6 +1,6 @@
 import React from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
-import { useSettingActionRowStore } from '../tokens/settingRowStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { lookupLucideIcon } from './iconLookup';
 
 export type DualGrabberColorScheme = 'neutral' | 'amber' | 'orange' | 'emerald' | 'sky' | 'rose';

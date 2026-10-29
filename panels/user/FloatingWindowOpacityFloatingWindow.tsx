@@ -1,6 +1,6 @@
 import React from 'react';
 import { SettingSliderRow } from '../../compounds/SettingSliderRow';
-import { useFloatingStore, floatingSandboxStore } from '../../tokens/floatingStore';
+import { useFloatingStore, floatingSandboxStore } from '../../stores/floatingStore';
 
 export interface FloatingWindowOpacityProps {
   isLight?: boolean;

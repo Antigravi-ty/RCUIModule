@@ -4,12 +4,12 @@ import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layou
 import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { Card } from '../layout/Card';
-import { useMenuLayoutStore } from '../tokens/menuLayoutStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
   pushQuickNotification,
   useQuickNotificationStore,
   expandQuickNotificationCenter,
-} from '../tokens/quickNotificationStore';
+} from '../stores/quickNotificationStore';
 import { dialogue } from '../compounds/Dialogue';
 
 export interface Layer3OnlineWarmupRecipeProps {

@@ -27,9 +27,9 @@ import {
   PERFORMANCE_MONITOR_PRESET,
   NETWORK_MONITOR_PRESET,
   FLOATING_WINDOW_OPACITY_PRESET,
-} from '../../../tokens/floatingPresets';
-import { useFloatingStore } from '../../../tokens/floatingStore';
-import { useSettingActionRowStore } from '../../../tokens/settingRowStore';
+} from '../../../stores/floatingPresets';
+import { useFloatingStore } from '../../../stores/floatingStore';
+import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import {
   useSettingsPacingStore,
   type ClockPacingMode,

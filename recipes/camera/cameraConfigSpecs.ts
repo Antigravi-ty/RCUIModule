@@ -10,7 +10,7 @@ import {
   Repeat,
   Activity,
 } from 'lucide-react';
-import type { CameraSliderColorScheme } from '../../tokens/cameraSettingsStyleStore';
+import type { CameraSliderColorScheme } from '../../stores/cameraSettingsStyleStore';
 
 export interface CameraConfig {
   cameraShake: boolean;

@@ -3,7 +3,7 @@ import { AppWindowMac, Volume2, Engine } from 'lucide-react';
 import { SettingSliderRow } from '../../../compounds/SettingSliderRow';
 import { SettingToggleRow } from '../../../compounds/SettingToggleRow';
 import { JetThrustSvg } from '../../../primitives/packagedSvgIcons';
-import { useSettingActionRowStore } from '../../../tokens/settingRowStore';
+import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 
 export interface AudioConfig {
   masterVolume: number;      // 0..100
