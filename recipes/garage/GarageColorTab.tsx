@@ -38,7 +38,7 @@ export const GarageColorTab: React.FC<GarageColorTabProps> = ({
   defaultPrimaryTeam = 'blue',
   onPrimaryTeamChange,
   paintFinish: controlledPaintFinish,
-  defaultPaintFinish = 'matte',
+  defaultPaintFinish = 'metallic',
   onPaintFinishChange,
   onHoverDesc,
   isLight = false,

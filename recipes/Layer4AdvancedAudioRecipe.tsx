@@ -214,9 +214,9 @@ export const Layer4AdvancedAudioRecipe: React.FC<Layer4AdvancedAudioRecipeProps>
             onMouseLeave={() => setHoveredDesc(null)}
           >
             <PhaseVariationMatrix
-              title="Boost Rocket Sample Pool (7 Sets × 3 Phases)"
+              title="Boost Rocket Sample Pool (4 Sets × 3 Phases)"
               subtitle="Select Ignition Start, Sustain Loop, and Tail Release variations"
-              badgeText="7 Sets · M4A"
+              badgeText="4 Sets · M4A"
               variations={DEFAULT_BOOST_VARIATION_ITEMS}
               defaultVariationId="rush"
               selection={boostSelection}

@@ -85,11 +85,16 @@ export const networkDiagnosticsStore = {
   },
 
   setSession: (reconciler: any, channel: any, bridgeOverride?: Partial<NetworkDiagnosticsBridge>) => {
+    const isBridgeObject =
+      bridgeOverride &&
+      typeof bridgeOverride === 'object' &&
+      !('physics' in bridgeOverride) &&
+      !('arena' in bridgeOverride);
     state = {
       ...state,
       reconcilerRef: reconciler,
       channelRef: channel,
-      bridge: bridgeOverride ? { ...state.bridge, ...bridgeOverride } : state.bridge,
+      bridge: isBridgeObject ? { ...state.bridge, ...bridgeOverride } : state.bridge,
       metrics: {
         ...state.metrics,
         connected: Boolean(channel),

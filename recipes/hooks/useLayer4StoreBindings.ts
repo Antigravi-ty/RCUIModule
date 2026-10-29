@@ -149,7 +149,21 @@ export function useLayer4AdvancedAudioStoreBinding(
     variationId: string,
     phase: VariationPhaseId
   ) => {
-    setBoostSelection((prev) => ({ ...prev, [phase]: variationId }));
+    setBoostSelection((prev) => {
+      const next = { ...prev, [phase]: variationId };
+      if (next.start === next.loop && next.loop === next.end) {
+        useAppStore
+          .getState()
+          .updateMaterials({
+            boostAudio: variationId as
+              | 'rush'
+              | 'standard'
+              | 'flamethrower'
+              | 'plasma',
+          });
+      }
+      return next;
+    });
     if (phase === 'start') {
       setBoostStartVariation(variationId);
     } else if (phase === 'loop') {
@@ -167,6 +181,15 @@ export function useLayer4AdvancedAudioStoreBinding(
       end: variationId,
     });
     setAllBoostAudioVariations(variationId);
+    useAppStore
+      .getState()
+      .updateMaterials({
+        boostAudio: variationId as
+          | 'rush'
+          | 'standard'
+          | 'flamethrower'
+          | 'plasma',
+      });
     previewBoostAudioVariation(variationId, 'start');
   };
 

@@ -18,7 +18,7 @@ import { SettingSliderRow } from '../../compounds/SettingSliderRow';
 import { quickNotification } from '../../stores/quickNotificationStore';
 import { useReplayViewerPanelStoreBindings } from './useUserPanelStoreBindings';
 
-export type PlaybackSpeedPreset = '100' | '75' | '50' | '25' | 'custom';
+export type PlaybackSpeedPreset = '100' | '50' | '200' | '500' | 'custom';
 export type DownCounterOption = '3' | '2' | '1' | '0';
 
 export interface ReplayViewerState {
@@ -373,9 +373,9 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
               }}
               options={[
                 { value: '100', label: '100%' },
-                { value: '75', label: '75%' },
                 { value: '50', label: '50%' },
-                { value: '25', label: '25%' },
+                { value: '200', label: '200%' },
+                { value: '500', label: '500%' },
                 { value: 'custom', label: 'Custom' },
               ]}
             />
@@ -387,7 +387,7 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
             label="Custom"
             value={customSpeedPct}
             min={1}
-            max={100}
+            max={500}
             step={1}
             unit="%"
             layout="inline"

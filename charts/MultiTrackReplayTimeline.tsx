@@ -32,7 +32,7 @@ export const DEFAULT_REPLAY_SIGNAL_MARKERS: ReplaySignalMarker[] = [
 ];
 
 export type ReplayDownCounterSec = 3 | 2 | 1 | 0;
-export type ReplayFlowPresetId = '100' | '75' | '50' | '25' | 'custom';
+export type ReplayFlowPresetId = '100' | '50' | '200' | '500' | 'custom';
 
 export interface MultiTrackReplayTimelineHandle {
   /** Imperatively move the 3-track playhead cursor at 120Hz with zero React re-renders */
@@ -230,6 +230,11 @@ export const MultiTrackReplayTimeline = React.memo(
                     <div
                       key={`${m.frameIndex}-${idx}`}
                       style={{ left: `${leftPct}%` }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        applyCursorToDom(m.frameIndex);
+                        onSeekFrame?.(m.frameIndex);
+                      }}
                       className={`absolute top-0 bottom-0 ${colorCls}`}
                       title={`${m.label} @ #${m.frameIndex}`}
                     />
@@ -260,6 +265,11 @@ export const MultiTrackReplayTimeline = React.memo(
                     <div
                       key={`${s.frameIndex}-${idx}`}
                       style={{ left: `${leftPct}%` }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        applyCursorToDom(s.frameIndex);
+                        onSeekFrame?.(s.frameIndex);
+                      }}
                       className={`absolute top-0 bottom-0 ${colorCls}`}
                       title={`${s.label} @ #${s.frameIndex}`}
                     />
@@ -368,6 +378,11 @@ export const MultiTrackReplayTimeline = React.memo(
                     <div
                       key={`${m.frameIndex}-${idx}`}
                       style={{ left: `${leftPct}%` }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        applyCursorToDom(m.frameIndex);
+                        onSeekFrame?.(m.frameIndex);
+                      }}
                       className={`absolute top-0 bottom-0 ${colorCls}`}
                       title={`${m.label} @ #${m.frameIndex}`}
                     />
@@ -402,6 +417,11 @@ export const MultiTrackReplayTimeline = React.memo(
                     <div
                       key={`${s.frameIndex}-${idx}`}
                       style={{ left: `${leftPct}%` }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        applyCursorToDom(s.frameIndex);
+                        onSeekFrame?.(s.frameIndex);
+                      }}
                       className={`absolute top-0 bottom-0 ${colorCls}`}
                       title={`${s.label} @ #${s.frameIndex}`}
                     />
@@ -494,9 +514,9 @@ export const MultiTrackReplayTimeline = React.memo(
                 onValueChange={(v) => setFlowPreset(v as ReplayFlowPresetId)}
                 options={[
                   { value: '100', label: '100%' },
-                  { value: '75', label: '75%' },
                   { value: '50', label: '50%' },
-                  { value: '25', label: '25%' },
+                  { value: '200', label: '200%' },
+                  { value: '500', label: '500%' },
                   { value: 'custom', label: 'Custom' },
                 ]}
               />
@@ -516,9 +536,9 @@ export const MultiTrackReplayTimeline = React.memo(
             <SliderControl
               label="Custom Flow Speed"
               value={customFlowPct}
-              min={5}
-              max={200}
-              step={5}
+              min={1}
+              max={500}
+              step={1}
               unit="%"
               isLight={isLight}
               onChange={setCustomFlowPct}

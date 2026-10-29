@@ -8,7 +8,7 @@ export type ReplayViewerState =
   | 'forwarding'
   | 'preroll-countdown';
 
-export type ReplayFlowPreset = '100' | '75' | '50' | '25' | 'custom';
+export type ReplayFlowPreset = '100' | '50' | '200' | '500' | 'custom';
 export type ReplayDownCounterOption = 0 | 1 | 2 | 3;
 
 export interface ReplayIncidentMarker {
@@ -124,11 +124,13 @@ export const useReplayViewerStore = create<ReplayViewerStoreState>((set) => ({
       effectiveFlowPct:
         flowPreset === 'custom' ? s.customFlowPct : Number(flowPreset) || 100,
     })),
-  setCustomFlowPct: (customFlowPct) =>
+  setCustomFlowPct: (customFlowPct) => {
+    const clamped = Math.max(1, Math.min(500, Math.round(Number(customFlowPct) || 100)));
     set((s) => ({
-      customFlowPct,
-      effectiveFlowPct: s.flowPreset === 'custom' ? customFlowPct : s.effectiveFlowPct,
-    })),
+      customFlowPct: clamped,
+      effectiveFlowPct: s.flowPreset === 'custom' ? clamped : s.effectiveFlowPct,
+    }));
+  },
   setErrorMessage: (errorMessage) => set({ errorMessage }),
   updateLiveTelemetry: (patch) => set((s) => ({ ...s, ...patch })),
 

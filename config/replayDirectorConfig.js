@@ -15,16 +15,25 @@ export const DEFAULT_REPLAY_DIRECTOR_CONFIG = Object.freeze({
   twoTouchLookaheadSeconds: 2.20,
   twoTouchAnticipationWeight: 0.36,
 
-  corridorBackDistStart: 760.0,
-  corridorBackDistEnd: 640.0,
-  corridorSideDistBase: 520.0,
-  goalBoxShowcaseDist: 1150.0,
-  carMidpointMaxWeight: 0.48,
+  corridorBackDistStart: 640.0,
+  corridorBackDistEnd: 520.0,
+  corridorSideDistBase: 460.0,
+  goalBoxShowcaseDist: 920.0,
+  carMidpointMaxWeight: 0.46,
+
+  cameraBaseHeightUu: 195.0,
+  cameraAerialHeightSlope: 0.36,
+  interceptorLookaheadSeconds: 1.65,
+  interceptorFramingWeight: 0.72,
+  suffixTimeDecayRate: 1.40,
+  trajectorySmoothPasses: 4,
+  maxTotalYawBudgetDeg: 320.0,
+
   postGoalExplosionStretchDist: 780.0,
   postGoalExplosionStretchDuration: 0.36,
   postGoalScorerFollowTransitionSec: 0.28,
-  eyeDampingRate: 3.8,
-  gazeDampingRate: 7.5,
+  eyeDampingRate: 5.2,
+  gazeDampingRate: 8.5,
   strikerSwitchDampingRate: 4.2,
 });
 
@@ -49,6 +58,7 @@ export function updateReplayDirectorConfig(patch = {}) {
     if (_activeReplayController.isImportedPreview && _activeReplayController.useRecordedCsvCamera) {
       _activeReplayController.useRecordedCsvCamera = false;
     }
+    _activeReplayController._cachedSuffixCameraPlan = null;
     _activeReplayController._cachedSmoothnessSummary = null;
     _activeReplayController._cachedAnomalyPeaks = null;
     _activeReplayController.refreshCurrentFrameDirectorPose?.();
@@ -69,6 +79,7 @@ export function updateReplayDirectorConfig(patch = {}) {
 export function resetReplayDirectorConfig() {
   Object.assign(REPLAY_DIRECTOR_CONFIG, DEFAULT_REPLAY_DIRECTOR_CONFIG);
   if (_activeReplayController) {
+    _activeReplayController._cachedSuffixCameraPlan = null;
     _activeReplayController._cachedSmoothnessSummary = null;
     _activeReplayController._cachedAnomalyPeaks = null;
     _activeReplayController.refreshCurrentFrameDirectorPose?.();
@@ -242,7 +253,7 @@ export async function importActiveReplayDirectorDiagnosticPattern(fileOrInput, o
     return null;
   }
 
-  if (parsed.directorConfig && options.applyImportedConfig !== false) {
+  if (parsed.directorConfig && options.applyImportedConfig === true) {
     for (const [key, val] of Object.entries(parsed.directorConfig)) {
       if (key in REPLAY_DIRECTOR_CONFIG && typeof val === 'number' && Number.isFinite(val)) {
         REPLAY_DIRECTOR_CONFIG[key] = val;
@@ -257,12 +268,18 @@ export async function importActiveReplayDirectorDiagnosticPattern(fileOrInput, o
     }
   }
 
+  const effectiveOptions = {
+    useRecordedCsvCamera: false,
+    ...options,
+    fileName,
+  };
+
   if (typeof _previewHandlers.onImportPattern === 'function') {
-    return _previewHandlers.onImportPattern(parsed, { ...options, fileName });
+    return _previewHandlers.onImportPattern(parsed, effectiveOptions);
   }
 
   if (_activeReplayController?.loadImportedDiagnosticPattern) {
-    _activeReplayController.loadImportedDiagnosticPattern(parsed, { ...options, fileName });
+    _activeReplayController.loadImportedDiagnosticPattern(parsed, effectiveOptions);
     notifyActiveReplayTimelineController();
   }
   return parsed;

@@ -36,6 +36,8 @@ export class AudioConfigManager {
 
   load() {
     try {
+      const validBoostIds = new Set(BOOST_AUDIO_VARIATIONS.map((v) => v.id));
+      const normalizeBoostVar = (val) => (validBoostIds.has(val) ? val : DEFAULT_BOOST_VARIATION);
       const raw = safeStorage.getItem(AUDIO_SETTINGS_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -45,6 +47,9 @@ export class AudioConfigManager {
         this.config = {
           ...DEFAULT_AUDIO_CONFIG,
           ...parsed,
+          boostStartVariation: normalizeBoostVar(parsed.boostStartVariation),
+          boostLoopVariation: normalizeBoostVar(parsed.boostLoopVariation),
+          boostEndVariation: normalizeBoostVar(parsed.boostEndVariation),
           version: DEFAULT_AUDIO_CONFIG.version,
           logEventFilter: {
             ...createDefaultLogEventFilter(),

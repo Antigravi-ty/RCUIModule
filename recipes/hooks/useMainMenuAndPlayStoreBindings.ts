@@ -145,6 +145,7 @@ export function useLayer2GarageStoreBinding(
   const saveAndBroadcastColors = (nextPrefs: StoredColorPrefs) => {
     setColorPrefs(nextPrefs);
     const activeSlotId = saveStoredColorPrefs(nextPrefs);
+    useExperimentalMultiBotsStore.getState().syncExhibitionFromColorPrefs?.();
     const allColors = [...BLUE_TEAM_COLORS, ...ORANGE_TEAM_COLORS];
     const found = allColors.find((c) => c.id === activeSlotId);
     if (found) {

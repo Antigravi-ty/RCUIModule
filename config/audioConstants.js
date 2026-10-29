@@ -110,7 +110,7 @@ export const DEFAULT_BOOST_VARIATION = 'rush';
 export const BOOST_AUDIO_VARIATIONS = Object.freeze([
   {
     id: 'rush',
-    label: 'Rush',
+    label: 'Gold Rush',
     start: '/assets/audio/boost/rush/start.m4a',
     loop: '/assets/audio/boost/rush/loop.m4a',
     end: '/assets/audio/boost/rush/release.m4a',
@@ -135,27 +135,6 @@ export const BOOST_AUDIO_VARIATIONS = Object.freeze([
     start: '/assets/audio/boost/plasma/start.m4a',
     loop: '/assets/audio/boost/plasma/loop.m4a',
     end: '/assets/audio/boost/plasma/end.m4a',
-  },
-  {
-    id: 'confetti',
-    label: 'Confetti',
-    start: '/assets/audio/boost/confetti/start.m4a',
-    loop: '/assets/audio/boost/confetti/loop.m4a',
-    end: '/assets/audio/boost/confetti/end.m4a',
-  },
-  {
-    id: 'crankup',
-    label: 'Crankup',
-    start: '/assets/audio/boost/crankup/start.m4a',
-    loop: '/assets/audio/boost/crankup/loop.m4a',
-    end: '/assets/audio/boost/crankup/end.m4a',
-  },
-  {
-    id: 'partyHorn',
-    label: 'Party Horn',
-    start: '/assets/audio/boost/partyHorn/start.m4a',
-    loop: '/assets/audio/boost/partyHorn/loop.m4a',
-    end: '/assets/audio/boost/partyHorn/end.m4a',
   },
 ]);
 

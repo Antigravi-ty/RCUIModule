@@ -33,6 +33,7 @@ export interface QuickNotificationSystemProps {
   isLight?: boolean;
   className?: string;
   absolute?: boolean;
+  placement?: 'top-right' | 'bottom-right';
   /**
    * Optional Slot 1 (Far Right) custom content (e.g. FloatingStackIcon, user avatar, custom utility button):
    * - undefined / null / false: Nothing is rendered in Slot 1. Zero empty spacers or redundant DOM.
@@ -81,6 +82,7 @@ export const QuickNotificationSystem: React.FC<QuickNotificationSystemProps> = (
   isLight = false,
   className = '',
   absolute = true,
+  placement = 'top-right',
   slotRight,
   activeNotification: controlledActive,
   ongoingNotification: controlledOngoing,
@@ -222,12 +224,18 @@ export const QuickNotificationSystem: React.FC<QuickNotificationSystemProps> = (
   const isBubbleVisible = effectiveUnread.length > 0;
 
   const hasSlotRight = Boolean(slotRight);
+  const isBottomRight = placement === 'bottom-right';
+  const anchorClass = isBottomRight
+    ? absolute
+      ? 'absolute bottom-[180px] right-5 flex-col-reverse'
+      : 'fixed bottom-[180px] right-6 flex-col-reverse'
+    : absolute
+    ? 'absolute top-4 right-4 flex-col'
+    : 'fixed top-4 right-6 flex-col';
 
   return (
     <div
-      className={`${
-        absolute ? 'absolute top-4 right-4' : 'fixed top-4 right-6'
-      } z-[900] select-none flex flex-col items-end pointer-events-auto ${className}`}
+      className={`${anchorClass} z-[900] select-none flex items-end pointer-events-auto ${className}`}
     >
       {/* ──────────────────────────────────────────────────────────────────
           Top Bar Cluster:
@@ -424,7 +432,9 @@ export const QuickNotificationSystem: React.FC<QuickNotificationSystemProps> = (
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
             }}
-            className={`mt-2.5 flex flex-col items-end gap-2 z-40 max-h-[460px] overflow-y-auto overflow-x-hidden p-2 ${
+            className={`${
+              isBottomRight ? 'mb-2.5' : 'mt-2.5'
+            } flex flex-col items-end gap-2 z-40 max-h-[460px] overflow-y-auto overflow-x-hidden p-2 ${
               hasSlotRight ? 'pr-[50px]' : 'pr-0.5'
             } [&::-webkit-scrollbar]:hidden`}
           >

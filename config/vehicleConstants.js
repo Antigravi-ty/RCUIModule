@@ -229,24 +229,22 @@ export const BOOST_AUDIO_PRESET_IDS = Object.freeze([
   'rush',
   'standard',
   'flamethrower',
-  'plasma',
-  'confetti',
-  'crankup',
-  'partyHorn'
+  'plasma'
 ]);
 
 export function encodePaintFinishIndex(paintFinish) {
   if (typeof paintFinish === 'number' && Number.isFinite(paintFinish)) {
     return (paintFinish & 1);
   }
-  return paintFinish === 'metallic' ? 1 : 0;
+  return paintFinish === 'matte' ? 0 : 1;
 }
 
 export function decodePaintFinishIndex(index) {
   if (typeof index === 'string') {
-    return index === 'metallic' ? 'metallic' : 'matte';
+    return index === 'matte' ? 'matte' : 'metallic';
   }
-  return (Number(index) & 1) === 1 ? 'metallic' : 'matte';
+  if (index === null || index === undefined) return 'metallic';
+  return (Number(index) & 1) === 0 ? 'matte' : 'metallic';
 }
 
 export function encodeBoostVisualIndex(boostVisual) {
@@ -292,7 +290,7 @@ export function decodeBoostAudioIndex(index) {
  *   bits 13..15: hitboxIndex + 1 (1..6, 0 = default from visual)
  *   bit  16    : paintFinishIndex (0 = matte, 1 = metallic)
  *   bit  17    : boostVisualIndex (0 = gold-rush, 1 = cartoon)
- *   bits 18..20: boostAudioIndex  (0..7: rush, standard, flamethrower, plasma, ...)
+ *   bits 18..20: boostAudioIndex  (0..3: rush, standard, flamethrower, plasma)
  *   bit  21    : hasExtendedCosmetics flag (1 when bits 16..20 are explicitly populated)
  */
 export function packLoadoutSignalParam2(
@@ -336,7 +334,7 @@ export function unpackLoadoutSignalParam2(param2) {
     : resolveHitboxIndex(visualId);
   const hitboxId = decodeHitboxIndex(hitboxIndex);
   const hasExtended = ((raw >>> 21) & 0x01) !== 0;
-  const paintFinishIndex = hasExtended ? ((raw >>> 16) & 0x01) : 0;
+  const paintFinishIndex = hasExtended ? ((raw >>> 16) & 0x01) : 1;
   const boostVisualIndex = hasExtended ? ((raw >>> 17) & 0x01) : 0;
   const boostAudioIndex = hasExtended ? ((raw >>> 18) & 0x07) : 0;
   return {
@@ -402,7 +400,7 @@ export function unpackLoadoutCommandParam1(param1) {
  *   bits  0..7 : colorSlot (0..255)
  *   bit   8    : paintFinishIndex (0 = matte, 1 = metallic)
  *   bit   9    : boostVisualIndex (0 = gold-rush, 1 = cartoon)
- *   bits 10..12: boostAudioIndex  (0..7)
+ *   bits 10..12: boostAudioIndex  (0..3)
  *   bit  15    : 0x8000 (1 when extended personal cosmetics are packed)
  */
 export function packLoadoutCommandParam2(
@@ -430,7 +428,7 @@ export function unpackLoadoutCommandParam2(param2) {
   const raw = (param2 ?? 0) & 0xFFFF;
   const colorSlot = raw & 0xFF;
   const hasExtended = (raw & 0x8000) !== 0;
-  const paintFinishIndex = hasExtended ? ((raw >>> 8) & 0x01) : 0;
+  const paintFinishIndex = hasExtended ? ((raw >>> 8) & 0x01) : 1;
   const boostVisualIndex = hasExtended ? ((raw >>> 9) & 0x01) : 0;
   const boostAudioIndex = hasExtended ? ((raw >>> 10) & 0x07) : 0;
   return {

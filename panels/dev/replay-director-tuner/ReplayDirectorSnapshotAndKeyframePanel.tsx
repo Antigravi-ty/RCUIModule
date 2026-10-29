@@ -126,6 +126,14 @@ export const ReplayDirectorSnapshotAndKeyframePanel: React.FC<
               >
                 MaxJerk #{peaks.maxEyeAccel?.frameId} ({peaks.maxEyeAccel?.valueUu}u)
               </button>
+              {typeof liveSnapshot?.importedSummary?.totalYawPathDeg === 'number' && (
+                <span
+                  title={`Total cumulative yaw rotation path across replay (< 360° budget). Net yaw span: ${liveSnapshot?.importedSummary?.netYawSpanDeg ?? 0}°`}
+                  className="px-1.5 py-0.5 rounded border border-violet-500/40 bg-violet-500/10 text-violet-300"
+                >
+                  TotalYaw {liveSnapshot.importedSummary.totalYawPathDeg}°
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -247,23 +255,28 @@ export const ReplayDirectorSnapshotAndKeyframePanel: React.FC<
             </b>
           </span>
           <span>
-            Ball Pos / Focus:{' '}
+            Ball / Anchors:{' '}
             <b>
-              [{Math.round(liveSnapshot.ball.pos[0])}, {Math.round(liveSnapshot.ball.pos[1])},{' '}
-              {Math.round(liveSnapshot.ball.pos[2])}] · C
-              {liveSnapshot.lookahead.activeTouchCarIndex}
+              C{liveSnapshot.lookahead.activeTouchCarIndex}
               {liveSnapshot.lookahead.nextTouchCarIndex >= 0
                 ? `->C${liveSnapshot.lookahead.nextTouchCarIndex}`
+                : ''}
+              {(liveSnapshot.lookahead.interceptorCarIndex ?? -1) >= 0
+                ? ` +OppC${liveSnapshot.lookahead.interceptorCarIndex}(${Math.round(
+                    (liveSnapshot.lookahead.interceptorBlend ?? 0) * 100
+                  )}%)`
                 : ''}{' '}
-              ({liveSnapshot.cars?.length || 1} car
-              {(liveSnapshot.cars?.length || 1) > 1 ? 's' : ''})
+              ({liveSnapshot.cars?.length || 1}c)
             </b>
           </span>
           <span>
-            View Angle (Car / Ball):{' '}
+            View Angle (Car/Ball/Opp):{' '}
             <b className="text-sky-300">
               {(liveSnapshot.cameraPose.carViewAngleDeg ?? 0).toFixed(1)}° /{' '}
               {(liveSnapshot.cameraPose.ballViewAngleDeg ?? 0).toFixed(1)}°
+              {typeof liveSnapshot.cameraPose.interceptorViewAngleDeg === 'number'
+                ? ` / ${liveSnapshot.cameraPose.interceptorViewAngleDeg.toFixed(1)}°`
+                : ''}
             </b>
           </span>
           <span>

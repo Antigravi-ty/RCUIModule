@@ -57,9 +57,89 @@ export const ReplayDirectorCameraCard: React.FC<ReplayDirectorCameraCardProps> =
       {activeTab === 'framing' && (
         <div className={`p-2.5 rounded-xl border flex flex-col gap-2.5 ${subPanelBg}`}>
           <div className="flex items-center justify-between border-b border-neutral-700/30 pb-1">
+            <span className="text-[11px] font-semibold flex items-center gap-1.5 text-emerald-400">
+              <Camera className="h-3.5 w-3.5" />
+              <span>Suffix Safe-Zone &amp; Low Camera Elevation</span>
+            </span>
+            <span className={`text-[10px] font-mono ${mutedText}`}>Single-Sweep Plan</span>
+          </div>
+
+          <SliderControl
+            label={`Base Camera Height (${Math.round(cfg.cameraBaseHeightUu ?? 195)} UU)`}
+            description={`Low-angle cinematic camera floor elevation (default ${DEFAULT_REPLAY_DIRECTOR_CONFIG.cameraBaseHeightUu} UU)`}
+            value={cfg.cameraBaseHeightUu ?? 195}
+            min={110}
+            max={420}
+            step={5}
+            unit="UU"
+            editable={true}
+            showStepper={true}
+            colorScheme="amber"
+            isLight={isLight}
+            onChange={(v) => onParamChange('cameraBaseHeightUu', v)}
+          />
+
+          <SliderControl
+            label={`Aerial Height Follow Slope (${Math.round((cfg.cameraAerialHeightSlope ?? 0.36) * 100)}%)`}
+            description="How much camera Z rises with aerial plays (lower = stays lower to the pitch)"
+            value={cfg.cameraAerialHeightSlope ?? 0.36}
+            min={0.1}
+            max={0.85}
+            step={0.02}
+            editable={true}
+            showStepper={true}
+            colorScheme="amber"
+            isLight={isLight}
+            onChange={(v) => onParamChange('cameraAerialHeightSlope', v)}
+          />
+
+          <SliderControl
+            label={`Suffix Time-Decay Release (${(cfg.suffixTimeDecayRate ?? 1.4).toFixed(2)})`}
+            description="Progressive expansion rate as past points are eliminated from the remaining suffix safe-zone"
+            value={cfg.suffixTimeDecayRate ?? 1.4}
+            min={0.4}
+            max={3.0}
+            step={0.05}
+            editable={true}
+            showStepper={true}
+            colorScheme="neutral"
+            isLight={isLight}
+            onChange={(v) => onParamChange('suffixTimeDecayRate', v)}
+          />
+
+          <SliderControl
+            label={`Backward-Forward Smooth Passes (${Math.round(cfg.trajectorySmoothPasses ?? 4)})`}
+            description="Zero-phase trajectory smoothing passes deduced backward from final free space"
+            value={cfg.trajectorySmoothPasses ?? 4}
+            min={1}
+            max={8}
+            step={1}
+            editable={true}
+            showStepper={true}
+            colorScheme="neutral"
+            isLight={isLight}
+            onChange={(v) => onParamChange('trajectorySmoothPasses', v)}
+          />
+
+          <SliderControl
+            label={`Total Yaw Rotation Budget (${Math.round(cfg.maxTotalYawBudgetDeg ?? 320)}°)`}
+            description="Maximum total cumulative yaw rotation path allowed across the entire replay (< 360°)"
+            value={cfg.maxTotalYawBudgetDeg ?? 320}
+            min={90}
+            max={355}
+            step={5}
+            unit="°"
+            editable={true}
+            showStepper={true}
+            colorScheme="amber"
+            isLight={isLight}
+            onChange={(v) => onParamChange('maxTotalYawBudgetDeg', v)}
+          />
+
+          <div className="flex items-center justify-between border-b border-neutral-700/30 pb-1 pt-1">
             <span className="text-[11px] font-semibold flex items-center gap-1.5 text-amber-400">
               <Sliders className="h-3.5 w-3.5" />
-              <span>Smoothing & Transition Damping</span>
+              <span>Smoothing &amp; Transition Damping</span>
             </span>
             <span className={`text-[10px] font-mono ${mutedText}`}>1/s exp decay</span>
           </div>
@@ -112,7 +192,7 @@ export const ReplayDirectorCameraCard: React.FC<ReplayDirectorCameraCardProps> =
           <div className="flex items-center justify-between border-b border-neutral-700/30 pb-1 pt-1">
             <span className="text-[11px] font-semibold flex items-center gap-1.5 text-sky-400">
               <Camera className="h-3.5 w-3.5" />
-              <span>Corridor & Goal-Box Distances (UU)</span>
+              <span>Corridor &amp; Goal-Box Distances (UU)</span>
             </span>
             <span className={`text-[10px] font-mono ${mutedText}`}>Unreal Units</span>
           </div>
@@ -184,13 +264,13 @@ export const ReplayDirectorCameraCard: React.FC<ReplayDirectorCameraCardProps> =
           <div className="flex items-center justify-between border-b border-neutral-700/30 pb-1">
             <span className="text-[11px] font-semibold flex items-center gap-1.5 text-emerald-400">
               <Eye className="h-3.5 w-3.5" />
-              <span>Two-Touch Lookahead & Striker Weighting</span>
+              <span>Scoring Anchors &amp; Opponent Interceptors</span>
             </span>
           </div>
 
           <SliderControl
             label={`Striker Car Midpoint Max Weight (${Math.round(cfg.carMidpointMaxWeight * 100)}%)`}
-            description="Max weight of active touch car in Car-Ball composite midpoint (0% = pure ball cam)"
+            description="Mandatory weight of scoring-team touch car in composite anchor"
             value={cfg.carMidpointMaxWeight}
             min={0.0}
             max={0.75}
@@ -200,6 +280,35 @@ export const ReplayDirectorCameraCard: React.FC<ReplayDirectorCameraCardProps> =
             colorScheme="amber"
             isLight={isLight}
             onChange={(v) => onParamChange('carMidpointMaxWeight', v)}
+          />
+
+          <SliderControl
+            label={`Opponent Interceptor Framing Weight (${Math.round((cfg.interceptorFramingWeight ?? 0.72) * 100)}%)`}
+            description="Frames opponent defender/blocker trajectory when challenging the ball so failed saves remain visible"
+            value={cfg.interceptorFramingWeight ?? 0.72}
+            min={0.0}
+            max={1.0}
+            step={0.02}
+            editable={true}
+            showStepper={true}
+            colorScheme="amber"
+            isLight={isLight}
+            onChange={(v) => onParamChange('interceptorFramingWeight', v)}
+          />
+
+          <SliderControl
+            label={`Interceptor Lookahead Window (${(cfg.interceptorLookaheadSeconds ?? 1.65).toFixed(2)}s)`}
+            description="How early before an opponent block/challenge to include the defender in the safe viewing cone"
+            value={cfg.interceptorLookaheadSeconds ?? 1.65}
+            min={0.3}
+            max={3.5}
+            step={0.05}
+            unit="s"
+            editable={true}
+            showStepper={true}
+            colorScheme="neutral"
+            isLight={isLight}
+            onChange={(v) => onParamChange('interceptorLookaheadSeconds', v)}
           />
 
           <SliderControl

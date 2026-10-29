@@ -3,6 +3,7 @@ import { Wifi, Download, Pause, Play, User } from 'lucide-react';
 import { PacingOscilloscopeChart, PacingRingBuffer } from '../../charts/PacingOscilloscopeChart';
 import { Button } from '../../primitives/Button';
 import { quickNotification } from '../../stores/quickNotificationStore';
+import { useNetworkMonitorPanelStoreBindings } from './useUserPanelStoreBindings';
 
 export type NetworkSessionMode = 'online-client' | 'online-host' | 'single-player';
 
@@ -99,8 +100,8 @@ function createInitialPacingBuffer(seedSamples?: NetworkDiagnosticsSample[]): Pa
  * 3. Embedded `<PacingOscilloscopeChart variant="embedded" />` + `Freeze` and `Clear` (`Reset`) controls (no Inject Starvation).
  */
 export const NetworkMonitorFloatingWindow: React.FC<NetworkMonitorFloatingWindowProps> =
-  React.memo(
-    ({
+  React.memo((rawProps) => {
+    const {
       isLight = false,
       snapshot,
       historySamples,
@@ -116,7 +117,7 @@ export const NetworkMonitorFloatingWindow: React.FC<NetworkMonitorFloatingWindow
       onClear,
       onReset,
       onExportLog,
-    }) => {
+    } = useNetworkMonitorPanelStoreBindings(rawProps);
       const [internalSessionMode, setInternalSessionMode] =
         useState<NetworkSessionMode>(defaultSessionMode);
       const [internalIsPaused, setInternalIsPaused] = useState<boolean>(defaultIsPaused);

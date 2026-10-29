@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   BARRIER_GRID_COLS,
   BARRIER_GRID_ROWS,
@@ -22,6 +22,11 @@ import {
   useRewinderStore,
   type RewinderDownCounterSec,
 } from '../../stores/rewinderStore';
+import { useAppStore } from '../../stores/appStore';
+import { useNetworkDiagnosticsData } from '../../stores/networkDiagnosticsStore';
+import { globalPacingTelemetryRecorder } from '../../stores/pacingTelemetryRecorder.js';
+import { downloadNetworkTelemetryZip } from '../../stores/pacingTelemetryExporter.js';
+import { useTelemetryData } from '../../stores/perfTelemetryStore';
 import type {
   GoalBarrierConfiguratorFloatingWindowProps,
   GoalBarrierPlacement,
@@ -35,6 +40,15 @@ import type {
   RewinderBadgeState,
   RewinderDownCounterOption,
 } from './RewinderConfiguratorFloatingWindow';
+import type {
+  NetworkMonitorFloatingWindowProps,
+  NetworkDiagnosticsSnapshot,
+  NetworkSessionMode,
+} from './NetworkMonitorFloatingWindow';
+import type {
+  PerformanceMonitorFloatingWindowProps,
+  LiveSystemTelemetrySnapshot,
+} from './PerformanceMonitorFloatingWindow';
 
 function rectsToGrid(rects: NormalizedRect[]): Uint8Array {
   const grid = new Uint8Array(BARRIER_GRID_COLS * BARRIER_GRID_ROWS);
@@ -266,10 +280,10 @@ export function useReplayViewerPanelStoreBindings(
       props.onLoadRecentReplay ?? (() => runtimeHandlers.onLoadRetainedMatchReplay?.()),
     incidentMarkers:
       props.incidentMarkers ??
-      (mappedIncidentMarkers.length > 0 ? mappedIncidentMarkers : undefined),
+      (loadedFileName ? mappedIncidentMarkers : undefined),
     signalMarkers:
       props.signalMarkers ??
-      (mappedSignalMarkers.length > 0 ? mappedSignalMarkers : undefined),
+      (loadedFileName ? mappedSignalMarkers : undefined),
   };
 }
 
@@ -350,3 +364,98 @@ export function useRewinderPanelStoreBindings(
         })),
   };
 }
+
+export function useNetworkMonitorPanelStoreBindings(
+  props: NetworkMonitorFloatingWindowProps
+): NetworkMonitorFloatingWindowProps {
+  const { metrics } = useNetworkDiagnosticsData();
+  const onlineSession = useAppStore((s) => s.onlineSession);
+  const bridge = useAppStore((s) => s.bridge);
+
+  useEffect(() => {
+    bridge?.onEnsureNetworkDiagnostics?.();
+  }, [bridge]);
+
+  const hasHostRuntime = Boolean(bridge?.onEnsureNetworkDiagnostics || metrics);
+
+  const sessionMode: NetworkSessionMode = onlineSession?.roomId
+    ? onlineSession.isHosting
+      ? 'online-host'
+      : 'online-client'
+    : 'single-player';
+
+  const storeSnapshot = useMemo<NetworkDiagnosticsSnapshot | undefined>(() => {
+    if (!hasHostRuntime) return undefined;
+    const raw = metrics as Record<string, any> | undefined;
+    return {
+      sessionMode,
+      rttMs: metrics?.rttMs || 0,
+      jitterMs: metrics?.jitterMs || 0,
+      leadTicks: raw?.effectiveBuffer ?? metrics?.clientLeadTicks ?? 0,
+      physicsRateHz: raw?.physicsRateHz || 120,
+      rollbackCount: raw?.rollbackCount ?? metrics?.corrections ?? 0,
+      targetBuffer: raw?.targetBuffer || 0,
+      serverBuffer: raw?.serverBuffer || 0,
+    };
+  }, [hasHostRuntime, sessionMode, metrics]);
+
+  if (!hasHostRuntime) {
+    return props;
+  }
+
+  return {
+    ...props,
+    sessionMode: props.sessionMode ?? sessionMode,
+    snapshot: props.snapshot ?? storeSnapshot,
+    onExportLog:
+      props.onExportLog ??
+      (() => {
+        try {
+          downloadNetworkTelemetryZip();
+        } catch (err: unknown) {
+          console.error('[NetworkDiagnostics] Export failed:', err);
+        }
+      }),
+    onClear:
+      props.onClear ??
+      (() => {
+        globalPacingTelemetryRecorder.reset();
+      }),
+  };
+}
+
+export function usePerformanceMonitorPanelStoreBindings(
+  props: PerformanceMonitorFloatingWindowProps
+): PerformanceMonitorFloatingWindowProps {
+  const { data: snap } = useTelemetryData(180, true);
+
+  const telemetrySnapshot = useMemo<LiveSystemTelemetrySnapshot | undefined>(() => {
+    if (!snap) return undefined;
+    return {
+      frameTimeMs: snap.frameMs || 8.33,
+      budgetMs: snap.budgetMs || 8.33,
+      refreshHz: snap.refreshHz || 120,
+      p50Ms: snap.p50 || 8.3,
+      p95Ms: snap.p95 || 8.5,
+      p99Ms: snap.p99 || 9.0,
+      peakMs: snap.worstMs || 9.5,
+      overBudgetPct: snap.overBudgetPct || 0,
+      physicsStepHz: snap.sim?.physicsRateHz || 120,
+      substepsPerTick: snap.sim?.ticksPerFrame || 1,
+      drawCalls: snap.renderer?.drawCalls || 0,
+      trianglesLabel: String(snap.renderer?.triangles ?? '0'),
+      geometries: snap.renderer?.geometries || 0,
+    };
+  }, [snap]);
+
+  if (!telemetrySnapshot) {
+    return props;
+  }
+
+  return {
+    ...props,
+    snapshot: props.snapshot ?? telemetrySnapshot,
+  };
+}
+
+

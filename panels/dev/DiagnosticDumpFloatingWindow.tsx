@@ -162,6 +162,17 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
   };
 
   const handleExportUnifiedDumpZip = () => {
+    const bridge = networkDiagnosticsStore.getSnapshot().bridge;
+    if (bridge.onExportUnifiedDiagnosticDump) {
+      const status = bridge.onExportUnifiedDiagnosticDump({
+        includeClientReplay,
+        includeReconcileTelemetry,
+        includeServerReplay,
+      });
+      if (typeof status === 'string') setLastExportStatus(status);
+      return;
+    }
+
     const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const phaseSlug = !isOnlineSession ? 'offline' : isLobby ? 'lobby' : 'match';
     const entries: Array<{ name: string; data: Uint8Array | string }> = [];
@@ -262,8 +273,12 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
       setLastExportStatus('No client presentation replay frames recorded yet.');
       return;
     }
-    networkDiagnosticsStore.getSnapshot().bridge.onExportStandaloneClientReplay?.();
-    setLastExportStatus(`Exporting Client Replay (${clientFrames} frames / ${clientDurationSec}s)...`);
+    const status = networkDiagnosticsStore.getSnapshot().bridge.onExportStandaloneClientReplay?.();
+    setLastExportStatus(
+      typeof status === 'string'
+        ? status
+        : `Exporting Client Replay (${clientFrames} frames / ${clientDurationSec}s)...`
+    );
   };
 
   const handleExportStandaloneTelemetry = () => {

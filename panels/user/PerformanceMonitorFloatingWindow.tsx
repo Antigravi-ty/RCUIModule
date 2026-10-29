@@ -3,6 +3,7 @@ import { Cpu, HardDrive } from 'lucide-react';
 import { TelemetrySparklineChart, TelemetryPhaseItem } from '../../charts/TelemetrySparklineChart';
 import { TelemetryRingBuffer } from '../../charts/telemetryRingBuffer';
 import { quickNotification } from '../../stores/quickNotificationStore';
+import { usePerformanceMonitorPanelStoreBindings } from './useUserPanelStoreBindings';
 
 const INITIAL_FRAME_SAMPLES: number[] = [
   3.18, 3.24, 3.31, 3.22, 3.45, 3.28, 3.19, 3.35, 3.41, 3.26, 3.3, 3.21,
@@ -72,8 +73,8 @@ export interface PerformanceMonitorFloatingWindowProps {
  * 4. Bottom cards: WASM Physics & WebGL2 Pipeline (preserved)
  */
 export const PerformanceMonitorFloatingWindow: React.FC<PerformanceMonitorFloatingWindowProps> =
-  React.memo(
-    ({
+  React.memo((rawProps) => {
+    const {
       isLight = false,
       snapshot,
       frameSamplesMs,
@@ -85,7 +86,7 @@ export const PerformanceMonitorFloatingWindow: React.FC<PerformanceMonitorFloati
       onPauseToggle,
       onReset,
       onClear,
-    }) => {
+    } = usePerformanceMonitorPanelStoreBindings(rawProps);
       const budgetMs = propBudgetMs ?? snapshot?.budgetMs ?? 8.33;
       const refreshHz = propRefreshHz ?? snapshot?.refreshHz ?? 120;
 

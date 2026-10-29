@@ -26,8 +26,8 @@ export const GLOBAL_VEHICLE_SURFACE_MATERIALS = {
     mode: 'standard',
     color: '#bc8100',
     pearlColor: '#ff2a60',
-    metalness: 0.5,
-    roughness: 0.85,
+    metalness: 0.7,
+    roughness: 0.45,
     clearcoat: 1,
     clearcoatRoughness: 0.11,
     sheen: 0.7,
@@ -112,12 +112,12 @@ export function getActiveVehiclePaintFinishPreset() {
   const body = GLOBAL_VEHICLE_SURFACE_MATERIALS.body;
   if (
     body &&
-    Math.abs((body.metalness ?? 0.5) - VEHICLE_PAINT_FINISH_PRESETS.metallic.metalness) < 0.05 &&
-    Math.abs((body.roughness ?? 0.85) - VEHICLE_PAINT_FINISH_PRESETS.metallic.roughness) < 0.05
+    Math.abs((body.metalness ?? 0.7) - VEHICLE_PAINT_FINISH_PRESETS.matte.metalness) < 0.05 &&
+    Math.abs((body.roughness ?? 0.45) - VEHICLE_PAINT_FINISH_PRESETS.matte.roughness) < 0.05
   ) {
-    return 'metallic';
+    return 'matte';
   }
-  return 'matte';
+  return 'metallic';
 }
 
 export const GLOBAL_VEHICLE_LAMPS_CONFIG = {

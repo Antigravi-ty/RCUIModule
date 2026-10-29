@@ -10,13 +10,10 @@ export interface PhaseVariationItem {
 }
 
 export const DEFAULT_BOOST_VARIATION_ITEMS: PhaseVariationItem[] = [
-  { id: 'rush', label: 'Rush', isDefault: true },
-  { id: 'cosmic', label: 'Cosmic' },
+  { id: 'rush', label: 'Gold Rush', isDefault: true },
   { id: 'standard', label: 'Standard' },
+  { id: 'flamethrower', label: 'Flamethrower' },
   { id: 'plasma', label: 'Plasma' },
-  { id: 'ion', label: 'Ion' },
-  { id: 'thermal', label: 'Thermal' },
-  { id: 'bubbles', label: 'Bubbles' },
 ];
 
 export interface PhaseVariationSelection {
@@ -49,7 +46,7 @@ export const PhaseVariationMatrix: React.FC<PhaseVariationMatrixProps> = React.m
   ({
     title = 'Boost Audio Variation Tuner',
     subtitle = 'Select one variation per column (Start / Loop / End) · Click cell to preview',
-    badgeText = '7 Sets · M4A',
+    badgeText = '4 Sets · M4A',
     variations = DEFAULT_BOOST_VARIATION_ITEMS,
     defaultVariationId = variations[0]?.id ?? 'rush',
     selection: controlledSelection,

@@ -12,7 +12,7 @@ export const MATERIALS_STORAGE_KEY = STORAGE_KEYS.MATERIALS;
 export const DEFAULT_MATERIALS_CONFIG = {
   ballStyle: 'football',
   carPaint: 'cartoon',
-  paintFinish: 'matte',
+  paintFinish: 'metallic',
   demolishedEffect: 'toon',
   boostVisual: 'gold-rush',
   boostAudio: 'rush',
@@ -26,7 +26,7 @@ let activeMaterials = (() => {
     try {
       const parsed = { ...DEFAULT_MATERIALS_CONFIG, ...JSON.parse(raw) };
       if (parsed.paintFinish !== 'matte' && parsed.paintFinish !== 'metallic') {
-        parsed.paintFinish = 'matte';
+        parsed.paintFinish = 'metallic';
       }
       if (!parsed.boostAudio) {
         const audioCfg = getAudioSettings?.();
