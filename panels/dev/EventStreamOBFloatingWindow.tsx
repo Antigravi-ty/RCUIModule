@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Activity, Zap, RefreshCw, Filter, Sliders, Volume2, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import {
   useEventStreamData,
   eventStreamStore,
   type EventParamType,
 } from '../../stores/eventStreamStore';
+import { SliderControl } from '../../primitives/SliderControl';
 
 export interface EventStreamOBFloatingWindowProps {
   isLight?: boolean;
@@ -15,7 +16,6 @@ const SVG_HEIGHT = 120;
 
 export const EventStreamOBFloatingWindow: React.FC<EventStreamOBFloatingWindowProps> = ({
   isLight = false,
-  active = true,
 }) => {
   const state = useEventStreamData();
   const [filter, setFilter] = useState<'all' | 'car-ball' | 'car-world'>('all');
@@ -238,35 +238,31 @@ export const EventStreamOBFloatingWindow: React.FC<EventStreamOBFloatingWindowPr
           isLight ? 'bg-neutral-50/80 border-neutral-200' : 'bg-neutral-850/80 border-neutral-700/80'
         }`}
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-neutral-400">
-            <Volume2 className="h-3.5 w-3.5 text-amber-500" />
-            <span>Audio Threshold:</span>
-          </div>
-          <span className="font-bold text-amber-500">{Math.round(state.threshold)}</span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max={state.maxY}
-          step="10"
+        <SliderControl
+          label="Audio Threshold"
           value={state.threshold}
-          onChange={(e) => eventStreamStore.setThreshold(Number(e.target.value))}
-          className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+          min={0}
+          max={state.maxY}
+          step={10}
+          editable={true}
+          showStepper={true}
+          colorScheme="amber"
+          isLight={isLight}
+          onChange={(val) => eventStreamStore.setThreshold(val)}
         />
 
-        <div className="flex items-center justify-between gap-2 pt-1">
-          <span className="text-neutral-400">Time Window:</span>
-          <span className="font-bold text-neutral-200">{state.timeWindowSec.toFixed(1)}s</span>
-        </div>
-        <input
-          type="range"
-          min="1"
-          max="10"
-          step="0.5"
+        <SliderControl
+          label="Time Window"
           value={state.timeWindowSec}
-          onChange={(e) => eventStreamStore.setTimeWindow(Number(e.target.value))}
-          className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-sky-500"
+          min={1}
+          max={10}
+          step={0.5}
+          unit="s"
+          editable={true}
+          showStepper={true}
+          colorScheme="amber"
+          isLight={isLight}
+          onChange={(val) => eventStreamStore.setTimeWindow(val)}
         />
       </div>
     </div>

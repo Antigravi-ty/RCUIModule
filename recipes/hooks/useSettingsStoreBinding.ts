@@ -7,13 +7,24 @@ import {
   updateBallVisualConfig,
 } from '../../config/ballVisualConfig.js';
 import type {
-  Layer2SettingsRecipeProps,
+  GameplayConfig,
+  ClockPacingPriority,
   BallOpacityMode,
-} from '../Layer2SettingsRecipe';
+} from '../settings/tabs/GameplayTab';
+import type { AudioConfig } from '../settings/tabs/AudioTab';
+import type {
+  MenuPowerSaveOption,
+  FpsTargetOption,
+} from '../settings/tabs/DisplayTab';
+import type {
+  InputBufferTargetOption,
+  TelemetryOverlayConfig,
+} from '../settings/tabs/AdvancedTab';
 
-export function useLayer2SettingsStoreBinding(
-  props: Layer2SettingsRecipeProps
-): Layer2SettingsRecipeProps {
+export function useLayer2SettingsStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
 
@@ -104,7 +115,7 @@ export function useLayer2SettingsStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     developerMode: props.developerMode ?? developerMode,
     onDeveloperModeChange: props.onDeveloperModeChange ?? setDeveloperMode,
@@ -112,20 +123,21 @@ export function useLayer2SettingsStoreBinding(
     onClearHighlight: props.onClearHighlight ?? clearHighlightSetting,
     gameplayConfig: props.gameplayConfig ?? gameplay,
     onGameplayConfigChange:
-      props.onGameplayConfigChange ?? ((_next, patch) => updateGameplay(patch)),
+      props.onGameplayConfigChange ??
+      ((_next: GameplayConfig, patch: Partial<GameplayConfig>) => updateGameplay(patch)),
     ballCamIndicator: props.ballCamIndicator ?? gameplay.ballCamIndicator,
     onBallCamIndicatorChange:
       props.onBallCamIndicatorChange ??
-      ((enabled) => updateGameplay({ ballCamIndicator: enabled })),
+      ((enabled: boolean) => updateGameplay({ ballCamIndicator: enabled })),
     trajectoryEnabled: props.trajectoryEnabled ?? storeTrajectory.enabled,
     onTrajectoryEnabledChange:
       props.onTrajectoryEnabledChange ??
-      ((enabled) => updateStoreTrajectory({ enabled })),
+      ((enabled: boolean) => updateStoreTrajectory({ enabled })),
     clockPacingPriority:
       props.clockPacingPriority ?? (clockPacingPriority as any),
     onClockPacingPriorityChange:
       props.onClockPacingPriorityChange ??
-      ((prio) => setClockPacingPriority(prio as any)),
+      ((prio: ClockPacingPriority) => setClockPacingPriority(prio as any)),
     onNavigateTrainingDetail:
       props.onNavigateTrainingDetail ?? (() => navigate('training')),
     onNavigateKeybindingsDetail:
@@ -146,7 +158,7 @@ export function useLayer2SettingsStoreBinding(
     },
     onAudioConfigChange:
       props.onAudioConfigChange ??
-      ((_next, patch) => {
+      ((_next: AudioConfig, patch: Partial<AudioConfig>) => {
         const mapped: Record<string, unknown> = { ...patch };
         if (patch.muteWhenUnfocused !== undefined) {
           mapped.continueAudioOnLostFocus = !patch.muteWhenUnfocused;
@@ -157,19 +169,19 @@ export function useLayer2SettingsStoreBinding(
     muteWhenUnfocused: props.muteWhenUnfocused ?? !audio.continueAudioOnLostFocus,
     onMuteWhenUnfocusedChange:
       props.onMuteWhenUnfocusedChange ??
-      ((muted) => updateAudio({ continueAudioOnLostFocus: !muted })),
+      ((muted: boolean) => updateAudio({ continueAudioOnLostFocus: !muted })),
     masterVolume: props.masterVolume ?? audio.masterVolume,
     onMasterVolumeChange:
       props.onMasterVolumeChange ??
-      ((masterVolume) => updateAudio({ masterVolume })),
+      ((masterVolume: number) => updateAudio({ masterVolume })),
     engineVolume: props.engineVolume ?? audio.engineVolume,
     onEngineVolumeChange:
       props.onEngineVolumeChange ??
-      ((engineVolume) => updateAudio({ engineVolume })),
+      ((engineVolume: number) => updateAudio({ engineVolume })),
     boostVolume: props.boostVolume ?? audio.boostVolume,
     onBoostVolumeChange:
       props.onBoostVolumeChange ??
-      ((boostVolume) => updateAudio({ boostVolume })),
+      ((boostVolume: number) => updateAudio({ boostVolume })),
     onNavigateAudioDetail:
       props.onNavigateAudioDetail ?? (() => navigate('audio-eq')),
     theme: props.theme ?? storeTheme,
@@ -182,21 +194,23 @@ export function useLayer2SettingsStoreBinding(
     limitFps: props.limitFps ?? storeGraphics.limitFps,
     onLimitFpsChange:
       props.onLimitFpsChange ??
-      ((limitFps) => updateStoreGraphics({ limitFps })),
+      ((limitFps: boolean) => updateStoreGraphics({ limitFps })),
     maxFps: props.maxFps ?? storeGraphics.maxFps,
     onMaxFpsChange:
-      props.onMaxFpsChange ?? ((maxFps) => updateStoreGraphics({ maxFps })),
+      props.onMaxFpsChange ??
+      ((maxFps: number | FpsTargetOption) =>
+        updateStoreGraphics({ maxFps: Number(maxFps) || 120 })),
     renderScale: props.renderScale ?? renderScale,
     onRenderScaleChange:
       props.onRenderScaleChange ??
-      ((scale) => {
+      ((scale: number) => {
         setRenderScale(scale);
         updateStoreGraphics({ renderScale: scale });
       }),
     menuPowerSave: props.menuPowerSave ?? menuPowerSaveForTab,
     onMenuPowerSaveChange:
       props.onMenuPowerSaveChange ??
-      ((mode) => {
+      ((mode: MenuPowerSaveOption) => {
         const mapped =
           mode === 'extreme' || mode === 'freeze'
             ? 'freeze'
@@ -214,7 +228,8 @@ export function useLayer2SettingsStoreBinding(
     telemetryConfig: props.telemetryConfig ?? (storeTelemetry as any),
     onTelemetryConfigChange:
       props.onTelemetryConfigChange ??
-      ((_next, patch) => updateStoreTelemetry(patch as any)),
+      ((_next: TelemetryOverlayConfig, patch: Partial<TelemetryOverlayConfig>) =>
+        updateStoreTelemetry(patch as any)),
     ballOpacityMode: props.ballOpacityMode ?? ballOpacityMode,
     onBallOpacityModeChange:
       props.onBallOpacityModeChange ?? handleBallOpacityModeChange,
@@ -239,5 +254,5 @@ export function useLayer2SettingsStoreBinding(
     onNavigateDevUnderDevelopment:
       props.onNavigateDevUnderDevelopment ??
       (() => navigate('dev-under-development')),
-  };
+  } as TProps;
 }

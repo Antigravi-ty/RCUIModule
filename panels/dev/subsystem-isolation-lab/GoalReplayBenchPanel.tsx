@@ -323,14 +323,18 @@ export const GoalReplayBenchPanel: React.FC<GoalReplayBenchPanelProps> = ({
                 </button>
               </div>
             </div>
-            <input
-              type="range"
+            <SliderControl
+              label="Scrub Replay Timeline"
+              value={Number(progressPct.toFixed(1))}
               min={0}
               max={100}
               step={0.5}
-              value={progressPct}
-              onChange={(e) => runtimeHandlers.onGoalReplaySeekNormalized?.(Number(e.target.value) / 100)}
-              className="w-full accent-amber-400 cursor-pointer"
+              unit="%"
+              editable={true}
+              showStepper={true}
+              colorScheme="amber"
+              isLight={isLight}
+              onChange={(val) => runtimeHandlers.onGoalReplaySeekNormalized?.(val / 100)}
             />
           </div>
         )}

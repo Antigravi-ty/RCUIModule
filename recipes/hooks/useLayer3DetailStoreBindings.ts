@@ -1,32 +1,41 @@
 import { useEffect, useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
-import { useKickoffTrainingStore } from '../../stores/kickoffTrainingStore';
+import {
+  useKickoffTrainingStore,
+  type KickoffSubMode,
+} from '../../stores/kickoffTrainingStore';
 import { useRewinderStore } from '../../stores/rewinderStore';
 import { floatingStore } from '../../stores/floatingStore';
 import {
   REPLAY_VIEWER_PRESET,
   REWINDER_CONFIGURATOR_PRESET,
 } from '../../stores/floatingPresets';
-import type {
-  Layer3ExhibitionRecipeProps,
-  ExhibitionBotSetupConfig,
-} from '../Layer3ExhibitionRecipe';
-import type {
-  Layer3SelfTrainingRecipeProps,
-  SelfTrainingModeId,
-} from '../Layer3SelfTrainingRecipe';
-import type {
-  Layer3KickoffTrainingRecipeProps,
-  KickoffTrainingConfig,
-} from '../Layer3KickoffTrainingRecipe';
-import type { Layer3TrainingRecipeProps } from '../Layer3TrainingRecipe';
-import type { Layer3CameraRecipeProps } from '../Layer3CameraRecipe';
-import type { Layer3BallTrajectoryRecipeProps } from '../Layer3BallTrajectoryRecipe';
 
-export function useLayer3ExhibitionStoreBinding(
-  props: Layer3ExhibitionRecipeProps
-): Layer3ExhibitionRecipeProps {
+export interface ExhibitionBotSetupConfig {
+  format: '1v1' | '2v2' | '3v3';
+  difficulty: string;
+  duration: '90' | '180' | '300';
+}
+
+export type SelfTrainingModeId =
+  | 'free-play'
+  | 'static-training-pack'
+  | 'dynamic-training-pack'
+  | 'kickoff-training'
+  | 'replay-viewer';
+
+export interface KickoffTrainingConfig {
+  subMode: KickoffSubMode;
+  aiSpawnSide: 'opposite-side' | 'same-position';
+  ghostMode: boolean;
+  showRhythmHighway: boolean;
+}
+
+export function useLayer3ExhibitionStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -82,20 +91,21 @@ export function useLayer3ExhibitionStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : config),
-    onConfigChange: props.onConfigChange ?? ((next) => setConfig(next)),
+    onConfigChange: props.onConfigChange ?? ((next: ExhibitionBotSetupConfig) => setConfig(next)),
     onSelectDifficulty: props.onSelectDifficulty ?? handleStartExhibition,
     onNavigateAdvancedMutators:
       props.onNavigateAdvancedMutators ??
       (() => navigate('exp-multi-bots-config')),
     onBack: props.onBack ?? goBack,
-  };
+  } as TProps;
 }
 
-export function useLayer3SelfTrainingStoreBinding(
-  props: Layer3SelfTrainingRecipeProps
-): Layer3SelfTrainingRecipeProps {
+export function useLayer3SelfTrainingStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -138,15 +148,16 @@ export function useLayer3SelfTrainingStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     onSelectMode: props.onSelectMode ?? handleSelectMode,
-  };
+  } as TProps;
 }
 
-export function useLayer3KickoffTrainingStoreBinding(
-  props: Layer3KickoffTrainingRecipeProps
-): Layer3KickoffTrainingRecipeProps {
+export function useLayer3KickoffTrainingStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const closeMenu = useAppStore((s) => s.closeMenu);
   const setMatchMode = useAppStore((s) => s.setMatchMode);
@@ -194,40 +205,42 @@ export function useLayer3KickoffTrainingStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : config),
     onConfigChange: props.onConfigChange ?? handleConfigChange,
     onStartTraining: props.onStartTraining ?? handleStartTraining,
     onBack: props.onBack ?? goBack,
-  };
+  } as TProps;
 }
 
-export function useLayer3TrainingStoreBinding(
-  props: Layer3TrainingRecipeProps
-): Layer3TrainingRecipeProps {
+export function useLayer3TrainingStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const storeGameplay = useAppStore((s) => s.gameplay);
   const storeUpdateGameplay = useAppStore((s) => s.updateGameplay);
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     gameplay: props.gameplay ?? storeGameplay,
     onUpdateGameplay:
       props.onUpdateGameplay ??
-      ((patch) =>
+      ((patch: Record<string, any>) =>
         storeUpdateGameplay({
           ...(patch as any),
           ...(patch.showCarHitbox !== undefined
             ? { showCarHitbox: Boolean(patch.showCarHitbox) }
             : {}),
         })),
-  };
+  } as TProps;
 }
 
-export function useLayer3CameraStoreBinding(
-  props: Layer3CameraRecipeProps
-): Layer3CameraRecipeProps {
+export function useLayer3CameraStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const storeCamera = useAppStore((s) => s.camera);
   const storeUpdateCamera = useAppStore((s) => s.updateCamera);
@@ -235,20 +248,21 @@ export function useLayer3CameraStoreBinding(
   const setLivePreviewCollapsed = useAppStore((s) => s.setLivePreviewCollapsed);
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : storeCamera),
     onConfigChange:
-      props.onConfigChange ?? ((_next, patch) => storeUpdateCamera(patch)),
+      props.onConfigChange ?? ((_next: any, patch: any) => storeUpdateCamera(patch)),
     onReset: props.onReset ?? (() => storeResetCamera()),
     onCollapsePreview:
       props.onCollapsePreview ?? (() => setLivePreviewCollapsed(true)),
-  };
+  } as TProps;
 }
 
-export function useLayer3BallTrajectoryStoreBinding(
-  props: Layer3BallTrajectoryRecipeProps
-): Layer3BallTrajectoryRecipeProps {
+export function useLayer3BallTrajectoryStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const developerMode = useAppStore((s) => s.developerMode);
   const storeTrajectory = useAppStore((s) => s.trajectory);
@@ -256,15 +270,15 @@ export function useLayer3BallTrajectoryStoreBinding(
   const setLivePreviewCollapsed = useAppStore((s) => s.setLivePreviewCollapsed);
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     developerMode: props.developerMode ?? developerMode,
     config:
       props.config ??
       props.settings ??
       (props.defaultConfig ? undefined : storeTrajectory),
-    onChange: props.onChange ?? ((_next, patch) => storeUpdateTrajectory(patch)),
+    onChange: props.onChange ?? ((_next: any, patch: any) => storeUpdateTrajectory(patch)),
     onCollapsePreview:
       props.onCollapsePreview ?? (() => setLivePreviewCollapsed(true)),
-  };
+  } as TProps;
 }

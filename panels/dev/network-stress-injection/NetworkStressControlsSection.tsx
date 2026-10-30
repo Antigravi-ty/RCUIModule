@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Zap, Eye, RotateCcw, Bug, Activity } from 'lucide-react';
 import {
   useNetworkDiagnosticsData,
   networkDiagnosticsStore,
   NETWORK_STRESS_PRESET_LIST,
 } from '../../../stores/networkDiagnosticsStore';
+import { SliderControl } from '../../../primitives/SliderControl';
 
 export interface NetworkStressControlsSectionProps {
   isLight?: boolean;
@@ -14,41 +15,6 @@ export const NetworkStressControlsSection: React.FC<NetworkStressControlsSection
   isLight = false,
 }) => {
   const { metrics } = useNetworkDiagnosticsData();
-  const [periodInput, setPeriodInput] = useState<string>(String(metrics.burstPeriodMs ?? 1000));
-  const [durationInput, setDurationInput] = useState<string>(String(metrics.burstDurationMs ?? 0));
-  const [isEditingPeriod, setIsEditingPeriod] = useState(false);
-  const [isEditingDuration, setIsEditingDuration] = useState(false);
-
-  useEffect(() => {
-    if (!isEditingPeriod) {
-      setPeriodInput(String(metrics.burstPeriodMs ?? 1000));
-    }
-  }, [metrics.burstPeriodMs, isEditingPeriod]);
-
-  useEffect(() => {
-    if (!isEditingDuration) {
-      setDurationInput(String(metrics.burstDurationMs ?? 0));
-    }
-  }, [metrics.burstDurationMs, isEditingDuration]);
-
-  const commitBurstPeriodInput = () => {
-    setIsEditingPeriod(false);
-    const parsed = parseInt(periodInput, 10);
-    const nextPeriod = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1000;
-    networkDiagnosticsStore.setBurstPeriodMs(nextPeriod);
-    setPeriodInput(String(nextPeriod));
-  };
-
-  const commitBurstDurationInput = () => {
-    setIsEditingDuration(false);
-    const parsed = parseInt(durationInput, 10);
-    const maxAllowed = Math.max(0, (metrics.burstPeriodMs || 1000) - 1);
-    const nextDuration = Number.isFinite(parsed)
-      ? Math.max(0, Math.min(maxAllowed, parsed))
-      : 0;
-    networkDiagnosticsStore.setBurstDurationMs(nextDuration);
-    setDurationInput(String(nextDuration));
-  };
 
   return (
     <div
@@ -96,63 +62,63 @@ export const NetworkStressControlsSection: React.FC<NetworkStressControlsSection
       </div>
 
       {/* Asymmetric Uplink Delay Slider */}
-      <div className="flex items-center justify-between pt-0.5">
-        <span className="text-neutral-400">Uplink Delay ↑ (0~500ms):</span>
-        <span className="font-bold text-amber-400">+{metrics.extraUplinkMs} ms</span>
-      </div>
-      <input
-        type="range"
-        min="0"
-        max="500"
-        step={metrics.adjustStepMs}
+      <SliderControl
+        label="Uplink Delay ↑ (0~500ms)"
         value={metrics.extraUplinkMs}
-        onChange={(e) => networkDiagnosticsStore.setExtraUplinkLatency(Number(e.target.value))}
-        className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+        min={0}
+        max={500}
+        step={metrics.adjustStepMs}
+        unit=" ms"
+        editable={true}
+        showStepper={true}
+        colorScheme="amber"
+        isLight={isLight}
+        onChange={(val) => networkDiagnosticsStore.setExtraUplinkLatency(val)}
       />
 
       {/* Asymmetric Downlink Delay Slider */}
-      <div className="flex items-center justify-between">
-        <span className="text-neutral-400">Downlink Delay ↓ (0~500ms):</span>
-        <span className="font-bold text-orange-400">+{metrics.extraDownlinkMs} ms</span>
-      </div>
-      <input
-        type="range"
-        min="0"
-        max="500"
-        step={metrics.adjustStepMs}
+      <SliderControl
+        label="Downlink Delay ↓ (0~500ms)"
         value={metrics.extraDownlinkMs}
-        onChange={(e) => networkDiagnosticsStore.setExtraDownlinkLatency(Number(e.target.value))}
-        className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+        min={0}
+        max={500}
+        step={metrics.adjustStepMs}
+        unit=" ms"
+        editable={true}
+        showStepper={true}
+        colorScheme="amber"
+        isLight={isLight}
+        onChange={(val) => networkDiagnosticsStore.setExtraDownlinkLatency(val)}
       />
 
       {/* Jitter Slider */}
-      <div className="flex items-center justify-between">
-        <span className="text-neutral-400">Simulated Jitter (0~100ms):</span>
-        <span className="font-bold text-cyan-400">±{metrics.jitterMs} ms</span>
-      </div>
-      <input
-        type="range"
-        min="0"
-        max="100"
-        step="1"
+      <SliderControl
+        label="Simulated Jitter (0~100ms)"
         value={metrics.jitterMs}
-        onChange={(e) => networkDiagnosticsStore.setJitter(Number(e.target.value))}
-        className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+        min={0}
+        max={100}
+        step={1}
+        unit=" ms"
+        editable={true}
+        showStepper={true}
+        colorScheme="amber"
+        isLight={isLight}
+        onChange={(val) => networkDiagnosticsStore.setJitter(val)}
       />
 
       {/* Random Drop Slider (0~100%) */}
-      <div className="flex items-center justify-between">
-        <span className="text-neutral-400">Random Drop (0~100%):</span>
-        <span className="font-bold text-rose-400">{metrics.packetLossPct}%</span>
-      </div>
-      <input
-        type="range"
-        min="0"
-        max="100"
-        step="1"
+      <SliderControl
+        label="Random Drop (0~100%)"
         value={metrics.packetLossPct}
-        onChange={(e) => networkDiagnosticsStore.setPacketLoss(Number(e.target.value))}
-        className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-rose-500"
+        min={0}
+        max={100}
+        step={1}
+        unit="%"
+        editable={true}
+        showStepper={true}
+        colorScheme="amber"
+        isLight={isLight}
+        onChange={(val) => networkDiagnosticsStore.setPacketLoss(val)}
       />
 
       {/* Periodic / Intermittent Burst Drop Controls */}
@@ -173,68 +139,33 @@ export const NetworkStressControlsSection: React.FC<NetworkStressControlsSection
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-neutral-400">Burst Drop Period (1~5s / ms):</span>
-          <div className="flex items-center gap-1">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={periodInput}
-              onFocus={() => setIsEditingPeriod(true)}
-              onChange={(e) => setPeriodInput(e.target.value)}
-              onBlur={commitBurstPeriodInput}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  commitBurstPeriodInput();
-                  e.currentTarget.blur();
-                }
-              }}
-              className="w-16 px-1.5 py-0.5 rounded bg-neutral-900 border border-neutral-700 text-right font-mono text-[10px] text-amber-300 focus:outline-none focus:border-amber-400"
-            />
-            <span className="text-[10px] text-neutral-400">ms</span>
-          </div>
-        </div>
-        <input
-          type="range"
-          min="1000"
-          max="5000"
-          step="1000"
-          value={Math.min(5000, Math.max(1000, Math.round((metrics.burstPeriodMs || 2000) / 1000) * 1000))}
-          onChange={(e) => networkDiagnosticsStore.setBurstPeriodMs(Number(e.target.value))}
-          className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+        <SliderControl
+          label="Burst Drop Period (1~5s / ms)"
+          value={metrics.burstPeriodMs || 2000}
+          min={1000}
+          max={5000}
+          step={1000}
+          unit=" ms"
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={true}
+          colorScheme="amber"
+          isLight={isLight}
+          onChange={(val) => networkDiagnosticsStore.setBurstPeriodMs(Math.max(1, Math.round(val)))}
         />
 
-        <div className="flex items-center justify-between gap-2 pt-0.5">
-          <span className="text-neutral-400">
-            Burst Drop Duration ({metrics.burstDurationPct}% / max {Math.max(0, (metrics.burstPeriodMs || 2000) - 1)}ms):
-          </span>
-          <div className="flex items-center gap-1">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={durationInput}
-              onFocus={() => setIsEditingDuration(true)}
-              onChange={(e) => setDurationInput(e.target.value)}
-              onBlur={commitBurstDurationInput}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  commitBurstDurationInput();
-                  e.currentTarget.blur();
-                }
-              }}
-              className="w-16 px-1.5 py-0.5 rounded bg-neutral-900 border border-neutral-700 text-right font-mono text-[10px] text-rose-300 focus:outline-none focus:border-rose-400"
-            />
-            <span className="text-[10px] text-neutral-400">ms</span>
-          </div>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="99"
-          step="1"
+        <SliderControl
+          label={`Burst Drop Duration (${metrics.burstDurationMs ?? 0}ms / max ${Math.max(0, (metrics.burstPeriodMs || 2000) - 1)}ms)`}
           value={metrics.burstDurationPct}
-          onChange={(e) => networkDiagnosticsStore.setBurstDurationPct(Number(e.target.value))}
-          className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-rose-500"
+          min={0}
+          max={99}
+          step={1}
+          unit="%"
+          editable={true}
+          showStepper={true}
+          colorScheme="amber"
+          isLight={isLight}
+          onChange={(val) => networkDiagnosticsStore.setBurstDurationPct(val)}
         />
       </div>
 

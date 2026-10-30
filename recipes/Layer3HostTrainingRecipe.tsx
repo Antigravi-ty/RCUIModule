@@ -25,6 +25,9 @@ export interface HostTrainingConfig {
 export interface Layer3HostTrainingRecipeProps {
   isLight?: boolean;
   defaultConfig?: Partial<HostTrainingConfig>;
+  defaultGhostMode?: HostTrainingGhostMode;
+  progressStatus?: CreationProgressStatus;
+  currentStep?: number;
   onStartTraining?: (config: HostTrainingConfig) => void;
   onNavigateGarageSync?: () => void;
   onBack?: () => void;
@@ -42,6 +45,9 @@ export interface Layer3HostTrainingRecipeProps {
 export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> = React.memo(({
   isLight = true,
   defaultConfig,
+  defaultGhostMode,
+  progressStatus: controlledProgressStatus,
+  currentStep: controlledCurrentStep,
   onStartTraining,
   onNavigateGarageSync,
   onBack: propOnBack,
@@ -59,7 +65,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
     defaultConfig?.roomKey ?? ''
   );
   const [ghostMode, setGhostMode] = useState<HostTrainingGhostMode>(
-    defaultConfig?.ghostMode ?? 'automatically-enable'
+    defaultGhostMode ?? defaultConfig?.ghostMode ?? 'automatically-enable'
   );
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
@@ -68,8 +74,10 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   const { rowGap, paddingX } = useSettingActionRowStore();
 
   // 5-Step Creation Progress State
-  const [progressStatus, setProgressStatus] = useState<CreationProgressStatus>('idle');
-  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [internalProgressStatus, setProgressStatus] = useState<CreationProgressStatus>('idle');
+  const [internalCurrentStep, setCurrentStep] = useState<number>(1);
+  const progressStatus = controlledProgressStatus ?? internalProgressStatus;
+  const currentStep = controlledCurrentStep ?? internalCurrentStep;
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearStepTimer = () => {

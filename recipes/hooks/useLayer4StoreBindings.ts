@@ -23,20 +23,18 @@ import {
   setSelectedController,
   getConnectedGamepads,
 } from '../../config/InputBindings.js';
-import {
-  AUDIO_VOLUME_GROUPS,
-  type Layer4AdvancedAudioRecipeProps,
-} from '../Layer4AdvancedAudioRecipe';
 import type {
   PhaseVariationSelection,
   VariationPhaseId,
 } from '../../compounds/PhaseVariationMatrix';
-import type {
-  Layer4ControllerSettingsRecipeProps,
-  ControllerAxesConfig,
-} from '../Layer4ControllerSettingsRecipe';
-import type { Layer4EventTriggerRulesRecipeProps } from '../Layer4EventTriggerRulesRecipe';
 import type { EventCatalogEntry } from '../../compounds/tuner/EventFilterMatrix';
+
+export interface ControllerAxesConfig {
+  steer: { axis: number; invert: boolean };
+  pitch: { axis: number; invert: boolean };
+  deadzone: number;
+  triggerThreshold: number;
+}
 
 const GROUP_VOLUME_CONFIG_KEYS: Record<string, string[]> = {
   'vehicle-boost': [
@@ -75,9 +73,10 @@ const EVENT_CATALOG_ITEMS: EventCatalogEntry[] = CONSOLE_LOG_EVENT_CATALOG.map(
   })
 );
 
-export function useLayer4AdvancedAudioStoreBinding(
-  props: Layer4AdvancedAudioRecipeProps
-): Layer4AdvancedAudioRecipeProps {
+export function useLayer4AdvancedAudioStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const [boostSelection, setBoostSelection] = useState<PhaseVariationSelection>(
     () =>
@@ -203,8 +202,8 @@ export function useLayer4AdvancedAudioStoreBinding(
   };
 
   const handleResetGroupVolumes = () => {
-    for (const grp of AUDIO_VOLUME_GROUPS) {
-      handleGroupVolumeChange(grp.id, 100);
+    for (const groupId of Object.keys(GROUP_VOLUME_CONFIG_KEYS)) {
+      handleGroupVolumeChange(groupId, 100);
     }
   };
 
@@ -231,7 +230,7 @@ export function useLayer4AdvancedAudioStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     boostSelection:
       props.boostSelection ??
@@ -244,12 +243,13 @@ export function useLayer4AdvancedAudioStoreBinding(
     onGroupVolumeChange: props.onGroupVolumeChange ?? handleGroupVolumeChange,
     onResetGroupVolumes: props.onResetGroupVolumes ?? handleResetGroupVolumes,
     onExportJson: props.onExportJson ?? handleExportJson,
-  };
+  } as TProps;
 }
 
-export function useLayer4ControllerSettingsStoreBinding(
-  props: Layer4ControllerSettingsRecipeProps
-): Layer4ControllerSettingsRecipeProps {
+export function useLayer4ControllerSettingsStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const bridge = useAppStore((s) => s.bridge);
   const [bindings, setBindings] = useState(() => {
@@ -318,7 +318,7 @@ export function useLayer4ControllerSettingsStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     config:
       props.config ??
@@ -328,12 +328,13 @@ export function useLayer4ControllerSettingsStoreBinding(
     onReset: props.onReset ?? handleReset,
     inputDevice: props.inputDevice ?? inputDevice,
     onInputDeviceChange: props.onInputDeviceChange ?? handleInputDeviceChange,
-  };
+  } as TProps;
 }
 
-export function useLayer4EventTriggerRulesStoreBinding(
-  props: Layer4EventTriggerRulesRecipeProps
-): Layer4EventTriggerRulesRecipeProps {
+export function useLayer4EventTriggerRulesStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const [hitCooldownMs, setHitCooldownMs] = useState<number>(
     () => Number(audioConfig.get('carBallHitCooldownMs') ?? 40)
@@ -426,76 +427,76 @@ export function useLayer4EventTriggerRulesStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     eventCatalogItems: props.eventCatalogItems ?? EVENT_CATALOG_ITEMS,
     hitCooldownMs: props.hitCooldownMs ?? hitCooldownMs,
     onHitCooldownMsChange:
       props.onHitCooldownMsChange ??
-      ((val) => {
+      ((val: number) => {
         setHitCooldownMs(val);
         audioConfig.set('carBallHitCooldownMs', val);
       }),
     scrapeCooldownMs: props.scrapeCooldownMs ?? scrapeCooldownMs,
     onScrapeCooldownMsChange:
       props.onScrapeCooldownMsChange ??
-      ((val) => {
+      ((val: number) => {
         setScrapeCooldownMs(val);
         audioConfig.set('goalpostHitCooldownMs', val);
       }),
     supersonicHoldMs: props.supersonicHoldMs ?? supersonicHoldMs,
     onSupersonicHoldMsChange:
       props.onSupersonicHoldMsChange ??
-      ((val) => {
+      ((val: number) => {
         setSupersonicHoldMs(val);
         audioConfig.set('incidentCooldownMs', val);
       }),
     lightTouchImpulse: props.lightTouchImpulse ?? lightTouchImpulse,
     onLightTouchImpulseChange:
       props.onLightTouchImpulseChange ??
-      ((val) => {
+      ((val: number) => {
         setLightTouchImpulse(val);
         audioConfig.set('carBallHitImpulseThreshold', val);
       }),
     mediumHitImpulse: props.mediumHitImpulse ?? mediumHitImpulse,
     onMediumHitImpulseChange:
       props.onMediumHitImpulseChange ??
-      ((val) => {
+      ((val: number) => {
         setMediumHitImpulse(val);
         audioConfig.set('ballGroundHitThreshold', val);
       }),
     heavyBoomImpulse: props.heavyBoomImpulse ?? heavyBoomImpulse,
     onHeavyBoomImpulseChange:
       props.onHeavyBoomImpulseChange ??
-      ((val) => {
+      ((val: number) => {
         setHeavyBoomImpulse(val);
         audioConfig.set('ballWallHitThreshold', val);
       }),
     rimClankGate: props.rimClankGate ?? rimClankGate,
     onRimClankGateChange:
       props.onRimClankGateChange ??
-      ((val) => {
+      ((val: number) => {
         setRimClankGate(val);
         audioConfig.set('goalpostHitThreshold', val);
       }),
     carBumpGate: props.carBumpGate ?? carBumpGate,
     onCarBumpGateChange:
       props.onCarBumpGateChange ??
-      ((val) => {
+      ((val: number) => {
         setCarBumpGate(val);
         audioConfig.set('netDualTriggerAngleDeg', val);
       }),
     enableConsoleLog: props.enableConsoleLog ?? enableConsoleLog,
     onEnableConsoleLogChange:
       props.onEnableConsoleLogChange ??
-      ((val) => {
+      ((val: boolean) => {
         setEnableConsoleLog(val);
         audioConfig.set('logAllEvents', val);
       }),
     logHitStructsOnly: props.logHitStructsOnly ?? logHitStructsOnly,
     onLogHitStructsOnlyChange:
       props.onLogHitStructsOnlyChange ??
-      ((val) => {
+      ((val: boolean) => {
         setLogHitStructsOnly(val);
         audioConfig.set('logCarBallHitEvents', val);
       }),
@@ -503,5 +504,5 @@ export function useLayer4EventTriggerRulesStoreBinding(
     onToggleEventHex: props.onToggleEventHex ?? handleToggleEventHex,
     onSelectAllEvents: props.onSelectAllEvents ?? handleSelectAllEvents,
     onDeselectAllEvents: props.onDeselectAllEvents ?? handleDeselectAllEvents,
-  };
+  } as TProps;
 }

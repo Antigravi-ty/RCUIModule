@@ -5,13 +5,12 @@ import {
   getActiveEditItemVariable,
   mutateActiveEditItemVariable,
 } from '../../stores/staticTrainingPackStore';
-import type { Layer4StaticTrainingPackBrowseRecipeProps } from '../Layer4StaticTrainingPackBrowseRecipe';
-import type { Layer5StaticTrainingPackEditRecipeProps } from '../Layer5StaticTrainingPackEditRecipe';
 import type { StaticTrainingShotItem } from '../static-training/staticTrainingTypes';
 
-export function useLayer4StaticTrainingPackBrowseStoreBinding(
-  props: Layer4StaticTrainingPackBrowseRecipeProps
-): Layer4StaticTrainingPackBrowseRecipeProps {
+export function useLayer4StaticTrainingPackBrowseStoreBinding<
+  TProps extends object
+>(rawProps: TProps): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const packs = useStaticTrainingPackStore((s) => s.packs);
   const selectedPackUuid = useStaticTrainingPackStore(
@@ -45,12 +44,12 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
   }, [initialized, initStore]);
 
   return {
-    ...props,
+    ...rawProps,
     packs: props.packs ?? (packs.length > 0 ? packs : undefined),
     selectedPackUuid: props.selectedPackUuid ?? selectedPackUuid,
     onSelectPack:
       props.onSelectPack ??
-      ((uuid) => {
+      ((uuid: string) => {
         void selectPack(uuid);
       }),
     downCounterEnabled: props.downCounterEnabled ?? downCounterEnabled,
@@ -61,36 +60,37 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
       props.onDownCounterValueChange ?? setDownCounterValue,
     onCreatePack:
       props.onCreatePack ??
-      (async (title, desc) => {
+      (async (title: string, desc: string) => {
         await createPack(title, desc);
       }),
     onSavePackMetadata:
       props.onSavePackMetadata ??
-      (async (uuid, title, desc) => {
+      (async (uuid: string, title: string, desc: string) => {
         await updatePackInfo(uuid, title, desc);
       }),
     onDeletePack:
       props.onDeletePack ??
-      (async (uuid) => {
+      (async (uuid: string) => {
         await deletePack(uuid);
       }),
     onExportPack:
       props.onExportPack ??
-      (async (pack) => {
+      (async (pack: { uuid: string }) => {
         await exportPackRCS(pack.uuid);
       }),
     onImportPackFile:
       props.onImportPackFile ??
-      (async (file) => {
+      (async (file: File) => {
         await importPackRCS(file);
       }),
     onBack: props.onBack ?? goBack,
-  };
+  } as TProps;
 }
 
-export function useLayer5StaticTrainingPackEditStoreBinding(
-  props: Layer5StaticTrainingPackEditRecipeProps
-): Layer5StaticTrainingPackEditRecipeProps {
+export function useLayer5StaticTrainingPackEditStoreBinding<
+  TProps extends object
+>(rawProps: TProps): TProps {
+  const props = rawProps as Record<string, any>;
   const activePack = useStaticTrainingPackStore((s) => s.activePack);
   const storeShotIndex = useStaticTrainingPackStore((s) => s.currentShotIndex);
   const storeIsEditingItem = useStaticTrainingPackStore((s) => s.isEditingItem);
@@ -141,7 +141,7 @@ export function useLayer5StaticTrainingPackEditStoreBinding(
       return;
     }
     if (props.onShotsChange && props.shots) {
-      const items = props.shots;
+      const items = props.shots as StaticTrainingShotItem[];
       const selectedIndex = props.selectedShotIndex ?? storeShotIndex;
       const safeIndex = Math.max(
         0,
@@ -173,7 +173,7 @@ export function useLayer5StaticTrainingPackEditStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     packTitle: props.packTitle ?? activePack?.metadata.title ?? 'PACK',
     shots:
       props.shots ??
@@ -182,14 +182,14 @@ export function useLayer5StaticTrainingPackEditStoreBinding(
         : undefined),
     currentShotOverride,
     selectedShotIndex: props.selectedShotIndex ?? storeShotIndex,
-    onSelectedShotIndexChange: (idx) => {
+    onSelectedShotIndexChange: (idx: number) => {
       props.onSelectedShotIndexChange?.(idx);
       if (!props.shots && activePack) {
         enterItemEditMode(idx);
       }
     },
     isInspectingShot: isInspecting,
-    onInspectingShotChange: (inspecting) => {
+    onInspectingShotChange: (inspecting: boolean) => {
       props.onInspectingShotChange?.(inspecting);
       if (!inspecting && !props.shots && activePack) {
         void deselectEditShot();
@@ -212,5 +212,5 @@ export function useLayer5StaticTrainingPackEditStoreBinding(
       props.onExportSingleShot ?? (activePack ? exportSingleShotJson : undefined),
     onImportSingleShot:
       props.onImportSingleShot ?? (activePack ? importSingleShotJson : undefined),
-  };
+  } as TProps;
 }

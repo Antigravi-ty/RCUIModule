@@ -1,5 +1,6 @@
 import React from 'react';
 import { type ClockPacingParams } from '../../../config/clockPacingConfig';
+import { SliderControl } from '../../../primitives/SliderControl';
 
 interface ParamSliderProps {
   label: string;
@@ -22,24 +23,19 @@ const ParamSlider: React.FC<ParamSliderProps> = ({
   onChange,
   isLight = false,
 }) => (
-  <div className="flex flex-col gap-0.5">
-    <div className="flex items-center justify-between text-[10px] font-mono">
-      <span className={isLight ? 'text-neutral-600' : 'text-neutral-300'}>{label}</span>
-      <span className="font-bold text-amber-400">
-        {Number.isInteger(step) ? value : value.toFixed(step < 0.05 ? 2 : 1)}
-        {unit}
-      </span>
-    </div>
-    <input
-      type="range"
-      min={min}
-      max={max}
-      step={step}
-      value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
-      className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-amber-500 bg-neutral-700/70"
-    />
-  </div>
+  <SliderControl
+    label={label}
+    value={value}
+    min={min}
+    max={max}
+    step={step}
+    unit={unit}
+    editable={true}
+    showStepper={true}
+    colorScheme="amber"
+    isLight={isLight}
+    onChange={onChange}
+  />
 );
 
 export interface ClockPacingParameterGroupsProps {

@@ -25,20 +25,18 @@ import {
   previewBoostAudioVariation,
 } from '../../config/audioConfig.js';
 import type {
-  Layer3DevActiveTunersRecipeProps,
-  BoostPhaseSelectionState,
-} from '../Layer3DevActiveTunersRecipe';
-import type {
-  Layer3DevSubsystemIsolationRecipeProps,
-  DevTestLabTab as LayerDevTestLabTab,
-} from '../Layer3DevSubsystemIsolationRecipe';
-import type { Layer3DevUnderDevelopmentRecipeProps } from '../Layer3DevUnderDevelopmentRecipe';
-import type { Layer3ExpMultiBotsRecipeProps } from '../Layer3ExpMultiBotsRecipe';
-import type {
   TeamRosterSlotConfig,
   BotPolicyId,
   CarColorSwatch,
 } from '../../compounds/TeamRosterCard';
+
+export interface BoostPhaseSelectionState {
+  start: string;
+  loop: string;
+  end: string;
+}
+
+export type LayerDevTestLabTab = DevTestLabTab | 'exp-multi-bots';
 
 const EXP_SWATCH_PALETTE: CarColorSwatch[] = EXP_CAR_COLOR_PALETTE.map((c) => ({
   id: String(c.id),
@@ -46,9 +44,10 @@ const EXP_SWATCH_PALETTE: CarColorSwatch[] = EXP_CAR_COLOR_PALETTE.map((c) => ({
   hex: c.hex,
 }));
 
-export function useLayer3DevActiveTunersStoreBinding(
-  props: Layer3DevActiveTunersRecipeProps
-): Layer3DevActiveTunersRecipeProps {
+export function useLayer3DevActiveTunersStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const wsVerticalOffsetPct = useKickoffTrainingStore((s) => s.wsVerticalOffsetPct);
@@ -161,7 +160,7 @@ export function useLayer3DevActiveTunersStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     wsVerticalOffsetPct: props.wsVerticalOffsetPct ?? wsVerticalOffsetPct,
     onWsVerticalOffsetPctChange:
@@ -180,12 +179,13 @@ export function useLayer3DevActiveTunersStoreBinding(
       props.onNavigateEventAndTriggerer ??
       props.onNavigateEventTriggerer ??
       (() => navigate('event-and-triggerer')),
-  };
+  } as TProps;
 }
 
-export function useLayer3DevSubsystemIsolationStoreBinding(
-  props: Layer3DevSubsystemIsolationRecipeProps
-): Layer3DevSubsystemIsolationRecipeProps {
+export function useLayer3DevSubsystemIsolationStoreBinding<
+  TProps extends object
+>(rawProps: TProps): TProps {
+  const props = rawProps as Record<string, any>;
   const { activeTab, setSelectedTab, applyAndRestartLab } =
     useSubsystemIsolationLabStore();
   const matchMode = useAppStore((s) => s.matchMode);
@@ -220,7 +220,7 @@ export function useLayer3DevSubsystemIsolationStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     activeBenchId:
       props.activeBenchId !== undefined
@@ -232,45 +232,47 @@ export function useLayer3DevSubsystemIsolationStoreBinding(
     onNavigateExpMultiBots:
       props.onNavigateExpMultiBots ??
       (() => navigate('exp-multi-bots-config')),
-  };
+  } as TProps;
 }
 
-export function useLayer3DevUnderDevelopmentStoreBinding(
-  props: Layer3DevUnderDevelopmentRecipeProps
-): Layer3DevUnderDevelopmentRecipeProps {
+export function useLayer3DevUnderDevelopmentStoreBinding<
+  TProps extends object
+>(rawProps: TProps): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const underDev = useAppStore((s) => s.underDevelopment);
   const updateUnderDev = useAppStore((s) => s.updateUnderDevelopment);
   const closeMenu = useAppStore((s) => s.closeMenu);
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     threeWheelsEnabled:
       props.threeWheelsEnabled ?? Boolean(underDev?.threeWheelsEnabled),
     onThreeWheelsChange:
       props.onThreeWheelsChange ??
-      ((enabled) => updateUnderDev({ threeWheelsEnabled: enabled })),
+      ((enabled: boolean) => updateUnderDev({ threeWheelsEnabled: enabled })),
     onEnableAndDriveThreeWheels:
       props.onEnableAndDriveThreeWheels ?? closeMenu,
     stadiumPreset:
       props.stadiumPreset ?? (underDev?.stadiumPreset || 'standard'),
     onStadiumPresetChange:
       props.onStadiumPresetChange ??
-      ((nextPreset) => updateUnderDev({ stadiumPreset: nextPreset })),
+      ((nextPreset: 'standard' | 'throwback') =>
+        updateUnderDev({ stadiumPreset: nextPreset })),
     onLoadAndInspectThrowback: props.onLoadAndInspectThrowback ?? closeMenu,
     showCollisionOverlay:
       props.showCollisionOverlay ??
       Boolean(underDev?.showThrowbackCollisionOverlay),
     onShowCollisionOverlayChange:
       props.onShowCollisionOverlayChange ??
-      ((visible) =>
+      ((visible: boolean) =>
         updateUnderDev({ showThrowbackCollisionOverlay: visible })),
     selectedCarIdx:
       props.selectedCarIdx ?? (underDev?.selectedBoostCarIndex ?? 0),
     onSelectedCarIdxChange:
       props.onSelectedCarIdxChange ??
-      ((idx) =>
+      ((idx: number) =>
         updateUnderDev({
           selectedBoostCarIndex: Math.max(0, Math.min(7, Number(idx) || 0)),
         })),
@@ -278,13 +280,14 @@ export function useLayer3DevUnderDevelopmentStoreBinding(
       props.perCarBoostConfigs ?? (underDev?.perCarBoostConfigs || {}),
     onPerCarBoostConfigsChange:
       props.onPerCarBoostConfigsChange ??
-      ((next) => updateUnderDev({ perCarBoostConfigs: next })),
-  };
+      ((next: Record<number, any>) => updateUnderDev({ perCarBoostConfigs: next })),
+  } as TProps;
 }
 
-export function useLayer3ExpMultiBotsStoreBinding(
-  props: Layer3ExpMultiBotsRecipeProps
-): Layer3ExpMultiBotsRecipeProps {
+export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const {
     playerParticipation,
     blueSlots: storeBlueSlots,
@@ -402,7 +405,7 @@ export function useLayer3ExpMultiBotsStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     blueSlots: props.blueSlots ?? blueSlots,
     orangeSlots: props.orangeSlots ?? orangeSlots,
@@ -420,18 +423,19 @@ export function useLayer3ExpMultiBotsStoreBinding(
     isInExpMode: props.isInExpMode ?? isInExpMode,
     onSetPlayerParticipation:
       props.onSetPlayerParticipation ??
-      ((v) => setPlayerParticipation(v as ExpPlayerParticipation)),
+      ((v: ExpPlayerParticipation) => setPlayerParticipation(v)),
     onApplyFormatPreset:
       props.onApplyFormatPreset ?? handleApplyFormatPreset,
     onAddBot:
-      props.onAddBot ?? ((team, botType) => addBotToTeam(team, botType)),
+      props.onAddBot ?? ((team: 0 | 1, botType: BotPolicyId) => addBotToTeam(team, botType)),
     onSelectCameraCar: props.onSelectCameraCar ?? setActiveCameraCarIndex,
     onSetSlotBotType:
       props.onSetSlotBotType ??
-      ((team, slotIndex, botType) => setSlotBotType(team, slotIndex, botType)),
+      ((team: 0 | 1, slotIndex: number, botType: BotPolicyId) =>
+        setSlotBotType(team, slotIndex, botType)),
     onSetSlotColor:
       props.onSetSlotColor ??
-      ((team, slotIndex, colorId) =>
+      ((team: 0 | 1, slotIndex: number, colorId: string | number) =>
         setSlotColor(team, slotIndex, Number(colorId))),
     onRemoveSlot: props.onRemoveSlot ?? removeSlotFromTeam,
     onSetMatchDurationSec:
@@ -443,5 +447,5 @@ export function useLayer3ExpMultiBotsStoreBinding(
     onTriggerSandboxAction:
       props.onTriggerSandboxAction ?? triggerSandboxAction,
     onEnterGame: handleEnterGame,
-  };
+  } as TProps;
 }

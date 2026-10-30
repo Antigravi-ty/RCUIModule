@@ -10,14 +10,40 @@ import {
 } from 'lucide-react';
 import { SettingSegmentedRow } from '../../compounds/SettingSegmentedRow';
 import { SliderControl } from '../../primitives/SliderControl';
-import {
-  BOT_POLICY_LABELS,
-  FORMAT_LABELS,
-  formatMatchDurationLabel,
-  type HostMatchBotPolicy,
-  type HostMatchDurationPreset,
-  type HostMatchTeamFormat,
-} from '../Layer3HostMatchRecipe';
+export type HostMatchTeamFormat = 'standard' | 'doubles' | 'duel';
+export type HostMatchBotPolicy = 'none' | 'auto-fill' | 'vs-ai' | 'custom';
+export type HostMatchDurationPreset = '90' | '180' | '300' | 'custom';
+
+export interface HostMatchConfig {
+  playerName: string;
+  roomCode: string;
+  roomKey: string;
+  teamFormat: HostMatchTeamFormat;
+  botPolicy: HostMatchBotPolicy;
+  durationPreset: HostMatchDurationPreset;
+  customDurationSeconds: number;
+}
+
+export const FORMAT_LABELS: Record<HostMatchTeamFormat, string> = {
+  standard: 'Standard',
+  doubles: 'Doubles',
+  duel: 'Duel',
+};
+
+export const BOT_POLICY_LABELS: Record<HostMatchBotPolicy, string> = {
+  none: 'No Bots',
+  'auto-fill': 'Auto-Fill',
+  'vs-ai': 'Vs AI',
+  custom: 'Custom',
+};
+
+export const formatMatchDurationLabel = (seconds: number): string => {
+  const clamped = Math.max(0, Math.min(300, Math.round(seconds)));
+  if (clamped === 0) return '0:00 (OT)';
+  const mins = Math.floor(clamped / 60);
+  const secs = clamped % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
 
 export interface MatchConfigSummaryCardProps {
   teamFormat: HostMatchTeamFormat;

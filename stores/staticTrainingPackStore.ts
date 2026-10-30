@@ -436,7 +436,11 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
     get().runtimeHandlers.onSessionModeChanged?.('play');
   },
 
-  ...createStaticTrainingShotActions(set, get),
+  ...createStaticTrainingShotActions(set, get, {
+    getActiveEditItemVariable,
+    setActiveEditItemVariable,
+    buildActivePackBundle,
+  }),
 
   setEditSubMode: (subMode: EditSubMode) => {
     set({ editSubMode: subMode });

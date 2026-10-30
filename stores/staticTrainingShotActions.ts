@@ -1,6 +1,7 @@
 import {
   type StaticTrainingPackMetadata,
   type StaticTrainingShotItem,
+  type EditSubMode,
   MAX_SHOTS_PER_PACK,
   generateUUID,
   createDefaultShotItem,
@@ -17,23 +18,72 @@ import {
   parseSingleShotItemFromJsonFile,
 } from '../config/staticTrainingPackStorage';
 import { floatingStore } from './floatingStore';
-import {
-  type StaticTrainingPackStoreState,
-  type ActiveStaticTrainingPackBundle,
-  type StaticPackSessionMode,
-  getActiveEditItemVariable,
-  setActiveEditItemVariable,
-  buildActivePackBundle,
-} from './staticTrainingPackStore';
 
-export function createStaticTrainingShotActions(
+export type StaticPackDownCounterOption = 1 | 2 | 3;
+export type StaticPackSessionMode = 'browse' | 'play' | 'edit';
+
+export interface ActiveStaticTrainingPackBundle {
+  uuid: string;
+  title: string;
+  description: string;
+  itemCount: number;
+  metadata: StaticTrainingPackMetadata;
+  items: StaticTrainingShotItem[];
+}
+
+export interface StaticTrainingPackRuntimeHandlers {
+  onShotChanged?: (shotIndex: number) => void;
+  onResetShotRequested?: () => void;
+  onEditVariableMutated?: (draft: StaticTrainingShotItem) => void;
+  onEditSubModeChanged?: (subMode: EditSubMode) => void;
+  onSessionModeChanged?: (mode: StaticPackSessionMode) => void;
+}
+
+export interface StaticTrainingShotActionHelpers {
+  getActiveEditItemVariable: () => StaticTrainingShotItem | null;
+  setActiveEditItemVariable: (item: StaticTrainingShotItem | null) => void;
+  buildActivePackBundle: (
+    metadata: StaticTrainingPackMetadata | null,
+    items: StaticTrainingShotItem[]
+  ) => ActiveStaticTrainingPackBundle | null;
+}
+
+export interface StaticTrainingShotStoreSlice {
+  packs: StaticTrainingPackMetadata[];
+  selectedPackUuid: string | null;
+  sessionMode: StaticPackSessionMode;
+  activePack: ActiveStaticTrainingPackBundle | null;
+  activeItems: StaticTrainingShotItem[];
+  committedSessionItems: StaticTrainingShotItem[];
+  currentShotIndex: number;
+  isEditingItem: boolean;
+  isEdgeInspectorExpanded: boolean;
+  activeEditItemDraft: StaticTrainingShotItem | null;
+  editSubMode: EditSubMode;
+  editVarVersion: number;
+  remainingTimeoutSec: number;
+  runtimeHandlers: StaticTrainingPackRuntimeHandlers;
+  setCurrentShotIndex: (index: number) => void;
+  isCurrentShotDirty: () => boolean;
+  saveCurrentShotToEditWorkspace: () => Promise<void>;
+}
+
+export function createStaticTrainingShotActions<
+  TState extends StaticTrainingShotStoreSlice
+>(
   set: (
     partial:
-      | Partial<StaticTrainingPackStoreState>
-      | ((state: StaticTrainingPackStoreState) => Partial<StaticTrainingPackStoreState>)
+      | Partial<StaticTrainingShotStoreSlice>
+      | ((state: TState) => Partial<StaticTrainingShotStoreSlice>)
   ) => void,
-  get: () => StaticTrainingPackStoreState
+  get: () => TState,
+  helpers: StaticTrainingShotActionHelpers
 ) {
+  const {
+    getActiveEditItemVariable,
+    setActiveEditItemVariable,
+    buildActivePackBundle,
+  } = helpers;
   return {
   createPack: async (title: string, description: string) => {
     const now = Date.now();

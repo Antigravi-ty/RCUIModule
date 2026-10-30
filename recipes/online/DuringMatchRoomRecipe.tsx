@@ -13,13 +13,11 @@ import {
   DoubleConfirmServerButton,
   HostRoomSignalingBar,
   MatchConfigSummaryCard,
+  type HostMatchBotPolicy,
+  type HostMatchDurationPreset,
+  type HostMatchTeamFormat,
   type SignalingHealthState,
 } from './OnlineRoomTopStatusBar';
-import type {
-  HostMatchBotPolicy,
-  HostMatchDurationPreset,
-  HostMatchTeamFormat,
-} from '../Layer3HostMatchRecipe';
 
 export interface ActiveMatchPlayer {
   id: string;

@@ -216,15 +216,19 @@ export const ReplayDirectorSnapshotAndKeyframePanel: React.FC<
         </div>
       </div>
 
-      <div data-testid="replay-timeline-scrubber" className="flex items-center gap-2">
-        <span className="text-rose-400 font-bold text-[9.5px] shrink-0">SCRUB</span>
-        <input
-          type="range"
+      <div data-testid="replay-timeline-scrubber" className="w-full">
+        <SliderControl
+          label="SCRUB TIMELINE"
+          value={Math.round(effectiveProgress01 * 1000)}
           min={0}
           max={1000}
-          value={Math.round(effectiveProgress01 * 1000)}
-          onChange={(e) => handleScrubNormalized(Number(e.target.value) / 1000)}
-          className="w-full h-1.5 accent-amber-400 cursor-pointer"
+          step={1}
+          unit="‰"
+          editable={true}
+          showStepper={true}
+          colorScheme="amber"
+          isLight={isLight}
+          onChange={(val) => handleScrubNormalized(val / 1000)}
         />
       </div>
 

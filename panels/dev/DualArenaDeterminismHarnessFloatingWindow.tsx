@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Target, CheckCircle2, AlertOctagon, RotateCcw, Play, Pause, Sliders } from 'lucide-react';
+import { CheckCircle2, AlertOctagon, RotateCcw, Play, Pause } from 'lucide-react';
 import { useDeterminismData, determinismStore } from '../../stores/determinismStore';
 import { useAppStore } from '../../stores/appStore';
+import { SliderControl } from '../../primitives/SliderControl';
 
 export interface DualArenaDeterminismHarnessFloatingWindowProps {
   isLight?: boolean;
@@ -10,38 +11,9 @@ export interface DualArenaDeterminismHarnessFloatingWindowProps {
 
 export const DualArenaDeterminismHarnessFloatingWindow: React.FC<DualArenaDeterminismHarnessFloatingWindowProps> = ({
   isLight = false,
-  active = true,
 }) => {
-  const { metrics, periodicRollback, rollbackInterval, rollbackDepth, active: harnessActive } =
+  const { metrics, periodicRollback, rollbackInterval, rollbackDepth } =
     useDeterminismData();
-  const [depthInput, setDepthInput] = React.useState<string>(String(rollbackDepth));
-  const [intervalInput, setIntervalInput] = React.useState<string>(String(rollbackInterval));
-  const [editingDepth, setEditingDepth] = React.useState(false);
-  const [editingInterval, setEditingInterval] = React.useState(false);
-
-  useEffect(() => {
-    if (!editingDepth) setDepthInput(String(rollbackDepth));
-  }, [rollbackDepth, editingDepth]);
-
-  useEffect(() => {
-    if (!editingInterval) setIntervalInput(String(rollbackInterval));
-  }, [rollbackInterval, editingInterval]);
-
-  const commitDepthInput = () => {
-    setEditingDepth(false);
-    const parsed = parseInt(depthInput, 10);
-    const next = Number.isFinite(parsed) && parsed >= 1 ? parsed : rollbackDepth;
-    determinismStore.setRollbackDepth(next);
-    setDepthInput(String(next));
-  };
-
-  const commitIntervalInput = () => {
-    setEditingInterval(false);
-    const parsed = parseInt(intervalInput, 10);
-    const next = Number.isFinite(parsed) && parsed >= 1 ? parsed : rollbackInterval;
-    determinismStore.setRollbackInterval(next);
-    setIntervalInput(String(next));
-  };
 
   useEffect(() => {
     useAppStore.getState().bridge.onEnsureDeterminism?.();
@@ -193,25 +165,7 @@ export const DualArenaDeterminismHarnessFloatingWindow: React.FC<DualArenaDeterm
         }`}
       >
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-neutral-400">Rollback Step / Depth:</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={depthInput}
-              onFocus={() => setEditingDepth(true)}
-              onChange={(e) => setDepthInput(e.target.value)}
-              onBlur={commitDepthInput}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  commitDepthInput();
-                  e.currentTarget.blur();
-                }
-              }}
-              className="w-12 px-1.5 py-0.5 rounded bg-neutral-900 border border-neutral-700 text-right font-mono text-[10px] text-sky-300 focus:outline-none focus:border-sky-400"
-            />
-            <span className="text-[10px] text-neutral-400">t</span>
-          </div>
+          <span className="text-neutral-400 font-semibold">Manual & Periodic Rollback</span>
           <button
             type="button"
             onClick={() => determinismStore.triggerManualRollback()}
@@ -222,59 +176,49 @@ export const DualArenaDeterminismHarnessFloatingWindow: React.FC<DualArenaDeterm
           </button>
         </div>
 
-        <input
-          type="range"
-          min="1"
-          max="120"
-          value={Math.min(120, rollbackDepth)}
-          onChange={(e) => determinismStore.setRollbackDepth(Number(e.target.value))}
-          className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-sky-500"
+        <SliderControl
+          label="Rollback Step / Depth"
+          value={rollbackDepth}
+          min={1}
+          max={120}
+          step={1}
+          unit="t"
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={true}
+          colorScheme="amber"
+          isLight={isLight}
+          onChange={(val) => determinismStore.setRollbackDepth(Math.max(1, Math.round(val)))}
         />
 
         <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => determinismStore.togglePeriodic()}
-              className={`p-1 rounded-lg text-[10px] font-semibold border flex items-center gap-1 cursor-pointer transition-colors ${
-                periodicRollback
-                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
-                  : 'bg-neutral-800 border-neutral-700 text-neutral-400'
-              }`}
-            >
-              {periodicRollback ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
-              <span>Auto Rollback ({periodicRollback ? 'ON' : 'OFF'})</span>
-            </button>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-neutral-400 text-[10px]">Every</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={intervalInput}
-              onFocus={() => setEditingInterval(true)}
-              onChange={(e) => setIntervalInput(e.target.value)}
-              onBlur={commitIntervalInput}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  commitIntervalInput();
-                  e.currentTarget.blur();
-                }
-              }}
-              className="w-12 px-1.5 py-0.5 rounded bg-neutral-900 border border-neutral-700 text-right font-mono text-[10px] text-amber-300 focus:outline-none focus:border-amber-400"
-            />
-            <span className="text-neutral-400 text-[10px]">ticks</span>
-          </div>
+          <button
+            type="button"
+            onClick={() => determinismStore.togglePeriodic()}
+            className={`p-1 rounded-lg text-[10px] font-semibold border flex items-center gap-1 cursor-pointer transition-colors ${
+              periodicRollback
+                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                : 'bg-neutral-800 border-neutral-700 text-neutral-400'
+            }`}
+          >
+            {periodicRollback ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+            <span>Auto Rollback ({periodicRollback ? 'ON' : 'OFF'})</span>
+          </button>
         </div>
 
-        <input
-          type="range"
-          min="5"
-          max="120"
-          step="5"
-          value={Math.min(120, Math.max(5, rollbackInterval))}
-          onChange={(e) => determinismStore.setRollbackInterval(Number(e.target.value))}
-          className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+        <SliderControl
+          label="Auto Rollback Interval"
+          value={rollbackInterval}
+          min={5}
+          max={120}
+          step={5}
+          unit=" ticks"
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={true}
+          colorScheme="amber"
+          isLight={isLight}
+          onChange={(val) => determinismStore.setRollbackInterval(Math.max(1, Math.round(val)))}
         />
       </div>
     </div>

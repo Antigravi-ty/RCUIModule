@@ -9,6 +9,9 @@ import {
   DoubleConfirmServerButton,
   HostRoomSignalingBar,
   MatchConfigSummaryCard,
+  type HostMatchBotPolicy,
+  type HostMatchDurationPreset,
+  type HostMatchTeamFormat,
   type SignalingHealthState,
 } from './OnlineRoomTopStatusBar';
 import {
@@ -16,11 +19,6 @@ import {
   type LobbyPlayerSlot,
   type LobbyTeamAssignment,
 } from './MatchLobbyTeamRosterSection';
-import type {
-  HostMatchBotPolicy,
-  HostMatchDurationPreset,
-  HostMatchTeamFormat,
-} from '../Layer3HostMatchRecipe';
 
 export type { LobbyPlayerSlot, LobbyTeamAssignment };
 

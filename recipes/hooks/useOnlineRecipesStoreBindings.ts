@@ -13,23 +13,30 @@ import {
   loadStoredPlayerName,
   saveStoredPlayerName,
 } from '../../config/vehiclePresets.js';
-import type {
-  Layer2RoomHostControlRecipeProps,
-  OnlineSessionContextId,
-} from '../Layer2RoomHostControlRecipe';
 import type { LobbyPlayerSlot, LobbyTeamAssignment } from '../online/MatchLobbyRoomRecipe';
 import type { ActiveMatchPlayer } from '../online/DuringMatchRoomRecipe';
 import type { WarmupRoomPlayer } from '../online/OnlineWarmupRoomRecipe';
 import type {
-  Layer3HostMatchRecipeProps,
   HostMatchConfig,
   HostMatchTeamFormat,
-} from '../Layer3HostMatchRecipe';
-import type {
-  Layer3JoinRoomRecipeProps,
-  JoinRoomConfig,
-} from '../Layer3JoinRoomRecipe';
+} from '../online/OnlineRoomConfigSummaryCard';
+import type { SignalingHealthState } from '../online/OnlineRoomTopStatusBar';
 import type { CreationProgressStatus } from '../online/OnlineRoomCreationProgress';
+
+export type OnlineSessionContextId =
+  | 'match-lobby-host'
+  | 'match-lobby-client'
+  | 'online-match-host'
+  | 'online-match-client'
+  | 'online-warmup-host'
+  | 'online-warmup-client';
+
+export interface JoinRoomConfig {
+  playerName: string;
+  roomCode: string;
+  roomKey: string;
+  allowSpectating: boolean;
+}
 
 const FORMAT_TO_GAME_MODE: Record<HostMatchTeamFormat, '1v1' | '2v2' | '3v3'> = {
   duel: '1v1',
@@ -43,9 +50,10 @@ const GAME_MODE_TO_FORMAT: Record<string, HostMatchTeamFormat> = {
   '3v3': 'standard',
 };
 
-export function useLayer2RoomHostControlStoreBinding(
-  props: Layer2RoomHostControlRecipeProps
-): Layer2RoomHostControlRecipeProps {
+export function useLayer2RoomHostControlStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const {
     onlineSession,
     setOnlineSession,
@@ -155,7 +163,7 @@ export function useLayer2RoomHostControlStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     roomCode: props.roomCode ?? (onlineSession?.roomId || '8924'),
     sessionContext: props.sessionContext ?? sessionContext,
     signalingState:
@@ -191,12 +199,13 @@ export function useLayer2RoomHostControlStoreBinding(
     onOpenNetHud: props.onOpenNetHud ?? handleOpenNetHud,
     onCloseRoom: props.onCloseRoom ?? (() => void handleCloseRoom()),
     onBack: props.onBack ?? goBack,
-  };
+  } as TProps;
 }
 
-export function useLayer3HostMatchStoreBinding(
-  props: Layer3HostMatchRecipeProps
-): Layer3HostMatchRecipeProps {
+export function useLayer3HostMatchStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -291,21 +300,22 @@ export function useLayer3HostMatchStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : config),
     onConfigChange:
       props.onConfigChange ??
-      ((next) => {
+      ((next: HostMatchConfig, patch: Partial<HostMatchConfig>) => {
         setConfig(next);
         if (next.playerName) {
           setOnlineSession({ playerName: next.playerName });
         }
+        void patch;
       }),
     progressStatus:
       props.progressStatus ?? (bridge.onHostOnlineWarmup ? progressStatus : undefined),
     currentStep:
       props.currentStep ?? (bridge.onHostOnlineWarmup ? currentStep : undefined),
-    onStartHost: props.onStartHost ?? ((cfg) => void handleStartHost(cfg)),
+    onStartHost: props.onStartHost ?? ((cfg: HostMatchConfig) => void handleStartHost(cfg)),
     onRetryHost: props.onRetryHost ?? (() => void handleStartHost(config)),
     onCancelHost:
       props.onCancelHost ??
@@ -317,12 +327,13 @@ export function useLayer3HostMatchStoreBinding(
     onNavigateGarageSync:
       props.onNavigateGarageSync ?? (() => navigate('garage')),
     onBack: props.onBack ?? goBack,
-  };
+  } as TProps;
 }
 
-export function useLayer3JoinRoomStoreBinding(
-  props: Layer3JoinRoomRecipeProps
-): Layer3JoinRoomRecipeProps {
+export function useLayer3JoinRoomStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -385,11 +396,11 @@ export function useLayer3JoinRoomStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : config),
     onConfigChange:
       props.onConfigChange ??
-      ((next) => {
+      ((next: JoinRoomConfig) => {
         setConfig(next);
         if (next.playerName) {
           setOnlineSession({ playerName: next.playerName });
@@ -399,7 +410,7 @@ export function useLayer3JoinRoomStoreBinding(
       props.progressStatus ?? (bridge.onJoinOnlineWarmup ? progressStatus : undefined),
     currentStep:
       props.currentStep ?? (bridge.onJoinOnlineWarmup ? currentStep : undefined),
-    onJoinRoom: props.onJoinRoom ?? ((cfg) => void handleJoinRoom(cfg)),
+    onJoinRoom: props.onJoinRoom ?? ((cfg: JoinRoomConfig) => void handleJoinRoom(cfg)),
     onRetryJoin: props.onRetryJoin ?? (() => void handleJoinRoom(config)),
     onCancelJoin:
       props.onCancelJoin ??
@@ -411,5 +422,5 @@ export function useLayer3JoinRoomStoreBinding(
     onNavigateGarageSync:
       props.onNavigateGarageSync ?? (() => navigate('garage')),
     onBack: props.onBack ?? goBack,
-  };
+  } as TProps;
 }

@@ -27,28 +27,11 @@ import { useNetworkDiagnosticsData } from '../../stores/networkDiagnosticsStore'
 import { globalPacingTelemetryRecorder } from '../../stores/pacingTelemetryRecorder.js';
 import { downloadNetworkTelemetryZip } from '../../stores/pacingTelemetryExporter.js';
 import { useTelemetryData } from '../../stores/perfTelemetryStore';
-import type {
-  GoalBarrierConfiguratorFloatingWindowProps,
-  GoalBarrierPlacement,
-} from './GoalBarrierConfiguratorFloatingWindow';
-import type {
-  ReplayViewerFloatingWindowProps,
-  DownCounterOption,
-} from './ReplayViewerFloatingWindow';
-import type {
-  RewinderConfiguratorFloatingWindowProps,
-  RewinderBadgeState,
-  RewinderDownCounterOption,
-} from './RewinderConfiguratorFloatingWindow';
-import type {
-  NetworkMonitorFloatingWindowProps,
-  NetworkDiagnosticsSnapshot,
-  NetworkSessionMode,
-} from './NetworkMonitorFloatingWindow';
-import type {
-  PerformanceMonitorFloatingWindowProps,
-  LiveSystemTelemetrySnapshot,
-} from './PerformanceMonitorFloatingWindow';
+export type GoalBarrierPlacement = 'none' | 'blue' | 'orange' | 'both';
+export type DownCounterOption = '0' | '1' | '2' | '3';
+export type RewinderBadgeState = 'recording' | 'stopped' | 'idle' | 'error';
+export type RewinderDownCounterOption = '0' | '1' | '2' | '3';
+export type NetworkSessionMode = 'single-player' | 'online-host' | 'online-client';
 
 function rectsToGrid(rects: NormalizedRect[]): Uint8Array {
   const grid = new Uint8Array(BARRIER_GRID_COLS * BARRIER_GRID_ROWS);
@@ -78,9 +61,10 @@ function triggerReplayFilePicker(onSelect: (file: File) => void): void {
   input.click();
 }
 
-export function useGoalBarrierPanelStoreBindings(
-  props: GoalBarrierConfiguratorFloatingWindowProps
-): GoalBarrierConfiguratorFloatingWindowProps {
+export function useGoalBarrierPanelStoreBindings<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const {
     enabled,
     targetGoal,
@@ -151,11 +135,11 @@ export function useGoalBarrierPanelStoreBindings(
   );
 
   return {
-    ...props,
+    ...rawProps,
     placement: props.placement ?? storePlacement,
     onPlacementChange: handlePlacementChange,
     selectionMode: props.selectionMode ?? selectionMode,
-    onSelectionModeChange: (mode) => {
+    onSelectionModeChange: (mode: any) => {
       setSelectionMode(mode);
       props.onSelectionModeChange?.(mode);
     },
@@ -163,7 +147,7 @@ export function useGoalBarrierPanelStoreBindings(
     onOpacityPctChange: handleOpacityPctChange,
     grid: props.grid ?? storeGrid,
     onGridChange: handleGridChange,
-    onApplyPreset: (presetId, grid) => {
+    onApplyPreset: (presetId: any, grid: Uint8Array) => {
       applyPreset(presetId);
       props.onApplyPreset?.(presetId, grid);
     },
@@ -171,12 +155,13 @@ export function useGoalBarrierPanelStoreBindings(
       clearBarrier();
       props.onClear?.();
     },
-  };
+  } as TProps;
 }
 
-export function useReplayViewerPanelStoreBindings(
-  props: ReplayViewerFloatingWindowProps
-): ReplayViewerFloatingWindowProps {
+export function useReplayViewerPanelStoreBindings<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const {
     loadedFileName,
     totalFrames,
@@ -185,7 +170,6 @@ export function useReplayViewerPanelStoreBindings(
     flowPreset,
     customFlowPct,
     downCounterSec,
-    hasRetainedMatch,
     incidentMarkers,
     signalMarkers,
     setFlowPreset,
@@ -228,28 +212,25 @@ export function useReplayViewerPanelStoreBindings(
   );
 
   if (!runtimeHandlers || Object.keys(runtimeHandlers).length === 0) {
-    return props;
+    return rawProps;
   }
 
-  const hasLoadedReplay = Boolean(loadedFileName && totalFrames > 0);
-
   return {
-    ...props,
-    hasLoadedReplay: props.hasLoadedReplay ?? hasLoadedReplay,
-    hasRetainedMatch: props.hasRetainedMatch ?? hasRetainedMatch,
-    fileName:
-      props.fileName ?? (hasLoadedReplay && loadedFileName ? loadedFileName : 'No replay loaded'),
-    totalFrames: props.totalFrames ?? (hasLoadedReplay ? totalFrames : 0),
-    cursorFrame: props.cursorFrame ?? (hasLoadedReplay ? cursorFrame : 0),
-    onSeekFrame: props.onSeekFrame ?? ((frame) => runtimeHandlers.onSeekFrame?.(frame)),
+    ...rawProps,
+    fileName: props.fileName ?? (loadedFileName || undefined),
+    totalFrames: props.totalFrames ?? Math.max(1, totalFrames),
+    cursorFrame: props.cursorFrame ?? cursorFrame,
+    onSeekFrame:
+      props.onSeekFrame ?? ((frame: number) => runtimeHandlers.onSeekFrame?.(frame)),
     onStepFrame:
-      props.onStepFrame ?? ((_delta, nextFrame) => runtimeHandlers.onSeekFrame?.(nextFrame)),
+      props.onStepFrame ??
+      ((_delta: number, nextFrame: number) => runtimeHandlers.onSeekFrame?.(nextFrame)),
     isPlaying: props.isPlaying ?? viewerState === 'playing',
     onPlay: props.onPlay ?? (() => runtimeHandlers.onStartPlaying?.()),
     onPause: props.onPause ?? (() => runtimeHandlers.onPausePlaying?.()),
     onPlayingChange:
       props.onPlayingChange ??
-      ((playing) => {
+      ((playing: boolean) => {
         if (playing) runtimeHandlers.onStartPlaying?.();
         else runtimeHandlers.onPausePlaying?.();
       }),
@@ -264,22 +245,19 @@ export function useReplayViewerPanelStoreBindings(
     customSpeedPct: props.customSpeedPct ?? customFlowPct,
     onPlaybackSpeedChange:
       props.onPlaybackSpeedChange ??
-      ((_eff, preset, customPct) => {
+      ((_eff: number, preset: any, customPct: number) => {
         setFlowPreset(preset);
         setCustomFlowPct(customPct);
       }),
     downCounter: props.downCounter ?? (String(downCounterSec) as DownCounterOption),
     onDownCounterChange:
       props.onDownCounterChange ??
-      ((dc) => setDownCounterSec((Number(dc) || 0) as ReplayDownCounterOption)),
-    isIntervening:
-      props.isIntervening ??
-      (viewerState === 'preroll-countdown' || viewerState === 'intervening'),
+      ((dc: DownCounterOption) =>
+        setDownCounterSec((Number(dc) || 0) as ReplayDownCounterOption)),
+    isIntervening: props.isIntervening ?? viewerState === 'preroll-countdown',
     onInterveneFromHere:
       props.onInterveneFromHere ?? (() => runtimeHandlers.onResumeFromHere?.()),
-    onBackToReplay:
-      props.onBackToReplay ??
-      (() => (runtimeHandlers.onReturnToReplay ?? runtimeHandlers.onPausePlaying)?.()),
+    onBackToReplay: props.onBackToReplay ?? (() => runtimeHandlers.onClearReplay?.()),
     onLoadReplayFile:
       props.onLoadReplayFile ??
       (() =>
@@ -289,15 +267,18 @@ export function useReplayViewerPanelStoreBindings(
     onLoadRecentReplay:
       props.onLoadRecentReplay ?? (() => runtimeHandlers.onLoadRetainedMatchReplay?.()),
     incidentMarkers:
-      props.incidentMarkers ?? (hasLoadedReplay ? mappedIncidentMarkers : []),
+      props.incidentMarkers ??
+      (loadedFileName ? mappedIncidentMarkers : undefined),
     signalMarkers:
-      props.signalMarkers ?? (hasLoadedReplay ? mappedSignalMarkers : []),
-  };
+      props.signalMarkers ??
+      (loadedFileName ? mappedSignalMarkers : undefined),
+  } as TProps;
 }
 
-export function useRewinderPanelStoreBindings(
-  props: RewinderConfiguratorFloatingWindowProps
-): RewinderConfiguratorFloatingWindowProps {
+export function useRewinderPanelStoreBindings<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const {
     rewinderState,
     rewinderRecordedFrames,
@@ -313,7 +294,7 @@ export function useRewinderPanelStoreBindings(
   } = useRewinderStore();
 
   if (!runtimeHandlers || Object.keys(runtimeHandlers).length === 0) {
-    return props;
+    return rawProps;
   }
 
   const status: RewinderBadgeState =
@@ -324,7 +305,7 @@ export function useRewinderPanelStoreBindings(
       : 'stopped';
 
   return {
-    ...props,
+    ...rawProps,
     status: props.status ?? status,
     recordedFrames: props.recordedFrames ?? Math.max(1, rewinderRecordedFrames),
     cursorFrame: props.cursorFrame ?? rewinderCursorFrame,
@@ -333,12 +314,13 @@ export function useRewinderPanelStoreBindings(
       props.downCounter ?? (String(rewinderDownCounterSec) as RewinderDownCounterOption),
     onDownCounterChange:
       props.onDownCounterChange ??
-      ((dc) => setRewinderDownCounterSec((Number(dc) || 0) as RewinderDownCounterSec)),
+      ((dc: RewinderDownCounterOption) =>
+        setRewinderDownCounterSec((Number(dc) || 0) as RewinderDownCounterSec)),
     shuttlePreset: props.shuttlePreset ?? rewinderFlowPreset,
     customShuttleSpeed: props.customShuttleSpeed ?? rewinderCustomFlowPct,
     onShuttleSpeedChange:
       props.onShuttleSpeedChange ??
-      ((_eff, preset, customPct) => {
+      ((_eff: number, preset: any, customPct: number) => {
         setRewinderFlowPreset(preset);
         setRewinderCustomFlowPct(customPct);
       }),
@@ -355,10 +337,12 @@ export function useRewinderPanelStoreBindings(
     onForwardPressEnd:
       props.onForwardPressEnd ?? (() => runtimeHandlers.onRewinderPushForwardStop?.()),
     onSeekFrame:
-      props.onSeekFrame ?? ((frame) => runtimeHandlers.onRewinderSeekFrame?.(frame)),
+      props.onSeekFrame ??
+      ((frame: number) => runtimeHandlers.onRewinderSeekFrame?.(frame)),
     onStepFrame:
       props.onStepFrame ??
-      ((_delta, nextFrame) => runtimeHandlers.onRewinderSeekFrame?.(nextFrame)),
+      ((_delta: number, nextFrame: number) =>
+        runtimeHandlers.onRewinderSeekFrame?.(nextFrame)),
     onResumeFromHere:
       props.onResumeFromHere ?? (() => runtimeHandlers.onRewinderResumeFromHere?.()),
     onClear: props.onClear ?? (() => runtimeHandlers.onRewinderClearBuffer?.()),
@@ -370,12 +354,13 @@ export function useRewinderPanelStoreBindings(
         triggerReplayFilePicker((file) => {
           runtimeHandlers.onRewinderImportReplay?.(file);
         })),
-  };
+  } as TProps;
 }
 
-export function useNetworkMonitorPanelStoreBindings(
-  props: NetworkMonitorFloatingWindowProps
-): NetworkMonitorFloatingWindowProps {
+export function useNetworkMonitorPanelStoreBindings<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const { metrics } = useNetworkDiagnosticsData();
   const onlineSession = useAppStore((s) => s.onlineSession);
   const bridge = useAppStore((s) => s.bridge);
@@ -392,7 +377,7 @@ export function useNetworkMonitorPanelStoreBindings(
       : 'online-client'
     : 'single-player';
 
-  const storeSnapshot = useMemo<NetworkDiagnosticsSnapshot | undefined>(() => {
+  const storeSnapshot = useMemo(() => {
     if (!hasHostRuntime) return undefined;
     const raw = metrics as Record<string, any> | undefined;
     return {
@@ -408,11 +393,11 @@ export function useNetworkMonitorPanelStoreBindings(
   }, [hasHostRuntime, sessionMode, metrics]);
 
   if (!hasHostRuntime) {
-    return props;
+    return rawProps;
   }
 
   return {
-    ...props,
+    ...rawProps,
     sessionMode: props.sessionMode ?? sessionMode,
     snapshot: props.snapshot ?? storeSnapshot,
     onExportLog:
@@ -429,15 +414,16 @@ export function useNetworkMonitorPanelStoreBindings(
       (() => {
         globalPacingTelemetryRecorder.reset();
       }),
-  };
+  } as TProps;
 }
 
-export function usePerformanceMonitorPanelStoreBindings(
-  props: PerformanceMonitorFloatingWindowProps
-): PerformanceMonitorFloatingWindowProps {
+export function usePerformanceMonitorPanelStoreBindings<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const { data: snap } = useTelemetryData(180, true);
 
-  const telemetrySnapshot = useMemo<LiveSystemTelemetrySnapshot | undefined>(() => {
+  const telemetrySnapshot = useMemo(() => {
     if (!snap) return undefined;
     return {
       frameTimeMs: snap.frameMs || 8.33,
@@ -457,13 +443,13 @@ export function usePerformanceMonitorPanelStoreBindings(
   }, [snap]);
 
   if (!telemetrySnapshot) {
-    return props;
+    return rawProps;
   }
 
   return {
-    ...props,
+    ...rawProps,
     snapshot: props.snapshot ?? telemetrySnapshot,
-  };
+  } as TProps;
 }
 
 

@@ -23,19 +23,25 @@ import {
   type CreationStepSpec,
 } from './online/OnlineRoomCreationProgress';
 
-export type HostMatchTeamFormat = 'standard' | 'doubles' | 'duel';
-export type HostMatchBotPolicy = 'none' | 'auto-fill' | 'vs-ai' | 'custom';
-export type HostMatchDurationPreset = '90' | '180' | '300' | 'custom';
+import {
+  BOT_POLICY_LABELS,
+  FORMAT_LABELS,
+  formatMatchDurationLabel,
+  type HostMatchBotPolicy,
+  type HostMatchConfig,
+  type HostMatchDurationPreset,
+  type HostMatchTeamFormat,
+} from './online/OnlineRoomConfigSummaryCard';
 
-export interface HostMatchConfig {
-  playerName: string;
-  roomCode: string;
-  roomKey: string;
-  teamFormat: HostMatchTeamFormat;
-  botPolicy: HostMatchBotPolicy;
-  durationPreset: HostMatchDurationPreset;
-  customDurationSeconds: number;
-}
+export {
+  BOT_POLICY_LABELS,
+  FORMAT_LABELS,
+  formatMatchDurationLabel,
+  type HostMatchBotPolicy,
+  type HostMatchConfig,
+  type HostMatchDurationPreset,
+  type HostMatchTeamFormat,
+};
 
 export const DEFAULT_HOST_MATCH_CONFIG: HostMatchConfig = {
   playerName: `Player${Math.floor(1000 + Math.random() * 9000)}`,
@@ -50,6 +56,8 @@ export const DEFAULT_HOST_MATCH_CONFIG: HostMatchConfig = {
 export interface Layer3HostMatchRecipeProps {
   isLight?: boolean;
   developerMode?: boolean;
+  /** Initial expanded state for the Current Configuration disclosure card */
+  defaultEditingConfig?: boolean;
   /** Controlled host match configuration */
   config?: Partial<HostMatchConfig>;
   /** Alias for controlled config */
@@ -76,27 +84,6 @@ export interface Layer3HostMatchRecipeProps {
   onBack?: () => void;
 }
 
-export const FORMAT_LABELS: Record<HostMatchTeamFormat, string> = {
-  standard: 'Standard',
-  doubles: 'Doubles',
-  duel: 'Duel',
-};
-
-export const BOT_POLICY_LABELS: Record<HostMatchBotPolicy, string> = {
-  none: 'No Bots',
-  'auto-fill': 'Auto-Fill',
-  'vs-ai': 'Vs AI',
-  custom: 'Custom',
-};
-
-export const formatMatchDurationLabel = (seconds: number): string => {
-  const clamped = Math.max(0, Math.min(300, Math.round(seconds)));
-  if (clamped === 0) return '0:00 (OT)';
-  const mins = Math.floor(clamped / 60);
-  const secs = clamped % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
-
 /**
  * [Recipe] Layer 3 Host Match (Create & Host Online Lobby)
  * Updated layout:
@@ -114,7 +101,7 @@ export const formatMatchDurationLabel = (seconds: number): string => {
  */
 export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React.memo((rawProps) => {
   const {
-  isLight = false, config: controlledConfigProp, settings: controlledSettingsProp,
+  isLight = false, defaultEditingConfig = false, config: controlledConfigProp, settings: controlledSettingsProp,
   defaultConfig, onChange, onConfigChange, onBack = () => {}, onNavigateGarageSync,
   onNavigateAdvancedSettings, onStartHost, onCancelHost, onRetryHost,
   progressStatus: controlledProgressStatus, currentStep: controlledCurrentStep,
@@ -157,7 +144,10 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
   const setDurationPreset = (val: HostMatchDurationPreset) => updateConfig({ durationPreset: val });
   const setCustomDurationSeconds = (val: number) => updateConfig({ customDurationSeconds: val });
 
-  const [isEditingConfig, setIsEditingConfig] = useState<boolean>(false);
+  const [isEditingConfig, setIsEditingConfig] = useState<boolean>(defaultEditingConfig);
+  useEffect(() => {
+    setIsEditingConfig(Boolean(defaultEditingConfig));
+  }, [defaultEditingConfig]);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   // 5-Step Creation Progress State

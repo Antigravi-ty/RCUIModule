@@ -6,21 +6,18 @@ import {
   BLUE_TEAM_COLORS,
   ORANGE_TEAM_COLORS,
 } from '../garage/garageConstants';
+import type { VisualMaterialsConfig } from '../garage/GarageMaterialsTab';
 import {
   type StoredColorPrefs,
   loadStoredColorPrefs,
   saveStoredColorPrefs,
 } from '../../config/uiConfig';
-import type {
-  Layer1MainMenuRecipeProps,
-  Layer1ContextVariation,
-} from '../Layer1MainMenuRecipe';
-import type { Layer2PlayRecipeProps } from '../Layer2PlayRecipe';
-import type { Layer2GarageRecipeProps } from '../Layer2GarageRecipe';
+import type { CanonicalLayer1ContextVariation } from '../layer1MenuContextSpecs';
 
-export function useLayer1MainMenuStoreBinding(
-  props: Layer1MainMenuRecipeProps
-): Layer1MainMenuRecipeProps {
+export function useLayer1MainMenuStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const matchMode = useAppStore((s) => s.matchMode);
   const onlineSession = useAppStore((s) => s.onlineSession);
   const touchMode = useAppStore((s) => s.touchMode);
@@ -38,7 +35,7 @@ export function useLayer1MainMenuStoreBinding(
   const hasActiveOnlineRoom =
     matchMode === 'online-warmup' || Boolean(onlineSession?.roomId);
 
-  let derivedVariation: Layer1ContextVariation = 'freeplay';
+  let derivedVariation: CanonicalLayer1ContextVariation = 'freeplay';
   if (matchMode === 'match') {
     if (hasActiveOnlineRoom) {
       derivedVariation = isHosting ? 'online-match-host' : 'online-match-client';
@@ -64,7 +61,7 @@ export function useLayer1MainMenuStoreBinding(
   }
 
   return {
-    ...props,
+    ...rawProps,
     contextVariation:
       props.contextVariation ?? props.contextMode ?? derivedVariation,
     touchMode: props.touchMode ?? touchMode,
@@ -84,7 +81,7 @@ export function useLayer1MainMenuStoreBinding(
     onNavigateGarage: props.onNavigateGarage ?? (() => navigate('garage')),
     onNavigateSettings:
       props.onNavigateSettings ??
-      ((tab) => {
+      ((tab?: string) => {
         if (tab === 'display') {
           useAppStore.getState().setHighlightSetting('menu-power-save');
         }
@@ -95,12 +92,13 @@ export function useLayer1MainMenuStoreBinding(
     onNavigateExpMultiBotsConfig:
       props.onNavigateExpMultiBotsConfig ??
       (() => navigate('exp-multi-bots-config')),
-  };
+  } as TProps;
 }
 
-export function useLayer2PlayStoreBinding(
-  props: Layer2PlayRecipeProps
-): Layer2PlayRecipeProps {
+export function useLayer2PlayStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const navigate = useAppStore((s) => s.navigate);
   const goBack = useAppStore((s) => s.goBack);
 
@@ -114,7 +112,7 @@ export function useLayer2PlayStoreBinding(
     props.onSelectSelfTraining ?? (() => navigate('self-training'));
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     onSelectExhibition,
     onSelectHostMatch,
@@ -122,18 +120,19 @@ export function useLayer2PlayStoreBinding(
     onSelectSelfTraining,
     onSelectMode:
       props.onSelectMode ??
-      ((modeId) => {
+      ((modeId: string) => {
         if (modeId === 'exhibition') onSelectExhibition();
         else if (modeId === 'host-match') onSelectHostMatch();
         else if (modeId === 'join-room') onSelectJoinRoom();
         else if (modeId === 'self-training') onSelectSelfTraining();
       }),
-  };
+  } as TProps;
 }
 
-export function useLayer2GarageStoreBinding(
-  props: Layer2GarageRecipeProps
-): Layer2GarageRecipeProps {
+export function useLayer2GarageStoreBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
   const activeCar = useAppStore((s) => s.activeCar);
   const setActiveCar = useAppStore((s) => s.setActiveCar);
@@ -164,32 +163,32 @@ export function useLayer2GarageStoreBinding(
   };
 
   return {
-    ...props,
+    ...rawProps,
     onBack: props.onBack ?? goBack,
     selectedCar: props.selectedCar ?? activeCar,
     onSelectCar: props.onSelectCar ?? handleSelectCar,
     primaryTeam: props.primaryTeam ?? colorPrefs.primaryTeam,
     onPrimaryTeamChange:
       props.onPrimaryTeamChange ??
-      ((team) => saveAndBroadcastColors({ ...colorPrefs, primaryTeam: team })),
+      ((team: 'blue' | 'orange') => saveAndBroadcastColors({ ...colorPrefs, primaryTeam: team })),
     paintFinish: props.paintFinish ?? materials.paintFinish,
     onPaintFinishChange:
       props.onPaintFinishChange ??
-      ((paintFinish) => updateMaterials({ paintFinish })),
+      ((paintFinish: 'matte' | 'metallic') => updateMaterials({ paintFinish })),
     blueOrder: props.blueOrder ?? colorPrefs.blueOrder,
     onBlueOrderChange:
       props.onBlueOrderChange ??
-      ((blueOrder) => saveAndBroadcastColors({ ...colorPrefs, blueOrder })),
+      ((blueOrder: number[]) => saveAndBroadcastColors({ ...colorPrefs, blueOrder })),
     orangeOrder: props.orangeOrder ?? colorPrefs.orangeOrder,
     onOrangeOrderChange:
       props.onOrangeOrderChange ??
-      ((orangeOrder) => saveAndBroadcastColors({ ...colorPrefs, orangeOrder })),
+      ((orangeOrder: number[]) => saveAndBroadcastColors({ ...colorPrefs, orangeOrder })),
     materials: props.materials ?? {
-      ...materials,
+      ...materials as VisualMaterialsConfig,
       boostAudio: materials.boostAudio ?? 'rush',
     },
     onUpdateMaterials: props.onUpdateMaterials ?? updateMaterials,
     selectedAnthem: props.selectedAnthem ?? selectedAnthem,
     onSelectAnthem: props.onSelectAnthem ?? setSelectedAnthem,
-  };
+  } as TProps;
 }
