@@ -6,7 +6,8 @@ export type ReplayViewerState =
   | 'paused'
   | 'rewinding'
   | 'forwarding'
-  | 'preroll-countdown';
+  | 'preroll-countdown'
+  | 'intervening';
 
 export type ReplayFlowPreset = '100' | '50' | '200' | '500' | 'custom';
 export type ReplayDownCounterOption = 0 | 1 | 2 | 3;
@@ -52,6 +53,8 @@ export interface ReplayViewerStoreState {
   hasRetainedMatch: boolean;
   isWindowOpen: boolean;
   hasHotkeyPriority: boolean;
+  activePovCarIndex: number;
+  activePovSlotKey: number | null;
 
   setDownCounterSec: (sec: ReplayDownCounterOption) => void;
   setFlowPreset: (preset: ReplayFlowPreset) => void;
@@ -70,6 +73,8 @@ export interface ReplayViewerStoreState {
     onPushForwardStart?: () => void;
     onPushForwardStop?: () => void;
     onResumeFromHere?: () => void;
+    onReturnToReplay?: () => void;
+    onSelectPovSlot?: (slotKey: number | null) => void;
     onClearReplay?: () => void;
   };
   setRuntimeHandlers: (handlers: Partial<ReplayViewerStoreState['runtimeHandlers']>) => void;
@@ -107,7 +112,7 @@ export const useReplayViewerStore = create<ReplayViewerStoreState>((set) => ({
   synthesizedSignalCount: 0,
   incidentMarkers: [],
   signalMarkers: [],
-  downCounterSec: 3,
+  downCounterSec: 0,
   prerollRemainingSec: 0,
   flowPreset: '100',
   customFlowPct: 60,
@@ -116,6 +121,8 @@ export const useReplayViewerStore = create<ReplayViewerStoreState>((set) => ({
   hasRetainedMatch: false,
   isWindowOpen: false,
   hasHotkeyPriority: false,
+  activePovCarIndex: 0,
+  activePovSlotKey: 1,
 
   setDownCounterSec: (downCounterSec) => set({ downCounterSec }),
   setFlowPreset: (flowPreset) =>

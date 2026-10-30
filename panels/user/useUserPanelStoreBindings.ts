@@ -185,6 +185,7 @@ export function useReplayViewerPanelStoreBindings(
     flowPreset,
     customFlowPct,
     downCounterSec,
+    hasRetainedMatch,
     incidentMarkers,
     signalMarkers,
     setFlowPreset,
@@ -230,11 +231,16 @@ export function useReplayViewerPanelStoreBindings(
     return props;
   }
 
+  const hasLoadedReplay = Boolean(loadedFileName && totalFrames > 0);
+
   return {
     ...props,
-    fileName: props.fileName ?? (loadedFileName || undefined),
-    totalFrames: props.totalFrames ?? Math.max(1, totalFrames),
-    cursorFrame: props.cursorFrame ?? cursorFrame,
+    hasLoadedReplay: props.hasLoadedReplay ?? hasLoadedReplay,
+    hasRetainedMatch: props.hasRetainedMatch ?? hasRetainedMatch,
+    fileName:
+      props.fileName ?? (hasLoadedReplay && loadedFileName ? loadedFileName : 'No replay loaded'),
+    totalFrames: props.totalFrames ?? (hasLoadedReplay ? totalFrames : 0),
+    cursorFrame: props.cursorFrame ?? (hasLoadedReplay ? cursorFrame : 0),
     onSeekFrame: props.onSeekFrame ?? ((frame) => runtimeHandlers.onSeekFrame?.(frame)),
     onStepFrame:
       props.onStepFrame ?? ((_delta, nextFrame) => runtimeHandlers.onSeekFrame?.(nextFrame)),
@@ -266,10 +272,14 @@ export function useReplayViewerPanelStoreBindings(
     onDownCounterChange:
       props.onDownCounterChange ??
       ((dc) => setDownCounterSec((Number(dc) || 0) as ReplayDownCounterOption)),
-    isIntervening: props.isIntervening ?? viewerState === 'preroll-countdown',
+    isIntervening:
+      props.isIntervening ??
+      (viewerState === 'preroll-countdown' || viewerState === 'intervening'),
     onInterveneFromHere:
       props.onInterveneFromHere ?? (() => runtimeHandlers.onResumeFromHere?.()),
-    onBackToReplay: props.onBackToReplay ?? (() => runtimeHandlers.onClearReplay?.()),
+    onBackToReplay:
+      props.onBackToReplay ??
+      (() => (runtimeHandlers.onReturnToReplay ?? runtimeHandlers.onPausePlaying)?.()),
     onLoadReplayFile:
       props.onLoadReplayFile ??
       (() =>
@@ -279,11 +289,9 @@ export function useReplayViewerPanelStoreBindings(
     onLoadRecentReplay:
       props.onLoadRecentReplay ?? (() => runtimeHandlers.onLoadRetainedMatchReplay?.()),
     incidentMarkers:
-      props.incidentMarkers ??
-      (loadedFileName ? mappedIncidentMarkers : undefined),
+      props.incidentMarkers ?? (hasLoadedReplay ? mappedIncidentMarkers : []),
     signalMarkers:
-      props.signalMarkers ??
-      (loadedFileName ? mappedSignalMarkers : undefined),
+      props.signalMarkers ?? (hasLoadedReplay ? mappedSignalMarkers : []),
   };
 }
 

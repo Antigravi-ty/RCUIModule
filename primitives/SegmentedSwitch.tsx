@@ -58,6 +58,7 @@ export const SegmentedSwitch: React.FC<SegmentedSwitchProps> = React.memo(({
   id,
   ariaLabel = 'Segmented Switch',
   isLight = false,
+  disabled = false,
   size = 'md',
   distribution,
   fullWidth = false,
@@ -123,20 +124,28 @@ export const SegmentedSwitch: React.FC<SegmentedSwitchProps> = React.memo(({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
+      aria-disabled={disabled}
       className={`${containerLayout} border ${containerRadius} ${sizeClass} select-none ${
         isLight ? 'bg-neutral-200/80 border-neutral-300/80' : 'bg-neutral-950 border-neutral-800'
-      } ${className}`}
+      } ${disabled ? 'opacity-45 pointer-events-none cursor-not-allowed' : ''} ${className}`}
     >
       {options.map((opt) => {
         const isSelected = value === opt.value;
+        const isOptDisabled = Boolean(disabled || opt.disabled);
         return (
           <button
             key={opt.value}
             type="button"
             role="radio"
+            disabled={isOptDisabled}
             aria-checked={isSelected}
-            onClick={() => (onValueChange ?? onChange)?.(opt.value)}
-            className={`group relative inline-flex items-center justify-center gap-1.5 ${itemPadding} ${itemRadius} ${getItemLayout()} transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 cursor-pointer ${
+            onClick={() => {
+              if (isOptDisabled) return;
+              (onValueChange ?? onChange)?.(opt.value);
+            }}
+            className={`group relative inline-flex items-center justify-center gap-1.5 ${itemPadding} ${itemRadius} ${getItemLayout()} transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 ${
+              isOptDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+            } ${
               isSelected
                 ? isLight
                   ? 'text-neutral-900'

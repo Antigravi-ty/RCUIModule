@@ -35,6 +35,10 @@ export interface ReplayViewerState {
 export interface ReplayViewerFloatingWindowProps {
   isLight?: boolean;
   active?: boolean;
+  /** Controlled whether a valid replay is loaded */
+  hasLoadedReplay?: boolean;
+  /** Controlled whether a retained recent match replay exists in memory */
+  hasRetainedMatch?: boolean;
   /** Controlled replay file name */
   fileName?: string;
   /** Controlled current frame cursor */
@@ -105,6 +109,8 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
   (rawProps) => {
     const {
       isLight = false,
+      hasLoadedReplay: controlledHasLoadedReplay,
+      hasRetainedMatch: controlledHasRetainedMatch,
       fileName: controlledFileName,
       cursorFrame: controlledCursorFrame,
       defaultCursorFrame = 420,
@@ -142,6 +148,8 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
     const activeClip = RECENT_CLIPS[clipIndex];
     const fileName = controlledFileName ?? activeClip.name;
     const totalFrames = controlledTotalFrames ?? activeClip.totalFrames;
+    const controlsDisabled = controlledHasLoadedReplay === false || totalFrames <= 0;
+    const loadRecentDisabled = controlledHasRetainedMatch === false;
 
     const [internalCursorFrame, setInternalCursorFrame] = useState<number>(defaultCursorFrame);
     const [internalIsPlaying, setInternalIsPlaying] = useState<boolean>(defaultIsPlaying);
@@ -179,18 +187,19 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
     };
 
     useEffect(() => {
-      if (!isPlaying || controlledCursorFrame !== undefined) return;
+      if (controlsDisabled || !isPlaying || controlledCursorFrame !== undefined) return;
       const stepFrames = Math.max(1, Math.round((4 * effectiveSpeedPct) / 100));
       const timer = window.setInterval(() => {
         setInternalCursorFrame((prev) => (prev + stepFrames) % Math.max(1, totalFrames));
       }, 33);
       return () => window.clearInterval(timer);
-    }, [isPlaying, effectiveSpeedPct, totalFrames, controlledCursorFrame]);
+    }, [controlsDisabled, isPlaying, effectiveSpeedPct, totalFrames, controlledCursorFrame]);
 
-    const clampedCursor = Math.max(0, Math.min(totalFrames, cursorFrame));
+    const clampedCursor = controlsDisabled ? 0 : Math.max(0, Math.min(totalFrames, cursorFrame));
     const cursorSec = (clampedCursor / 120).toFixed(2);
 
     const handleSeek = (nextFrame: number) => {
+      if (controlsDisabled) return;
       if (controlledCursorFrame === undefined) {
         setInternalCursorFrame(nextFrame);
       }
@@ -199,6 +208,7 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
     };
 
     const handleStep = (delta: number) => {
+      if (controlsDisabled) return;
       if (controlledIsPlaying === undefined) {
         setInternalIsPlaying(false);
       }
@@ -213,11 +223,17 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
       emitStateChange({ isPlaying: false, cursorFrame: nextFrame });
     };
 
-    const compactBtnClass = `flex-1 min-w-0 whitespace-nowrap inline-flex items-center justify-center gap-1 px-1.5 py-1.5 rounded-lg border text-[11px] font-semibold cursor-pointer transition-all active:scale-95 ${
-      isLight
-        ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
-        : 'bg-neutral-800/90 hover:bg-neutral-700 border-neutral-700 text-neutral-100'
+    const compactBtnClass = `flex-1 min-w-0 whitespace-nowrap inline-flex items-center justify-center gap-1 px-1.5 py-1.5 rounded-lg border text-[11px] font-semibold transition-all ${
+      controlsDisabled
+        ? isLight
+          ? 'bg-neutral-100 border-neutral-200 text-neutral-400 opacity-45 cursor-not-allowed pointer-events-none'
+          : 'bg-neutral-800/50 border-neutral-800 text-neutral-500 opacity-45 cursor-not-allowed pointer-events-none'
+        : isLight
+        ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800 cursor-pointer active:scale-95'
+        : 'bg-neutral-800/90 hover:bg-neutral-700 border-neutral-700 text-neutral-100 cursor-pointer active:scale-95'
     }`;
+
+    const backToReplayDisabled = controlsDisabled || !isIntervening;
 
     return (
       <div className="p-3.5 flex flex-col gap-3 text-xs select-none">
@@ -244,7 +260,9 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
 
           <button
             type="button"
+            disabled={loadRecentDisabled}
             onClick={() => {
+              if (loadRecentDisabled) return;
               if (onLoadRecentReplay) {
                 onLoadRecentReplay();
               } else {
@@ -255,10 +273,14 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
                 quickNotification.info(`Loaded recent replay: ${RECENT_CLIPS[nextIdx].name}`);
               }
             }}
-            className={`py-2 px-3 rounded-xl border font-semibold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95 ${
-              isLight
-                ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
-                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
+            className={`py-2 px-3 rounded-xl border font-semibold text-xs inline-flex items-center justify-center gap-1.5 transition-all ${
+              loadRecentDisabled
+                ? isLight
+                  ? 'bg-neutral-100 border-neutral-200 text-neutral-400 opacity-45 cursor-not-allowed pointer-events-none'
+                  : 'bg-neutral-800/50 border-neutral-800 text-neutral-500 opacity-45 cursor-not-allowed pointer-events-none'
+                : isLight
+                ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800 cursor-pointer active:scale-95'
+                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200 cursor-pointer active:scale-95'
             }`}
           >
             <ClockCheck className="h-3.5 w-3.5 shrink-0" />
@@ -269,6 +291,7 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
         {/* 2. L5 MultiTrackReplayTimeline (File Name, Frame Readout & 3 Synchronized Tracks) */}
         <MultiTrackReplayTimeline
           variant="tracks-only"
+          disabled={controlsDisabled}
           fileName={fileName}
           totalFrames={totalFrames}
           cursorFrame={clampedCursor}
@@ -283,7 +306,9 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
         <div className="flex items-center gap-1.5">
           <button
             type="button"
+            disabled={controlsDisabled}
             onClick={() => {
+              if (controlsDisabled) return;
               if (controlledIsPlaying === undefined) setInternalIsPlaying(true);
               onPlay?.();
               onPlayingChange?.(true);
@@ -299,7 +324,9 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
 
           <button
             type="button"
+            disabled={controlsDisabled}
             onClick={() => {
+              if (controlsDisabled) return;
               if (controlledIsPlaying === undefined) setInternalIsPlaying(false);
               onPause?.();
               onPlayingChange?.(false);
@@ -315,12 +342,13 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
 
           <button
             type="button"
+            disabled={controlsDisabled}
             onClick={() => handleStep(-60)}
-            onMouseDown={onRewindPressStart}
-            onMouseUp={onRewindPressEnd}
-            onMouseLeave={onRewindPressEnd}
-            onTouchStart={onRewindPressStart}
-            onTouchEnd={onRewindPressEnd}
+            onMouseDown={controlsDisabled ? undefined : onRewindPressStart}
+            onMouseUp={controlsDisabled ? undefined : onRewindPressEnd}
+            onMouseLeave={controlsDisabled ? undefined : onRewindPressEnd}
+            onTouchStart={controlsDisabled ? undefined : onRewindPressStart}
+            onTouchEnd={controlsDisabled ? undefined : onRewindPressEnd}
             className={compactBtnClass}
             title="Rewind (Hotkey: [)"
           >
@@ -331,12 +359,13 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
 
           <button
             type="button"
+            disabled={controlsDisabled}
             onClick={() => handleStep(60)}
-            onMouseDown={onForwardPressStart}
-            onMouseUp={onForwardPressEnd}
-            onMouseLeave={onForwardPressEnd}
-            onTouchStart={onForwardPressStart}
-            onTouchEnd={onForwardPressEnd}
+            onMouseDown={controlsDisabled ? undefined : onForwardPressStart}
+            onMouseUp={controlsDisabled ? undefined : onForwardPressEnd}
+            onMouseLeave={controlsDisabled ? undefined : onForwardPressEnd}
+            onTouchStart={controlsDisabled ? undefined : onForwardPressStart}
+            onTouchEnd={controlsDisabled ? undefined : onForwardPressEnd}
             className={compactBtnClass}
             title="Forward (Hotkey: ])"
           >
@@ -355,13 +384,16 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
           showDescription={false}
           paddingX={4}
           paddingY={2}
+          disabled={controlsDisabled}
           isLight={isLight}
           rightSlot={
             <SegmentedSwitch
               value={playbackPreset}
               size="sm"
+              disabled={controlsDisabled}
               isLight={isLight}
               onValueChange={(v) => {
+                if (controlsDisabled) return;
                 const nextPreset = v as PlaybackSpeedPreset;
                 if (controlledPlaybackPreset === undefined) {
                   setInternalPlaybackPreset(nextPreset);
@@ -398,7 +430,9 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
             showDescription={false}
             paddingX={4}
             paddingY={2}
+            disabled={controlsDisabled}
             onChange={(nextPct) => {
+              if (controlsDisabled) return;
               if (controlledCustomSpeedPct === undefined) {
                 setInternalCustomSpeedPct(nextPct);
               }
@@ -413,7 +447,9 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
         <div className="flex items-center gap-2">
           <button
             type="button"
+            disabled={controlsDisabled}
             onClick={() => {
+              if (controlsDisabled) return;
               if (controlledIsPlaying === undefined) setInternalIsPlaying(false);
               if (controlledIsIntervening === undefined) setInternalIsIntervening(true);
               onPlayingChange?.(false);
@@ -425,10 +461,14 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
                 );
               }
             }}
-            className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.985] shadow-xs ${
-              isLight
-                ? 'bg-neutral-900 hover:bg-neutral-800 text-white border border-neutral-900'
-                : 'bg-white hover:bg-neutral-200 text-neutral-950 border border-white'
+            className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs ${
+              controlsDisabled
+                ? isLight
+                  ? 'bg-neutral-200 text-neutral-400 border border-neutral-200 opacity-45 cursor-not-allowed pointer-events-none'
+                  : 'bg-neutral-800 text-neutral-500 border border-neutral-800 opacity-45 cursor-not-allowed pointer-events-none'
+                : isLight
+                ? 'bg-neutral-900 hover:bg-neutral-800 text-white border border-neutral-900 cursor-pointer active:scale-[0.985]'
+                : 'bg-white hover:bg-neutral-200 text-neutral-950 border border-white cursor-pointer active:scale-[0.985]'
             }`}
           >
             <span>Intervene from here</span>
@@ -436,7 +476,9 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
 
           <button
             type="button"
+            disabled={backToReplayDisabled}
             onClick={() => {
+              if (backToReplayDisabled) return;
               if (controlledIsIntervening === undefined) setInternalIsIntervening(false);
               onBackToReplay?.();
               emitStateChange({ isIntervening: false });
@@ -444,10 +486,14 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
                 quickNotification.info('Returned to replay playback mode.');
               }
             }}
-            className={`py-2 px-3 rounded-xl border font-semibold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95 ${
-              isLight
-                ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
-                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
+            className={`py-2 px-3 rounded-xl border font-semibold text-xs inline-flex items-center justify-center gap-1.5 transition-all ${
+              backToReplayDisabled
+                ? isLight
+                  ? 'bg-neutral-100 border-neutral-200 text-neutral-400 opacity-45 cursor-not-allowed pointer-events-none'
+                  : 'bg-neutral-800/50 border-neutral-800 text-neutral-500 opacity-45 cursor-not-allowed pointer-events-none'
+                : isLight
+                ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800 cursor-pointer active:scale-95'
+                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200 cursor-pointer active:scale-95'
             }`}
           >
             <RotateCcw className="h-3.5 w-3.5 shrink-0" />
@@ -463,13 +509,16 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
           showDescription={false}
           paddingX={4}
           paddingY={2}
+          disabled={controlsDisabled}
           isLight={isLight}
           rightSlot={
             <SegmentedSwitch
               value={downCounter}
               size="sm"
+              disabled={controlsDisabled}
               isLight={isLight}
               onValueChange={(v) => {
+                if (controlsDisabled) return;
                 const nextDown = v as DownCounterOption;
                 if (controlledDownCounter === undefined) {
                   setInternalDownCounter(nextDown);

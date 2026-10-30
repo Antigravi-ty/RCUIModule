@@ -5,6 +5,7 @@ import { useTelemetryData } from '../stores/perfTelemetryStore';
 import { useNetworkDiagnosticsData } from '../stores/networkDiagnosticsStore';
 import { useKickoffTrainingStore } from '../stores/kickoffTrainingStore';
 import { useExperimentalMultiBotsStore } from '../stores/experimentalMultiBotsStore';
+import { useReplayViewerStore } from '../stores/replayViewerStore';
 import {
   HudAnchorStage,
   HudZone,
@@ -253,12 +254,28 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     kickoffStore.playerKeys,
   ]);
 
-  // 7. Handle POV slot selection from EdgePlayerHudStrip in Replay / Spectator mode
+  // 7. Handle POV slot selection from EdgePlayerHudStrip in Replay / Spectator / Replay Viewer mode
   // Keys 1-6 select player slots 1-6; Key 7 (null) returns to Director camera view.
+  const replayViewerState = useReplayViewerStore((s) => s.viewerState);
+  const replayViewerTotalFrames = useReplayViewerStore((s) => s.totalFrames);
+  const replayViewerFileName = useReplayViewerStore((s) => s.loadedFileName);
+  const isReplayViewerActive = Boolean(
+    replayViewerFileName &&
+      replayViewerTotalFrames > 0 &&
+      replayViewerState !== 'idle' &&
+      replayViewerState !== 'intervening'
+  );
+  const isReplayViewerLoaded = Boolean(
+    replayViewerFileName && replayViewerTotalFrames > 0 && replayViewerState !== 'idle'
+  );
+
   const handleSelectPovSlot = useCallback(
     (slotKey: 1 | 2 | 3 | 4 | 5 | 6 | null) => {
       if (slotKey === null) {
         hudChannel.setRoster({ focusedSlotKey: null });
+        if (isReplayViewerActive) {
+          useReplayViewerStore.getState().runtimeHandlers.onSelectPovSlot?.(null);
+        }
         const curHud = useHudStore.getState();
         if (curHud.onReplaySelectPovCar) {
           curHud.onReplaySelectPovCar(null);
@@ -269,12 +286,23 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
       }
 
       const roster = hudChannel.getRoster();
-      const targetSlot =
+      const allSlots = [...(roster.leftPlayers || []), ...(roster.rightPlayers || [])];
+      const matchedByKey = allSlots.find(
+        (s) => s && s.exists !== false && s.slotKey === slotKey
+      );
+      const fallbackSlot =
         slotKey <= 3 ? roster.leftPlayers[slotKey - 1] : roster.rightPlayers[slotKey - 4];
+      const targetSlot = matchedByKey ?? fallbackSlot;
       const slotCarIndex =
         targetSlot && targetSlot.exists !== false && typeof targetSlot.carIndex === 'number'
           ? targetSlot.carIndex
           : null;
+
+      if (isReplayViewerActive) {
+        hudChannel.setRoster({ focusedSlotKey: slotKey });
+        useReplayViewerStore.getState().runtimeHandlers.onSelectPovSlot?.(slotKey);
+        return;
+      }
 
       if (slotCarIndex !== null) {
         hudChannel.setRoster({ focusedSlotKey: slotKey });
@@ -293,12 +321,12 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
         }
       }
     },
-    [hudChannel, matchMode]
+    [hudChannel, matchMode, isReplayViewerActive]
   );
 
-  // Bind 1-6 (player POV) and 7 (Director view) hotkeys during Goal Replay across all match modes
+  // Bind 1-6 (player POV) and 7 (Director view) hotkeys during Goal Replay or Replay Viewer
   useEffect(() => {
-    if (matchPhase !== 'replay') return;
+    if (matchPhase !== 'replay' && !isReplayViewerActive) return;
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       const tag = target?.tagName;
@@ -312,8 +340,10 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
       }
 
       if (keyNum === 7 || keyNum === 0) {
-        e.preventDefault();
-        handleSelectPovSlot(null);
+        if (matchPhase === 'replay') {
+          e.preventDefault();
+          handleSelectPovSlot(null);
+        }
       } else if (keyNum >= 1 && keyNum <= 6) {
         e.preventDefault();
         handleSelectPovSlot(keyNum as 1 | 2 | 3 | 4 | 5 | 6);
@@ -321,12 +351,13 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [matchPhase, handleSelectPovSlot]);
+  }, [matchPhase, isReplayViewerActive, handleSelectPovSlot]);
 
   const showTopScoreboard =
     matchMode === 'match' ||
     matchMode === 'exp-multi-bots' ||
-    (matchMode === 'online-warmup' && onlineSession.roomType === 'match');
+    (matchMode === 'online-warmup' && onlineSession.roomType === 'match') ||
+    isReplayViewerLoaded;
 
   const showEdgeRosterStrips =
     showTopScoreboard && matchPhase !== 'podium' && matchPhase !== 'ended';

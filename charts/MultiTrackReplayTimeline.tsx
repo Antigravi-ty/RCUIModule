@@ -50,6 +50,7 @@ export interface MultiTrackReplayTimelineProps {
   signalMarkers?: ReplaySignalMarker[];
   /** Visual variant: 'card' (full 5B inspector) or 'tracks-only' (embedded 3-track scrub card for ReplayViewerFloatingWindow) */
   variant?: 'card' | 'tracks-only';
+  disabled?: boolean;
   onSeekFrame?: (frameIndex: number) => void;
   onResumeFromCursor?: (cursorFrame: number, downCounterSec: ReplayDownCounterSec) => void;
   isLight?: boolean;
@@ -74,6 +75,7 @@ export const MultiTrackReplayTimeline = React.memo(
         incidentMarkers = DEFAULT_REPLAY_INCIDENT_MARKERS,
         signalMarkers = DEFAULT_REPLAY_SIGNAL_MARKERS,
         variant = 'card',
+        disabled = false,
         onSeekFrame,
         onResumeFromCursor,
         isLight = true,
@@ -82,11 +84,12 @@ export const MultiTrackReplayTimeline = React.memo(
       ref
     ) => {
       const [isPlaying, setIsPlaying] = useState(false);
-      const [downCounterSec, setDownCounterSec] = useState<ReplayDownCounterSec>(3);
+      const [downCounterSec, setDownCounterSec] = useState<ReplayDownCounterSec>(0);
       const [flowPreset, setFlowPreset] = useState<ReplayFlowPresetId>('100');
       const [customFlowPct, setCustomFlowPct] = useState(80);
 
-      const effectiveInitialFrame = controlledCursorFrame ?? initialCursorFrame;
+      const isTrackDisabled = disabled || totalFrames <= 0;
+      const effectiveInitialFrame = isTrackDisabled ? 0 : (controlledCursorFrame ?? initialCursorFrame);
       const cursorFrameRef = useRef(effectiveInitialFrame);
       const cursorTextRef = useRef<HTMLSpanElement | null>(null);
       const trackAFillRef = useRef<HTMLDivElement | null>(null);
@@ -99,6 +102,14 @@ export const MultiTrackReplayTimeline = React.memo(
 
       const applyCursorToDom = useCallback(
         (frameIdx: number) => {
+          if (isTrackDisabled) {
+            cursorFrameRef.current = 0;
+            if (trackAFillRef.current) trackAFillRef.current.style.width = '0%';
+            if (trackBCursorRef.current) trackBCursorRef.current.style.left = '0%';
+            if (trackCCursorRef.current) trackCCursorRef.current.style.left = '0%';
+            if (cursorTextRef.current) cursorTextRef.current.textContent = 'Frame #0 (0.00s)';
+            return;
+          }
           const maxF = isTracksOnly ? totalFrames : Math.max(1, totalFrames - 1);
           const clamped = Math.max(0, Math.min(maxF, Math.round(frameIdx)));
           cursorFrameRef.current = clamped;
@@ -120,7 +131,7 @@ export const MultiTrackReplayTimeline = React.memo(
             }
           }
         },
-        [totalFrames, denomFrames, isTracksOnly]
+        [totalFrames, denomFrames, isTracksOnly, isTrackDisabled]
       );
 
       useImperativeHandle(
@@ -136,16 +147,17 @@ export const MultiTrackReplayTimeline = React.memo(
       }, [controlledCursorFrame, initialCursorFrame, applyCursorToDom]);
 
       useEffect(() => {
-        if (!isPlaying || isTracksOnly) return;
+        if (!isPlaying || isTracksOnly || isTrackDisabled) return;
         const stepFrames = Math.max(1, Math.round((4 * effectiveFlowPct) / 100));
         const id = window.setInterval(() => {
           const next = (cursorFrameRef.current + stepFrames) % Math.max(1, totalFrames);
           applyCursorToDom(next);
         }, 33);
         return () => window.clearInterval(id);
-      }, [isPlaying, isTracksOnly, effectiveFlowPct, totalFrames, applyCursorToDom]);
+      }, [isPlaying, isTracksOnly, isTrackDisabled, effectiveFlowPct, totalFrames, applyCursorToDom]);
 
       const handleTrackSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (isTrackDisabled) return;
         const rect = e.currentTarget.getBoundingClientRect();
         const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
         const target = Math.round(ratio * denomFrames);
@@ -154,6 +166,7 @@ export const MultiTrackReplayTimeline = React.memo(
       };
 
       const stepRelative = (deltaFrames: number) => {
+        if (isTrackDisabled) return;
         const next = Math.max(0, Math.min(denomFrames, cursorFrameRef.current + deltaFrames));
         applyCursorToDom(next);
         onSeekFrame?.(next);
@@ -163,26 +176,30 @@ export const MultiTrackReplayTimeline = React.memo(
       const cursorLineClass = isLight ? 'bg-neutral-900' : 'bg-white';
 
       if (isTracksOnly) {
-        const clampedCursor = Math.max(0, Math.min(totalFrames, effectiveInitialFrame));
+        const clampedCursor = isTrackDisabled ? 0 : Math.max(0, Math.min(totalFrames, effectiveInitialFrame));
         const cursorSec = (clampedCursor / 120).toFixed(2);
-        const totalSec = (totalFrames / 120).toFixed(2);
-        const cursorPct = (clampedCursor / denomFrames) * 100;
+        const totalSec = (Math.max(0, totalFrames) / 120).toFixed(2);
+        const cursorPct = isTrackDisabled ? 0 : (clampedCursor / denomFrames) * 100;
+        const trackInteractiveCls = isTrackDisabled
+          ? 'cursor-not-allowed pointer-events-none opacity-50'
+          : 'cursor-pointer';
 
         return (
           <div
             data-ui-element="chart-multitrack-replay-timeline"
+            aria-disabled={isTrackDisabled}
             className={`p-3 rounded-xl border flex flex-col gap-2 font-mono select-none ${
               isLight
                 ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
                 : 'bg-neutral-900/70 border-neutral-800 text-neutral-200'
-            } ${className}`}
+            } ${isTrackDisabled ? 'opacity-60' : ''} ${className}`}
           >
             {/* File Name Line */}
             <div className="flex items-center justify-between gap-2">
               <span data-allow-truncate="true" className="font-bold text-xs truncate">
                 {fileName}
               </span>
-              {isIntervening && (
+              {isIntervening && !isTrackDisabled && (
                 <span className="text-[10px] font-bold uppercase text-amber-500 shrink-0">
                   Live Intervention
                 </span>
@@ -201,7 +218,7 @@ export const MultiTrackReplayTimeline = React.memo(
               <div
                 onClick={handleTrackSeek}
                 title="Track 1 · Physics State & Player Input (Click to seek)"
-                className={`w-full h-3 rounded-full overflow-hidden cursor-pointer relative ${trackBgClass}`}
+                className={`w-full h-3 rounded-full overflow-hidden relative ${trackInteractiveCls} ${trackBgClass}`}
               >
                 <div
                   ref={trackAFillRef}
@@ -214,72 +231,78 @@ export const MultiTrackReplayTimeline = React.memo(
               <div
                 onClick={handleTrackSeek}
                 title="Track 2 · Arena Incidents (Touch / Demo / Save / Goal)"
-                className={`w-full h-3 rounded-full overflow-hidden cursor-pointer relative ${trackBgClass}`}
+                className={`w-full h-3 rounded-full overflow-hidden relative ${trackInteractiveCls} ${trackBgClass}`}
               >
-                {incidentMarkers.map((m, idx) => {
-                  const leftPct = (m.frameIndex / denomFrames) * 100;
-                  const colorCls =
-                    m.type === 'goal'
-                      ? 'bg-emerald-500 w-1.5 z-10'
-                      : m.type === 'demo'
-                      ? 'bg-rose-500 w-1'
-                      : m.type === 'save'
-                      ? 'bg-sky-500 w-1'
-                      : 'bg-amber-500 w-0.5';
-                  return (
-                    <div
-                      key={`${m.frameIndex}-${idx}`}
-                      style={{ left: `${leftPct}%` }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        applyCursorToDom(m.frameIndex);
-                        onSeekFrame?.(m.frameIndex);
-                      }}
-                      className={`absolute top-0 bottom-0 ${colorCls}`}
-                      title={`${m.label} @ #${m.frameIndex}`}
-                    />
-                  );
-                })}
-                <div
-                  ref={trackBCursorRef}
-                  style={{ left: `${cursorPct}%` }}
-                  className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`}
-                />
+                {!isTrackDisabled &&
+                  incidentMarkers.map((m, idx) => {
+                    const leftPct = (m.frameIndex / denomFrames) * 100;
+                    const colorCls =
+                      m.type === 'goal'
+                        ? 'bg-emerald-500 w-1.5 z-10'
+                        : m.type === 'demo'
+                        ? 'bg-rose-500 w-1'
+                        : m.type === 'save'
+                        ? 'bg-sky-500 w-1'
+                        : 'bg-amber-500 w-0.5';
+                    return (
+                      <div
+                        key={`${m.frameIndex}-${idx}`}
+                        style={{ left: `${leftPct}%` }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          applyCursorToDom(m.frameIndex);
+                          onSeekFrame?.(m.frameIndex);
+                        }}
+                        className={`absolute top-0 bottom-0 ${colorCls}`}
+                        title={`${m.label} @ #${m.frameIndex}`}
+                      />
+                    );
+                  })}
+                {!isTrackDisabled && (
+                  <div
+                    ref={trackBCursorRef}
+                    style={{ left: `${cursorPct}%` }}
+                    className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`}
+                  />
+                )}
               </div>
 
               {/* Track 3: Signals */}
               <div
                 onClick={handleTrackSeek}
                 title="Track 3 · Match Signals (Kickoff / Score / Boundary)"
-                className={`w-full h-3 rounded-full overflow-hidden cursor-pointer relative ${trackBgClass}`}
+                className={`w-full h-3 rounded-full overflow-hidden relative ${trackInteractiveCls} ${trackBgClass}`}
               >
-                {signalMarkers.map((s, idx) => {
-                  const leftPct = (s.frameIndex / denomFrames) * 100;
-                  const colorCls =
-                    s.type === 'score'
-                      ? 'bg-emerald-500 w-1.5'
-                      : s.type === 'end'
-                      ? 'bg-violet-500 w-1'
-                      : 'bg-sky-500 w-1';
-                  return (
-                    <div
-                      key={`${s.frameIndex}-${idx}`}
-                      style={{ left: `${leftPct}%` }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        applyCursorToDom(s.frameIndex);
-                        onSeekFrame?.(s.frameIndex);
-                      }}
-                      className={`absolute top-0 bottom-0 ${colorCls}`}
-                      title={`${s.label} @ #${s.frameIndex}`}
-                    />
-                  );
-                })}
-                <div
-                  ref={trackCCursorRef}
-                  style={{ left: `${cursorPct}%` }}
-                  className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`}
-                />
+                {!isTrackDisabled &&
+                  signalMarkers.map((s, idx) => {
+                    const leftPct = (s.frameIndex / denomFrames) * 100;
+                    const colorCls =
+                      s.type === 'score'
+                        ? 'bg-emerald-500 w-1.5'
+                        : s.type === 'end'
+                        ? 'bg-violet-500 w-1'
+                        : 'bg-sky-500 w-1';
+                    return (
+                      <div
+                        key={`${s.frameIndex}-${idx}`}
+                        style={{ left: `${leftPct}%` }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          applyCursorToDom(s.frameIndex);
+                          onSeekFrame?.(s.frameIndex);
+                        }}
+                        className={`absolute top-0 bottom-0 ${colorCls}`}
+                        title={`${s.label} @ #${s.frameIndex}`}
+                      />
+                    );
+                  })}
+                {!isTrackDisabled && (
+                  <div
+                    ref={trackCCursorRef}
+                    style={{ left: `${cursorPct}%` }}
+                    className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`}
+                  />
+                )}
               </div>
             </div>
           </div>
