@@ -53,7 +53,19 @@ export const DriftwoodsTunerFloatingWindow: React.FC<DriftwoodsTunerFloatingWind
   const precisionStep = useAppStore((s) => s.precisionStep);
   const setPrecisionStep = useAppStore((s) => s.setPrecisionStep);
 
-  const [activeTab, setActiveTab] = useState<TunerTab>('ground');
+  const [internalTab, setInternalTab] = useState<TunerTab>(() =>
+    controlledTab && ['ground', 'surfaces', 'transparent', 'performance'].includes(controlledTab)
+      ? controlledTab
+      : 'ground'
+  );
+  const activeTab: TunerTab =
+    controlledTab && ['ground', 'surfaces', 'transparent', 'performance'].includes(controlledTab)
+      ? controlledTab
+      : internalTab;
+  const setActiveTab = (nextTab: TunerTab) => {
+    setInternalTab(nextTab);
+    onTabChange?.(nextTab);
+  };
   const [copied, setCopied] = useState<boolean>(false);
   const [presetDropdownOpen, setPresetDropdownOpen] = useState<boolean>(false);
 

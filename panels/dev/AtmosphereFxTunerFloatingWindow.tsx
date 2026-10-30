@@ -61,10 +61,19 @@ export const AtmosphereFxTunerFloatingWindow: React.FC<AtmosphereFxTunerFloating
   activeTab: controlledTab,
   onTabChange,
 }) => {
-  const [activeTab, setActiveTabState] = useState<AtmosphereFxTab>(() => cachedAtmosphereActiveTab);
+  const [internalTab, setActiveTabState] = useState<AtmosphereFxTab>(() =>
+    controlledTab && ['wall-fx', 'shadows', 'skybox', 'ball'].includes(controlledTab)
+      ? controlledTab
+      : cachedAtmosphereActiveTab
+  );
+  const activeTab: AtmosphereFxTab =
+    controlledTab && ['wall-fx', 'shadows', 'skybox', 'ball'].includes(controlledTab)
+      ? controlledTab
+      : internalTab;
   const setActiveTab = (tab: AtmosphereFxTab) => {
     cachedAtmosphereActiveTab = tab;
     setActiveTabState(tab);
+    onTabChange?.(tab);
   };
   const [copiedSnapshot, setCopiedSnapshot] = useState(false);
   const bridge = useAppStore((s) => s.bridge);

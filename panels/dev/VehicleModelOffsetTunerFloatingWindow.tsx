@@ -88,7 +88,19 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   const [selectedCar, setSelectedCar] = useState<CustomVehicleId>(() =>
     activeCar === 'insidio' ? 'insidio' : 'fennec'
   );
-  const [activeTab, setActiveTab] = useState<VehicleTunerTab>('hitbox');
+  const [internalTab, setInternalTab] = useState<VehicleTunerTab>(() =>
+    controlledTab && ['hitbox', 'wheels', 'boost'].includes(controlledTab)
+      ? controlledTab
+      : 'hitbox'
+  );
+  const activeTab: VehicleTunerTab =
+    controlledTab && ['hitbox', 'wheels', 'boost'].includes(controlledTab)
+      ? controlledTab
+      : internalTab;
+  const setActiveTab = (nextTab: VehicleTunerTab) => {
+    setInternalTab(nextTab);
+    onTabChange?.(nextTab);
+  };
   const [copiedJson, setCopiedJson] = useState(false);
   const [, setRevision] = useState(0);
   const [runtimeFlags, setRuntimeFlagsState] = useState(() => getVehicleTunerRuntimeFlags());

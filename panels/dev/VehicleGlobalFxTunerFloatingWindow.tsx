@@ -75,7 +75,19 @@ export const VehicleGlobalFxTunerFloatingWindow: React.FC<VehicleGlobalFxTunerFl
   const precisionStep = useAppStore((s) => s.precisionStep);
   const setPrecisionStep = useAppStore((s) => s.setPrecisionStep);
 
-  const [activeTab, setActiveTab] = useState<VehicleGlobalFxTab>('surfaces');
+  const [internalTab, setInternalTab] = useState<VehicleGlobalFxTab>(() =>
+    controlledTab && ['surfaces', 'lamps', 'wheels', 'boost'].includes(controlledTab)
+      ? controlledTab
+      : 'surfaces'
+  );
+  const activeTab: VehicleGlobalFxTab =
+    controlledTab && ['surfaces', 'lamps', 'wheels', 'boost'].includes(controlledTab)
+      ? controlledTab
+      : internalTab;
+  const setActiveTab = (nextTab: VehicleGlobalFxTab) => {
+    setInternalTab(nextTab);
+    onTabChange?.(nextTab);
+  };
   const [copiedJson, setCopiedJson] = useState(false);
   const [, setRevision] = useState(0);
   const [runtimeFlags, setRuntimeFlagsState] = useState(() =>

@@ -37,7 +37,19 @@ export const BoostPadTunerFloatingWindow: React.FC<BoostPadTunerFloatingWindowPr
   const updateTuner = useAppStore((s) => s.updateBoostPadTuner);
   const resetTuner = useAppStore((s) => s.resetBoostPadTuner);
 
-  const [activeTab, setActiveTab] = useState<TabKey>('shader');
+  const [internalTab, setInternalTab] = useState<TabKey>(() =>
+    controlledTab && ['shader', 'materials', 'rotations', 'refill', 'collect'].includes(controlledTab)
+      ? controlledTab
+      : 'shader'
+  );
+  const activeTab: TabKey =
+    controlledTab && ['shader', 'materials', 'rotations', 'refill', 'collect'].includes(controlledTab)
+      ? controlledTab
+      : internalTab;
+  const setActiveTab = (nextTab: TabKey) => {
+    setInternalTab(nextTab);
+    onTabChange?.(nextTab);
+  };
   const [copied, setCopied] = useState<boolean>(false);
   const [imported, setImported] = useState<boolean>(false);
 

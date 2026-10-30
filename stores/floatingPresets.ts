@@ -47,6 +47,8 @@ export const REPLAY_VIEWER_PRESET: PresetConfig = {
   tier: 'user',
   summary: 'Multi-track replay timeline scrubber, camera mode switcher, and speed flow controls.',
   menuEntryPath: 'Play -> RC Replay Viewer',
+  component: 'ReplayViewerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/user/ReplayViewerFloatingWindow.tsx',
 };
 
 export const GOAL_BARRIER_CONFIGURATOR_PRESET: PresetConfig = {
@@ -63,6 +65,8 @@ export const GOAL_BARRIER_CONFIGURATOR_PRESET: PresetConfig = {
   tier: 'user',
   summary: 'Interactive 2D goal barrier boolean rectangle designer with Orange/Blue/Both target selection.',
   menuEntryPath: 'Settings -> Gameplay -> Training Mode Configuration',
+  component: 'GoalBarrierConfiguratorFloatingWindow',
+  sourcePath: 'src/ui-core/panels/user/GoalBarrierConfiguratorFloatingWindow.tsx',
 };
 
 export const REWINDER_CONFIGURATOR_PRESET: PresetConfig = {
@@ -79,6 +83,8 @@ export const REWINDER_CONFIGURATOR_PRESET: PresetConfig = {
   tier: 'user',
   summary: 'Free Play state history recorder, timeline scrubber ([ / ]), and countdown takeover.',
   menuEntryPath: 'Settings -> Gameplay -> Training Mode Configuration',
+  component: 'RewinderConfiguratorFloatingWindow',
+  sourcePath: 'src/ui-core/panels/user/RewinderConfiguratorFloatingWindow.tsx',
 };
 
 export const NETWORK_MONITOR_PRESET: PresetConfig = {
@@ -95,6 +101,8 @@ export const NETWORK_MONITOR_PRESET: PresetConfig = {
   tier: 'user',
   summary: 'Real-time RTT & jitter oscilloscope, input buffer queue depth, and 20-minute session telemetry export.',
   menuEntryPath: 'Settings -> Advanced -> Network Monitor',
+  component: 'NetworkMonitorFloatingWindow',
+  sourcePath: 'src/ui-core/panels/user/NetworkMonitorFloatingWindow.tsx',
 };
 
 export const PERFORMANCE_MONITOR_PRESET: PresetConfig = {
@@ -111,6 +119,8 @@ export const PERFORMANCE_MONITOR_PRESET: PresetConfig = {
   tier: 'user',
   summary: 'Real-time CPU 6-phase breakdown, physics simulation sub-ticks, and WebGL rendering pipeline metrics.',
   menuEntryPath: 'Settings -> Advanced -> Performance Monitor',
+  component: 'PerformanceMonitorFloatingWindow',
+  sourcePath: 'src/ui-core/panels/user/PerformanceMonitorFloatingWindow.tsx',
 };
 
 export const FLOATING_WINDOW_OPACITY_PRESET: PresetConfig = {
@@ -128,6 +138,8 @@ export const FLOATING_WINDOW_OPACITY_PRESET: PresetConfig = {
   tier: 'user',
   summary: 'Global opacity adjustment (1% - 100%) for all active floating telemetry windows.',
   menuEntryPath: 'Settings -> Advanced -> Floating Window Opacity',
+  component: 'FloatingWindowOpacityFloatingWindow',
+  sourcePath: 'src/ui-core/panels/user/FloatingWindowOpacityFloatingWindow.tsx',
 };
 
 // ============================================================================
@@ -145,6 +157,8 @@ export const DIAGNOSTIC_DUMP_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Live Client Replay, Reconcile & Pacing Telemetry, and Server Replay buffer gauges + one-click .zip dump.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'DiagnosticDumpFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/DiagnosticDumpFloatingWindow.tsx',
 };
 
 export const STATIC_TRAINING_BALL_CAM_TUNER_PRESET: PresetConfig = {
@@ -158,6 +172,8 @@ export const STATIC_TRAINING_BALL_CAM_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Relative ball camera (Distance, Height, Angle, Lateral Offset) and Edit-Mode 70% Ball Opacity override.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'StaticTrainingBallCamTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/StaticTrainingBallCamTunerFloatingWindow.tsx',
 };
 
 export const NAME_TAG_TUNER_PRESET: PresetConfig = {
@@ -171,6 +187,8 @@ export const NAME_TAG_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: '208x54 horizontal pill name cards, distance curve gamma, 50UU+6px offset, and 6-car kickoff arena.',
   menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  component: 'NameTagTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/NameTagTunerFloatingWindow.tsx',
 };
 
 export const GOAL_VOLUME_TUNER_PRESET: PresetConfig = {
@@ -184,6 +202,8 @@ export const GOAL_VOLUME_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Goal Volume Hitbox 3D wireframe overlay, Standard & Throwback AABB calibration & JSON export.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'GoalVolumeTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/GoalVolumeTunerFloatingWindow.tsx',
 };
 
 export const REPLAY_DIRECTOR_TUNER_PRESET: PresetConfig = {
@@ -197,6 +217,8 @@ export const REPLAY_DIRECTOR_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: '.rcgr.gz Goal Replay container export/import, 3D Arena preview, anomaly peak seek chips & +-15f window.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'ReplayDirectorTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/ReplayDirectorTunerFloatingWindow.tsx',
 };
 
 export const REACHABILITY_TUNER_PRESET: PresetConfig = {
@@ -210,6 +232,8 @@ export const REACHABILITY_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Ground 1s/2s/3s Isochrone LUT (Boost=0), Boost-Driven 3D Horn & Optimal Intercept 3D Cross.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'ReachabilityTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/ReachabilityTunerFloatingWindow.tsx',
 };
 
 export const VEHICLE_MODEL_OFFSET_TUNER_PRESET: PresetConfig = {
@@ -223,10 +247,12 @@ export const VEHICLE_MODEL_OFFSET_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Per-vehicle Hitbox & Align, Wheel Hub Anchors & Dual Boost Exhaust Nozzle Offsets (Fennec & Insidio).',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'VehicleModelOffsetTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx',
   tabs: [
-    { id: 'hitbox', label: 'Hitbox & Align' },
-    { id: 'wheel-anchors', label: 'Wheel Anchors' },
-    { id: 'boost-nozzles', label: 'Boost Nozzles' },
+    { id: 'hitbox', label: '1. Hitbox & Align' },
+    { id: 'wheels', label: '2. Wheel Offsets' },
+    { id: 'boost', label: '3. Boost Nozzles' },
   ],
 };
 
@@ -241,11 +267,13 @@ export const VEHICLE_GLOBAL_FX_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Universal Surfaces & Paint, Head/Brake Lamps, 3-Face Solid Cylinder Wheels & Boost FX.',
   menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  component: 'VehicleGlobalFxTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/VehicleGlobalFxTunerFloatingWindow.tsx',
   tabs: [
-    { id: 'surfaces', label: 'Surfaces & Paint' },
-    { id: 'lights', label: 'Lights & Lamps' },
-    { id: 'wheels', label: 'Wheels (7uu)' },
-    { id: 'boost-fx', label: 'Boost FX' },
+    { id: 'surfaces', label: '1. Surfaces' },
+    { id: 'lamps', label: '2. Lamps' },
+    { id: 'wheels', label: '3. Wheels' },
+    { id: 'boost', label: '4. Boost & FX' },
   ],
 };
 
@@ -260,6 +288,8 @@ export const EXPERIMENTAL_MULTI_BOTS_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Live floating controller for up to 3v3 Native SafeTensors Nexto/Necto POV switching & inference telemetry.',
   menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  component: 'ExperimentalMultiBotsFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/ExperimentalMultiBotsFloatingWindow.tsx',
 };
 
 export const ATMOSPHERE_FX_TUNER_PRESET: PresetConfig = {
@@ -273,11 +303,13 @@ export const ATMOSPHERE_FX_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Wall & Pulse (Cubic-Bezier Fade-Out Curve), Single-Sun Sharp Shadows, Full-Sphere Skybox & 70% Ball.',
   menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  component: 'AtmosphereFxTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/AtmosphereFxTunerFloatingWindow.tsx',
   tabs: [
-    { id: 'wall-pulse', label: 'Wall & Pulse' },
-    { id: 'shadows', label: 'Shadows' },
-    { id: 'skybox', label: 'Skybox' },
-    { id: 'ball', label: 'Ball (70%)' },
+    { id: 'wall-fx', label: '1. Wall & Pulse' },
+    { id: 'shadows', label: '2. Shadows & Light' },
+    { id: 'skybox', label: '3. Skybox' },
+    { id: 'ball', label: '4. Ball' },
   ],
 };
 
@@ -292,14 +324,16 @@ export const SUBSYSTEM_ISOLATION_LAB_PRESET: PresetConfig = {
   tier: 'developer',
   summary: '7 isolated test benches: Probes, Multi-World Ghost, State Replay, 90s Match, Goal Replay, Kickoff Duel & Demolish Respawn.',
   menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  component: 'SubsystemIsolationLabFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/SubsystemIsolationLabFloatingWindow.tsx',
   tabs: [
-    { id: 'probes', label: 'Probes' },
-    { id: 'dual-world', label: 'Multi Ghost' },
-    { id: 'state-replay', label: 'State Replay' },
-    { id: 'incident-match', label: '90s Match' },
-    { id: 'goal-replay', label: 'Goal Replay' },
-    { id: 'kickoff-duel', label: 'Kickoff Duel' },
-    { id: 'demolish-respawn', label: 'Demolish & Respawn' },
+    { id: 'probes', label: '1. Probes' },
+    { id: 'dual-world', label: '2. Multi Ghost' },
+    { id: 'state-replay', label: '3. State Replay' },
+    { id: 'incident-match', label: '4. 90s Match' },
+    { id: 'goal-replay', label: '5. Goal Replay' },
+    { id: 'kickoff-duel', label: '6. Kickoff Duel' },
+    { id: 'demolish-respawn', label: '7. Demo Respawn' },
   ],
 };
 
@@ -314,6 +348,8 @@ export const KICKOFF_TRAINING_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Kickoff sub-modes, realistic wait (0.25s steps), N/120 speed & W/S rhythm overlay offset.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'KickoffTrainingFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/KickoffTrainingFloatingWindow.tsx',
 };
 
 export const EVENT_STREAM_OB_PRESET: PresetConfig = {
@@ -327,6 +363,8 @@ export const EVENT_STREAM_OB_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Real-time physics collision observer, impulse scatter chart & audio threshold visualizer.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'EventStreamOBFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/EventStreamOBFloatingWindow.tsx',
 };
 
 export const DUAL_ARENA_DETERMINISM_HARNESS_PRESET: PresetConfig = {
@@ -340,6 +378,8 @@ export const DUAL_ARENA_DETERMINISM_HARNESS_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Bit-exact parallel RocketSim physics rollback verification & desync delta monitoring.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'DualArenaDeterminismHarnessFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/DualArenaDeterminismHarnessFloatingWindow.tsx',
 };
 
 export const CAMERA_DETERMINISM_PRESET: PresetConfig = {
@@ -353,6 +393,8 @@ export const CAMERA_DETERMINISM_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Side-by-side comparison between Legacy WASM & Clean JS camera with 600+600f CSV auto-capture.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'CameraDeterminismFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/CameraDeterminismFloatingWindow.tsx',
 };
 
 export const NETWORK_STRESS_INJECTION_PRESET: PresetConfig = {
@@ -366,6 +408,8 @@ export const NETWORK_STRESS_INJECTION_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Asymmetric uplink/downlink delay, jitter, packet loss & burst drop injection + 2-Car 0G probes.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'NetworkStressInjectionFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/NetworkStressInjectionFloatingWindow.tsx',
 };
 
 export const CLOCK_PACING_TUNER_PRESET: PresetConfig = {
@@ -379,6 +423,8 @@ export const CLOCK_PACING_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Low-level STS/CSTS hysteresis, PD gains, RTT bias compensation, trace import & What-If simulator.',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'ClockPacingTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/ClockPacingTunerFloatingWindow.tsx',
 };
 
 export const BOOST_PAD_TUNER_PRESET: PresetConfig = {
@@ -392,12 +438,14 @@ export const BOOST_PAD_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Upward gradient opacity, midpoint falloff curve & Big Pad floating orb geometry.',
   menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  component: 'BoostPadTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/BoostPadTunerFloatingWindow.tsx',
   tabs: [
-    { id: 'shader-orb', label: 'Shader & Orb' },
+    { id: 'shader', label: 'Shader & Orb' },
     { id: 'materials', label: 'Materials' },
     { id: 'rotations', label: 'Rotations' },
-    { id: 'refilling', label: 'Refilling' },
-    { id: 'collect-fx', label: 'Collect FX' },
+    { id: 'refill', label: 'Refilling' },
+    { id: 'collect', label: 'Collect FX' },
   ],
 };
 
@@ -412,6 +460,8 @@ export const DRIFTWOODS_TUNER_PRESET: PresetConfig = {
   tier: 'developer',
   summary: 'Ground dynamic dual-color UV mask, 8-mesh PBR palette, 0.20 Hex Shield & Lite Lambert mode.',
   menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  component: 'DriftwoodsTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/DriftwoodsTunerFloatingWindow.tsx',
   tabs: [
     { id: 'ground', label: 'Ground' },
     { id: 'surfaces', label: 'Surfaces' },

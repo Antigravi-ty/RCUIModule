@@ -46,13 +46,37 @@ export interface SubsystemIsolationLabFloatingWindowProps {
  */
 export const SubsystemIsolationLabFloatingWindow: React.FC<SubsystemIsolationLabFloatingWindowProps> = ({
   isLight = false,
+  activeTab: controlledTab,
+  onTabChange,
 }) => {
   const {
-    activeTab,
-    selectedTab,
-    setSelectedTab,
+    activeTab: storeActiveTab,
+    selectedTab: storeSelectedTab,
+    setSelectedTab: setStoreSelectedTab,
     applyAndRestartLab,
   } = useSubsystemIsolationLabStore();
+
+  const validTabs: DevTestLabTab[] = [
+    'probes',
+    'dual-world',
+    'state-replay',
+    'incident-match',
+    'goal-replay',
+    'kickoff-duel',
+    'demolish-respawn',
+  ];
+  const selectedTab: DevTestLabTab =
+    controlledTab && validTabs.includes(controlledTab as DevTestLabTab)
+      ? (controlledTab as DevTestLabTab)
+      : storeSelectedTab;
+  const activeTab: DevTestLabTab =
+    controlledTab && validTabs.includes(controlledTab as DevTestLabTab)
+      ? (controlledTab as DevTestLabTab)
+      : storeActiveTab;
+  const setSelectedTab = (tab: DevTestLabTab) => {
+    setStoreSelectedTab(tab);
+    onTabChange?.(tab);
+  };
 
   const matchMode = useAppStore((s) => s.matchMode);
   const bridge = useAppStore((s) => s.bridge);
