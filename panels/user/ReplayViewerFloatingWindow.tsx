@@ -343,7 +343,11 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
           <button
             type="button"
             disabled={controlsDisabled}
-            onClick={() => handleStep(-60)}
+            onClick={(e) => {
+              if (!onRewindPressStart || e.detail === 0) {
+                handleStep(-Math.max(1, Math.round(effectiveSpeedPct / 100)));
+              }
+            }}
             onMouseDown={controlsDisabled ? undefined : onRewindPressStart}
             onMouseUp={controlsDisabled ? undefined : onRewindPressEnd}
             onMouseLeave={controlsDisabled ? undefined : onRewindPressEnd}
@@ -360,7 +364,11 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
           <button
             type="button"
             disabled={controlsDisabled}
-            onClick={() => handleStep(60)}
+            onClick={(e) => {
+              if (!onForwardPressStart || e.detail === 0) {
+                handleStep(Math.max(1, Math.round(effectiveSpeedPct / 100)));
+              }
+            }}
             onMouseDown={controlsDisabled ? undefined : onForwardPressStart}
             onMouseUp={controlsDisabled ? undefined : onForwardPressEnd}
             onMouseLeave={controlsDisabled ? undefined : onForwardPressEnd}

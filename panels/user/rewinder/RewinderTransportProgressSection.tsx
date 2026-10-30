@@ -120,7 +120,11 @@ export const RewinderTransportProgressSection: React.FC<
 
             <button
               type="button"
-              onClick={() => onStepFrame(-12)}
+              onClick={(e) => {
+                if (!onRewindPressStart || e.detail === 0) {
+                  onStepFrame(-1);
+                }
+              }}
               onMouseDown={onRewindPressStart}
               onMouseUp={onRewindPressEnd}
               onMouseLeave={onRewindPressEnd}
@@ -136,7 +140,11 @@ export const RewinderTransportProgressSection: React.FC<
 
             <button
               type="button"
-              onClick={() => onStepFrame(12)}
+              onClick={(e) => {
+                if (!onForwardPressStart || e.detail === 0) {
+                  onStepFrame(1);
+                }
+              }}
               onMouseDown={onForwardPressStart}
               onMouseUp={onForwardPressEnd}
               onMouseLeave={onForwardPressEnd}
