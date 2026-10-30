@@ -100,9 +100,9 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
   materials,
   onUpdateMaterials,
   selectedAnthem: controlledSelectedAnthem,
-  defaultSelectedAnthem = 'random',
+  defaultSelectedAnthem = 'none',
   onSelectAnthem,
-  anthemAvailable = false,
+  anthemAvailable = true,
 } = useLayer2GarageStoreBinding(rawProps);
   const { panels, panelBodyPaddingX } = useMenuLayoutStore();
   const sizing = panels['layer2-garage'];

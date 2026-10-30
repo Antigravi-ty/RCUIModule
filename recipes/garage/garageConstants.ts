@@ -41,20 +41,16 @@ export const ORANGE_TEAM_COLORS: ColorDef[] = [
 export const BLUE_TEAM_COLOURS = BLUE_TEAM_COLORS;
 export const ORANGE_TEAM_COLOURS = ORANGE_TEAM_COLORS;
 
-// 3. Player Anthem Tab: Music presets + Random option
-export interface AnthemDef {
-  id: string;
-  title: string;
-  artist: string;
-  duration: string;
-  tag: string;
-}
+// 3. Player Anthem Tab: 58 converted M4A stingers + No Anthem (default) + Shuffle / Random Anthem
+import {
+  ANTHEM_CATALOG,
+  ANTHEM_CATEGORIES,
+  DEFAULT_ANTHEM_ID,
+  type AnthemDef,
+  type AnthemCategoryDef,
+} from '../../config/spatialAudioConfig';
 
-export const ANTHEMS: AnthemDef[] = [
-  { id: 'random', title: 'Shuffle / Random Anthem', artist: 'All Soundtracks', duration: 'VARIES', tag: 'Random' },
-  { id: 'solar-wind', title: 'Solar Eruption (VIP)', artist: 'Tokyo Machine', duration: '0:15', tag: 'High BPM' },
-  { id: 'champion-rush', title: 'Champion Arena Rush', artist: 'Koven', duration: '0:14', tag: 'Orchestral' },
-  { id: 'neon-overdrive', title: 'Neon Overdrive', artist: 'Pegboard Nerds', duration: '0:16', tag: 'Synthwave' },
-  { id: 'sub-bass-fury', title: 'Sub-Bass Drop', artist: 'Noisestorm', duration: '0:12', tag: 'Bass Heavy' },
-  { id: 'cyber-victory', title: 'Victory Circuit', artist: 'Protostar', duration: '0:15', tag: 'Electronic' },
-];
+export { ANTHEM_CATALOG, ANTHEM_CATEGORIES, DEFAULT_ANTHEM_ID };
+export type { AnthemDef, AnthemCategoryDef };
+
+export const ANTHEMS: readonly AnthemDef[] = ANTHEM_CATALOG;

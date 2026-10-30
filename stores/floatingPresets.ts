@@ -470,6 +470,21 @@ export const DRIFTWOODS_TUNER_PRESET: PresetConfig = {
   ],
 };
 
+export const SPATIAL_AUDIO_TUNER_PRESET: PresetConfig = {
+  id: 'spatial-audio-tuner',
+  title: 'Spatial Audio & Anthem Tuner',
+  category: 'AudioTuner',
+  width: 480,
+  height: 620,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'Stadium spatial acoustics (HPF 425Hz, LPF 3500Hz, Wet 69%, 3.0s Decay) & 2.0s directional non-linear transition curve.',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'SpatialAudioTunerFloatingWindow',
+  sourcePath: 'src/ui-core/panels/dev/SpatialAudioTunerFloatingWindow.tsx',
+};
+
 export const USER_PRESET_WINDOWS: PresetConfig[] = [
   REPLAY_VIEWER_PRESET,
   GOAL_BARRIER_CONFIGURATOR_PRESET,
@@ -499,6 +514,7 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   CLOCK_PACING_TUNER_PRESET,
   BOOST_PAD_TUNER_PRESET,
   DRIFTWOODS_TUNER_PRESET,
+  SPATIAL_AUDIO_TUNER_PRESET,
 ];
 
 export const PRESET_WINDOWS: PresetConfig[] = [

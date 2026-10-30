@@ -18,6 +18,7 @@ import {
   AudioDebugSection,
   type AudioDebugTelemetryProps,
 } from '../components/AudioDebugSection';
+import { RealisticBgmSection } from '../components/RealisticBgmSection';
 import {
   TelemetryConfigCard,
   DEFAULT_TELEMETRY_CONFIG_STATE,
@@ -245,6 +246,14 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         onChange={handleToggleAllowRemoteProfile}
         bordered={resolvedBordered}
         onHover={(desc) => desc && onHover(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      {/* 2b. Realistic Background Music (Rendered when BGM folder is uploaded) */}
+      <RealisticBgmSection
+        bordered={resolvedBordered}
+        onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
       />

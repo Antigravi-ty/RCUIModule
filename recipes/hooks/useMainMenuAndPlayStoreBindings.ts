@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
+import { useSpatialAudioStore } from '../../stores/spatialAudioStore';
 import { garageSettingsStore } from '../../config/vehiclePresets.js';
 import {
   BLUE_TEAM_COLORS,
@@ -138,7 +139,9 @@ export function useLayer2GarageStoreBinding<TProps extends object>(
   const setActiveCar = useAppStore((s) => s.setActiveCar);
   const materials = useAppStore((s) => s.materials);
   const updateMaterials = useAppStore((s) => s.updateMaterials);
-  const [selectedAnthem, setSelectedAnthem] = useState<string>('default');
+  const selectedAnthem = useSpatialAudioStore((s) => s.selectedAnthem);
+  const setSelectedAnthem = useSpatialAudioStore((s) => s.setSelectedAnthem);
+  const stopPreviewAnthem = useSpatialAudioStore((s) => s.stopPreviewAnthem);
   const [colorPrefs, setColorPrefs] = useState<StoredColorPrefs>(loadStoredColorPrefs);
 
   const saveAndBroadcastColors = (nextPrefs: StoredColorPrefs) => {
@@ -164,7 +167,19 @@ export function useLayer2GarageStoreBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    onBack: props.onBack ?? goBack,
+    onBack:
+      props.onBack ??
+      (() => {
+        stopPreviewAnthem();
+        goBack();
+      }),
+    onTabChange:
+      props.onTabChange ??
+      ((tab: string) => {
+        if (tab !== 'anthem') {
+          stopPreviewAnthem();
+        }
+      }),
     selectedCar: props.selectedCar ?? activeCar,
     onSelectCar: props.onSelectCar ?? handleSelectCar,
     primaryTeam: props.primaryTeam ?? colorPrefs.primaryTeam,
@@ -190,5 +205,6 @@ export function useLayer2GarageStoreBinding<TProps extends object>(
     onUpdateMaterials: props.onUpdateMaterials ?? updateMaterials,
     selectedAnthem: props.selectedAnthem ?? selectedAnthem,
     onSelectAnthem: props.onSelectAnthem ?? setSelectedAnthem,
+    anthemAvailable: props.anthemAvailable ?? true,
   } as TProps;
 }

@@ -29,6 +29,7 @@ import { NetworkStressInjectionFloatingWindow } from './dev/NetworkStressInjecti
 import { ClockPacingTunerFloatingWindow } from './dev/ClockPacingTunerFloatingWindow';
 import { BoostPadTunerFloatingWindow } from './dev/BoostPadTunerFloatingWindow';
 import { DriftwoodsTunerFloatingWindow } from './dev/DriftwoodsTunerFloatingWindow';
+import { SpatialAudioTunerFloatingWindow } from './dev/SpatialAudioTunerFloatingWindow';
 
 export * from './user/ReplayViewerFloatingWindow';
 export * from './user/GoalBarrierConfiguratorFloatingWindow';
@@ -46,7 +47,7 @@ export {
   NetworkMonitorFloatingWindow,
   PerformanceMonitorFloatingWindow,
   FloatingWindowOpacityFloatingWindow,
-  // 19 Developer Floating Windows (Canonical Names)
+  // 20 Developer Floating Windows (Canonical Names)
   DiagnosticDumpFloatingWindow,
   StaticTrainingBallCamTunerFloatingWindow,
   NameTagTunerFloatingWindow,
@@ -66,6 +67,7 @@ export {
   ClockPacingTunerFloatingWindow,
   BoostPadTunerFloatingWindow,
   DriftwoodsTunerFloatingWindow,
+  SpatialAudioTunerFloatingWindow,
 };
 
 export interface RenderFloatingWindowPanelOptions {
@@ -256,6 +258,11 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
         onTabChange={onTabChange as any}
       />
     ),
+  },
+  'spatial-audio-tuner': {
+    id: 'spatial-audio-tuner',
+    category: 'developer',
+    render: ({ isLight = false }) => <SpatialAudioTunerFloatingWindow isLight={isLight} />,
   },
 };
 

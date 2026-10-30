@@ -36,6 +36,9 @@ export const STORAGE_KEYS = Object.freeze({
   ALLOW_SPECTATOR_DAISY_CHAIN: 'allow-spectator-daisy-chain',
   ACTIVE_HOST: 'active-host',
   REF_OVERLAY_PROFILES: 'hitbox-ref-overlay-profiles',
+  PLAYER_ANTHEM: 'player-anthem',
+  BGM_PREFS: 'bgm-preferences',
+  SPATIAL_AUDIO_TUNER: 'spatial-audio-tuner',
 });
 
 export const UI_THEME_STORAGE_KEY = STORAGE_KEYS.UI_THEME;

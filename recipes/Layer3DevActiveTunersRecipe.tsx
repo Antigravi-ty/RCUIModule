@@ -17,6 +17,7 @@ import {
   Database,
   Zap,
   Scan,
+  Volume2,
 } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent, PanelFooter } from '../layout/Panel';
 import { PhaseVariationMatrix } from '../compounds/PhaseVariationMatrix';
@@ -36,6 +37,7 @@ import {
   CAMERA_DETERMINISM_PRESET,
   CLOCK_PACING_TUNER_PRESET,
   NETWORK_STRESS_INJECTION_PRESET,
+  SPATIAL_AUDIO_TUNER_PRESET,
 } from '../stores/floatingPresets';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 import { SettingActionRow } from '../compounds/SettingActionRow';
@@ -141,6 +143,22 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             showDescription={false}
             description="Live Client Replay, Reconcile & Pacing Telemetry, and Authoritative Server Replay gauges + anytime mid-match dump"
             hoverTooltip="Export Diagnostic Dump: Real-time buffer usage monitor with configurable capacity and one-click unified .zip export anytime via ESC."
+            onHover={setHoveredDesc}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* Spatial Audio & Anthem Active Tuner */}
+          <FloatingWindowCard
+            preset={SPATIAL_AUDIO_TUNER_PRESET}
+            icon={Volume2}
+            iconColor="text-amber-400"
+            badge="2.0s Curve · Stadium Reverb"
+            badgeClass="bg-amber-500/15 border-amber-500/30 text-amber-400"
+            bordered={false}
+            showDescription={false}
+            description="Stadium spatial acoustics (HPF 425Hz, LPF 3500Hz, Wet 69%, 3.0s Decay) & 2.0s directional non-linear transition curve"
+            hoverTooltip="Spatial Audio & Anthem Tuner: Live calibration for Player Anthem and Realistic Background Music stadium acoustics and 2.0s directional non-linear transitions."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
