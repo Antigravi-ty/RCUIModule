@@ -1,15 +1,29 @@
 import React, { useState, useRef } from 'react';
-import { AppWindowMac, Volume2, Engine, EighthNotes, FolderUp } from 'lucide-react';
+import {
+  AppWindowMac,
+  Volume2,
+  Engine,
+  EighthNotes,
+  ChevronDown,
+  Gamepad2,
+  Target,
+  Users,
+  Trophy,
+} from 'lucide-react';
+import { SettingActionRow } from '../../../compounds/SettingActionRow';
 import { SettingSliderRow } from '../../../compounds/SettingSliderRow';
 import { SettingToggleRow } from '../../../compounds/SettingToggleRow';
+import { Checkbox } from '../../../primitives/Checkbox';
 import { JetThrustSvg } from '../../../primitives/packagedSvgIcons';
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import { useSpatialAudioStore } from '../../../stores/spatialAudioStore';
+import type { BgmSceneConfig } from '../../../config/spatialAudioConfig';
 
 export interface AudioConfig {
   masterVolume: number;      // 0..100
   engineVolume: number;      // 0..100
   boostVolume: number;       // 0..100
+  bgmVolume?: number;        // 0..100
   muteWhenUnfocused?: boolean; // Positive boolean semantics for "Mute When Unfocused"
   bassGain: number;          // -12..12 dB
   midGain: number;           // -12..12 dB
@@ -21,6 +35,7 @@ export const DEFAULT_AUDIO_CONFIG: AudioConfig = {
   masterVolume: 100,
   engineVolume: 100,
   boostVolume: 80,
+  bgmVolume: 80,
   muteWhenUnfocused: true,
   bassGain: 0,
   midGain: 0,
@@ -54,6 +69,9 @@ export interface AudioTabProps {
   boostVolume?: number;
   defaultBoostVolume?: number;
   onBoostVolumeChange?: (volume: number) => void;
+  bgmVolume?: number;
+  defaultBgmVolume?: number;
+  onBgmVolumeChange?: (volume: number) => void;
   bgmEnabled?: boolean;
   onBgmEnabledChange?: (enabled: boolean) => void;
   onUploadBgmFiles?: (files: FileList) => void;
@@ -62,14 +80,47 @@ export interface AudioTabProps {
   onLeave: () => void;
 }
 
+const BGM_SCENE_ITEMS: readonly {
+  key: keyof BgmSceneConfig;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+}[] = [
+  {
+    key: 'freePlay',
+    label: 'Free Play',
+    description: 'Play background music during Free Play driving and menu navigation',
+    icon: Gamepad2,
+  },
+  {
+    key: 'singlePlayerTraining',
+    label: 'Single Player Training',
+    description: 'Play background music during Kickoff Training and Custom Training Packs',
+    icon: Target,
+  },
+  {
+    key: 'multiplayerTraining',
+    label: 'Multiplayer Training',
+    description: 'Play background music during Online Warmup and multiplayer training sessions',
+    icon: Users,
+  },
+  {
+    key: 'match',
+    label: 'Match',
+    description: 'Play background music during Exhibition, Bot Matches, and Online Matches',
+    icon: Trophy,
+  },
+];
+
 /**
  * [Layer 2 Settings -> Audio Tab]
  * Streamlined User & Developer unified Audio settings:
  * 1. `Mute When Unfocused` (`app-window-mac`, default active = true)
- * 2. `Background Music` (`eighth-notes`, toggle switch on the right + `Upload Folder` button on the left when active)
- * 3. `Master Volume` (`volume-2`, read-only value badge + draggable slider)
- * 4. `Engine Volume` (`engine`, read-only value badge + draggable slider)
- * 5. `Boost Volume` (Noun Project `4873540` Jet Thrust SVG, read-only value badge + draggable slider)
+ * 2. `Background Music` (`eighth-notes`, `More` disclosure + `Upload Folder` button + toggle switch on the right)
+ * 3. `Master Volume` (`volume-2`, read-only value readout + draggable slider)
+ * 4. `Engine Volume` (`engine`, read-only value readout + draggable slider)
+ * 5. `Boost Volume` (Noun Project `4873540` Jet Thrust SVG, read-only value readout + draggable slider)
+ * 6. `Background Music Volume` (`eighth-notes`, adjustable when Background Music is enabled, locked when disabled)
  */
 export const AudioTab: React.FC<AudioTabProps> = ({
   isLight = false,
@@ -91,6 +142,9 @@ export const AudioTab: React.FC<AudioTabProps> = ({
   boostVolume: propBoostVolume,
   defaultBoostVolume,
   onBoostVolumeChange,
+  bgmVolume: propBgmVolume,
+  defaultBgmVolume,
+  onBgmVolumeChange,
   bgmEnabled: propBgmEnabled,
   onBgmEnabledChange,
   onUploadBgmFiles,
@@ -105,6 +159,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
     ...(defaultMasterVolume !== undefined ? { masterVolume: defaultMasterVolume } : {}),
     ...(defaultEngineVolume !== undefined ? { engineVolume: defaultEngineVolume } : {}),
     ...(defaultBoostVolume !== undefined ? { boostVolume: defaultBoostVolume } : {}),
+    ...(defaultBgmVolume !== undefined ? { bgmVolume: defaultBgmVolume } : {}),
   }));
 
   const resolvedConfig: AudioConfig = {
@@ -114,6 +169,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
     ...(propMasterVolume !== undefined ? { masterVolume: propMasterVolume } : {}),
     ...(propEngineVolume !== undefined ? { engineVolume: propEngineVolume } : {}),
     ...(propBoostVolume !== undefined ? { boostVolume: propBoostVolume } : {}),
+    ...(propBgmVolume !== undefined ? { bgmVolume: propBgmVolume } : {}),
   };
 
   const muteWhenUnfocused = resolvedConfig.muteWhenUnfocused ?? true;
@@ -123,16 +179,29 @@ export const AudioTab: React.FC<AudioTabProps> = ({
 
   const storeBgmEnabled = useSpatialAudioStore((s) => s.bgmEnabled);
   const setStoreBgmEnabled = useSpatialAudioStore((s) => s.setBgmEnabled);
+  const storeBgmVolume = useSpatialAudioStore((s) => s.bgmVolume);
+  const setStoreBgmVolume = useSpatialAudioStore((s) => s.setBgmVolume);
+  const bgmScenes = useSpatialAudioStore((s) => s.bgmScenes);
+  const setBgmSceneEnabled = useSpatialAudioStore((s) => s.setBgmSceneEnabled);
   const uploadStoreBgmFiles = useSpatialAudioStore((s) => s.uploadBgmFiles);
   const bgmTracksCount = useSpatialAudioStore((s) => s.bgmTracks.length);
   const bgmCurrentTrackTitle = useSpatialAudioStore((s) => s.bgmCurrentTrackTitle);
 
   const bgmEnabled = propBgmEnabled ?? storeBgmEnabled;
+  const bgmVolume = propBgmVolume ?? storeBgmVolume ?? resolvedConfig.bgmVolume ?? 80;
+
+  const [isBgmMoreExpanded, setIsBgmMoreExpanded] = useState(false);
   const folderInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleToggleBgm = (next: boolean) => {
     setStoreBgmEnabled(next);
     onBgmEnabledChange?.(next);
+  };
+
+  const handleBgmVolumeChange = (next: number) => {
+    setStoreBgmVolume(next);
+    onBgmVolumeChange?.(next);
+    updateAudioField('bgmVolume', next);
   };
 
   const handleFolderSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,7 +221,66 @@ export const AudioTab: React.FC<AudioTabProps> = ({
     onChange?.(nextConfig, patch);
   };
 
-  const { rowGap } = useSettingActionRowStore();
+  const {
+    rowGap,
+    borderRadius,
+    buttonFontSize,
+    buttonPaddingX,
+    buttonPaddingY,
+    buttonRadius,
+  } = useSettingActionRowStore();
+
+  const moreDisclosureButton = (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsBgmMoreExpanded((prev) => !prev);
+      }}
+      className={`inline-flex items-center gap-0.5 text-xs font-medium cursor-pointer transition-colors select-none py-0.5 px-1 rounded ${
+        isLight
+          ? 'text-neutral-500 hover:text-neutral-900'
+          : 'text-neutral-400 hover:text-neutral-100'
+      }`}
+      title={
+        isBgmMoreExpanded
+          ? 'Collapse background music playback scenes'
+          : 'Expand background music playback scenes'
+      }
+    >
+      <span className="underline underline-offset-3 decoration-current/60">
+        More
+      </span>
+      <ChevronDown
+        className={`h-3.5 w-3.5 transition-transform duration-200 ${
+          isBgmMoreExpanded ? 'rotate-180' : ''
+        }`}
+      />
+    </button>
+  );
+
+  const uploadFolderButton = (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        folderInputRef.current?.click();
+      }}
+      style={{
+        fontSize: `${buttonFontSize}px`,
+        padding: `${buttonPaddingY}px ${buttonPaddingX}px`,
+        borderRadius: `${buttonRadius}px`,
+      }}
+      className={`font-semibold transition-all duration-150 shrink-0 cursor-pointer border active:scale-[0.98] ${
+        isLight
+          ? 'bg-neutral-200/60 group-hover:bg-neutral-200/95 hover:!bg-neutral-300/90 border-neutral-300/80 text-neutral-800'
+          : 'bg-white/[0.06] group-hover:bg-white/[0.11] hover:!bg-white/[0.16] border-white/[0.10] group-hover:border-white/[0.16] text-neutral-200'
+      }`}
+      title="Upload a folder of audio files for Background Music"
+    >
+      {bgmTracksCount > 0 ? 'Change Folder' : 'Upload Folder'}
+    </button>
+  );
 
   return (
     <div
@@ -188,51 +316,76 @@ export const AudioTab: React.FC<AudioTabProps> = ({
         onChange={handleFolderSelected}
       />
 
-      <SettingToggleRow
-        icon={EighthNotes}
-        iconName="eighth-notes"
-        label="Background Music"
-        subtitle={
-          bgmTracksCount > 0
-            ? bgmCurrentTrackTitle
-              ? `${bgmTracksCount} tracks loaded · Playing: ${bgmCurrentTrackTitle}`
-              : `${bgmTracksCount} tracks loaded in current session`
-            : 'Upload a local audio folder for Free Play & menu soundtrack playback (supports hardware media keys)'
-        }
-        badge={
-          bgmEnabled && bgmTracksCount > 0 ? (
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider font-semibold bg-amber-500/15 border-amber-500/30 text-amber-400">
-              {bgmTracksCount} Tracks
-            </span>
-          ) : undefined
-        }
-        checked={bgmEnabled}
-        onChange={handleToggleBgm}
-        extraRightSlot={
-          bgmEnabled ? (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                folderInputRef.current?.click();
-              }}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer select-none ${
-                isLight
-                  ? 'bg-white hover:bg-neutral-100 text-neutral-800 border-neutral-300 shadow-2xs'
-                  : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-100 border-neutral-600 shadow-2xs'
-              }`}
-              title="Upload a folder of audio files for Background Music"
-            >
-              <FolderUp className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-              <span>{bgmTracksCount > 0 ? 'Change Folder' : 'Upload Folder'}</span>
-            </button>
-          ) : undefined
-        }
-        hoverDescription="Background Music: Enable custom background soundtrack playback with MediaSession shortcut support. When enabled, use Upload Folder on the left of the switch to load local audio tracks."
-        onHover={(desc) => desc && onHover(desc)}
-        onLeave={onLeave}
-        isLight={isLight}
-      />
+      <div
+        data-ui-element="compound-bgm-config-card"
+        className="flex flex-col w-full"
+        style={{ gap: `${rowGap}px` }}
+      >
+        <SettingToggleRow
+          icon={EighthNotes}
+          iconName="eighth-notes"
+          label="Background Music"
+          subtitle={
+            bgmTracksCount > 0
+              ? bgmCurrentTrackTitle
+                ? `${bgmTracksCount} tracks loaded · Playing: ${bgmCurrentTrackTitle}`
+                : `${bgmTracksCount} tracks loaded in current session`
+              : 'Upload a local audio folder for soundtrack playback (supports hardware media keys)'
+          }
+          checked={bgmEnabled}
+          onChange={handleToggleBgm}
+          extraRightSlot={
+            <div className="flex items-center gap-2.5">
+              {moreDisclosureButton}
+              {uploadFolderButton}
+            </div>
+          }
+          hoverDescription="Background Music: Enable custom background soundtrack playback with smooth fade-in/fade-out and MediaSession shortcut support. Click More to choose active scenes (Free Play, Single Player Training, Multiplayer Training, Match), or Upload Folder to load local audio files."
+          onHover={(desc) => desc && onHover(desc)}
+          onLeave={onLeave}
+          isLight={isLight}
+        />
+
+        {isBgmMoreExpanded && (
+          <div
+            style={{
+              borderRadius: `${Math.max(6, borderRadius)}px`,
+              gap: `${rowGap}px`,
+            }}
+            className={`mt-1 p-1.5 border flex flex-col w-full transition-all ${
+              isLight
+                ? 'bg-neutral-100/75 border-neutral-200/90'
+                : 'bg-neutral-900/55 border-neutral-800/90'
+            }`}
+          >
+            {BGM_SCENE_ITEMS.map((item) => {
+              const isSceneChecked = Boolean(bgmScenes[item.key]);
+              return (
+                <SettingActionRow
+                  key={item.key}
+                  icon={item.icon}
+                  title={item.label}
+                  description={item.description}
+                  bordered={false}
+                  onAction={() => setBgmSceneEnabled(item.key, !isSceneChecked)}
+                  hoverDescription={`${item.label}: ${item.description}.`}
+                  onHover={(desc) => desc && onHover(desc)}
+                  onLeave={onLeave}
+                  isLight={isLight}
+                  rightSlot={
+                    <Checkbox
+                      checked={isSceneChecked}
+                      onCheckedChange={(checked) => setBgmSceneEnabled(item.key, checked)}
+                      variant="neutral"
+                      isLight={isLight}
+                    />
+                  }
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <SettingSliderRow
         icon={Volume2}
@@ -295,6 +448,25 @@ export const AudioTab: React.FC<AudioTabProps> = ({
           updateAudioField('boostVolume', next);
         }}
         hoverDescription="Rocket thruster discharge loop and supersonic acceleration sound."
+        onHover={(desc) => desc && onHover(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      <SettingSliderRow
+        icon={EighthNotes}
+        iconName="eighth-notes"
+        label="Background Music Volume"
+        description="Soundtrack playback volume level (locked while Background Music is disabled)"
+        value={bgmVolume}
+        min={0}
+        max={100}
+        step={1}
+        unit="%"
+        disabled={!bgmEnabled}
+        developerMode={developerMode}
+        onChange={handleBgmVolumeChange}
+        hoverDescription="Adjust Background Music volume level. Available when Background Music is enabled; temporarily locked when disabled."
         onHover={(desc) => desc && onHover(desc)}
         onLeave={onLeave}
         isLight={isLight}

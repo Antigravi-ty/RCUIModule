@@ -237,8 +237,10 @@ export function saveStoredPlayerAnthem(anthemId: string): string {
 export type SpatialAudioOverrideMode = 'auto' | 'normal' | 'spatial' | 'manual';
 
 export interface SpatialAudioTunerConfig {
-  /** Smooth transition duration in seconds (default: 2.0s) */
+  /** Smooth spatial transition duration in seconds (default: 2.0s) */
   transitionDurationSec: number;
+  /** Play/Pause/Enable/Disable smooth fade-in & fade-out duration in seconds (default: 2.0s, max: 3.0s) */
+  bgmFadeDurationSec: number;
   /** High-Pass Filter cutoff frequency at full spatial blend (default: 425 Hz) */
   hpfMaxFreq: number;
   /** Low-Pass Filter cutoff frequency at full spatial blend (default: 3500 Hz) */
@@ -265,6 +267,7 @@ export interface SpatialAudioTunerConfig {
 
 export const DEFAULT_SPATIAL_AUDIO_TUNER_CONFIG: SpatialAudioTunerConfig = Object.freeze({
   transitionDurationSec: 2.0,
+  bgmFadeDurationSec: 2.0,
   hpfMaxFreq: 425,
   lpfMinFreq: 3500,
   wetMaxPct: 69,
@@ -293,6 +296,10 @@ export function sanitizeSpatialAudioTunerConfig(
     transitionDurationSec: clampNumberOrDefault(src.transitionDurationSec, fallback.transitionDurationSec, {
       min: 0.1,
       max: 8.0,
+    }),
+    bgmFadeDurationSec: clampNumberOrDefault(src.bgmFadeDurationSec, fallback.bgmFadeDurationSec, {
+      min: 0.1,
+      max: 3.0,
     }),
     hpfMaxFreq: clampNumberOrDefault(src.hpfMaxFreq, fallback.hpfMaxFreq, {
       min: 20,
@@ -418,6 +425,20 @@ export function evaluateSpatialBlendFromPhase(
 // Background Music Filter Preferences (Persisted; Audio Files Are Session-Only)
 // ============================================================================
 
+export interface BgmSceneConfig {
+  freePlay: boolean;
+  singlePlayerTraining: boolean;
+  multiplayerTraining: boolean;
+  match: boolean;
+}
+
+export const DEFAULT_BGM_SCENE_CONFIG: BgmSceneConfig = Object.freeze({
+  freePlay: true,
+  singlePlayerTraining: true,
+  multiplayerTraining: false,
+  match: false,
+});
+
 export interface StoredBgmPrefs {
   /** Realistic Background Music toggle in Settings -> Advanced (default: true) */
   realisticBgmEnabled: boolean;
@@ -427,6 +448,10 @@ export interface StoredBgmPrefs {
   deselectedVolumes: string[];
   /** Individual track filenames deselected by the user (new tracks default to selected) */
   deselectedTrackNames: string[];
+  /** Background Music volume percentage (0..100, default: 80) */
+  bgmVolume: number;
+  /** Active scenes where Background Music is allowed to play */
+  bgmScenes: BgmSceneConfig;
 }
 
 export const DEFAULT_STORED_BGM_PREFS: StoredBgmPrefs = Object.freeze({
@@ -434,7 +459,25 @@ export const DEFAULT_STORED_BGM_PREFS: StoredBgmPrefs = Object.freeze({
   categorizedMode: true,
   deselectedVolumes: [],
   deselectedTrackNames: [],
+  bgmVolume: 80,
+  bgmScenes: DEFAULT_BGM_SCENE_CONFIG,
 });
+
+export function sanitizeBgmSceneConfig(raw: unknown): BgmSceneConfig {
+  const src = isPlainObject(raw) ? raw : {};
+  return {
+    freePlay: booleanOrDefault(src.freePlay, DEFAULT_BGM_SCENE_CONFIG.freePlay),
+    singlePlayerTraining: booleanOrDefault(
+      src.singlePlayerTraining,
+      DEFAULT_BGM_SCENE_CONFIG.singlePlayerTraining
+    ),
+    multiplayerTraining: booleanOrDefault(
+      src.multiplayerTraining,
+      DEFAULT_BGM_SCENE_CONFIG.multiplayerTraining
+    ),
+    match: booleanOrDefault(src.match, DEFAULT_BGM_SCENE_CONFIG.match),
+  };
+}
 
 export function loadStoredBgmPrefs(): StoredBgmPrefs {
   const raw = safeStorage.get(STORAGE_KEYS.BGM_PREFS);
@@ -444,6 +487,8 @@ export function loadStoredBgmPrefs(): StoredBgmPrefs {
       categorizedMode: true,
       deselectedVolumes: [],
       deselectedTrackNames: [],
+      bgmVolume: 80,
+      bgmScenes: { ...DEFAULT_BGM_SCENE_CONFIG },
     };
   }
   try {
@@ -454,6 +499,8 @@ export function loadStoredBgmPrefs(): StoredBgmPrefs {
         categorizedMode: true,
         deselectedVolumes: [],
         deselectedTrackNames: [],
+        bgmVolume: 80,
+        bgmScenes: { ...DEFAULT_BGM_SCENE_CONFIG },
       };
     }
     return {
@@ -465,6 +512,8 @@ export function loadStoredBgmPrefs(): StoredBgmPrefs {
       deselectedTrackNames: Array.isArray(parsed.deselectedTrackNames)
         ? parsed.deselectedTrackNames.filter((v): v is string => typeof v === 'string')
         : [],
+      bgmVolume: clampNumberOrDefault(parsed.bgmVolume, 80, { min: 0, max: 100, integer: true }),
+      bgmScenes: sanitizeBgmSceneConfig(parsed.bgmScenes),
     };
   } catch {
     return {
@@ -472,6 +521,8 @@ export function loadStoredBgmPrefs(): StoredBgmPrefs {
       categorizedMode: true,
       deselectedVolumes: [],
       deselectedTrackNames: [],
+      bgmVolume: 80,
+      bgmScenes: { ...DEFAULT_BGM_SCENE_CONFIG },
     };
   }
 }
@@ -484,6 +535,8 @@ export function saveStoredBgmPrefs(prefs: StoredBgmPrefs): void {
       categorizedMode: Boolean(prefs.categorizedMode),
       deselectedVolumes: Array.from(new Set(prefs.deselectedVolumes)),
       deselectedTrackNames: Array.from(new Set(prefs.deselectedTrackNames)),
+      bgmVolume: clampNumberOrDefault(prefs.bgmVolume, 80, { min: 0, max: 100, integer: true }),
+      bgmScenes: sanitizeBgmSceneConfig(prefs.bgmScenes),
     })
   );
 }

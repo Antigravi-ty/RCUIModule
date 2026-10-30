@@ -10,6 +10,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
+import { Checkbox } from '../../../primitives/Checkbox';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import {
@@ -28,8 +29,8 @@ export interface RealisticBgmSectionProps {
  * [Layer 2 Settings -> Advanced Tab -> Realistic Background Music]
  * Displayed when a Background Music folder has been uploaded in the current session.
  * - Icon: `mirror-rectangular` (`MirrorRectangular`)
- * - ToggleSwitch on the far right (default: `true` — stadium spatial audio while driving in Free Play, normal audio in ESC menu)
- * - `More` + down arrow (`ChevronDown`) to the left of the ToggleSwitch to expand Volume / Uncategorized / File Name filters.
+ * - ToggleSwitch on the far right (default: `true` — stadium spatial audio while driving, normal audio in ESC menu)
+ * - `More` + down arrow (`ChevronDown`) to the left of the ToggleSwitch (matching `Show Telemetry Summary` underlined disclosure style) to expand Volume / Uncategorized / File Name filters.
  * - Filter state is persisted to localStorage while audio file blobs remain session-only.
  */
 export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.memo(
@@ -92,14 +93,10 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
           e.stopPropagation();
           setIsExpanded((prev) => !prev);
         }}
-        className={`inline-flex items-center gap-1 text-xs font-medium cursor-pointer transition-colors select-none py-1 px-2 rounded-lg border ${
-          isExpanded
-            ? isLight
-              ? 'bg-amber-50 border-amber-400 text-amber-800'
-              : 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-            : isLight
-            ? 'bg-white hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 border-neutral-200'
-            : 'bg-neutral-800/90 hover:bg-neutral-700 text-neutral-300 hover:text-white border-neutral-700'
+        className={`inline-flex items-center gap-0.5 text-xs font-medium cursor-pointer transition-colors select-none py-0.5 px-1 rounded ${
+          isLight
+            ? 'text-neutral-500 hover:text-neutral-900'
+            : 'text-neutral-400 hover:text-neutral-100'
         }`}
         title={
           isExpanded
@@ -107,7 +104,9 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
             : 'Expand Volume, Uncategorized & Track filter'
         }
       >
-        <span>More</span>
+        <span className="underline underline-offset-3 decoration-current/60">
+          More
+        </span>
         <ChevronDown
           className={`h-3.5 w-3.5 transition-transform duration-200 ${
             isExpanded ? 'rotate-180' : ''
@@ -135,15 +134,15 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
           icon={MirrorRectangular}
           iconName="mirror-rectangular"
           title="Realistic Background Music"
-          description={`Spatial stadium reverb during Free Play driving, normal clear playback in menus (${activePlaylist.length}/${bgmTracks.length} active)`}
+          description={`Spatial stadium reverb during driving, normal clear playback in menus (${activePlaylist.length}/${bgmTracks.length} active)`}
           bordered={false}
           onAction={() => setRealisticBgmEnabled(!realisticBgmEnabled)}
-          hoverDescription="Realistic Background Music: Apply stadium spatial acoustics to Background Music while driving in Free Play, and transition to clear studio playback when the ESC menu is opened. Click More to filter by Volume, Uncategorized, or individual file names."
+          hoverDescription="Realistic Background Music: Apply stadium spatial acoustics to Background Music while driving, and transition to clear studio playback when the ESC menu is opened. Click More to filter by Volume, Uncategorized, or individual file names."
           onHover={(desc) => desc && onHover(desc)}
           onLeave={onLeave}
           isLight={isLight}
           rightSlot={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               {moreTriggerButton}
               <ToggleSwitch
                 checked={realisticBgmEnabled}
@@ -162,8 +161,8 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
             }}
             className={`mt-1 p-3 border flex flex-col gap-3 w-full transition-all ${
               isLight
-                ? 'bg-neutral-100/85 border-neutral-200/90 text-neutral-800'
-                : 'bg-neutral-900/70 border-neutral-800/90 text-neutral-200'
+                ? 'bg-neutral-100/75 border-neutral-200/90 text-neutral-800'
+                : 'bg-neutral-900/55 border-neutral-800/90 text-neutral-200'
             }`}
           >
             {/* Top row: Mode Switcher (Categorized vs Uncategorized) + Transport Controls */}
@@ -190,7 +189,7 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
                       bgmCategorizedMode
                         ? isLight
                           ? 'bg-white text-neutral-900 shadow-2xs'
-                          : 'bg-amber-500 text-neutral-950'
+                          : 'bg-white/[0.14] text-white'
                         : isLight
                         ? 'text-neutral-600 hover:text-neutral-900'
                         : 'text-neutral-400 hover:text-neutral-200'
@@ -205,7 +204,7 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
                       !bgmCategorizedMode
                         ? isLight
                           ? 'bg-white text-neutral-900 shadow-2xs'
-                          : 'bg-amber-500 text-neutral-950'
+                          : 'bg-white/[0.14] text-white'
                         : isLight
                         ? 'text-neutral-600 hover:text-neutral-900'
                         : 'text-neutral-400 hover:text-neutral-200'
@@ -236,7 +235,9 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
                   title={bgmIsPlaying ? 'Pause' : 'Play'}
                   className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
                     bgmIsPlaying
-                      ? 'bg-amber-500 text-neutral-950 border-amber-400'
+                      ? isLight
+                        ? 'bg-neutral-900 text-white border-neutral-900'
+                        : 'bg-neutral-100 text-neutral-950 border-neutral-100'
                       : isLight
                       ? 'bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700'
                       : 'bg-neutral-850 hover:bg-neutral-800 border-neutral-700 text-neutral-300'
@@ -278,7 +279,11 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
                     <button
                       type="button"
                       onClick={() => setAllBgmVolumes(true)}
-                      className="px-2 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors bg-amber-500/15 border-amber-500/30 text-amber-400 hover:bg-amber-500/25"
+                      className={`px-2 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors ${
+                        isLight
+                          ? 'bg-neutral-200/80 border-neutral-300 text-neutral-800 hover:bg-neutral-300/80'
+                          : 'bg-white/[0.08] border-white/[0.12] text-neutral-200 hover:bg-white/[0.14]'
+                      }`}
                     >
                       Select All
                     </button>
@@ -308,8 +313,8 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer select-none ${
                           isVolSelected
                             ? isLight
-                              ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
-                              : 'bg-amber-500/20 text-amber-300 border-amber-500/60'
+                              ? 'bg-neutral-900 text-white border-neutral-900 shadow-2xs'
+                              : 'bg-white/[0.14] text-white border-white/[0.24]'
                             : isLight
                             ? 'bg-white text-neutral-400 border-neutral-200 hover:text-neutral-700'
                             : 'bg-neutral-950/60 text-neutral-500 border-neutral-800 hover:text-neutral-300'
@@ -343,7 +348,11 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
                         visibleTracks.map((t) => t.rawName)
                       )
                     }
-                    className="px-2 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors bg-amber-500/15 border-amber-500/30 text-amber-400 hover:bg-amber-500/25"
+                    className={`px-2 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors ${
+                      isLight
+                        ? 'bg-neutral-200/80 border-neutral-300 text-neutral-800 hover:bg-neutral-300/80'
+                        : 'bg-white/[0.08] border-white/[0.12] text-neutral-200 hover:bg-white/[0.14]'
+                    }`}
                   >
                     Enable All
                   </button>
@@ -388,19 +397,20 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
                         className={`flex items-center justify-between px-2.5 py-1.5 text-xs transition-colors ${
                           isCurrentPlaying
                             ? isLight
-                              ? 'bg-amber-50/90 text-amber-900'
-                              : 'bg-amber-500/15 text-amber-200'
+                              ? 'bg-neutral-100 text-neutral-900'
+                              : 'bg-white/[0.08] text-white'
                             : isLight
                             ? 'hover:bg-neutral-50'
                             : 'hover:bg-neutral-900'
                         } ${!isTrackEnabled ? 'opacity-50' : ''}`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={isTrackEnabled}
-                            onChange={() => toggleBgmTrack(track.rawName)}
-                            className="h-3.5 w-3.5 rounded accent-amber-500 cursor-pointer shrink-0"
+                            onCheckedChange={() => toggleBgmTrack(track.rawName)}
+                            variant="neutral"
+                            size="sm"
+                            isLight={isLight}
                             title={
                               isTrackEnabled
                                 ? `Exclude ${track.rawName} from playlist`
@@ -414,7 +424,7 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
                             title={`Play ${track.rawName}`}
                           >
                             {isCurrentPlaying && (
-                              <Volume2 className="h-3.5 w-3.5 text-amber-400 shrink-0 animate-pulse" />
+                              <Volume2 className="h-3.5 w-3.5 shrink-0 animate-pulse" />
                             )}
                             <span className="font-medium truncate">{track.title}</span>
                             <span
@@ -429,10 +439,8 @@ export const RealisticBgmSection: React.FC<RealisticBgmSectionProps> = React.mem
 
                         <div className="flex items-center gap-1.5 shrink-0 ml-2">
                           <span
-                            className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
-                              isLight
-                                ? 'bg-neutral-100 border-neutral-200 text-neutral-600'
-                                : 'bg-neutral-900 border-neutral-700 text-neutral-400'
+                            className={`text-[10px] font-mono ${
+                              isLight ? 'text-neutral-400' : 'text-neutral-500'
                             }`}
                           >
                             {track.volume ? `Vol ${track.volume}` : 'Uncat'}

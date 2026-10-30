@@ -178,6 +178,8 @@ export interface AudioConfig {
   masterVolume: number;
   engineVolume: number;
   boostVolume: number;
+  bgmVolume?: number;
+  muteWhenUnfocused?: boolean;
   continueAudioOnLostFocus?: boolean;
   bassGain: number;
   midGain: number;

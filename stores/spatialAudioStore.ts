@@ -4,6 +4,7 @@ import {
   DEFAULT_SPATIAL_AUDIO_TUNER_CONFIG,
   type SpatialAudioTunerConfig,
   type StoredBgmPrefs,
+  type BgmSceneConfig,
   loadStoredPlayerAnthem,
   saveStoredPlayerAnthem,
   loadStoredBgmPrefs,
@@ -45,6 +46,8 @@ export interface SpatialAudioStoreState {
 
   // 2. Background Music State
   bgmEnabled: boolean;
+  bgmVolume: number;
+  bgmScenes: BgmSceneConfig;
   realisticBgmEnabled: boolean;
   bgmCategorizedMode: boolean;
   bgmDeselectedVolumes: string[];
@@ -74,6 +77,9 @@ export interface SpatialAudioStoreState {
 
   // Actions — Background Music
   setBgmEnabled: (enabled: boolean) => void;
+  setBgmVolume: (volume: number) => void;
+  setBgmSceneEnabled: (sceneKey: keyof BgmSceneConfig, enabled: boolean) => void;
+  toggleBgmScene: (sceneKey: keyof BgmSceneConfig) => void;
   setRealisticBgmEnabled: (enabled: boolean) => void;
   setBgmCategorizedMode: (categorized: boolean) => void;
   uploadBgmFiles: (files: FileList | File[]) => void;
@@ -107,12 +113,16 @@ function persistBgmPrefsFromState(state: {
   bgmCategorizedMode: boolean;
   bgmDeselectedVolumes: string[];
   bgmDeselectedTrackNames: string[];
+  bgmVolume: number;
+  bgmScenes: BgmSceneConfig;
 }) {
   const prefs: StoredBgmPrefs = {
     realisticBgmEnabled: state.realisticBgmEnabled,
     categorizedMode: state.bgmCategorizedMode,
     deselectedVolumes: state.bgmDeselectedVolumes,
     deselectedTrackNames: state.bgmDeselectedTrackNames,
+    bgmVolume: state.bgmVolume,
+    bgmScenes: state.bgmScenes,
   };
   saveStoredBgmPrefs(prefs);
 }
@@ -128,6 +138,8 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
   isGoalReplaySkipped: false,
 
   bgmEnabled: false,
+  bgmVolume: initialBgmPrefs.bgmVolume,
+  bgmScenes: initialBgmPrefs.bgmScenes,
   realisticBgmEnabled: initialBgmPrefs.realisticBgmEnabled,
   bgmCategorizedMode: initialBgmPrefs.categorizedMode,
   bgmDeselectedVolumes: initialBgmPrefs.deselectedVolumes,
@@ -189,6 +201,42 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
     get().runtimeCallbacks.onBgmPrefsChanged?.();
   },
 
+  setBgmVolume: (volume) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(Number(volume) || 0)));
+    set((state) => {
+      const next = { ...state, bgmVolume: clamped };
+      persistBgmPrefsFromState(next);
+      return { bgmVolume: clamped };
+    });
+    get().runtimeCallbacks.onBgmPrefsChanged?.();
+  },
+
+  setBgmSceneEnabled: (sceneKey, enabled) => {
+    set((state) => {
+      const nextScenes: BgmSceneConfig = {
+        ...state.bgmScenes,
+        [sceneKey]: Boolean(enabled),
+      };
+      const next = { ...state, bgmScenes: nextScenes };
+      persistBgmPrefsFromState(next);
+      return { bgmScenes: nextScenes };
+    });
+    get().runtimeCallbacks.onBgmPrefsChanged?.();
+  },
+
+  toggleBgmScene: (sceneKey) => {
+    set((state) => {
+      const nextScenes: BgmSceneConfig = {
+        ...state.bgmScenes,
+        [sceneKey]: !state.bgmScenes[sceneKey],
+      };
+      const next = { ...state, bgmScenes: nextScenes };
+      persistBgmPrefsFromState(next);
+      return { bgmScenes: nextScenes };
+    });
+    get().runtimeCallbacks.onBgmPrefsChanged?.();
+  },
+
   setRealisticBgmEnabled: (realistic) => {
     set((state) => {
       const next = { ...state, realisticBgmEnabled: realistic };
@@ -208,7 +256,7 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
   },
 
   uploadBgmFiles: (fileList) => {
-    const rawFiles = Array.from(fileList).filter(
+    const rawFiles = Array.from<File>(fileList as ArrayLike<File>).filter(
       (file) => file.type.startsWith('audio/') || AUDIO_FILE_EXTENSIONS.test(file.name)
     );
     if (rawFiles.length === 0) return;

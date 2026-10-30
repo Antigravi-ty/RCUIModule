@@ -302,22 +302,42 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
 
       {/* Transition Duration & Directional Cubic-Bezier Sliders */}
       <div className="grid grid-cols-1 gap-2">
-        <SliderControl
-          editable={true}
-          allowOutOfBoundsInput={true}
-          showStepper={false}
-          colorScheme="amber"
-          label="Transition Duration (Default 2.0s)"
-          unit="s"
-          value={tunerConfig.transitionDurationSec}
-          min={0.1}
-          max={6.0}
-          step={0.1}
-          isLight={isLight}
-          onChange={(v) =>
-            updateTunerConfig({ transitionDurationSec: Math.max(0.1, v) })
-          }
-        />
+        <div className="grid grid-cols-2 gap-2">
+          <SliderControl
+            editable={true}
+            allowOutOfBoundsInput={true}
+            showStepper={false}
+            colorScheme="amber"
+            label="Spatial Transition (Default 2.0s)"
+            unit="s"
+            value={tunerConfig.transitionDurationSec}
+            min={0.1}
+            max={6.0}
+            step={0.1}
+            isLight={isLight}
+            onChange={(v) =>
+              updateTunerConfig({ transitionDurationSec: Math.max(0.1, v) })
+            }
+          />
+          <SliderControl
+            editable={true}
+            allowOutOfBoundsInput={false}
+            showStepper={false}
+            colorScheme="amber"
+            label="BGM Play/Pause Fade (Max 3.0s)"
+            unit="s"
+            value={tunerConfig.bgmFadeDurationSec ?? 2.0}
+            min={0.1}
+            max={3.0}
+            step={0.1}
+            isLight={isLight}
+            onChange={(v) =>
+              updateTunerConfig({
+                bgmFadeDurationSec: Math.max(0.1, Math.min(3.0, v)),
+              })
+            }
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-2">
           <SliderControl
