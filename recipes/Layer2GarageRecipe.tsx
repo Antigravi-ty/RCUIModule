@@ -181,14 +181,18 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
       </div>
 
       <PanelContent scrollable>
-        <div className="grid grid-cols-1 items-start w-full shrink-0">
+        <div
+          className="grid grid-cols-1 items-start w-full shrink-0"
+          data-tab-envelope-grid="true"
+        >
           <div
             aria-hidden={activeTab !== 'car'}
             inert={activeTab !== 'car' ? true : undefined}
+            data-tab-active={activeTab === 'car' ? 'true' : 'false'}
             className={`col-start-1 row-start-1 w-full ${
               activeTab === 'car'
                 ? 'visible opacity-100 pointer-events-auto z-10'
-                : 'invisible opacity-0 pointer-events-none select-none z-0'
+                : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
             }`}
           >
             <GarageCarTab
@@ -202,10 +206,11 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
           <div
             aria-hidden={activeTab !== 'paint'}
             inert={activeTab !== 'paint' ? true : undefined}
+            data-tab-active={activeTab === 'paint' ? 'true' : 'false'}
             className={`col-start-1 row-start-1 w-full ${
               activeTab === 'paint'
                 ? 'visible opacity-100 pointer-events-auto z-10'
-                : 'invisible opacity-0 pointer-events-none select-none z-0'
+                : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
             }`}
           >
             <GarageColorTab
@@ -229,10 +234,11 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
           <div
             aria-hidden={activeTab !== 'loadout'}
             inert={activeTab !== 'loadout' ? true : undefined}
+            data-tab-active={activeTab === 'loadout' ? 'true' : 'false'}
             className={`col-start-1 row-start-1 w-full ${
               activeTab === 'loadout'
                 ? 'visible opacity-100 pointer-events-auto z-10'
-                : 'invisible opacity-0 pointer-events-none select-none z-0'
+                : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
             }`}
           >
             <GarageMaterialsTab
@@ -246,10 +252,12 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
           <div
             aria-hidden={activeTab !== 'anthem'}
             inert={activeTab !== 'anthem' ? true : undefined}
+            data-tab-active={activeTab === 'anthem' ? 'true' : 'false'}
+            data-envelope-exclude="true"
             className={`col-start-1 row-start-1 w-full ${
               activeTab === 'anthem'
                 ? 'visible opacity-100 pointer-events-auto z-10'
-                : 'invisible opacity-0 pointer-events-none select-none z-0'
+                : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
             }`}
           >
             <GarageAnthemTab
@@ -264,10 +272,11 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
           <div
             aria-hidden={activeTab !== 'sync'}
             inert={activeTab !== 'sync' ? true : undefined}
+            data-tab-active={activeTab === 'sync' ? 'true' : 'false'}
             className={`col-start-1 row-start-1 w-full ${
               activeTab === 'sync'
                 ? 'visible opacity-100 pointer-events-auto z-10'
-                : 'invisible opacity-0 pointer-events-none select-none z-0'
+                : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
             }`}
           >
             <UnderConstructionPlaceholder

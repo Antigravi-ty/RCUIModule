@@ -548,35 +548,16 @@ export function getBoostParticleRuntimeConfig() {
   return { ...boostParticleRuntimeConfig };
 }
 
+const BOOST_PARTICLE_PRESETS = {
+  none: { detailPreset: 'none', trailSpawnMultiplier: 0.0, trailLifeMultiplier: 0.5, shortTrailSpawnMultiplier: 0.0, longTrailSpawnMultiplier: 0.0, drivePuffsEnabled: false },
+  low: { detailPreset: 'low', trailSpawnMultiplier: 0.4, trailLifeMultiplier: 0.65, shortTrailSpawnMultiplier: 0.6, shortTrailLifetime: 0.1, shortTrailScaleRefLife: 0.6, longTrailSpawnMultiplier: 0.05, longTrailLifetime: 1.4, drivePuffsEnabled: false },
+  full: { detailPreset: 'full', trailSpawnMultiplier: 1, trailLifeMultiplier: 1, shortTrailSpawnMultiplier: 1, shortTrailLifetime: 0.1, shortTrailScaleRefLife: 0.6, longTrailSpawnMultiplier: 0.1, longTrailLifetime: 2, drivePuffsEnabled: true },
+};
+
 export function setBoostParticleRuntimeConfig(patch = {}) {
   if (!patch) return boostParticleRuntimeConfig;
-  if (patch.detailPreset === 'none') {
-    boostParticleRuntimeConfig.detailPreset = 'none';
-    boostParticleRuntimeConfig.trailSpawnMultiplier = 0.0;
-    boostParticleRuntimeConfig.trailLifeMultiplier = 0.5;
-    boostParticleRuntimeConfig.shortTrailSpawnMultiplier = 0.0;
-    boostParticleRuntimeConfig.longTrailSpawnMultiplier = 0.0;
-    boostParticleRuntimeConfig.drivePuffsEnabled = false;
-  } else if (patch.detailPreset === 'low') {
-    boostParticleRuntimeConfig.detailPreset = 'low';
-    boostParticleRuntimeConfig.trailSpawnMultiplier = 0.4;
-    boostParticleRuntimeConfig.trailLifeMultiplier = 0.65;
-    boostParticleRuntimeConfig.shortTrailSpawnMultiplier = 0.6;
-    boostParticleRuntimeConfig.shortTrailLifetime = 0.1;
-    boostParticleRuntimeConfig.shortTrailScaleRefLife = 0.6;
-    boostParticleRuntimeConfig.longTrailSpawnMultiplier = 0.05;
-    boostParticleRuntimeConfig.longTrailLifetime = 1.4;
-    boostParticleRuntimeConfig.drivePuffsEnabled = false;
-  } else if (patch.detailPreset === 'full') {
-    boostParticleRuntimeConfig.detailPreset = 'full';
-    boostParticleRuntimeConfig.trailSpawnMultiplier = 1;
-    boostParticleRuntimeConfig.trailLifeMultiplier = 1;
-    boostParticleRuntimeConfig.shortTrailSpawnMultiplier = 1;
-    boostParticleRuntimeConfig.shortTrailLifetime = 0.1;
-    boostParticleRuntimeConfig.shortTrailScaleRefLife = 0.6;
-    boostParticleRuntimeConfig.longTrailSpawnMultiplier = 0.1;
-    boostParticleRuntimeConfig.longTrailLifetime = 2;
-    boostParticleRuntimeConfig.drivePuffsEnabled = true;
+  if (patch.detailPreset && BOOST_PARTICLE_PRESETS[patch.detailPreset]) {
+    Object.assign(boostParticleRuntimeConfig, BOOST_PARTICLE_PRESETS[patch.detailPreset]);
   }
   Object.assign(boostParticleRuntimeConfig, patch);
   return boostParticleRuntimeConfig;

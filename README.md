@@ -19,5 +19,5 @@ config <- tokens <- stores <- primitives <- layout <- compounds <- navigation <-
 - `charts/`: Telemetry and curve editors (`CubicBezierCurveEditor`, `EventImpulseScatterChart`, `ParametricTrajectoryChart`, `TelemetrySparkline`, `VelocityProgressBar`).
 - `viewport/`: Safe-area viewport scaling and arena backdrop (`GameViewport`, `SafeAreaHud`, `ArenaBackdrop`).
 - `loading/`: Dual-stage progress bar and loading screen (`DualProgressBar`, `LoadingScreen`).
-- `panels/`: 18 production developer floating window tuners (`floatingWindowRegistry.tsx` and domain sub-modules).
+- `panels/`: 20 production developer floating window tuners and 6 user floating windows (`floatingWindowRegistry.tsx` and domain sub-modules).
 - `recipes/`: Layer 1, Layer 2, Layer 3, and Layer 4 menu recipes connected to stores with optional controlled/override props for flat state-matrix auditing.

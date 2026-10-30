@@ -18,6 +18,7 @@ import {
   Sparkles,
   Tag,
   Target,
+  Volume2,
 } from 'lucide-react';
 
 export const RotateCcwClockIcon: React.FC<{ className?: string }> = ({ className = 'h-4 w-4 shrink-0' }) => (
@@ -46,11 +47,15 @@ export interface FloatingWindowIconProps {
 
 /**
  * Canonical unified icon resolver for floating windows, ghost flights, and minimized stack tray items.
- * Supports all 25 RocketCompanion floating windows (6 User + 19 Developer).
+ * Supports all 26 RocketCompanion floating windows (6 User + 20 Developer).
  */
 export const getFloatingWindowIcon = (category?: string, id?: string, extraClass: string = 'h-4 w-4 shrink-0') => {
   const normId = (id || '').toLowerCase();
   const normCat = (category || '').toLowerCase();
+
+  if (normId.includes('spatial-audio') || normCat.includes('audio')) {
+    return <Volume2 className={`${extraClass} text-amber-500 dark:text-amber-400`} />;
+  }
 
   if (normId.includes('diagnostic-dump') || normCat === 'diagnosticdump') {
     return <Database className={`${extraClass} text-sky-500 dark:text-sky-400`} />;

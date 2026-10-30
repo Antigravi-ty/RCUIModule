@@ -400,14 +400,18 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = (rawPro
       </div>
 
       <PanelContent scrollable>
-        <div className="grid grid-cols-1 items-start w-full shrink-0">
+        <div
+          className="grid grid-cols-1 items-start w-full shrink-0"
+          data-tab-envelope-grid="true"
+        >
           <div
             aria-hidden={currentTab !== 'gameplay'}
             inert={currentTab !== 'gameplay' ? true : undefined}
+            data-tab-active={currentTab === 'gameplay' ? 'true' : 'false'}
             className={`col-start-1 row-start-1 w-full ${
               currentTab === 'gameplay'
                 ? 'visible opacity-100 pointer-events-auto z-10'
-                : 'invisible opacity-0 pointer-events-none select-none z-0'
+                : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
             }`}
           >
             <GameplayTab
@@ -436,10 +440,11 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = (rawPro
           <div
             aria-hidden={currentTab !== 'audio'}
             inert={currentTab !== 'audio' ? true : undefined}
+            data-tab-active={currentTab === 'audio' ? 'true' : 'false'}
             className={`col-start-1 row-start-1 w-full ${
               currentTab === 'audio'
                 ? 'visible opacity-100 pointer-events-auto z-10'
-                : 'invisible opacity-0 pointer-events-none select-none z-0'
+                : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
             }`}
           >
             <AudioTab
@@ -465,10 +470,11 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = (rawPro
           <div
             aria-hidden={currentTab !== 'display'}
             inert={currentTab !== 'display' ? true : undefined}
+            data-tab-active={currentTab === 'display' ? 'true' : 'false'}
             className={`col-start-1 row-start-1 w-full ${
               currentTab === 'display'
                 ? 'visible opacity-100 pointer-events-auto z-10'
-                : 'invisible opacity-0 pointer-events-none select-none z-0'
+                : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
             }`}
           >
             <DisplayTab
@@ -506,10 +512,11 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = (rawPro
           <div
             aria-hidden={currentTab !== 'advanced'}
             inert={currentTab !== 'advanced' ? true : undefined}
+            data-tab-active={currentTab === 'advanced' ? 'true' : 'false'}
             className={`col-start-1 row-start-1 w-full ${
               currentTab === 'advanced'
                 ? 'visible opacity-100 pointer-events-auto z-10'
-                : 'invisible opacity-0 pointer-events-none select-none z-0'
+                : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
             }`}
           >
             <AdvancedTab
@@ -550,10 +557,11 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = (rawPro
             <div
               aria-hidden={currentTab !== 'developer'}
               inert={currentTab !== 'developer' ? true : undefined}
+              data-tab-active={currentTab === 'developer' ? 'true' : 'false'}
               className={`col-start-1 row-start-1 w-full ${
                 currentTab === 'developer'
                   ? 'visible opacity-100 pointer-events-auto z-10'
-                  : 'invisible opacity-0 pointer-events-none select-none z-0'
+                  : 'invisible opacity-0 pointer-events-none select-none z-0 h-0 overflow-hidden'
               }`}
             >
               <DeveloperTab

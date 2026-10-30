@@ -102,6 +102,29 @@ export function measureNaturalElementHeight(el: HTMLElement, depth = 0): number 
 
   // Multi-column CSS Grid (e.g. Layer 4 .RCSPack Browser 12-col split view or Layer 2 Play 3-col grid)
   if (style.display === 'grid') {
+    if (el.getAttribute('data-tab-envelope-grid') === 'true') {
+      let maxTabH = 0;
+      for (let i = 0; i < el.children.length; i++) {
+        const tabWrapper = el.children[i] as HTMLElement;
+        if (tabWrapper.getAttribute('data-envelope-exclude') === 'true') {
+          continue;
+        }
+        const isActive = tabWrapper.getAttribute('data-tab-active') === 'true';
+        const inner = tabWrapper.firstElementChild as HTMLElement | null;
+        const rawTabH = inner
+          ? measureNaturalElementHeight(inner, depth + 1)
+          : tabWrapper.scrollHeight;
+        const effectiveTabH = isActive ? rawTabH : Math.min(rawTabH, 360);
+        if (effectiveTabH > maxTabH) {
+          maxTabH = effectiveTabH;
+        }
+      }
+      if (maxTabH > 0) {
+        el.style.setProperty('--tab-envelope-h', `${Math.floor(maxTabH)}px`);
+        return padBorderY + maxTabH;
+      }
+    }
+
     const cols = style.gridTemplateColumns
       ? style.gridTemplateColumns.trim().split(/\s+/).length
       : 1;
@@ -125,7 +148,7 @@ export function measureNaturalElementHeight(el: HTMLElement, depth = 0): number 
       return padBorderY + maxColH;
     }
 
-    // Standard auto-sizing grid (e.g. PlayModeCard grid or single-cell multi-tab stack grid):
+    // Standard auto-sizing grid (e.g. PlayModeCard grid):
     // Its bounding rect height is already its exact natural grid height.
     return el.getBoundingClientRect().height;
   }

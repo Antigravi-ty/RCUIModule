@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, X, Activity, Cpu, Monitor, Target, Sparkles, Sliders } from 'lucide-react';
+import { Layers, X } from 'lucide-react';
 import { useFloatingStore, FloatingWindowItem, FlyingGhostState, type FloatingStoreInstance } from '../stores/floatingStore';
 import { UI_EASING } from '../tokens/easing';
+import { getFloatingWindowIcon } from './FloatingWindowIcon';
 
 export interface FloatingStackIconProps {
   isLight?: boolean;
@@ -24,22 +25,8 @@ export interface FloatingStackIconProps {
   onCloseWindowItem?: (win: FloatingWindowItem, defaultClose: () => void) => void;
 }
 
-/** Helper to pick a distinct colored icon without any background pill */
-const getWindowIcon = (category?: string, id?: string) => {
-  if (category === 'Diagnostic' || id?.includes('telemetry')) {
-    return <Activity className="h-4 w-4 text-neutral-800 dark:text-neutral-200 shrink-0" />;
-  }
-  if (category === 'Kernel' || id?.includes('kernel') || id?.includes('simd')) {
-    return <Cpu className="h-4 w-4 text-neutral-800 dark:text-neutral-200 shrink-0" />;
-  }
-  if (category === 'Hitbox' || id?.includes('hitbox')) {
-    return <Target className="h-4 w-4 text-neutral-800 dark:text-neutral-200 shrink-0" />;
-  }
-  if (id?.includes('eq') || id?.includes('dsp')) {
-    return <Sliders className="h-4 w-4 text-neutral-800 dark:text-neutral-200 shrink-0" />;
-  }
-  return <Sparkles className="h-4 w-4 text-neutral-800 dark:text-neutral-200 shrink-0" />;
-};
+const getWindowIcon = (category?: string, id?: string) =>
+  getFloatingWindowIcon(category, id, 'h-4 w-4 shrink-0');
 
 interface FlyingGhostElementProps {
   flight: FlyingGhostState;
@@ -114,7 +101,7 @@ const FlyingGhostElement: React.FC<FlyingGhostElementProps> = ({ flight, isLight
             : 'bg-neutral-850/98 border-neutral-700 text-neutral-100'
         }`}
       >
-        <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+        {getFloatingWindowIcon(flight.preset?.category, flight.preset?.id, 'h-3.5 w-3.5 shrink-0')}
       </motion.div>
     );
   }
@@ -164,7 +151,7 @@ const FlyingGhostElement: React.FC<FlyingGhostElementProps> = ({ flight, isLight
           exit={{ opacity: 0, scale: 0.8 }}
           className="flex items-center justify-center"
         >
-          <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+          {getFloatingWindowIcon(flight.preset?.category, flight.preset?.id, 'h-3.5 w-3.5 shrink-0')}
         </motion.div>
       ) : (
         <motion.div

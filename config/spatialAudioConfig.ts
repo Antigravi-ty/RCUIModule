@@ -132,7 +132,7 @@ export const STINGER_ANTHEMS: readonly AnthemDef[] = Object.freeze(
     };
     return Object.freeze({
       id: entry.id,
-      title: `${meta.label} #${parseInt(entry.number, 10)} (${entry.id})`,
+      title: entry.id,
       artist: `${meta.arenaName} · ${entry.id}.m4a`,
       category: entry.category,
       number: entry.number,
@@ -158,7 +158,7 @@ export const ANTHEM_CATALOG: readonly AnthemDef[] = Object.freeze([
   }),
   Object.freeze({
     id: 'random',
-    title: 'Random Anthem',
+    title: 'Random',
     artist: 'Shuffle across all 58 stadium stingers',
     category: 'random',
     number: '0000',
