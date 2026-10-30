@@ -95,7 +95,8 @@ export const CAR_VISUAL_CATALOG = Object.freeze([
   Object.freeze({ index: 3, id: 'hitbox-dominus', label: 'Dominus (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-dominus' }),
   Object.freeze({ index: 4, id: 'hitbox-breakout', label: 'Breakout (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-breakout' }),
   Object.freeze({ index: 5, id: 'hitbox-plank', label: 'Batmobile/Plank (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-plank' }),
-  Object.freeze({ index: 6, id: 'hitbox-merc', label: 'Merc (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-merc' })
+  Object.freeze({ index: 6, id: 'hitbox-merc', label: 'Merc (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-merc' }),
+  Object.freeze({ index: 7, id: 'ryza', label: 'Ryza', isPreset: false, defaultHitboxId: 'hitbox-octane' })
 ]);
 
 export const CAR_VISUAL_IDS = Object.freeze(CAR_VISUAL_CATALOG.map((item) => item.id));
@@ -115,7 +116,8 @@ export const SHORT_VISUAL_ALIAS_MAP = Object.freeze({
   default: 'fennec',
   'hitbox-hybrid': 'insidio',
   fennec: 'fennec',
-  insidio: 'insidio'
+  insidio: 'insidio',
+  ryza: 'ryza'
 });
 
 export const PLAYER_ROLES = Object.freeze({
@@ -184,7 +186,7 @@ export function resolveHitboxIndex(hitboxOrVisual) {
   if (lower.includes('breakout')) return 3;
   if (lower.includes('hybrid') || lower.includes('insidio')) return 4;
   if (lower.includes('merc')) return 5;
-  if (lower.includes('octane') || lower.includes('fennec') || lower === 'default') return 0;
+  if (lower.includes('octane') || lower.includes('fennec') || lower.includes('ryza') || lower === 'default') return 0;
   console.warn(`[vehicleConstants:Fallback] Unknown hitbox type "${hitboxOrVisual}", falling back to 0 (Octane).`);
   return 0;
 }

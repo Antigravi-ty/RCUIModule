@@ -97,7 +97,7 @@ export const VehicleGlobalFxTunerFloatingWindow: React.FC<VehicleGlobalFxTunerFl
   const [particleConfig, setParticleConfig] = useState(() => getBoostParticleRuntimeConfig());
   const [wheelConfig, setWheelConfig] = useState(() => getWheelModifierConfig());
 
-  const targetCarId = activeCar === 'insidio' ? 'insidio' : 'fennec';
+  const targetCarId = activeCar === 'insidio' ? 'insidio' : activeCar === 'ryza' ? 'ryza' : 'fennec';
   const sharedDescriptorProxy = {
     ...FENNEC_DESCRIPTOR,
     surfaceMaterials: GLOBAL_VEHICLE_SURFACE_MATERIALS,

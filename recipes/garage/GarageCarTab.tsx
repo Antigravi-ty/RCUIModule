@@ -60,7 +60,7 @@ export const GarageCarTab: React.FC<GarageCarTabProps> = ({
             <span>Model & Offset Tuner</span>
           </button>
           <span className="text-[11px] font-mono opacity-70">
-            7 Standard Models • Click to Equip
+            {CARS.length} Standard Models • Click to Equip
           </span>
         </div>
       </div>

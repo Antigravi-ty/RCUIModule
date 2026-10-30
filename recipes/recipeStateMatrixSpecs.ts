@@ -38,7 +38,7 @@ export const LAYER2_GARAGE_STATES: RecipeStateSnapshotSpec<{
   {
     id: 'garage-car',
     label: '1. Car Body Selection',
-    description: '7 vehicle chassis presets with Octane / Dominus / Plank / Hybrid hitbox archetype badges.',
+    description: '8 vehicle chassis presets with Octane / Dominus / Plank / Hybrid hitbox archetype badges.',
     componentName: 'Layer2GarageRecipe',
     sourceFile: 'src/ui-core/recipes/Layer2GarageRecipe.tsx',
     subViewFile: 'src/ui-core/recipes/garage/GarageCarTab.tsx',

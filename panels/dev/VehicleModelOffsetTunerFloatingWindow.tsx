@@ -20,6 +20,7 @@ import { HITBOX_PRESETS } from '../../config/vehicleConstants.js';
 import {
   FENNEC_DESCRIPTOR,
   INSIDIO_DESCRIPTOR,
+  RYZA_DESCRIPTOR,
   getVehicleDescriptor,
 } from '../../config/vehicleTunerConfig.js';
 import {
@@ -42,7 +43,7 @@ export interface VehicleModelOffsetTunerFloatingWindowProps {
 }
 
 export type VehicleTunerTab = 'hitbox' | 'wheels' | 'boost';
-export type CustomVehicleId = 'fennec' | 'insidio';
+export type CustomVehicleId = 'fennec' | 'insidio' | 'ryza';
 
 const INITIAL_VEHICLE_OFFSET_SNAPSHOT = JSON.parse(
   JSON.stringify({
@@ -61,6 +62,14 @@ const INITIAL_VEHICLE_OFFSET_SNAPSHOT = JSON.parse(
       suspensionHeights: INSIDIO_DESCRIPTOR.suspensionHeights,
       boostNozzleParams: INSIDIO_DESCRIPTOR.boostNozzleParams,
       boostOutlets: INSIDIO_DESCRIPTOR.boostOutlets,
+    },
+    ryza: {
+      hitboxPreset: RYZA_DESCRIPTOR.hitboxPreset,
+      alignment: RYZA_DESCRIPTOR.alignment,
+      wheelAnchors: RYZA_DESCRIPTOR.wheelAnchors,
+      suspensionHeights: RYZA_DESCRIPTOR.suspensionHeights,
+      boostNozzleParams: RYZA_DESCRIPTOR.boostNozzleParams,
+      boostOutlets: RYZA_DESCRIPTOR.boostOutlets,
     },
   })
 );
@@ -86,7 +95,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   const setPrecisionStep = useAppStore((s) => s.setPrecisionStep);
 
   const [selectedCar, setSelectedCar] = useState<CustomVehicleId>(() =>
-    activeCar === 'insidio' ? 'insidio' : 'fennec'
+    activeCar === 'insidio' ? 'insidio' : activeCar === 'ryza' ? 'ryza' : 'fennec'
   );
   const [internalTab, setInternalTab] = useState<VehicleTunerTab>(() =>
     controlledTab && ['hitbox', 'wheels', 'boost'].includes(controlledTab)
@@ -248,6 +257,14 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
         boostNozzleParams: INSIDIO_DESCRIPTOR.boostNozzleParams,
         boostOutlets: INSIDIO_DESCRIPTOR.boostOutlets,
       },
+      ryza: {
+        hitboxPreset: RYZA_DESCRIPTOR.hitboxPreset,
+        alignment: RYZA_DESCRIPTOR.alignment,
+        wheelAnchors: RYZA_DESCRIPTOR.wheelAnchors,
+        suspensionHeights: RYZA_DESCRIPTOR.suspensionHeights,
+        boostNozzleParams: RYZA_DESCRIPTOR.boostNozzleParams,
+        boostOutlets: RYZA_DESCRIPTOR.boostOutlets,
+      },
     },
   });
 
@@ -310,6 +327,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
             options={[
               { value: 'fennec', label: 'Fennec (Fennec.glb)' },
               { value: 'insidio', label: 'Insidio (Insidio.glb)' },
+              { value: 'ryza', label: 'Ryza (Ryza.glb)' },
             ]}
             size="sm"
             fullWidth

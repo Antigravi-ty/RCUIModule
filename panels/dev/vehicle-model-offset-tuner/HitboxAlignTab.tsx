@@ -12,8 +12,8 @@ import { CameraSwivelSimulatorCard } from '../../../compounds/CameraSwivelSimula
 export interface HitboxAlignTabProps {
   descriptor: any;
   hitboxSpec: any;
-  selectedCar: 'fennec' | 'insidio';
-  notifyAndRefresh: (carId?: 'fennec' | 'insidio', nextHitboxPreset?: string) => void;
+  selectedCar: 'fennec' | 'insidio' | 'ryza';
+  notifyAndRefresh: (carId?: 'fennec' | 'insidio' | 'ryza', nextHitboxPreset?: string) => void;
   handleCenterOffsetAxis: (axisIndex: 0 | 1 | 2, val: number) => void;
   handleAlignmentChange: (patch: Record<string, any>) => void;
   handleAlignTopToRLHitbox: () => void;

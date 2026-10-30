@@ -1,4 +1,4 @@
-// 1. Car Tab: 7 vehicles following RocketCompanion's canonical chassis list
+// 1. Car Tab: 8 vehicles following RocketCompanion's canonical chassis list
 export interface CarDef {
   id: string;
   name: string;
@@ -8,6 +8,7 @@ export interface CarDef {
 export const CARS: CarDef[] = [
   { id: 'fennec', name: 'Fennec', hitbox: 'Octane' },
   { id: 'insidio', name: 'Insidio', hitbox: 'Hybrid' },
+  { id: 'ryza', name: 'Ryza', hitbox: 'Octane' },
   { id: 'hitbox-octane', name: 'Octane (Whitebox)', hitbox: 'Octane' },
   { id: 'hitbox-dominus', name: 'Dominus (Whitebox)', hitbox: 'Dominus' },
   { id: 'hitbox-breakout', name: 'Breakout (Whitebox)', hitbox: 'Breakout' },

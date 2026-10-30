@@ -69,7 +69,7 @@ export interface Layer2GarageRecipeProps {
 /**
  * [Recipe] Layer 2 Garage Loadout Menu (Width: 640px, Height: 520px)
  * Modular nested architecture maintaining low coupling:
- * 1. Car (`GarageCarTab`): 7 cards with name & hitbox badge (4x2 grid, no scroll)
+ * 1. Car (`GarageCarTab`): 8 cards with name & hitbox badge (4x2 grid, no scroll)
  * 2. Paint (`GarageColorTab`): Blue & Orange team fallback preference order (2x3 = 6 presets)
  * 3. Loadout (`GarageMaterialsTab`): Ball style, demolition FX, boost trail, boost audio & luminance
  * 4. Anthem (`GarageAnthemTab`): Anthem selection or Under Development placeholder

@@ -27,6 +27,7 @@ export interface DemolishRespawnBenchPanelProps {
 const VEHICLE_VISUAL_OPTIONS = [
   { id: 'octane', label: 'Octane (Default)' },
   { id: 'fennec', label: 'Fennec' },
+  { id: 'ryza', label: 'Ryza' },
   { id: 'dominus', label: 'Dominus' },
   { id: 'breakout', label: 'Breakout' },
   { id: 'plank', label: 'Plank / Batmobile' },
