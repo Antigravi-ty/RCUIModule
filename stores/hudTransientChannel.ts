@@ -5,61 +5,62 @@
  */
 import type {
   SpeedTransientListener, BoostTransientListener, BallCamTransientListener,
-  StepperScoreboardState, EdgeDemoIndicatorConfig, EdgeRosterHudState,
-  FlipTransientState, CompactTelemetryTransientSnapshot, KickoffTransientFrame,
-  ReplayBannerTransientState, TemporalReplayFooterTransientState,
+  StepperScoreboardState, EdgeDemoIndicatorConfig, EdgeSkipIndicatorConfig,
+  EdgeRosterHudState, FlipTransientState, CompactTelemetryTransientSnapshot,
+  KickoffTransientFrame, ReplayBannerTransientState, TemporalReplayFooterTransientState,
   DemolishHourglassTransientState, PitchMiniMapTransientState,
   KickoffCountdownFlashTransientState, HudTransientChannel,
 } from './hudTransientTypes';
 export * from './hudTransientTypes';
 
 export const DEFAULT_DEMO_INDICATOR_CONFIG: EdgeDemoIndicatorConfig = {
-  variant: 'bomb-svg',
-  color: '#EF4444',
-  strokeWidth: 1.75,
-  sizePx: 16,
-  glowColor: '#EF4444',
-  glowBlurPx: 0,
-  glowIntensityPct: 0,
+  variant: 'bomb-svg', color: '#EF4444', strokeWidth: 1.75, sizePx: 16,
+  glowColor: '#EF4444', glowBlurPx: 0, glowIntensityPct: 0,
 };
 
-/**
- * Safely normalizes any raw or partial `EdgeDemoIndicatorConfig` (even if undefined,
- * null, or corrupted by external state) into a complete, valid config object.
- */
+export const DEFAULT_SKIP_INDICATOR_CONFIG: EdgeSkipIndicatorConfig = {
+  color: '#10B981', strokeWidth: 2.5, sizePx: 18,
+  glowColor: '#10B981', glowBlurPx: 6, glowIntensityPct: 110,
+};
+
 export function resolveDemoIndicatorConfig(
   raw?: Partial<EdgeDemoIndicatorConfig> | unknown,
   fallback: EdgeDemoIndicatorConfig = DEFAULT_DEMO_INDICATOR_CONFIG
 ): EdgeDemoIndicatorConfig {
-  const base =
-    fallback && typeof fallback === 'object' ? fallback : DEFAULT_DEMO_INDICATOR_CONFIG;
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return { ...base };
-  }
+  const base = fallback && typeof fallback === 'object' ? fallback : DEFAULT_DEMO_INDICATOR_CONFIG;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ...base };
   const r = raw as Partial<EdgeDemoIndicatorConfig>;
   return {
     variant: r.variant === 'cross' || r.variant === 'bomb-svg' ? r.variant : base.variant,
     color: typeof r.color === 'string' && r.color.trim().length > 0 ? r.color : base.color,
-    strokeWidth:
-      typeof r.strokeWidth === 'number' && Number.isFinite(r.strokeWidth)
-        ? r.strokeWidth
-        : base.strokeWidth,
-    sizePx:
-      typeof r.sizePx === 'number' && Number.isFinite(r.sizePx) ? r.sizePx : base.sizePx,
+    strokeWidth: typeof r.strokeWidth === 'number' && Number.isFinite(r.strokeWidth) ? r.strokeWidth : base.strokeWidth,
+    sizePx: typeof r.sizePx === 'number' && Number.isFinite(r.sizePx) ? r.sizePx : base.sizePx,
     glowColor:
       typeof r.glowColor === 'string' && r.glowColor.trim().length > 0
         ? r.glowColor
-        : typeof r.color === 'string' && r.color.trim().length > 0
-        ? r.color
-        : base.glowColor,
-    glowBlurPx:
-      typeof r.glowBlurPx === 'number' && Number.isFinite(r.glowBlurPx)
-        ? r.glowBlurPx
-        : base.glowBlurPx,
-    glowIntensityPct:
-      typeof r.glowIntensityPct === 'number' && Number.isFinite(r.glowIntensityPct)
-        ? r.glowIntensityPct
-        : base.glowIntensityPct,
+        : typeof r.color === 'string' && r.color.trim().length > 0 ? r.color : base.glowColor,
+    glowBlurPx: typeof r.glowBlurPx === 'number' && Number.isFinite(r.glowBlurPx) ? r.glowBlurPx : base.glowBlurPx,
+    glowIntensityPct: typeof r.glowIntensityPct === 'number' && Number.isFinite(r.glowIntensityPct) ? r.glowIntensityPct : base.glowIntensityPct,
+  };
+}
+
+export function resolveSkipIndicatorConfig(
+  raw?: Partial<EdgeSkipIndicatorConfig> | unknown,
+  fallback: EdgeSkipIndicatorConfig = DEFAULT_SKIP_INDICATOR_CONFIG
+): EdgeSkipIndicatorConfig {
+  const base = fallback && typeof fallback === 'object' ? fallback : DEFAULT_SKIP_INDICATOR_CONFIG;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ...base };
+  const r = raw as Partial<EdgeSkipIndicatorConfig>;
+  return {
+    color: typeof r.color === 'string' && r.color.trim().length > 0 ? r.color : base.color,
+    strokeWidth: typeof r.strokeWidth === 'number' && Number.isFinite(r.strokeWidth) ? r.strokeWidth : base.strokeWidth,
+    sizePx: typeof r.sizePx === 'number' && Number.isFinite(r.sizePx) ? r.sizePx : base.sizePx,
+    glowColor:
+      typeof r.glowColor === 'string' && r.glowColor.trim().length > 0
+        ? r.glowColor
+        : typeof r.color === 'string' && r.color.trim().length > 0 ? r.color : base.glowColor,
+    glowBlurPx: typeof r.glowBlurPx === 'number' && Number.isFinite(r.glowBlurPx) ? r.glowBlurPx : base.glowBlurPx,
+    glowIntensityPct: typeof r.glowIntensityPct === 'number' && Number.isFinite(r.glowIntensityPct) ? r.glowIntensityPct : base.glowIntensityPct,
   };
 }
 
@@ -80,6 +81,7 @@ export const DEFAULT_INITIAL_ROSTER: EdgeRosterHudState = {
   focusedSlotKey: 1,
   opponentDemoCompact: true,
   demoIndicatorConfig: { ...DEFAULT_DEMO_INDICATOR_CONFIG },
+  skipIndicatorConfig: { ...DEFAULT_SKIP_INDICATOR_CONFIG },
   leftPlayers: [
     makeInitialPlayer(1, 'left', 'You (Octane_99)', 85, true),
     makeInitialPlayer(2, 'left', 'Zen_Master_RL', 42),
@@ -173,6 +175,7 @@ export function createHudTransientChannel(initial?: {
     opponentDemoCompact:
       initial?.roster?.opponentDemoCompact ?? DEFAULT_INITIAL_ROSTER.opponentDemoCompact ?? true,
     demoIndicatorConfig: resolveDemoIndicatorConfig(initial?.roster?.demoIndicatorConfig),
+    skipIndicatorConfig: resolveSkipIndicatorConfig(initial?.roster?.skipIndicatorConfig),
     leftPlayers: (initial?.roster?.leftPlayers ?? DEFAULT_INITIAL_ROSTER.leftPlayers).map((p) => ({
       ...p,
     })) as EdgeRosterHudState['leftPlayers'],
@@ -440,6 +443,12 @@ export function createHudTransientChannel(initial?: {
         s.demoIndicatorConfig = resolveDemoIndicatorConfig(
           partial.demoIndicatorConfig,
           resolveDemoIndicatorConfig(s.demoIndicatorConfig)
+        );
+      }
+      if (partial.skipIndicatorConfig !== undefined) {
+        s.skipIndicatorConfig = resolveSkipIndicatorConfig(
+          partial.skipIndicatorConfig,
+          resolveSkipIndicatorConfig(s.skipIndicatorConfig)
         );
       }
       if (partial.focusedSlotKey !== undefined) {

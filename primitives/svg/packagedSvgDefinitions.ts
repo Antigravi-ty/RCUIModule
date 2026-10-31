@@ -2,6 +2,7 @@ import React from 'react';
 
 export type PackagedSvgIconId =
   | 'bomb-emoji'
+  | 'replay-skip-check'
   | 'crossbar-outline'
   | 'crossbar-solid'
   | 'bounce-outline'
@@ -111,6 +112,16 @@ export const PACKAGED_SVG_CATALOG: PackagedSvgCatalogEntry[] = [
     defaultEventTitle: 'DEMOLITION',
     defaultCapsuleText: '+25 PTS · BOOM',
     defaultFootnoteText: 'SUPERSONIC IMPACT · 3.0S RESPAWN',
+  },
+  {
+    id: 'replay-skip-check',
+    title: 'Replay Skip Ready Checkmark',
+    subtitle: '5A Match HUD inward half-rounded card checkmark with adjustable stroke width, color, and outer glow',
+    sourceUrl: 'https://lucide.dev/icons/check',
+    category: 'match-hud-5a',
+    defaultEventTitle: 'SKIP REPLAY',
+    defaultCapsuleText: 'READY',
+    defaultFootnoteText: 'GOAL REPLAY SKIP VOTE CONFIRMED',
   },
   {
     id: 'crossbar-outline',

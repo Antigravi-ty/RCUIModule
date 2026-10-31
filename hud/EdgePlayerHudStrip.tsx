@@ -1,14 +1,20 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 import {
   DEFAULT_DEMO_INDICATOR_CONFIG,
+  DEFAULT_SKIP_INDICATOR_CONFIG,
   DEFAULT_INITIAL_ROSTER,
   EdgeDemoIndicatorConfig,
+  EdgeSkipIndicatorConfig,
   EdgePlayerSlotState,
   EdgeRosterHudState,
   HudRosterViewMode,
   RosterTransientListener,
 } from '../stores/hudTransientChannel';
-import { BombEmojiSvg, buildSvgDropShadowFilter } from '../primitives/packagedSvgIcons';
+import {
+  BombEmojiSvg,
+  ReplaySkipCheckSvg,
+  buildSvgDropShadowFilter,
+} from '../primitives/packagedSvgIcons';
 
 export interface EdgePlayerHudStripHandle {
   /** Imperatively push roster state to DOM refs with zero React re-renders */
@@ -18,7 +24,7 @@ export interface EdgePlayerHudStripHandle {
 export interface EdgePlayerHudStripProps {
   /** Which screen edge this vertical player stack attaches to */
   side: 'left' | 'right';
-  /** Declarative fallback props when subscribeRoster is not used */
+  /** Optional viewMode override (falls back to roster.viewMode or 'player-live') */
   viewMode?: HudRosterViewMode;
   players?: EdgePlayerSlotState[];
   /** Team color for this side (default: left = Blue #2563EB, right = Orange #EA580C) */
@@ -32,6 +38,11 @@ export interface EdgePlayerHudStripProps {
    * Merges over `roster.demoIndicatorConfig` when provided.
    */
   demoIndicatorConfig?: Partial<EdgeDemoIndicatorConfig>;
+  /**
+   * Optional replay skip checkmark SVG configuration override (sizePx, strokeWidth, color, glow).
+   * Merges over `roster.skipIndicatorConfig` when provided.
+   */
+  skipIndicatorConfig?: Partial<EdgeSkipIndicatorConfig>;
   /** Optional callback when user clicks a card or presses 1-6 to switch POV */
   onSelectSlot?: (slotKey: 1 | 2 | 3 | 4 | 5 | 6) => void;
   /**
@@ -59,9 +70,8 @@ interface CardDomRefs {
 
 const KEY_BADGE_WIDTH_PX = 28;
 const DEMO_EXTEND_PX = 10;
-const CARD_ROW_PITCH_PX = 45; // 37px card height (32px row + 5px bar) + 8px gap-2
-const MAX_TEAM_SLOTS = 5; // Supports 1v1, 2v2, 3v3, 2v4, 1v5 (up to 6 total match cars)
-const SKIP_GLOW_FILTER = buildSvgDropShadowFilter('#10B981', 6, 115);
+const CARD_ROW_PITCH_PX = 45;
+const MAX_TEAM_SLOTS = 5;
 
 function createEmptyCardRefs(defaultKey: 1 | 2 | 3 | 4 | 5 | 6): CardDomRefs {
   return {
@@ -74,10 +84,11 @@ function createEmptyCardRefs(defaultKey: 1 | 2 | 3 | 4 | 5 | 6): CardDomRefs {
 const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerHudStripProps>(
   (
     {
-      side, viewMode = 'player-live', players,
+      side, viewMode, players,
       teamColor = side === 'left' ? '#2563EB' : '#EA580C',
       barColor = side === 'left' ? '#3B82F6' : '#F97316',
-      isLight = true, demoIndicatorConfig, onSelectSlot, subscribeRoster, className = '',
+      isLight = true, demoIndicatorConfig, skipIndicatorConfig,
+      onSelectSlot, subscribeRoster, className = '',
     },
     ref
   ) => {
@@ -102,7 +113,8 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
         currentMode: HudRosterViewMode,
         slotIndex: number,
         visualRowIndex: number,
-        resolvedDemoCfg: EdgeDemoIndicatorConfig
+        resolvedDemoCfg: EdgeDemoIndicatorConfig,
+        resolvedSkipCfg: EdgeSkipIndicatorConfig
       ) => {
         const {
           rowWrapEl, cardEl, skipBadgeEl, keyBadgeEl, nameEl, selfTagEl,
@@ -120,11 +132,39 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
 
         const isDemo = Boolean(slot.isDemolished);
         const isFocused = Boolean(slot.isFocusedPov);
+        const showSkipReady = Boolean(slot.replaySkipReady);
         const isReplayOrSpec = currentMode === 'goal-replay' || currentMode === 'spectator';
 
         if (skipBadgeEl) {
-          const showSkipReady = Boolean(slot.replaySkipReady);
           skipBadgeEl.style.display = showSkipReady ? 'flex' : 'none';
+          skipBadgeEl.style.backgroundColor = isLight
+            ? 'rgba(255, 255, 255, 0.96)'
+            : 'rgba(20, 20, 25, 0.95)';
+          skipBadgeEl.style.boxShadow = isLight
+            ? '0 0 0 1.5px rgba(115, 115, 115, 0.32), inset 0 0 0 1px rgba(0, 0, 0, 0.14)'
+            : '0 0 0 1.5px rgba(113, 113, 122, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.14)';
+          const skipSvgEl = skipBadgeEl.querySelector('svg');
+          if (skipSvgEl) {
+            const pxVal = resolvedSkipCfg.sizePx || 18;
+            const sz = `${pxVal}px`;
+            const skipColor = resolvedSkipCfg.color || '#10B981';
+            const skipGlow = buildSvgDropShadowFilter(
+              resolvedSkipCfg.glowColor || skipColor,
+              resolvedSkipCfg.glowBlurPx,
+              resolvedSkipCfg.glowIntensityPct
+            );
+            skipSvgEl.setAttribute('width', String(pxVal));
+            skipSvgEl.setAttribute('height', String(pxVal));
+            skipSvgEl.style.width = sz;
+            skipSvgEl.style.height = sz;
+            skipSvgEl.style.color = skipColor;
+            skipSvgEl.style.filter = skipGlow !== 'none' ? skipGlow : 'none';
+            const paths = skipSvgEl.querySelectorAll('path');
+            paths.forEach((p) => {
+              p.setAttribute('stroke-width', String(resolvedSkipCfg.strokeWidth || 2.5));
+              p.setAttribute('stroke', 'currentColor');
+            });
+          }
         }
 
         if (side === 'left') {
@@ -134,9 +174,9 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           rowWrapEl.style.opacity = '1';
         } else {
           if (!isReplayOrSpec) {
-            if (isDemo) {
-              const targetX = KEY_BADGE_WIDTH_PX - DEMO_EXTEND_PX;
-              const deltaY = (visualRowIndex - slotIndex) * CARD_ROW_PITCH_PX;
+            if (isDemo || showSkipReady) {
+              const targetX = isDemo ? KEY_BADGE_WIDTH_PX - DEMO_EXTEND_PX : KEY_BADGE_WIDTH_PX;
+              const deltaY = isDemo ? (visualRowIndex - slotIndex) * CARD_ROW_PITCH_PX : 0;
               rowWrapEl.style.transform = `translate3d(${targetX}px, ${deltaY}px, 0)`;
               rowWrapEl.style.opacity = '1';
             } else {
@@ -274,15 +314,21 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
     const applyRoster = useCallback(
       (roster: EdgeRosterHudState) => {
         const list = side === 'left' ? roster.leftPlayers : roster.rightPlayers;
+        const effectiveMode: HudRosterViewMode = viewMode ?? roster.viewMode ?? 'player-live';
         const isLiveRightCompact =
           side === 'right' &&
-          roster.viewMode === 'player-live' &&
+          effectiveMode === 'player-live' &&
           roster.opponentDemoCompact !== false;
 
         const resolvedDemoCfg: EdgeDemoIndicatorConfig = {
           ...DEFAULT_DEMO_INDICATOR_CONFIG,
           ...(roster.demoIndicatorConfig ?? {}),
           ...(demoIndicatorConfig ?? {}),
+        };
+        const resolvedSkipCfg: EdgeSkipIndicatorConfig = {
+          ...DEFAULT_SKIP_INDICATOR_CONFIG,
+          ...(roster.skipIndicatorConfig ?? {}),
+          ...(skipIndicatorConfig ?? {}),
         };
 
         let existingRankCounter = 0;
@@ -324,40 +370,53 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           const refs = cardRefs.current[i];
           if (refs) {
             applySlotDom(
-              slot, refs, roster.viewMode, existingRanks[i], demoVisualRanks[i], resolvedDemoCfg
+              slot,
+              refs,
+              effectiveMode,
+              existingRanks[i],
+              demoVisualRanks[i],
+              resolvedDemoCfg,
+              resolvedSkipCfg
             );
           }
         }
       },
-      [side, applySlotDom, demoIndicatorConfig]
+      [side, viewMode, applySlotDom, demoIndicatorConfig, skipIndicatorConfig]
     );
 
     useImperativeHandle(ref, () => ({ setRoster: applyRoster }), [applyRoster]);
 
     useEffect(() => {
-      if (subscribeRoster) {
-        return subscribeRoster(applyRoster);
-      }
+      if (subscribeRoster) return subscribeRoster(applyRoster);
       const resolvedDemoCfg: EdgeDemoIndicatorConfig = {
         ...DEFAULT_DEMO_INDICATOR_CONFIG,
         ...(demoIndicatorConfig ?? {}),
       };
+      const resolvedSkipCfg: EdgeSkipIndicatorConfig = {
+        ...DEFAULT_SKIP_INDICATOR_CONFIG,
+        ...(skipIndicatorConfig ?? {}),
+      };
+      const effectiveMode: HudRosterViewMode = viewMode ?? 'player-live';
       let rankCounter = 0;
       for (let i = 0; i < MAX_TEAM_SLOTS; i++) {
         const slot = defaultPlayers[i];
         const refs = cardRefs.current[i];
         if (refs) {
           const r = slot && slot.exists !== false ? rankCounter++ : i;
-          applySlotDom(slot, refs, viewMode, r, r, resolvedDemoCfg);
+          applySlotDom(slot, refs, effectiveMode, r, r, resolvedDemoCfg, resolvedSkipCfg);
         }
       }
-    }, [subscribeRoster, applyRoster, applySlotDom, defaultPlayers, viewMode, demoIndicatorConfig]);
+    }, [subscribeRoster, applyRoster, applySlotDom, defaultPlayers, viewMode, demoIndicatorConfig, skipIndicatorConfig]);
 
     const shapeClass =
       side === 'left' ? 'rounded-r-[9px] rounded-l-none' : 'rounded-l-[9px] rounded-r-none';
     const initialDemoCfg: EdgeDemoIndicatorConfig = {
       ...DEFAULT_DEMO_INDICATOR_CONFIG,
       ...(demoIndicatorConfig ?? {}),
+    };
+    const initialSkipCfg: EdgeSkipIndicatorConfig = {
+      ...DEFAULT_SKIP_INDICATOR_CONFIG,
+      ...(skipIndicatorConfig ?? {}),
     };
 
     return (
@@ -378,34 +437,22 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           return (
             <div
               key={idx}
-              ref={(el) => {
-                cardRefs.current[idx].rowWrapEl = el;
-              }}
+              ref={(el) => { cardRefs.current[idx].rowWrapEl = el; }}
               className={`flex items-center gap-1.5 will-change-transform transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                 isRight ? 'flex-row-reverse' : 'flex-row'
               }`}
-              style={{
-                display: initialSlot && initialSlot.exists !== false ? 'flex' : 'none',
-              }}
+              style={{ display: initialSlot && initialSlot.exists !== false ? 'flex' : 'none' }}
             >
               <div
-                ref={(el) => {
-                  cardRefs.current[idx].cardEl = el;
-                }}
+                ref={(el) => { cardRefs.current[idx].cardEl = el; }}
                 onClick={() => onSelectSlot?.(cardRefs.current[idx].currentSlotKey)}
                 title={`Press [${slotKey}] to observe ${initialSlot?.name ?? `Player ${slotKey}`}`}
                 className={`group relative flex flex-col overflow-hidden cursor-pointer ${shapeClass}`}
                 style={{ width: '196px' }}
               >
-                <div
-                  className={`flex items-center h-[32px] w-full ${
-                    isRight ? 'flex-row-reverse' : 'flex-row'
-                  }`}
-                >
+                <div className={`flex items-center h-[32px] w-full ${isRight ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div
-                    ref={(el) => {
-                      cardRefs.current[idx].keyBadgeEl = el;
-                    }}
+                    ref={(el) => { cardRefs.current[idx].keyBadgeEl = el; }}
                     className={`flex items-center justify-center shrink-0 h-full text-[11px] font-normal tabular-nums ${
                       isRight ? 'border-l' : 'border-r'
                     } border-black/10 transition-colors duration-200`}
@@ -422,9 +469,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                     }`}
                   >
                     <span
-                      ref={(el) => {
-                        cardRefs.current[idx].nameEl = el;
-                      }}
+                      ref={(el) => { cardRefs.current[idx].nameEl = el; }}
                       className={`truncate text-[12px] leading-tight tracking-tight ${
                         isRight ? 'text-right' : 'text-left'
                       }`}
@@ -433,9 +478,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                       {initialSlot?.name ?? `Player ${slotKey}`}
                     </span>
                     <span
-                      ref={(el) => {
-                        cardRefs.current[idx].selfTagEl = el;
-                      }}
+                      ref={(el) => { cardRefs.current[idx].selfTagEl = el; }}
                       className="shrink-0 px-1 py-[1px] rounded text-[8px] uppercase tracking-wider bg-black/20 text-current opacity-80"
                       style={{ display: initialSlot?.isSelf ? 'inline-block' : 'none' }}
                     >
@@ -449,9 +492,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                     }`}
                   >
                     <span
-                      ref={(el) => {
-                        cardRefs.current[idx].boostTextEl = el;
-                      }}
+                      ref={(el) => { cardRefs.current[idx].boostTextEl = el; }}
                       className={`inline-block w-[3ch] text-[13px] leading-none tabular-nums tracking-tight ${
                         isRight ? 'text-left' : 'text-right'
                       }`}
@@ -461,9 +502,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                     </span>
 
                     <span
-                      ref={(el) => {
-                        cardRefs.current[idx].demoCrossEl = el;
-                      }}
+                      ref={(el) => { cardRefs.current[idx].demoCrossEl = el; }}
                       className={`items-center min-w-[3ch] overflow-visible text-[15px] leading-none font-bold ${
                         isRight ? 'justify-start text-left' : 'justify-end text-right'
                       }`}
@@ -481,9 +520,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                     </span>
 
                     <span
-                      ref={(el) => {
-                        cardRefs.current[idx].demoBombWrapEl = el;
-                      }}
+                      ref={(el) => { cardRefs.current[idx].demoBombWrapEl = el; }}
                       className={`items-center min-w-[3ch] overflow-visible leading-none ${
                         isRight ? 'justify-start text-left' : 'justify-end text-right'
                       }`}
@@ -507,15 +544,11 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                 </div>
 
                 <div
-                  ref={(el) => {
-                    cardRefs.current[idx].barTrackEl = el;
-                  }}
+                  ref={(el) => { cardRefs.current[idx].barTrackEl = el; }}
                   className="relative w-full h-[5px] bg-[#09090B] overflow-hidden"
                 >
                   <div
-                    ref={(el) => {
-                      cardRefs.current[idx].barFillEl = el;
-                    }}
+                    ref={(el) => { cardRefs.current[idx].barFillEl = el; }}
                     className={`h-full w-full ${
                       isRight ? 'origin-right' : 'origin-left'
                     } will-change-transform transition-colors duration-150`}
@@ -527,49 +560,29 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                 </div>
               </div>
 
-              {/* Inward-facing Goal Replay Skip / Ready Square with Green SVG Glow */}
               <div
-                ref={(el) => {
-                  cardRefs.current[idx].skipBadgeEl = el;
-                }}
+                ref={(el) => { cardRefs.current[idx].skipBadgeEl = el; }}
                 data-ui-element={`hud-edge-player-skip-ready-${slotKey}`}
                 title={`Player #${slotKey} Ready / Skip Goal Replay`}
-                className="w-[37px] h-[37px] rounded-[9px] shrink-0 items-center justify-center transition-all duration-200"
+                className={`w-[37px] h-[37px] shrink-0 items-center justify-center transition-all duration-200 ${shapeClass}`}
                 style={{
                   display: initialSlot?.replaySkipReady ? 'flex' : 'none',
                   backgroundColor: isLight
                     ? 'rgba(255, 255, 255, 0.96)'
                     : 'rgba(20, 20, 25, 0.95)',
-                  boxShadow:
-                    '0 0 0 1.5px #10B981, 0 0 12px rgba(16, 185, 129, 0.45), inset 0 0 8px rgba(16, 185, 129, 0.22)',
+                  boxShadow: isLight
+                    ? '0 0 0 1.5px rgba(115, 115, 115, 0.32), inset 0 0 0 1px rgba(0, 0, 0, 0.14)'
+                    : '0 0 0 1.5px rgba(113, 113, 122, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.14)',
                 }}
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  style={{ color: '#10B981', filter: SKIP_GLOW_FILTER }}
-                >
-                  <rect
-                    x="3.5"
-                    y="3.5"
-                    width="17"
-                    height="17"
-                    rx="4.5"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    fill="rgba(16, 185, 129, 0.16)"
-                  />
-                  <path
-                    d="M7.75 12.25L10.75 15.25L16.5 9.25"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <ReplaySkipCheckSvg
+                  size={initialSkipCfg.sizePx}
+                  color={initialSkipCfg.color}
+                  strokeWidth={initialSkipCfg.strokeWidth}
+                  glowColor={initialSkipCfg.glowColor}
+                  glowBlurPx={initialSkipCfg.glowBlurPx}
+                  glowIntensityPct={initialSkipCfg.glowIntensityPct}
+                />
               </div>
             </div>
           );

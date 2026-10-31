@@ -65,6 +65,21 @@ export interface EdgeDemoIndicatorConfig {
   glowIntensityPct: number;
 }
 
+export interface EdgeSkipIndicatorConfig {
+  /** Checkmark SVG stroke color (default '#10B981') */
+  color: string;
+  /** Checkmark SVG stroke width (default 2.5, range 1.0 - 4.0) */
+  strokeWidth: number;
+  /** Checkmark SVG icon size in px (default 18, range 10 - 28) */
+  sizePx: number;
+  /** Checkmark SVG drop-shadow glow color (default '#10B981') */
+  glowColor: string;
+  /** Checkmark SVG drop-shadow glow blur radius in px (default 6, range 0 - 20) */
+  glowBlurPx: number;
+  /** Checkmark SVG drop-shadow glow intensity percentage (default 110, range 0 - 200) */
+  glowIntensityPct: number;
+}
+
 export interface EdgePlayerSlotState {
   slotKey: 1 | 2 | 3 | 4 | 5 | 6;
   team: 'left' | 'right';
@@ -82,7 +97,7 @@ export interface EdgePlayerSlotState {
   demoRespawnTotalSec?: number;
   /** Optional timestamp (performance.now()) when demolish started; if omitted/0, FIFO falls back to demoRespawnRemainingSec ascending */
   demolishedAtMs?: number;
-  /** Whether this player has voted to skip the Goal Replay (renders an inward-facing green SVG glow ready badge) */
+  /** Whether this player has voted to skip the Goal Replay (renders an inward-facing half-rounded card with green checkmark SVG) */
   replaySkipReady?: boolean;
 }
 
@@ -96,6 +111,8 @@ export interface EdgeRosterHudState {
   opponentDemoCompact?: boolean;
   /** Optional demolish indicator configuration (bomb-svg vs red cross, stroke width, color, outer glow) */
   demoIndicatorConfig?: EdgeDemoIndicatorConfig;
+  /** Optional replay skip checkmark SVG configuration (size, stroke width, color, SVG glow) */
+  skipIndicatorConfig?: EdgeSkipIndicatorConfig;
   leftPlayers: [EdgePlayerSlotState, EdgePlayerSlotState, EdgePlayerSlotState, ...EdgePlayerSlotState[]];
   rightPlayers: [EdgePlayerSlotState, EdgePlayerSlotState, EdgePlayerSlotState, ...EdgePlayerSlotState[]];
 }

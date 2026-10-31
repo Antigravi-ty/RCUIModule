@@ -484,9 +484,45 @@ export const JetThrustSvg: React.FC<PackagedSvgStyleProps> = React.memo(
 );
 JetThrustSvg.displayName = 'JetThrustSvg';
 
-/**
- * Unified Decoupled Packaged SVG Icon Resolver
- */
+export const ReplaySkipCheckSvg: React.FC<PackagedSvgStyleProps> = React.memo(
+  ({
+    size = 18,
+    color = '#10B981',
+    strokeWidth = 2.5,
+    glowColor = '#10B981',
+    glowBlurPx = 6,
+    glowIntensityPct = 110,
+    className = '',
+    style,
+  }) => {
+    const filterStr = buildSvgDropShadowFilter(glowColor ?? color, glowBlurPx, glowIntensityPct);
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={`shrink-0 select-none ${className}`}
+        style={{
+          color,
+          filter: filterStr !== 'none' ? filterStr : undefined,
+          ...style,
+        }}
+      >
+        <path
+          d="M5 12.5L10 17.5L19 6.5"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+);
+ReplaySkipCheckSvg.displayName = 'ReplaySkipCheckSvg';
+
 export const PackagedSvgIcon: React.FC<PackagedSvgIconProps> = React.memo(
   ({
     name,
@@ -502,20 +538,12 @@ export const PackagedSvgIcon: React.FC<PackagedSvgIconProps> = React.memo(
     switch (resolvedName) {
       case 'bomb-emoji':
         return <BombEmojiSvg {...styleProps} />;
+      case 'replay-skip-check':
+        return <ReplaySkipCheckSvg {...styleProps} />;
       case 'crossbar-outline':
-        return (
-          <CrossbarSvg
-            {...styleProps}
-            options={{ solidFrame: false, ...crossbarOptions }}
-          />
-        );
+        return <CrossbarSvg {...styleProps} options={{ solidFrame: false, ...crossbarOptions }} />;
       case 'crossbar-solid':
-        return (
-          <CrossbarSvg
-            {...styleProps}
-            options={{ solidFrame: true, ...crossbarOptions }}
-          />
-        );
+        return <CrossbarSvg {...styleProps} options={{ solidFrame: true, ...crossbarOptions }} />;
       case 'bounce-outline':
         return (
           <BounceSvg
@@ -543,19 +571,9 @@ export const PackagedSvgIcon: React.FC<PackagedSvgIconProps> = React.memo(
       case 'high-five':
         return <HighFiveSvg {...styleProps} options={highFiveOptions} />;
       case 'tactics':
-        return (
-          <TacticsSvg
-            {...styleProps}
-            options={{ squareVariation: false, ...tacticsOptions }}
-          />
-        );
+        return <TacticsSvg {...styleProps} options={{ squareVariation: false, ...tacticsOptions }} />;
       case 'tactics-square':
-        return (
-          <TacticsSvg
-            {...styleProps}
-            options={{ squareVariation: true, ...tacticsOptions }}
-          />
-        );
+        return <TacticsSvg {...styleProps} options={{ squareVariation: true, ...tacticsOptions }} />;
       case 'strategy':
         return <StrategySvg {...styleProps} options={strategyOptions} />;
       case 'jet-thrust':
