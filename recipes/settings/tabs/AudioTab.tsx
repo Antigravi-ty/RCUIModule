@@ -9,6 +9,7 @@ import {
   Target,
   Users,
   Trophy,
+  Timer,
 } from 'lucide-react';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
 import { SettingSliderRow } from '../../../compounds/SettingSliderRow';
