@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
+import { useReplayViewerStore } from '../../stores/replayViewerStore';
+import { useNameTagTunerStore } from '../../stores/nameTagTunerStore';
+import { useRewinderStore } from '../../stores/rewinderStore';
+import { useNetworkDiagnosticsData } from '../../stores/networkDiagnosticsStore';
 import { useSpatialAudioStore } from '../../stores/spatialAudioStore';
+import { getActiveReplayTimelineController } from '../../config/replayDirectorConfig.js';
 import { garageSettingsStore } from '../../config/vehiclePresets.js';
 import {
   BLUE_TEAM_COLORS,
@@ -30,6 +35,29 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
   const closeMenu = useAppStore((s) => s.closeMenu);
   const bridge = useAppStore((s) => s.bridge);
   const isExhibitionMode = useExperimentalMultiBotsStore((s) => s.isExhibitionMode);
+  const replayViewerHasLoaded = useReplayViewerStore(
+    (s) => Boolean((s.loadedFileName && s.totalFrames > 0) || s.viewerState !== 'idle')
+  );
+  const isNameTagTunerArenaActive = useNameTagTunerStore((s) => s.isTunerArenaActive);
+  const rewinderState = useRewinderStore((s) => s.rewinderState);
+  const { metrics: netDiagMetrics } = useNetworkDiagnosticsData();
+
+  const activeDirectorCtrl = getActiveReplayTimelineController();
+  const isDirectorPreviewActive = Boolean(
+    activeDirectorCtrl?.isActive &&
+      (activeDirectorCtrl?.isImportedPreview || activeDirectorCtrl?.isPersistent)
+  );
+  const isRewinderBlocking =
+    rewinderState === 'paused-scrub' ||
+    rewinderState === 'rewinding' ||
+    rewinderState === 'forwarding' ||
+    rewinderState === 'preroll-countdown';
+  const hasFreeplaySubSceneOverride = Boolean(
+    isNameTagTunerArenaActive ||
+      isDirectorPreviewActive ||
+      isRewinderBlocking ||
+      netDiagMetrics?.zeroGFleetEnabled
+  );
 
   const isHosting = Boolean(onlineSession?.isHosting);
   const isOnlineMatchRoom = onlineSession?.roomType === 'match';
@@ -49,6 +77,11 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
     derivedVariation = isExhibitionMode ? 'exhibition' : 'exp-multi-bots';
   } else if (matchMode === 'kickoff-training') {
     derivedVariation = 'kickoff-training';
+  } else if (
+    matchMode === 'replay-viewer' ||
+    (matchMode === 'freeplay' && replayViewerHasLoaded)
+  ) {
+    derivedVariation = 'replay-viewer';
   } else if (matchMode === 'static-training-pack') {
     derivedVariation = props.extraBottomAction
       ? 'static-training-edit'
@@ -61,23 +94,37 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
     }
   }
 
+  const handleReturnToFreeplay =
+    props.onReturnToFreeplay ??
+    (() => {
+      useAppStore.getState().setMatchMode('freeplay');
+      closeMenu();
+      bridge.onReturnToFreeplay?.();
+    });
+
+  const resolvedExtraBottomAction =
+    props.extraBottomAction ??
+    (derivedVariation === 'freeplay' && hasFreeplaySubSceneOverride
+      ? {
+          title: 'Exit to Free Play',
+          subtitle: 'Leave active arena preview and return to Free Play',
+          variant: 'secondary' as const,
+          onClick: handleReturnToFreeplay,
+        }
+      : undefined);
+
   return {
     ...rawProps,
     contextVariation:
       props.contextVariation ?? props.contextMode ?? derivedVariation,
+    extraBottomAction: resolvedExtraBottomAction,
     touchMode: props.touchMode ?? touchMode,
     touchHeadlessMode: props.touchHeadlessMode ?? touchHeadlessMode,
     touchInputAgent: props.touchInputAgent ?? touchInputAgent,
     onTouchInputAgentChange: props.onTouchInputAgentChange ?? setTouchInputAgent,
     menuPowerSave: props.menuPowerSave ?? menuPowerSave,
     onResume: props.onResume ?? closeMenu,
-    onReturnToFreeplay:
-      props.onReturnToFreeplay ??
-      (() => {
-        useAppStore.getState().setMatchMode('freeplay');
-        closeMenu();
-        bridge.onReturnToFreeplay?.();
-      }),
+    onReturnToFreeplay: handleReturnToFreeplay,
     onNavigatePlay: props.onNavigatePlay ?? (() => navigate('play')),
     onNavigateGarage: props.onNavigateGarage ?? (() => navigate('garage')),
     onNavigateSettings:

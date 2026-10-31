@@ -149,13 +149,13 @@ export const DEFAULT_MAIN_MENU_MONO_FALLBACK_WEIGHT: JetBrainsMonoFontWeight = 4
 export type MainMenuPlatformPreviewMode = 'auto' | 'apple' | 'non-apple-fallback';
 
 export type MainMenuPreviewContextMode =
-  | 'freeplay' | 'exhibition' | 'match-lobby-host' | 'match-lobby-client'
+  | 'freeplay' | 'replay-viewer' | 'exhibition' | 'match-lobby-host' | 'match-lobby-client'
   | 'online-match-host' | 'online-match-client' | 'online-warmup-host' | 'online-warmup-client'
   | 'kickoff-training' | 'static-training-play' | 'static-training-edit' | 'dev-test-lab'
   | 'exp-multi-bots' | 'match' | 'custom-match-host' | 'custom-match-client';
 
 const VALID_MAIN_MENU_CONTEXT_MODES = [
-  'freeplay', 'exhibition', 'match-lobby-host', 'match-lobby-client',
+  'freeplay', 'replay-viewer', 'exhibition', 'match-lobby-host', 'match-lobby-client',
   'online-match-host', 'online-match-client', 'online-warmup-host', 'online-warmup-client',
   'kickoff-training', 'static-training-play', 'static-training-edit', 'dev-test-lab', 'exp-multi-bots',
 ] as const;

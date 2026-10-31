@@ -138,13 +138,16 @@ export function useLayer3SelfTrainingStoreBinding<TProps extends object>(
       return;
     }
     if (mode === 'replay-viewer') {
-      setMatchMode('freeplay');
+      setMatchMode('replay-viewer');
       closeMenu();
-      bridge.onReturnToFreeplay?.();
-      floatingStore.spawnWindow({
-        ...REPLAY_VIEWER_PRESET,
-        startMinimized: false,
-      });
+      if (bridge.onStartReplayViewer) {
+        bridge.onStartReplayViewer();
+      } else {
+        floatingStore.spawnWindow({
+          ...REPLAY_VIEWER_PRESET,
+          startMinimized: false,
+        });
+      }
     }
   };
 

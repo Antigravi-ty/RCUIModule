@@ -5,6 +5,7 @@ import {
 
 export type CanonicalLayer1ContextVariation =
   | 'freeplay'
+  | 'replay-viewer'
   | 'exhibition'
   | 'match-lobby-host'
   | 'match-lobby-client'
@@ -413,6 +414,27 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
       iconColorClass: 'text-rose-400',
       variant: 'danger',
       actionType: 'exit-edit-mode',
+    },
+  },
+  {
+    id: 'replay-viewer',
+    label: 'Replay Viewer (REPLAY VIEWER)',
+    shortLabel: 'Replay Viewer',
+    tier: 'user',
+    headerTitle: 'REPLAY VIEWER',
+    groupId: 'training',
+    groupLabel: 'Training',
+    description: 'Replay Viewer: Resume, Garage, Settings, Exit to Free Play',
+    showGarage: true,
+    showSettings: true,
+    showRestartMatch: false,
+    bottomActionRow: {
+      slotId: 'leave',
+      title: 'Exit to Free Play',
+      subtitle: 'Leave Replay Viewer and return to Free Play',
+      iconColorClass: 'text-amber-400',
+      variant: 'secondary',
+      actionType: 'return-freeplay',
     },
   },
 
