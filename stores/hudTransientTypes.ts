@@ -65,19 +65,42 @@ export interface EdgeDemoIndicatorConfig {
   glowIntensityPct: number;
 }
 
+export type EdgeSkipIndicatorVariant =
+  | 'check'
+  | 'disconnect'
+  | 'packet-loss'
+  | 'latency'
+  | 'waiting';
+
 export interface EdgeSkipIndicatorConfig {
-  /** Checkmark SVG stroke color (default '#10B981') */
+  /** Default icon variant rendered inside the inward slot extension card (default 'check') */
+  variant: EdgeSkipIndicatorVariant;
+  /** Icon SVG stroke color (default '#10B981' — 2nd green swatch) */
   color: string;
-  /** Checkmark SVG stroke width (default 2.5, range 1.0 - 4.0) */
+  /** Icon SVG stroke width (default 2.0, range 1.0 - 4.0) */
   strokeWidth: number;
-  /** Checkmark SVG icon size in px (default 18, range 10 - 28) */
+  /** Icon SVG size in px (default 24, range 10 - 34) */
   sizePx: number;
-  /** Checkmark SVG drop-shadow glow color (default '#10B981') */
+  /** Icon SVG drop-shadow glow color (default '#10B981') */
   glowColor: string;
-  /** Checkmark SVG drop-shadow glow blur radius in px (default 6, range 0 - 20) */
+  /** Icon SVG drop-shadow glow blur radius in px (default 6, range 0 - 20) */
   glowBlurPx: number;
-  /** Checkmark SVG drop-shadow glow intensity percentage (default 110, range 0 - 200) */
+  /** Icon SVG drop-shadow glow intensity percentage (default 110, range 0 - 200) */
   glowIntensityPct: number;
+  /** Visible inward protrusion length past the player card edge in px (default 38, range 24 - 76) */
+  protrudeWidthPx: number;
+  /** Inner overlap width tucked underneath the player card in px so borders extend seamlessly from beneath the card (default 12, range 0 - 28) */
+  underlapPx: number;
+  /** Outer rounded corner radius of the extension card in px (default 9, range 0 - 18) */
+  cardRadiusPx: number;
+  /** Horizontal fine-tuning offset of the icon inside the protruding area in px (default 0, range -12 - 12) */
+  iconOffsetXPx: number;
+  /** Slide-out push animation duration when activated in ms (default 220, range 0 - 600) */
+  enterDurationMs: number;
+  /** Slide-in retract animation duration when deactivated/reset in ms (default 160, faster than 300ms 1-2-3 contraction) */
+  exitDurationMs: number;
+  /** Automatically reset all slots' replaySkipReady state when 'kickoff-will-start' signal fires (default true) */
+  autoResetOnKickoff: boolean;
 }
 
 export interface EdgePlayerSlotState {
@@ -97,8 +120,12 @@ export interface EdgePlayerSlotState {
   demoRespawnTotalSec?: number;
   /** Optional timestamp (performance.now()) when demolish started; if omitted/0, FIFO falls back to demoRespawnRemainingSec ascending */
   demolishedAtMs?: number;
-  /** Whether this player has voted to skip the Goal Replay (renders an inward-facing half-rounded card with green checkmark SVG) */
+  /** Whether this player's inward auxiliary extension card (Skip Replay / Network Status) is active */
   replaySkipReady?: boolean;
+  /** Optional per-slot auxiliary icon variant override ('check' | 'disconnect' | 'packet-loss' | 'latency' | 'waiting') */
+  skipIndicatorVariant?: EdgeSkipIndicatorVariant;
+  /** Optional per-slot auxiliary icon color override */
+  skipIndicatorColor?: string;
 }
 
 export interface EdgeRosterHudState {

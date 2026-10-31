@@ -212,6 +212,17 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     choreographySignal === 'goal-replay-started' && matchPhase === 'replay';
 
   useEffect(() => {
+    if (choreographySignal === 'kickoff-will-start') {
+      const skipCfg = hudChannel.getRoster().skipIndicatorConfig;
+      if (skipCfg?.autoResetOnKickoff !== false) {
+        ([1, 2, 3, 4, 5, 6] as const).forEach((slotKey) => {
+          hudChannel.updatePlayerSlot(slotKey, { replaySkipReady: false });
+        });
+      }
+    }
+  }, [choreographySignal, hudChannel]);
+
+  useEffect(() => {
     hudChannel.setReplayFooter({
       visible: replayFooterVisible,
       scorerName: replayScorerName || 'SCORER',

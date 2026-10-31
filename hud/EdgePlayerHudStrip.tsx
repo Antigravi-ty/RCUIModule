@@ -9,10 +9,13 @@ import {
   EdgeRosterHudState,
   HudRosterViewMode,
   RosterTransientListener,
+  resolveDemoIndicatorConfig,
+  resolveSkipIndicatorConfig,
 } from '../stores/hudTransientChannel';
 import {
   BombEmojiSvg,
   ReplaySkipCheckSvg,
+  SKIP_ICON_VARIANT_PATHS,
   buildSvgDropShadowFilter,
 } from '../primitives/packagedSvgIcons';
 
@@ -39,7 +42,7 @@ export interface EdgePlayerHudStripProps {
    */
   demoIndicatorConfig?: Partial<EdgeDemoIndicatorConfig>;
   /**
-   * Optional replay skip checkmark SVG configuration override (sizePx, strokeWidth, color, glow).
+   * Optional replay skip / auxiliary extension card configuration override.
    * Merges over `roster.skipIndicatorConfig` when provided.
    */
   skipIndicatorConfig?: Partial<EdgeSkipIndicatorConfig>;
@@ -56,6 +59,7 @@ export interface EdgePlayerHudStripProps {
 interface CardDomRefs {
   rowWrapEl: HTMLDivElement | null;
   cardEl: HTMLDivElement | null;
+  skipClipWrapEl: HTMLDivElement | null;
   skipBadgeEl: HTMLDivElement | null;
   keyBadgeEl: HTMLDivElement | null;
   nameEl: HTMLSpanElement | null;
@@ -75,9 +79,19 @@ const MAX_TEAM_SLOTS = 5;
 
 function createEmptyCardRefs(defaultKey: 1 | 2 | 3 | 4 | 5 | 6): CardDomRefs {
   return {
-    rowWrapEl: null, cardEl: null, skipBadgeEl: null, keyBadgeEl: null,
-    nameEl: null, selfTagEl: null, boostTextEl: null, demoCrossEl: null,
-    demoBombWrapEl: null, barTrackEl: null, barFillEl: null, currentSlotKey: defaultKey,
+    rowWrapEl: null,
+    cardEl: null,
+    skipClipWrapEl: null,
+    skipBadgeEl: null,
+    keyBadgeEl: null,
+    nameEl: null,
+    selfTagEl: null,
+    boostTextEl: null,
+    demoCrossEl: null,
+    demoBombWrapEl: null,
+    barTrackEl: null,
+    barFillEl: null,
+    currentSlotKey: defaultKey,
   };
 }
 
@@ -117,7 +131,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
         resolvedSkipCfg: EdgeSkipIndicatorConfig
       ) => {
         const {
-          rowWrapEl, cardEl, skipBadgeEl, keyBadgeEl, nameEl, selfTagEl,
+          rowWrapEl, cardEl, skipClipWrapEl, skipBadgeEl, keyBadgeEl, nameEl, selfTagEl,
           boostTextEl, demoCrossEl, demoBombWrapEl, barTrackEl, barFillEl,
         } = refs;
         if (!cardEl || !rowWrapEl) return;
@@ -135,21 +149,66 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
         const showSkipReady = Boolean(slot.replaySkipReady);
         const isReplayOrSpec = currentMode === 'goal-replay' || currentMode === 'spectator';
 
+        const underlapPx = Math.max(0, Math.round(resolvedSkipCfg.underlapPx ?? 12));
+        const protrudeWidthPx = Math.max(20, Math.round(resolvedSkipCfg.protrudeWidthPx ?? 38));
+        const cardRadiusPx = Math.max(0, Math.round(resolvedSkipCfg.cardRadiusPx ?? 9));
+        const iconOffsetXPx = Math.round(resolvedSkipCfg.iconOffsetXPx ?? 0);
+        const enterMs = Math.max(0, Math.round(resolvedSkipCfg.enterDurationMs ?? 220));
+        const exitMs = Math.max(0, Math.round(resolvedSkipCfg.exitDurationMs ?? 160));
+
+        if (skipClipWrapEl) {
+          if (side === 'left') {
+            skipClipWrapEl.style.marginLeft = `-${underlapPx}px`;
+            skipClipWrapEl.style.marginRight = '0px';
+            skipClipWrapEl.style.clipPath = 'inset(-4px -18px -4px 0px)';
+          } else {
+            skipClipWrapEl.style.marginRight = `-${underlapPx}px`;
+            skipClipWrapEl.style.marginLeft = '0px';
+            skipClipWrapEl.style.clipPath = 'inset(-4px 0px -4px -18px)';
+          }
+        }
+
         if (skipBadgeEl) {
-          skipBadgeEl.style.display = showSkipReady ? 'flex' : 'none';
+          const totalWidthPx = underlapPx + protrudeWidthPx;
+          skipBadgeEl.style.display = 'flex';
+          skipBadgeEl.style.width = `${totalWidthPx}px`;
+          skipBadgeEl.style.height = '37px';
+          skipBadgeEl.style.paddingLeft = side === 'left' ? `${underlapPx}px` : '0px';
+          skipBadgeEl.style.paddingRight = side === 'right' ? `${underlapPx}px` : '0px';
+          skipBadgeEl.style.borderRadius =
+            side === 'left'
+              ? `0px ${cardRadiusPx}px ${cardRadiusPx}px 0px`
+              : `${cardRadiusPx}px 0px 0px ${cardRadiusPx}px`;
           skipBadgeEl.style.backgroundColor = isLight
-            ? 'rgba(255, 255, 255, 0.96)'
-            : 'rgba(20, 20, 25, 0.95)';
-          skipBadgeEl.style.boxShadow = isLight
-            ? '0 0 0 1.5px rgba(115, 115, 115, 0.32), inset 0 0 0 1px rgba(0, 0, 0, 0.14)'
-            : '0 0 0 1.5px rgba(113, 113, 122, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.14)';
+            ? 'rgba(255, 255, 255, 0.98)'
+            : 'rgba(20, 20, 25, 0.98)';
+          const innerLine = isLight ? 'rgba(0, 0, 0, 0.14)' : 'rgba(255, 255, 255, 0.14)';
+          const outerRing = isLight ? 'rgba(115, 115, 115, 0.32)' : 'rgba(113, 113, 122, 0.55)';
+          const outerSideInset =
+            side === 'left'
+              ? `inset -1px 0 0 0 ${innerLine}`
+              : `inset 1px 0 0 0 ${innerLine}`;
+          skipBadgeEl.style.boxShadow = `0 0 0 1.5px ${outerRing}, ${outerSideInset}, inset 0 1px 0 0 ${innerLine}, inset 0 -1px 0 0 ${innerLine}`;
+          skipBadgeEl.style.transitionDuration = `${showSkipReady ? enterMs : exitMs}ms`;
+          skipBadgeEl.style.transform = showSkipReady
+            ? 'translate3d(0%, 0, 0)'
+            : side === 'left'
+            ? 'translate3d(-112%, 0, 0)'
+            : 'translate3d(112%, 0, 0)';
+          skipBadgeEl.style.pointerEvents = showSkipReady ? 'auto' : 'none';
+
           const skipSvgEl = skipBadgeEl.querySelector('svg');
           if (skipSvgEl) {
-            const pxVal = resolvedSkipCfg.sizePx || 18;
+            const effectiveVariant =
+              slot.skipIndicatorVariant ?? resolvedSkipCfg.variant ?? 'check';
+            const effectiveColor =
+              slot.skipIndicatorColor ?? resolvedSkipCfg.color ?? '#10B981';
+            const effectiveGlowColor =
+              slot.skipIndicatorColor ?? resolvedSkipCfg.glowColor ?? effectiveColor;
+            const pxVal = resolvedSkipCfg.sizePx || 24;
             const sz = `${pxVal}px`;
-            const skipColor = resolvedSkipCfg.color || '#10B981';
             const skipGlow = buildSvgDropShadowFilter(
-              resolvedSkipCfg.glowColor || skipColor,
+              effectiveGlowColor,
               resolvedSkipCfg.glowBlurPx,
               resolvedSkipCfg.glowIntensityPct
             );
@@ -157,11 +216,16 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
             skipSvgEl.setAttribute('height', String(pxVal));
             skipSvgEl.style.width = sz;
             skipSvgEl.style.height = sz;
-            skipSvgEl.style.color = skipColor;
+            skipSvgEl.style.color = effectiveColor;
             skipSvgEl.style.filter = skipGlow !== 'none' ? skipGlow : 'none';
+            skipSvgEl.style.transform =
+              iconOffsetXPx !== 0 ? `translate3d(${iconOffsetXPx}px, 0, 0)` : 'none';
+            const pathD =
+              SKIP_ICON_VARIANT_PATHS[effectiveVariant] ?? SKIP_ICON_VARIANT_PATHS.check;
             const paths = skipSvgEl.querySelectorAll('path');
             paths.forEach((p) => {
-              p.setAttribute('stroke-width', String(resolvedSkipCfg.strokeWidth || 2.5));
+              p.setAttribute('d', pathD);
+              p.setAttribute('stroke-width', String(resolvedSkipCfg.strokeWidth || 2.0));
               p.setAttribute('stroke', 'currentColor');
             });
           }
@@ -200,8 +264,8 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           cardEl.style.boxShadow = `0 0 0 2px ${teamColor}66, inset 0 0 0 1px rgba(255,255,255,0.32)`;
         } else {
           cardEl.style.backgroundColor = isLight
-            ? 'rgba(255, 255, 255, 0.96)'
-            : 'rgba(20, 20, 25, 0.95)';
+            ? 'rgba(255, 255, 255, 0.98)'
+            : 'rgba(20, 20, 25, 0.98)';
           cardEl.style.color = isLight ? '#09090B' : '#F4F4F5';
           cardEl.style.boxShadow = isLight
             ? '0 0 0 2px rgba(115, 115, 115, 0.22), inset 0 0 0 1px rgba(0, 0, 0, 0.14)'
@@ -320,16 +384,14 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           effectiveMode === 'player-live' &&
           roster.opponentDemoCompact !== false;
 
-        const resolvedDemoCfg: EdgeDemoIndicatorConfig = {
-          ...DEFAULT_DEMO_INDICATOR_CONFIG,
-          ...(roster.demoIndicatorConfig ?? {}),
-          ...(demoIndicatorConfig ?? {}),
-        };
-        const resolvedSkipCfg: EdgeSkipIndicatorConfig = {
-          ...DEFAULT_SKIP_INDICATOR_CONFIG,
-          ...(roster.skipIndicatorConfig ?? {}),
-          ...(skipIndicatorConfig ?? {}),
-        };
+        const resolvedDemoCfg = resolveDemoIndicatorConfig(
+          demoIndicatorConfig,
+          resolveDemoIndicatorConfig(roster.demoIndicatorConfig)
+        );
+        const resolvedSkipCfg = resolveSkipIndicatorConfig(
+          skipIndicatorConfig,
+          resolveSkipIndicatorConfig(roster.skipIndicatorConfig)
+        );
 
         let existingRankCounter = 0;
         const existingRanks: number[] = [0, 1, 2, 3, 4];
@@ -388,14 +450,8 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
 
     useEffect(() => {
       if (subscribeRoster) return subscribeRoster(applyRoster);
-      const resolvedDemoCfg: EdgeDemoIndicatorConfig = {
-        ...DEFAULT_DEMO_INDICATOR_CONFIG,
-        ...(demoIndicatorConfig ?? {}),
-      };
-      const resolvedSkipCfg: EdgeSkipIndicatorConfig = {
-        ...DEFAULT_SKIP_INDICATOR_CONFIG,
-        ...(skipIndicatorConfig ?? {}),
-      };
+      const resolvedDemoCfg = resolveDemoIndicatorConfig(demoIndicatorConfig);
+      const resolvedSkipCfg = resolveSkipIndicatorConfig(skipIndicatorConfig);
       const effectiveMode: HudRosterViewMode = viewMode ?? 'player-live';
       let rankCounter = 0;
       for (let i = 0; i < MAX_TEAM_SLOTS; i++) {
@@ -410,14 +466,11 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
 
     const shapeClass =
       side === 'left' ? 'rounded-r-[9px] rounded-l-none' : 'rounded-l-[9px] rounded-r-none';
-    const initialDemoCfg: EdgeDemoIndicatorConfig = {
-      ...DEFAULT_DEMO_INDICATOR_CONFIG,
-      ...(demoIndicatorConfig ?? {}),
-    };
-    const initialSkipCfg: EdgeSkipIndicatorConfig = {
-      ...DEFAULT_SKIP_INDICATOR_CONFIG,
-      ...(skipIndicatorConfig ?? {}),
-    };
+    const initialDemoCfg = resolveDemoIndicatorConfig(demoIndicatorConfig);
+    const initialSkipCfg = resolveSkipIndicatorConfig(skipIndicatorConfig);
+    const initUnderlapPx = Math.max(0, Math.round(initialSkipCfg.underlapPx ?? 12));
+    const initProtrudePx = Math.max(20, Math.round(initialSkipCfg.protrudeWidthPx ?? 38));
+    const initRadiusPx = Math.max(0, Math.round(initialSkipCfg.cardRadiusPx ?? 9));
 
     return (
       <div
@@ -433,12 +486,19 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
           const fallbackKey = Math.min(6, Math.max(1, side === 'left' ? idx + 1 : idx + 4)) as
             | 1 | 2 | 3 | 4 | 5 | 6;
           const slotKey = initialSlot?.slotKey ?? fallbackKey;
+          const initShowSkip = Boolean(initialSlot?.replaySkipReady);
+          const innerLine = isLight ? 'rgba(0, 0, 0, 0.14)' : 'rgba(255, 255, 255, 0.14)';
+          const outerRing = isLight ? 'rgba(115, 115, 115, 0.32)' : 'rgba(113, 113, 122, 0.55)';
+          const outerSideInset =
+            side === 'left'
+              ? `inset -1px 0 0 0 ${innerLine}`
+              : `inset 1px 0 0 0 ${innerLine}`;
 
           return (
             <div
               key={idx}
               ref={(el) => { cardRefs.current[idx].rowWrapEl = el; }}
-              className={`flex items-center gap-1.5 will-change-transform transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              className={`flex items-center gap-0 will-change-transform transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                 isRight ? 'flex-row-reverse' : 'flex-row'
               }`}
               style={{ display: initialSlot && initialSlot.exists !== false ? 'flex' : 'none' }}
@@ -447,7 +507,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                 ref={(el) => { cardRefs.current[idx].cardEl = el; }}
                 onClick={() => onSelectSlot?.(cardRefs.current[idx].currentSlotKey)}
                 title={`Press [${slotKey}] to observe ${initialSlot?.name ?? `Player ${slotKey}`}`}
-                className={`group relative flex flex-col overflow-hidden cursor-pointer ${shapeClass}`}
+                className={`group relative z-20 shrink-0 flex flex-col overflow-hidden cursor-pointer ${shapeClass}`}
                 style={{ width: '196px' }}
               >
                 <div className={`flex items-center h-[32px] w-full ${isRight ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -561,28 +621,57 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
               </div>
 
               <div
-                ref={(el) => { cardRefs.current[idx].skipBadgeEl = el; }}
-                data-ui-element={`hud-edge-player-skip-ready-${slotKey}`}
-                title={`Player #${slotKey} Ready / Skip Goal Replay`}
-                className={`w-[37px] h-[37px] shrink-0 items-center justify-center transition-all duration-200 ${shapeClass}`}
+                ref={(el) => { cardRefs.current[idx].skipClipWrapEl = el; }}
+                className="relative z-10 shrink-0 flex items-center"
                 style={{
-                  display: initialSlot?.replaySkipReady ? 'flex' : 'none',
-                  backgroundColor: isLight
-                    ? 'rgba(255, 255, 255, 0.96)'
-                    : 'rgba(20, 20, 25, 0.95)',
-                  boxShadow: isLight
-                    ? '0 0 0 1.5px rgba(115, 115, 115, 0.32), inset 0 0 0 1px rgba(0, 0, 0, 0.14)'
-                    : '0 0 0 1.5px rgba(113, 113, 122, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.14)',
+                  marginLeft: side === 'left' ? `-${initUnderlapPx}px` : '0px',
+                  marginRight: side === 'right' ? `-${initUnderlapPx}px` : '0px',
+                  clipPath:
+                    side === 'left'
+                      ? 'inset(-4px -18px -4px 0px)'
+                      : 'inset(-4px 0px -4px -18px)',
                 }}
               >
-                <ReplaySkipCheckSvg
-                  size={initialSkipCfg.sizePx}
-                  color={initialSkipCfg.color}
-                  strokeWidth={initialSkipCfg.strokeWidth}
-                  glowColor={initialSkipCfg.glowColor}
-                  glowBlurPx={initialSkipCfg.glowBlurPx}
-                  glowIntensityPct={initialSkipCfg.glowIntensityPct}
-                />
+                <div
+                  ref={(el) => { cardRefs.current[idx].skipBadgeEl = el; }}
+                  data-ui-element={`hud-edge-player-skip-ready-${slotKey}`}
+                  title={`Player #${slotKey} Ready / Skip Goal Replay`}
+                  className="h-[37px] shrink-0 flex items-center justify-center will-change-transform transition-transform ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  style={{
+                    width: `${initUnderlapPx + initProtrudePx}px`,
+                    paddingLeft: side === 'left' ? `${initUnderlapPx}px` : '0px',
+                    paddingRight: side === 'right' ? `${initUnderlapPx}px` : '0px',
+                    borderRadius:
+                      side === 'left'
+                        ? `0px ${initRadiusPx}px ${initRadiusPx}px 0px`
+                        : `${initRadiusPx}px 0px 0px ${initRadiusPx}px`,
+                    backgroundColor: isLight
+                      ? 'rgba(255, 255, 255, 0.98)'
+                      : 'rgba(20, 20, 25, 0.98)',
+                    boxShadow: `0 0 0 1.5px ${outerRing}, ${outerSideInset}, inset 0 1px 0 0 ${innerLine}, inset 0 -1px 0 0 ${innerLine}`,
+                    transitionDuration: `${
+                      initShowSkip
+                        ? initialSkipCfg.enterDurationMs
+                        : initialSkipCfg.exitDurationMs
+                    }ms`,
+                    transform: initShowSkip
+                      ? 'translate3d(0%, 0, 0)'
+                      : side === 'left'
+                      ? 'translate3d(-112%, 0, 0)'
+                      : 'translate3d(112%, 0, 0)',
+                    pointerEvents: initShowSkip ? 'auto' : 'none',
+                  }}
+                >
+                  <ReplaySkipCheckSvg
+                    variant={initialSlot?.skipIndicatorVariant ?? initialSkipCfg.variant}
+                    size={initialSkipCfg.sizePx}
+                    color={initialSlot?.skipIndicatorColor ?? initialSkipCfg.color}
+                    strokeWidth={initialSkipCfg.strokeWidth}
+                    glowColor={initialSlot?.skipIndicatorColor ?? initialSkipCfg.glowColor}
+                    glowBlurPx={initialSkipCfg.glowBlurPx}
+                    glowIntensityPct={initialSkipCfg.glowIntensityPct}
+                  />
+                </div>
               </div>
             </div>
           );

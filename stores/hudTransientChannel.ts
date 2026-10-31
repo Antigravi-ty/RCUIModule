@@ -19,9 +19,29 @@ export const DEFAULT_DEMO_INDICATOR_CONFIG: EdgeDemoIndicatorConfig = {
 };
 
 export const DEFAULT_SKIP_INDICATOR_CONFIG: EdgeSkipIndicatorConfig = {
-  color: '#10B981', strokeWidth: 2.5, sizePx: 18,
-  glowColor: '#10B981', glowBlurPx: 6, glowIntensityPct: 110,
+  variant: 'check',
+  color: '#10B981',
+  strokeWidth: 2.0,
+  sizePx: 24,
+  glowColor: '#10B981',
+  glowBlurPx: 6,
+  glowIntensityPct: 110,
+  protrudeWidthPx: 38,
+  underlapPx: 12,
+  cardRadiusPx: 9,
+  iconOffsetXPx: 0,
+  enterDurationMs: 220,
+  exitDurationMs: 160,
+  autoResetOnKickoff: true,
 };
+
+const VALID_SKIP_VARIANTS = new Set([
+  'check',
+  'disconnect',
+  'packet-loss',
+  'latency',
+  'waiting',
+]);
 
 export function resolveDemoIndicatorConfig(
   raw?: Partial<EdgeDemoIndicatorConfig> | unknown,
@@ -52,6 +72,10 @@ export function resolveSkipIndicatorConfig(
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ...base };
   const r = raw as Partial<EdgeSkipIndicatorConfig>;
   return {
+    variant:
+      typeof r.variant === 'string' && VALID_SKIP_VARIANTS.has(r.variant)
+        ? r.variant
+        : base.variant,
     color: typeof r.color === 'string' && r.color.trim().length > 0 ? r.color : base.color,
     strokeWidth: typeof r.strokeWidth === 'number' && Number.isFinite(r.strokeWidth) ? r.strokeWidth : base.strokeWidth,
     sizePx: typeof r.sizePx === 'number' && Number.isFinite(r.sizePx) ? r.sizePx : base.sizePx,
@@ -61,6 +85,32 @@ export function resolveSkipIndicatorConfig(
         : typeof r.color === 'string' && r.color.trim().length > 0 ? r.color : base.glowColor,
     glowBlurPx: typeof r.glowBlurPx === 'number' && Number.isFinite(r.glowBlurPx) ? r.glowBlurPx : base.glowBlurPx,
     glowIntensityPct: typeof r.glowIntensityPct === 'number' && Number.isFinite(r.glowIntensityPct) ? r.glowIntensityPct : base.glowIntensityPct,
+    protrudeWidthPx:
+      typeof r.protrudeWidthPx === 'number' && Number.isFinite(r.protrudeWidthPx)
+        ? r.protrudeWidthPx
+        : base.protrudeWidthPx,
+    underlapPx:
+      typeof r.underlapPx === 'number' && Number.isFinite(r.underlapPx)
+        ? r.underlapPx
+        : base.underlapPx,
+    cardRadiusPx:
+      typeof r.cardRadiusPx === 'number' && Number.isFinite(r.cardRadiusPx)
+        ? r.cardRadiusPx
+        : base.cardRadiusPx,
+    iconOffsetXPx:
+      typeof r.iconOffsetXPx === 'number' && Number.isFinite(r.iconOffsetXPx)
+        ? r.iconOffsetXPx
+        : base.iconOffsetXPx,
+    enterDurationMs:
+      typeof r.enterDurationMs === 'number' && Number.isFinite(r.enterDurationMs)
+        ? r.enterDurationMs
+        : base.enterDurationMs,
+    exitDurationMs:
+      typeof r.exitDurationMs === 'number' && Number.isFinite(r.exitDurationMs)
+        ? r.exitDurationMs
+        : base.exitDurationMs,
+    autoResetOnKickoff:
+      typeof r.autoResetOnKickoff === 'boolean' ? r.autoResetOnKickoff : base.autoResetOnKickoff,
   };
 }
 

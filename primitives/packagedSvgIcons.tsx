@@ -484,11 +484,33 @@ export const JetThrustSvg: React.FC<PackagedSvgStyleProps> = React.memo(
 );
 JetThrustSvg.displayName = 'JetThrustSvg';
 
-export const ReplaySkipCheckSvg: React.FC<PackagedSvgStyleProps> = React.memo(
+export type SkipIndicatorSvgVariant =
+  | 'check'
+  | 'disconnect'
+  | 'packet-loss'
+  | 'latency'
+  | 'waiting';
+
+export const SKIP_ICON_VARIANT_PATHS: Record<SkipIndicatorSvgVariant, string> = {
+  check: 'M5 12.5L10 17.5L19 6.5',
+  disconnect:
+    'M2 2L22 22 M16.72 11.06A10.94 10.94 0 0 1 19 12.55 M5 12.55A10.94 10.94 0 0 1 10.17 10.16 M10.71 5.05A16 16 0 0 1 22.58 9 M1.42 9A15.91 15.91 0 0 1 6.12 6.12 M8.53 16.11A6 6 0 0 1 15.48 16.11 M12 20H12.01',
+  'packet-loss':
+    'M3 5H11V13H3Z M13 11H21V19H13Z M15.5 4.5L19.5 8.5 M19.5 4.5L15.5 8.5 M5.5 15.5L8.5 18.5 M8.5 15.5L5.5 18.5',
+  latency: 'M4 19V15 M9 19V11 M14 19V7 M19 6V13 M19 17.5H19.01',
+  waiting: 'M12 21A9 9 0 1 1 21 12 M12 7V12L15.5 14 M17.5 16.5L21 16.5L21 20',
+};
+
+export interface ReplaySkipCheckSvgProps extends PackagedSvgStyleProps {
+  variant?: SkipIndicatorSvgVariant;
+}
+
+export const ReplaySkipCheckSvg: React.FC<ReplaySkipCheckSvgProps> = React.memo(
   ({
-    size = 18,
+    variant = 'check',
+    size = 24,
     color = '#10B981',
-    strokeWidth = 2.5,
+    strokeWidth = 2.0,
     glowColor = '#10B981',
     glowBlurPx = 6,
     glowIntensityPct = 110,
@@ -496,6 +518,7 @@ export const ReplaySkipCheckSvg: React.FC<PackagedSvgStyleProps> = React.memo(
     style,
   }) => {
     const filterStr = buildSvgDropShadowFilter(glowColor ?? color, glowBlurPx, glowIntensityPct);
+    const pathD = SKIP_ICON_VARIANT_PATHS[variant] ?? SKIP_ICON_VARIANT_PATHS.check;
     return (
       <svg
         width={size}
@@ -511,7 +534,7 @@ export const ReplaySkipCheckSvg: React.FC<PackagedSvgStyleProps> = React.memo(
         }}
       >
         <path
-          d="M5 12.5L10 17.5L19 6.5"
+          d={pathD}
           stroke="currentColor"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
