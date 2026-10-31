@@ -37,6 +37,8 @@ export interface SettingSliderRowProps {
   showDescription?: boolean;
   paddingX?: number;
   paddingY?: number;
+  /** Optional inline action slot rendered before the slider track (e.g. Preview button) */
+  actionSlot?: React.ReactNode;
   onChange: (val: number) => void;
   hoverDescription?: string;
   onHover?: (desc?: string) => void;
@@ -81,6 +83,7 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
   showDescription: propShowDescription,
   paddingX: propPaddingX,
   paddingY: propPaddingY,
+  actionSlot,
   onChange,
   hoverDescription,
   onHover,
@@ -304,7 +307,16 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
         onLeave={handleLeave}
         isLight={isLight}
         className={className}
-        rightSlot={renderValueReadout()}
+        rightSlot={
+          actionSlot ? (
+            <div className="flex items-center gap-2">
+              {actionSlot}
+              {renderValueReadout()}
+            </div>
+          ) : (
+            renderValueReadout()
+          )
+        }
         bottomSlot={renderTrackControl({ width: '100%' })}
       />
     );
@@ -312,7 +324,7 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
 
   const isFlexTrack = typeof resolvedTrackWidth === 'string';
 
-  // Default: 'inline' single-row [Icon + Title] ... [Slider Track + Value Readout/Input]
+  // Default: 'inline' single-row [Icon + Title] ... [ActionSlot + Slider Track + Value Readout/Input]
   return (
     <SettingActionRow
       icon={icon}
@@ -333,6 +345,7 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
       className={className}
       rightSlot={
         <div className="flex items-center gap-2.5">
+          {actionSlot}
           {renderTrackControl(
             isFlexTrack
               ? { width: resolvedTrackWidth, minWidth: '108px' }
