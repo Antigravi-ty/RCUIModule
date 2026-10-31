@@ -4,7 +4,6 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useCallback,
-  useId,
 } from 'react';
 import {
   CenterUpperGlowConfig,
@@ -14,6 +13,7 @@ import {
   buildOuterGlowTextShadow,
   hexToRgba,
 } from './CenterUpperInfoHUD';
+export * from './TakeoverVignetteOverlay';
 
 export type TakeoverCountdownStep = '3' | '2' | '1' | 'complete';
 
@@ -21,79 +21,47 @@ export type TakeoverSignal = 'replacing-in' | 'takeover-complete';
 
 export type TakeoverTeamSide = 'blue' | 'orange';
 
-export interface TakeoverVignetteCurve {
-  p1x: number;
-  p1y: number;
-  p2x: number;
-  p2y: number;
-}
-
-export interface TakeoverVignetteConfig {
-  /** Whether the surrounding 4-edge rounded-rectangle vignette layer is enabled beneath the HUD */
-  enabled: boolean;
-  /** Inner opening (t=0 at distancePct) RGB tint color (default `#000000`) */
-  innerColor?: string;
-  /** Inner opening (t=0 at distancePct) alpha / opacity percentage (`0` – `100`, default `0`) */
-  innerIntensityPct?: number;
-  /** Outer edge (t=1 at outerReachPct) RGB tint color (default `#000000`) */
-  color: string;
-  /** Outer edge (t=1 at outerReachPct) peak intensity / opacity percentage (`0` – `100`, default `50`) */
-  intensityPct: number;
-  /** Clear center rounded-rectangle distance percentage from screen center (`0` – `95`, default `60`) */
-  distancePct: number;
-  /** Outer full-density reach percentage (`20` – `140`, default `140`) */
-  outerReachPct: number;
-  /** Non-linear Cubic-Bezier falloff curve from inner boundary (`0`) to outer edge (`1`) */
-  curve: TakeoverVignetteCurve;
-  /** Fade-in transition duration when entering `replacing-in` in ms (default `280`) */
-  fadeInMs: number;
-  /** Fade-out transition duration when `3-2-1` completes and HUD returns in ms (default `380`) */
-  fadeOutMs: number;
-  /** Corner radius of the clear inner rounded-rectangle opening in px (default `12`) */
-  cornerRadiusPx?: number;
-}
-
 export interface TakeoverLayoutConfig {
-  /** Upward vertical offset in px relative to `bottom-center` (default `0`) */
+  /** Upward vertical offset in px relative to bottom-center (default 0) */
   bottomOffsetPx: number;
 }
 
 export interface TakeoverTopLabelStyleConfig {
-  /** Whether top label (`Takeover in...`) uses team-specific fill color (Blue vs Orange) */
+  /** Whether top label (Takeover in...) uses team-specific fill color (Blue vs Orange) */
   useTeamColor?: boolean;
-  /** Blue team top label font fill color (default `#38BDF8`) */
+  /** Blue team top label font fill color (default '#38BDF8') */
   blueTeamColor?: string;
-  /** Orange team top label font fill color (default `#FB923C`) */
+  /** Orange team top label font fill color (default '#FB923C') */
   orangeTeamColor?: string;
-  /** Top label stroke color (default `#000000`) */
+  /** Top label stroke color (default '#000000') */
   strokeColor?: string;
-  /** Top label stroke width in px (default `0.5`) */
+  /** Top label stroke width in px (default 0.5) */
   strokeWidthPx?: number;
-  /** Top label outer glow color (default `#000000`) */
+  /** Top label outer glow color (default '#000000') */
   glowColor?: string;
-  /** Top label tight core glow blur in px (default `6`) */
+  /** Top label tight core glow blur in px (default 6) */
   innerBlurPx?: number;
-  /** Top label outer glow blur in px (default `0`) */
+  /** Top label outer glow blur in px (default 0) */
   outerBlurPx?: number;
-  /** Top label ambient glow blur in px (default `28`) */
+  /** Top label ambient glow blur in px (default 28) */
   ambientBlurPx?: number;
-  /** Top label glow intensity percentage (`0` – `200`, default `100`) */
+  /** Top label glow intensity percentage (0 - 200, default 100) */
   glowIntensityPct?: number;
 }
 
 export interface TakeoverGlowConfig extends CenterUpperGlowConfig {
-  /** Team-colored + stroke/glow overrides for the stationary top label (`Takeover in...`) */
+  /** Team-colored + stroke/glow overrides for the stationary top label (Takeover in...) */
   topLabelStyle?: TakeoverTopLabelStyleConfig;
 }
 
 export interface TakeoverHudPayload {
-  /** Top static label rendered in `JetBrains Mono Regular` (`400`) — e.g. `'Takeover in...'` */
+  /** Top static label rendered in JetBrains Mono Regular (400) - e.g. 'Takeover in...' */
   topText: string;
-  /** Bottom countdown text rendered in `JetBrains Mono Thin` (`100`) — e.g. `'3'`, `'2'`, `'1'` */
+  /** Bottom countdown text rendered in JetBrains Mono Thin (100) - e.g. '3', '2', '1' */
   mainText: string;
   /** Optional secondary sub-caption below countdown */
   subText?: string;
-  /** Active player team side (`'blue'` | `'orange'`) for team-colored top label */
+  /** Active player team side ('blue' | 'orange') for team-colored top label */
   teamSide?: TakeoverTeamSide;
   /** Active glow configuration override */
   glow?: Partial<TakeoverGlowConfig>;
@@ -111,15 +79,15 @@ export interface TakeoverCountdownHandle {
 }
 
 export interface TakeoverCountdownHUDProps {
-  /** Active takeover payload (`null` = hidden) */
+  /** Active takeover payload (null = hidden) */
   payload?: TakeoverHudPayload | null;
-  /** Active team side (`'blue'` | `'orange'`, default `'blue'`) */
+  /** Active team side ('blue' | 'orange', default 'blue') */
   teamSide?: TakeoverTeamSide;
-  /** Glow configuration (shared with 5E `CenterUpperGlowConfig` + `topLabelStyle`) */
+  /** Glow configuration (shared with 5E CenterUpperGlowConfig + topLabelStyle) */
   glowConfig?: TakeoverGlowConfig;
-  /** Typography configuration (`uppercase: false` by default for Takeover) */
+  /** Typography configuration (uppercase: false by default for Takeover) */
   typographyConfig?: CenterUpperTypographyConfig;
-  /** Timing configuration (scale pop applies strictly to `mainText`, leaving `topText` stationary) */
+  /** Timing configuration (scale pop applies strictly to mainText, leaving topText stationary) */
   timingConfig?: CenterUpperTimingConfig;
   /** Callback fired when an individual step's hold + exit window completes */
   onStepExpire?: () => void;
@@ -181,299 +149,9 @@ export const DEFAULT_TAKEOVER_LAYOUT: TakeoverLayoutConfig = {
   bottomOffsetPx: 0,
 };
 
-export const DEFAULT_TAKEOVER_VIGNETTE: TakeoverVignetteConfig = {
-  enabled: true,
-  innerColor: '#000000',
-  innerIntensityPct: 0,
-  color: '#000000',
-  intensityPct: 50,
-  distancePct: 60,
-  outerReachPct: 140,
-  curve: {
-    p1x: 0.28,
-    p1y: 0.01,
-    p2x: 0,
-    p2y: 1.01,
-  },
-  fadeInMs: 280,
-  fadeOutMs: 380,
-  cornerRadiusPx: 12,
-};
-
-function parseHexToRgbTuple(hex: string): [number, number, number] {
-  const clean = (hex || '#000000').replace('#', '').trim();
-  if (clean.length === 3) {
-    const r = parseInt(clean[0] + clean[0], 16);
-    const g = parseInt(clean[1] + clean[1], 16);
-    const b = parseInt(clean[2] + clean[2], 16);
-    return [
-      Number.isFinite(r) ? r : 0,
-      Number.isFinite(g) ? g : 0,
-      Number.isFinite(b) ? b : 0,
-    ];
-  }
-  const r = parseInt(clean.slice(0, 2), 16);
-  const g = parseInt(clean.slice(2, 4), 16);
-  const b = parseInt(clean.slice(4, 6), 16);
-  return [
-    Number.isFinite(r) ? r : 0,
-    Number.isFinite(g) ? g : 0,
-    Number.isFinite(b) ? b : 0,
-  ];
-}
-
-export function formatVignetteEndpointRgba(hex: string, alphaPct: number): string {
-  const [r, g, b] = parseHexToRgbTuple(hex);
-  const a = Math.max(0, Math.min(1, alphaPct / 100));
-  return `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
-}
-
-function sampleCubicBezier1D(u: number, p1: number, p2: number): number {
-  const inv = 1 - u;
-  return 3 * inv * inv * u * p1 + 3 * inv * u * u * p2 + u * u * u;
-}
-
-export function evaluateCubicBezierAtX(
-  targetX: number,
-  curve: TakeoverVignetteCurve
-): number {
-  const x = Math.max(0, Math.min(1, targetX));
-  if (x <= 0) return 0;
-  if (x >= 1) return 1;
-
-  const p1x = Math.max(0, Math.min(1, curve.p1x));
-  const p2x = Math.max(0, Math.min(1, curve.p2x));
-
-  let low = 0;
-  let high = 1;
-  let u = x;
-  for (let i = 0; i < 14; i++) {
-    u = 0.5 * (low + high);
-    const estX = sampleCubicBezier1D(u, p1x, p2x);
-    if (estX < x) {
-      low = u;
-    } else {
-      high = u;
-    }
-  }
-  const y = sampleCubicBezier1D(u, curve.p1y, curve.p2y);
-  return Math.max(0, Math.min(1, y));
-}
-
 /**
- * Builds a 4-edge rectangular gradient fallback CSS string between Inner RGBA (t=0) and Outer RGBA (t=1).
- */
-export function buildTakeoverVignetteGradient(config: TakeoverVignetteConfig): string {
-  const innerAlpha = Math.max(0, Math.min(1, (config.innerIntensityPct ?? 0) / 100));
-  const outerAlpha = Math.max(0, Math.min(1, config.intensityPct / 100));
-  if (!config.enabled || (innerAlpha <= 0 && outerAlpha <= 0)) {
-    return 'none';
-  }
-  const innerRgb = parseHexToRgbTuple(config.innerColor ?? config.color ?? '#000000');
-  const outerRgb = parseHexToRgbTuple(config.color ?? '#000000');
-  const innerStop = Math.max(0, Math.min(95, config.distancePct));
-  const outerStop = Math.max(innerStop + 4, Math.min(150, config.outerReachPct));
-  const span = outerStop - innerStop;
-
-  const sampleFractions = [0, 0.2, 0.4, 0.6, 0.8, 1];
-  const buildEdgeStops = () =>
-    sampleFractions
-      .map((frac) => {
-        const distFromCenterPct = innerStop + frac * span;
-        const posFromEdgePct = Math.max(0, 50 - distFromCenterPct * 0.5);
-        const curveFactor = evaluateCubicBezierAtX(frac, config.curve);
-        const r = Math.round(innerRgb[0] + (outerRgb[0] - innerRgb[0]) * curveFactor);
-        const g = Math.round(innerRgb[1] + (outerRgb[1] - innerRgb[1]) * curveFactor);
-        const b = Math.round(innerRgb[2] + (outerRgb[2] - innerRgb[2]) * curveFactor);
-        const alpha = innerAlpha + (outerAlpha - innerAlpha) * curveFactor;
-        return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)}) ${posFromEdgePct.toFixed(1)}%`;
-      })
-      .reverse()
-      .join(', ');
-
-  const edgeStops = buildEdgeStops();
-  const centerStopRgba = `rgba(${innerRgb[0]}, ${innerRgb[1]}, ${innerRgb[2]}, ${innerAlpha.toFixed(3)})`;
-  return [
-    `linear-gradient(to bottom, ${edgeStops}, ${centerStopRgba} 50%)`,
-    `linear-gradient(to top, ${edgeStops}, ${centerStopRgba} 50%)`,
-    `linear-gradient(to right, ${edgeStops}, ${centerStopRgba} 50%)`,
-    `linear-gradient(to left, ${edgeStops}, ${centerStopRgba} 50%)`,
-  ].join(', ');
-}
-
-export interface TakeoverVignetteOverlayProps {
-  config: TakeoverVignetteConfig;
-  /** Whether the vignette is currently active (e.g., during `replacing-in` 3-2-1 countdown) */
-  active: boolean;
-  className?: string;
-}
-
-const VIGNETTE_RING_SAMPLES = 28;
-
-/**
- * TakeoverVignetteOverlay
- * Renders a 4-edge rounded-rectangle atmospheric vignette mask beneath the HUD layer (`z-10`, below `HudAnchorStage z-20`).
- * Interpolates both RGB color and Alpha from Inner Endpoint (`innerColor`, `innerIntensityPct` at `distancePct`, `t=0`)
- * to Outer Endpoint (`color`, `intensityPct` at `outerReachPct`, `t=1`) along the Cubic-Bezier `curve`.
- */
-export const TakeoverVignetteOverlay: React.FC<TakeoverVignetteOverlayProps> = React.memo(
-  ({ config, active, className = '' }) => {
-    const rawId = useId();
-    const maskId = `takeover-rect-vignette-mask-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
-    const transitionMs = active ? config.fadeInMs : config.fadeOutMs;
-    const innerAlpha = Math.max(0, Math.min(1, (config.innerIntensityPct ?? 0) / 100));
-    const outerAlpha = Math.max(0, Math.min(1, config.intensityPct / 100));
-    const isShown = active && config.enabled && (outerAlpha > 0 || innerAlpha > 0);
-
-    const innerHex = config.innerColor ?? config.color ?? '#000000';
-    const outerHex = config.color ?? '#000000';
-    const innerRgb = parseHexToRgbTuple(innerHex);
-    const outerRgb = parseHexToRgbTuple(outerHex);
-
-    const innerPct = Math.max(0, Math.min(95, config.distancePct));
-    const outerPct = Math.max(innerPct + 4, Math.min(150, config.outerReachPct));
-    const baseRadiusPx = config.cornerRadiusPx ?? 12;
-
-    const maskRings: React.ReactNode[] = [];
-    const colorRings: React.ReactNode[] = [];
-
-    for (let i = 0; i < VIGNETTE_RING_SAMPLES; i++) {
-      const tOuter = 1 - i / VIGNETTE_RING_SAMPLES;
-      const tInner = 1 - (i + 1) / VIGNETTE_RING_SAMPLES;
-      const tMid = 0.5 * (tOuter + tInner);
-
-      // Map normalized distance `s = innerPct + t * (outerPct - innerPct)` where s=0 is center and s=100 is screen edge
-      const sOuter = innerPct + tOuter * (outerPct - innerPct);
-      const halfSpanPct = Math.max(0, Math.min(50, sOuter * 0.5));
-      const xPct = 50 - halfSpanPct;
-      const yPct = 50 - halfSpanPct;
-      const wPct = halfSpanPct * 2;
-      const hPct = halfSpanPct * 2;
-
-      // curveVal = 0 at inner boundary (t=0) and curveVal = 1 at outer boundary (t=1)
-      const curveVal = evaluateCubicBezierAtX(tMid, config.curve);
-      const ringAlpha = Math.max(0, Math.min(1, innerAlpha + (outerAlpha - innerAlpha) * curveVal));
-      const gray = Math.round(ringAlpha * 255);
-
-      const r = Math.round(innerRgb[0] + (outerRgb[0] - innerRgb[0]) * curveVal);
-      const g = Math.round(innerRgb[1] + (outerRgb[1] - innerRgb[1]) * curveVal);
-      const b = Math.round(innerRgb[2] + (outerRgb[2] - innerRgb[2]) * curveVal);
-
-      const scaleFactor = Math.max(0.15, wPct / 100);
-      const rx = Math.round(baseRadiusPx * scaleFactor);
-
-      maskRings.push(
-        <rect
-          key={i}
-          x={`${xPct.toFixed(2)}%`}
-          y={`${yPct.toFixed(2)}%`}
-          width={`${wPct.toFixed(2)}%`}
-          height={`${hPct.toFixed(2)}%`}
-          rx={rx}
-          ry={rx}
-          fill={`rgb(${gray}, ${gray}, ${gray})`}
-        />
-      );
-
-      colorRings.push(
-        <rect
-          key={i}
-          x={`${xPct.toFixed(2)}%`}
-          y={`${yPct.toFixed(2)}%`}
-          width={`${wPct.toFixed(2)}%`}
-          height={`${hPct.toFixed(2)}%`}
-          rx={rx}
-          ry={rx}
-          fill={`rgb(${r}, ${g}, ${b})`}
-        />
-      );
-    }
-
-    const outerGray = Math.round(outerAlpha * 255);
-    const innerGray = Math.round(innerAlpha * 255);
-
-    const clearHalfSpanPct = Math.max(0, Math.min(50, innerPct * 0.5));
-    const clearXYPct = 50 - clearHalfSpanPct;
-    const clearWHPct = clearHalfSpanPct * 2;
-    const clearRx = Math.round(baseRadiusPx * Math.max(0.15, clearWHPct / 100));
-
-    return (
-      <div
-        data-ui-element="hud-takeover-vignette"
-        data-vignette-shape="rounded-rect"
-        data-active={isShown ? 'true' : 'false'}
-        aria-hidden="true"
-        className={`absolute inset-0 pointer-events-none select-none z-10 transition-opacity ${className}`}
-        style={{
-          opacity: isShown ? 1 : 0,
-          transitionDuration: `${Math.max(0, transitionMs)}ms`,
-          transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-        }}
-      >
-        <svg
-          className="w-full h-full block"
-          width="100%"
-          height="100%"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <mask id={maskId} maskUnits="userSpaceOnUse" x="0%" y="0%" width="100%" height="100%">
-              {/* Outer boundary at Outer Endpoint alpha (t=1) */}
-              <rect
-                x="0%"
-                y="0%"
-                width="100%"
-                height="100%"
-                fill={`rgb(${outerGray}, ${outerGray}, ${outerGray})`}
-              />
-              {/* Concentric rounded-rectangle falloff bands from outerReachPct (t=1) inward to distancePct (t=0) */}
-              {maskRings}
-              {/* Innermost opening at Inner Endpoint alpha (t=0) */}
-              {clearWHPct > 0 && (
-                <rect
-                  x={`${clearXYPct.toFixed(2)}%`}
-                  y={`${clearXYPct.toFixed(2)}%`}
-                  width={`${clearWHPct.toFixed(2)}%`}
-                  height={`${clearWHPct.toFixed(2)}%`}
-                  rx={clearRx}
-                  ry={clearRx}
-                  fill={`rgb(${innerGray}, ${innerGray}, ${innerGray})`}
-                />
-              )}
-            </mask>
-          </defs>
-          <g mask={`url(#${maskId})`}>
-            <rect
-              x="0%"
-              y="0%"
-              width="100%"
-              height="100%"
-              fill={`rgb(${outerRgb[0]}, ${outerRgb[1]}, ${outerRgb[2]})`}
-            />
-            {colorRings}
-            {clearWHPct > 0 && (
-              <rect
-                x={`${clearXYPct.toFixed(2)}%`}
-                y={`${clearXYPct.toFixed(2)}%`}
-                width={`${clearWHPct.toFixed(2)}%`}
-                height={`${clearWHPct.toFixed(2)}%`}
-                rx={clearRx}
-                ry={clearRx}
-                fill={`rgb(${innerRgb[0]}, ${innerRgb[1]}, ${innerRgb[2]})`}
-              />
-            )}
-          </g>
-        </svg>
-      </div>
-    );
-  }
-);
-
-TakeoverVignetteOverlay.displayName = 'TakeoverVignetteOverlay';
-
-/**
- * Resolves the top label (`Takeover in...`) fill color, stroke, and outer glow shadow
- * based on the player's team side (`'blue'` | `'orange'`) and `TakeoverGlowConfig`.
+ * Resolves the top label (Takeover in...) fill color, stroke, and outer glow shadow
+ * based on the player's team side ('blue' | 'orange') and TakeoverGlowConfig.
  */
 export function resolveTakeoverTopLabelVisuals(
   glow: TakeoverGlowConfig,
@@ -514,9 +192,9 @@ export function resolveTakeoverTopLabelVisuals(
     strokeWidthPx > 0
       ? `0 0 2px ${hexToRgba(strokeColor, 0.95)}, 0 0 5px ${hexToRgba(strokeColor, 0.75)}`
       : '';
-  const textShadowCss = [crispHalo, glowShadow !== 'none' ? glowShadow : '']
-    .filter(Boolean)
-    .join(', ') || 'none';
+  const textShadowCss =
+    [crispHalo, glowShadow !== 'none' ? glowShadow : ''].filter(Boolean).join(', ') ||
+    'none';
 
   return {
     fillColor,
@@ -530,10 +208,10 @@ export function resolveTakeoverTopLabelVisuals(
 /**
  * TakeoverCountdownHUD
  * Bottom-center anchored takeover countdown banner:
- * - Top line (`topText`, default `'Takeover in...'`): `JetBrains Mono Regular (400)`, strictly stationary (never scales or jumps),
- *   rendered in the player's team color (Blue `#2563EB` or Orange `#EA580C`) with a white glowing stroke (`#FFFFFF`).
- * - Bottom line (`mainText`, `'3' -> '2' -> '1'`): `JetBrains Mono Thin (100)`, receives the scale pop animation independently.
- * - Default `uppercase: false` so mixed-case `'Takeover in...'` renders naturally without forced uppercase.
+ * - Top line (topText, default 'Takeover in...'): JetBrains Mono Regular (400), strictly stationary (never scales or jumps),
+ *   rendered in the player's team color (Blue vs Orange) with stroke and outer glow.
+ * - Bottom line (mainText, '3' -> '2' -> '1'): JetBrains Mono Thin (100), receives the scale pop animation independently.
+ * - Default uppercase: false so mixed-case 'Takeover in...' renders naturally without forced uppercase.
  */
 export const TakeoverCountdownHUD = React.memo(
   forwardRef<TakeoverCountdownHandle, TakeoverCountdownHUDProps>(
@@ -642,8 +320,7 @@ export const TakeoverCountdownHUD = React.memo(
           const resolvedStrokeCol =
             resolvedGlow.strokeColor || resolvedGlow.glowColor || resolvedGlow.textColor;
 
-          // 2. Top Line (`JetBrains Mono Regular` 400 — e.g. `Takeover in...`)
-          // Team-colored fill (Blue vs Orange) + White glowing stroke (`#FFFFFF`), strictly stationary!
+          // 2. Top Line (JetBrains Mono Regular 400 - e.g. Takeover in...)
           const hasTopText = Boolean(nextPayload.topText && nextPayload.topText.trim().length > 0);
           if (hasTopText) {
             const topVisuals = resolveTakeoverTopLabelVisuals(resolvedGlow, resolvedTeamSide);
@@ -668,7 +345,7 @@ export const TakeoverCountdownHUD = React.memo(
             topEl.textContent = '';
           }
 
-          // 3. Bottom Countdown Line (`JetBrains Mono Thin` 100 — `3`, `2`, `1`)
+          // 3. Bottom Countdown Line (JetBrains Mono Thin 100 - 3, 2, 1)
           mainEl.textContent = resolvedTypo.uppercase
             ? nextPayload.mainText.toUpperCase()
             : nextPayload.mainText;
@@ -705,7 +382,7 @@ export const TakeoverCountdownHUD = React.memo(
             subEl.textContent = '';
           }
 
-          // 5. Kinetic Scale Pop strictly on `mainWrapEl` (`3 -> 2 -> 1`), while `topEl` stays rock-solid
+          // 5. Kinetic Scale Pop strictly on mainWrapEl (3 -> 2 -> 1), while topEl stays rock-solid
           const entryMs = Math.max(0, resolvedTiming.entryDurationMs);
           const holdMs = Math.max(entryMs, resolvedTiming.durationMs);
           const exitMs = Math.max(0, resolvedTiming.exitDurationMs);
@@ -852,7 +529,7 @@ export const TakeoverCountdownHUD = React.memo(
               className="absolute -inset-x-12 -inset-y-6 rounded-full pointer-events-none -z-10 transition-opacity duration-150"
             />
 
-            {/* Top Line: JetBrains Mono Regular (400) — Static 'Takeover in...' (Team-colored + White Glowing Stroke) */}
+            {/* Top Line: JetBrains Mono Regular (400) - Static 'Takeover in...' */}
             <div
               ref={topTextRef}
               data-role="takeover-top-regular-static"
@@ -910,4 +587,3 @@ export const TakeoverCountdownHUD = React.memo(
 );
 
 TakeoverCountdownHUD.displayName = 'TakeoverCountdownHUD';
-
