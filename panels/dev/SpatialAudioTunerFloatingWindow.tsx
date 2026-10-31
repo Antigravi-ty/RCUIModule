@@ -10,7 +10,9 @@ import {
   Sliders,
 } from 'lucide-react';
 import { SliderControl } from '../../primitives/SliderControl';
+import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { useSpatialAudioStore } from '../../stores/spatialAudioStore';
+import { useSubsystemIsolationLabStore } from '../../stores/subsystemIsolationLabStore';
 import {
   solveCubicBezier,
   type SpatialAudioTunerConfig,
@@ -484,6 +486,36 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
             step={0.05}
             isLight={isLight}
             onChange={(v) => updateTunerConfig({ wetBoost: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-1.5 border-t border-neutral-700/30">
+          <div className="flex flex-col min-w-0">
+            <span className="font-semibold text-[11px] truncate">
+              Mute Signal Audio in Goal Replay
+            </span>
+            <span
+              className={`text-[10px] truncate ${
+                isLight ? 'text-neutral-500' : 'text-neutral-400'
+              }`}
+            >
+              Suppress kickoff 3-2-1 &amp; 10s/30s/60s timer signal cues during Goal Replay
+            </span>
+          </div>
+          <ToggleSwitch
+            checked={Boolean(tunerConfig.muteSignalAudioInGoalReplay ?? true)}
+            onCheckedChange={(v) => {
+              updateTunerConfig({ muteSignalAudioInGoalReplay: v });
+              try {
+                useSubsystemIsolationLabStore.getState().updateLiveTelemetry({
+                  goalReplayMuteSignalAudio: v,
+                });
+              } catch {
+                // Ignore if unavailable
+              }
+            }}
+            isLight={isLight}
+            variant="amber"
           />
         </div>
       </div>

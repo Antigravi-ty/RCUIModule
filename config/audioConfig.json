@@ -24,6 +24,7 @@
   "flipResetVolume": 1.0,
   "boostCollectVolume": 2.0,
   "signalVolume": 1.0,
+  "muteSignalAudioInGoalReplay": true,
   "endgameVolume": 2.0,
   "countdown10sVolume": 1.0,
   "spatialPanningModel": "equalpower",

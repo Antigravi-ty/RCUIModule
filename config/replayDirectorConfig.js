@@ -35,6 +35,7 @@ export const DEFAULT_REPLAY_DIRECTOR_CONFIG = Object.freeze({
   eyeDampingRate: 5.2,
   gazeDampingRate: 8.5,
   strikerSwitchDampingRate: 4.2,
+  muteSignalAudioInGoalReplay: true,
 });
 
 export const REPLAY_DIRECTOR_CONFIG = {
@@ -47,7 +48,13 @@ export function updateReplayDirectorConfig(patch = {}) {
   if (!patch || typeof patch !== 'object') return REPLAY_DIRECTOR_CONFIG;
   let changed = false;
   for (const [key, val] of Object.entries(patch)) {
-    if (key in REPLAY_DIRECTOR_CONFIG && typeof val === 'number' && Number.isFinite(val)) {
+    if (!(key in REPLAY_DIRECTOR_CONFIG)) continue;
+    if (typeof DEFAULT_REPLAY_DIRECTOR_CONFIG[key] === 'boolean' && typeof val === 'boolean') {
+      if (REPLAY_DIRECTOR_CONFIG[key] !== val) {
+        REPLAY_DIRECTOR_CONFIG[key] = val;
+        changed = true;
+      }
+    } else if (typeof val === 'number' && Number.isFinite(val)) {
       if (REPLAY_DIRECTOR_CONFIG[key] !== val) {
         REPLAY_DIRECTOR_CONFIG[key] = val;
         changed = true;

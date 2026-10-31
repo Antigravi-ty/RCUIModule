@@ -211,6 +211,7 @@ export const DEFAULT_AUDIO_CONFIG = Object.freeze({
   rolloffMaxDistance: 13000.0,
   minAudibleGainFloor: 0.15,
   airAbsorptionDamping: 0.0,
+  muteSignalAudioInGoalReplay: true,
   logEventFilter: createDefaultLogEventFilter(),
 });
 

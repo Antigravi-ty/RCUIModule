@@ -18,6 +18,8 @@ import {
   saveStoredSpatialAudioTunerConfig,
   parseBgmFileMetadata,
 } from '../config/spatialAudioConfig';
+import { audioConfig } from '../config/audioConfig.js';
+import { updateReplayDirectorConfig } from '../config/replayDirectorConfig.js';
 
 export interface BgmUploadedTrack {
   id: string;
@@ -451,6 +453,16 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
       ...patch,
     };
     const nextConfig = saveStoredSpatialAudioTunerConfig(merged);
+    if (typeof patch.muteSignalAudioInGoalReplay === 'boolean') {
+      try {
+        audioConfig.set('muteSignalAudioInGoalReplay', nextConfig.muteSignalAudioInGoalReplay);
+        updateReplayDirectorConfig({
+          muteSignalAudioInGoalReplay: nextConfig.muteSignalAudioInGoalReplay,
+        });
+      } catch {
+        // Ignore if unavailable
+      }
+    }
     set({ tunerConfig: nextConfig });
     get().runtimeCallbacks.onTunerConfigChanged?.(nextConfig);
   },
@@ -458,6 +470,14 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
   resetTunerConfig: () => {
     const nextConfig: SpatialAudioTunerConfig = { ...DEFAULT_SPATIAL_AUDIO_TUNER_CONFIG };
     saveStoredSpatialAudioTunerConfig(nextConfig);
+    try {
+      audioConfig.set('muteSignalAudioInGoalReplay', nextConfig.muteSignalAudioInGoalReplay);
+      updateReplayDirectorConfig({
+        muteSignalAudioInGoalReplay: nextConfig.muteSignalAudioInGoalReplay,
+      });
+    } catch {
+      // Ignore if unavailable
+    }
     set({ tunerConfig: nextConfig });
     get().runtimeCallbacks.onTunerConfigChanged?.(nextConfig);
   },

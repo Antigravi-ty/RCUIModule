@@ -354,6 +354,8 @@ export interface SpatialAudioTunerConfig {
   overrideMode: SpatialAudioOverrideMode;
   /** Manual blend override when overrideMode === 'manual' (0.0 = Normal, 1.0 = Spatial) */
   manualBlend: number;
+  /** Suppress Signal-triggered audio cues (kickoff countdown, 10s/30s/60s clock alerts) during Goal Replay */
+  muteSignalAudioInGoalReplay: boolean;
 }
 
 export const DEFAULT_SPATIAL_AUDIO_TUNER_CONFIG: SpatialAudioTunerConfig = Object.freeze({
@@ -370,6 +372,7 @@ export const DEFAULT_SPATIAL_AUDIO_TUNER_CONFIG: SpatialAudioTunerConfig = Objec
   bzY2: 1.0,
   overrideMode: 'auto',
   manualBlend: 0,
+  muteSignalAudioInGoalReplay: true,
 });
 
 export function sanitizeSpatialAudioTunerConfig(
@@ -421,6 +424,10 @@ export function sanitizeSpatialAudioTunerConfig(
     bzY2: clampNumberOrDefault(src.bzY2, fallback.bzY2, { min: 0.0, max: 1.0 }),
     overrideMode,
     manualBlend: clampNumberOrDefault(src.manualBlend, fallback.manualBlend, { min: 0.0, max: 1.0 }),
+    muteSignalAudioInGoalReplay: booleanOrDefault(
+      src.muteSignalAudioInGoalReplay,
+      fallback.muteSignalAudioInGoalReplay
+    ),
   };
 }
 

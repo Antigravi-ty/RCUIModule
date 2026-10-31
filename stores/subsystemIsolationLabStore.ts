@@ -3,6 +3,8 @@ import {
   INITIAL_SOLO_RESULTS,
   PRECOMPUTED_MATRIX_RESULTS,
 } from '../config/kickoffDuelConfig.js';
+import { updateReplayDirectorConfig } from '../config/replayDirectorConfig.js';
+import { audioConfig } from '../config/audioConfig.js';
 
 import {
   type KickoffDuelModelId,
@@ -79,6 +81,7 @@ export const useSubsystemIsolationLabStore = create<SubsystemIsolationLabState>(
 
   goalReplayLookbackSec: 5.0,
   goalReplayPostGoalSec: 3.0,
+  goalReplayMuteSignalAudio: true,
   goalReplayPhase: 'live',
   goalReplayCurrentFrameId: 0,
   goalReplayLastKickoffFrameId: 0,
@@ -350,6 +353,16 @@ export const useSubsystemIsolationLabStore = create<SubsystemIsolationLabState>(
   },
   setGoalReplayPostGoalSec: (goalReplayPostGoalSec) => {
     set({ goalReplayPostGoalSec });
+  },
+  setGoalReplayMuteSignalAudio: (goalReplayMuteSignalAudio) => {
+    const next = Boolean(goalReplayMuteSignalAudio);
+    set({ goalReplayMuteSignalAudio: next });
+    try {
+      updateReplayDirectorConfig({ muteSignalAudioInGoalReplay: next });
+      audioConfig.set('muteSignalAudioInGoalReplay', next);
+    } catch {
+      // Ignore if config is unavailable
+    }
   },
 
   setKickoffDuelModels: (kickoffDuelBlueModel, kickoffDuelOrangeModel) => {

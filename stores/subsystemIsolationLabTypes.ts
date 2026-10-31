@@ -116,6 +116,7 @@ export interface SubsystemIsolationLabState {
   // Bench 5: Goal Incident Event & Goal Replay Test + Podium Celebration Test
   goalReplayLookbackSec: number;
   goalReplayPostGoalSec: number;
+  goalReplayMuteSignalAudio: boolean;
   goalReplayPhase: 'live' | 'post-goal-delay' | 'replaying' | 'podium';
   goalReplayCurrentFrameId: number;
   goalReplayLastKickoffFrameId: number;
@@ -207,6 +208,7 @@ export interface SubsystemIsolationLabState {
   setIncidentDisableGoalReplay: (disable: boolean) => void;
   setGoalReplayLookbackSec: (sec: number) => void;
   setGoalReplayPostGoalSec: (sec: number) => void;
+  setGoalReplayMuteSignalAudio: (mute: boolean) => void;
   setKickoffDuelModels: (blue: KickoffDuelModelId, orange: KickoffDuelModelId) => void;
   setKickoffDuelSlotIndex: (slotIndex: number) => void;
   setKickoffDuelCutoffDelaySec: (sec: number) => void;

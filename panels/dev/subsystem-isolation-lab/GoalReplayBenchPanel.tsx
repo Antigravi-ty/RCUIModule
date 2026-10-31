@@ -14,9 +14,11 @@ import {
   Sliders,
 } from 'lucide-react';
 import { useSubsystemIsolationLabStore } from '../../../stores/subsystemIsolationLabStore';
+import { useSpatialAudioStore } from '../../../stores/spatialAudioStore';
 import { floatingStore } from '../../../stores/floatingStore';
 import { REPLAY_DIRECTOR_TUNER_PRESET } from '../../../stores/floatingPresets';
 import { SliderControl } from '../../../primitives/SliderControl';
+import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { Badge } from '../../../primitives/Badge';
 import { Button } from '../../../primitives/Button';
 
@@ -36,6 +38,7 @@ export const GoalReplayBenchPanel: React.FC<GoalReplayBenchPanelProps> = ({
   const {
     goalReplayLookbackSec,
     goalReplayPostGoalSec,
+    goalReplayMuteSignalAudio,
     goalReplayPhase,
     goalReplayCurrentFrameId,
     goalReplayLastKickoffFrameId,
@@ -53,6 +56,7 @@ export const GoalReplayBenchPanel: React.FC<GoalReplayBenchPanelProps> = ({
     podiumWinningTeam,
     setGoalReplayLookbackSec,
     setGoalReplayPostGoalSec,
+    setGoalReplayMuteSignalAudio,
     runtimeHandlers,
   } = useSubsystemIsolationLabStore();
 
@@ -159,6 +163,32 @@ export const GoalReplayBenchPanel: React.FC<GoalReplayBenchPanelProps> = ({
             isLight={isLight}
             onChange={(val) => setGoalReplayPostGoalSec(val)}
           />
+
+          <div className="flex items-center justify-between pt-1 border-t border-neutral-700/30">
+            <div className="flex flex-col min-w-0">
+              <span className="font-semibold text-[11px] truncate">
+                Mute Signal Audio in Goal Replay
+              </span>
+              <span className={`text-[10px] truncate ${mutedText}`}>
+                Suppress kickoff countdown &amp; 10s/30s/60s timer signal sounds during Goal Replay
+              </span>
+            </div>
+            <ToggleSwitch
+              checked={Boolean(goalReplayMuteSignalAudio ?? true)}
+              onCheckedChange={(v) => {
+                setGoalReplayMuteSignalAudio(v);
+                try {
+                  useSpatialAudioStore.getState().updateTunerConfig({
+                    muteSignalAudioInGoalReplay: v,
+                  });
+                } catch {
+                  // Ignore if unavailable
+                }
+              }}
+              isLight={isLight}
+              variant="amber"
+            />
+          </div>
         </div>
       </div>
 
