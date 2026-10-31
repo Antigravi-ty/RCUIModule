@@ -273,6 +273,12 @@ export const TakeoverCountdownHUD = React.memo(
           if (!nextPayload || !nextPayload.mainText) {
             rootEl.style.opacity = '0';
             rootEl.style.visibility = 'hidden';
+            topEl.style.display = 'none';
+            topEl.textContent = '';
+            mainWrapEl.style.opacity = '0';
+            mainEl.textContent = '';
+            subEl.style.display = 'none';
+            subEl.textContent = '';
             return;
           }
 
@@ -298,6 +304,7 @@ export const TakeoverCountdownHUD = React.memo(
           rootEl.style.visibility = 'visible';
           rootEl.style.opacity = '1';
           rootEl.style.transform = 'scale3d(1, 1, 1)';
+          mainWrapEl.style.opacity = '1';
           innerEl.style.gap = `${resolvedTypo.lineGapPx}px`;
 
           // 1. Backdrop radial bloom
@@ -325,6 +332,7 @@ export const TakeoverCountdownHUD = React.memo(
           if (hasTopText) {
             const topVisuals = resolveTakeoverTopLabelVisuals(resolvedGlow, resolvedTeamSide);
             topEl.style.display = 'block';
+            topEl.style.opacity = '1';
             topEl.style.transform = 'none';
             topEl.textContent = resolvedTypo.uppercase
               ? nextPayload.topText.toUpperCase()
@@ -382,7 +390,8 @@ export const TakeoverCountdownHUD = React.memo(
             subEl.textContent = '';
           }
 
-          // 5. Kinetic Scale Pop strictly on mainWrapEl (3 -> 2 -> 1), while topEl stays rock-solid
+          // 5. Kinetic Scale Pop strictly on mainWrapEl (3 -> 2 -> 1), while topEl stays rock-solid;
+          //    Tail exit fade applies to rootEl so 'Takeover in...' and the countdown digit always dismiss together.
           const entryMs = Math.max(0, resolvedTiming.entryDurationMs);
           const holdMs = Math.max(entryMs, resolvedTiming.durationMs);
           const exitMs = Math.max(0, resolvedTiming.exitDurationMs);
@@ -390,77 +399,46 @@ export const TakeoverCountdownHUD = React.memo(
           const entryScale = resolvedTiming.entryScale;
 
           if (typeof mainWrapEl.animate === 'function') {
-            if (resolvedTiming.persistentInspect) {
-              if (animateEntry && entryMs > 0) {
-                activeMainAnimRef.current = mainWrapEl.animate(
-                  [
-                    { transform: `scale3d(${entryScale}, ${entryScale}, 1)`, opacity: 1 },
-                    { transform: 'scale3d(1, 1, 1)', opacity: 1 },
-                  ],
-                  {
-                    duration: entryMs,
-                    easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-                    fill: 'forwards',
-                  }
-                );
-              } else {
-                mainWrapEl.style.transform = 'scale3d(1, 1, 1)';
-                mainWrapEl.style.opacity = '1';
-              }
-            } else if (animateEntry) {
-              const entryOffset = entryMs > 0 ? Math.min(1, entryMs / totalTimelineMs) : 0;
-              const holdEndOffset = Math.min(1, holdMs / totalTimelineMs);
-              const mainKeyframes: Keyframe[] = [];
-
-              if (entryOffset > 0) {
-                mainKeyframes.push({
-                  offset: 0,
-                  transform: `scale3d(${entryScale}, ${entryScale}, 1)`,
-                  opacity: 1,
+            if (animateEntry && entryMs > 0) {
+              activeMainAnimRef.current = mainWrapEl.animate(
+                [
+                  { transform: `scale3d(${entryScale}, ${entryScale}, 1)`, opacity: 1 },
+                  { transform: 'scale3d(1, 1, 1)', opacity: 1 },
+                ],
+                {
+                  duration: entryMs,
                   easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-                });
-                mainKeyframes.push({
-                  offset: entryOffset,
-                  transform: 'scale3d(1, 1, 1)',
-                  opacity: 1,
-                  easing: 'linear',
-                });
-              } else {
-                mainKeyframes.push({
-                  offset: 0,
-                  transform: 'scale3d(1, 1, 1)',
-                  opacity: 1,
-                  easing: 'linear',
-                });
-              }
-
-              if (exitMs > 0 && holdEndOffset > entryOffset && holdEndOffset < 1) {
-                mainKeyframes.push({
-                  offset: holdEndOffset,
-                  transform: 'scale3d(1, 1, 1)',
-                  opacity: 1,
-                  easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-                });
-              }
-
-              mainKeyframes.push({
-                offset: 1,
-                transform: 'scale3d(1, 1, 1)',
-                opacity: exitMs > 0 ? 0 : 1,
-              });
-
-              activeMainAnimRef.current = mainWrapEl.animate(mainKeyframes, {
-                duration: totalTimelineMs,
-                easing: 'linear',
-                fill: 'forwards',
-              });
-
-              expireTimerRef.current = window.setTimeout(() => {
-                onStepExpireRef.current?.();
-              }, totalTimelineMs);
+                  fill: 'forwards',
+                }
+              );
             } else {
               mainWrapEl.style.transform = 'scale3d(1, 1, 1)';
               mainWrapEl.style.opacity = '1';
+            }
+
+            if (!resolvedTiming.persistentInspect && animateEntry) {
+              const holdEndOffset = Math.min(1, holdMs / totalTimelineMs);
+              if (exitMs > 0 && holdEndOffset < 1 && typeof rootEl.animate === 'function') {
+                activeRootFadeAnimRef.current = rootEl.animate(
+                  [
+                    { offset: 0, opacity: 1 },
+                    { offset: holdEndOffset, opacity: 1, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' },
+                    { offset: 1, opacity: 0 },
+                  ],
+                  {
+                    duration: totalTimelineMs,
+                    easing: 'linear',
+                    fill: 'forwards',
+                  }
+                );
+              }
+
+              expireTimerRef.current = window.setTimeout(() => {
+                rootEl.style.opacity = '0';
+                rootEl.style.visibility = 'hidden';
+                topEl.style.display = 'none';
+                onStepExpireRef.current?.();
+              }, totalTimelineMs);
             }
           }
         },
