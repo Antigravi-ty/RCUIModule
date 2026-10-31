@@ -49,15 +49,47 @@ function rectsToGrid(rects: NormalizedRect[]): Uint8Array {
   return grid;
 }
 
-function triggerReplayFilePicker(onSelect: (file: File) => void): void {
-  if (typeof document === 'undefined') return;
+let persistentReplayFileInput: HTMLInputElement | null = null;
+let activeReplayFileSelectCallback: ((file: File) => void) | null = null;
+
+function getOrCreateReplayFileInput(): HTMLInputElement | null {
+  if (typeof document === 'undefined') return null;
+  if (persistentReplayFileInput && document.body?.contains(persistentReplayFileInput)) {
+    return persistentReplayFileInput;
+  }
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.rcreplay,.json,.gz';
-  input.onchange = () => {
+  input.accept =
+    '.rcreplay,.rcreplay.gz,.rcgr,.rcgr.gz,.gz,.json,application/gzip,application/x-gzip,application/octet-stream,application/json';
+  input.style.position = 'fixed';
+  input.style.left = '-9999px';
+  input.style.top = '-9999px';
+  input.style.width = '0px';
+  input.style.height = '0px';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
+  input.setAttribute('aria-hidden', 'true');
+  input.tabIndex = -1;
+  input.addEventListener('change', () => {
     const file = input.files?.[0];
-    if (file) onSelect(file);
-  };
+    const cb = activeReplayFileSelectCallback;
+    input.value = '';
+    if (file && cb) {
+      cb(file);
+    }
+  });
+  if (document.body) {
+    document.body.appendChild(input);
+  }
+  persistentReplayFileInput = input;
+  return input;
+}
+
+function triggerReplayFilePicker(onSelect: (file: File) => void): void {
+  const input = getOrCreateReplayFileInput();
+  if (!input) return;
+  activeReplayFileSelectCallback = onSelect;
+  input.value = '';
   input.click();
 }
 

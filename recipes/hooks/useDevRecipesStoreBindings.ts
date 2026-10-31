@@ -115,21 +115,19 @@ export function useLayer3DevActiveTunersStoreBinding<TProps extends object>(
     variationId: string,
     phase: 'start' | 'loop' | 'end'
   ) => {
-    setBoostSelection((prev) => {
-      const next = { ...prev, [phase]: variationId };
-      if (next.start === next.loop && next.loop === next.end) {
-        useAppStore
-          .getState()
-          .updateMaterials({
-            boostAudio: variationId as
-              | 'rush'
-              | 'standard'
-              | 'flamethrower'
-              | 'plasma',
-          });
-      }
-      return next;
-    });
+    const next = { ...boostSelection, [phase]: variationId };
+    setBoostSelection(next);
+    if (next.start === next.loop && next.loop === next.end) {
+      useAppStore
+        .getState()
+        .updateMaterials({
+          boostAudio: variationId as
+            | 'rush'
+            | 'standard'
+            | 'flamethrower'
+            | 'plasma',
+        });
+    }
     if (phase === 'start') {
       setBoostStartVariation(variationId);
     } else if (phase === 'loop') {
