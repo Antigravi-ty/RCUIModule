@@ -55,6 +55,7 @@ export interface ReplayViewerStoreState {
   hasHotkeyPriority: boolean;
   activePovCarIndex: number;
   activePovSlotKey: number | null;
+  activePovTeam: 0 | 1;
 
   setDownCounterSec: (sec: ReplayDownCounterOption) => void;
   setFlowPreset: (preset: ReplayFlowPreset) => void;
@@ -123,6 +124,7 @@ export const useReplayViewerStore = create<ReplayViewerStoreState>((set) => ({
   hasHotkeyPriority: false,
   activePovCarIndex: 0,
   activePovSlotKey: 1,
+  activePovTeam: 0,
 
   setDownCounterSec: (downCounterSec) => set({ downCounterSec }),
   setFlowPreset: (flowPreset) =>

@@ -6,6 +6,7 @@ import { useNetworkDiagnosticsData } from '../stores/networkDiagnosticsStore';
 import { useKickoffTrainingStore } from '../stores/kickoffTrainingStore';
 import { useExperimentalMultiBotsStore } from '../stores/experimentalMultiBotsStore';
 import { useReplayViewerStore } from '../stores/replayViewerStore';
+import { useRewinderStore } from '../stores/rewinderStore';
 import {
   HudAnchorStage,
   HudZone,
@@ -26,10 +27,22 @@ import { KickoffRhythmOverlayHUD } from './KickoffRhythmOverlayHUD';
 import {
   CenterUpperInfoHUD,
   DEFAULT_RL_COUNTDOWN_GLOW,
+  DEFAULT_WINNER_BLUE_TEAM_CONFIG,
   DEFAULT_CENTER_UPPER_TYPOGRAPHY,
   DEFAULT_CENTER_UPPER_TIMING,
   type CenterUpperInfoPayload,
 } from './CenterUpperInfoHUD';
+import {
+  TakeoverCountdownHUD,
+  DEFAULT_TAKEOVER_GLOW,
+  DEFAULT_TAKEOVER_TYPOGRAPHY,
+  DEFAULT_TAKEOVER_TIMING,
+  DEFAULT_TAKEOVER_VIGNETTE,
+  DEFAULT_TAKEOVER_LAYOUT,
+  type TakeoverHudPayload,
+  type TakeoverTeamSide,
+} from './TakeoverCountdownHUD';
+import { TakeoverVignetteOverlay } from './TakeoverVignetteOverlay';
 
 export interface InGameHUDProps {
   className?: string;
@@ -38,6 +51,8 @@ export interface InGameHUDProps {
 export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   const kickoffCountdown = useHudStore((s) => s.kickoffCountdown);
   const matchPhase = useHudStore((s) => s.matchPhase);
+  const isPaused = useHudStore((s) => s.isPaused);
+  const winner = useHudStore((s) => s.winner);
   const isOvertime = useHudStore((s) => s.isOvertime);
   const localTeam = useHudStore((s) => s.localTeam);
   const blueScore = useHudStore((s) => s.blueScore);
@@ -76,9 +91,10 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
 
   const hudChannel = globalHudTransientChannel;
 
-  // Layer 5E Kickoff Countdown (3 -> 2 -> 1 -> GO only; no winner or custom announcement)
+  // Layer 5E CenterUpperInfoHUD: Kickoff Countdown (3 -> 2 -> 1 -> GO), Match Paused, and Winner Blue/Orange Team
   const [countdownPayload, setCountdownPayload] = useState<CenterUpperInfoPayload | null>(null);
   const prevCountdownRef = useRef<number>(-1);
+  const prevEndedWinnerRef = useRef<string | number | null>(null);
   const countdownNonceRef = useRef<number>(1);
   const handleCountdownExpire = useCallback(() => {
     setCountdownPayload(null);
@@ -87,9 +103,83 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   useEffect(() => {
     if (matchMode === 'kickoff-training') {
       prevCountdownRef.current = kickoffCountdown;
+      prevEndedWinnerRef.current = null;
       setCountdownPayload(null);
       return;
     }
+
+    const isMatchContext =
+      matchMode === 'match' ||
+      matchMode === 'exp-multi-bots' ||
+      (matchMode === 'online-warmup' && onlineSession.roomType === 'match');
+
+    // 1. Winner Blue Team / Winner Orange Team announcement during 3s 'ended' window before 'podium'
+    if (isMatchContext && matchPhase === 'ended' && winner !== null && winner !== undefined) {
+      prevCountdownRef.current = 0;
+      const isBlueWinner =
+        winner === 0 ||
+        String(winner).toUpperCase() === 'BLUE' ||
+        String(winner).toUpperCase() === 'BLUE TEAM';
+      const isOrangeWinner =
+        winner === 1 ||
+        String(winner).toUpperCase() === 'ORANGE' ||
+        String(winner).toUpperCase() === 'ORANGE TEAM';
+      if ((isBlueWinner || isOrangeWinner) && prevEndedWinnerRef.current !== winner) {
+        prevEndedWinnerRef.current = winner;
+        countdownNonceRef.current += 1;
+        setCountdownPayload({
+          variant: 'winner',
+          winnerTeam: isOrangeWinner ? 'orange' : 'blue',
+          winnerBlueConfig: DEFAULT_WINNER_BLUE_TEAM_CONFIG,
+          topText: 'WINNER',
+          mainText: isOrangeWinner ? 'ORANGE TEAM' : 'BLUE TEAM',
+          timing: {
+            ...DEFAULT_CENTER_UPPER_TIMING,
+            durationMs: 2200,
+            persistentInspect: false,
+          },
+          triggerKey: countdownNonceRef.current,
+        });
+      }
+      return;
+    }
+
+    if (matchPhase !== 'ended') {
+      prevEndedWinnerRef.current = null;
+    }
+
+    // 2. Match Paused (ADMIN CONTROL / MATCH PAUSED) when paused without active resume countdown
+    const isAdminPaused = Boolean(
+      isMatchContext && (isPaused || matchPhase === 'paused') && kickoffCountdown <= 0
+    );
+    if (isAdminPaused) {
+      setCountdownPayload((prevPayload) => {
+        if (
+          prevPayload?.variant === 'announcement' &&
+          prevPayload.mainText === 'MATCH PAUSED'
+        ) {
+          return prevPayload;
+        }
+        countdownNonceRef.current += 1;
+        return {
+          variant: 'announcement',
+          topText: 'ADMIN CONTROL',
+          mainText: 'MATCH PAUSED',
+          timing: {
+            ...DEFAULT_CENTER_UPPER_TIMING,
+            persistentInspect: true,
+          },
+          triggerKey: countdownNonceRef.current,
+        };
+      });
+      return;
+    }
+
+    setCountdownPayload((prevPayload) =>
+      prevPayload?.variant === 'announcement' && prevPayload.mainText === 'MATCH PAUSED'
+        ? null
+        : prevPayload
+    );
 
     const prev = prevCountdownRef.current;
     const curr = kickoffCountdown;
@@ -98,7 +188,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
       curr === 0 &&
       (matchPhase === 'goal' ||
         matchPhase === 'replay' ||
-        matchPhase === 'ended' ||
         matchPhase === 'podium' ||
         matchPhase === 'freeplay' ||
         matchPhase === 'warmup')
@@ -135,7 +224,15 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
       });
       return;
     }
-  }, [kickoffCountdown, matchPhase, isOvertime, matchMode]);
+  }, [
+    kickoffCountdown,
+    matchPhase,
+    isPaused,
+    winner,
+    isOvertime,
+    matchMode,
+    onlineSession.roomType,
+  ]);
 
   // 1. Push telemetry bar updates
   const isOnline =
@@ -196,17 +293,85 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     });
   }, [hudChannel, leftScore, rightScore, activeClockSec, overtimeChinOpen]);
 
-  // 4. 4-Stage Choreography Signal State Machine:
-  // - 'goal-replay-will-start': Bottom cockpit HUD (BallCam, Velocity+Flip, Boost) exits off-screen; Footer stays hidden.
-  // - 'goal-replay-started': TemporalReplayFooterHUD slides up; EdgePlayerHudStrip enters 'goal-replay' mode.
-  // - 'goal-replay-will-end': TemporalReplayFooterHUD slides down off-screen; Bottom cockpit stays retracted.
-  // - 'kickoff-will-start': Bottom cockpit HUD slides back in; EdgePlayerHudStrip returns to 'player-live'.
+  // 4. 4-Stage Choreography Signal State Machine + Layer 5G Takeover Preroll State:
+  const replayViewerState = useReplayViewerStore((s) => s.viewerState);
+  const replayViewerTotalFrames = useReplayViewerStore((s) => s.totalFrames);
+  const replayViewerFileName = useReplayViewerStore((s) => s.loadedFileName);
+  const replayPrerollSec = useReplayViewerStore((s) => s.prerollRemainingSec);
+  const activePovTeam = useReplayViewerStore((s) => s.activePovTeam);
+
+  const rewinderState = useRewinderStore((s) => s.rewinderState);
+  const rewinderPrerollSec = useRewinderStore((s) => s.rewinderPrerollRemainingSec);
+
+  const isReplayPreroll = replayViewerState === 'preroll-countdown';
+  const isRewinderPreroll = rewinderState === 'preroll-countdown';
+  const isTakeoverPreroll = isReplayPreroll || isRewinderPreroll;
+
+  const takeoverTeam: TakeoverTeamSide =
+    (isReplayPreroll || replayViewerState === 'intervening' ? activePovTeam : localTeam) === 1
+      ? 'orange'
+      : 'blue';
+
+  const [takeoverPayload, setTakeoverPayload] = useState<TakeoverHudPayload | null>(null);
+  const takeoverSeqRef = useRef<number>(0);
+  const lastTakeoverStepRef = useRef<number | null>(null);
+
+  const handleTakeoverExpire = useCallback(() => {
+    setTakeoverPayload(null);
+  }, []);
+
+  useEffect(() => {
+    const activePrerollSec = isReplayPreroll
+      ? replayPrerollSec
+      : isRewinderPreroll
+      ? rewinderPrerollSec
+      : 0;
+
+    if (isTakeoverPreroll) {
+      if (activePrerollSec >= 1 && activePrerollSec <= 3) {
+        if (lastTakeoverStepRef.current !== activePrerollSec) {
+          lastTakeoverStepRef.current = activePrerollSec;
+          takeoverSeqRef.current += 1;
+          setTakeoverPayload({
+            topText: 'Takeover in...',
+            mainText: String(activePrerollSec),
+            subText: '',
+            teamSide: takeoverTeam,
+            glow: DEFAULT_TAKEOVER_GLOW,
+            typography: DEFAULT_TAKEOVER_TYPOGRAPHY,
+            timing: DEFAULT_TAKEOVER_TIMING,
+            triggerKey: takeoverSeqRef.current,
+          });
+        } else {
+          setTakeoverPayload((prev) =>
+            prev && prev.teamSide !== takeoverTeam ? { ...prev, teamSide: takeoverTeam } : prev
+          );
+        }
+      } else {
+        lastTakeoverStepRef.current = null;
+        setTakeoverPayload(null);
+      }
+      return;
+    }
+
+    lastTakeoverStepRef.current = null;
+    setTakeoverPayload(null);
+  }, [
+    isTakeoverPreroll,
+    isReplayPreroll,
+    isRewinderPreroll,
+    replayPrerollSec,
+    rewinderPrerollSec,
+    takeoverTeam,
+  ]);
+
   const bottomHudRetracted =
     choreographySignal === 'goal-replay-will-start' ||
     choreographySignal === 'goal-replay-started' ||
     choreographySignal === 'goal-replay-will-end' ||
     matchPhase === 'goal' ||
-    matchPhase === 'replay';
+    matchPhase === 'replay' ||
+    isTakeoverPreroll;
 
   const replayFooterVisible =
     choreographySignal === 'goal-replay-started' && matchPhase === 'replay';
@@ -267,9 +432,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
 
   // 7. Handle POV slot selection from EdgePlayerHudStrip in Replay / Spectator / Replay Viewer mode
   // Keys 1-6 select player slots 1-6; Key 7 (null) returns to Director camera view.
-  const replayViewerState = useReplayViewerStore((s) => s.viewerState);
-  const replayViewerTotalFrames = useReplayViewerStore((s) => s.totalFrames);
-  const replayViewerFileName = useReplayViewerStore((s) => s.loadedFileName);
   const isReplayViewerActive = Boolean(
     replayViewerFileName &&
       replayViewerTotalFrames > 0 &&
@@ -378,6 +540,12 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
       data-ui-element="in-game-hud-layer"
       className={`absolute inset-0 pointer-events-none select-none z-[5] overflow-hidden ${className}`}
     >
+      {/* Layer 5G Takeover Atmospheric Vignette Layer (beneath HudAnchorStage) */}
+      <TakeoverVignetteOverlay
+        config={DEFAULT_TAKEOVER_VIGNETTE}
+        active={isTakeoverPreroll}
+      />
+
       {/* Layer 5A Spatial Choreography Stage */}
       <HudAnchorStage
         strategy="reserve"
@@ -568,6 +736,25 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
           isLight={isLight}
           subscribeReplayFooter={hudChannel.subscribeReplayFooter}
         />
+
+        {/* 8. BOTTOM-CENTER UPWARD OFFSET: Layer 5G Takeover Countdown Banner */}
+        <HudZone
+          anchor="bottom-center"
+          flush
+          zIndexClassName="z-40"
+          style={{ bottom: `${DEFAULT_TAKEOVER_LAYOUT.bottomOffsetPx}px` }}
+        >
+          <HudSlot visible={Boolean(takeoverPayload)} mode="reserve">
+            <TakeoverCountdownHUD
+              payload={takeoverPayload}
+              teamSide={takeoverTeam}
+              glowConfig={DEFAULT_TAKEOVER_GLOW}
+              typographyConfig={DEFAULT_TAKEOVER_TYPOGRAPHY}
+              timingConfig={DEFAULT_TAKEOVER_TIMING}
+              onStepExpire={handleTakeoverExpire}
+            />
+          </HudSlot>
+        </HudZone>
       </HudAnchorStage>
     </div>
   );
