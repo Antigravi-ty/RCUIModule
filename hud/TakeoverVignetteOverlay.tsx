@@ -14,17 +14,17 @@ export interface TakeoverVignetteConfig {
   enabled: boolean;
   /** Rendering engine mode: 'sdf-smooth' (scene-safe continuous SDF + dither), 'css-inset' (reference CSS box-shadow), or 'hybrid' */
   renderMode?: TakeoverVignetteRenderMode;
-  /** Symmetric/master Top & Bottom vertical depth percentage (0 - 140, default 58) */
+  /** Symmetric/master Top & Bottom vertical depth percentage (0 - 140, default 15) */
   depthYPct?: number;
-  /** Independent Top edge vertical depth percentage (0 - 140, defaults to depthYPct ?? 58) */
+  /** Independent Top edge vertical depth percentage (0 - 140, default 0) */
   depthTopPct?: number;
-  /** Independent Bottom edge vertical depth percentage (0 - 140, defaults to depthYPct ?? 58) */
+  /** Independent Bottom edge vertical depth percentage (0 - 140, default 35) */
   depthBottomPct?: number;
   /** Vertical offset in px shifting the vignette opening (default 0; +px shifts opening upward for shorter top & taller bottom) */
   verticalOffsetPx?: number;
-  /** Independent Left/Right horizontal depth percentage (0 - 100, default 17) */
+  /** Independent Left/Right horizontal depth percentage (0 - 100, default 0) */
   depthXPct?: number;
-  /** Continuous feathering blur range in px (20 - 350, default 164) */
+  /** Continuous feathering blur range in px (20 - 350, default 160) */
   blurPx?: number;
   /** Inner opening (t=0 at distancePct) RGB tint color (default '#000000') */
   innerColor?: string;
@@ -32,11 +32,11 @@ export interface TakeoverVignetteConfig {
   innerIntensityPct?: number;
   /** Outer edge (t=1 at outerReachPct) RGB tint color (default '#000000') */
   color: string;
-  /** Outer edge (t=1 at outerReachPct) peak intensity / opacity percentage (0 - 100, default 100) */
+  /** Outer edge (t=1 at outerReachPct) peak intensity / opacity percentage (0 - 100, default 85) */
   intensityPct: number;
   /** Clear center rounded-rectangle distance percentage from screen center (0 - 95, default 40) */
   distancePct: number;
-  /** Outer full-density reach percentage (20 - 160, default 160) */
+  /** Outer full-density reach percentage (20 - 160, default 100) */
   outerReachPct: number;
   /** Non-linear Cubic-Bezier falloff curve from inner boundary (0) to outer edge (1) */
   curve: TakeoverVignetteCurve;
@@ -51,23 +51,23 @@ export interface TakeoverVignetteConfig {
 export const DEFAULT_TAKEOVER_VIGNETTE: TakeoverVignetteConfig = {
   enabled: true,
   renderMode: 'sdf-smooth',
-  depthYPct: 58,
-  depthTopPct: 58,
-  depthBottomPct: 58,
+  depthYPct: 15,
+  depthTopPct: 0,
+  depthBottomPct: 35,
   verticalOffsetPx: 0,
-  depthXPct: 17,
-  blurPx: 164,
+  depthXPct: 0,
+  blurPx: 160,
   innerColor: '#000000',
   innerIntensityPct: 0,
   color: '#000000',
-  intensityPct: 100,
+  intensityPct: 85,
   distancePct: 40,
-  outerReachPct: 160,
+  outerReachPct: 100,
   curve: {
-    p1x: 0.36,
-    p1y: 0.0,
-    p2x: 0.22,
-    p2y: 1.0,
+    p1x: 0.64,
+    p1y: 0,
+    p2x: 0.28,
+    p2y: 1,
   },
   fadeInMs: 280,
   fadeOutMs: 380,
@@ -156,11 +156,11 @@ export interface VignetteAxisGeometry {
 export function computeVignetteAxisOffsets(
   config: TakeoverVignetteConfig
 ): VignetteAxisGeometry {
-  const blurPx = Math.max(20, Math.min(450, config.blurPx ?? 164));
-  const depthXPct = Math.max(0, Math.min(140, config.depthXPct ?? 17));
-  const depthYPct = Math.max(0, Math.min(160, config.depthYPct ?? 58));
-  const depthTopPct = Math.max(0, Math.min(160, config.depthTopPct ?? depthYPct));
-  const depthBottomPct = Math.max(0, Math.min(160, config.depthBottomPct ?? depthYPct));
+  const blurPx = Math.max(20, Math.min(450, config.blurPx ?? 160));
+  const depthXPct = Math.max(0, Math.min(140, config.depthXPct ?? 0));
+  const depthYPct = Math.max(0, Math.min(160, config.depthYPct ?? 15));
+  const depthTopPct = Math.max(0, Math.min(160, config.depthTopPct ?? 0));
+  const depthBottomPct = Math.max(0, Math.min(160, config.depthBottomPct ?? 35));
   const verticalOffsetPx = Math.max(-360, Math.min(360, config.verticalOffsetPx ?? 0));
   const cornerRadiusPx = Math.max(0, Math.min(240, config.cornerRadiusPx ?? 0));
   const scale = blurPx * 0.012;
@@ -214,10 +214,9 @@ export function buildTakeoverVignetteGradient(config: TakeoverVignetteConfig): s
       .reverse()
       .join(', ');
 
-  const baseDepthY = config.depthYPct ?? 58;
-  const depthTopScale = Math.max(0.1, (config.depthTopPct ?? baseDepthY) / 100);
-  const depthBottomScale = Math.max(0.1, (config.depthBottomPct ?? baseDepthY) / 100);
-  const depthXScale = Math.max(0.1, (config.depthXPct ?? 17) / 100);
+  const depthTopScale = Math.max(0.1, (config.depthTopPct ?? 0) / 100);
+  const depthBottomScale = Math.max(0.1, (config.depthBottomPct ?? 35) / 100);
+  const depthXScale = Math.max(0.1, (config.depthXPct ?? 0) / 100);
   const topStops = buildEdgeStops(depthTopScale);
   const bottomStops = buildEdgeStops(depthBottomScale);
   const xStops = buildEdgeStops(depthXScale);
@@ -332,7 +331,7 @@ export const TakeoverVignetteOverlay: React.FC<TakeoverVignetteOverlayProps> = R
         const boxCoreW = Math.max(0, innerHalfW - effCornerRadius);
         const boxCoreH = Math.max(0, innerHalfH - effCornerRadius);
 
-        const reachScale = Math.max(0.25, (config.outerReachPct ?? 160) / 100);
+        const reachScale = Math.max(0.25, (config.outerReachPct ?? 100) / 100);
         const invFeatherReach = 1 / Math.max(1, featherSpan * reachScale);
 
         const alphaScale = renderMode === 'hybrid' ? 0.68 : 1.0;
