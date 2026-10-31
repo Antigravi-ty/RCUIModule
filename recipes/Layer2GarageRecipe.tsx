@@ -264,6 +264,7 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
               selectedAnthem={selectedAnthem}
               onSelectAnthem={handleSelectAnthem}
               anthemAvailable={anthemAvailable}
+              isActive={activeTab === 'anthem'}
               onHoverDesc={setHoveredDesc}
               isLight={isLight}
             />

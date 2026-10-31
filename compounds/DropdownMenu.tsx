@@ -43,6 +43,14 @@ export interface DropdownMenuProps<T extends string | number = string> {
    */
   menuWidthClass?: string;
   /**
+   * Maximum height class for the scrollable option list (defaults to 'max-h-64').
+   */
+  menuMaxHeightClass?: string;
+  /**
+   * Trigger button size ('sm' | 'md', defaults to 'md').
+   */
+  size?: 'sm' | 'md';
+  /**
    * Controlled open state (optional).
    */
   open?: boolean;
@@ -73,6 +81,8 @@ export const DropdownMenu = <T extends string | number = string>({
   children,
   align = 'left',
   menuWidthClass = 'w-64',
+  menuMaxHeightClass = 'max-h-64',
+  size = 'md',
   open: controlledOpen,
   onOpenChange,
   keepOpenOnChildClick = true,
@@ -81,15 +91,21 @@ export const DropdownMenu = <T extends string | number = string>({
   className = '',
 }: DropdownMenuProps<T>) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const isOpen = !disabled && (controlledOpen !== undefined ? controlledOpen : internalOpen);
 
   const setOpen = (next: boolean) => {
-    if (disabled) return;
+    if (disabled && next) return;
     if (controlledOpen === undefined) {
       setInternalOpen(next);
     }
     onOpenChange?.(next);
   };
+
+  useEffect(() => {
+    if (disabled && internalOpen) {
+      setInternalOpen(false);
+    }
+  }, [disabled, internalOpen]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -115,6 +131,10 @@ export const DropdownMenu = <T extends string | number = string>({
 
   const selectedOption = options?.find((o) => o.value === value);
   const displayLabel = label ?? selectedOption?.label ?? 'Select...';
+  const triggerSizeClass =
+    size === 'sm'
+      ? 'px-2.5 py-1 rounded-md text-[11px] gap-1.5'
+      : 'px-3 py-1.5 rounded-lg text-xs gap-2';
 
   return (
     <div
@@ -141,7 +161,7 @@ export const DropdownMenu = <T extends string | number = string>({
             e.stopPropagation();
             setOpen(!isOpen);
           }}
-          className={`w-full inline-flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none ${
+          className={`w-full inline-flex items-center justify-between ${triggerSizeClass} border font-medium transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none ${
             isLight
               ? 'bg-white hover:bg-neutral-50 border-neutral-300 text-neutral-800 shadow-2xs'
               : 'bg-neutral-800/90 hover:bg-neutral-800 border-neutral-700 text-neutral-100 shadow-2xs'
@@ -179,7 +199,7 @@ export const DropdownMenu = <T extends string | number = string>({
         >
           {/* Option Items */}
           {options && options.length > 0 && (
-            <div className="flex flex-col gap-0.5 max-h-64 overflow-y-auto">
+            <div className={`flex flex-col gap-0.5 ${menuMaxHeightClass} overflow-y-auto`}>
               {options.map((opt) => {
                 const isSelected = value !== undefined && opt.value === value;
                 return (

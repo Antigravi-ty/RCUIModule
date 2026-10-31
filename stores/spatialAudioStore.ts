@@ -1,12 +1,17 @@
 import { create } from 'zustand';
 import {
   DEFAULT_ANTHEM_ID,
+  DEFAULT_RANDOM_ANTHEM_SCOPE,
+  DEFAULT_RANDOM_ANTHEM_CATEGORY,
   DEFAULT_SPATIAL_AUDIO_TUNER_CONFIG,
+  type RandomAnthemScope,
   type SpatialAudioTunerConfig,
   type StoredBgmPrefs,
   type BgmSceneConfig,
   loadStoredPlayerAnthem,
   saveStoredPlayerAnthem,
+  loadStoredRandomAnthemPrefs,
+  saveStoredRandomAnthemPrefs,
   loadStoredBgmPrefs,
   saveStoredBgmPrefs,
   loadStoredSpatialAudioTunerConfig,
@@ -38,6 +43,9 @@ export interface SpatialAudioRuntimeCallbacks {
 export interface SpatialAudioStoreState {
   // 1. Player Anthem State
   selectedAnthem: string;
+  randomAnthemScope: RandomAnthemScope;
+  randomAnthemCategory: string;
+  isGarageAnthemTabActive: boolean;
   previewingAnthemId: string | null;
   activeGoalAnthemId: string | null;
   anthemLinearPhase: number;
@@ -68,6 +76,9 @@ export interface SpatialAudioStoreState {
 
   // Actions — Player Anthem
   setSelectedAnthem: (anthemId: string) => void;
+  setRandomAnthemScope: (scope: RandomAnthemScope) => void;
+  setRandomAnthemCategory: (category: string) => void;
+  setGarageAnthemTabActive: (active: boolean) => void;
   togglePreviewAnthem: (anthemId: string) => void;
   stopPreviewAnthem: () => void;
   setPreviewingAnthemId: (anthemId: string | null) => void;
@@ -107,6 +118,7 @@ export interface SpatialAudioStoreState {
 }
 
 const initialBgmPrefs = loadStoredBgmPrefs();
+const initialRandomAnthemPrefs = loadStoredRandomAnthemPrefs();
 
 function persistBgmPrefsFromState(state: {
   realisticBgmEnabled: boolean;
@@ -131,6 +143,9 @@ const AUDIO_FILE_EXTENSIONS = /\.(mp3|wav|ogg|m4a|flac|aac|opus|webm)$/i;
 
 export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) => ({
   selectedAnthem: loadStoredPlayerAnthem() || DEFAULT_ANTHEM_ID,
+  randomAnthemScope: initialRandomAnthemPrefs.scope || DEFAULT_RANDOM_ANTHEM_SCOPE,
+  randomAnthemCategory: initialRandomAnthemPrefs.category || DEFAULT_RANDOM_ANTHEM_CATEGORY,
+  isGarageAnthemTabActive: false,
   previewingAnthemId: null,
   activeGoalAnthemId: null,
   anthemLinearPhase: 0,
@@ -159,6 +174,31 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
   setSelectedAnthem: (anthemId) => {
     const normalized = saveStoredPlayerAnthem(anthemId);
     set({ selectedAnthem: normalized });
+  },
+
+  setRandomAnthemScope: (scope) => {
+    const saved = saveStoredRandomAnthemPrefs({ scope });
+    set({ randomAnthemScope: saved.scope });
+    const { previewingAnthemId, runtimeCallbacks } = get();
+    if (previewingAnthemId === 'random') {
+      runtimeCallbacks.onPreviewAnthem?.('random');
+    }
+  },
+
+  setRandomAnthemCategory: (category) => {
+    const saved = saveStoredRandomAnthemPrefs({ category });
+    set({ randomAnthemCategory: saved.category });
+    const { previewingAnthemId, runtimeCallbacks } = get();
+    if (previewingAnthemId === 'random') {
+      runtimeCallbacks.onPreviewAnthem?.('random');
+    }
+  },
+
+  setGarageAnthemTabActive: (active) => {
+    const next = Boolean(active);
+    if (get().isGarageAnthemTabActive === next) return;
+    set({ isGarageAnthemTabActive: next });
+    get().runtimeCallbacks.onBgmPrefsChanged?.();
   },
 
   togglePreviewAnthem: (anthemId) => {

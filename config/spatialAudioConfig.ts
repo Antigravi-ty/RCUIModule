@@ -39,7 +39,25 @@ export const ANTHEM_CATEGORIES: readonly AnthemCategoryDef[] = Object.freeze([
   { id: 'Utopia_Lux', label: 'Utopia Lux', arenaName: 'Utopia Coliseum' },
 ]);
 
-export const DEFAULT_ANTHEM_ID = 'none';
+export const ANTHEM_SPECIFIC_CATEGORIES: readonly AnthemCategoryDef[] = Object.freeze(
+  ANTHEM_CATEGORIES.filter((cat) => cat.id !== 'all')
+);
+
+export type RandomAnthemScope = 'all' | 'specific';
+
+export const DEFAULT_ANTHEM_ID = 'random';
+export const DEFAULT_RANDOM_ANTHEM_SCOPE: RandomAnthemScope = 'specific';
+export const DEFAULT_RANDOM_ANTHEM_CATEGORY = 'TrainStation';
+
+export interface StoredRandomAnthemPrefs {
+  scope: RandomAnthemScope;
+  category: string;
+}
+
+export const DEFAULT_STORED_RANDOM_ANTHEM_PREFS: StoredRandomAnthemPrefs = Object.freeze({
+  scope: DEFAULT_RANDOM_ANTHEM_SCOPE,
+  category: DEFAULT_RANDOM_ANTHEM_CATEGORY,
+});
 
 interface RawStingerEntry {
   id: string;
@@ -171,6 +189,7 @@ export const ANTHEM_CATALOG: readonly AnthemDef[] = Object.freeze([
 ]);
 
 const VALID_ANTHEM_IDS = new Set(ANTHEM_CATALOG.map((a) => a.id));
+const VALID_SPECIFIC_CATEGORY_IDS = new Set(ANTHEM_SPECIFIC_CATEGORIES.map((c) => c.id));
 
 export function normalizeAnthemId(id: unknown): string {
   if (typeof id === 'string') {
@@ -178,11 +197,63 @@ export function normalizeAnthemId(id: unknown): string {
     if (VALID_ANTHEM_IDS.has(trimmed)) {
       return trimmed;
     }
-    if (trimmed === 'muted' || trimmed === 'no-anthem' || trimmed === 'off' || trimmed === 'default') {
+    if (trimmed === 'muted' || trimmed === 'no-anthem' || trimmed === 'off') {
+      return 'none';
+    }
+    if (trimmed === 'default') {
       return DEFAULT_ANTHEM_ID;
     }
   }
   return DEFAULT_ANTHEM_ID;
+}
+
+export function normalizeRandomAnthemScope(scope: unknown): RandomAnthemScope {
+  return scope === 'all' ? 'all' : 'specific';
+}
+
+export function normalizeRandomAnthemCategory(category: unknown): string {
+  if (typeof category === 'string') {
+    const trimmed = category.trim();
+    if (VALID_SPECIFIC_CATEGORY_IDS.has(trimmed)) {
+      return trimmed;
+    }
+  }
+  return DEFAULT_RANDOM_ANTHEM_CATEGORY;
+}
+
+export function loadStoredRandomAnthemPrefs(): StoredRandomAnthemPrefs {
+  const raw = safeStorage.get(STORAGE_KEYS.PLAYER_ANTHEM_RANDOM_PREFS);
+  if (!raw) {
+    return { ...DEFAULT_STORED_RANDOM_ANTHEM_PREFS };
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!isPlainObject(parsed)) {
+      return { ...DEFAULT_STORED_RANDOM_ANTHEM_PREFS };
+    }
+    return {
+      scope: normalizeRandomAnthemScope(parsed.scope),
+      category: normalizeRandomAnthemCategory(parsed.category),
+    };
+  } catch {
+    return { ...DEFAULT_STORED_RANDOM_ANTHEM_PREFS };
+  }
+}
+
+export function saveStoredRandomAnthemPrefs(
+  prefs: Partial<StoredRandomAnthemPrefs>
+): StoredRandomAnthemPrefs {
+  const current = loadStoredRandomAnthemPrefs();
+  const next: StoredRandomAnthemPrefs = {
+    scope:
+      prefs.scope !== undefined ? normalizeRandomAnthemScope(prefs.scope) : current.scope,
+    category:
+      prefs.category !== undefined
+        ? normalizeRandomAnthemCategory(prefs.category)
+        : current.category,
+  };
+  safeStorage.set(STORAGE_KEYS.PLAYER_ANTHEM_RANDOM_PREFS, JSON.stringify(next));
+  return next;
 }
 
 export function getAnthemById(id: unknown): AnthemDef {
@@ -190,13 +261,33 @@ export function getAnthemById(id: unknown): AnthemDef {
   return ANTHEM_CATALOG.find((a) => a.id === norm) || ANTHEM_CATALOG[0];
 }
 
-export function resolvePlayableAnthemDef(id: unknown): AnthemDef | null {
+export function resolvePlayableAnthemDef(
+  id: unknown,
+  options?: {
+    randomScope?: RandomAnthemScope;
+    randomCategory?: string;
+  }
+): AnthemDef | null {
   const norm = normalizeAnthemId(id);
   if (norm === 'none') return null;
   if (norm === 'random') {
     if (STINGER_ANTHEMS.length === 0) return null;
-    const idx = Math.floor(Math.random() * STINGER_ANTHEMS.length);
-    return STINGER_ANTHEMS[idx] || null;
+    const stored = loadStoredRandomAnthemPrefs();
+    const scope =
+      options?.randomScope !== undefined
+        ? normalizeRandomAnthemScope(options.randomScope)
+        : stored.scope;
+    const category =
+      options?.randomCategory !== undefined
+        ? normalizeRandomAnthemCategory(options.randomCategory)
+        : stored.category;
+    const pool =
+      scope === 'specific'
+        ? STINGER_ANTHEMS.filter((a) => a.category === category)
+        : STINGER_ANTHEMS;
+    const effectivePool = pool.length > 0 ? pool : STINGER_ANTHEMS;
+    const idx = Math.floor(Math.random() * effectivePool.length);
+    return effectivePool[idx] || null;
   }
   return STINGER_ANTHEMS.find((a) => a.id === norm) || null;
 }

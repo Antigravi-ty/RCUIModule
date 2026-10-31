@@ -186,6 +186,10 @@ export const AudioTab: React.FC<AudioTabProps> = ({
   const uploadStoreBgmFiles = useSpatialAudioStore((s) => s.uploadBgmFiles);
   const bgmTracksCount = useSpatialAudioStore((s) => s.bgmTracks.length);
   const bgmCurrentTrackTitle = useSpatialAudioStore((s) => s.bgmCurrentTrackTitle);
+  const bgmFadeDurationSec = useSpatialAudioStore(
+    (s) => s.tunerConfig?.bgmFadeDurationSec ?? 2.0
+  );
+  const updateTunerConfig = useSpatialAudioStore((s) => s.updateTunerConfig);
 
   const bgmEnabled = propBgmEnabled ?? storeBgmEnabled;
   const bgmVolume = propBgmVolume ?? storeBgmVolume ?? resolvedConfig.bgmVolume ?? 80;
@@ -244,8 +248,8 @@ export const AudioTab: React.FC<AudioTabProps> = ({
       }`}
       title={
         isBgmMoreExpanded
-          ? 'Collapse background music playback scenes'
-          : 'Expand background music playback scenes'
+          ? 'Collapse background music playback scenes & fade settings'
+          : 'Expand background music playback scenes & fade settings'
       }
     >
       <span className="underline underline-offset-3 decoration-current/60">
@@ -340,7 +344,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
               {uploadFolderButton}
             </div>
           }
-          hoverDescription="Background Music: Enable custom background soundtrack playback with smooth fade-in/fade-out and MediaSession shortcut support. Click More to choose active scenes (Free Play, Single Player Training, Multiplayer Training, Match), or Upload Folder to load local audio files."
+          hoverDescription="Background Music: Enable custom background soundtrack playback with smooth fade-in/fade-out and MediaSession shortcut support. Click More to choose active scenes and adjust fade-in/fade-out duration (up to 3.0s), or Upload Folder to load local audio files."
           onHover={(desc) => desc && onHover(desc)}
           onLeave={onLeave}
           isLight={isLight}
@@ -383,6 +387,28 @@ export const AudioTab: React.FC<AudioTabProps> = ({
                 />
               );
             })}
+
+            <SettingSliderRow
+              icon={Timer}
+              label="Fade-In / Fade-Out Duration"
+              description="Smooth volume ramp duration when enabling, disabling, playing, or pausing Background Music (0.1s – 3.0s)"
+              value={bgmFadeDurationSec}
+              min={0.1}
+              max={3.0}
+              step={0.1}
+              unit="s"
+              bordered={false}
+              developerMode={developerMode}
+              onChange={(next) =>
+                updateTunerConfig({
+                  bgmFadeDurationSec: Math.max(0.1, Math.min(3.0, Number(next) || 2.0)),
+                })
+              }
+              hoverDescription="Adjust the smooth fade-in and fade-out duration (0.1s to 3.0s, synced with Spatial Audio & Anthem Tuner) when playing, pausing, or toggling Background Music."
+              onHover={(desc) => desc && onHover(desc)}
+              onLeave={onLeave}
+              isLight={isLight}
+            />
           </div>
         )}
       </div>

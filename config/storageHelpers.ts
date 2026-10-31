@@ -37,6 +37,7 @@ export const STORAGE_KEYS = Object.freeze({
   ACTIVE_HOST: 'active-host',
   REF_OVERLAY_PROFILES: 'hitbox-ref-overlay-profiles',
   PLAYER_ANTHEM: 'player-anthem',
+  PLAYER_ANTHEM_RANDOM_PREFS: 'player-anthem-random-prefs',
   BGM_PREFS: 'bgm-preferences',
   SPATIAL_AUDIO_TUNER: 'spatial-audio-tuner',
 });

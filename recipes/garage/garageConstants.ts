@@ -46,12 +46,23 @@ export const ORANGE_TEAM_COLOURS = ORANGE_TEAM_COLORS;
 import {
   ANTHEM_CATALOG,
   ANTHEM_CATEGORIES,
+  ANTHEM_SPECIFIC_CATEGORIES,
   DEFAULT_ANTHEM_ID,
+  DEFAULT_RANDOM_ANTHEM_SCOPE,
+  DEFAULT_RANDOM_ANTHEM_CATEGORY,
   type AnthemDef,
   type AnthemCategoryDef,
+  type RandomAnthemScope,
 } from '../../config/spatialAudioConfig';
 
-export { ANTHEM_CATALOG, ANTHEM_CATEGORIES, DEFAULT_ANTHEM_ID };
-export type { AnthemDef, AnthemCategoryDef };
+export {
+  ANTHEM_CATALOG,
+  ANTHEM_CATEGORIES,
+  ANTHEM_SPECIFIC_CATEGORIES,
+  DEFAULT_ANTHEM_ID,
+  DEFAULT_RANDOM_ANTHEM_SCOPE,
+  DEFAULT_RANDOM_ANTHEM_CATEGORY,
+};
+export type { AnthemDef, AnthemCategoryDef, RandomAnthemScope };
 
 export const ANTHEMS: readonly AnthemDef[] = ANTHEM_CATALOG;
