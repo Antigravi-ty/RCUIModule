@@ -31,45 +31,49 @@ export interface TakeoverVignetteCurve {
 export interface TakeoverVignetteConfig {
   /** Whether the surrounding 4-edge rounded-rectangle vignette layer is enabled beneath the HUD */
   enabled: boolean;
-  /** Vignette tint color (default `#000000`) */
+  /** Inner opening (t=0 at distancePct) RGB tint color (default `#000000`) */
+  innerColor?: string;
+  /** Inner opening (t=0 at distancePct) alpha / opacity percentage (`0` – `100`, default `0`) */
+  innerIntensityPct?: number;
+  /** Outer edge (t=1 at outerReachPct) RGB tint color (default `#000000`) */
   color: string;
-  /** Edge peak intensity / opacity percentage (`0` – `100`, default `50`) */
+  /** Outer edge (t=1 at outerReachPct) peak intensity / opacity percentage (`0` – `100`, default `50`) */
   intensityPct: number;
-  /** Clear center rounded-rectangle distance percentage from screen center (`0` – `95`, default `40`) */
+  /** Clear center rounded-rectangle distance percentage from screen center (`0` – `95`, default `60`) */
   distancePct: number;
-  /** Outer full-density reach percentage (`20` – `140`, default `120`) */
+  /** Outer full-density reach percentage (`20` – `140`, default `140`) */
   outerReachPct: number;
-  /** Non-linear Cubic-Bezier falloff curve from clear inner boundary (`0`) to outer edge (`1`) */
+  /** Non-linear Cubic-Bezier falloff curve from inner boundary (`0`) to outer edge (`1`) */
   curve: TakeoverVignetteCurve;
   /** Fade-in transition duration when entering `replacing-in` in ms (default `280`) */
   fadeInMs: number;
   /** Fade-out transition duration when `3-2-1` completes and HUD returns in ms (default `380`) */
   fadeOutMs: number;
-  /** Corner radius of the clear inner rounded-rectangle opening in px (default `36`) */
+  /** Corner radius of the clear inner rounded-rectangle opening in px (default `12`) */
   cornerRadiusPx?: number;
 }
 
 export interface TakeoverLayoutConfig {
-  /** Upward vertical offset in px relative to `bottom-center` (default `24`) */
+  /** Upward vertical offset in px relative to `bottom-center` (default `0`) */
   bottomOffsetPx: number;
 }
 
 export interface TakeoverTopLabelStyleConfig {
   /** Whether top label (`Takeover in...`) uses team-specific fill color (Blue vs Orange) */
   useTeamColor?: boolean;
-  /** Blue team top label font fill color (default `#2563EB`) */
+  /** Blue team top label font fill color (default `#38BDF8`) */
   blueTeamColor?: string;
-  /** Orange team top label font fill color (default `#EA580C`) */
+  /** Orange team top label font fill color (default `#FB923C`) */
   orangeTeamColor?: string;
-  /** Top label stroke color (default `#FFFFFF` white) */
+  /** Top label stroke color (default `#000000`) */
   strokeColor?: string;
-  /** Top label stroke width in px (default `0.75`) */
+  /** Top label stroke width in px (default `0.5`) */
   strokeWidthPx?: number;
-  /** Top label outer glow color (default `#FFFFFF` white) */
+  /** Top label outer glow color (default `#000000`) */
   glowColor?: string;
   /** Top label tight core glow blur in px (default `6`) */
   innerBlurPx?: number;
-  /** Top label outer glow blur in px (default `16`) */
+  /** Top label outer glow blur in px (default `0`) */
   outerBlurPx?: number;
   /** Top label ambient glow blur in px (default `28`) */
   ambientBlurPx?: number;
@@ -78,7 +82,7 @@ export interface TakeoverTopLabelStyleConfig {
 }
 
 export interface TakeoverGlowConfig extends CenterUpperGlowConfig {
-  /** Team-colored + white glowing stroke overrides for the stationary top label (`Takeover in...`) */
+  /** Team-colored + stroke/glow overrides for the stationary top label (`Takeover in...`) */
   topLabelStyle?: TakeoverTopLabelStyleConfig;
 }
 
@@ -124,13 +128,13 @@ export interface TakeoverCountdownHUDProps {
 
 export const DEFAULT_TAKEOVER_TOP_LABEL_STYLE: Required<TakeoverTopLabelStyleConfig> = {
   useTeamColor: true,
-  blueTeamColor: '#2563EB',
-  orangeTeamColor: '#EA580C',
-  strokeColor: '#FFFFFF',
-  strokeWidthPx: 0.75,
-  glowColor: '#FFFFFF',
+  blueTeamColor: '#38BDF8',
+  orangeTeamColor: '#FB923C',
+  strokeColor: '#000000',
+  strokeWidthPx: 0.5,
+  glowColor: '#000000',
   innerBlurPx: 6,
-  outerBlurPx: 16,
+  outerBlurPx: 0,
   ambientBlurPx: 28,
   glowIntensityPct: 100,
 };
@@ -138,13 +142,13 @@ export const DEFAULT_TAKEOVER_TOP_LABEL_STYLE: Required<TakeoverTopLabelStyleCon
 export const DEFAULT_TAKEOVER_GLOW: TakeoverGlowConfig = {
   ...DEFAULT_RL_COUNTDOWN_GLOW,
   textColor: '#FFE600',
-  glowColor: '#F59E0B',
+  glowColor: '#FFE600',
   innerBlurPx: 0,
   outerBlurPx: 28,
   ambientBlurPx: 0,
   intensityPct: 100,
   topLabelColor: '#FFFFFF',
-  topLabelGlowColor: '#FFFFFF',
+  topLabelGlowColor: '#F59E0B',
   strokeWidthPx: 0,
   strokeColor: '#FFFBEB',
   backdropBloomPct: 0,
@@ -174,15 +178,17 @@ export const DEFAULT_TAKEOVER_TIMING: CenterUpperTimingConfig = {
 };
 
 export const DEFAULT_TAKEOVER_LAYOUT: TakeoverLayoutConfig = {
-  bottomOffsetPx: 24,
+  bottomOffsetPx: 0,
 };
 
 export const DEFAULT_TAKEOVER_VIGNETTE: TakeoverVignetteConfig = {
   enabled: true,
+  innerColor: '#000000',
+  innerIntensityPct: 0,
   color: '#000000',
   intensityPct: 50,
-  distancePct: 40,
-  outerReachPct: 120,
+  distancePct: 60,
+  outerReachPct: 140,
   curve: {
     p1x: 0.28,
     p1y: 0.01,
@@ -191,8 +197,36 @@ export const DEFAULT_TAKEOVER_VIGNETTE: TakeoverVignetteConfig = {
   },
   fadeInMs: 280,
   fadeOutMs: 380,
-  cornerRadiusPx: 36,
+  cornerRadiusPx: 12,
 };
+
+function parseHexToRgbTuple(hex: string): [number, number, number] {
+  const clean = (hex || '#000000').replace('#', '').trim();
+  if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16);
+    const g = parseInt(clean[1] + clean[1], 16);
+    const b = parseInt(clean[2] + clean[2], 16);
+    return [
+      Number.isFinite(r) ? r : 0,
+      Number.isFinite(g) ? g : 0,
+      Number.isFinite(b) ? b : 0,
+    ];
+  }
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return [
+    Number.isFinite(r) ? r : 0,
+    Number.isFinite(g) ? g : 0,
+    Number.isFinite(b) ? b : 0,
+  ];
+}
+
+export function formatVignetteEndpointRgba(hex: string, alphaPct: number): string {
+  const [r, g, b] = parseHexToRgbTuple(hex);
+  const a = Math.max(0, Math.min(1, alphaPct / 100));
+  return `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
+}
 
 function sampleCubicBezier1D(u: number, p1: number, p2: number): number {
   const inv = 1 - u;
@@ -227,13 +261,16 @@ export function evaluateCubicBezierAtX(
 }
 
 /**
- * Builds a 4-edge rectangular gradient fallback CSS string (used when SVG is not active).
+ * Builds a 4-edge rectangular gradient fallback CSS string between Inner RGBA (t=0) and Outer RGBA (t=1).
  */
 export function buildTakeoverVignetteGradient(config: TakeoverVignetteConfig): string {
-  if (!config.enabled || config.intensityPct <= 0) {
+  const innerAlpha = Math.max(0, Math.min(1, (config.innerIntensityPct ?? 0) / 100));
+  const outerAlpha = Math.max(0, Math.min(1, config.intensityPct / 100));
+  if (!config.enabled || (innerAlpha <= 0 && outerAlpha <= 0)) {
     return 'none';
   }
-  const peakAlpha = Math.max(0, Math.min(1, config.intensityPct / 100));
+  const innerRgb = parseHexToRgbTuple(config.innerColor ?? config.color ?? '#000000');
+  const outerRgb = parseHexToRgbTuple(config.color ?? '#000000');
   const innerStop = Math.max(0, Math.min(95, config.distancePct));
   const outerStop = Math.max(innerStop + 4, Math.min(150, config.outerReachPct));
   const span = outerStop - innerStop;
@@ -245,18 +282,22 @@ export function buildTakeoverVignetteGradient(config: TakeoverVignetteConfig): s
         const distFromCenterPct = innerStop + frac * span;
         const posFromEdgePct = Math.max(0, 50 - distFromCenterPct * 0.5);
         const curveFactor = evaluateCubicBezierAtX(frac, config.curve);
-        const alpha = peakAlpha * curveFactor;
-        return `${hexToRgba(config.color, alpha)} ${posFromEdgePct.toFixed(1)}%`;
+        const r = Math.round(innerRgb[0] + (outerRgb[0] - innerRgb[0]) * curveFactor);
+        const g = Math.round(innerRgb[1] + (outerRgb[1] - innerRgb[1]) * curveFactor);
+        const b = Math.round(innerRgb[2] + (outerRgb[2] - innerRgb[2]) * curveFactor);
+        const alpha = innerAlpha + (outerAlpha - innerAlpha) * curveFactor;
+        return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)}) ${posFromEdgePct.toFixed(1)}%`;
       })
       .reverse()
       .join(', ');
 
   const edgeStops = buildEdgeStops();
+  const centerStopRgba = `rgba(${innerRgb[0]}, ${innerRgb[1]}, ${innerRgb[2]}, ${innerAlpha.toFixed(3)})`;
   return [
-    `linear-gradient(to bottom, ${edgeStops}, transparent 50%)`,
-    `linear-gradient(to top, ${edgeStops}, transparent 50%)`,
-    `linear-gradient(to right, ${edgeStops}, transparent 50%)`,
-    `linear-gradient(to left, ${edgeStops}, transparent 50%)`,
+    `linear-gradient(to bottom, ${edgeStops}, ${centerStopRgba} 50%)`,
+    `linear-gradient(to top, ${edgeStops}, ${centerStopRgba} 50%)`,
+    `linear-gradient(to right, ${edgeStops}, ${centerStopRgba} 50%)`,
+    `linear-gradient(to left, ${edgeStops}, ${centerStopRgba} 50%)`,
   ].join(', ');
 }
 
@@ -272,42 +313,56 @@ const VIGNETTE_RING_SAMPLES = 28;
 /**
  * TakeoverVignetteOverlay
  * Renders a 4-edge rounded-rectangle atmospheric vignette mask beneath the HUD layer (`z-10`, below `HudAnchorStage z-20`).
- * Fades inward from the 4 screen edges toward the clear rounded-rectangle center opening, parameterized by
- * `intensityPct`, `distancePct`, `outerReachPct`, `cornerRadiusPx`, and `curve` (Cubic-Bezier).
+ * Interpolates both RGB color and Alpha from Inner Endpoint (`innerColor`, `innerIntensityPct` at `distancePct`, `t=0`)
+ * to Outer Endpoint (`color`, `intensityPct` at `outerReachPct`, `t=1`) along the Cubic-Bezier `curve`.
  */
 export const TakeoverVignetteOverlay: React.FC<TakeoverVignetteOverlayProps> = React.memo(
   ({ config, active, className = '' }) => {
     const rawId = useId();
     const maskId = `takeover-rect-vignette-mask-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
     const transitionMs = active ? config.fadeInMs : config.fadeOutMs;
-    const isShown = active && config.enabled && config.intensityPct > 0;
+    const innerAlpha = Math.max(0, Math.min(1, (config.innerIntensityPct ?? 0) / 100));
+    const outerAlpha = Math.max(0, Math.min(1, config.intensityPct / 100));
+    const isShown = active && config.enabled && (outerAlpha > 0 || innerAlpha > 0);
 
-    const peakAlpha = Math.max(0, Math.min(1, config.intensityPct / 100));
+    const innerHex = config.innerColor ?? config.color ?? '#000000';
+    const outerHex = config.color ?? '#000000';
+    const innerRgb = parseHexToRgbTuple(innerHex);
+    const outerRgb = parseHexToRgbTuple(outerHex);
+
     const innerPct = Math.max(0, Math.min(95, config.distancePct));
     const outerPct = Math.max(innerPct + 4, Math.min(150, config.outerReachPct));
-    const baseRadiusPx = config.cornerRadiusPx ?? 36;
+    const baseRadiusPx = config.cornerRadiusPx ?? 12;
 
-    const rings = [];
+    const maskRings: React.ReactNode[] = [];
+    const colorRings: React.ReactNode[] = [];
+
     for (let i = 0; i < VIGNETTE_RING_SAMPLES; i++) {
       const tOuter = 1 - i / VIGNETTE_RING_SAMPLES;
       const tInner = 1 - (i + 1) / VIGNETTE_RING_SAMPLES;
       const tMid = 0.5 * (tOuter + tInner);
 
       // Map normalized distance `s = innerPct + t * (outerPct - innerPct)` where s=0 is center and s=100 is screen edge
-      const sInner = innerPct + tInner * (outerPct - innerPct);
-      const halfSpanPct = Math.max(0, Math.min(50, sInner * 0.5));
+      const sOuter = innerPct + tOuter * (outerPct - innerPct);
+      const halfSpanPct = Math.max(0, Math.min(50, sOuter * 0.5));
       const xPct = 50 - halfSpanPct;
       const yPct = 50 - halfSpanPct;
       const wPct = halfSpanPct * 2;
       const hPct = halfSpanPct * 2;
 
+      // curveVal = 0 at inner boundary (t=0) and curveVal = 1 at outer boundary (t=1)
       const curveVal = evaluateCubicBezierAtX(tMid, config.curve);
-      const maskLuminance = Math.max(0, Math.min(1, 1 - curveVal));
-      const gray = Math.round(maskLuminance * 255);
+      const ringAlpha = Math.max(0, Math.min(1, innerAlpha + (outerAlpha - innerAlpha) * curveVal));
+      const gray = Math.round(ringAlpha * 255);
+
+      const r = Math.round(innerRgb[0] + (outerRgb[0] - innerRgb[0]) * curveVal);
+      const g = Math.round(innerRgb[1] + (outerRgb[1] - innerRgb[1]) * curveVal);
+      const b = Math.round(innerRgb[2] + (outerRgb[2] - innerRgb[2]) * curveVal);
+
       const scaleFactor = Math.max(0.15, wPct / 100);
       const rx = Math.round(baseRadiusPx * scaleFactor);
 
-      rings.push(
+      maskRings.push(
         <rect
           key={i}
           x={`${xPct.toFixed(2)}%`}
@@ -319,7 +374,23 @@ export const TakeoverVignetteOverlay: React.FC<TakeoverVignetteOverlayProps> = R
           fill={`rgb(${gray}, ${gray}, ${gray})`}
         />
       );
+
+      colorRings.push(
+        <rect
+          key={i}
+          x={`${xPct.toFixed(2)}%`}
+          y={`${yPct.toFixed(2)}%`}
+          width={`${wPct.toFixed(2)}%`}
+          height={`${hPct.toFixed(2)}%`}
+          rx={rx}
+          ry={rx}
+          fill={`rgb(${r}, ${g}, ${b})`}
+        />
+      );
     }
+
+    const outerGray = Math.round(outerAlpha * 255);
+    const innerGray = Math.round(innerAlpha * 255);
 
     const clearHalfSpanPct = Math.max(0, Math.min(50, innerPct * 0.5));
     const clearXYPct = 50 - clearHalfSpanPct;
@@ -347,11 +418,17 @@ export const TakeoverVignetteOverlay: React.FC<TakeoverVignetteOverlayProps> = R
         >
           <defs>
             <mask id={maskId} maskUnits="userSpaceOnUse" x="0%" y="0%" width="100%" height="100%">
-              {/* Outer boundary at 100% vignette strength */}
-              <rect x="0%" y="0%" width="100%" height="100%" fill="rgb(255, 255, 255)" />
-              {/* Concentric rounded-rectangle falloff bands from outerReachPct inward to distancePct */}
-              {rings}
-              {/* Innermost clear rounded-rectangle opening (0% vignette darkening) */}
+              {/* Outer boundary at Outer Endpoint alpha (t=1) */}
+              <rect
+                x="0%"
+                y="0%"
+                width="100%"
+                height="100%"
+                fill={`rgb(${outerGray}, ${outerGray}, ${outerGray})`}
+              />
+              {/* Concentric rounded-rectangle falloff bands from outerReachPct (t=1) inward to distancePct (t=0) */}
+              {maskRings}
+              {/* Innermost opening at Inner Endpoint alpha (t=0) */}
               {clearWHPct > 0 && (
                 <rect
                   x={`${clearXYPct.toFixed(2)}%`}
@@ -360,20 +437,32 @@ export const TakeoverVignetteOverlay: React.FC<TakeoverVignetteOverlayProps> = R
                   height={`${clearWHPct.toFixed(2)}%`}
                   rx={clearRx}
                   ry={clearRx}
-                  fill="rgb(0, 0, 0)"
+                  fill={`rgb(${innerGray}, ${innerGray}, ${innerGray})`}
                 />
               )}
             </mask>
           </defs>
-          <rect
-            x="0%"
-            y="0%"
-            width="100%"
-            height="100%"
-            fill={config.color}
-            fillOpacity={peakAlpha}
-            mask={`url(#${maskId})`}
-          />
+          <g mask={`url(#${maskId})`}>
+            <rect
+              x="0%"
+              y="0%"
+              width="100%"
+              height="100%"
+              fill={`rgb(${outerRgb[0]}, ${outerRgb[1]}, ${outerRgb[2]})`}
+            />
+            {colorRings}
+            {clearWHPct > 0 && (
+              <rect
+                x={`${clearXYPct.toFixed(2)}%`}
+                y={`${clearXYPct.toFixed(2)}%`}
+                width={`${clearWHPct.toFixed(2)}%`}
+                height={`${clearWHPct.toFixed(2)}%`}
+                rx={clearRx}
+                ry={clearRx}
+                fill={`rgb(${innerRgb[0]}, ${innerRgb[1]}, ${innerRgb[2]})`}
+              />
+            )}
+          </g>
         </svg>
       </div>
     );
@@ -383,7 +472,7 @@ export const TakeoverVignetteOverlay: React.FC<TakeoverVignetteOverlayProps> = R
 TakeoverVignetteOverlay.displayName = 'TakeoverVignetteOverlay';
 
 /**
- * Resolves the top label (`Takeover in...`) fill color, white stroke, and white outer glow shadow
+ * Resolves the top label (`Takeover in...`) fill color, stroke, and outer glow shadow
  * based on the player's team side (`'blue'` | `'orange'`) and `TakeoverGlowConfig`.
  */
 export function resolveTakeoverTopLabelVisuals(
@@ -408,24 +497,24 @@ export function resolveTakeoverTopLabelVisuals(
     : glow.topLabelColor || '#FFFFFF';
 
   const strokeWidthPx = style.strokeWidthPx;
-  const strokeColor = style.strokeColor || '#FFFFFF';
+  const strokeColor = style.strokeColor || '#000000';
   const strokeCss =
     strokeWidthPx > 0 ? `${strokeWidthPx}px ${strokeColor}` : '0px transparent';
 
   const glowShadow = buildOuterGlowTextShadow(
-    style.glowColor || '#FFFFFF',
+    style.glowColor || strokeColor,
     style.innerBlurPx,
     style.outerBlurPx,
     style.ambientBlurPx,
     style.glowIntensityPct
   );
 
-  // Pair crisp white perimeter outline halo with the soft white outer glow so team color glyphs stay legible on all arenas
-  const crispWhiteHalo =
+  // Pair crisp perimeter outline halo with the soft outer glow so team color glyphs stay legible on all arenas
+  const crispHalo =
     strokeWidthPx > 0
       ? `0 0 2px ${hexToRgba(strokeColor, 0.95)}, 0 0 5px ${hexToRgba(strokeColor, 0.75)}`
       : '';
-  const textShadowCss = [crispWhiteHalo, glowShadow !== 'none' ? glowShadow : '']
+  const textShadowCss = [crispHalo, glowShadow !== 'none' ? glowShadow : '']
     .filter(Boolean)
     .join(', ') || 'none';
 

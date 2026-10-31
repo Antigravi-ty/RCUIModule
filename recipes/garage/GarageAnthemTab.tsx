@@ -107,17 +107,22 @@ export const GarageAnthemTab: React.FC<GarageAnthemTabProps> = ({
   ) => {
     const isNone = item.id === 'none';
     const isRandom = item.id === 'random';
+    const isPinnedTop = keyPrefix === 'pinned-current';
     const showBadge = !isNone && !isRandom;
     const isPreviewing = !isNone && previewingAnthemId === item.id;
     const rowDropdownKey = `${keyPrefix}-${item.id}`;
     const isDropdownOpen = openDropdownKey === rowDropdownKey;
+    const randomResultBadgeLabel =
+      randomAnthemScope === 'specific'
+        ? activeRandomCategoryMeta?.label ?? randomAnthemCategory
+        : 'All';
 
     const randomHoverText =
       randomAnthemScope === 'specific'
         ? `Random (${activeRandomCategoryMeta?.label ?? randomAnthemCategory}): Shuffle across ${
             activeRandomCategoryMeta?.arenaName ?? randomAnthemCategory
-          } goal stingers. Use All / Specific and the category dropdown to customize.`
-        : 'Random (All): Shuffle across all 58 stadium goal celebration stingers. Switch to Specific to target a single arena category.';
+          } goal stingers. Use All / Specific and the category dropdown in the list below to customize.`
+        : 'Random (All): Shuffle across all 58 stadium goal celebration stingers. Use the Random row in the list below to switch between All and Specific.';
 
     return (
       <div
@@ -235,9 +240,21 @@ export const GarageAnthemTab: React.FC<GarageAnthemTabProps> = ({
                 </span>
               </div>
             )}
+
+            {isRandom && isPinnedTop && (
+              <div className="flex items-center gap-2 shrink-0">
+                <Badge
+                  size="sm"
+                  variant={isSelected ? 'amber' : 'neutral'}
+                  isLight={isLight}
+                >
+                  {randomResultBadgeLabel}
+                </Badge>
+              </div>
+            )}
           </button>
 
-          {isRandom && (
+          {isRandom && !isPinnedTop && (
             <div
               className="flex items-center gap-1.5 shrink-0"
               onClick={(e) => e.stopPropagation()}

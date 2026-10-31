@@ -149,10 +149,11 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
         const showSkipReady = Boolean(slot.replaySkipReady);
         const isReplayOrSpec = currentMode === 'goal-replay' || currentMode === 'spectator';
 
-        const underlapPx = Math.max(0, Math.round(resolvedSkipCfg.underlapPx ?? 12));
-        const protrudeWidthPx = Math.max(20, Math.round(resolvedSkipCfg.protrudeWidthPx ?? 38));
+        const underlapPx = Math.max(0, Math.round(resolvedSkipCfg.underlapPx ?? 20));
+        const protrudeWidthPx = Math.max(20, Math.round(resolvedSkipCfg.protrudeWidthPx ?? 34));
         const cardRadiusPx = Math.max(0, Math.round(resolvedSkipCfg.cardRadiusPx ?? 9));
-        const iconOffsetXPx = Math.round(resolvedSkipCfg.iconOffsetXPx ?? 0);
+        const iconOffsetXPx = Number(resolvedSkipCfg.iconOffsetXPx ?? 0);
+        const iconOffsetYPx = Number(resolvedSkipCfg.iconOffsetYPx ?? -1);
         const enterMs = Math.max(0, Math.round(resolvedSkipCfg.enterDurationMs ?? 220));
         const exitMs = Math.max(0, Math.round(resolvedSkipCfg.exitDurationMs ?? 160));
 
@@ -219,7 +220,9 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
             skipSvgEl.style.color = effectiveColor;
             skipSvgEl.style.filter = skipGlow !== 'none' ? skipGlow : 'none';
             skipSvgEl.style.transform =
-              iconOffsetXPx !== 0 ? `translate3d(${iconOffsetXPx}px, 0, 0)` : 'none';
+              iconOffsetXPx !== 0 || iconOffsetYPx !== 0
+                ? `translate3d(${iconOffsetXPx}px, ${iconOffsetYPx}px, 0)`
+                : 'none';
             const pathD =
               SKIP_ICON_VARIANT_PATHS[effectiveVariant] ?? SKIP_ICON_VARIANT_PATHS.check;
             const paths = skipSvgEl.querySelectorAll('path');
@@ -468,8 +471,8 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
       side === 'left' ? 'rounded-r-[9px] rounded-l-none' : 'rounded-l-[9px] rounded-r-none';
     const initialDemoCfg = resolveDemoIndicatorConfig(demoIndicatorConfig);
     const initialSkipCfg = resolveSkipIndicatorConfig(skipIndicatorConfig);
-    const initUnderlapPx = Math.max(0, Math.round(initialSkipCfg.underlapPx ?? 12));
-    const initProtrudePx = Math.max(20, Math.round(initialSkipCfg.protrudeWidthPx ?? 38));
+    const initUnderlapPx = Math.max(0, Math.round(initialSkipCfg.underlapPx ?? 20));
+    const initProtrudePx = Math.max(20, Math.round(initialSkipCfg.protrudeWidthPx ?? 34));
     const initRadiusPx = Math.max(0, Math.round(initialSkipCfg.cardRadiusPx ?? 9));
 
     return (
@@ -670,6 +673,12 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                     glowColor={initialSlot?.skipIndicatorColor ?? initialSkipCfg.glowColor}
                     glowBlurPx={initialSkipCfg.glowBlurPx}
                     glowIntensityPct={initialSkipCfg.glowIntensityPct}
+                    style={{
+                      transform:
+                        initialSkipCfg.iconOffsetXPx !== 0 || initialSkipCfg.iconOffsetYPx !== 0
+                          ? `translate3d(${initialSkipCfg.iconOffsetXPx}px, ${initialSkipCfg.iconOffsetYPx}px, 0)`
+                          : undefined,
+                    }}
                   />
                 </div>
               </div>

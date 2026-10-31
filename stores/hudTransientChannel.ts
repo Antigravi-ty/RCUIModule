@@ -21,15 +21,16 @@ export const DEFAULT_DEMO_INDICATOR_CONFIG: EdgeDemoIndicatorConfig = {
 export const DEFAULT_SKIP_INDICATOR_CONFIG: EdgeSkipIndicatorConfig = {
   variant: 'check',
   color: '#10B981',
-  strokeWidth: 2.0,
+  strokeWidth: 2,
   sizePx: 24,
   glowColor: '#10B981',
   glowBlurPx: 6,
   glowIntensityPct: 110,
-  protrudeWidthPx: 38,
-  underlapPx: 12,
+  protrudeWidthPx: 34,
+  underlapPx: 20,
   cardRadiusPx: 9,
   iconOffsetXPx: 0,
+  iconOffsetYPx: -1,
   enterDurationMs: 220,
   exitDurationMs: 160,
   autoResetOnKickoff: true,
@@ -101,6 +102,10 @@ export function resolveSkipIndicatorConfig(
       typeof r.iconOffsetXPx === 'number' && Number.isFinite(r.iconOffsetXPx)
         ? r.iconOffsetXPx
         : base.iconOffsetXPx,
+    iconOffsetYPx:
+      typeof r.iconOffsetYPx === 'number' && Number.isFinite(r.iconOffsetYPx)
+        ? r.iconOffsetYPx
+        : base.iconOffsetYPx,
     enterDurationMs:
       typeof r.enterDurationMs === 'number' && Number.isFinite(r.enterDurationMs)
         ? r.enterDurationMs

@@ -87,14 +87,16 @@ export interface EdgeSkipIndicatorConfig {
   glowBlurPx: number;
   /** Icon SVG drop-shadow glow intensity percentage (default 110, range 0 - 200) */
   glowIntensityPct: number;
-  /** Visible inward protrusion length past the player card edge in px (default 38, range 24 - 76) */
+  /** Visible inward protrusion length past the player card edge in px (default 34, range 24 - 76) */
   protrudeWidthPx: number;
-  /** Inner overlap width tucked underneath the player card in px so borders extend seamlessly from beneath the card (default 12, range 0 - 28) */
+  /** Inner overlap width tucked underneath the player card in px so borders extend seamlessly from beneath the card (default 20, range 0 - 28) */
   underlapPx: number;
   /** Outer rounded corner radius of the extension card in px (default 9, range 0 - 18) */
   cardRadiusPx: number;
   /** Horizontal fine-tuning offset of the icon inside the protruding area in px (default 0, range -12 - 12) */
   iconOffsetXPx: number;
+  /** Vertical fine-tuning offset of the icon inside the protruding area in px for optical vs mathematical center balance (default -1, range -12 - 12) */
+  iconOffsetYPx: number;
   /** Slide-out push animation duration when activated in ms (default 220, range 0 - 600) */
   enterDurationMs: number;
   /** Slide-in retract animation duration when deactivated/reset in ms (default 160, faster than 300ms 1-2-3 contraction) */
