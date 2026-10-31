@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import {
   audioConfig,
-  DEFAULT_BOOST_VARIATION,
+  ADVANCED_AUDIO_DETAIL_CATALOG,
   exportAudioSettingsJson,
-  setBoostStartVariation,
-  setBoostLoopVariation,
-  setBoostEndVariation,
-  setAllBoostAudioVariations,
-  previewBoostAudioVariation,
+  resetAllAudioDetailVolumes,
+  previewAudioDetailItem,
+  stopAudioDetailPreview,
   CONSOLE_LOG_EVENT_CATALOG,
   selectAllEventLogs,
   deselectAllEventLogs,
@@ -23,10 +21,6 @@ import {
   setSelectedController,
   getConnectedGamepads,
 } from '../../config/InputBindings.js';
-import type {
-  PhaseVariationSelection,
-  VariationPhaseId,
-} from '../../compounds/PhaseVariationMatrix';
 import type { EventCatalogEntry } from '../../compounds/tuner/EventFilterMatrix';
 
 export interface ControllerAxesConfig {
@@ -36,35 +30,6 @@ export interface ControllerAxesConfig {
   triggerThreshold: number;
 }
 
-const GROUP_VOLUME_CONFIG_KEYS: Record<string, string[]> = {
-  'vehicle-boost': [
-    'engineVolume',
-    'boostVolume',
-    'vehicleSelfVolume',
-    'jumpVolume',
-    'doubleJumpVolume',
-    'dodgeVolume',
-    'supersonicVolume',
-    'flipResetVolume',
-    'boostCollectVolume',
-  ],
-  'ball-arena': [
-    'ballCollisionVolume',
-    'carBallHitVolume',
-    'ballWorldHitVolume',
-    'goalpostHitVolume',
-    'ballRollingVolume',
-    'ballFlyingVolume',
-    'carCarCollisionVolume',
-  ],
-  'stingers-fanfare': [
-    'goalScoredVolume',
-    'endgameVolume',
-    'countdown10sVolume',
-  ],
-  'ui-ambient': ['masterVolume'],
-};
-
 const EVENT_CATALOG_ITEMS: EventCatalogEntry[] = CONSOLE_LOG_EVENT_CATALOG.map(
   (item) => ({
     hex: item.hex,
@@ -73,70 +38,29 @@ const EVENT_CATALOG_ITEMS: EventCatalogEntry[] = CONSOLE_LOG_EVENT_CATALOG.map(
   })
 );
 
+function readDetailVolumesFromConfig(): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const item of ADVANCED_AUDIO_DETAIL_CATALOG) {
+    const raw = audioConfig.get(item.key);
+    const val = typeof raw === 'number' && Number.isFinite(raw) ? raw : 1.0;
+    map[item.key] = Math.max(0, Math.min(500, Math.round(val * 100)));
+  }
+  return map;
+}
+
 export function useLayer4AdvancedAudioStoreBinding<TProps extends object>(
   rawProps: TProps
 ): TProps {
   const props = rawProps as Record<string, any>;
   const goBack = useAppStore((s) => s.goBack);
-  const [boostSelection, setBoostSelection] = useState<PhaseVariationSelection>(
-    () =>
-      props.defaultBoostSelection ?? {
-        start: String(
-          audioConfig.get('boostStartVariation') || DEFAULT_BOOST_VARIATION
-        ),
-        loop: String(
-          audioConfig.get('boostLoopVariation') || DEFAULT_BOOST_VARIATION
-        ),
-        end: String(
-          audioConfig.get('boostEndVariation') || DEFAULT_BOOST_VARIATION
-        ),
-      }
-  );
 
-  const [groupVolumes, setGroupVolumes] = useState<Record<string, number>>(
-    () => ({
-      'vehicle-boost': Math.round(
-        Number(audioConfig.get('boostVolume') ?? 1) * 100
-      ),
-      'ball-arena': Math.round(
-        Number(audioConfig.get('ballCollisionVolume') ?? 1) * 100
-      ),
-      'stingers-fanfare': Math.round(
-        Number(audioConfig.get('goalScoredVolume') ?? 1) * 100
-      ),
-      'ui-ambient': Math.round(
-        Number(audioConfig.get('masterVolume') ?? 1) * 100
-      ),
-    })
+  const [detailVolumes, setDetailVolumes] = useState<Record<string, number>>(
+    () => props.defaultDetailVolumes ?? readDetailVolumesFromConfig()
   );
 
   useEffect(() => {
     const sync = () => {
-      setBoostSelection({
-        start: String(
-          audioConfig.get('boostStartVariation') || DEFAULT_BOOST_VARIATION
-        ),
-        loop: String(
-          audioConfig.get('boostLoopVariation') || DEFAULT_BOOST_VARIATION
-        ),
-        end: String(
-          audioConfig.get('boostEndVariation') || DEFAULT_BOOST_VARIATION
-        ),
-      });
-      setGroupVolumes({
-        'vehicle-boost': Math.round(
-          Number(audioConfig.get('boostVolume') ?? 1) * 100
-        ),
-        'ball-arena': Math.round(
-          Number(audioConfig.get('ballCollisionVolume') ?? 1) * 100
-        ),
-        'stingers-fanfare': Math.round(
-          Number(audioConfig.get('goalScoredVolume') ?? 1) * 100
-        ),
-        'ui-ambient': Math.round(
-          Number(audioConfig.get('masterVolume') ?? 1) * 100
-        ),
-      });
+      setDetailVolumes(readDetailVolumesFromConfig());
     };
     const unsub = audioConfig.subscribe(sync);
     return () => {
@@ -144,72 +68,46 @@ export function useLayer4AdvancedAudioStoreBinding<TProps extends object>(
     };
   }, []);
 
-  const handleBoostPhaseChange = (
-    variationId: string,
-    phase: VariationPhaseId
-  ) => {
-    setBoostSelection((prev) => {
-      const next = { ...prev, [phase]: variationId };
-      if (next.start === next.loop && next.loop === next.end) {
-        useAppStore
-          .getState()
-          .updateMaterials({
-            boostAudio: variationId as
-              | 'rush'
-              | 'standard'
-              | 'flamethrower'
-              | 'plasma',
-          });
-      }
-      return next;
-    });
-    if (phase === 'start') {
-      setBoostStartVariation(variationId);
-    } else if (phase === 'loop') {
-      setBoostLoopVariation(variationId);
-    } else {
-      setBoostEndVariation(variationId);
-    }
-    previewBoostAudioVariation(variationId, phase);
+  const handleDetailVolumeChange = (key: string, percentVal: number) => {
+    const clampedPct = Math.max(0, Math.min(500, Math.round(Number(percentVal) || 0)));
+    setDetailVolumes((prev) => ({ ...prev, [key]: clampedPct }));
+    audioConfig.set(key, clampedPct / 100);
   };
 
-  const handleBoostAllChange = (variationId: string) => {
-    setBoostSelection({
-      start: variationId,
-      loop: variationId,
-      end: variationId,
-    });
-    setAllBoostAudioVariations(variationId);
-    useAppStore
-      .getState()
-      .updateMaterials({
-        boostAudio: variationId as
-          | 'rush'
-          | 'standard'
-          | 'flamethrower'
-          | 'plasma',
-      });
-    previewBoostAudioVariation(variationId, 'start');
+  const handleResetDetailVolumes = () => {
+    resetAllAudioDetailVolumes();
+    setDetailVolumes(readDetailVolumesFromConfig());
   };
 
-  const handleGroupVolumeChange = (groupId: string, percentVal: number) => {
-    setGroupVolumes((prev) => ({ ...prev, [groupId]: percentVal }));
-    const floatVal = percentVal / 100;
-    const keys = GROUP_VOLUME_CONFIG_KEYS[groupId] || [];
-    for (const k of keys) {
-      audioConfig.set(k, floatVal);
-    }
+  const handlePreviewDetail = (key: string) => {
+    previewAudioDetailItem(key);
   };
 
-  const handleResetGroupVolumes = () => {
-    for (const groupId of Object.keys(GROUP_VOLUME_CONFIG_KEYS)) {
-      handleGroupVolumeChange(groupId, 100);
-    }
+  const handleStopPreview = () => {
+    stopAudioDetailPreview();
   };
 
-  const handleExportJson = () => {
+  const handleCopyJson = (): { ok: boolean; bytes: number; count: number } => {
     try {
       const json = exportAudioSettingsJson();
+      const bytes = typeof Blob !== 'undefined' ? new Blob([json]).size : json.length;
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(json).catch(() => {});
+      }
+      return {
+        ok: true,
+        bytes,
+        count: ADVANCED_AUDIO_DETAIL_CATALOG.length,
+      };
+    } catch {
+      return { ok: false, bytes: 0, count: ADVANCED_AUDIO_DETAIL_CATALOG.length };
+    }
+  };
+
+  const handleExportJson = (): { ok: boolean; bytes: number; count: number } => {
+    try {
+      const json = exportAudioSettingsJson();
+      const bytes = typeof Blob !== 'undefined' ? new Blob([json]).size : json.length;
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         navigator.clipboard.writeText(json).catch(() => {});
       }
@@ -224,24 +122,27 @@ export function useLayer4AdvancedAudioStoreBinding<TProps extends object>(
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
+      return {
+        ok: true,
+        bytes,
+        count: ADVANCED_AUDIO_DETAIL_CATALOG.length,
+      };
     } catch {
-      // ignore export errors in headless environments
+      return { ok: false, bytes: 0, count: ADVANCED_AUDIO_DETAIL_CATALOG.length };
     }
   };
 
   return {
     ...rawProps,
     onBack: props.onBack ?? goBack,
-    boostSelection:
-      props.boostSelection ??
-      (props.defaultBoostSelection ? undefined : boostSelection),
-    onBoostPhaseChange: props.onBoostPhaseChange ?? handleBoostPhaseChange,
-    onBoostAllChange: props.onBoostAllChange ?? handleBoostAllChange,
-    groupVolumes:
-      props.groupVolumes ??
-      (props.defaultGroupVolumes ? undefined : groupVolumes),
-    onGroupVolumeChange: props.onGroupVolumeChange ?? handleGroupVolumeChange,
-    onResetGroupVolumes: props.onResetGroupVolumes ?? handleResetGroupVolumes,
+    detailVolumes:
+      props.detailVolumes ??
+      (props.defaultDetailVolumes ? undefined : detailVolumes),
+    onDetailVolumeChange: props.onDetailVolumeChange ?? handleDetailVolumeChange,
+    onResetDetailVolumes: props.onResetDetailVolumes ?? handleResetDetailVolumes,
+    onPreviewDetail: props.onPreviewDetail ?? handlePreviewDetail,
+    onStopPreview: props.onStopPreview ?? handleStopPreview,
+    onCopyJson: props.onCopyJson ?? handleCopyJson,
     onExportJson: props.onExportJson ?? handleExportJson,
   } as TProps;
 }

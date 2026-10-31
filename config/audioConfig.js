@@ -3,6 +3,8 @@ import {
   CONSOLE_LOG_EVENT_CATALOG,
   BOOST_AUDIO_VARIATIONS,
   DEFAULT_BOOST_VARIATION,
+  ADVANCED_AUDIO_CATEGORIES,
+  ADVANCED_AUDIO_DETAIL_CATALOG,
   createDefaultLogEventFilter,
   clamp01,
   clampVolume,
@@ -17,6 +19,8 @@ export {
   CONSOLE_LOG_EVENT_CATALOG,
   BOOST_AUDIO_VARIATIONS,
   DEFAULT_BOOST_VARIATION,
+  ADVANCED_AUDIO_CATEGORIES,
+  ADVANCED_AUDIO_DETAIL_CATALOG,
   createDefaultLogEventFilter,
   clamp01,
   clampVolume,
@@ -41,8 +45,21 @@ export class AudioConfigManager {
       const raw = safeStorage.getItem(AUDIO_SETTINGS_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if ((!parsed.version || parsed.version < 3) && parsed.boostCollectVolume === 1.0) {
-          parsed.boostCollectVolume = DEFAULT_AUDIO_CONFIG.boostCollectVolume;
+        if (!parsed.version || parsed.version < 4) {
+          for (const item of ADVANCED_AUDIO_DETAIL_CATALOG) {
+            if (parsed[item.key] === undefined) {
+              parsed[item.key] = 1.0;
+            }
+          }
+          if (parsed.boostCollectVolume === 2.0) parsed.boostCollectVolume = 1.0;
+          if (parsed.endgameVolume === 2.0) parsed.endgameVolume = 1.0;
+          if (parsed.goalpostHitVolume === 2.0) parsed.goalpostHitVolume = 1.0;
+          if (parsed.goalScoredVolume === 1.5) parsed.goalScoredVolume = 1.0;
+          if (parsed.engineVolume === 0.8) parsed.engineVolume = 1.0;
+          if (parsed.boostVolume === 0.8) parsed.boostVolume = 1.0;
+          if (parsed.boostLoopVolume === 0.8) parsed.boostLoopVolume = 1.0;
+          if (parsed.ballRollingVolume === 0.8) parsed.ballRollingVolume = 1.0;
+          if (parsed.ballFlyingVolume === 0.8) parsed.ballFlyingVolume = 1.0;
         }
         this.config = {
           ...DEFAULT_AUDIO_CONFIG,
@@ -131,6 +148,16 @@ export function getAudioSettings() {
   return audioConfig.config;
 }
 
+export function resetAllAudioDetailVolumes() {
+  for (const item of ADVANCED_AUDIO_DETAIL_CATALOG) {
+    audioConfig.config[item.key] = 1.0;
+  }
+  audioConfig.config.boostStartStopVolume = 1.0;
+  audioConfig.config.supersonicVolume = 1.0;
+  audioConfig.config.ballWorldHitVolume = 1.0;
+  audioConfig.save();
+}
+
 export function setCarBallSoundMode(mode) { audioConfig.set('carBallSoundMode', mode); }
 export function setCarCarSoundMode(mode) { audioConfig.set('carCarSoundMode', mode); }
 export function setBoostStartVariation(variationId) { audioConfig.set('boostStartVariation', variationId); }
@@ -197,6 +224,8 @@ const audioDiagnosticsProvider = {
   playTestTone: null,
   forceRecovery: null,
   previewBoostVariation: null,
+  previewAudioDetail: null,
+  stopAudioDetailPreview: null,
 };
 
 export function registerAudioDiagnosticsProvider(handlers = {}) {
@@ -242,5 +271,17 @@ export async function forceAudioRecovery() {
 export function previewBoostAudioVariation(variationId, phase = 'start') {
   if (typeof audioDiagnosticsProvider.previewBoostVariation === 'function') {
     return audioDiagnosticsProvider.previewBoostVariation(variationId, phase);
+  }
+}
+
+export function previewAudioDetailItem(detailKey) {
+  if (typeof audioDiagnosticsProvider.previewAudioDetail === 'function') {
+    return audioDiagnosticsProvider.previewAudioDetail(detailKey);
+  }
+}
+
+export function stopAudioDetailPreview() {
+  if (typeof audioDiagnosticsProvider.stopAudioDetailPreview === 'function') {
+    return audioDiagnosticsProvider.stopAudioDetailPreview();
   }
 }
