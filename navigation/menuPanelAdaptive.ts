@@ -109,12 +109,11 @@ export function measureNaturalElementHeight(el: HTMLElement, depth = 0): number 
         if (tabWrapper.getAttribute('data-envelope-exclude') === 'true') {
           continue;
         }
-        const isActive = tabWrapper.getAttribute('data-tab-active') === 'true';
         const inner = tabWrapper.firstElementChild as HTMLElement | null;
         const rawTabH = inner
           ? measureNaturalElementHeight(inner, depth + 1)
           : tabWrapper.scrollHeight;
-        const effectiveTabH = isActive ? rawTabH : Math.min(rawTabH, 360);
+        const effectiveTabH = Math.min(rawTabH, 360);
         if (effectiveTabH > maxTabH) {
           maxTabH = effectiveTabH;
         }
@@ -160,6 +159,7 @@ export function measureNaturalElementHeight(el: HTMLElement, depth = 0): number 
     const cStyle = window.getComputedStyle(child);
     const marginY = getExplicitVerticalMargin(child, cStyle);
     const isFlexStretched =
+      child.getAttribute('data-tab-envelope-grid') === 'true' ||
       parseFloat(cStyle.flexGrow) > 0 ||
       child.classList.contains('grow') ||
       child.classList.contains('flex-1') ||
@@ -258,6 +258,102 @@ function measureChromeMinWidth(panelEl: HTMLElement): number {
   return Math.round(minW);
 }
 
+function measureTabEnvelopeMinWidth(contentEl: HTMLElement): number {
+  const envelopeGrid = contentEl.querySelector<HTMLElement>(
+    '[data-tab-envelope-grid="true"]'
+  );
+  if (!envelopeGrid) return 0;
+
+  const cStyle = window.getComputedStyle(contentEl);
+  const contentPadX =
+    (parseFloat(cStyle.paddingLeft) || 0) + (parseFloat(cStyle.paddingRight) || 0);
+
+  let maxInnerW = 0;
+
+  for (let i = 0; i < envelopeGrid.children.length; i++) {
+    const tabWrapper = envelopeGrid.children[i] as HTMLElement;
+    if (tabWrapper.getAttribute('data-envelope-exclude') === 'true') {
+      continue;
+    }
+
+    const rows = tabWrapper.querySelectorAll<HTMLElement>(
+      '[data-ui-element="setting-action-row"]'
+    );
+    rows.forEach((row) => {
+      const rStyle = window.getComputedStyle(row);
+      const rowPadX =
+        (parseFloat(rStyle.paddingLeft) || 0) +
+        (parseFloat(rStyle.paddingRight) || 0) +
+        (parseFloat(rStyle.borderLeftWidth) || 0) +
+        (parseFloat(rStyle.borderRightWidth) || 0);
+      const topLine = row.firstElementChild as HTMLElement | null;
+      if (topLine && topLine.children.length >= 2) {
+        const leftEl = topLine.children[0] as HTMLElement;
+        const rightEl = topLine.children[topLine.children.length - 1] as HTMLElement;
+        const titleSpan = leftEl.querySelector<HTMLElement>('span.font-semibold');
+        const titleW = titleSpan ? measureTextContentWidth(titleSpan) : 110;
+        const leftW = 26 + titleW + 8;
+        const rightW = Math.ceil(
+          rightEl.scrollWidth || rightEl.getBoundingClientRect().width
+        );
+        const rowNeeded = rowPadX + leftW + 12 + rightW;
+        if (rowNeeded > maxInnerW) maxInnerW = rowNeeded;
+      }
+    });
+
+    const queueLists = tabWrapper.querySelectorAll<HTMLElement>(
+      '[data-component="priority-queue-list"]'
+    );
+    if (queueLists.length >= 2) {
+      let maxCardW = 0;
+      queueLists.forEach((card) => {
+        const cardStyle = window.getComputedStyle(card);
+        const cardPadX =
+          (parseFloat(cardStyle.paddingLeft) || 0) +
+          (parseFloat(cardStyle.paddingRight) || 0) +
+          2;
+        const listContainer = card.children[1] as HTMLElement | undefined;
+        if (listContainer) {
+          for (let j = 0; j < listContainer.children.length; j++) {
+            const itemRow = listContainer.children[j] as HTMLElement;
+            const leftGroup = itemRow.children[0] as HTMLElement | undefined;
+            const rightGroup = itemRow.children[1] as HTMLElement | undefined;
+            const nameSpan = leftGroup?.querySelector<HTMLElement>('span.truncate');
+            const nameW = nameSpan ? measureTextContentWidth(nameSpan) : 72;
+            const leftW = 46 + nameW;
+            const rightW = rightGroup
+              ? Math.ceil(rightGroup.getBoundingClientRect().width)
+              : 118;
+            const cardNeeded = cardPadX + 26 + leftW + 8 + rightW;
+            if (cardNeeded > maxCardW) maxCardW = cardNeeded;
+          }
+        }
+      });
+      const twoColNeeded = maxCardW * 2 + 14;
+      if (twoColNeeded > maxInnerW) maxInnerW = twoColNeeded;
+    }
+
+    const carGrid = tabWrapper.querySelector<HTMLElement>(
+      '[data-ui-element="garage-tab-car"]'
+    );
+    if (carGrid) {
+      let maxCarCardW = 0;
+      for (let j = 0; j < carGrid.children.length; j++) {
+        const btn = carGrid.children[j] as HTMLElement;
+        const nameSpan = btn.querySelector<HTMLElement>('span.font-bold');
+        const nameW = nameSpan ? measureTextContentWidth(nameSpan) : 64;
+        const cardW = nameW + 32;
+        if (cardW > maxCarCardW) maxCarCardW = cardW;
+      }
+      const fourColNeeded = maxCarCardW * 4 + 36;
+      if (fourColNeeded > maxInnerW) maxInnerW = fourColNeeded;
+    }
+  }
+
+  if (maxInnerW <= 0) return 0;
+  return Math.min(640, Math.ceil(maxInnerW + contentPadX + 2));
+}
+
 /**
  * Synchronously measures both the natural non-scrolling height (`intrinsicHeight`) and
  * minimum non-truncating width (`autoMinWidth` + `16px` scrollbar reserve) of a rendered Menu Panel.
@@ -307,31 +403,34 @@ export function measureMenuPanelIntrinsicDimensions(
   const chromeMinWidth = measureChromeMinWidth(panelEl);
 
   if (options?.measureWidth === false || !contentEl || contentEl.clientWidth <= 0) {
-    const autoMinW = Math.max(fallbackMinW, chromeMinWidth);
+    const envelopeMinW = contentEl ? measureTabEnvelopeMinWidth(contentEl) : 0;
+    const autoMinW = Math.max(fallbackMinW, chromeMinWidth, envelopeMinW);
     return {
       intrinsicHeight,
       autoMinWidth: autoMinW,
-      contentMinWidth: fallbackMinW,
+      contentMinWidth: Math.max(fallbackMinW, envelopeMinW),
       chromeMinWidth,
       scrollbarReservePx: SCROLLBAR_GUTTER_RESERVE_PX,
     };
   }
 
+  const envelopeMinW = measureTabEnvelopeMinWidth(contentEl);
   const widthResult = measureIntrinsicMinWidth(contentEl, {
     isResizable: true,
-    fallbackMinWidth: Math.min(fallbackMinW, 340),
+    fallbackMinWidth: Math.max(Math.min(fallbackMinW, 340), envelopeMinW),
     tier: options?.tier,
     maxProbeWidth: 680,
   });
 
+  const effectiveContentMinW = Math.max(widthResult.totalMinWidth, envelopeMinW);
   const autoMinWidth = Math.round(
-    Math.max(chromeMinWidth, widthResult.totalMinWidth)
+    Math.max(chromeMinWidth, effectiveContentMinW)
   );
 
   return {
     intrinsicHeight,
     autoMinWidth,
-    contentMinWidth: widthResult.totalMinWidth,
+    contentMinWidth: effectiveContentMinW,
     chromeMinWidth,
     scrollbarReservePx: widthResult.scrollbarReservePx,
   };

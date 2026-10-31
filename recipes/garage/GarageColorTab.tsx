@@ -158,7 +158,7 @@ export const GarageColorTab: React.FC<GarageColorTabProps> = ({
         onMouseLeave={() => onHoverDesc?.(null)}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+      <div className="grid grid-cols-2 gap-3.5 pt-1">
         <div
           onMouseEnter={() =>
             onHoverDesc?.('Reorder Blue Team fallback palette priority (#1 Primary -> Fallback 1 -> Fallback 2).')

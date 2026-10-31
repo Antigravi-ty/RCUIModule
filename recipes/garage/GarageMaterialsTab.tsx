@@ -114,7 +114,7 @@ export const GarageMaterialsTab: React.FC<GarageMaterialsTabProps> = ({
   const onLeave = () => onHoverDesc?.(null);
 
   return (
-    <div className="flex flex-col py-1" style={{ gap: `${rowGap}px` }}>
+    <div className="flex flex-col justify-between h-full flex-1 py-1" style={{ gap: `${rowGap}px` }}>
       <SettingSegmentedRow
         icon={Disc}
         iconColor="text-sky-400"

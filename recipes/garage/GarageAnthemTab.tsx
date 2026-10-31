@@ -299,8 +299,8 @@ export const GarageAnthemTab: React.FC<GarageAnthemTabProps> = ({
 
   return (
     <div
-      style={{ height: 'var(--tab-envelope-h, 290px)' }}
-      className="flex flex-col gap-2 max-h-full overflow-hidden"
+      style={{ height: 'var(--tab-envelope-h, 100%)' }}
+      className="flex flex-col gap-2 w-full h-full max-h-full overflow-hidden"
       data-ui-element="garage-tab-anthem"
     >
       {/* Fixed Top Region: Row 1 (Category Filter Pills) + Row 2 (Pinned Current Selection Row) */}
@@ -309,7 +309,10 @@ export const GarageAnthemTab: React.FC<GarageAnthemTabProps> = ({
           isLight ? 'border-neutral-200/90' : 'border-neutral-800/90'
         }`}
       >
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 no-scrollbar">
+        <div
+          className="flex items-center gap-1 overflow-x-auto pb-0.5 px-0.5 no-scrollbar [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {ANTHEM_CATEGORIES.map((cat) => {
             const isCatActive = selectedCategory === cat.id;
             return (
@@ -334,12 +337,17 @@ export const GarageAnthemTab: React.FC<GarageAnthemTabProps> = ({
           })}
         </div>
 
-        {/* Pinned Row: Always shows the currently selected anthem at the top */}
-        {renderAnthemRow(activeAnthemObj, true, 'pinned-current')}
+        {/* Pinned Row: Always shows the currently selected anthem at the top (px-0.5 py-0.5 prevents ring-2 clipping and matches list width) */}
+        <div className="px-0.5 py-0.5">
+          {renderAnthemRow(activeAnthemObj, true, 'pinned-current')}
+        </div>
       </div>
 
-      {/* Scrollable Anthem List */}
-      <div className="relative z-10 flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto pr-1">
+      {/* Scrollable Anthem List (hidden scrollbar + matching px-0.5 py-0.5 so rows align 1:1 with pinned row without clipping ring-2) */}
+      <div
+        className="relative z-10 flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto px-0.5 py-0.5 no-scrollbar [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         {filteredAnthems.map((item) =>
           renderAnthemRow(item, selectedAnthem === item.id, 'list')
         )}
