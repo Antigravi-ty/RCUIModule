@@ -149,11 +149,11 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
         onBack={onBack}
       />
 
-      <PanelContent scrollable={true} className="flex flex-col justify-between gap-3">
+      <PanelContent scrollable={true} className="flex flex-col justify-between gap-4">
         <div
           data-layout="host-training-list"
           className="flex flex-col w-full"
-          style={{ gap: `${rowGap}px` }}
+          style={{ gap: `${Math.max(8, rowGap)}px` }}
         >
           {/* 1 & 2. Shared Identity & Room Code / Key */}
           <OnlineRoomIdentityFields
@@ -196,7 +196,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
             paddingLeft: `${Math.max(0, paddingX)}px`,
             paddingRight: `${Math.max(0, paddingX)}px`,
           }}
-          className="flex flex-col gap-2 shrink-0 pt-1"
+          className="flex flex-col gap-2 shrink-0"
         >
           {progressStatus !== 'idle' && (
             <OnlineRoomCreationProgress
