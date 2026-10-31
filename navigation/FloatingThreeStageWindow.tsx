@@ -144,9 +144,13 @@ export const FloatingThreeStageWindowInstance: React.FC<FloatingThreeStageWindow
   const [pos, setPos] = useState({
     x: item.position?.x ?? 36, y: item.position?.y ?? 36,
   });
+  const posRef = useRef(pos);
+  posRef.current = pos;
   const [size, setSize] = useState({
     width: item.width ?? 480, height: item.height ?? 350,
   });
+  const sizeRef = useRef(size);
+  sizeRef.current = size;
   const [minimizePhase, setMinimizePhase] = useState<
     'idle' | 'fading_content' | 'resizing_to_stack'
   >('idle');
@@ -167,7 +171,10 @@ export const FloatingThreeStageWindowInstance: React.FC<FloatingThreeStageWindow
     axis: 'both' as 'both' | 'w' | 'h',
   });
   useEffect(() => {
-    if (item.position) setPos(item.position);
+    if (item.position) {
+      posRef.current = item.position;
+      setPos(item.position);
+    }
   }, [item.position]);
   useEffect(() => {
     if (item.width && item.height) {
@@ -176,9 +183,11 @@ export const FloatingThreeStageWindowInstance: React.FC<FloatingThreeStageWindow
         ? Math.min(config.maxWidth, item.width) : item.width;
       const clampedH = config.limitMaxSize
         ? Math.min(config.maxHeight, item.height) : item.height;
-      setSize({
+      const nextSize = {
         width: Math.max(config.minWidth, clampedW), height: Math.max(effectiveMinH, clampedH),
-      });
+      };
+      sizeRef.current = nextSize;
+      setSize(nextSize);
     }
   }, [
     item.width, item.height,
@@ -209,7 +218,7 @@ export const FloatingThreeStageWindowInstance: React.FC<FloatingThreeStageWindow
     setInteractionMode('dragging');
     dragStartRef.current = {
       mouseX: e.clientX, mouseY: e.clientY,
-      startX: pos.x, startY: pos.y,
+      startX: posRef.current.x, startY: posRef.current.y,
     };
     const handleMouseMove = (ev: MouseEvent) => {
       if (!isDraggingRef.current) return;
@@ -221,16 +230,16 @@ export const FloatingThreeStageWindowInstance: React.FC<FloatingThreeStageWindow
         const rect = containerRef.current.getBoundingClientRect();
         newX = Math.min(newX, Math.max(16, rect.width - 120));
         newY = Math.min(newY, Math.max(16, rect.height - 60));
-      } setPos({ x: Math.round(newX), y: Math.round(newY) });
+      }
+      const nextPos = { x: Math.round(newX), y: Math.round(newY) };
+      posRef.current = nextPos;
+      setPos(nextPos);
     };
     const handleMouseUp = () => {
       if (isDraggingRef.current) {
         isDraggingRef.current = false;
         setInteractionMode('idle');
-        setPos((latestPos) => {
-          onUpdatePosition(latestPos);
-          return latestPos;
-        });
+        onUpdatePosition(posRef.current);
       } window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
@@ -247,7 +256,7 @@ export const FloatingThreeStageWindowInstance: React.FC<FloatingThreeStageWindow
     );
     resizeStartRef.current = {
       mouseX: e.clientX, mouseY: e.clientY,
-      startWidth: size.width, startHeight: size.height,
+      startWidth: sizeRef.current.width, startHeight: sizeRef.current.height,
       axis, };
     const handleResizeMove = (ev: MouseEvent) => {
       if (!isResizingRef.current) return;
@@ -268,18 +277,17 @@ export const FloatingThreeStageWindowInstance: React.FC<FloatingThreeStageWindow
         currentAxis === 'w' ? resizeStartRef.current.startHeight
           : config.limitMaxSize ? Math.min(config.maxHeight, rawNextH)
           : rawNextH;
-      setSize({
+      const nextSize = {
         width: Math.round(nextWidth), height: Math.round(nextHeight),
-      });
+      };
+      sizeRef.current = nextSize;
+      setSize(nextSize);
     };
     const handleResizeUp = () => {
       if (isResizingRef.current) {
         isResizingRef.current = false;
         setInteractionMode('idle');
-        setSize((latestSize) => {
-          onUpdateSize(latestSize);
-          return latestSize;
-        });
+        onUpdateSize(sizeRef.current);
       } window.removeEventListener('mousemove', handleResizeMove);
       window.removeEventListener('mouseup', handleResizeUp);
     };
