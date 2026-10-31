@@ -15,9 +15,9 @@ export const DEFAULT_REPLAY_DIRECTOR_CONFIG = Object.freeze({
   twoTouchLookaheadSeconds: 2.20,
   twoTouchAnticipationWeight: 0.36,
 
-  corridorBackDistStart: 640.0,
-  corridorBackDistEnd: 520.0,
-  corridorSideDistBase: 460.0,
+  corridorBackDistStart: 500.0,
+  corridorBackDistEnd: 400.0,
+  corridorSideDistBase: 760.0,
   goalBoxShowcaseDist: 920.0,
   carMidpointMaxWeight: 0.46,
 
@@ -109,6 +109,8 @@ export function subscribeReplayDirectorConfig(listener) {
 }
 
 let _activeReplayController = null;
+let _latestRetainedReplayController = null;
+let _retainedReplaySequence = 0;
 let _diagnosticExporter = null;
 let _diagnosticParser = null;
 let _windowDiagnosticBuilder = null;
@@ -123,6 +125,20 @@ let _previewHandlers = {
 };
 const _replaySessionListeners = new Set();
 
+export function markReplayTimelineControllerRetained(ctrl) {
+  if (!ctrl || !Array.isArray(ctrl.activeFrames) || ctrl.activeFrames.length === 0) {
+    return 0;
+  }
+  _retainedReplaySequence += 1;
+  ctrl.retainedReplaySeq = _retainedReplaySequence;
+  _latestRetainedReplayController = ctrl;
+  return _retainedReplaySequence;
+}
+
+export function getLatestRetainedReplayTimelineController() {
+  return _latestRetainedReplayController;
+}
+
 export function notifyActiveReplayTimelineController() {
   for (const fn of _replaySessionListeners) {
     try {
@@ -134,6 +150,18 @@ export function notifyActiveReplayTimelineController() {
 }
 
 export function setActiveReplayTimelineController(ctrl) {
+  if (
+    ctrl &&
+    !ctrl.isActive &&
+    _latestRetainedReplayController &&
+    _latestRetainedReplayController !== ctrl &&
+    Array.isArray(_latestRetainedReplayController.activeFrames) &&
+    _latestRetainedReplayController.activeFrames.length > 0 &&
+    (_latestRetainedReplayController.retainedReplaySeq || 0) > (ctrl.retainedReplaySeq || 0) &&
+    typeof ctrl.copyRetainedReplayFrom === 'function'
+  ) {
+    ctrl.copyRetainedReplayFrom(_latestRetainedReplayController);
+  }
   _activeReplayController = ctrl;
   notifyActiveReplayTimelineController();
 }
