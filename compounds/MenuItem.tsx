@@ -114,7 +114,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
             {icon}
           </div>
         )}
-        <div className="flex flex-col items-start leading-tight text-left min-w-0">
+        <div className="flex flex-col items-start leading-snug text-left min-w-0">
           <span className="font-semibold tracking-tight truncate w-full">{title}</span>
           {subtitle && (
             <span

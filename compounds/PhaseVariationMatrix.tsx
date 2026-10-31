@@ -107,7 +107,7 @@ export const PhaseVariationMatrix: React.FC<PhaseVariationMatrixProps> = React.m
       >
         <div className="flex items-center gap-2 min-w-0">
           <Flame className="h-4 w-4 text-amber-500 shrink-0" />
-          <div className="flex flex-col text-left leading-tight min-w-0">
+          <div className="flex flex-col text-left leading-snug min-w-0">
             <div className="flex items-center gap-1.5">
               <span
                 className={`text-xs font-bold truncate ${

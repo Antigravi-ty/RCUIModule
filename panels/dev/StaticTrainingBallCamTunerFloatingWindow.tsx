@@ -110,7 +110,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
       >
         <div className="flex items-center gap-2 min-w-0">
           <Camera className="w-4 h-4 text-sky-400 shrink-0" />
-          <div className="flex flex-col leading-tight truncate">
+          <div className="flex flex-col leading-snug truncate">
             <span className="font-semibold text-[11px] truncate">
               Relative Ball Camera (Ball Speed Sub-Mode)
             </span>

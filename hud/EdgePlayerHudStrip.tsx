@@ -533,7 +533,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
                   >
                     <span
                       ref={(el) => { cardRefs.current[idx].nameEl = el; }}
-                      className={`truncate text-[12px] leading-tight tracking-tight ${
+                      className={`truncate text-[12px] leading-snug tracking-tight ${
                         isRight ? 'text-right' : 'text-left'
                       }`}
                       style={{ fontWeight: 400 }}

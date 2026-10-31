@@ -100,7 +100,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = React.memo(({
       } ${className}`}
     >
       {(label || description) && (
-        <div className="flex flex-col text-left leading-tight min-w-0">
+        <div className="flex flex-col text-left leading-snug min-w-0">
           {label && (
             <span className={`text-sm font-semibold truncate ${resolvedIsLight ? 'text-neutral-800' : 'text-neutral-200'}`}>
               {label}

@@ -121,7 +121,7 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
       >
         <div className="flex items-center gap-2 min-w-0">
           <Volume2 className="w-4 h-4 text-amber-400 shrink-0" />
-          <div className="flex flex-col leading-tight truncate">
+          <div className="flex flex-col leading-snug truncate">
             <span className="font-semibold text-[11px] truncate">
               Stadium Spatial Audio & Non-Linear Transition Engine
             </span>

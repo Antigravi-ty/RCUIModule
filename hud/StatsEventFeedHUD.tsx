@@ -306,7 +306,7 @@ const SingleStatsEventRow: React.FC<{
             </div>
           )}
 
-          <div className="flex flex-col min-w-0 leading-tight">
+          <div className="flex flex-col min-w-0 leading-snug">
             {showKicker && data.kickerText && (
               <span
                 data-ui-element="hud-stats-event-kicker"

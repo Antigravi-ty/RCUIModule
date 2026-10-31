@@ -41,6 +41,10 @@ export interface FloatingWindowItem {
   /** Vertical scrollbar width reserved in minWidth (integer 1px unit, 16px for resizable windows) */
   scrollbarReservePx?: number;
   minHeight?: number;
+  /** Optional manually calibrated minHeight (strictly integer 1px unit) overriding preset minHeight */
+  manualMinHeight?: number;
+  /** Intrinsic full content height (Header + Content + Footer + 2px border) reported by FloatingWindowManager */
+  intrinsicMaxHeight?: number;
   maxWidth?: number;
   maxHeight?: number;
   autoFitHeight?: boolean;
@@ -190,7 +194,9 @@ export function createFloatingStore(syncKey: string) {
       width: item.width ?? 440,
       height: item.height ?? 300,
       minWidth: item.minWidth,
+      manualMinWidth: item.manualMinWidth,
       minHeight: item.minHeight,
+      manualMinHeight: item.manualMinHeight,
       maxWidth: item.maxWidth,
       maxHeight: item.maxHeight,
       autoFitHeight: item.autoFitHeight,
@@ -279,17 +285,56 @@ export function createFloatingStore(syncKey: string) {
     };
     notify();
   },
-  /** Record auto-detected intrinsic minWidth and scrollbar reserve (strictly integer 1px units) */
+  /** Update manually calibrated minHeight (strictly integer 1px unit, or undefined to reset to preset minHeight) */
+  updateMinHeight: (id: string, manualMinHeight: number | undefined) => {
+    const roundedMinH =
+      manualMinHeight !== undefined && Number.isFinite(manualMinHeight)
+        ? Math.max(72, Math.round(manualMinHeight))
+        : undefined;
+    state = {
+      ...state,
+      windows: state.windows.map((w) =>
+        w.id === id
+          ? {
+              ...w,
+              manualMinHeight: roundedMinH,
+              height:
+                roundedMinH !== undefined && w.height !== undefined
+                  ? Math.max(roundedMinH, Math.round(w.height))
+                  : w.height,
+            }
+          : w
+      ),
+    };
+    notify();
+  },
+  /** Record auto-detected intrinsic minWidth, scrollbar reserve, and intrinsicMaxHeight (strictly integer 1px units) */
   reportIntrinsicMetrics: (
     id: string,
-    metrics: { autoMinWidth: number; scrollbarReservePx: number }
+    metrics: {
+      autoMinWidth?: number;
+      scrollbarReservePx?: number;
+      intrinsicMaxHeight?: number;
+    }
   ) => {
-    const autoMinW = Math.round(metrics.autoMinWidth);
-    const reservePx = Math.round(metrics.scrollbarReservePx);
     const target = state.windows.find((w) => w.id === id);
+    if (!target) return;
+    const autoMinW =
+      metrics.autoMinWidth !== undefined
+        ? Math.round(metrics.autoMinWidth)
+        : target.autoMinWidth;
+    const reservePx =
+      metrics.scrollbarReservePx !== undefined
+        ? Math.round(metrics.scrollbarReservePx)
+        : target.scrollbarReservePx;
+    const intrinsicMaxH =
+      metrics.intrinsicMaxHeight !== undefined
+        ? Math.round(metrics.intrinsicMaxHeight)
+        : target.intrinsicMaxHeight;
     if (
-      !target ||
-      (target.autoMinWidth === autoMinW && target.scrollbarReservePx === reservePx)
+      target.autoMinWidth === autoMinW &&
+      target.scrollbarReservePx === reservePx &&
+      target.intrinsicMaxHeight === intrinsicMaxH
     ) {
       return;
     }
@@ -301,6 +346,7 @@ export function createFloatingStore(syncKey: string) {
               ...w,
               autoMinWidth: autoMinW,
               scrollbarReservePx: reservePx,
+              intrinsicMaxHeight: intrinsicMaxH,
             }
           : w
       ),
@@ -558,6 +604,7 @@ export const useFloatingStore = (customStore: FloatingStoreInstance = floatingSt
     updatePosition: customStore.updatePosition,
     updateSize: customStore.updateSize,
     updateMinWidth: customStore.updateMinWidth,
+    updateMinHeight: customStore.updateMinHeight,
     reportIntrinsicMetrics: customStore.reportIntrinsicMetrics,
     minimizeWindow: customStore.minimizeWindow,
     minimizeAllWindows: customStore.minimizeAllWindows,

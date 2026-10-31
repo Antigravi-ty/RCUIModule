@@ -249,7 +249,7 @@ export const Dialogue: React.FC<DialogueProps> = ({
             fontWeight: Number(titleFontWeight) || 400,
             color: titleColor || undefined,
           }}
-          className={`text-center tracking-tight truncate leading-tight transition-colors ${getTitleColorClass()}`}
+          className={`text-center tracking-tight truncate leading-snug transition-colors ${getTitleColorClass()}`}
         >
           {resolvedTitle}
         </h2>

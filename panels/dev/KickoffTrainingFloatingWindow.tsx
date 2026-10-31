@@ -329,7 +329,7 @@ export const KickoffTrainingFloatingWindow: React.FC<KickoffTrainingFloatingWind
             <span className="text-[11px] font-semibold">
               {ghostModeEnabled ? 'Ghost Mode (No Collision)' : 'Solid Car Mode (Physical Collision)'}
             </span>
-            <span className={`text-[9px] leading-tight truncate ${mutedText}`}>
+            <span className={`text-[9px] leading-snug truncate ${mutedText}`}>
               {ghostModeEnabled
                 ? 'Translucent ghost car & ball in isolated world'
                 : ghostPlacement === 'opposite'

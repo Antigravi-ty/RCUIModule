@@ -195,7 +195,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden px-3">
         <h2
           style={{ fontSize: `${titleFontSize}px` }}
-          className={`font-bold tracking-wider uppercase whitespace-nowrap leading-none text-center ${titleClassName}`}
+          className={`font-bold tracking-wider uppercase whitespace-nowrap leading-snug text-center ${titleClassName}`}
         >
           {title}
         </h2>

@@ -313,11 +313,11 @@ export const CollapsibleNumberedRailList: React.FC<CollapsibleNumberedRailListPr
                   }`}
                 >
                   <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-bold truncate leading-tight">
+                    <span className="text-xs font-bold truncate leading-snug">
                       {item.title}
                     </span>
                     {item.subtitle && (
-                      <span className="text-[10px] font-mono opacity-65 truncate leading-tight">
+                      <span className="text-[10px] font-mono opacity-65 truncate leading-snug">
                         {item.subtitle}
                       </span>
                     )}

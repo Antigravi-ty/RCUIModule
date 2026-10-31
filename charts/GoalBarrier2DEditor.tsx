@@ -275,7 +275,7 @@ export const GoalBarrier2DEditor: React.FC<GoalBarrier2DEditorProps> = React.mem
           >
             <div className="flex items-center gap-2 min-w-0">
               <Shield className="h-4 w-4 text-amber-500 shrink-0" />
-              <div className="flex flex-col leading-tight min-w-0">
+              <div className="flex flex-col leading-snug min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-bold text-xs truncate">
                     2D Boolean Goal Mouth Barrier Editor

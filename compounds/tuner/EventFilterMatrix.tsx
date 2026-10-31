@@ -111,7 +111,7 @@ export const EventFilterMatrix: React.FC<EventFilterMatrixProps> = React.memo(({
               >
                 {item.hex}
               </span>
-              <div className="flex flex-col min-w-0 flex-1 leading-tight">
+              <div className="flex flex-col min-w-0 flex-1 leading-snug">
                 <span className="text-[11px] font-semibold truncate">{item.name}</span>
                 <span className="text-[9px] font-mono opacity-60 truncate">{item.id}</span>
               </div>

@@ -18,6 +18,8 @@ export interface FloatingWindowRenderContext {
   intrinsicMaxHeight: number | null;
   minWidth: number;
   autoMinWidth: number;
+  minHeight: number;
+  presetMinHeight: number;
   scrollbarReservePx: number;
   hoveredDescription: string | null;
   setHoveredDescription: (desc: string | null) => void;
@@ -44,8 +46,9 @@ export interface FloatingWindowInstanceProps {
   onUpdatePosition: (pos: { x: number; y: number }) => void;
   onUpdateSize: (size: { width: number; height: number }, userAdjusted?: boolean) => void;
   onReportIntrinsicMetrics?: (metrics: {
-    autoMinWidth: number;
-    scrollbarReservePx: number;
+    autoMinWidth?: number;
+    scrollbarReservePx?: number;
+    intrinsicMaxHeight?: number;
   }) => void;
 }
 
@@ -75,6 +78,8 @@ export const FloatingWindowInstance: React.FC<FloatingWindowInstanceProps> = ({
     intrinsicMaxHeight,
     autoMinWidth,
     effectiveMinWidth,
+    presetMinHeight,
+    effectiveMinHeight,
     effectiveMaxHeight,
     scrollbarReservePx,
     clampedGeometry,
@@ -138,6 +143,8 @@ export const FloatingWindowInstance: React.FC<FloatingWindowInstanceProps> = ({
     intrinsicMaxHeight,
     minWidth: effectiveMinWidth,
     autoMinWidth,
+    minHeight: effectiveMinHeight,
+    presetMinHeight,
     scrollbarReservePx,
     hoveredDescription: hoveredDesc,
     setHoveredDescription: setHoveredDesc,
@@ -184,6 +191,8 @@ export const FloatingWindowInstance: React.FC<FloatingWindowInstanceProps> = ({
       data-floating-window-id={item.id}
       data-min-width={effectiveMinWidth}
       data-auto-min-width={autoMinWidth}
+      data-min-height={effectiveMinHeight}
+      data-preset-min-height={presetMinHeight}
       data-scrollbar-reserve={scrollbarReservePx}
       data-max-height={effectiveMaxHeight}
       className={`pointer-events-auto flex flex-col border overflow-hidden select-none outline-none shadow-2xl ${
@@ -215,7 +224,7 @@ export const FloatingWindowInstance: React.FC<FloatingWindowInstanceProps> = ({
           >
             {getHeaderIcon()}
           </div>
-          <span className="font-bold text-[14px] tracking-tight truncate max-w-[360px] leading-none">
+          <span className="font-bold text-[14px] tracking-tight truncate max-w-[360px] leading-snug">
             {item.title}
           </span>
         </div>
@@ -363,14 +372,14 @@ export const FloatingWindowInstance: React.FC<FloatingWindowInstanceProps> = ({
           onMouseEnter={() => {
             setCornerGripHovered(true);
             setHoveredDesc(
-              `Corner Resize Dragger (${clampedGeometry.width}×${clampedGeometry.height}px · MinWidth ${effectiveMinWidth}px · MaxHeight ${effectiveMaxHeight}px): Drag to scale window.`
+              `Corner Resize Dragger (${clampedGeometry.width}×${clampedGeometry.height}px · MinWidth ${effectiveMinWidth}px · MinHeight ${effectiveMinHeight}px · MaxHeight ${effectiveMaxHeight}px): Drag to scale window.`
             );
           }}
           onMouseLeave={() => {
             setCornerGripHovered(false);
             setHoveredDesc(null);
           }}
-          title={`Drag bottom-right corner arc to resize window (MinW: ${effectiveMinWidth}px, MaxH: ${effectiveMaxHeight}px)`}
+          title={`Drag bottom-right corner arc to resize window (MinW: ${effectiveMinWidth}px, MinH: ${effectiveMinHeight}px, MaxH: ${effectiveMaxHeight}px)`}
           className="absolute bottom-0 right-0 cursor-nwse-resize flex items-end justify-end select-none z-30"
         >
           <CornerCurvedDragger

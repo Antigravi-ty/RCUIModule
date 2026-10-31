@@ -87,7 +87,7 @@ export const FloatingThreeStageHeader: React.FC<FloatingThreeStageHeaderProps> =
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden px-12">
           <span
             style={{ fontSize: `${config.headerTitleFontSize}px` }}
-            className="font-bold tracking-wider uppercase whitespace-nowrap truncate leading-none text-center"
+            className="font-bold tracking-wider uppercase whitespace-nowrap truncate leading-snug text-center"
           >
             {activeTitle}
           </span>
@@ -166,7 +166,7 @@ export const FloatingThreeStageHeader: React.FC<FloatingThreeStageHeaderProps> =
               fontSize: `${config.headerTitleFontSize}px`,
               paddingLeft: config.headerLeftSlotMode === 'none' ? '10px' : '0px',
             }}
-            className="font-bold tracking-tight truncate max-w-[360px] leading-none"
+            className="font-bold tracking-tight truncate max-w-[360px] leading-snug"
           >
             {activeTitle}
           </span>

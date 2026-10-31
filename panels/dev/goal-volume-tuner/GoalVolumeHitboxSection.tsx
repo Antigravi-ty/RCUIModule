@@ -50,7 +50,7 @@ export const GoalVolumeHitboxSection: React.FC<GoalVolumeHitboxSectionProps> = (
           <div className={`p-2.5 rounded-xl border flex items-center justify-between shrink-0 ${cardBg}`}>
             <div className="flex items-center gap-2 min-w-0 pr-2">
               <Eye className="h-4 w-4 text-sky-400 shrink-0" />
-              <div className="flex flex-col leading-tight min-w-0">
+              <div className="flex flex-col leading-snug min-w-0">
                 <span className="font-semibold text-xs truncate">
                   Show 3D Goal Volume Hitbox Overlay
                 </span>

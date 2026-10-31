@@ -46,7 +46,7 @@ const CameraLabelCell: React.FC<CameraLabelCellProps> = ({
         className={`shrink-0 ${iconColor}`}
       />
     )}
-    <span className="truncate leading-tight" title={label}>
+    <span className="truncate leading-snug" title={label}>
       {label}
     </span>
   </div>
