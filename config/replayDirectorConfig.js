@@ -276,7 +276,7 @@ export async function importActiveReplayDirectorDiagnosticPattern(fileOrInput, o
   }
 
   const effectiveOptions = {
-    useRecordedCsvCamera: Boolean(parsed.hasRecordedCsvRows),
+    useRecordedCsvCamera: false,
     ...options,
     fileName,
   };

@@ -180,7 +180,7 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
       const parsed = await importActiveReplayDirectorDiagnosticPattern(file, {
         fileName: file.name,
         autoStartPreview: true,
-        useRecordedCsvCamera: true,
+        useRecordedCsvCamera: false,
       });
       if (parsed) {
         setExportedFileMsg(
