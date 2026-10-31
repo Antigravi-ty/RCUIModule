@@ -76,7 +76,7 @@ export function useLayer2RoomHostControlStoreBinding<TProps extends object>(
     return isHost ? 'match-lobby-host' : 'match-lobby-client';
   }, [onlineSession?.isHosting, onlineSession?.roomType, matchMode]);
 
-  const [localTeam, setLocalTeam] = useState<LobbyTeamAssignment>('blue');
+  const [localTeam, setLocalTeam] = useState<LobbyTeamAssignment>('neutral');
 
   const lobbyPeers: LobbyPlayerSlot[] | undefined = useMemo(() => {
     const peers = onlineSession?.connectedPeers;

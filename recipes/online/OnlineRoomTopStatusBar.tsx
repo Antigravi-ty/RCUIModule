@@ -81,7 +81,11 @@ export const HostRoomSignalingBar: React.FC<HostRoomSignalingBarProps> = React.m
       {/* Left: Room Code + Copy */}
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-xs font-mono text-neutral-400 shrink-0">Room Code:</span>
-        <span className="text-xs font-mono font-bold text-amber-500 truncate">
+        <span
+          className={`text-xs font-mono font-bold truncate ${
+            isLight ? 'text-neutral-900' : 'text-neutral-100'
+          }`}
+        >
           #{roomCode}
         </span>
         <button
@@ -89,8 +93,12 @@ export const HostRoomSignalingBar: React.FC<HostRoomSignalingBarProps> = React.m
           onClick={handleCopy}
           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer shrink-0 ${
             copied
-              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
-              : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 text-amber-500'
+              ? isLight
+                ? 'bg-neutral-800 border-neutral-800 text-white'
+                : 'bg-neutral-200 border-neutral-200 text-neutral-900'
+              : isLight
+              ? 'bg-white hover:bg-neutral-200/80 border-neutral-300 text-neutral-700'
+              : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
           }`}
           title="Copy Room Code"
         >
@@ -223,7 +231,11 @@ export const ClientRoomTopBars: React.FC<ClientRoomTopBarsProps> = React.memo(({
       >
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-xs font-mono text-neutral-400 shrink-0">Room Code:</span>
-          <span className="text-xs font-mono font-bold text-amber-500 truncate">
+          <span
+            className={`text-xs font-mono font-bold truncate ${
+              isLight ? 'text-neutral-900' : 'text-neutral-100'
+            }`}
+          >
             #{roomCode}
           </span>
           <button
@@ -231,8 +243,12 @@ export const ClientRoomTopBars: React.FC<ClientRoomTopBarsProps> = React.memo(({
             onClick={handleCopy}
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer shrink-0 ${
               copied
-                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
-                : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 text-amber-500'
+                ? isLight
+                  ? 'bg-neutral-800 border-neutral-800 text-white'
+                  : 'bg-neutral-200 border-neutral-200 text-neutral-900'
+                : isLight
+                ? 'bg-white hover:bg-neutral-200/80 border-neutral-300 text-neutral-700'
+                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
             }`}
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -248,7 +264,13 @@ export const ClientRoomTopBars: React.FC<ClientRoomTopBarsProps> = React.memo(({
           }`}
         >
           <span className="text-[10px] uppercase tracking-wider text-neutral-400">Pair ID:</span>
-          <strong className="text-sky-400 font-bold tracking-wider">#{pairId}</strong>
+          <strong
+            className={`font-bold tracking-wider ${
+              isLight ? 'text-neutral-900' : 'text-neutral-100'
+            }`}
+          >
+            #{pairId}
+          </strong>
         </div>
       </div>
 

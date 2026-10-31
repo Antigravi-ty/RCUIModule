@@ -54,9 +54,9 @@ export const ONLINE_SESSION_CONTEXT_SPECS: OnlineSessionContextSpec[] = [
     stageLabel: 'Match Lobby · Client',
     role: 'client',
     stage: 'lobby',
-    resolveHeaderTitle: () => 'CONFIGURE ROOM',
+    resolveHeaderTitle: () => 'ROOM INFO',
     footerDefaultDesc:
-      'Match Lobby (Client): View Room Code & Pair ID, manage Daisy Chain Spectating relay, switch team, and manually enter match.',
+      'Room Info (Match Lobby · Client): View Room Code & Pair ID, manage Daisy Chain Spectating relay, select team (Blue / Auto / Orange), and join match.',
   },
   {
     id: 'online-match-host',
@@ -76,7 +76,7 @@ export const ONLINE_SESSION_CONTEXT_SPECS: OnlineSessionContextSpec[] = [
     stage: 'during-match',
     resolveHeaderTitle: (code) => `ONLINE MATCH · #${code}`,
     footerDefaultDesc:
-      'During Match (Client): View Blue/Orange players in match, manage spectators relaying via you, ask to pause, or leave room.',
+      'During Match (Client): View Blue/Orange players in match, select team or replace a No Input player to join match, manage spectators relaying via you, ask to pause, or leave room.',
   },
   {
     id: 'online-warmup-host',

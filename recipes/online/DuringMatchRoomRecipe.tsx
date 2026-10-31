@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Bot,
+  Check,
   Eye,
   Pause,
   Play,
   Radio,
   User,
-  UserMinus,
+  UserCheck,
+  UserRoundX,
 } from 'lucide-react';
 import {
   ClientRoomTopBars,
@@ -18,15 +20,19 @@ import {
   type HostMatchTeamFormat,
   type SignalingHealthState,
 } from './OnlineRoomTopStatusBar';
+import type { LobbyTeamAssignment } from './MatchLobbyTeamRosterSection';
 
 export interface ActiveMatchPlayer {
   id: string;
   name: string;
   pingMs: number;
+  pairId?: string;
   team: 'blue' | 'orange';
   isHost?: boolean;
   isSelf?: boolean;
   isBot?: boolean;
+  /** True when peer has disconnected or stopped sending input and can be replaced on rejoin */
+  noInput?: boolean;
 }
 
 export interface SpectatorRouteEntry {
@@ -61,12 +67,11 @@ export interface DuringMatchRoomViewProps {
 }
 
 const INITIAL_MATCH_PLAYERS: ActiveMatchPlayer[] = [
-  { id: 'b-1', name: 'Player_01 (Host)', pingMs: 0, team: 'blue', isHost: true },
-  { id: 'b-2', name: 'Aerial_Vortex', pingMs: 28, team: 'blue' },
+  { id: 'b-1', name: 'Player_01 (Host)', pingMs: 0, pairId: '1A0F', team: 'blue', isHost: true },
+  { id: 'b-2', name: 'Aerial_Vortex', pingMs: 28, pairId: '4D1E', team: 'blue' },
   { id: 'b-3', name: 'Nexto_Bot_1', pingMs: 0, team: 'blue', isBot: true },
-  { id: 'o-1', name: 'OctaneMain_99', pingMs: 22, team: 'orange' },
-  { id: 'o-2', name: 'FlipReset_Pro', pingMs: 41, team: 'orange' },
-  { id: 'o-3', name: 'Necto_Bot_2', pingMs: 0, team: 'orange', isBot: true },
+  { id: 'o-1', name: 'OctaneMain_99', pingMs: 22, pairId: '9B2C', team: 'orange' },
+  { id: 'o-2', name: 'FlipReset_Pro', pingMs: 0, pairId: '5E7A', team: 'orange', noInput: true },
 ];
 
 const INITIAL_SPECTATORS: SpectatorRouteEntry[] = [
@@ -101,17 +106,12 @@ const INITIAL_SPECTATORS: SpectatorRouteEntry[] = [
 
 /**
  * Decoupled Active Match Admin / Room Info View (`online-match-host` & `online-match-client`):
- * - No `Start Playing` / `Start Match`, no `Configure` / `Custom`, no `Switch Team`.
- * - `PLAYERS IN MATCH`: 2 side-by-side columns (`Blue Team` left | `Orange Team` right). Host can Kick/Remove.
+ * - `PLAYERS IN MATCH`: 2 side-by-side columns (`Blue Team` left | `Orange Team` right).
+ *   - Host can toggle `Pair ID` (`Eye`, active by default) and Kick players with icon-only `UserRoundX`.
+ *   - Client supports mid-match join / reconnect: select `Blue`, `Auto` (default), or `Orange` to `Join Match`, or select a non-host `No Input` player slot to `Replace & Enter`.
  * - `SPECTATING`:
- *   - Host: Sees total spectators + `from player` route (`from Host (Direct P2P)` vs `from <Player> (Daisy Chain)`) for uplink bandwidth diagnostics, with Kick/Remove.
- *   - Client: Only sees spectators relaying through this client (`SPECTATING VIA YOU`), and can actively Remove them.
- * - Pause control:
- *   - Host: `Request to Pause` / `Pause Match`
- *   - Client: `Ask to Pause` (non-authoritative request)
- * - Bottom:
- *   - Host: Double-confirm `Shutdown Server` (`door-stairwell`)
- *   - Client: `Leave Room` (`door-stairwell`)
+ *   - Host: Sees total spectators + `from player` route diagnostics, with icon-only `UserRoundX` kick.
+ *   - Client: Sees spectators relaying through this client (`SPECTATING VIA YOU`), with icon-only `UserRoundX` remove.
  */
 export const DuringMatchRoomView: React.FC<DuringMatchRoomViewProps> = React.memo(({
   role,
@@ -136,6 +136,16 @@ export const DuringMatchRoomView: React.FC<DuringMatchRoomViewProps> = React.mem
   const [internalPlayers, setInternalPlayers] = useState<ActiveMatchPlayer[]>(INITIAL_MATCH_PLAYERS);
   const [spectators, setSpectators] = useState<SpectatorRouteEntry[]>(INITIAL_SPECTATORS);
   const [internalPauseRequested, setInternalPauseRequested] = useState<boolean>(false);
+  const [showPairId, setShowPairId] = useState<boolean>(isHost);
+
+  // Client mid-match join / reconnect state
+  const [clientJoinTeam, setClientJoinTeam] = useState<LobbyTeamAssignment>('neutral');
+  const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
+  const [joinedMatchState, setJoinedMatchState] = useState<'idle' | 'joined' | 'replaced'>('idle');
+
+  useEffect(() => {
+    setShowPairId(isHost);
+  }, [isHost]);
 
   const signalingState = controlledSignaling ?? internalSignaling;
   const setSignalingState = setInternalSignaling;
@@ -144,6 +154,11 @@ export const DuringMatchRoomView: React.FC<DuringMatchRoomViewProps> = React.mem
 
   const bluePlayers = players.filter((p) => p.team === 'blue');
   const orangePlayers = players.filter((p) => p.team === 'orange');
+  const humanPlayersCount = players.filter((p) => !p.isBot).length;
+
+  const selectedReplacePlayer = players.find(
+    (p) => p.id === selectedReplaceId && !p.isHost && p.noInput
+  );
 
   // Client only sees spectators connected through them; Host sees all spectators
   const visibleSpectators = isHost
@@ -194,23 +209,50 @@ export const DuringMatchRoomView: React.FC<DuringMatchRoomViewProps> = React.mem
             />
             <span>{isBlue ? 'BLUE TEAM' : 'ORANGE TEAM'}</span>
           </span>
-          <span>{teamPlayers.length}</span>
+          <span>{teamPlayers.length} / 3</span>
         </div>
 
         <div className="flex flex-col gap-1">
           {teamPlayers.map((p) => {
-            const isSelfRow =
-              (isHost && p.isHost) || (!isHost && p.id === 'o-1');
+            const isSelfRow = isHost && p.isHost;
+            const canSelectForReplace = !isHost && !p.isHost && !p.isBot && Boolean(p.noInput);
+            const isSelectedForReplace = canSelectForReplace && selectedReplaceId === p.id;
+
             return (
               <div
                 key={p.id}
-                className={`flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-mono ${
-                  isLight
+                onClick={
+                  canSelectForReplace
+                    ? () => {
+                        setJoinedMatchState('idle');
+                        setSelectedReplaceId((prev) => (prev === p.id ? null : p.id));
+                      }
+                    : undefined
+                }
+                className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-all ${
+                  isSelectedForReplace
+                    ? isLight
+                      ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-400/40 cursor-pointer'
+                      : 'bg-amber-950/35 border-amber-400 ring-2 ring-amber-400/35 cursor-pointer'
+                    : canSelectForReplace
+                    ? isLight
+                      ? 'bg-white hover:bg-amber-50/60 border-amber-300/90 cursor-pointer'
+                      : 'bg-neutral-950/65 hover:bg-amber-950/25 border-amber-500/35 cursor-pointer'
+                    : p.isBot
+                    ? isLight
+                      ? 'bg-neutral-100/70 border-dashed border-neutral-300 text-neutral-600'
+                      : 'bg-neutral-900/40 border-dashed border-neutral-800 text-neutral-400'
+                    : isLight
                     ? 'bg-white border-neutral-200/90'
                     : 'bg-neutral-950/65 border-neutral-800/90'
                 }`}
+                title={
+                  canSelectForReplace
+                    ? `No Input detected for ${p.name} — click to select for Replace & Enter`
+                    : undefined
+                }
               >
-                <div className="flex items-center gap-1.5 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                   {p.isBot ? (
                     <Bot className={`h-3.5 w-3.5 shrink-0 ${iconColor}`} />
                   ) : (
@@ -228,22 +270,52 @@ export const DuringMatchRoomView: React.FC<DuringMatchRoomViewProps> = React.mem
                     }`}
                   >
                     {p.name}
-                    {!isHost && p.id === 'o-1' ? ' (You)' : ''}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[10px] text-emerald-500 tabular-nums">
-                    {p.isBot ? 'Bot' : p.isHost ? 'Host' : `${p.pingMs}ms`}
-                  </span>
-                  {isHost && !p.isHost && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {p.noInput && !p.isHost && (
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-semibold border ${
+                        isSelectedForReplace
+                          ? 'bg-amber-500 text-neutral-950 border-amber-400'
+                          : 'bg-amber-500/15 border-amber-500/35 text-amber-500'
+                      }`}
+                    >
+                      {isSelectedForReplace ? 'Replace Selected' : 'No Input'}
+                    </span>
+                  )}
+
+                  {!p.isBot && !p.noInput && (
+                    <span
+                      className={`text-[10px] tabular-nums ${
+                        showPairId
+                          ? isLight
+                            ? 'text-neutral-700 font-semibold'
+                            : 'text-neutral-300 font-semibold'
+                          : 'text-emerald-500'
+                      }`}
+                    >
+                      {showPairId
+                        ? `#${p.pairId || '7F3A'}`
+                        : p.isHost
+                        ? '0ms'
+                        : `${p.pingMs}ms`}
+                    </span>
+                  )}
+
+                  {isHost && !p.isHost && !p.isBot && (
                     <button
                       type="button"
-                      onClick={() => handleRemovePlayer(p.id)}
-                      className="p-0.5 px-1 rounded border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[9px] font-semibold cursor-pointer transition-colors"
-                      title="Kick / Remove from match"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemovePlayer(p.id);
+                      }}
+                      className="inline-flex items-center justify-center p-1 rounded-md border border-rose-500/35 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 cursor-pointer transition-colors"
+                      title="Kick player from match"
+                      aria-label={`Kick ${p.name}`}
                     >
-                      Kick
+                      <UserRoundX className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
@@ -278,22 +350,44 @@ export const DuringMatchRoomView: React.FC<DuringMatchRoomViewProps> = React.mem
         />
       )}
 
-      {/* 2. PLAYERS IN MATCH (2 Columns: Blue Team | Orange Team, No Switch Team) */}
+      {/* 2. PLAYERS IN MATCH (2 Columns: Blue Team | Orange Team) */}
       <div
         data-ui-element="during-match-players"
         className="flex flex-col gap-1.5"
         onMouseEnter={() =>
           onHoverDesc?.(
-            'Players in Match: Split into Blue Team (left) and Orange Team (right). Team switching is locked during active match.'
+            isHost
+              ? 'Players in Match: Split into Blue Team and Orange Team. Toggle Pair ID (Eye) to inspect peer IDs or use the red icon to kick.'
+              : 'Players in Match: Select a team below (Blue / Auto / Orange) to join mid-match, or click a No Input player to Replace & Enter.'
           )
         }
         onMouseLeave={() => onHoverDesc?.(null)}
       >
         <div className="flex items-center justify-between text-xs font-mono font-semibold text-neutral-400">
-          <span>PLAYERS IN MATCH</span>
-          <span className="text-amber-500">
-            {players.length} / 6 · Teams Locked
-          </span>
+          <div className="flex items-center gap-2">
+            <span>PLAYERS IN MATCH</span>
+            <span className={isLight ? 'text-black font-bold' : 'text-white font-bold'}>
+              {humanPlayersCount} / 6
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowPairId((prev) => !prev)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[10px] font-mono font-bold cursor-pointer transition-colors ${
+              showPairId
+                ? isLight
+                  ? 'bg-neutral-900 border-neutral-900 text-white shadow-2xs'
+                  : 'bg-neutral-100 border-neutral-100 text-neutral-950 shadow-2xs'
+                : isLight
+                ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-600'
+                : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-400'
+            }`}
+            title="Toggle Pair ID display instead of RTT"
+          >
+            <Eye className="h-3 w-3" />
+            <span>Pair ID</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -302,6 +396,127 @@ export const DuringMatchRoomView: React.FC<DuringMatchRoomViewProps> = React.mem
         </div>
       </div>
 
+      {/* 2B. Client Mid-Match Join / Reconnect Controls: Blue | Auto | Orange + Join Match / Replace & Enter */}
+      {!isHost && (
+        <div
+          data-ui-element="during-match-client-rejoin-controls"
+          className="flex flex-col gap-2"
+        >
+          <div
+            className="grid grid-cols-3 gap-2"
+            onMouseEnter={() =>
+              onHoverDesc?.(
+                'Mid-Match Side Selection: Choose Blue, Auto (default), or Orange when joining or reconnecting during an active match.'
+              )
+            }
+            onMouseLeave={() => onHoverDesc?.(null)}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedReplaceId(null);
+                setJoinedMatchState('idle');
+                setClientJoinTeam('blue');
+              }}
+              className={`py-2 px-3 rounded-xl border text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                !selectedReplacePlayer && clientJoinTeam === 'blue'
+                  ? 'bg-sky-500 text-white border-sky-400 shadow-sm ring-2 ring-sky-400/35'
+                  : isLight
+                  ? 'bg-sky-500/10 hover:bg-sky-500/20 border-sky-400/45 text-sky-700'
+                  : 'bg-sky-500/12 hover:bg-sky-500/22 border-sky-500/35 text-sky-400'
+              }`}
+            >
+              {!selectedReplacePlayer && clientJoinTeam === 'blue' && (
+                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+              )}
+              <span>Blue</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedReplaceId(null);
+                setJoinedMatchState('idle');
+                setClientJoinTeam('neutral');
+              }}
+              className={`py-2 px-3 rounded-xl border text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                !selectedReplacePlayer && clientJoinTeam === 'neutral'
+                  ? isLight
+                    ? 'bg-neutral-800 text-white border-neutral-700 shadow-sm ring-2 ring-neutral-400/40'
+                    : 'bg-neutral-200 text-neutral-950 border-white shadow-sm ring-2 ring-neutral-300/35'
+                  : isLight
+                  ? 'bg-neutral-200/75 hover:bg-neutral-300/80 border-neutral-400/50 text-neutral-700'
+                  : 'bg-neutral-800/75 hover:bg-neutral-700/80 border-neutral-600/50 text-neutral-300'
+              }`}
+            >
+              {!selectedReplacePlayer && clientJoinTeam === 'neutral' && (
+                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+              )}
+              <span>Auto</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedReplaceId(null);
+                setJoinedMatchState('idle');
+                setClientJoinTeam('orange');
+              }}
+              className={`py-2 px-3 rounded-xl border text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                !selectedReplacePlayer && clientJoinTeam === 'orange'
+                  ? 'bg-orange-500 text-white border-orange-400 shadow-sm ring-2 ring-orange-400/35'
+                  : isLight
+                  ? 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-400/45 text-orange-700'
+                  : 'bg-orange-500/12 hover:bg-orange-500/22 border-orange-500/35 text-orange-400'
+              }`}
+            >
+              {!selectedReplacePlayer && clientJoinTeam === 'orange' && (
+                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+              )}
+              <span>Orange</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedReplacePlayer) {
+                setJoinedMatchState((prev) => (prev === 'replaced' ? 'idle' : 'replaced'));
+              } else {
+                setJoinedMatchState((prev) => (prev === 'joined' ? 'idle' : 'joined'));
+              }
+            }}
+            onMouseEnter={() =>
+              onHoverDesc?.(
+                selectedReplacePlayer
+                  ? `Replace & Enter: Take over the No Input slot of ${selectedReplacePlayer.name} (${selectedReplacePlayer.team.toUpperCase()} Team).`
+                  : 'Join Match: Enter the ongoing match with your selected side (Blue / Auto / Orange).'
+              )
+            }
+            onMouseLeave={() => onHoverDesc?.(null)}
+            className="w-full py-2.5 px-5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+          >
+            {selectedReplacePlayer ? (
+              <>
+                <UserCheck className="h-3.5 w-3.5" />
+                <span>
+                  {joinedMatchState === 'replaced'
+                    ? `Replaced ${selectedReplacePlayer.name} · In Match`
+                    : `Replace & Enter (${selectedReplacePlayer.name})`}
+                </span>
+              </>
+            ) : (
+              <>
+                <Play className="h-3.5 w-3.5 fill-current" />
+                <span>
+                  {joinedMatchState === 'joined' ? 'Joined Match · In Arena' : 'Join Match'}
+                </span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* 3. SPECTATING Section (Host: All + from player route; Client: Only Spectating via You) */}
       <div
         data-ui-element="during-match-spectating"
@@ -309,8 +524,8 @@ export const DuringMatchRoomView: React.FC<DuringMatchRoomViewProps> = React.mem
         onMouseEnter={() =>
           onHoverDesc?.(
             isHost
-              ? 'Spectating (Host Diagnostics): Shows total spectators and which upstream route (from player via Daisy Chain vs Direct Host P2P) each spectator uses so you can diagnose upload bandwidth and Kick/Remove.'
-              : 'Spectating via You: Shows spectators daisy-chained through your client uplink. You can actively Remove them at any time.'
+              ? 'Spectating (Host Diagnostics): Shows total spectators and which upstream route (from player via Daisy Chain vs Direct Host P2P) each spectator uses.'
+              : 'Spectating via You: Shows spectators daisy-chained through your client uplink.'
           )
         }
         onMouseLeave={() => onHoverDesc?.(null)}
@@ -389,10 +604,11 @@ export const DuringMatchRoomView: React.FC<DuringMatchRoomViewProps> = React.mem
                   <button
                     type="button"
                     onClick={() => handleRemoveSpectator(spec.id)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-rose-500/35 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-semibold cursor-pointer transition-colors"
+                    className="inline-flex items-center justify-center p-1 rounded-md border border-rose-500/35 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 cursor-pointer transition-colors"
+                    title="Remove spectator"
+                    aria-label={`Remove spectator ${spec.name}`}
                   >
-                    <UserMinus className="h-3 w-3" />
-                    <span>{isHost ? 'Kick / Remove' : 'Remove'}</span>
+                    <UserRoundX className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>

@@ -12,7 +12,7 @@ import {
 
 export * from '../tokens/menuLayoutTokens';
 
-const STORAGE_KEY = 'ui-storybook-menu-layout-tokens-v16';
+const STORAGE_KEY = 'ui-storybook-menu-layout-tokens-v17';
 
 export const normalizePanels = (
   rawPanels?: Partial<Record<MenuPanelId, Partial<PanelSizingConfig>>>

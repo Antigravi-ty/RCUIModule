@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Eye,
   Ghost,
@@ -7,7 +7,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   User,
-  UserMinus,
+  UserRoundX,
 } from 'lucide-react';
 import { SettingToggleRow } from '../../compounds/SettingToggleRow';
 import {
@@ -22,6 +22,7 @@ export interface WarmupRoomPlayer {
   id: string;
   name: string;
   pingMs: number;
+  pairId?: string;
   isHost?: boolean;
   isSelf?: boolean;
 }
@@ -41,10 +42,10 @@ export interface OnlineWarmupRoomViewProps {
 }
 
 const INITIAL_WARMUP_PLAYERS: WarmupRoomPlayer[] = [
-  { id: 'w-1', name: 'Player_01 (Host)', pingMs: 0, isHost: true },
-  { id: 'w-2', name: 'OctaneMain_99', pingMs: 21 },
-  { id: 'w-3', name: 'Aerial_Vortex', pingMs: 33 },
-  { id: 'w-4', name: 'FlipReset_Pro', pingMs: 44 },
+  { id: 'w-1', name: 'Player_01 (Host)', pingMs: 0, pairId: '1A0F', isHost: true },
+  { id: 'w-2', name: 'OctaneMain_99', pingMs: 21, pairId: '9B2C' },
+  { id: 'w-3', name: 'Aerial_Vortex', pingMs: 33, pairId: '4D1E' },
+  { id: 'w-4', name: 'FlipReset_Pro', pingMs: 44, pairId: '5E7A' },
 ];
 
 const INITIAL_WARMUP_SPECTATORS: SpectatorRouteEntry[] = [
@@ -72,8 +73,8 @@ const INITIAL_WARMUP_SPECTATORS: SpectatorRouteEntry[] = [
  * Decoupled Online Warmup Room View (`online-warmup-host` & `online-warmup-client`):
  * - No Team division (`PLAYERS IN ROOM`, up to 6 players, no `Switch Team`).
  * - `SPECTATING`:
- *   - Host: Sees all spectators + `from player` route diagnostics + `Kick / Remove`.
- *   - Client: Sees only spectators daisy-chained through this client (`SPECTATING VIA YOU`) + `Remove`.
+ *   - Host: Sees all spectators + `from player` route diagnostics + icon-only `UserRoundX` kick.
+ *   - Client: Sees only spectators daisy-chained through this client (`SPECTATING VIA YOU`) + icon-only `UserRoundX` remove.
  * - Host-Only controls:
  *   - `Advanced Management` button & reserved window interface (`onOpenAdvancedManagement` + inline preview).
  *   - Double-Confirm `Shutdown Server` (`door-stairwell`).
@@ -102,6 +103,11 @@ export const OnlineWarmupRoomView: React.FC<OnlineWarmupRoomViewProps> = React.m
   const [spectators, setSpectators] = useState<SpectatorRouteEntry[]>(
     INITIAL_WARMUP_SPECTATORS
   );
+  const [showPairId, setShowPairId] = useState<boolean>(isHost);
+
+  useEffect(() => {
+    setShowPairId(isHost);
+  }, [isHost]);
 
   const signalingState = controlledSignaling ?? internalSignaling;
   const setSignalingState = setInternalSignaling;
@@ -159,18 +165,40 @@ export const OnlineWarmupRoomView: React.FC<OnlineWarmupRoomViewProps> = React.m
         className="flex flex-col gap-1.5"
         onMouseEnter={() =>
           onHoverDesc?.(
-            'Players in Room: Up to 6 online players in shared warmup. No team division or team switching.'
+            'Players in Room: Up to 6 online players in shared warmup. Toggle Pair ID (Eye) to inspect peer IDs instead of RTT.'
           )
         }
         onMouseLeave={() => onHoverDesc?.(null)}
       >
         <div className="flex items-center justify-between text-xs font-mono font-semibold text-neutral-400">
-          <span>PLAYERS IN ROOM</span>
-          <span className="text-amber-500">{players.length} / 6</span>
+          <div className="flex items-center gap-2">
+            <span>PLAYERS IN ROOM</span>
+            <span className={isLight ? 'text-black font-bold' : 'text-white font-bold'}>
+              {players.length} / 6
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowPairId((prev) => !prev)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[10px] font-mono font-bold cursor-pointer transition-colors ${
+              showPairId
+                ? isLight
+                  ? 'bg-neutral-900 border-neutral-900 text-white shadow-2xs'
+                  : 'bg-neutral-100 border-neutral-100 text-neutral-950 shadow-2xs'
+                : isLight
+                ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-600'
+                : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-400'
+            }`}
+            title="Toggle Pair ID display instead of RTT"
+          >
+            <Eye className="h-3 w-3" />
+            <span>Pair ID</span>
+          </button>
         </div>
 
         <div
-          className={`rounded-xl border p-2 flex flex-col gap-1.5 ${
+          className={`rounded-xl border p-2 grid grid-cols-2 gap-1.5 ${
             isLight
               ? 'bg-neutral-50 border-neutral-200/90'
               : 'bg-neutral-900/60 border-neutral-800'
@@ -211,18 +239,31 @@ export const OnlineWarmupRoomView: React.FC<OnlineWarmupRoomViewProps> = React.m
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[10px] text-emerald-500 tabular-nums">
-                    {p.isHost ? '0ms · Host' : `${p.pingMs}ms`}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span
+                    className={`text-[10px] tabular-nums ${
+                      showPairId
+                        ? isLight
+                          ? 'text-neutral-700 font-semibold'
+                          : 'text-neutral-300 font-semibold'
+                        : 'text-emerald-500'
+                    }`}
+                  >
+                    {showPairId
+                      ? `#${p.pairId || '4C8E'}`
+                      : p.isHost
+                      ? '0ms'
+                      : `${p.pingMs}ms`}
                   </span>
                   {isHost && !p.isHost && (
                     <button
                       type="button"
                       onClick={() => handleRemovePlayer(p.id)}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-rose-500/35 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-semibold cursor-pointer transition-colors"
+                      className="inline-flex items-center justify-center p-1 rounded-md border border-rose-500/35 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 cursor-pointer transition-colors"
+                      title="Kick player from warmup room"
+                      aria-label={`Kick ${p.name}`}
                     >
-                      <UserMinus className="h-3 w-3" />
-                      <span>Kick</span>
+                      <UserRoundX className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
@@ -314,10 +355,11 @@ export const OnlineWarmupRoomView: React.FC<OnlineWarmupRoomViewProps> = React.m
                   <button
                     type="button"
                     onClick={() => handleRemoveSpectator(spec.id)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-rose-500/35 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-semibold cursor-pointer transition-colors"
+                    className="inline-flex items-center justify-center p-1 rounded-md border border-rose-500/35 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 cursor-pointer transition-colors"
+                    title="Remove spectator"
+                    aria-label={`Remove spectator ${spec.name}`}
                   >
-                    <UserMinus className="h-3 w-3" />
-                    <span>{isHost ? 'Kick / Remove' : 'Remove'}</span>
+                    <UserRoundX className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>

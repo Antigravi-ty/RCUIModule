@@ -229,8 +229,8 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
   },
   'layer2-room-host-control': {
     mode: 'auto',
-    width: 520,
-    targetHeight: 560,
+    width: 720,
+    targetHeight: 500,
     minHeight: 220,
     maxHeight: 1080,
   },
