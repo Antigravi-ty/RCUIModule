@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Upload,
   ClockCheck,
@@ -66,7 +66,7 @@ export interface ReplayViewerFloatingWindowProps {
   /** Custom signal markers */
   signalMarkers?: ReplaySignalMarker[];
   // Action callbacks
-  onLoadReplayFile?: () => void;
+  onLoadReplayFile?: (file?: File) => void;
   onLoadRecentReplay?: () => void;
   onPlay?: () => void;
   onPause?: () => void;
@@ -144,6 +144,7 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
       onDownCounterChange,
       onChange,
     } = useReplayViewerPanelStoreBindings(rawProps);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [clipIndex, setClipIndex] = useState<number>(0);
     const activeClip = RECENT_CLIPS[clipIndex];
     const fileName = controlledFileName ?? activeClip.name;
@@ -237,12 +238,30 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
 
     return (
       <div className="p-3.5 flex flex-col gap-3 text-xs select-none">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".rcreplay,.rcreplay.gz,.rcgr,.rcgr.gz,.json,.gz,application/gzip,application/x-gzip,application/json"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file && onLoadReplayFile) {
+              onLoadReplayFile(file);
+            }
+          }}
+        />
         {/* 1. Top Row: 2 Buttons — Load Replay Files (Black Primary + Upload icon) & Load Recent (clock-check icon) */}
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => {
-              if (onLoadReplayFile) {
+              if (rawProps.onLoadReplayFile && rawProps.onLoadReplayFile.length === 0) {
+                rawProps.onLoadReplayFile();
+              } else if (fileInputRef.current && onLoadReplayFile) {
+                fileInputRef.current.value = '';
+                fileInputRef.current.click();
+              } else if (onLoadReplayFile) {
                 onLoadReplayFile();
               } else {
                 quickNotification.info('Open local .rcreplay file picker.');
@@ -460,7 +479,6 @@ export const ReplayViewerFloatingWindow: React.FC<ReplayViewerFloatingWindowProp
               if (controlsDisabled) return;
               if (controlledIsPlaying === undefined) setInternalIsPlaying(false);
               if (controlledIsIntervening === undefined) setInternalIsIntervening(true);
-              onPlayingChange?.(false);
               onInterveneFromHere?.(clampedCursor, Number(downCounter));
               emitStateChange({ isPlaying: false, isIntervening: true });
               if (!onInterveneFromHere) {

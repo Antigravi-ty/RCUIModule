@@ -110,6 +110,19 @@ export function useFloatingWindowDragResize({
       Math.max(presetMinHeight, item.height ?? matchedPreset?.height ?? 360)
     ),
   }));
+  const desiredAnchorRef = useRef<WindowRect>(desiredAnchor);
+  desiredAnchorRef.current = desiredAnchor;
+
+  const updateDesiredAnchor = useCallback(
+    (updater: WindowRect | ((prev: WindowRect) => WindowRect)): WindowRect => {
+      const next =
+        typeof updater === 'function' ? updater(desiredAnchorRef.current) : updater;
+      desiredAnchorRef.current = next;
+      setDesiredAnchor(next);
+      return next;
+    },
+    []
+  );
 
   const userHasResizedRef = useRef<boolean>(Boolean(item.userAdjustedSize));
   const lastMeasuredIntrinsicHRef = useRef<number | null>(null);
@@ -134,7 +147,7 @@ export function useFloatingWindowDragResize({
 
       if (!isResizable) {
         lastMeasuredIntrinsicHRef.current = totalIntrinsicH;
-        setDesiredAnchor((prev) =>
+        updateDesiredAnchor((prev) =>
           Math.abs(prev.height - totalIntrinsicH) <= 1
             ? prev
             : { ...prev, height: totalIntrinsicH }
@@ -143,7 +156,7 @@ export function useFloatingWindowDragResize({
         const prevIntrinsic = lastMeasuredIntrinsicHRef.current;
         lastMeasuredIntrinsicHRef.current = totalIntrinsicH;
 
-        setDesiredAnchor((prev) => {
+        updateDesiredAnchor((prev) => {
           if (!userHasResizedRef.current) {
             if (Math.abs(prev.height - totalIntrinsicH) <= 1) return prev;
             return { ...prev, height: totalIntrinsicH };
@@ -188,6 +201,7 @@ export function useFloatingWindowDragResize({
     presetMinWidth,
     shouldAutoFitHeight,
     showFooter,
+    updateDesiredAnchor,
   ]);
 
   useEffect(() => {
@@ -218,11 +232,11 @@ export function useFloatingWindowDragResize({
     if (item.position) {
       const rx = Math.round(item.position.x);
       const ry = Math.round(item.position.y);
-      setDesiredAnchor((prev) =>
+      updateDesiredAnchor((prev) =>
         prev.x === rx && prev.y === ry ? prev : { ...prev, x: rx, y: ry }
       );
     }
-  }, [item.position]);
+  }, [item.position, updateDesiredAnchor]);
 
   useEffect(() => {
     userHasResizedRef.current = Boolean(item.userAdjustedSize);
@@ -231,7 +245,7 @@ export function useFloatingWindowDragResize({
   useEffect(() => {
     if (isDraggingRef.current || isResizingRef.current) return;
     if (item.width && item.height) {
-      setDesiredAnchor((prev) => {
+      updateDesiredAnchor((prev) => {
         const nextW = Math.max(effectiveMinWidth, Math.round(item.width!));
         const nextH =
           !isResizable && intrinsicMaxHeight !== null
@@ -258,6 +272,7 @@ export function useFloatingWindowDragResize({
     isResizable,
     shouldAutoFitHeight,
     intrinsicMaxHeight,
+    updateDesiredAnchor,
   ]);
 
   const clampedGeometry = resolveClampedWindowGeometry(
@@ -333,15 +348,15 @@ export function useFloatingWindowDragResize({
     const startMouseY = e.clientY;
     const startX = latestClampedRef.current.x;
     const startY = latestClampedRef.current.y;
-    const preservedDesiredW = desiredAnchor.width;
-    const preservedDesiredH = desiredAnchor.height;
+    const preservedDesiredW = desiredAnchorRef.current.width;
+    const preservedDesiredH = desiredAnchorRef.current.height;
 
     const handleMouseMove = (ev: MouseEvent) => {
       if (!isDraggingRef.current) return;
       const deltaX = ev.clientX - startMouseX;
       const deltaY = ev.clientY - startMouseY;
 
-      setDesiredAnchor({
+      updateDesiredAnchor({
         x: Math.round(startX + deltaX),
         y: Math.round(startY + deltaY),
         width: preservedDesiredW,
@@ -356,27 +371,26 @@ export function useFloatingWindowDragResize({
         setIsDraggingNow(false);
 
         const c = latestConstraintsRef.current;
-        setDesiredAnchor((latestDesired) => {
-          const settled = resolveClampedWindowGeometry(
-            latestDesired,
-            c.containerBounds,
-            {
-              minWidth: c.effectiveMinWidth,
-              maxWidth: c.presetMaxWidth,
-              minHeight: c.effectiveMinHeight,
-              maxHeight: c.effectiveMaxHeight,
-              resizable: c.isResizable,
-            },
-            { margin: CONTAINER_MARGIN, prioritizePositionSqueeze: false }
-          );
-          onUpdatePosition({ x: settled.x, y: settled.y });
-          return {
-            x: settled.x,
-            y: settled.y,
-            width: preservedDesiredW,
-            height: preservedDesiredH,
-          };
+        const latestDesired = desiredAnchorRef.current;
+        const settled = resolveClampedWindowGeometry(
+          latestDesired,
+          c.containerBounds,
+          {
+            minWidth: c.effectiveMinWidth,
+            maxWidth: c.presetMaxWidth,
+            minHeight: c.effectiveMinHeight,
+            maxHeight: c.effectiveMaxHeight,
+            resizable: c.isResizable,
+          },
+          { margin: CONTAINER_MARGIN, prioritizePositionSqueeze: false }
+        );
+        updateDesiredAnchor({
+          x: settled.x,
+          y: settled.y,
+          width: preservedDesiredW,
+          height: preservedDesiredH,
         });
+        onUpdatePosition({ x: settled.x, y: settled.y });
       }
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -431,7 +445,7 @@ export function useFloatingWindowDragResize({
         Math.min(maxHInContainer, Math.round(startHeight + deltaH))
       );
 
-      setDesiredAnchor({
+      updateDesiredAnchor({
         x: startX,
         y: startY,
         width: nextWidth,
@@ -444,11 +458,9 @@ export function useFloatingWindowDragResize({
         isResizingRef.current = false;
         setIsInteracting(false);
         setIsResizingNow(false);
-        setDesiredAnchor((latest) => {
-          onUpdatePosition({ x: latest.x, y: latest.y });
-          onUpdateSize({ width: latest.width, height: latest.height }, true);
-          return latest;
-        });
+        const latest = desiredAnchorRef.current;
+        onUpdatePosition({ x: latest.x, y: latest.y });
+        onUpdateSize({ width: latest.width, height: latest.height }, true);
       }
       window.removeEventListener('mousemove', handleResizeMove);
       window.removeEventListener('mouseup', handleResizeUp);
