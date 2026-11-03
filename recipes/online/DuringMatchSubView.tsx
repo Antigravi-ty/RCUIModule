@@ -30,7 +30,7 @@ import {
 import type { LobbyTeamAssignment } from './MatchLobbyTeamRosterSection';
 
 
-export interface DuringMatchRoomRecipeProps {
+export interface DuringMatchSubViewProps {
   role: 'host' | 'client';
   roomCode?: string;
   pairId?: string;
@@ -100,7 +100,7 @@ const INITIAL_SPECTATORS: SpectatorRouteEntry[] = [
  *   - Host: Sees total spectators + `from player` route diagnostics, with icon-only `UserRoundX` kick.
  *   - Client: Sees spectators relaying through this client (`SPECTATING VIA YOU`), with icon-only `UserRoundX` remove.
  */
-export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React.memo(({
+export const DuringMatchSubView: React.FC<DuringMatchSubViewProps> = React.memo(({
   role,
   roomCode = 'RL-8924',
   pairId = '7F3A',
@@ -489,4 +489,4 @@ export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React
   );
 });
 
-DuringMatchRoomRecipe.displayName = 'DuringMatchRoomRecipe';
+DuringMatchSubView.displayName = 'DuringMatchSubView';

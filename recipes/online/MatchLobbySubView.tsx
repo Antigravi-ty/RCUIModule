@@ -23,7 +23,7 @@ import {
 } from './MatchLobbyTeamRosterSection';
 
 
-export interface MatchLobbyRoomRecipeProps {
+export interface MatchLobbySubViewProps {
   role: 'host' | 'client';
   roomCode?: string;
   pairId?: string;
@@ -73,7 +73,7 @@ const TEAM_SLOTS_PER_SIDE: Record<HostMatchTeamFormat, number> = {
 /**
  * Decoupled Match Lobby Content (`match-lobby-host` & `match-lobby-client`).
  */
-export const MatchLobbyRoomRecipe: React.FC<MatchLobbyRoomRecipeProps> = React.memo(({
+export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
   role,
   roomCode = 'RL-8924',
   pairId = '7F3A',
@@ -452,4 +452,4 @@ export const MatchLobbyRoomRecipe: React.FC<MatchLobbyRoomRecipeProps> = React.m
   );
 });
 
-MatchLobbyRoomRecipe.displayName = 'MatchLobbyRoomRecipe';
+MatchLobbySubView.displayName = 'MatchLobbySubView';

@@ -12,7 +12,7 @@ import type {
   LobbyTeamAssignment,
 } from '../online/MatchLobbyTeamRosterSection';
 import type { ActiveMatchPlayer } from '../online/DuringMatchClientRejoinControls';
-import type { WarmupRoomPlayer } from '../online/OnlineWarmupRoomRecipe';
+import type { WarmupRoomPlayer } from '../online/OnlineWarmupSubView';
 import type { HostMatchTeamFormat } from '../online/OnlineRoomConfigSummaryCard';
 
 export type OnlineSessionContextId =

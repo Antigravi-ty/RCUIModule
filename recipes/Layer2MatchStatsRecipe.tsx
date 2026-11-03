@@ -36,7 +36,7 @@ export const Layer2MatchStatsRecipe: React.FC<Layer2MatchStatsRecipeProps> = ({
   return (
     <PanelContainer isLight={isLight} className="w-full max-w-[580px]">
       <PanelHeader
-        title="MATCH SUMMARY"
+        title="MATCH STATS & TELEMETRY"
         onBack={onBack}
         rightElement={
           <Badge variant="primary" size="sm" isLight={isLight}>

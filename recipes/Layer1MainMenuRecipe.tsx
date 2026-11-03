@@ -41,13 +41,8 @@ export type TouchInputAgentOption = 'none' | 'necto' | 'nexto';
 
 export interface Layer1MainMenuRecipeProps {
   isLight?: boolean;
-  showAdditionalPreviews?: boolean;
-  /** Legacy matchMode prop OR full Layer1ContextVariation */
-  matchMode?: Layer1ContextVariation | 'online-warmup' | 'static-training-pack';
-  /** Explicit context variation (overrides matchMode if provided) */
+  /** Explicit context variation */
   contextVariation?: Layer1ContextVariation;
-  /** Alias for contextVariation */
-  contextMode?: Layer1ContextVariation;
   /** Optional developer Touch Input Agent banner (?touch=1 / ?touch=2) */
   touchMode?: boolean;
   touchHeadlessMode?: boolean;
@@ -59,22 +54,17 @@ export interface Layer1MainMenuRecipeProps {
   onTouchInputAgentChange?: (agent: TouchInputAgentOption) => void;
   /** Background power saving mode ('extreme' | '15' | '30' | 'disable' | 'freeze' | 'match') */
   menuPowerSave?: 'extreme' | '15' | '30' | 'disable' | 'freeze' | 'match';
-  /** Legacy boolean fallback for backgroundRenderPaused */
-  backgroundRenderPaused?: boolean;
   onResume?: () => void;
   onRestartMatch?: () => void;
   onReturnToFreeplay?: () => void;
   onNavigatePlay?: () => void;
   onNavigateGarage?: () => void;
   onNavigateSettings?: (targetTab?: string) => void;
-  onNavigatePreviews?: () => void;
-  onNavigateManageRoom?: () => void;
   onNavigateRoomControl?: () => void;
   onNavigateTrainingConfig?: () => void;
   onNavigateKickoffConfig?: () => void;
   onNavigateStaticTrainingPack?: () => void;
   onNavigateExpMultiBots?: () => void;
-  onNavigateExpMultiBotsConfig?: () => void;
   onOpenFloatingWindow?: (id: string) => void;
   onLeaveRoom?: () => void;
   onExitEditMode?: () => void;
@@ -123,38 +113,30 @@ const renderCustomRowIcon = (
  */
 export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawProps) => {
   const {
-  isLight = false,
-  matchMode,
-  contextVariation: propContextVariation,
-  contextMode,
-  touchMode = false,
-  touchHeadlessMode = false,
-  touchInputAgent: propTouchInputAgent,
-  defaultTouchInputAgent = 'none',
-  onTouchInputAgentChange,
-  menuPowerSave,
-  backgroundRenderPaused = false,
-  onResume,
-  onRestartMatch,
-  onReturnToFreeplay,
-  onNavigatePlay,
-  onNavigateGarage,
-  onNavigateSettings,
-  onNavigateManageRoom: propNavigateManageRoom,
-  onNavigateRoomControl,
-  onNavigateExpMultiBotsConfig: propNavigateExpMultiBotsConfig,
-  onNavigateExpMultiBots,
-  onLeaveRoom,
-  onExitEditMode,
-  extraBottomAction,
-  sizing: propSizing,
-  styleVariant,
-  styleParams,
-  className = '',
-} = useLayer1MainMenuStoreBinding(rawProps);
-  const contextVariation = propContextVariation ?? contextMode;
-  const onNavigateManageRoom = propNavigateManageRoom ?? onNavigateRoomControl;
-  const onNavigateExpMultiBotsConfig = propNavigateExpMultiBotsConfig ?? onNavigateExpMultiBots;
+    isLight = false,
+    contextVariation,
+    touchMode = false,
+    touchHeadlessMode = false,
+    touchInputAgent: propTouchInputAgent,
+    defaultTouchInputAgent = 'none',
+    onTouchInputAgentChange,
+    menuPowerSave,
+    onResume,
+    onRestartMatch,
+    onReturnToFreeplay,
+    onNavigatePlay,
+    onNavigateGarage,
+    onNavigateSettings,
+    onNavigateRoomControl,
+    onNavigateExpMultiBots,
+    onLeaveRoom,
+    onExitEditMode,
+    extraBottomAction,
+    sizing: propSizing,
+    styleVariant,
+    styleParams,
+    className = '',
+  } = useLayer1MainMenuStoreBinding(rawProps);
   const storeSizing = useMenuLayoutStore(
     (s) => s.panels?.['layer1-main'] ?? DEFAULT_PANEL_SIZING['layer1-main']
   );
@@ -182,15 +164,15 @@ export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawPro
   };
 
   const rawCtxInput =
-    contextVariation ?? matchMode ?? storeMenuStyle.previewContextMode ?? 'freeplay';
+    contextVariation ?? storeMenuStyle.previewContextMode ?? 'freeplay';
   const ctxSpec = resolveLayer1ContextSpec(rawCtxInput);
 
   const handleCustomRowClick = () => {
     const actionType = ctxSpec.customActionRow?.actionType;
     if (actionType === 'manage-room') {
-      onNavigateManageRoom?.();
+      onNavigateRoomControl?.();
     } else if (actionType === 'exp-multi-bots') {
-      onNavigateExpMultiBotsConfig?.();
+      onNavigateExpMultiBots?.();
     } else {
       onNavigatePlay?.();
     }
@@ -219,7 +201,7 @@ export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawPro
         }
       : undefined);
 
-  const powerSave = menuPowerSave ?? (backgroundRenderPaused ? 'extreme' : '30');
+  const powerSave = menuPowerSave ?? '30';
   let dotColor = 'bg-emerald-500';
   let powerLabel = 'Power Saving: 30 FPS';
   if (powerSave === 'extreme' || powerSave === 'freeze') {

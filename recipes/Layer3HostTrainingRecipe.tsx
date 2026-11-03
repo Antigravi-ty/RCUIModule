@@ -7,7 +7,7 @@ import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
-import { dispatchOnlineRoomErrorNotification } from './Layer3OnlineWarmupRecipe';
+import { dispatchOnlineRoomErrorNotification } from './online/onlineRoomErrorNotification';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,

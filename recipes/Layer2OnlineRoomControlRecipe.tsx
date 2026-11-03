@@ -4,17 +4,17 @@ import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
-import { MatchLobbyRoomRecipe } from './online/MatchLobbyRoomRecipe';
+import { MatchLobbySubView } from './online/MatchLobbySubView';
 import type {
   LobbyPlayerSlot,
   LobbyTeamAssignment,
 } from './online/MatchLobbyTeamRosterSection';
-import { DuringMatchRoomRecipe } from './online/DuringMatchRoomRecipe';
+import { DuringMatchSubView } from './online/DuringMatchSubView';
 import type { ActiveMatchPlayer } from './online/DuringMatchClientRejoinControls';
 import {
-  OnlineWarmupRoomRecipe,
+  OnlineWarmupSubView,
   type WarmupRoomPlayer,
-} from './online/OnlineWarmupRoomRecipe';
+} from './online/OnlineWarmupSubView';
 import type { SignalingHealthState } from './online/OnlineRoomTopStatusBar';
 
 export type RoomStateMode = 'free-play' | 'match';
@@ -116,7 +116,7 @@ export const resolveOnlineSessionContextId = (
   }
 };
 
-export interface Layer2RoomHostControlRecipeProps {
+export interface Layer2OnlineRoomControlRecipeProps {
   isLight?: boolean;
   developerMode?: boolean;
   roomCode?: string;
@@ -161,52 +161,52 @@ export interface Layer2RoomHostControlRecipeProps {
 }
 
 /**
- * [Recipe] Layer 2 Online Session Room Control / Info (`Layer2RoomHostControlRecipe`)
+ * [Recipe] Layer 2 Online Session Room Control / Info (`Layer2OnlineRoomControlRecipe`)
  * Decoupled router that renders the exact view for each of the 6 online session states:
- * 1. `match-lobby-host` (`MatchLobbyRoomView` role="host")
- * 2. `match-lobby-client` (`MatchLobbyRoomView` role="client")
- * 3. `online-match-host` (`DuringMatchRoomView` role="host")
- * 4. `online-match-client` (`DuringMatchRoomView` role="client")
- * 5. `online-warmup-host` (`OnlineWarmupRoomView` role="host")
- * 6. `online-warmup-client` (`OnlineWarmupRoomView` role="client")
+ * 1. `match-lobby-host` (`MatchLobbySubView` role="host")
+ * 2. `match-lobby-client` (`MatchLobbySubView` role="client")
+ * 3. `online-match-host` (`DuringMatchSubView` role="host")
+ * 4. `online-match-client` (`DuringMatchSubView` role="client")
+ * 5. `online-warmup-host` (`OnlineWarmupSubView` role="host")
+ * 6. `online-warmup-client` (`OnlineWarmupSubView` role="client")
  */
-export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipeProps> = React.memo((rawProps) => {
+export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlRecipeProps> = React.memo((rawProps) => {
   const {
-  isLight = true,
-  roomCode = 'RL-8924',
-  signalingState,
-  onRefreshSignaling,
-  localTeam,
-  onSwitchTeam,
-  teamFormat,
-  onChangeTeamFormat,
-  botPolicy,
-  onChangeBotPolicy,
-  durationPreset,
-  onChangeDurationPreset,
-  customDurationSeconds,
-  onChangeCustomDurationSeconds,
-  lobbyPeers,
-  matchPlayers,
-  warmupPlayers,
-  onKickPeer,
-  zeroGProbes,
-  onToggleZeroGProbes,
-  testSfx,
-  onToggleTestSfx,
-  onResetBall,
-  isMatchPaused,
-  onTogglePause,
-  topSlot,
-  sessionContext: controlledContext,
-  onStartMatch,
-  onEnterMatch,
-  onNavigateAdvancedSettings,
-  onOpenNetHud,
-  onCloseRoom,
-  onBack = () => {},
-  className = '',
-} = useLayer2RoomHostControlBinding(rawProps);
+    isLight = true,
+    roomCode = 'RL-8924',
+    signalingState,
+    onRefreshSignaling,
+    localTeam,
+    onSwitchTeam,
+    teamFormat,
+    onChangeTeamFormat,
+    botPolicy,
+    onChangeBotPolicy,
+    durationPreset,
+    onChangeDurationPreset,
+    customDurationSeconds,
+    onChangeCustomDurationSeconds,
+    lobbyPeers,
+    matchPlayers,
+    warmupPlayers,
+    onKickPeer,
+    zeroGProbes,
+    onToggleZeroGProbes,
+    testSfx,
+    onToggleTestSfx,
+    onResetBall,
+    isMatchPaused,
+    onTogglePause,
+    topSlot,
+    sessionContext: controlledContext,
+    onStartMatch,
+    onEnterMatch,
+    onNavigateAdvancedSettings,
+    onOpenNetHud,
+    onCloseRoom,
+    onBack = () => {},
+    className = '',
+  } = useLayer2RoomHostControlBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const activeContextId = controlledContext ?? 'match-lobby-host';
@@ -237,7 +237,7 @@ export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipePr
         {topSlot}
 
         {activeSpec.stage === 'lobby' && (
-          <MatchLobbyRoomRecipe
+          <MatchLobbySubView
             role={activeSpec.role}
             roomCode={resolvedRoomCode}
             signalingState={signalingState}
@@ -270,7 +270,7 @@ export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipePr
         )}
 
         {activeSpec.stage === 'during-match' && (
-          <DuringMatchRoomRecipe
+          <DuringMatchSubView
             role={activeSpec.role}
             roomCode={resolvedRoomCode}
             signalingState={signalingState}
@@ -294,7 +294,7 @@ export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipePr
         )}
 
         {activeSpec.stage === 'warmup' && (
-          <OnlineWarmupRoomRecipe
+          <OnlineWarmupSubView
             role={activeSpec.role}
             roomCode={resolvedRoomCode}
             signalingState={signalingState}
@@ -317,4 +317,4 @@ export const Layer2RoomHostControlRecipe: React.FC<Layer2RoomHostControlRecipePr
   );
 });
 
-Layer2RoomHostControlRecipe.displayName = 'Layer2RoomHostControlRecipe';
+Layer2OnlineRoomControlRecipe.displayName = 'Layer2OnlineRoomControlRecipe';

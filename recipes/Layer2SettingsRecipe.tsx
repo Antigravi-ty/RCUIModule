@@ -33,15 +33,11 @@ export interface Layer2SettingsRecipeProps {
   onNavigateAudioDetail?: () => void;
   onNavigateKeybindingsDetail?: () => void;
   onNavigateTrajectoryDetail?: () => void;
-  /** Alias for onNavigateTrajectoryDetail */
-  onNavigateTrajectory?: () => void;
   onNavigateCameraDetail?: () => void;
-  onNavigateCameraSettings?: () => void;
   onNavigateAdvancedAudio?: () => void;
-  onNavigateEventAndTriggerer?: () => void;
+  onNavigateEventTriggerRules?: () => void;
   onNavigateExpMultiBots?: () => void;
   onNavigateDevSandboxes?: () => void;
-  onNavigateDevSubsystemIsolation?: () => void;
   onNavigateDevActiveTuners?: () => void;
   onNavigateDevCalibratedPresets?: () => void;
   onNavigateDevUnderDevelopment?: () => void;
@@ -51,11 +47,7 @@ export interface Layer2SettingsRecipeProps {
   onTabChange?: (tab: SettingsTabId) => void;
   /** Whether Developer Mode is unlocked (controls visibility of 5th 'Developer' tab) */
   developerMode?: boolean;
-  developerModeEnabled?: boolean;
   onDeveloperModeChange?: (unlocked: boolean) => void;
-  onToggleDeveloperMode?: (unlocked: boolean) => void;
-  backgroundRenderPaused?: boolean;
-  onToggleBackgroundRender?: (paused: boolean) => void;
   highlightSetting?: string | null;
   onClearHighlight?: () => void;
 
@@ -92,15 +84,12 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   onNavigateTrainingDetail,
   onNavigateKeybindingsDetail,
   onNavigateTrajectoryDetail,
-  onNavigateTrajectory,
   onNavigateCameraDetail,
-  onNavigateCameraSettings,
   onNavigateAudioDetail,
   onNavigateAdvancedAudio,
-  onNavigateEventAndTriggerer,
+  onNavigateEventTriggerRules,
   onNavigateExpMultiBots,
   onNavigateDevSandboxes,
-  onNavigateDevSubsystemIsolation,
   onNavigateDevActiveTuners,
   onNavigateDevCalibratedPresets,
   onNavigateDevUnderDevelopment,
@@ -109,9 +98,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   activeTab: controlledTab,
   onTabChange,
   developerMode: propDevMode,
-  developerModeEnabled,
   onDeveloperModeChange,
-  onToggleDeveloperMode,
   highlightSetting,
   onClearHighlight,
   gameplayConfig,
@@ -130,14 +117,12 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   const setStoreDevMode = useAppStore((s) => s.setDeveloperMode);
 
   const onBack = propOnBack ?? storeGoBack;
-  const resolvedPropDevMode = propDevMode ?? developerModeEnabled;
 
   const [internalSubView, setInternalSubView] = useState<
     null | 'trajectory' | 'training' | 'camera' | 'keybindings'
   >(null);
 
   const normalizeTab = (t?: string): SettingsTabId => {
-    if (t === 'video') return 'display';
     if (
       t === 'gameplay' ||
       t === 'audio' ||
@@ -160,15 +145,14 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   }, [initialTab, controlledTab]);
 
   const [internalDevMode, setInternalDevMode] = useState<boolean>(
-    resolvedPropDevMode ?? storeDevMode ?? (initialTab === 'developer' || controlledTab === 'developer')
+    propDevMode ?? storeDevMode ?? (initialTab === 'developer' || controlledTab === 'developer')
   );
-  const developerMode = resolvedPropDevMode ?? storeDevMode ?? internalDevMode;
+  const developerMode = propDevMode ?? storeDevMode ?? internalDevMode;
 
   const handleDeveloperModeChange = (next: boolean) => {
     setInternalDevMode(next);
     setStoreDevMode(next);
     onDeveloperModeChange?.(next);
-    onToggleDeveloperMode?.(next);
     if (!next && currentTab === 'developer') {
       setInternalTab('advanced');
       onTabChange?.('advanced');
@@ -189,9 +173,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   const sizing = propSizing ?? storeSizing;
 
   const handleNavigateTrajectory = () => {
-    const externalHandler = onNavigateTrajectoryDetail ?? onNavigateTrajectory;
-    if (externalHandler) {
-      externalHandler();
+    if (onNavigateTrajectoryDetail) {
+      onNavigateTrajectoryDetail();
     } else {
       setInternalSubView('trajectory');
     }
@@ -206,9 +189,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   };
 
   const handleNavigateCamera = () => {
-    const externalHandler = onNavigateCameraDetail ?? onNavigateCameraSettings;
-    if (externalHandler) {
-      externalHandler();
+    if (onNavigateCameraDetail) {
+      onNavigateCameraDetail();
     } else {
       setInternalSubView('camera');
     }
@@ -308,7 +290,6 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
               onNavigateTrainingDetail={handleNavigateTraining}
               onNavigateKeybindingsDetail={handleNavigateKeybindings}
               onNavigateTrajectoryDetail={handleNavigateTrajectory}
-              onNavigateTrajectory={handleNavigateTrajectory}
               onNavigateCameraDetail={handleNavigateCamera}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
@@ -392,10 +373,9 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
               <DeveloperTab
                 isLight={isLight}
                 onNavigateAdvancedAudio={onNavigateAdvancedAudio}
-                onNavigateEventAndTriggerer={onNavigateEventAndTriggerer}
+                onNavigateEventTriggerRules={onNavigateEventTriggerRules}
                 onNavigateExpMultiBots={onNavigateExpMultiBots}
                 onNavigateDevSandboxes={onNavigateDevSandboxes}
-                onNavigateDevSubsystemIsolation={onNavigateDevSubsystemIsolation}
                 onNavigateDevActiveTuners={onNavigateDevActiveTuners}
                 onNavigateDevCalibratedPresets={onNavigateDevCalibratedPresets}
                 onNavigateDevUnderDevelopment={onNavigateDevUnderDevelopment}

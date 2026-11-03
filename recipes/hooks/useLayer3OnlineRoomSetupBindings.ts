@@ -125,9 +125,9 @@ export function useLayer3HostMatchStoreBinding<TProps extends object>(
   return {
     ...rawProps,
     roomType: props.roomType ?? resolvedRoomType,
-    config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : config),
-    onConfigChange:
-      props.onConfigChange ??
+    config: props.config ?? (props.defaultConfig ? undefined : config),
+    onChange:
+      props.onChange ??
       ((next: HostMatchConfig, patch: Partial<HostMatchConfig>) => {
         setConfig(next);
         if (next.playerName) {

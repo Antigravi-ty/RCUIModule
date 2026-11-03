@@ -51,8 +51,6 @@ export interface GameplayTabProps {
   onNavigateTrainingDetail?: () => void;
   onNavigateKeybindingsDetail?: () => void;
   onNavigateTrajectoryDetail?: () => void;
-  /** Alias for onNavigateTrajectoryDetail */
-  onNavigateTrajectory?: () => void;
   onNavigateCameraDetail?: () => void;
   onHover: (desc: string) => void;
   onLeave: () => void;
@@ -68,7 +66,6 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
   onNavigateTrainingDetail,
   onNavigateKeybindingsDetail,
   onNavigateTrajectoryDetail,
-  onNavigateTrajectory,
   onNavigateCameraDetail,
   onHover,
   onLeave,
@@ -119,8 +116,6 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
   const handleOpenTrajectoryConfig = () => {
     if (onNavigateTrajectoryDetail) {
       onNavigateTrajectoryDetail();
-    } else if (onNavigateTrajectory) {
-      onNavigateTrajectory();
     } else {
       navigate('trajectory');
     }

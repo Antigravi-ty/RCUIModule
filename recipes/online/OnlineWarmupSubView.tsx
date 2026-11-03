@@ -27,7 +27,7 @@ export interface WarmupRoomPlayer {
   isSelf?: boolean;
 }
 
-export interface OnlineWarmupRoomRecipeProps {
+export interface OnlineWarmupSubViewProps {
   role: 'host' | 'client';
   roomCode?: string;
   pairId?: string;
@@ -84,7 +84,7 @@ const INITIAL_WARMUP_SPECTATORS: SpectatorRouteEntry[] = [
  *   - `Request Modification` button.
  *   - `Leave Room` button (`door-stairwell`).
  */
-export const OnlineWarmupRoomRecipe: React.FC<OnlineWarmupRoomRecipeProps> = React.memo(({
+export const OnlineWarmupSubView: React.FC<OnlineWarmupSubViewProps> = React.memo(({
   role,
   roomCode = 'TRN-409',
   pairId = '4C8E',
@@ -501,4 +501,4 @@ export const OnlineWarmupRoomRecipe: React.FC<OnlineWarmupRoomRecipeProps> = Rea
   );
 });
 
-OnlineWarmupRoomRecipe.displayName = 'OnlineWarmupRoomRecipe';
+OnlineWarmupSubView.displayName = 'OnlineWarmupSubView';

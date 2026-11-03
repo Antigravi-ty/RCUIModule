@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link2, Unlink2, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import {
   DEFAULT_Q1_LAYER_COLORS,
   DEFAULT_Q1_LAYER_OPACITIES,
@@ -9,7 +9,6 @@ import {
   oklchToHex,
   setHexOklchLightness,
   type DriftwoodsGroundConfig,
-  type DriftwoodsGroundTextureMode,
   type DriftwoodsQ1LayerColors,
   type DriftwoodsQ1LayerId,
   type DriftwoodsQ1LayerOpacities,
@@ -18,11 +17,9 @@ import {
   TunerRow,
   TunerColorRow,
   TunerToggleRow,
-  TunerSegmentedControl,
 } from '../../../compounds/TunerControls';
 import { DriftwoodsOklchSyncSection } from './DriftwoodsOklchSyncSection';
 import { DriftwoodsGroundSurfaceSection } from './DriftwoodsGroundSurfaceSection';
-import { DriftwoodsLegacyGroundSection } from './DriftwoodsLegacyGroundSection';
 
 export interface DriftwoodsGroundTabProps {
   ground: DriftwoodsGroundConfig;
@@ -35,7 +32,6 @@ export const DriftwoodsGroundTab: React.FC<DriftwoodsGroundTabProps> = ({
   onChange,
   isLight = false,
 }) => {
-  const activeMode: DriftwoodsGroundTextureMode = ground.textureMode ?? 'q1-7gray';
   const q1Colors: DriftwoodsQ1LayerColors = {
     ...DEFAULT_Q1_LAYER_COLORS,
     ...(ground.q1Colors || {}),
@@ -132,63 +128,14 @@ export const DriftwoodsGroundTab: React.FC<DriftwoodsGroundTabProps> = ({
     });
   };
 
-  const handleScaleXChange = (val: number) => {
-    if (ground.linkScale) {
-      onChange({ scaleX: val, scaleY: val });
-    } else {
-      onChange({ scaleX: val });
-    }
-  };
-
-  const handleScaleYChange = (val: number) => {
-    if (ground.linkScale) {
-      onChange({ scaleX: val, scaleY: val });
-    } else {
-      onChange({ scaleY: val });
-    }
-  };
-
-  const resetUVTransform = () => {
-    onChange({
-      scaleX: 1.015,
-      scaleY: 1.037,
-      offsetX: -0.0075,
-      offsetY: -0.0176,
-      originalLineThreshold: 0.0921,
-      originalLineSmoothness: 0.0364,
-    });
-  };
-
   return (
     <div className="flex flex-col gap-2.5">
-      {/* 0. Ground Texture Source Switch */}
-      <div className="flex flex-col gap-1.5">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 px-1">
-          Ground Texture Mode
-        </span>
-
-        <TunerSegmentedControl<DriftwoodsGroundTextureMode>
-          label="Active Ground Texture"
-          description="Switch between Q1 7-Layer RGBA Decal Mask (2048x3000 Mipmap + 16x AF) and Legacy Original Texture"
-          value={activeMode}
-          options={[
-            { value: 'q1-7gray', label: 'Q1 7-Layer Mask (L0-L6)' },
-            { value: 'original', label: 'Original Texture (2-Color)' },
-          ]}
-          onChange={(mode) => onChange({ textureMode: mode })}
-          isLight={isLight}
-        />
-      </div>
-
       {/* 0B. OKLCH Perceptual Luminance & Symmetric Team Palette */}
       <DriftwoodsOklchSyncSection
         ground={ground}
         onChange={onChange}
         isLight={isLight}
       />
-
-      {activeMode === 'q1-7gray' ? (
-        <>
           {/* 1A. Q1 7-Layer Semantic Grayscale Palette + Decal Opacity */}
           <div className="flex flex-col gap-1.5 pt-1">
             <div className="flex items-center justify-between px-1">
@@ -404,17 +351,6 @@ export const DriftwoodsGroundTab: React.FC<DriftwoodsGroundTabProps> = ({
               />
             </div>
           </div>
-        </>
-      ) : (
-        <DriftwoodsLegacyGroundSection
-          ground={ground}
-          onChange={onChange}
-          resetUVTransform={resetUVTransform}
-          handleScaleXChange={handleScaleXChange}
-          handleScaleYChange={handleScaleYChange}
-          isLight={isLight}
-        />
-      )}
 
       <DriftwoodsGroundSurfaceSection
         ground={ground}

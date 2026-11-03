@@ -21,7 +21,6 @@ export type ActiveMenuRoute =
   | 'self-training'
   | 'kickoff-training'
   | 'static-training-pack'
-  | 'online-warmup'
   | 'host-match'
   | 'join-room'
   | 'host-training'
@@ -36,9 +35,8 @@ export type ActiveMenuRoute =
   | 'keybindings'
   | 'advanced-controller'
   | 'advanced-audio'
-  | 'event-and-triggerer'
+  | 'event-trigger-rules'
   | 'exp-multi-bots-config'
-  | 'dev-subsystem-isolation'
   | 'dev-sandboxes'
   | 'dev-active-tuners'
   | 'dev-calibrated-presets'
@@ -51,7 +49,6 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'self-training': 'play',
   'kickoff-training': 'self-training',
   'static-training-pack': 'self-training',
-  'online-warmup': 'play',
   'host-match': 'play',
   'join-room': 'play',
   'host-training': 'play',
@@ -66,9 +63,8 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'keybindings': 'settings',
   'advanced-controller': 'keybindings',
   'advanced-audio': 'dev-active-tuners',
-  'event-and-triggerer': 'settings',
+  'event-trigger-rules': 'dev-active-tuners',
   'exp-multi-bots-config': 'dev-sandboxes',
-  'dev-subsystem-isolation': 'dev-sandboxes',
   'dev-sandboxes': 'settings',
   'dev-active-tuners': 'settings',
   'dev-calibrated-presets': 'settings',

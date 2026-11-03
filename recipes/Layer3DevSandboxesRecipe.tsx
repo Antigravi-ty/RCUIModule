@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLayer3DevSubsystemIsolationStoreBinding } from './hooks/useLayer3DevSettingsBindings';
+import { useLayer3DevSandboxesStoreBinding } from './hooks/useLayer3DevSettingsBindings';
 import {
   Bot,
   Sparkles,
@@ -40,14 +40,11 @@ export type DevTestLabTab =
   | 'exp-multi-bots'
   | 'exp-botpack-9700488';
 
-export interface Layer3DevSubsystemIsolationRecipeProps {
+export interface Layer3DevSandboxesRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
   activeBenchId?: DevTestLabTab | null;
   onEnterBench?: (tab: DevTestLabTab) => void;
-  onLaunchIsolationTab?: (tab: DevTestLabTab) => void;
-  onNavigateSubsystemIsolation?: () => void;
-  onNavigateMultiBots?: () => void;
   onNavigateExpMultiBots?: () => void;
   onNavigateExpBotpack9700488?: () => void;
   sizing?: PanelSizingConfig;
@@ -151,23 +148,22 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
  * [Recipe] Layer 3 Sandboxes — Isolated Subsystem Selector
  * Unified borderless single-line SettingActionRow list with tinted leading icons and inline [Play + Enter] buttons.
  */
-export const Layer3DevSubsystemIsolationRecipe: React.FC<Layer3DevSubsystemIsolationRecipeProps> = (rawProps) => {
+export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> = (rawProps) => {
   const {
-  isLight = false,
-  onBack,
-  activeBenchId = null,
-  onEnterBench,
-  onLaunchIsolationTab,
-  onNavigateExpMultiBots,
-  onNavigateExpBotpack9700488,
-  sizing: propSizing,
-} = useLayer3DevSubsystemIsolationStoreBinding(rawProps);
+    isLight = false,
+    onBack,
+    activeBenchId = null,
+    onEnterBench,
+    onNavigateExpMultiBots,
+    onNavigateExpBotpack9700488,
+    sizing: propSizing,
+  } = useLayer3DevSandboxesStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const storeSizing = useMenuLayoutStore(
     (s) =>
-      s.panels?.['layer3-dev-subsystem-isolation'] ??
-      DEFAULT_PANEL_SIZING['layer3-dev-subsystem-isolation']
+      s.panels?.['layer3-dev-sandboxes'] ??
+      DEFAULT_PANEL_SIZING['layer3-dev-sandboxes']
   );
   const sizing = propSizing ?? storeSizing;
 
@@ -218,11 +214,7 @@ export const Layer3DevSubsystemIsolationRecipe: React.FC<Layer3DevSubsystemIsola
         });
       }
     }
-    if (onEnterBench) {
-      onEnterBench(tab);
-    } else {
-      onLaunchIsolationTab?.(tab);
-    }
+    onEnterBench?.(tab);
   };
 
   return (

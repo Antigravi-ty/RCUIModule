@@ -16,7 +16,7 @@ import { SliderControl } from '../primitives/SliderControl';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
-import { dispatchOnlineRoomErrorNotification } from './Layer3OnlineWarmupRecipe';
+import { dispatchOnlineRoomErrorNotification } from './online/onlineRoomErrorNotification';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,
@@ -55,14 +55,10 @@ export interface Layer3HostMatchRecipeProps {
   defaultEditingConfig?: boolean;
   /** Controlled host match configuration */
   config?: Partial<HostMatchConfig>;
-  /** Alias for controlled config */
-  settings?: Partial<HostMatchConfig>;
   /** Initial host match configuration for uncontrolled mode */
   defaultConfig?: Partial<HostMatchConfig>;
   /** Callback fired when any host match setting changes */
   onChange?: (next: HostMatchConfig, patch: Partial<HostMatchConfig>) => void;
-  /** Alias for onChange */
-  onConfigChange?: (next: HostMatchConfig, patch: Partial<HostMatchConfig>) => void;
   onStartHost?: (config: HostMatchConfig) => void;
   /** Controlled 5-step creation progress status */
   progressStatus?: CreationProgressStatus;
@@ -96,12 +92,25 @@ export interface Layer3HostMatchRecipeProps {
  */
 export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React.memo((rawProps) => {
   const {
-  isLight = false, roomType = 'match', title, defaultEditingConfig = false, config: controlledConfigProp, settings: controlledSettingsProp,
-  defaultConfig, onChange, onConfigChange, onBack = () => {}, onNavigateGarageSync,
-  onNavigateAdvancedSettings, onStartHost, onCancelHost, onRetryHost,
-  progressStatus: controlledProgressStatus, currentStep: controlledCurrentStep,
-  onProgressStatusChange, onCurrentStepChange, steps,
-} = useLayer3HostMatchStoreBinding(rawProps);
+    isLight = false,
+    roomType = 'match',
+    title,
+    defaultEditingConfig = false,
+    config: controlledConfigProp,
+    defaultConfig,
+    onChange,
+    onBack = () => {},
+    onNavigateGarageSync,
+    onNavigateAdvancedSettings,
+    onStartHost,
+    onCancelHost,
+    onRetryHost,
+    progressStatus: controlledProgressStatus,
+    currentStep: controlledCurrentStep,
+    onProgressStatusChange,
+    onCurrentStepChange,
+    steps,
+  } = useLayer3HostMatchStoreBinding(rawProps);
   const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
   const sizing = panels['layer3-host-match'];
   const { titleFontSize, rowGap, paddingX } = useSettingActionRowStore();
@@ -111,10 +120,9 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
     ...defaultConfig,
   });
 
-  const controlledSource = controlledConfigProp ?? controlledSettingsProp;
   const resolvedConfig: HostMatchConfig = {
     ...internalConfig,
-    ...controlledSource,
+    ...controlledConfigProp,
   };
 
   const updateConfig = (patch: Partial<HostMatchConfig>) => {
@@ -122,11 +130,10 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
       ...resolvedConfig,
       ...patch,
     };
-    if (controlledSource === undefined) {
+    if (controlledConfigProp === undefined) {
       setInternalConfig(next);
     }
     onChange?.(next, patch);
-    onConfigChange?.(next, patch);
   };
 
   const { playerName, roomCode, roomKey, teamFormat, botPolicy, durationPreset, customDurationSeconds } = resolvedConfig;

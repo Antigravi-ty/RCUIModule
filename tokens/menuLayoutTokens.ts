@@ -5,12 +5,10 @@ export type CanonicalMenuPanelId =
   | 'layer2-play'
   | 'layer2-garage'
   | 'layer2-settings'
-  | 'layer2-previews'
   | 'layer2-room-host-control'
   | 'layer3-training'
   | 'layer3-audio-eq'
   | 'layer3-ball-trajectory'
-  | 'layer3-online-warmup'
   | 'layer3-host-match'
   | 'layer3-host-training'
   | 'layer3-custom-play'
@@ -21,7 +19,7 @@ export type CanonicalMenuPanelId =
   | 'layer3-camera'
   | 'layer3-keybindings'
   | 'layer3-exp-multi-bots'
-  | 'layer3-dev-subsystem-isolation'
+  | 'layer3-dev-sandboxes'
   | 'layer3-dev-active-tuners'
   | 'layer3-dev-calibrated-presets'
   | 'layer3-dev-under-development'
@@ -105,8 +103,6 @@ export interface MenuLayoutTokens {
   menuContainerPadding: number;
   /** Vertical padding (top & bottom in px) of Layer 1 PanelContent (default: 14px) */
   panelContentPaddingY: number;
-  /** Whether to display the 5th button ("Additional Previews") in Layer 1 Main Menu */
-  showAdditionalPreviews: boolean;
   /** Whether Layer 3 recipes display the inline single-line error notice */
   simulateLayer3Error: boolean;
 
@@ -125,8 +121,6 @@ export interface MenuLayoutTokens {
   panelHeaderBackBtnWidth: number;
   /** Header back button height (in px) for Layer 2+ PanelHeader (default: 32px) */
   panelHeaderBackBtnHeight: number;
-  /** Legacy alias synced with panelHeaderBackBtnHeight for backward compatibility */
-  panelHeaderBackBtnSize: number;
   /** Whether to show the left arrow icon inside the PanelHeader back button (default: true) */
   panelHeaderBackBtnShowArrow: boolean;
   /** Whether to show the "BACK" text label inside the PanelHeader back button (default: false) */
@@ -181,14 +175,6 @@ export interface MenuLayoutTokens {
   panelFooterRightDivider: boolean;
   /** Horizontal padding (in px) of the PanelFooter right-hand capability slot (default: 12px) */
   panelFooterRightPaddingX: number;
-
-  // Convenience dimension summaries synced with panels
-  layer1Width: number;
-  layer1Height: number;
-  layer2Width: number;
-  layer2Height: number;
-  layer3Width: number;
-  layer3Height: number;
 }
 
 export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingConfig> = {
@@ -220,13 +206,6 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     minHeight: 220,
     maxHeight: 1120,
   },
-  'layer2-previews': {
-    mode: 'auto',
-    width: 600,
-    targetHeight: 440,
-    minHeight: 220,
-    maxHeight: 960,
-  },
   'layer2-room-host-control': {
     mode: 'auto',
     width: 720,
@@ -252,13 +231,6 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     mode: 'auto',
     width: 560,
     targetHeight: 520,
-    minHeight: 220,
-    maxHeight: 1080,
-  },
-  'layer3-online-warmup': {
-    mode: 'auto',
-    width: 480,
-    targetHeight: 540,
     minHeight: 220,
     maxHeight: 1080,
   },
@@ -332,7 +304,7 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     minHeight: 240,
     maxHeight: 1120,
   },
-  'layer3-dev-subsystem-isolation': {
+  'layer3-dev-sandboxes': {
     mode: 'auto',
     width: 560,
     targetHeight: 460,
@@ -414,7 +386,6 @@ export const DEFAULT_PANEL_SHELL_TOKENS = {
   lockPanelHeaderBackBtnAspect: false,
   panelHeaderBackBtnWidth: 42,
   panelHeaderBackBtnHeight: 32,
-  panelHeaderBackBtnSize: 32,
   panelHeaderBackBtnShowArrow: true,
   panelHeaderBackBtnShowLabel: false,
   panelHeaderBackBtnIdleTone: 'match-header' as PanelHeaderBackBtnIdleTone,
@@ -541,13 +512,6 @@ export const DEFAULT_MENU_LAYOUT_TOKENS: MenuLayoutTokens = {
   menuItemPaddingY: 10,
   menuContainerPadding: 4,
   panelContentPaddingY: 14,
-  showAdditionalPreviews: false,
   simulateLayer3Error: false,
   ...DEFAULT_PANEL_SHELL_TOKENS,
-  layer1Width: DEFAULT_PANEL_SIZING['layer1-main'].width,
-  layer1Height: DEFAULT_PANEL_SIZING['layer1-main'].targetHeight,
-  layer2Width: DEFAULT_PANEL_SIZING['layer2-settings'].width,
-  layer2Height: DEFAULT_PANEL_SIZING['layer2-settings'].targetHeight,
-  layer3Width: DEFAULT_PANEL_SIZING['layer3-online-warmup'].width,
-  layer3Height: DEFAULT_PANEL_SIZING['layer3-online-warmup'].targetHeight,
 };

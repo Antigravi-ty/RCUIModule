@@ -115,8 +115,7 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    contextVariation:
-      props.contextVariation ?? props.contextMode ?? derivedVariation,
+    contextVariation: props.contextVariation ?? derivedVariation,
     extraBottomAction: resolvedExtraBottomAction,
     touchMode: props.touchMode ?? touchMode,
     touchHeadlessMode: props.touchHeadlessMode ?? touchHeadlessMode,
@@ -135,10 +134,10 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
         }
         navigate('settings');
       }),
-    onNavigateManageRoom:
-      props.onNavigateManageRoom ?? (() => navigate('room-host-control')),
-    onNavigateExpMultiBotsConfig:
-      props.onNavigateExpMultiBotsConfig ??
+    onNavigateRoomControl:
+      props.onNavigateRoomControl ?? (() => navigate('room-host-control')),
+    onNavigateExpMultiBots:
+      props.onNavigateExpMultiBots ??
       (() => navigate('exp-multi-bots-config')),
   } as TProps;
 }

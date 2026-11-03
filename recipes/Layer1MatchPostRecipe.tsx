@@ -31,7 +31,7 @@ export const Layer1MatchPostRecipe: React.FC<Layer1MatchPostRecipeProps> = ({
   return (
     <PanelContainer isLight={isLight} className="w-full max-w-[420px]">
       <PanelHeader
-        title="MATCH SUMMARY"
+        title="POST-MATCH MENU"
         rightElement={
           <Badge variant="success" size="sm" dot isLight={isLight}>
             VICTORY 4 - 2

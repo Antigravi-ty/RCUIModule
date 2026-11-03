@@ -22,10 +22,7 @@ export type GarageTabId =
   | 'paint'
   | 'loadout'
   | 'anthem'
-  | 'sync'
-  | 'colour'
-  | 'materials'
-  | 'player-name';
+  | 'sync';
 
 export interface Layer2GarageRecipeProps {
   isLight?: boolean;
@@ -72,40 +69,46 @@ export interface Layer2GarageRecipeProps {
  */
 export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) => {
   const {
-  isLight = false,
-  onBack = () => {},
-  initialTab = 'car',
-  activeTab: controlledTab,
-  onTabChange,
-  selectedCar: controlledSelectedCar,
-  defaultSelectedCar = 'fennec',
-  onSelectCar,
-  primaryTeam,
-  defaultPrimaryTeam,
-  onPrimaryTeamChange,
-  paintFinish,
-  defaultPaintFinish,
-  onPaintFinishChange,
-  blueOrder,
-  defaultBlueOrder = DEFAULT_BLUE_ORDER,
-  onBlueOrderChange,
-  orangeOrder,
-  defaultOrangeOrder = DEFAULT_ORANGE_ORDER,
-  onOrangeOrderChange,
-  materials,
-  onUpdateMaterials,
-  selectedAnthem: controlledSelectedAnthem,
-  defaultSelectedAnthem = 'none',
-  onSelectAnthem,
-  anthemAvailable = true,
-} = useLayer2GarageStoreBinding(rawProps);
+    isLight = false,
+    onBack = () => {},
+    initialTab = 'car',
+    activeTab: controlledTab,
+    onTabChange,
+    selectedCar: controlledSelectedCar,
+    defaultSelectedCar = 'fennec',
+    onSelectCar,
+    primaryTeam,
+    defaultPrimaryTeam,
+    onPrimaryTeamChange,
+    paintFinish,
+    defaultPaintFinish,
+    onPaintFinishChange,
+    blueOrder,
+    defaultBlueOrder = DEFAULT_BLUE_ORDER,
+    onBlueOrderChange,
+    orangeOrder,
+    defaultOrangeOrder = DEFAULT_ORANGE_ORDER,
+    onOrangeOrderChange,
+    materials,
+    onUpdateMaterials,
+    selectedAnthem: controlledSelectedAnthem,
+    defaultSelectedAnthem = 'none',
+    onSelectAnthem,
+    anthemAvailable = true,
+  } = useLayer2GarageStoreBinding(rawProps);
   const { panels, panelBodyPaddingX } = useMenuLayoutStore();
   const sizing = panels['layer2-garage'];
-  const normalizeTab = (t?: string) => {
-    if (t === 'player-name') return 'sync';
-    if (t === 'colour') return 'paint';
-    if (t === 'materials') return 'loadout';
-    return t || 'car';
+  const normalizeTab = (t?: string): GarageTabId => {
+    if (
+      t === 'car' ||
+      t === 'paint' ||
+      t === 'loadout' ||
+      t === 'anthem' ||
+      t === 'sync'
+    ) {
+      return t;
+    }
+    return 'car';
   };
   const [internalTab, setInternalTab] = useState(() => normalizeTab(initialTab));
   const activeTab = normalizeTab(controlledTab ?? internalTab);

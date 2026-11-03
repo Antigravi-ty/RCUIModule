@@ -155,14 +155,13 @@ export function useLayer3DevActiveTunersStoreBinding<TProps extends object>(
       props.onSelectAllBoostPhases ?? handleSelectAllBoostPhases,
     onNavigateAdvancedAudio:
       props.onNavigateAdvancedAudio ?? (() => navigate('advanced-audio')),
-    onNavigateEventAndTriggerer:
-      props.onNavigateEventAndTriggerer ??
-      props.onNavigateEventTriggerer ??
-      (() => navigate('event-and-triggerer')),
+    onNavigateEventTriggerRules:
+      props.onNavigateEventTriggerRules ??
+      (() => navigate('event-trigger-rules')),
   } as TProps;
 }
 
-export function useLayer3DevSubsystemIsolationStoreBinding<
+export function useLayer3DevSandboxesStoreBinding<
   TProps extends object
 >(rawProps: TProps): TProps {
   const props = rawProps as Record<string, any>;
