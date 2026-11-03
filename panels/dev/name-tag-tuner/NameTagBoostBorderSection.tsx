@@ -1,0 +1,596 @@
+import React from 'react';
+import { CircleDot, Eye, Gauge, Layers, ShieldAlert } from 'lucide-react';
+import type {
+  NameTagBoostBorderAudience,
+  NameTagBoostBorderColorMode,
+  NameTagBoostBorderOverride,
+  NameTagBoostIndicatorMode,
+  NameTagConfig,
+} from '../../../config/nameTagConfig';
+import { updateBallVisualConfig } from '../../../config/ballVisualConfig';
+import { SliderControl } from '../../../primitives/SliderControl';
+import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
+import { CAR_SLOT_BADGES } from './NameTagCalibrationSection';
+
+export interface NameTagBoostBorderSectionProps {
+  config: NameTagConfig;
+  boostBorderOverride: NameTagBoostBorderOverride;
+  isLight: boolean;
+  updateConfig: (partial: Partial<NameTagConfig>) => void;
+  updatePreviewBoostAmount: (index: number, boostAmount: number) => void;
+  setBoostBorderOverride: (override: NameTagBoostBorderOverride) => void;
+}
+
+const BOOST_MODE_OPTIONS: Array<{
+  id: NameTagBoostIndicatorMode;
+  label: string;
+  shortDesc: string;
+}> = [
+  {
+    id: 'bottom-up-fill',
+    label: '1. Bottom-Up Fill',
+    shortDesc: 'Vertical liquid fill (0-100% height) - uniform across all name lengths',
+  },
+  {
+    id: 'left-right-fill',
+    label: '2. Left-Right Fill',
+    shortDesc: 'Horizontal bar fill + border progress across full pill width',
+  },
+  {
+    id: 'sunset-circle',
+    label: '3. Sunset Circle',
+    shortDesc: 'Embedded left circular gauge with bottom-to-top rising fill',
+  },
+  {
+    id: 'border-only',
+    label: '4. Border Only',
+    shortDesc: 'Perimeter stroke clip (0-100% left-to-right)',
+  },
+];
+
+const COLOR_MODE_OPTIONS: Array<{
+  id: NameTagBoostBorderColorMode;
+  label: string;
+}> = [
+  { id: 'team', label: 'Team Specific' },
+  { id: 'shared', label: 'Shared White / Unified' },
+];
+
+const AUDIENCE_OPTIONS: Array<{
+  id: NameTagBoostBorderAudience;
+  label: string;
+}> = [
+  { id: 'teammates', label: 'Teammates Only' },
+  { id: 'all', label: 'All Cars' },
+  { id: 'none', label: 'Hidden' },
+];
+
+const OVERRIDE_OPTIONS: Array<{
+  label: string;
+  value: NameTagBoostBorderOverride;
+}> = [
+  { label: 'Default (Scene Rules)', value: null },
+  { label: 'Force Teammates', value: 'teammates' },
+  { label: 'Force All Cars', value: 'all' },
+  { label: 'Force Hidden', value: false },
+];
+
+const BALL_OPACITY_PRESETS: Array<{ label: string; value: number }> = [
+  { label: '100% Solid', value: 1.0 },
+  { label: '70% Dev Default', value: 0.7 },
+  { label: '40% Ghost', value: 0.4 },
+  { label: '0% Off', value: 0.0 },
+];
+
+export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps> = ({
+  config,
+  boostBorderOverride,
+  isLight,
+  updateConfig,
+  updatePreviewBoostAmount,
+  setBoostBorderOverride,
+}) => {
+  const cardBackground = isLight
+    ? 'bg-neutral-50/95 border-neutral-200/90 text-neutral-800 shadow-2xs'
+    : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
+  const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
+
+  const activeModeMeta =
+    BOOST_MODE_OPTIONS.find((item) => item.id === config.boostIndicatorMode) ||
+    BOOST_MODE_OPTIONS[0];
+
+  const handleUpdateBallOcclusionOpacity = (nextOpacity: number) => {
+    const clamped = Math.max(0, Math.min(1, Number(nextOpacity) || 0));
+    updateConfig({ ballOcclusionOpacity: clamped });
+    updateBallVisualConfig({ opacity: clamped });
+  };
+
+  return (
+    <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBackground}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-bold text-[11px] flex items-center gap-1.5">
+          <Gauge
+            className={`h-3.5 w-3.5 ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}
+          />
+          <span>Boost Progress Indicator (4 Visual Modes · 0-100%)</span>
+        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={`text-[10px] ${mutedText}`}>Enable Boost Indicator</span>
+          <ToggleSwitch
+            checked={config.boostBorderEnabled}
+            onChange={(nextValue) => updateConfig({ boostBorderEnabled: nextValue })}
+            isLight={isLight}
+          />
+        </div>
+      </div>
+
+      <div
+        className={`p-2 rounded-lg border flex flex-col gap-1.5 ${
+          isLight
+            ? 'border-neutral-200 bg-neutral-100/75'
+            : 'border-neutral-800 bg-neutral-900/50'
+        }`}
+      >
+        <div className="flex items-center justify-between gap-1.5 text-[10px]">
+          <span className="font-semibold flex items-center gap-1">
+            <Layers className="h-3 w-3 opacity-80" />
+            <span>Boost Display Mode (4 Candidates):</span>
+          </span>
+          <span className={`font-mono text-[9px] truncate ${mutedText}`}>
+            {activeModeMeta.shortDesc}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-1">
+          {BOOST_MODE_OPTIONS.map((option) => {
+            const isSelected = config.boostIndicatorMode === option.id;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => updateConfig({ boostIndicatorMode: option.id })}
+                title={option.shortDesc}
+                className={`px-2 py-1 rounded border text-[10px] font-mono cursor-pointer text-left flex items-center justify-between gap-1 transition-colors ${
+                  isSelected
+                    ? isLight
+                      ? 'bg-cyan-500/15 border-cyan-500 text-cyan-900 font-bold shadow-2xs'
+                      : 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold'
+                    : isLight
+                      ? 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-100'
+                      : 'border-neutral-700/80 text-neutral-300 hover:bg-neutral-800'
+                }`}
+              >
+                <span className="truncate">{option.label}</span>
+                {isSelected && (
+                  <span className="text-[8px] uppercase px-1 py-0.2 rounded bg-cyan-500/20 border border-cyan-500/40 shrink-0">
+                    Active
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {(config.boostIndicatorMode === 'bottom-up-fill' ||
+          config.boostIndicatorMode === 'left-right-fill' ||
+          config.boostIndicatorMode === 'sunset-circle') && (
+          <div className="flex flex-col gap-1.5 pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className={mutedText}>
+                Show Crisp Horizon / Edge Line at Boost Level
+              </span>
+              <ToggleSwitch
+                checked={config.boostShowHorizonLine}
+                onChange={(nextValue) =>
+                  updateConfig({ boostShowHorizonLine: nextValue })
+                }
+                isLight={isLight}
+              />
+            </div>
+
+            {config.boostIndicatorMode !== 'sunset-circle' && (
+              <>
+                <SliderControl
+                  label="Active Boost Fill Opacity"
+                  value={config.boostFillOpacity}
+                  min={0.1}
+                  max={1.0}
+                  step={0.02}
+                  onChange={(nextValue) =>
+                    updateConfig({ boostFillOpacity: nextValue })
+                  }
+                  isLight={isLight}
+                />
+                <SliderControl
+                  label="Unfilled Base Background Opacity"
+                  value={config.boostUnfilledBgOpacity}
+                  min={0.05}
+                  max={0.9}
+                  step={0.02}
+                  onChange={(nextValue) =>
+                    updateConfig({ boostUnfilledBgOpacity: nextValue })
+                  }
+                  isLight={isLight}
+                />
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between gap-1.5 text-[10px]">
+        <span className={mutedText}>Boost Accent / Fill Color Mode:</span>
+        <div className="flex items-center gap-1">
+          {COLOR_MODE_OPTIONS.map((option) => {
+            const isSelected = config.boostBorderColorMode === option.id;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => updateConfig({ boostBorderColorMode: option.id })}
+                className={`px-2 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
+                  isSelected
+                    ? isLight
+                      ? 'bg-cyan-500/15 border-cyan-500 text-cyan-800 font-bold'
+                      : 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold'
+                    : isLight
+                      ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
+                      : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {config.boostBorderColorMode === 'team' ? (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-2 rounded-lg border border-sky-500/30 bg-sky-500/5 flex items-center justify-between text-[10px]">
+            <span
+              className={`font-semibold ${isLight ? 'text-sky-700' : 'text-sky-300'}`}
+            >
+              Blue Boost Accent
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="font-mono text-[9px] uppercase opacity-75">
+                {config.blueBoostBorderColor}
+              </span>
+              <input
+                type="color"
+                value={config.blueBoostBorderColor}
+                onChange={(event) =>
+                  updateConfig({ blueBoostBorderColor: event.target.value })
+                }
+                className="h-5 w-8 rounded cursor-pointer bg-transparent border-0"
+              />
+            </div>
+          </div>
+
+          <div className="p-2 rounded-lg border border-orange-500/30 bg-orange-500/5 flex items-center justify-between text-[10px]">
+            <span
+              className={`font-semibold ${
+                isLight ? 'text-orange-700' : 'text-orange-300'
+              }`}
+            >
+              Orange Boost Accent
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="font-mono text-[9px] uppercase opacity-75">
+                {config.orangeBoostBorderColor}
+              </span>
+              <input
+                type="color"
+                value={config.orangeBoostBorderColor}
+                onChange={(event) =>
+                  updateConfig({ orangeBoostBorderColor: event.target.value })
+                }
+                className="h-5 w-8 rounded cursor-pointer bg-transparent border-0"
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={`p-2 rounded-lg border flex items-center justify-between text-[10px] ${
+            isLight
+              ? 'border-neutral-300 bg-white'
+              : 'border-neutral-700/80 bg-neutral-900/50'
+          }`}
+        >
+          <span className="font-semibold">Shared Boost Color (All Players)</span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => updateConfig({ sharedBoostBorderColor: '#ffffff' })}
+              className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
+                isLight
+                  ? 'border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                  : 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+              }`}
+            >
+              Pure White (#FFFFFF)
+            </button>
+            <span className="font-mono text-[9px] uppercase opacity-75">
+              {config.sharedBoostBorderColor}
+            </span>
+            <input
+              type="color"
+              value={config.sharedBoostBorderColor}
+              onChange={(event) =>
+                updateConfig({ sharedBoostBorderColor: event.target.value })
+              }
+              className="h-5 w-8 rounded cursor-pointer bg-transparent border-0"
+            />
+          </div>
+        </div>
+      )}
+
+      <div
+        className={`p-2 rounded-lg border flex flex-col gap-1.5 ${
+          isLight
+            ? 'border-neutral-200 bg-neutral-100/70'
+            : 'border-neutral-800 bg-neutral-900/40'
+        }`}
+      >
+        <div className="flex items-center justify-between text-[10px]">
+          <span className="font-semibold flex items-center gap-1">
+            <CircleDot className="h-3 w-3 text-amber-500" />
+            <span>Kickoff Ball Entity Occlusion (R=95 UU · Default OFF)</span>
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className={`font-mono text-[9px] ${mutedText}`}>
+              {config.ballOcclusionEnabled
+                ? `Active (${Math.round(config.ballOcclusionOpacity * 100)}% Mask)`
+                : 'Disabled (0 Overhead)'}
+            </span>
+            <ToggleSwitch
+              checked={config.ballOcclusionEnabled}
+              onChange={(nextValue) =>
+                updateConfig({ ballOcclusionEnabled: nextValue })
+              }
+              isLight={isLight}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-1.5 text-[10px]">
+          <span className={mutedText}>Ball Opacity Presets (Dev Settings Sync):</span>
+          <div className="flex items-center gap-1">
+            {BALL_OPACITY_PRESETS.map((preset) => {
+              const isSelected =
+                Math.abs(config.ballOcclusionOpacity - preset.value) < 0.015;
+              return (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => handleUpdateBallOcclusionOpacity(preset.value)}
+                  className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer transition-colors ${
+                    isSelected
+                      ? isLight
+                        ? 'bg-amber-500/15 border-amber-500 text-amber-800 font-bold'
+                        : 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
+                      : isLight
+                        ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
+                        : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <SliderControl
+          label="Ball Opacity (Occlusion Attenuation on Behind-Ball Tags)"
+          value={Math.round(config.ballOcclusionOpacity * 100)}
+          min={0}
+          max={100}
+          step={5}
+          unit="%"
+          onChange={(nextPct) => handleUpdateBallOcclusionOpacity(nextPct / 100)}
+          isLight={isLight}
+        />
+      </div>
+
+      <div
+        className={`p-2 rounded-lg border flex flex-col gap-1.5 ${
+          isLight
+            ? 'border-neutral-200 bg-neutral-100/70'
+            : 'border-neutral-800 bg-neutral-900/40'
+        }`}
+      >
+        <div className="flex items-center justify-between text-[10px]">
+          <span className="font-semibold flex items-center gap-1">
+            <Eye className="h-3 w-3 opacity-80" />
+            <span>Scene &amp; Audience Visibility Flags</span>
+          </span>
+          <span className={`font-mono text-[9px] ${mutedText}`}>
+            Exhibition / Replay Flag Policy
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 text-[10px]">
+          <div className="flex items-center gap-1.5">
+            <ToggleSwitch
+              checked={config.showBoostBorderInMatchPlaying}
+              onChange={(nextValue) =>
+                updateConfig({ showBoostBorderInMatchPlaying: nextValue })
+              }
+              isLight={isLight}
+            />
+            <span>During Match Playing:</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {AUDIENCE_OPTIONS.map((option) => {
+              const isSelected = config.boostBorderMatchAudience === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  disabled={!config.showBoostBorderInMatchPlaying}
+                  onClick={() => updateConfig({ boostBorderMatchAudience: option.id })}
+                  className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer transition-colors disabled:opacity-40 ${
+                    isSelected
+                      ? isLight
+                        ? 'bg-emerald-500/15 border-emerald-500 text-emerald-800 font-bold'
+                        : 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold'
+                      : isLight
+                        ? 'bg-white border-neutral-300 text-neutral-600'
+                        : 'border-neutral-700 text-neutral-400'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 text-[10px]">
+          <div className="flex items-center gap-1.5">
+            <ToggleSwitch
+              checked={config.showBoostBorderInGoalReplay}
+              onChange={(nextValue) =>
+                updateConfig({ showBoostBorderInGoalReplay: nextValue })
+              }
+              isLight={isLight}
+            />
+            <span>Goal Replay / Cinematic:</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {AUDIENCE_OPTIONS.map((option) => {
+              const isSelected = config.boostBorderReplayAudience === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  disabled={!config.showBoostBorderInGoalReplay}
+                  onClick={() => updateConfig({ boostBorderReplayAudience: option.id })}
+                  className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer transition-colors disabled:opacity-40 ${
+                    isSelected
+                      ? isLight
+                        ? 'bg-amber-500/15 border-amber-500 text-amber-800 font-bold'
+                        : 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
+                      : isLight
+                        ? 'bg-white border-neutral-300 text-neutral-600'
+                        : 'border-neutral-700 text-neutral-400'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-1.5 pt-0.5 text-[10px]">
+          <span className={`flex items-center gap-1 ${mutedText}`}>
+            <ShieldAlert className="h-3 w-3" />
+            <span>Runtime Flag Override:</span>
+          </span>
+          <div className="grid grid-cols-4 gap-1">
+            {OVERRIDE_OPTIONS.map((option) => {
+              const isSelected = boostBorderOverride === option.value;
+              return (
+                <button
+                  key={option.label}
+                  type="button"
+                  onClick={() => setBoostBorderOverride(option.value)}
+                  className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer truncate transition-colors ${
+                    isSelected
+                      ? isLight
+                        ? 'bg-sky-500/15 border-sky-500 text-sky-800 font-bold'
+                        : 'bg-sky-500/20 border-sky-400 text-sky-300 font-bold'
+                      : isLight
+                        ? 'bg-white border-neutral-300 text-neutral-600'
+                        : 'border-neutral-700 text-neutral-400'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between text-[10px]">
+          <span className={`font-semibold ${mutedText}`}>
+            6-Car Sample Boost Amounts (0-100%):
+          </span>
+          <div className="flex items-center gap-1">
+            {[
+              { label: '0%', values: [0, 0, 0, 0, 0, 0] },
+              { label: '33%', values: [33, 33, 33, 33, 33, 33] },
+              { label: 'Mixed', values: [100, 66, 33, 85, 50, 18] },
+              { label: '100%', values: [100, 100, 100, 100, 100, 100] },
+            ].map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => updateConfig({ previewBoostAmounts: preset.values })}
+                className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
+                  isLight
+                    ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
+                    : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-1.5">
+          {[0, 1, 2, 3, 4, 5].map((index) => {
+            const slotMeta = CAR_SLOT_BADGES[index];
+            const isOrange = index >= 3;
+            const boostVal = config.previewBoostAmounts[index] ?? 100;
+            return (
+              <div
+                key={index}
+                className={`px-2 py-1 rounded border flex flex-col gap-0.5 ${
+                  isOrange
+                    ? 'border-orange-500/25 bg-orange-500/5'
+                    : 'border-sky-500/25 bg-sky-500/5'
+                }`}
+              >
+                <div className="flex items-center justify-between text-[9px] font-mono">
+                  <span
+                    className={`font-bold ${
+                      isOrange
+                        ? isLight
+                          ? 'text-orange-700'
+                          : 'text-orange-300'
+                        : isLight
+                          ? 'text-sky-700'
+                          : 'text-sky-300'
+                    }`}
+                  >
+                    {slotMeta.slotCode}
+                  </span>
+                  <span>{boostVal}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={boostVal}
+                  onChange={(event) =>
+                    updatePreviewBoostAmount(index, Number(event.target.value))
+                  }
+                  className="w-full h-1.5 accent-cyan-400 cursor-pointer"
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
