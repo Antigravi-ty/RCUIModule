@@ -146,21 +146,6 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
       includeClientReplay,
       includeReconcileTelemetry,
       includeServerReplay,
-      isOnlineSession,
-      isHosting,
-      isLobby,
-      matchState,
-      diag,
-      activeSlots,
-      clientFrames,
-      effectiveMaxFrames,
-      clientOverflowPaused,
-      autoPauseOnOverflow,
-      clientMb,
-      telemetryTicks,
-      telemetrySummary,
-      metrics,
-      serverFrames,
     });
     setLastExportStatus(status);
   };
@@ -170,7 +155,7 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
       setLastExportStatus('No client presentation replay frames recorded yet.');
       return;
     }
-    const status = networkDiagnosticsStore.getSnapshot().bridge.onExportStandaloneClientReplay?.();
+    const status = networkDiagnosticsStore.getState().bridge.onExportStandaloneClientReplay?.();
     setLastExportStatus(
       typeof status === 'string'
         ? status
@@ -179,7 +164,7 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
   };
 
   const handleExportStandaloneTelemetry = () => {
-    setLastExportStatus(exportStandaloneTelemetryZip(isLobby, telemetryTicks));
+    setLastExportStatus(exportStandaloneTelemetryZip());
   };
 
   return (

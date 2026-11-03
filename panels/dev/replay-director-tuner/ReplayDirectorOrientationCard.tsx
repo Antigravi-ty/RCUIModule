@@ -6,8 +6,8 @@ import {
   Crosshair,
   Upload,
 } from 'lucide-react';
-import { REPLAY_DIRECTOR_CONFIG } from '../../../config/replayDirectorConfig';
 import {
+  getReplayDirectorConfig,
   getActiveReplayTimelineController,
   subscribeActiveReplayTimelineController,
   exportActiveReplayDirectorDiagnosticPattern,
@@ -234,7 +234,7 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
     const windowDiag = buildActiveReplayDirectorWindowDiagnostic(15) || {
       schema: 'RocketCompanion.ReplayDirectorFrameWindowDiagnostic.v1',
       exportedAt: new Date().toISOString(),
-      directorConfig: { ...REPLAY_DIRECTOR_CONFIG },
+      directorConfig: { ...getReplayDirectorConfig() },
       selectedFrameDiagnostic: liveSnapshot,
     };
     const json = JSON.stringify(windowDiag, null, 2);

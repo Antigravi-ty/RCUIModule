@@ -1,6 +1,6 @@
 /**
  * replayDirectorConfig.ts
- * Pure configuration schema, defaults, and parameter updates for the Goal Replay Director Camera & Slow-Motion.
+ * Pure configuration schema, defaults, and parameter sanitization for the Goal Replay Director Camera & Slow-Motion.
  */
 
 export const DEFAULT_REPLAY_DIRECTOR_FOV_DEG = 110.0;
@@ -78,88 +78,28 @@ export const DEFAULT_REPLAY_DIRECTOR_CONFIG: Readonly<ReplayDirectorConfigState>
   muteSignalAudioInGoalReplay: true,
 });
 
-export const REPLAY_DIRECTOR_CONFIG: ReplayDirectorConfigState = {
-  ...DEFAULT_REPLAY_DIRECTOR_CONFIG,
-};
-
-type ReplayDirectorConfigListener = (config: ReplayDirectorConfigState) => void;
-const directorConfigListeners = new Set<ReplayDirectorConfigListener>();
-
-let _getActiveController: (() => any) | null = null;
-let _notifyActiveController: (() => void) | null = null;
-
-export function setReplayDirectorActiveControllerHooks(hooks: {
-  getActiveController: () => any;
-  notifyActiveController: () => void;
-}): void {
-  _getActiveController = hooks.getActiveController;
-  _notifyActiveController = hooks.notifyActiveController;
-}
-
-export function updateReplayDirectorConfig(
+export function sanitizeReplayDirectorConfigPatch(
+  current: ReplayDirectorConfigState,
   patch: Partial<ReplayDirectorConfigState> = {}
-): ReplayDirectorConfigState {
-  if (!patch || typeof patch !== 'object') return REPLAY_DIRECTOR_CONFIG;
+): { nextConfig: ReplayDirectorConfigState; changed: boolean } {
+  if (!patch || typeof patch !== 'object') {
+    return { nextConfig: current, changed: false };
+  }
+  const nextConfig: ReplayDirectorConfigState = { ...current };
   let changed = false;
   for (const [key, val] of Object.entries(patch)) {
-    if (!(key in REPLAY_DIRECTOR_CONFIG)) continue;
+    if (!(key in DEFAULT_REPLAY_DIRECTOR_CONFIG)) continue;
     if (typeof DEFAULT_REPLAY_DIRECTOR_CONFIG[key] === 'boolean' && typeof val === 'boolean') {
-      if (REPLAY_DIRECTOR_CONFIG[key] !== val) {
-        REPLAY_DIRECTOR_CONFIG[key] = val;
+      if (nextConfig[key] !== val) {
+        nextConfig[key] = val;
         changed = true;
       }
     } else if (typeof val === 'number' && Number.isFinite(val)) {
-      if (REPLAY_DIRECTOR_CONFIG[key] !== val) {
-        REPLAY_DIRECTOR_CONFIG[key] = val;
+      if (nextConfig[key] !== val) {
+        nextConfig[key] = val;
         changed = true;
       }
     }
   }
-  const activeCtrl = _getActiveController?.();
-  if (changed && activeCtrl) {
-    if (activeCtrl.isImportedPreview && activeCtrl.useRecordedCsvCamera) {
-      activeCtrl.useRecordedCsvCamera = false;
-    }
-    activeCtrl._cachedSuffixCameraPlan = null;
-    activeCtrl._cachedSmoothnessSummary = null;
-    activeCtrl._cachedAnomalyPeaks = null;
-    activeCtrl.refreshCurrentFrameDirectorPose?.();
-  }
-  for (const fn of directorConfigListeners) {
-    try {
-      fn({ ...REPLAY_DIRECTOR_CONFIG });
-    } catch (err) {
-      console.warn('[replayDirectorConfig] Config listener failed:', err);
-    }
-  }
-  if (changed) {
-    _notifyActiveController?.();
-  }
-  return REPLAY_DIRECTOR_CONFIG;
-}
-
-export function resetReplayDirectorConfig(): ReplayDirectorConfigState {
-  Object.assign(REPLAY_DIRECTOR_CONFIG, DEFAULT_REPLAY_DIRECTOR_CONFIG);
-  const activeCtrl = _getActiveController?.();
-  if (activeCtrl) {
-    activeCtrl._cachedSuffixCameraPlan = null;
-    activeCtrl._cachedSmoothnessSummary = null;
-    activeCtrl._cachedAnomalyPeaks = null;
-    activeCtrl.refreshCurrentFrameDirectorPose?.();
-  }
-  for (const fn of directorConfigListeners) {
-    try {
-      fn({ ...REPLAY_DIRECTOR_CONFIG });
-    } catch (err) {
-      console.warn('[replayDirectorConfig] Config reset listener failed:', err);
-    }
-  }
-  _notifyActiveController?.();
-  return REPLAY_DIRECTOR_CONFIG;
-}
-
-export function subscribeReplayDirectorConfig(listener: ReplayDirectorConfigListener): () => boolean {
-  if (typeof listener !== 'function') return () => false;
-  directorConfigListeners.add(listener);
-  return () => directorConfigListeners.delete(listener);
+  return { nextConfig, changed };
 }

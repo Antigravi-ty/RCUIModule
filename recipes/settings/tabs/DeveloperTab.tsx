@@ -18,7 +18,7 @@ import { useViewportStore, viewportStore } from '../../../stores/viewportStore';
 import {
   getBallVisualConfig,
   updateBallVisualConfig,
-} from '../../../config/ballVisualConfig';
+} from '../../../stores/ballVisualStore';
 import { BOTS_LOADOUT_PRESET } from '../../../stores/devFloatingPresets';
 import { FloatingWindowCard } from '../components/FloatingWindowCard';
 import { DeveloperProfileExportSection } from '../components/DeveloperProfileExportSection';

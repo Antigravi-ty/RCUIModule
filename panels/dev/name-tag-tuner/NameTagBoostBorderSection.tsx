@@ -7,7 +7,7 @@ import type {
   NameTagBoostIndicatorMode,
   NameTagConfig,
 } from '../../../config/nameTagConfig';
-import { updateBallVisualConfig } from '../../../config/ballVisualConfig';
+import { updateBallVisualConfig } from '../../../stores/ballVisualStore';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { CAR_SLOT_BADGES } from './NameTagCalibrationSection';

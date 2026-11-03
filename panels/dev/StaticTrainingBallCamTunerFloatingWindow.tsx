@@ -6,9 +6,9 @@ import {
 } from '../../stores/staticTrainingBallCamTunerStore';
 import { useStaticTrainingPackStore } from '../../stores/staticTrainingPackStore';
 import {
-  ballVisualRuntimeConfig,
+  useBallVisualStore,
   setTemporaryBallOpacityOverride,
-} from '../../config/ballVisualConfig';
+} from '../../stores/ballVisualStore';
 
 export interface StaticTrainingBallCamTunerFloatingWindowProps {
   isLight?: boolean;
@@ -36,11 +36,12 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
   const isTestingSingleShot = useStaticTrainingPackStore((s) => s.isTestingSingleShot);
   const editSubMode = useStaticTrainingPackStore((s) => s.editSubMode);
   const setEditSubMode = useStaticTrainingPackStore((s) => s.setEditSubMode);
+  const ballOpacity = useBallVisualStore((s) => s.config.opacity);
 
   const [copied, setCopied] = useState(false);
 
   const isInEditModeUntested = sessionMode === 'edit' && !isTestingSingleShot;
-  const globalOpacity = Number(ballVisualRuntimeConfig.opacity ?? 0.7);
+  const globalOpacity = Number(ballOpacity ?? 0.7);
   const globalModeLabel =
     Math.abs(globalOpacity - 0.7) < 0.005
       ? '70%'

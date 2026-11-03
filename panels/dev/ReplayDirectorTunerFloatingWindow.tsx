@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Film, RotateCcw, Download, Check, VolumeX } from 'lucide-react';
+import { DEFAULT_REPLAY_DIRECTOR_FOV_DEG, type ReplayDirectorConfigState } from '../../config/replayDirectorConfig';
 import {
-  REPLAY_DIRECTOR_CONFIG,
-  DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
+  useReplayDirectorStore,
+  getReplayDirectorConfig,
   updateReplayDirectorConfig,
   resetReplayDirectorConfig,
-  subscribeReplayDirectorConfig,
-} from '../../config/replayDirectorConfig';
+} from '../../stores/replayDirectorStore';
 import { audioConfig } from '../../config/audioConfig';
 import { useAppStore } from '../../stores/appStore';
 import { useSubsystemIsolationLabStore } from '../../stores/subsystemIsolationLabStore';
@@ -25,24 +25,14 @@ export interface ReplayDirectorTunerFloatingWindowProps {
 export const ReplayDirectorTunerFloatingWindow: React.FC<ReplayDirectorTunerFloatingWindowProps> = ({
   isLight = false,
 }) => {
-  const [cfg, setCfg] = useState(() => ({ ...REPLAY_DIRECTOR_CONFIG }));
+  const cfg = useReplayDirectorStore((s) => s.config);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    const unsubCfg = subscribeReplayDirectorConfig((next: typeof REPLAY_DIRECTOR_CONFIG) => {
-      setCfg({ ...next });
-    });
-    return () => {
-      unsubCfg();
-    };
-  }, []);
-
-  const handleParamChange = (key: keyof typeof REPLAY_DIRECTOR_CONFIG, val: number) => {
+  const handleParamChange = (key: keyof ReplayDirectorConfigState, val: number) => {
     updateReplayDirectorConfig({ [key]: val });
     if (key === 'cameraFovDeg') {
       useAppStore.getState().setFreeCamFov(val);
     }
-    setCfg({ ...REPLAY_DIRECTOR_CONFIG });
   };
 
   const handleMuteSignalAudioChange = (mute: boolean) => {
@@ -59,7 +49,6 @@ export const ReplayDirectorTunerFloatingWindow: React.FC<ReplayDirectorTunerFloa
     } catch {
       // Ignore if store/config is unavailable
     }
-    setCfg({ ...REPLAY_DIRECTOR_CONFIG });
   };
 
   const handleResetAll = () => {
@@ -76,11 +65,10 @@ export const ReplayDirectorTunerFloatingWindow: React.FC<ReplayDirectorTunerFloa
     } catch {
       // Ignore if store/config is unavailable
     }
-    setCfg({ ...REPLAY_DIRECTOR_CONFIG });
   };
 
   const handleCopyJson = () => {
-    const json = JSON.stringify(REPLAY_DIRECTOR_CONFIG, null, 2);
+    const json = JSON.stringify(getReplayDirectorConfig(), null, 2);
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(json).catch((err) => {
         console.warn('[ReplayDirectorTuner] Failed to copy director config JSON to clipboard:', err);

@@ -1,10 +1,3 @@
-/**
- * StaticTrainingPackStorage.ts
- * Path-keyed IndexedDB Virtual Filesystem (VFS) for Static Training Packs,
- * plus a dedicated Edit-Mode IndexedDB (`rc-static-pack-edit-db`) for isolated
- * Edit Session staging before committing or ignoring changes.
- */
-
 import {
   type EditSubMode,
   type StaticTrainingCarConfig,
@@ -71,6 +64,143 @@ export {
   buildEditItemPath,
 };
 
+export interface ActiveStaticTrainingPackBundle {
+  uuid: string;
+  title: string;
+  description: string;
+  itemCount: number;
+  metadata: StaticTrainingPackMetadata;
+  items: StaticTrainingShotItem[];
+}
+
+export function buildActivePackBundle(
+  metadata: StaticTrainingPackMetadata | null,
+  items: StaticTrainingShotItem[]
+): ActiveStaticTrainingPackBundle | null {
+  if (!metadata) return null;
+  return {
+    uuid: metadata.uuid,
+    title: metadata.title,
+    description: metadata.description,
+    itemCount: items.length,
+    metadata: { ...metadata, itemCount: items.length },
+    items,
+  };
+}
+
+export function computeEffectiveWorkspaceItems(
+  activeItems: StaticTrainingShotItem[],
+  isEditingItem: boolean,
+  draft: StaticTrainingShotItem | null,
+  currentShotIndex: number
+): StaticTrainingShotItem[] {
+  return isEditingItem && draft
+    ? activeItems.map((it, i) => (i === currentShotIndex ? cloneShotItem(draft, i) : it))
+    : activeItems;
+}
+
+export function computeNextEditSubMode(
+  currentSubMode: EditSubMode,
+  currentItem: StaticTrainingShotItem | null | undefined,
+  delta: 1 | -1
+): EditSubMode {
+  const alignsSpeedWithNose = currentItem?.car?.speedFollowsHeading !== false;
+  const order: EditSubMode[] = alignsSpeedWithNose
+    ? ['car-heading', 'ball-speed', 'free-cam']
+    : EDIT_SUB_MODES_ORDER;
+  const currentIndex = order.indexOf(currentSubMode);
+  const baseIdx = currentIndex >= 0 ? currentIndex : 0;
+  const nextIdx = ((baseIdx + delta) % order.length + order.length) % order.length;
+  return order[nextIdx];
+}
+
+export async function persistWorkspaceShotListMutation(
+  metadata: StaticTrainingPackMetadata,
+  nextItems: StaticTrainingShotItem[]
+): Promise<{
+  updatedMeta: StaticTrainingPackMetadata;
+  bundle: ActiveStaticTrainingPackBundle | null;
+  nextItems: StaticTrainingShotItem[];
+}> {
+  const normalized = nextItems.slice(0, MAX_SHOTS_PER_PACK).map((item, idx) => ({
+    ...item,
+    index: idx,
+  }));
+  const updatedMeta: StaticTrainingPackMetadata = {
+    ...metadata,
+    itemCount: normalized.length,
+    updatedAt: Date.now(),
+  };
+  await saveEditWorkspacePackFull(updatedMeta, normalized);
+  return {
+    updatedMeta,
+    bundle: buildActivePackBundle(updatedMeta, normalized),
+    nextItems: normalized,
+  };
+}
+
+export async function duplicateWorkspaceShotAt(
+  metadata: StaticTrainingPackMetadata,
+  activeItems: StaticTrainingShotItem[],
+  index: number
+) {
+  const source = activeItems[index];
+  const duplicated = cloneShotItem(source, index + 1);
+  duplicated.id = generateUUID();
+  duplicated.name = `${source.name || `Shot ${index + 1}`} (Copy)`;
+  return persistWorkspaceShotListMutation(metadata, [
+    ...activeItems.slice(0, index + 1),
+    duplicated,
+    ...activeItems.slice(index + 1),
+  ]);
+}
+
+export async function reorderWorkspaceShotAt(
+  metadata: StaticTrainingPackMetadata,
+  activeItems: StaticTrainingShotItem[],
+  fromIndex: number,
+  toIndex: number
+) {
+  const copy = [...activeItems];
+  const [moved] = copy.splice(fromIndex, 1);
+  copy.splice(toIndex, 0, moved);
+  return persistWorkspaceShotListMutation(metadata, copy);
+}
+
+export async function commitWorkspaceShotsToMainVfs(
+  metadata: StaticTrainingPackMetadata,
+  activeItems: StaticTrainingShotItem[],
+  isEditingItem: boolean,
+  draft: StaticTrainingShotItem | null,
+  currentShotIndex: number
+): Promise<{
+  packs: StaticTrainingPackMetadata[];
+  bundle: ActiveStaticTrainingPackBundle | null;
+  finalItems: StaticTrainingShotItem[];
+}> {
+  const finalItems = computeEffectiveWorkspaceItems(
+    activeItems,
+    isEditingItem,
+    draft,
+    currentShotIndex
+  )
+    .slice(0, MAX_SHOTS_PER_PACK)
+    .map((it, idx) => cloneShotItem(it, idx));
+  const updatedMeta: StaticTrainingPackMetadata = {
+    ...metadata,
+    itemCount: finalItems.length,
+    updatedAt: Date.now(),
+  };
+  await saveStaticTrainingPackFull(updatedMeta, finalItems);
+  await clearEditWorkspaceByUuid(metadata.uuid);
+  const packs = await listStaticTrainingPacks();
+  return {
+    packs,
+    bundle: buildActivePackBundle(updatedMeta, finalItems),
+    finalItems,
+  };
+}
+
 export async function clearEditWorkspaceByUuid(uuid: string): Promise<void> {
   for (const [k, v] of memoryEditVfsFallback.entries()) {
     if (v.uuid === uuid) memoryEditVfsFallback.delete(k);
@@ -106,8 +236,7 @@ export async function saveEditWorkspacePackFull(
 ): Promise<void> {
   await clearEditWorkspaceByUuid(metadata.uuid);
   const now = Date.now();
-  const cappedItems = items.slice(0, MAX_SHOTS_PER_PACK);
-  const normalizedItems = cappedItems.map((item, idx) => {
+  const normalizedItems = items.slice(0, MAX_SHOTS_PER_PACK).map((item, idx) => {
     const cloned = cloneShotItem(item, idx);
     cloned.index = idx;
     return cloned;
@@ -163,17 +292,13 @@ export async function saveSingleEditWorkspaceShotItem(
   ];
 
   if (metadata) {
-    const updatedMeta: StaticTrainingPackMetadata = {
-      ...metadata,
-      updatedAt: now,
-    };
     nodes.push({
       path: buildEditMetaPath(uuid),
       category: 'static-training-pack',
       uuid,
       nodeType: 'metadata',
       updatedAt: now,
-      data: updatedMeta,
+      data: { ...metadata, updatedAt: now },
     });
   }
 
@@ -204,14 +329,6 @@ export async function loadEditWorkspacePackByUuid(uuid: string): Promise<{
   return { metadata, items: items.slice(0, MAX_SHOTS_PER_PACK) };
 }
 
-/* ============================================================================
- * Main Committed VFS Operations (`rc-virtual-fs-db`)
- * ========================================================================== */
-
-/**
- * Lists all Static Training Pack metadata records sorted by updatedAt descending.
- * Seeds a default starter pack if the VFS is completely empty on first launch.
- */
 export async function listStaticTrainingPacks(): Promise<StaticTrainingPackMetadata[]> {
   const records = await vfsGetAllByCategory('static-training-pack');
   const metas = records
@@ -219,10 +336,7 @@ export async function listStaticTrainingPacks(): Promise<StaticTrainingPackMetad
     .map((r) => r.data as StaticTrainingPackMetadata)
     .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
-  if (metas.length > 0) {
-    return metas;
-  }
-
+  if (metas.length > 0) return metas;
   const starter = await seedDefaultStarterPack();
   return [starter];
 }
@@ -270,17 +384,13 @@ export async function loadStaticTrainingPackByUuid(uuid: string): Promise<{
   return { metadata, items: capped };
 }
 
-/**
- * Saves an entire Static Training Pack (metadata + all items, capped at 99) into the IndexedDB VFS.
- */
 export async function saveStaticTrainingPackFull(
   metadata: StaticTrainingPackMetadata,
   items: StaticTrainingShotItem[]
 ): Promise<void> {
   await vfsDeleteByUuid(metadata.uuid);
   const now = Date.now();
-  const cappedItems = items.slice(0, MAX_SHOTS_PER_PACK);
-  const normalizedItems = cappedItems.map((item, idx) => {
+  const normalizedItems = items.slice(0, MAX_SHOTS_PER_PACK).map((item, idx) => {
     const cloned = cloneShotItem(item, idx);
     cloned.index = idx;
     return cloned;
@@ -315,9 +425,6 @@ export async function saveStaticTrainingPackFull(
   await vfsPutNodes(nodes);
 }
 
-/**
- * Commits a single edited shot item to the main IndexedDB VFS.
- */
 export async function saveSingleStaticTrainingShotItem(
   uuid: string,
   index: number,
@@ -339,17 +446,13 @@ export async function saveSingleStaticTrainingShotItem(
   ];
 
   if (metadata) {
-    const updatedMeta: StaticTrainingPackMetadata = {
-      ...metadata,
-      updatedAt: now,
-    };
     nodes.push({
       path: buildMetaPath(uuid),
       category: 'static-training-pack',
       uuid,
       nodeType: 'metadata',
       updatedAt: now,
-      data: updatedMeta,
+      data: { ...metadata, updatedAt: now },
     });
   }
 
@@ -361,9 +464,6 @@ export async function deleteStaticTrainingPackByUuid(uuid: string): Promise<void
   await vfsDeleteByUuid(uuid);
 }
 
-/**
- * Imports a `.RCSPack` file (compressed or uncompressed JSON) and persists it into the VFS.
- */
 export async function importStaticTrainingPackFromFile(
   file: File
 ): Promise<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }> {

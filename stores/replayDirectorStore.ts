@@ -1,20 +1,24 @@
 /**
  * replayDirectorStore.ts
- * Active session subscription and diagnostic service locator for the Goal Replay Director Camera & Slow-Motion.
+ * Zustand store, active session subscription, and diagnostic service locator
+ * for the Goal Replay Director Camera & Slow-Motion.
  */
+import { create } from 'zustand';
 import {
-  REPLAY_DIRECTOR_CONFIG,
-  updateReplayDirectorConfig,
-  resetReplayDirectorConfig,
-  subscribeReplayDirectorConfig,
-  setReplayDirectorActiveControllerHooks,
+  DEFAULT_REPLAY_DIRECTOR_CONFIG,
+  DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
+  type ReplayDirectorConfigState,
+  sanitizeReplayDirectorConfigPatch,
 } from '../config/replayDirectorConfig';
 
 export {
-  updateReplayDirectorConfig,
-  resetReplayDirectorConfig,
-  subscribeReplayDirectorConfig,
+  DEFAULT_REPLAY_DIRECTOR_CONFIG,
+  DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
+  type ReplayDirectorConfigState,
 };
+
+type ReplayDirectorConfigListener = (config: ReplayDirectorConfigState) => void;
+const directorConfigListeners = new Set<ReplayDirectorConfigListener>();
 
 let _activeReplayController: any = null;
 let _latestRetainedReplayController: any = null;
@@ -23,6 +27,80 @@ let _diagnosticExporter: ((ctrl: any, format: string, options: any) => any) | nu
 let _diagnosticParser: ((fileOrInput: any, fileName: string) => Promise<any>) | null = null;
 let _windowDiagnosticBuilder: ((ctrl: any, windowRadius: number) => any) | null = null;
 let _referenceKeyframeExporter: ((ctrl: any, options: any) => any) | null = null;
+
+export interface ReplayDirectorStoreState {
+  config: ReplayDirectorConfigState;
+  updateConfig: (patch?: Partial<ReplayDirectorConfigState>) => ReplayDirectorConfigState;
+  resetConfig: () => ReplayDirectorConfigState;
+}
+
+export const useReplayDirectorStore = create<ReplayDirectorStoreState>(() => ({
+  config: { ...DEFAULT_REPLAY_DIRECTOR_CONFIG },
+  updateConfig: (patch = {}) => updateReplayDirectorConfig(patch),
+  resetConfig: () => resetReplayDirectorConfig(),
+}));
+
+export function getReplayDirectorConfig(): ReplayDirectorConfigState {
+  return useReplayDirectorStore.getState().config;
+}
+
+export function updateReplayDirectorConfig(
+  patch: Partial<ReplayDirectorConfigState> = {}
+): ReplayDirectorConfigState {
+  const current = useReplayDirectorStore.getState().config;
+  const { nextConfig, changed } = sanitizeReplayDirectorConfigPatch(current, patch);
+  if (changed) {
+    useReplayDirectorStore.setState({ config: nextConfig });
+  }
+  if (changed && _activeReplayController) {
+    if (_activeReplayController.isImportedPreview && _activeReplayController.useRecordedCsvCamera) {
+      _activeReplayController.useRecordedCsvCamera = false;
+    }
+    _activeReplayController._cachedSuffixCameraPlan = null;
+    _activeReplayController._cachedSmoothnessSummary = null;
+    _activeReplayController._cachedAnomalyPeaks = null;
+    _activeReplayController.refreshCurrentFrameDirectorPose?.();
+  }
+  const snapshot = { ...nextConfig };
+  for (const fn of directorConfigListeners) {
+    try {
+      fn(snapshot);
+    } catch (err) {
+      console.warn('[replayDirectorStore] Config listener failed:', err);
+    }
+  }
+  if (changed) {
+    notifyActiveReplayTimelineController();
+  }
+  return nextConfig;
+}
+
+export function resetReplayDirectorConfig(): ReplayDirectorConfigState {
+  const nextConfig: ReplayDirectorConfigState = { ...DEFAULT_REPLAY_DIRECTOR_CONFIG };
+  useReplayDirectorStore.setState({ config: nextConfig });
+  if (_activeReplayController) {
+    _activeReplayController._cachedSuffixCameraPlan = null;
+    _activeReplayController._cachedSmoothnessSummary = null;
+    _activeReplayController._cachedAnomalyPeaks = null;
+    _activeReplayController.refreshCurrentFrameDirectorPose?.();
+  }
+  const snapshot = { ...nextConfig };
+  for (const fn of directorConfigListeners) {
+    try {
+      fn(snapshot);
+    } catch (err) {
+      console.warn('[replayDirectorStore] Config reset listener failed:', err);
+    }
+  }
+  notifyActiveReplayTimelineController();
+  return nextConfig;
+}
+
+export function subscribeReplayDirectorConfig(listener: ReplayDirectorConfigListener): () => boolean {
+  if (typeof listener !== 'function') return () => false;
+  directorConfigListeners.add(listener);
+  return () => directorConfigListeners.delete(listener);
+}
 
 export interface ReplayDirectorPreviewHandlers {
   onImportPattern?: ((parsed: any, options: any) => any) | null;
@@ -44,11 +122,6 @@ const _previewHandlers: ReplayDirectorPreviewHandlers = {
 
 type ReplaySessionListener = (controller: any) => void;
 const _replaySessionListeners = new Set<ReplaySessionListener>();
-
-setReplayDirectorActiveControllerHooks({
-  getActiveController: () => _activeReplayController,
-  notifyActiveController: () => notifyActiveReplayTimelineController(),
-});
 
 export function markReplayTimelineControllerRetained(ctrl: any): number {
   if (!ctrl || !Array.isArray(ctrl.activeFrames) || ctrl.activeFrames.length === 0) {
@@ -225,7 +298,7 @@ export async function importActiveReplayDirectorDiagnosticPattern(
   if (parsed.directorConfig && options.applyImportedConfig === true) {
     const patch: Record<string, number> = {};
     for (const [key, val] of Object.entries(parsed.directorConfig)) {
-      if (key in REPLAY_DIRECTOR_CONFIG && typeof val === 'number' && Number.isFinite(val)) {
+      if (key in DEFAULT_REPLAY_DIRECTOR_CONFIG && typeof val === 'number' && Number.isFinite(val)) {
         patch[key] = val;
       }
     }
