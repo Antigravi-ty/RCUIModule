@@ -5,12 +5,77 @@ import {
   getActiveEditItemVariable,
   mutateActiveEditItemVariable,
 } from '../../stores/staticTrainingPackStore';
-import type { StaticTrainingShotItem } from '../static-training/staticTrainingTypes';
+import type {
+  StaticTrainingShotItem,
+  EditSubMode,
+} from '../static-training/staticTrainingTypes';
+import type {
+  StaticPackDownCounterOption,
+  StaticTrainingPackSummary,
+} from '../static-training/StaticTrainingPackFolderList';
 
-export function useLayer4StaticTrainingPackBrowseStoreBinding<
-  TProps extends object
->(rawProps: TProps): TProps {
-  const props = rawProps as Record<string, any>;
+export interface Layer4StaticTrainingPackBrowseRecipeProps {
+  isLight?: boolean;
+  packs?: StaticTrainingPackSummary[];
+  selectedPackUuid?: string | null;
+  onSelectPack?: (uuid: string) => void;
+  defaultSelectedId?: string;
+  defaultUseDownCounter?: boolean;
+  downCounterEnabled?: boolean;
+  onDownCounterEnabledChange?: (enabled: boolean) => void;
+  downCounterValue?: StaticPackDownCounterOption;
+  onDownCounterValueChange?: (val: StaticPackDownCounterOption) => void;
+  onCreatePack?: (title: string, description: string) => Promise<void> | void;
+  onSavePackMetadata?: (uuid: string, title: string, description: string) => Promise<void> | void;
+  onDeletePack?: (uuid: string) => Promise<void> | void;
+  onImportPackFile?: (file: File) => Promise<void> | void;
+  onBack?: () => void;
+  onStartPlaySession?: (uuid: string) => void;
+  onStartEditSession?: (uuid: string) => void;
+  onPlayPack?: (pack: StaticTrainingPackSummary, useDownCounter: boolean) => void;
+  onEditPack?: (pack: StaticTrainingPackSummary) => void;
+  onImportPack?: () => void;
+  onExportPack?: (pack: StaticTrainingPackSummary) => Promise<void> | void;
+  className?: string;
+}
+
+export interface Layer5StaticTrainingPackEditRecipeProps {
+  isLight?: boolean;
+  transparent?: boolean;
+  packTitle?: string;
+  /** Controlled or uncontrolled shots list */
+  shots?: StaticTrainingShotItem[];
+  onShotsChange?: (shots: StaticTrainingShotItem[]) => void;
+  /** Optional active shot override (e.g. from fast in-memory edit variable) */
+  currentShotOverride?: StaticTrainingShotItem | null;
+  /** Controlled or uncontrolled selected shot index */
+  selectedShotIndex?: number;
+  onSelectedShotIndexChange?: (idx: number) => void;
+  /** Controlled or uncontrolled item inspection state (false = full list, true = compressed rail + detail inspector) */
+  isInspectingShot?: boolean;
+  onInspectingShotChange?: (inspecting: boolean) => void;
+  /** Controlled or uncontrolled 3D edit sub-mode */
+  editSubMode?: EditSubMode;
+  onEditSubModeChange?: (mode: EditSubMode) => void;
+  /** Controlled or uncontrolled dirty flag for current shot */
+  isDirty?: boolean;
+  onMutateCurrentShot?: (updater: (draft: StaticTrainingShotItem) => void) => void;
+  onSaveCurrentShot?: () => void | Promise<void>;
+  onAddNewShot?: () => void | Promise<void>;
+  onDuplicateShot?: (idx: number) => void | Promise<void>;
+  onReorderShot?: (fromIdx: number, toIdx: number) => void | Promise<void>;
+  onDeleteShot?: (idx: number) => void | Promise<void>;
+  onExportSingleShot?: (idx: number) => void;
+  onImportSingleShot?: (file: File) => void | Promise<void>;
+  /** Callback when user clicks Collapse [TAB] in header */
+  onCollapseDrawer?: () => void;
+  /** Callback when user confirms Exit in the double-check dialogue */
+  onExitSession?: (action: 'save' | 'ignore') => void | Promise<void>;
+}
+
+export function useLayer4StaticTrainingPackBrowseStoreBinding(
+  rawProps: Layer4StaticTrainingPackBrowseRecipeProps
+): Layer4StaticTrainingPackBrowseRecipeProps {
   const goBack = useAppStore((s) => s.goBack);
   const packs = useStaticTrainingPackStore((s) => s.packs);
   const selectedPackUuid = useStaticTrainingPackStore(
@@ -45,52 +110,51 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding<
 
   return {
     ...rawProps,
-    packs: props.packs ?? (packs.length > 0 ? packs : undefined),
-    selectedPackUuid: props.selectedPackUuid ?? selectedPackUuid,
+    packs: rawProps.packs ?? (packs.length > 0 ? packs : undefined),
+    selectedPackUuid: rawProps.selectedPackUuid ?? selectedPackUuid,
     onSelectPack:
-      props.onSelectPack ??
+      rawProps.onSelectPack ??
       ((uuid: string) => {
         void selectPack(uuid);
       }),
-    downCounterEnabled: props.downCounterEnabled ?? downCounterEnabled,
+    downCounterEnabled: rawProps.downCounterEnabled ?? downCounterEnabled,
     onDownCounterEnabledChange:
-      props.onDownCounterEnabledChange ?? setDownCounterEnabled,
-    downCounterValue: props.downCounterValue ?? downCounterValue,
+      rawProps.onDownCounterEnabledChange ?? setDownCounterEnabled,
+    downCounterValue: rawProps.downCounterValue ?? downCounterValue,
     onDownCounterValueChange:
-      props.onDownCounterValueChange ?? setDownCounterValue,
+      rawProps.onDownCounterValueChange ?? setDownCounterValue,
     onCreatePack:
-      props.onCreatePack ??
+      rawProps.onCreatePack ??
       (async (title: string, desc: string) => {
         await createPack(title, desc);
       }),
     onSavePackMetadata:
-      props.onSavePackMetadata ??
+      rawProps.onSavePackMetadata ??
       (async (uuid: string, title: string, desc: string) => {
         await updatePackInfo(uuid, title, desc);
       }),
     onDeletePack:
-      props.onDeletePack ??
+      rawProps.onDeletePack ??
       (async (uuid: string) => {
         await deletePack(uuid);
       }),
     onExportPack:
-      props.onExportPack ??
+      rawProps.onExportPack ??
       (async (pack: { uuid: string }) => {
         await exportPackRCS(pack.uuid);
       }),
     onImportPackFile:
-      props.onImportPackFile ??
+      rawProps.onImportPackFile ??
       (async (file: File) => {
         await importPackRCS(file);
       }),
-    onBack: props.onBack ?? goBack,
-  } as TProps;
+    onBack: rawProps.onBack ?? goBack,
+  };
 }
 
-export function useLayer5StaticTrainingPackEditStoreBinding<
-  TProps extends object
->(rawProps: TProps): TProps {
-  const props = rawProps as Record<string, any>;
+export function useLayer5StaticTrainingPackEditStoreBinding(
+  rawProps: Layer5StaticTrainingPackEditRecipeProps
+): Layer5StaticTrainingPackEditRecipeProps {
   const activePack = useStaticTrainingPackStore((s) => s.activePack);
   const storeShotIndex = useStaticTrainingPackStore((s) => s.currentShotIndex);
   const storeIsEditingItem = useStaticTrainingPackStore((s) => s.isEditingItem);
@@ -125,24 +189,24 @@ export function useLayer5StaticTrainingPackEditStoreBinding<
 
   void editVarVersion;
 
-  const isInspecting = props.isInspectingShot ?? storeIsEditingItem;
+  const isInspecting = rawProps.isInspectingShot ?? storeIsEditingItem;
   const currentShotOverride =
-    props.currentShotOverride !== undefined
-      ? props.currentShotOverride
-      : isInspecting && !props.shots
+    rawProps.currentShotOverride !== undefined
+      ? rawProps.currentShotOverride
+      : isInspecting && !rawProps.shots
       ? getActiveEditItemVariable()
       : null;
 
   const handleMutateCurrentShot = (
     updater: (draft: StaticTrainingShotItem) => void
   ) => {
-    if (props.onMutateCurrentShot) {
-      props.onMutateCurrentShot(updater);
+    if (rawProps.onMutateCurrentShot) {
+      rawProps.onMutateCurrentShot(updater);
       return;
     }
-    if (props.onShotsChange && props.shots) {
-      const items = props.shots as StaticTrainingShotItem[];
-      const selectedIndex = props.selectedShotIndex ?? storeShotIndex;
+    if (rawProps.onShotsChange && rawProps.shots) {
+      const items = rawProps.shots;
+      const selectedIndex = rawProps.selectedShotIndex ?? storeShotIndex;
       const safeIndex = Math.max(
         0,
         Math.min(Math.max(0, items.length - 1), selectedIndex)
@@ -164,7 +228,7 @@ export function useLayer5StaticTrainingPackEditStoreBinding<
         },
       };
       updater(cloned);
-      props.onShotsChange(
+      rawProps.onShotsChange(
         items.map((it, idx) => (idx === safeIndex ? cloned : it))
       );
       return;
@@ -174,43 +238,43 @@ export function useLayer5StaticTrainingPackEditStoreBinding<
 
   return {
     ...rawProps,
-    packTitle: props.packTitle ?? activePack?.metadata.title ?? 'PACK',
+    packTitle: rawProps.packTitle ?? activePack?.metadata.title ?? 'PACK',
     shots:
-      props.shots ??
+      rawProps.shots ??
       (activePack?.items && activePack.items.length > 0
         ? activePack.items
         : undefined),
     currentShotOverride,
-    selectedShotIndex: props.selectedShotIndex ?? storeShotIndex,
+    selectedShotIndex: rawProps.selectedShotIndex ?? storeShotIndex,
     onSelectedShotIndexChange: (idx: number) => {
-      props.onSelectedShotIndexChange?.(idx);
-      if (!props.shots && activePack) {
+      rawProps.onSelectedShotIndexChange?.(idx);
+      if (!rawProps.shots && activePack) {
         enterItemEditMode(idx);
       }
     },
     isInspectingShot: isInspecting,
     onInspectingShotChange: (inspecting: boolean) => {
-      props.onInspectingShotChange?.(inspecting);
-      if (!inspecting && !props.shots && activePack) {
+      rawProps.onInspectingShotChange?.(inspecting);
+      if (!inspecting && !rawProps.shots && activePack) {
         void deselectEditShot();
       }
     },
-    editSubMode: props.editSubMode ?? storeEditSubMode,
-    onEditSubModeChange: props.onEditSubModeChange ?? setStoreEditSubMode,
-    isDirty: props.isDirty ?? (activePack ? isCurrentShotDirty() : undefined),
-    onMutateCurrentShot: activePack ? handleMutateCurrentShot : props.onMutateCurrentShot,
+    editSubMode: rawProps.editSubMode ?? storeEditSubMode,
+    onEditSubModeChange: rawProps.onEditSubModeChange ?? setStoreEditSubMode,
+    isDirty: rawProps.isDirty ?? (activePack ? isCurrentShotDirty() : undefined),
+    onMutateCurrentShot: activePack ? handleMutateCurrentShot : rawProps.onMutateCurrentShot,
     onSaveCurrentShot:
-      props.onSaveCurrentShot ??
+      rawProps.onSaveCurrentShot ??
       (activePack ? saveCurrentShotToEditWorkspace : undefined),
-    onAddNewShot: props.onAddNewShot ?? (activePack ? addNewShot : undefined),
+    onAddNewShot: rawProps.onAddNewShot ?? (activePack ? addNewShot : undefined),
     onDuplicateShot:
-      props.onDuplicateShot ?? (activePack ? duplicateShot : undefined),
+      rawProps.onDuplicateShot ?? (activePack ? duplicateShot : undefined),
     onReorderShot:
-      props.onReorderShot ?? (activePack ? reorderShot : undefined),
-    onDeleteShot: props.onDeleteShot ?? (activePack ? deleteShot : undefined),
+      rawProps.onReorderShot ?? (activePack ? reorderShot : undefined),
+    onDeleteShot: rawProps.onDeleteShot ?? (activePack ? deleteShot : undefined),
     onExportSingleShot:
-      props.onExportSingleShot ?? (activePack ? exportSingleShotJson : undefined),
+      rawProps.onExportSingleShot ?? (activePack ? exportSingleShotJson : undefined),
     onImportSingleShot:
-      props.onImportSingleShot ?? (activePack ? importSingleShotJson : undefined),
-  } as TProps;
+      rawProps.onImportSingleShot ?? (activePack ? importSingleShotJson : undefined),
+  };
 }

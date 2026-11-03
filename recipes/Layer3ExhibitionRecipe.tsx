@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { useLayer3ExhibitionStoreBinding } from './hooks/useLayer3PlayTrainingBindings';
+import {
+  useLayer3ExhibitionStoreBinding,
+  type BotDifficultyTier,
+  type ExhibitionMatchFormat,
+  type ExhibitionDuration,
+  type ExhibitionBotSetupConfig,
+  type Layer3ExhibitionRecipeProps,
+} from './hooks/useLayer3PlayTrainingBindings';
 import { Bot, Clock, Play, SlidersHorizontal, Users } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -7,50 +14,19 @@ import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 
-export type BotDifficultyTier = 'nexto' | 'necto' | 'easy' | 'medium' | 'hard';
-export type ExhibitionMatchFormat = '1v1' | '2v2' | '3v3';
-export type ExhibitionDuration = '90' | '180' | '300' | '600' | 'unlimited';
-
-export interface ExhibitionBotSetupConfig {
-  format: ExhibitionMatchFormat;
-  difficulty: BotDifficultyTier;
-  duration: ExhibitionDuration;
-}
+export type {
+  BotDifficultyTier,
+  ExhibitionMatchFormat,
+  ExhibitionDuration,
+  ExhibitionBotSetupConfig,
+  Layer3ExhibitionRecipeProps,
+};
 
 export const DEFAULT_EXHIBITION_CONFIG: ExhibitionBotSetupConfig = {
   format: '3v3',
   difficulty: 'necto',
   duration: '90',
 };
-
-export interface Layer3ExhibitionRecipeProps {
-  isLight?: boolean;
-  /** Controlled exhibition setup config */
-  config?: Partial<ExhibitionBotSetupConfig>;
-  /** Alias for controlled config */
-  settings?: Partial<ExhibitionBotSetupConfig>;
-  /** Initial exhibition setup config for uncontrolled mode */
-  defaultConfig?: Partial<ExhibitionBotSetupConfig>;
-  /** Callback fired when any exhibition setup field changes */
-  onChange?: (
-    next: ExhibitionBotSetupConfig,
-    patch: Partial<ExhibitionBotSetupConfig>
-  ) => void;
-  /** Alias for onChange */
-  onConfigChange?: (
-    next: ExhibitionBotSetupConfig,
-    patch: Partial<ExhibitionBotSetupConfig>
-  ) => void;
-  defaultDifficulty?: BotDifficultyTier;
-  defaultFormat?: ExhibitionMatchFormat;
-  defaultDuration?: ExhibitionDuration;
-  difficultyOptions?: Array<{ label: string; value: BotDifficultyTier }>;
-  durationOptions?: Array<{ label: string; value: ExhibitionDuration }>;
-  onSelectDifficulty?: (difficulty: BotDifficultyTier, config?: ExhibitionBotSetupConfig) => void;
-  onNavigateAdvancedMutators?: () => void;
-  onBack?: () => void;
-  className?: string;
-}
 
 const DIFFICULTY_DESCRIPTIONS: Record<BotDifficultyTier, string> = {
   easy: 'Rookie Bot: Relaxed throttle pacing, no aerials, ideal for basic ball-cam tracking.',

@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { useLayer4EventTriggerRulesStoreBinding } from './hooks/useLayer4AudioAndEventBindings';
+import {
+  useLayer4EventTriggerRulesStoreBinding,
+  type EventTriggerRule,
+  type Layer4EventTriggerRulesRecipeProps,
+} from './hooks/useLayer4AudioAndEventBindings';
 import {
   Timer,
   Waves,
@@ -27,50 +31,7 @@ import {
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 
-export interface EventTriggerRule {
-  id: string;
-  name: string;
-  conditionType: 'ball-speed' | 'boost-below' | 'car-air-time' | 'touch-count';
-  range: [number, number];
-  unit: string;
-  minLimit: number;
-  maxLimit: number;
-  actionType: 'reset-shot' | 'award-goal' | 'slow-motion' | 'flash-hud';
-  enabled: boolean;
-}
-
-export interface Layer4EventTriggerRulesRecipeProps {
-  isLight?: boolean;
-  defaultRules?: EventTriggerRule[];
-  onChange?: (rules: EventTriggerRule[]) => void;
-  eventCatalogItems?: EventCatalogEntry[];
-  hitCooldownMs?: number;
-  onHitCooldownMsChange?: (val: number) => void;
-  scrapeCooldownMs?: number;
-  onScrapeCooldownMsChange?: (val: number) => void;
-  supersonicHoldMs?: number;
-  onSupersonicHoldMsChange?: (val: number) => void;
-  lightTouchImpulse?: number;
-  onLightTouchImpulseChange?: (val: number) => void;
-  mediumHitImpulse?: number;
-  onMediumHitImpulseChange?: (val: number) => void;
-  heavyBoomImpulse?: number;
-  onHeavyBoomImpulseChange?: (val: number) => void;
-  rimClankGate?: number;
-  onRimClankGateChange?: (val: number) => void;
-  carBumpGate?: number;
-  onCarBumpGateChange?: (val: number) => void;
-  enableConsoleLog?: boolean;
-  onEnableConsoleLogChange?: (val: boolean) => void;
-  logHitStructsOnly?: boolean;
-  onLogHitStructsOnlyChange?: (val: boolean) => void;
-  selectedEvents?: Record<string, boolean>;
-  onToggleEventHex?: (hex: string) => void;
-  onSelectAllEvents?: () => void;
-  onDeselectAllEvents?: () => void;
-  onBack?: () => void;
-  className?: string;
-}
+export type { EventTriggerRule, Layer4EventTriggerRulesRecipeProps };
 
 const DEFAULT_TRIGGER_RULES: EventTriggerRule[] = [
   {

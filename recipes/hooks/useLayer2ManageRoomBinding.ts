@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { useHudStore } from '../../stores/hudStore';
 import { floatingStore } from '../../stores/floatingStore';
@@ -14,6 +14,9 @@ import type {
 import type { ActiveMatchPlayer } from '../online/DuringMatchClientRejoinControls';
 import type { WarmupRoomPlayer } from '../online/OnlineWarmupRoomRecipe';
 import type { HostMatchTeamFormat } from '../online/OnlineRoomConfigSummaryCard';
+import type { SignalingHealthState } from '../online/OnlineRoomTopStatusBar';
+
+export type RoomStateMode = 'free-play' | 'match';
 
 export type OnlineSessionContextId =
   | 'match-lobby-host'
@@ -22,6 +25,50 @@ export type OnlineSessionContextId =
   | 'online-match-client'
   | 'online-warmup-host'
   | 'online-warmup-client';
+
+export interface Layer2ManageRoomRecipeProps {
+  isLight?: boolean;
+  developerMode?: boolean;
+  roomCode?: string;
+  signalingState?: SignalingHealthState;
+  onRefreshSignaling?: () => void | Promise<void>;
+  localTeam?: LobbyTeamAssignment;
+  onSwitchTeam?: (team: LobbyTeamAssignment) => void;
+  teamFormat?: 'duel' | 'doubles' | 'standard';
+  onChangeTeamFormat?: (format: 'duel' | 'doubles' | 'standard') => void;
+  botPolicy?: 'none' | 'auto-fill' | 'vs-ai' | 'custom';
+  onChangeBotPolicy?: (policy: 'none' | 'auto-fill' | 'vs-ai' | 'custom') => void;
+  durationPreset?: '90' | '180' | '300' | 'custom';
+  onChangeDurationPreset?: (preset: '90' | '180' | '300' | 'custom') => void;
+  customDurationSeconds?: number;
+  onChangeCustomDurationSeconds?: (seconds: number) => void;
+  lobbyPeers?: LobbyPlayerSlot[];
+  matchPlayers?: ActiveMatchPlayer[];
+  warmupPlayers?: WarmupRoomPlayer[];
+  onKickPeer?: (peerId: string) => void;
+  zeroGProbes?: boolean;
+  onToggleZeroGProbes?: () => void;
+  testSfx?: boolean;
+  onToggleTestSfx?: () => void;
+  onResetBall?: () => void;
+  isMatchPaused?: boolean;
+  onTogglePause?: () => void;
+  topSlot?: React.ReactNode;
+  defaultRoomState?: RoomStateMode;
+  onRoomStateChange?: (state: RoomStateMode) => void;
+  defaultMatchLengthMin?: number;
+  onStartState?: (state: RoomStateMode, matchLengthMin: number) => void;
+  /** Active online session context ('match-lobby-host' | 'match-lobby-client' | 'online-match-host' | 'online-match-client' | 'online-warmup-host' | 'online-warmup-client') */
+  sessionContext?: OnlineSessionContextId;
+  onSessionContextChange?: (ctx: OnlineSessionContextId) => void;
+  onStartMatch?: () => void;
+  onEnterMatch?: () => void;
+  onNavigateAdvancedSettings?: () => void;
+  onOpenNetHud?: () => void;
+  onCloseRoom?: () => void;
+  onBack?: () => void;
+  className?: string;
+}
 
 export const FORMAT_TO_GAME_MODE: Record<HostMatchTeamFormat, '1v1' | '2v2' | '3v3'> = {
   duel: '1v1',
@@ -35,10 +82,9 @@ export const GAME_MODE_TO_FORMAT: Record<string, HostMatchTeamFormat> = {
   '3v3': 'standard',
 };
 
-export function useLayer2RoomHostControlBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export function useLayer2ManageRoomBinding(
+  rawProps: Layer2ManageRoomRecipeProps
+): Layer2ManageRoomRecipeProps {
   const {
     onlineSession,
     setOnlineSession,
@@ -219,49 +265,49 @@ export function useLayer2RoomHostControlBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    roomCode: props.roomCode ?? (onlineSession?.roomId || '8924'),
-    sessionContext: props.sessionContext ?? sessionContext,
+    roomCode: rawProps.roomCode ?? (onlineSession?.roomId || '8924'),
+    sessionContext: rawProps.sessionContext ?? sessionContext,
     signalingState:
-      props.signalingState ??
+      rawProps.signalingState ??
       (onlineSession?.signalingConnected ? 'green' : 'yellow'),
     onRefreshSignaling:
-      props.onRefreshSignaling ?? (() => bridge.onReconnectSignaling?.()),
-    localTeam: props.localTeam ?? localTeam,
-    onSwitchTeam: props.onSwitchTeam ?? handleSwitchTeam,
-    teamFormat: props.teamFormat ?? teamFormat,
-    onChangeTeamFormat: props.onChangeTeamFormat ?? handleChangeTeamFormat,
-    botPolicy: props.botPolicy ?? botPolicy,
-    onChangeBotPolicy: props.onChangeBotPolicy ?? handleChangeBotPolicy,
-    durationPreset: props.durationPreset ?? durationPreset,
-    onChangeDurationPreset: props.onChangeDurationPreset ?? handleChangeDurationPreset,
-    customDurationSeconds: props.customDurationSeconds ?? customDurationSeconds,
+      rawProps.onRefreshSignaling ?? (() => bridge.onReconnectSignaling?.()),
+    localTeam: rawProps.localTeam ?? localTeam,
+    onSwitchTeam: rawProps.onSwitchTeam ?? handleSwitchTeam,
+    teamFormat: rawProps.teamFormat ?? teamFormat,
+    onChangeTeamFormat: rawProps.onChangeTeamFormat ?? handleChangeTeamFormat,
+    botPolicy: rawProps.botPolicy ?? botPolicy,
+    onChangeBotPolicy: rawProps.onChangeBotPolicy ?? handleChangeBotPolicy,
+    durationPreset: rawProps.durationPreset ?? durationPreset,
+    onChangeDurationPreset: rawProps.onChangeDurationPreset ?? handleChangeDurationPreset,
+    customDurationSeconds: rawProps.customDurationSeconds ?? customDurationSeconds,
     onChangeCustomDurationSeconds:
-      props.onChangeCustomDurationSeconds ?? handleChangeCustomDurationSeconds,
-    lobbyPeers: props.lobbyPeers ?? lobbyPeers,
-    matchPlayers: props.matchPlayers ?? matchPlayers,
-    warmupPlayers: props.warmupPlayers ?? warmupPlayers,
-    onKickPeer: props.onKickPeer ?? handleKickPeer,
+      rawProps.onChangeCustomDurationSeconds ?? handleChangeCustomDurationSeconds,
+    lobbyPeers: rawProps.lobbyPeers ?? lobbyPeers,
+    matchPlayers: rawProps.matchPlayers ?? matchPlayers,
+    warmupPlayers: rawProps.warmupPlayers ?? warmupPlayers,
+    onKickPeer: rawProps.onKickPeer ?? handleKickPeer,
     zeroGProbes:
-      props.zeroGProbes ?? Boolean(diagData?.metrics?.zeroGFleetEnabled),
+      rawProps.zeroGProbes ?? Boolean(diagData?.metrics?.zeroGFleetEnabled),
     onToggleZeroGProbes:
-      props.onToggleZeroGProbes ??
+      rawProps.onToggleZeroGProbes ??
       (() => {
         void networkDiagnosticsStore.toggleZeroGFleet();
       }),
-    testSfx: props.testSfx ?? Boolean(diagData?.metrics?.testCarAudioEnabled),
+    testSfx: rawProps.testSfx ?? Boolean(diagData?.metrics?.testCarAudioEnabled),
     onToggleTestSfx:
-      props.onToggleTestSfx ??
+      rawProps.onToggleTestSfx ??
       (() => {
         networkDiagnosticsStore.toggleTestCarAudio();
       }),
-    onResetBall: props.onResetBall ?? (() => bridge.onResetBall?.()),
-    isMatchPaused: props.isMatchPaused ?? isMatchPaused,
+    onResetBall: rawProps.onResetBall ?? (() => bridge.onResetBall?.()),
+    isMatchPaused: rawProps.isMatchPaused ?? isMatchPaused,
     onTogglePause:
-      props.onTogglePause ?? (() => bridge.onPauseOnlineMatch?.(!isMatchPaused, 3)),
-    onStartMatch: props.onStartMatch ?? handleStartMatch,
-    onEnterMatch: props.onEnterMatch ?? handleEnterMatch,
-    onOpenNetHud: props.onOpenNetHud ?? handleOpenNetHud,
-    onCloseRoom: props.onCloseRoom ?? (() => void handleCloseRoom()),
-    onBack: props.onBack ?? goBack,
-  } as TProps;
+      rawProps.onTogglePause ?? (() => bridge.onPauseOnlineMatch?.(!isMatchPaused, 3)),
+    onStartMatch: rawProps.onStartMatch ?? handleStartMatch,
+    onEnterMatch: rawProps.onEnterMatch ?? handleEnterMatch,
+    onOpenNetHud: rawProps.onOpenNetHud ?? handleOpenNetHud,
+    onCloseRoom: rawProps.onCloseRoom ?? (() => void handleCloseRoom()),
+    onBack: rawProps.onBack ?? goBack,
+  };
 }

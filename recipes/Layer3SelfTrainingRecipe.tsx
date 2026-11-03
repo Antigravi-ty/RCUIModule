@@ -1,5 +1,9 @@
 import React from 'react';
-import { useLayer3SelfTrainingStoreBinding } from './hooks/useLayer3PlayTrainingBindings';
+import {
+  useLayer3SelfTrainingStoreBinding,
+  type SelfTrainingModeId,
+  type Layer3SelfTrainingRecipeProps,
+} from './hooks/useLayer3PlayTrainingBindings';
 import {
   Barrel,
   FileVideoCamera,
@@ -17,12 +21,7 @@ import {
   type MainMenuItemSlotId,
 } from '../stores/mainMenuStyleStore';
 
-export type SelfTrainingModeId =
-  | 'free-play'
-  | 'static-training-pack'
-  | 'dynamic-training-pack'
-  | 'kickoff-training'
-  | 'replay-viewer';
+export type { SelfTrainingModeId, Layer3SelfTrainingRecipeProps };
 
 export interface SelfTrainingOption {
   id: SelfTrainingModeId;
@@ -79,13 +78,6 @@ export const SELF_TRAINING_OPTIONS: SelfTrainingOption[] = [
     hasArrow: true,
   },
 ];
-
-export interface Layer3SelfTrainingRecipeProps {
-  isLight?: boolean;
-  onSelectMode?: (mode: SelfTrainingModeId) => void;
-  onBack?: () => void;
-  className?: string;
-}
 
 /**
  * [Recipe] Layer 3 Self-Training Hub

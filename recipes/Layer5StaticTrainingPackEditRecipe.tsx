@@ -1,5 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { useLayer5StaticTrainingPackEditStoreBinding } from './hooks/useStaticTrainingStoreBindings';
+import {
+  useLayer5StaticTrainingPackEditStoreBinding,
+  type Layer5StaticTrainingPackEditRecipeProps,
+} from './hooks/useStaticTrainingStoreBindings';
 import { Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -15,6 +18,8 @@ import {
   type StaticTrainingShotItem,
 } from './static-training/staticTrainingTypes';
 import { StaticTrainingShotInspectorView } from './static-training/StaticTrainingShotInspectorView';
+
+export type { Layer5StaticTrainingPackEditRecipeProps };
 
 /**
  * Standalone helper to spawn the Exit Edit Mode confirmation dialogue (`Save / Ignore / Cancel`).
@@ -51,40 +56,6 @@ export function openStaticTrainingExitConfirmDialogue(
       },
     ],
   });
-}
-
-export interface Layer5StaticTrainingPackEditRecipeProps {
-  isLight?: boolean;
-  transparent?: boolean;
-  packTitle?: string;
-  /** Controlled or uncontrolled shots list */
-  shots?: StaticTrainingShotItem[];
-  onShotsChange?: (shots: StaticTrainingShotItem[]) => void;
-  /** Optional active shot override (e.g. from fast in-memory edit variable) */
-  currentShotOverride?: StaticTrainingShotItem | null;
-  /** Controlled or uncontrolled selected shot index */
-  selectedShotIndex?: number;
-  onSelectedShotIndexChange?: (idx: number) => void;
-  /** Controlled or uncontrolled item inspection state (false = full list, true = compressed rail + detail inspector) */
-  isInspectingShot?: boolean;
-  onInspectingShotChange?: (inspecting: boolean) => void;
-  /** Controlled or uncontrolled 3D edit sub-mode */
-  editSubMode?: EditSubMode;
-  onEditSubModeChange?: (mode: EditSubMode) => void;
-  /** Controlled or uncontrolled dirty flag for current shot */
-  isDirty?: boolean;
-  onMutateCurrentShot?: (updater: (draft: StaticTrainingShotItem) => void) => void;
-  onSaveCurrentShot?: () => void | Promise<void>;
-  onAddNewShot?: () => void | Promise<void>;
-  onDuplicateShot?: (idx: number) => void | Promise<void>;
-  onReorderShot?: (fromIdx: number, toIdx: number) => void | Promise<void>;
-  onDeleteShot?: (idx: number) => void | Promise<void>;
-  onExportSingleShot?: (idx: number) => void;
-  onImportSingleShot?: (file: File) => void | Promise<void>;
-  /** Callback when user clicks Collapse [TAB] in header */
-  onCollapseDrawer?: () => void;
-  /** Callback when user confirms Exit in the double-check dialogue */
-  onExitSession?: (action: 'save' | 'ignore') => void | Promise<void>;
 }
 
 /**
@@ -322,7 +293,7 @@ export const Layer5StaticTrainingPackEditRecipe: React.FC<Layer5StaticTrainingPa
       content: (
         <div className="flex flex-col gap-2.5 text-left text-xs leading-relaxed">
           <div className="font-semibold text-amber-500">
-            Static Training Pack 3D Editor Controls &amp; Shortcuts
+            Static Training Pack 3D Editor Controls & Shortcuts
           </div>
           <div className="grid grid-cols-1 gap-1.5 font-mono text-[11px]">
             <div>
@@ -356,7 +327,7 @@ export const Layer5StaticTrainingPackEditRecipe: React.FC<Layer5StaticTrainingPa
               <span className="font-bold text-sky-500">[F]</span> : Switch relative ball camera horizontal lateral offset side (flips between right +offset and left -offset).
             </div>
             <div>
-              <span className="font-bold text-emerald-500">[T]</span> : Toggle trajectory preview test in any Edit sub-mode (launches Car &amp; Ball while keeping the camera at its unlaunched viewpoint).
+              <span className="font-bold text-emerald-500">[T]</span> : Toggle trajectory preview test in any Edit sub-mode (launches Car & Ball while keeping the camera at its unlaunched viewpoint).
             </div>
             <div>
               <span className="font-bold text-emerald-500">[G]</span> : Test Single Shot in playable 3D arena (press [G] again to return to editor).

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useLayer3BallTrajectoryStoreBinding } from './hooks/useLayer3SettingsDetailBindings';
 import { Cpu, Palette } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -9,6 +8,7 @@ import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { BounceSolidSvg } from '../primitives/packagedSvgIcons';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
@@ -74,20 +74,34 @@ export interface Layer3BallTrajectoryRecipeProps {
  * - Trajectory Pattern Mode & Line Color Tone split into 2-line stacked rows with full-width SegmentedSwitch
  * - Iconless inline sliders with expanded label room so titles never truncate
  */
-export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProps> = (rawProps) => {
-  const {
+export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProps> = ({
   isLight = false,
-  developerMode = false,
-  onBack = () => {},
-  onCollapsePreview,
+  developerMode: propDeveloperMode,
+  onBack: propOnBack,
+  onCollapsePreview: propOnCollapsePreview,
   transparent = false,
   config: controlledConfigProp,
   settings: controlledSettingsProp,
   defaultConfig,
   defaultSettings,
-  onChange,
+  onChange: propOnChange,
   onConfigChange,
-} = useLayer3BallTrajectoryStoreBinding(rawProps);
+}) => {
+  const goBack = useAppStore((s) => s.goBack);
+  const storeDeveloperMode = useAppStore((s) => s.developerMode);
+  const storeTrajectory = useAppStore((s) => s.trajectory);
+  const storeUpdateTrajectory = useAppStore((s) => s.updateTrajectory);
+  const setLivePreviewCollapsed = useAppStore((s) => s.setLivePreviewCollapsed);
+
+  const developerMode = propDeveloperMode ?? storeDeveloperMode;
+  const onBack = propOnBack ?? goBack;
+  const onCollapsePreview =
+    propOnCollapsePreview ?? (() => setLivePreviewCollapsed(true));
+  const onChange =
+    propOnChange ??
+    ((_next: TrajectoryConfig, patch: Partial<TrajectoryConfig>) =>
+      storeUpdateTrajectory(patch));
+
   const sizing = useMenuLayoutStore(
     (s) => s.panels?.['layer3-ball-trajectory'] ?? DEFAULT_PANEL_SIZING['layer3-ball-trajectory']
   );
@@ -104,7 +118,11 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
     initialSeed.color.startsWith('#') ? initialSeed.color : '#fbbf24'
   );
 
-  const controlledSource = controlledConfigProp ?? controlledSettingsProp;
+  const hasInitialSeedOverride = Boolean(defaultConfig || defaultSettings);
+  const controlledSource =
+    controlledConfigProp ??
+    controlledSettingsProp ??
+    (hasInitialSeedOverride ? undefined : storeTrajectory);
   const resolved: TrajectoryConfig = {
     ...internalConfig,
     ...controlledSource,

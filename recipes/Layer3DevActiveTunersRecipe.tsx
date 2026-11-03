@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { useLayer3DevActiveTunersStoreBinding } from './hooks/useLayer3DevSettingsBindings';
+import {
+  useLayer3DevActiveTunersStoreBinding,
+  type BoostPhaseSelectionState,
+  type Layer3DevActiveTunersRecipeProps,
+} from './hooks/useLayer3DevSettingsBindings';
 import {
   Box,
   Car,
@@ -48,33 +52,7 @@ import { SettingActionRow } from '../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
 
-export interface BoostPhaseSelectionState {
-  start: string;
-  loop: string;
-  end: string;
-}
-
-export interface Layer3DevActiveTunersRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  onNavigateAdvancedAudio?: () => void;
-  onNavigateEventAndTriggerer?: () => void;
-  onNavigateEventTriggerer?: () => void;
-  wsVerticalOffsetPct?: number;
-  onWsVerticalOffsetPctChange?: (val: number) => void;
-  carBallMode?: string;
-  onCarBallModeChange?: (mode: string) => void;
-  carCarMode?: string;
-  onCarCarModeChange?: (mode: string) => void;
-  boostSelection?: BoostPhaseSelectionState;
-  onSelectBoostPhase?: (variationId: string, phase: 'start' | 'loop' | 'end') => void;
-  onSelectAllBoostPhases?: (variationId: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onAddPresetWindow?: (preset: any, e: React.MouseEvent<HTMLButtonElement>) => void;
-  activeWindows?: unknown[];
-  onClosePresetWindow?: (id: string) => void;
-  sizing?: PanelSizingConfig;
-}
+export type { BoostPhaseSelectionState, Layer3DevActiveTunersRecipeProps };
 
 /**
  * [Recipe] Layer 3 Active Tuners (Developer Tier)
@@ -85,6 +63,7 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
   isLight = false,
   onBack,
   onNavigateAdvancedAudio,
+  onNavigateEventTriggerRules,
   onNavigateEventAndTriggerer,
   onNavigateEventTriggerer,
   wsVerticalOffsetPct: propWsOffset,
@@ -402,16 +381,16 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             isLight={isLight}
           />
 
-          {/* 9b. Event and Triggerer (Navigates to Layer 4) */}
+          {/* 9b. Event & Trigger Rules (Navigates to Layer 4) */}
           <SettingActionRow
             icon={Zap}
             iconColor="text-sky-400"
-            title="Event and Triggerer"
+            title="Event & Trigger Rules"
             actionLabel="Configure"
             bordered={false}
             showDescription={false}
-            onAction={() => (onNavigateEventAndTriggerer ?? onNavigateEventTriggerer)?.()}
-            hoverDescription="Open Layer 4 Event and Triggerer: Configure collision impulse thresholds, audio/VFX event bindings, and trigger rules."
+            onAction={() => (onNavigateEventTriggerRules ?? onNavigateEventAndTriggerer ?? onNavigateEventTriggerer)?.()}
+            hoverDescription="Open Layer 4 Event & Trigger Rules: Configure collision impulse thresholds, audio/VFX event bindings, and trigger rules."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}

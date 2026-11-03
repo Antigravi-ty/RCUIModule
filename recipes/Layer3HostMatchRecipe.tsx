@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLayer3HostMatchStoreBinding } from './hooks/useLayer3OnlineRoomSetupBindings';
+import {
+  useLayer3HostMatchStoreBinding,
+  type Layer3HostMatchRecipeProps,
+} from './hooks/useLayer3OnlineRoomSetupBindings';
 import {
   Bot,
   ChevronDown,
@@ -16,10 +19,10 @@ import { SliderControl } from '../primitives/SliderControl';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
-import { dispatchOnlineRoomErrorNotification } from './Layer3OnlineWarmupRecipe';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,
+  dispatchOnlineRoomErrorNotification,
   type CreationProgressStatus,
   type CreationStepSpec,
 } from './online/OnlineRoomCreationProgress';
@@ -34,6 +37,8 @@ import {
   type HostMatchTeamFormat,
 } from './online/OnlineRoomConfigSummaryCard';
 
+export type { Layer3HostMatchRecipeProps };
+
 export const DEFAULT_HOST_MATCH_CONFIG: HostMatchConfig = {
   playerName: `Player${Math.floor(1000 + Math.random() * 9000)}`,
   roomCode: String(Math.floor(1000 + Math.random() * 9000)),
@@ -43,41 +48,6 @@ export const DEFAULT_HOST_MATCH_CONFIG: HostMatchConfig = {
   durationPreset: '300',
   customDurationSeconds: 180,
 };
-
-export interface Layer3HostMatchRecipeProps {
-  isLight?: boolean;
-  developerMode?: boolean;
-  /** Room type context ('match' | 'warmup') used to derive default panel header title */
-  roomType?: 'match' | 'warmup';
-  /** Optional explicit panel header title override */
-  title?: string;
-  /** Initial expanded state for the Current Configuration disclosure card */
-  defaultEditingConfig?: boolean;
-  /** Controlled host match configuration */
-  config?: Partial<HostMatchConfig>;
-  /** Alias for controlled config */
-  settings?: Partial<HostMatchConfig>;
-  /** Initial host match configuration for uncontrolled mode */
-  defaultConfig?: Partial<HostMatchConfig>;
-  /** Callback fired when any host match setting changes */
-  onChange?: (next: HostMatchConfig, patch: Partial<HostMatchConfig>) => void;
-  /** Alias for onChange */
-  onConfigChange?: (next: HostMatchConfig, patch: Partial<HostMatchConfig>) => void;
-  onStartHost?: (config: HostMatchConfig) => void;
-  /** Controlled 5-step creation progress status */
-  progressStatus?: CreationProgressStatus;
-  /** Controlled current step (1..5) */
-  currentStep?: number;
-  /** Custom step specifications */
-  steps?: CreationStepSpec[];
-  onProgressStatusChange?: (status: CreationProgressStatus) => void;
-  onCurrentStepChange?: (step: number) => void;
-  onRetryHost?: () => void;
-  onCancelHost?: () => void;
-  onNavigateGarageSync?: () => void;
-  onNavigateAdvancedSettings?: () => void;
-  onBack?: () => void;
-}
 
 /**
  * [Recipe] Layer 3 Host Match (Create & Host Online Lobby)

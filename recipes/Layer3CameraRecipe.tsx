@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { useLayer3CameraStoreBinding } from './hooks/useLayer3SettingsDetailBindings';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { dialogue } from '../compounds/dialogue/dialogueStore';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import {
@@ -57,8 +57,7 @@ export interface Layer3CameraRecipeProps {
  * - Invert Swivel & Camera Shake use the tactile `<Checkbox>` primitive aligned on the spine or extracted into a special group.
  * - Reset Camera Defaults renders as a big icon+label action button that triggers a red double-check `Dialogue` confirmation.
  */
-export const Layer3CameraRecipe: React.FC<Layer3CameraRecipeProps> = React.memo((rawProps) => {
-  const {
+export const Layer3CameraRecipe: React.FC<Layer3CameraRecipeProps> = React.memo(({
   isLight = false,
   developerMode = false,
   settings: propSettings,
@@ -67,14 +66,28 @@ export const Layer3CameraRecipe: React.FC<Layer3CameraRecipeProps> = React.memo(
   defaultConfig,
   styleParams,
   onChange,
-  onConfigChange,
-  onReset,
-  onCollapsePreview,
-  onBack = () => {},
+  onConfigChange: propOnConfigChange,
+  onReset: propOnReset,
+  onCollapsePreview: propOnCollapsePreview,
+  onBack: propOnBack,
   className = '',
-} = useLayer3CameraStoreBinding(rawProps);
-  const controlledInput = propSettings ?? propConfig;
+}) => {
+  const goBack = useAppStore((s) => s.goBack);
+  const storeCamera = useAppStore((s) => s.camera);
+  const storeUpdateCamera = useAppStore((s) => s.updateCamera);
+  const storeResetCamera = useAppStore((s) => s.resetCamera);
+  const setLivePreviewCollapsed = useAppStore((s) => s.setLivePreviewCollapsed);
+
   const initialInput = defaultSettings ?? defaultConfig;
+  const controlledInput =
+    propSettings ?? propConfig ?? (initialInput ? undefined : storeCamera);
+  const onBack = propOnBack ?? goBack;
+  const onConfigChange =
+    propOnConfigChange ??
+    ((_next: CameraConfig, patch: Partial<CameraConfig>) => storeUpdateCamera(patch));
+  const onReset = propOnReset ?? (() => storeResetCamera());
+  const onCollapsePreview =
+    propOnCollapsePreview ?? (() => setLivePreviewCollapsed(true));
 
   const [internalSettings, setInternalSettings] = useState<CameraProfileSettings>(() =>
     normalizeCameraSettings(

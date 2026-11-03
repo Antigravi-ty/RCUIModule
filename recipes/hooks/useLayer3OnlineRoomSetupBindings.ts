@@ -7,11 +7,14 @@ import {
   saveStoredPlayerName,
 } from '../../config/vehiclePresets';
 import type { HostMatchConfig } from '../online/OnlineRoomConfigSummaryCard';
-import type { CreationProgressStatus } from '../online/OnlineRoomCreationProgress';
+import type {
+  CreationProgressStatus,
+  CreationStepSpec,
+} from '../online/OnlineRoomCreationProgress';
 import {
   FORMAT_TO_GAME_MODE,
   GAME_MODE_TO_FORMAT,
-} from './useLayer2RoomHostControlBinding';
+} from './useLayer2ManageRoomBinding';
 
 export interface JoinRoomConfig {
   playerName: string;
@@ -20,10 +23,75 @@ export interface JoinRoomConfig {
   allowSpectating: boolean;
 }
 
-export function useLayer3HostMatchStoreBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export interface Layer3HostMatchRecipeProps {
+  isLight?: boolean;
+  developerMode?: boolean;
+  /** Room type context ('match' | 'warmup') used to derive default panel header title */
+  roomType?: 'match' | 'warmup';
+  /** Optional explicit panel header title override */
+  title?: string;
+  /** Initial expanded state for the Current Configuration disclosure card */
+  defaultEditingConfig?: boolean;
+  /** Controlled host match configuration */
+  config?: Partial<HostMatchConfig>;
+  /** Alias for controlled config */
+  settings?: Partial<HostMatchConfig>;
+  /** Initial host match configuration for uncontrolled mode */
+  defaultConfig?: Partial<HostMatchConfig>;
+  /** Callback fired when any host match setting changes */
+  onChange?: (next: HostMatchConfig, patch: Partial<HostMatchConfig>) => void;
+  /** Alias for onChange */
+  onConfigChange?: (next: HostMatchConfig, patch: Partial<HostMatchConfig>) => void;
+  onStartHost?: (config: HostMatchConfig) => void;
+  /** Controlled 5-step creation progress status */
+  progressStatus?: CreationProgressStatus;
+  /** Controlled current step (1..5) */
+  currentStep?: number;
+  /** Custom step specifications */
+  steps?: CreationStepSpec[];
+  onProgressStatusChange?: (status: CreationProgressStatus) => void;
+  onCurrentStepChange?: (step: number) => void;
+  onRetryHost?: () => void;
+  onCancelHost?: () => void;
+  onNavigateGarageSync?: () => void;
+  onNavigateAdvancedSettings?: () => void;
+  onBack?: () => void;
+}
+
+export interface Layer3JoinRoomRecipeProps {
+  isLight?: boolean;
+  /** Controlled join room configuration */
+  config?: Partial<JoinRoomConfig>;
+  /** Alias for controlled config */
+  settings?: Partial<JoinRoomConfig>;
+  /** Initial join room configuration for uncontrolled mode */
+  defaultConfig?: Partial<JoinRoomConfig>;
+  /** Callback fired when any join room field changes */
+  onChange?: (next: JoinRoomConfig, patch: Partial<JoinRoomConfig>) => void;
+  /** Alias for onChange */
+  onConfigChange?: (next: JoinRoomConfig, patch: Partial<JoinRoomConfig>) => void;
+  defaultPlayerName?: string;
+  defaultRoomCode?: string;
+  defaultRoomKey?: string;
+  defaultAllowSpectating?: boolean;
+  onJoinRoom?: (config: JoinRoomConfig) => void;
+  /** Controlled 5-step connection progress status */
+  progressStatus?: CreationProgressStatus;
+  /** Controlled current step (1..5) */
+  currentStep?: number;
+  /** Custom step specifications */
+  steps?: CreationStepSpec[];
+  onProgressStatusChange?: (status: CreationProgressStatus) => void;
+  onCurrentStepChange?: (step: number) => void;
+  onRetryJoin?: () => void;
+  onCancelJoin?: () => void;
+  onNavigateGarageSync?: () => void;
+  onBack?: () => void;
+}
+
+export function useLayer3HostMatchStoreBinding(
+  rawProps: Layer3HostMatchRecipeProps
+): Layer3HostMatchRecipeProps {
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -61,7 +129,7 @@ export function useLayer3HostMatchStoreBinding<TProps extends object>(
   const [currentStep, setCurrentStep] = useState<number>(1);
 
   const resolvedRoomType: 'match' | 'warmup' =
-    props.roomType === 'warmup' || onlineSession.roomType === 'warmup'
+    rawProps.roomType === 'warmup' || onlineSession.roomType === 'warmup'
       ? 'warmup'
       : 'match';
 
@@ -124,10 +192,10 @@ export function useLayer3HostMatchStoreBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    roomType: props.roomType ?? resolvedRoomType,
-    config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : config),
+    roomType: rawProps.roomType ?? resolvedRoomType,
+    config: rawProps.config ?? rawProps.settings ?? (rawProps.defaultConfig ? undefined : config),
     onConfigChange:
-      props.onConfigChange ??
+      rawProps.onConfigChange ??
       ((next: HostMatchConfig, patch: Partial<HostMatchConfig>) => {
         setConfig(next);
         if (next.playerName) {
@@ -136,28 +204,27 @@ export function useLayer3HostMatchStoreBinding<TProps extends object>(
         void patch;
       }),
     progressStatus:
-      props.progressStatus ?? (bridge.onHostOnlineWarmup ? progressStatus : undefined),
+      rawProps.progressStatus ?? (bridge.onHostOnlineWarmup ? progressStatus : undefined),
     currentStep:
-      props.currentStep ?? (bridge.onHostOnlineWarmup ? currentStep : undefined),
-    onStartHost: props.onStartHost ?? ((cfg: HostMatchConfig) => void handleStartHost(cfg)),
-    onRetryHost: props.onRetryHost ?? (() => void handleStartHost(config)),
+      rawProps.currentStep ?? (bridge.onHostOnlineWarmup ? currentStep : undefined),
+    onStartHost: rawProps.onStartHost ?? ((cfg: HostMatchConfig) => void handleStartHost(cfg)),
+    onRetryHost: rawProps.onRetryHost ?? (() => void handleStartHost(config)),
     onCancelHost:
-      props.onCancelHost ??
+      rawProps.onCancelHost ??
       (() => {
         setProgressStatus('idle');
         setCurrentStep(1);
         bridge.onLeaveOnlineServer?.();
       }),
     onNavigateGarageSync:
-      props.onNavigateGarageSync ?? (() => navigate('garage')),
-    onBack: props.onBack ?? goBack,
-  } as TProps;
+      rawProps.onNavigateGarageSync ?? (() => navigate('garage')),
+    onBack: rawProps.onBack ?? goBack,
+  };
 }
 
-export function useLayer3JoinRoomStoreBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export function useLayer3JoinRoomStoreBinding(
+  rawProps: Layer3JoinRoomRecipeProps
+): Layer3JoinRoomRecipeProps {
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -221,9 +288,9 @@ export function useLayer3JoinRoomStoreBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : config),
+    config: rawProps.config ?? rawProps.settings ?? (rawProps.defaultConfig ? undefined : config),
     onConfigChange:
-      props.onConfigChange ??
+      rawProps.onConfigChange ??
       ((next: JoinRoomConfig) => {
         setConfig(next);
         if (next.playerName) {
@@ -231,20 +298,20 @@ export function useLayer3JoinRoomStoreBinding<TProps extends object>(
         }
       }),
     progressStatus:
-      props.progressStatus ?? (bridge.onJoinOnlineWarmup ? progressStatus : undefined),
+      rawProps.progressStatus ?? (bridge.onJoinOnlineWarmup ? progressStatus : undefined),
     currentStep:
-      props.currentStep ?? (bridge.onJoinOnlineWarmup ? currentStep : undefined),
-    onJoinRoom: props.onJoinRoom ?? ((cfg: JoinRoomConfig) => void handleJoinRoom(cfg)),
-    onRetryJoin: props.onRetryJoin ?? (() => void handleJoinRoom(config)),
+      rawProps.currentStep ?? (bridge.onJoinOnlineWarmup ? currentStep : undefined),
+    onJoinRoom: rawProps.onJoinRoom ?? ((cfg: JoinRoomConfig) => void handleJoinRoom(cfg)),
+    onRetryJoin: rawProps.onRetryJoin ?? (() => void handleJoinRoom(config)),
     onCancelJoin:
-      props.onCancelJoin ??
+      rawProps.onCancelJoin ??
       (() => {
         setProgressStatus('idle');
         setCurrentStep(1);
         bridge.onLeaveOnlineServer?.();
       }),
     onNavigateGarageSync:
-      props.onNavigateGarageSync ?? (() => navigate('garage')),
-    onBack: props.onBack ?? goBack,
-  } as TProps;
+      rawProps.onNavigateGarageSync ?? (() => navigate('garage')),
+    onBack: rawProps.onBack ?? goBack,
+  };
 }

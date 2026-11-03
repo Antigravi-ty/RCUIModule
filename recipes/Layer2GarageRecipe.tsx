@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLayer2GarageStoreBinding } from './hooks/useMainMenuAndPlayStoreBindings';
+import {
+  useLayer2GarageStoreBinding,
+  type GarageTabId,
+  type Layer2GarageRecipeProps,
+} from './hooks/useMainMenuAndPlayStoreBindings';
 import {
   Car,
   Palette,
@@ -17,49 +21,7 @@ import { GaragePaintTab, DEFAULT_BLUE_ORDER, DEFAULT_ORANGE_ORDER } from './gara
 import { GarageLoadoutTab, type VisualMaterialsConfig } from './garage/GarageLoadoutTab';
 import { GarageAnthemTab } from './garage/GarageAnthemTab';
 
-export type GarageTabId =
-  | 'car'
-  | 'paint'
-  | 'loadout'
-  | 'anthem'
-  | 'sync'
-  | 'colour'
-  | 'materials'
-  | 'player-name';
-
-export interface Layer2GarageRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  initialTab?: string;
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
-  // Car Tab controlled props
-  selectedCar?: string;
-  defaultSelectedCar?: string;
-  onSelectCar?: (carId: string) => void;
-  // Paint Tab controlled props
-  primaryTeam?: 'blue' | 'orange';
-  defaultPrimaryTeam?: 'blue' | 'orange';
-  onPrimaryTeamChange?: (team: 'blue' | 'orange') => void;
-  paintFinish?: 'matte' | 'metallic';
-  defaultPaintFinish?: 'matte' | 'metallic';
-  onPaintFinishChange?: (finish: 'matte' | 'metallic') => void;
-  blueOrder?: number[];
-  defaultBlueOrder?: number[];
-  onBlueOrderChange?: (next: number[]) => void;
-  orangeOrder?: number[];
-  defaultOrangeOrder?: number[];
-  onOrangeOrderChange?: (next: number[]) => void;
-  // Loadout (Materials) Tab controlled props
-  materials?: VisualMaterialsConfig;
-  onUpdateMaterials?: (partial: Partial<VisualMaterialsConfig>) => void;
-  // Anthem Tab controlled props
-  selectedAnthem?: string;
-  defaultSelectedAnthem?: string;
-  onSelectAnthem?: (anthemId: string) => void;
-  /** Whether Anthem audio assets are available (default false -> renders Under Development placeholder) */
-  anthemAvailable?: boolean;
-}
+export type { GarageTabId, Layer2GarageRecipeProps };
 
 /**
  * [Recipe] Layer 2 Garage Loadout Menu (Width: 640px, Height: 520px)

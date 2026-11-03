@@ -3,12 +3,12 @@ import {
   Layer3BallTrajectoryRecipe,
   type TrajectoryConfig,
 } from '../Layer3BallTrajectoryRecipe';
-import { Layer3TrainingRecipe } from '../Layer3TrainingRecipe';
+import { Layer3TrainingConfigRecipe } from '../Layer3TrainingConfigRecipe';
 import { Layer3CameraRecipe } from '../Layer3CameraRecipe';
 import type { CameraConfig } from '../camera/cameraConfigSpecs';
 import { Layer3KeybindingsRecipe } from '../Layer3KeybindingsRecipe';
 
-export type SettingsInternalSubView = 'trajectory' | 'training' | 'camera' | 'keybindings' | null;
+export type SettingsInternalSubView = 'trajectory' | 'training-config' | 'camera' | 'keybindings' | null;
 
 export interface SettingsSubViewRouterProps {
   subView: Exclude<SettingsInternalSubView, null>;
@@ -50,9 +50,9 @@ export const SettingsSubViewRouter: React.FC<SettingsSubViewRouterProps> = ({
     );
   }
 
-  if (subView === 'training') {
+  if (subView === 'training-config') {
     return (
-      <Layer3TrainingRecipe
+      <Layer3TrainingConfigRecipe
         isLight={isLight}
         onBack={() => onChangeSubView(null)}
         onNavigateTrajectory={() => onChangeSubView('trajectory')}

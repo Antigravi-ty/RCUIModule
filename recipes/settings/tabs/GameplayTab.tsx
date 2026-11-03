@@ -196,7 +196,7 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
         title="Training Mode Configuration"
         description="Boost mode, goal barrier & car hitbox collision overlay"
         hoverDescription="Configure training rules, boost mode (standard vs unlimited), goal barrier designer, and car hitbox collision visualization."
-        onAction={onNavigateTrainingDetail ?? (() => navigate('training'))}
+        onAction={onNavigateTrainingDetail ?? (() => navigate('training-config'))}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}

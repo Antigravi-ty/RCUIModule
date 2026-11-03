@@ -6,11 +6,10 @@ export type CanonicalMenuPanelId =
   | 'layer2-garage'
   | 'layer2-settings'
   | 'layer2-previews'
-  | 'layer2-room-host-control'
-  | 'layer3-training'
+  | 'layer2-manage-room'
+  | 'layer3-training-config'
   | 'layer3-audio-eq'
   | 'layer3-ball-trajectory'
-  | 'layer3-online-warmup'
   | 'layer3-host-match'
   | 'layer3-host-training'
   | 'layer3-custom-play'
@@ -21,7 +20,7 @@ export type CanonicalMenuPanelId =
   | 'layer3-camera'
   | 'layer3-keybindings'
   | 'layer3-exp-multi-bots'
-  | 'layer3-dev-subsystem-isolation'
+  | 'layer3-dev-sandboxes'
   | 'layer3-dev-active-tuners'
   | 'layer3-dev-calibrated-presets'
   | 'layer3-dev-under-development'
@@ -227,14 +226,14 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     minHeight: 220,
     maxHeight: 960,
   },
-  'layer2-room-host-control': {
+  'layer2-manage-room': {
     mode: 'auto',
     width: 720,
     targetHeight: 500,
     minHeight: 220,
     maxHeight: 1080,
   },
-  'layer3-training': {
+  'layer3-training-config': {
     mode: 'auto',
     width: 480,
     targetHeight: 460,
@@ -252,13 +251,6 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     mode: 'auto',
     width: 560,
     targetHeight: 520,
-    minHeight: 220,
-    maxHeight: 1080,
-  },
-  'layer3-online-warmup': {
-    mode: 'auto',
-    width: 480,
-    targetHeight: 540,
     minHeight: 220,
     maxHeight: 1080,
   },
@@ -332,7 +324,7 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     minHeight: 240,
     maxHeight: 1120,
   },
-  'layer3-dev-subsystem-isolation': {
+  'layer3-dev-sandboxes': {
     mode: 'auto',
     width: 560,
     targetHeight: 460,
@@ -548,6 +540,6 @@ export const DEFAULT_MENU_LAYOUT_TOKENS: MenuLayoutTokens = {
   layer1Height: DEFAULT_PANEL_SIZING['layer1-main'].targetHeight,
   layer2Width: DEFAULT_PANEL_SIZING['layer2-settings'].width,
   layer2Height: DEFAULT_PANEL_SIZING['layer2-settings'].targetHeight,
-  layer3Width: DEFAULT_PANEL_SIZING['layer3-online-warmup'].width,
-  layer3Height: DEFAULT_PANEL_SIZING['layer3-online-warmup'].targetHeight,
+  layer3Width: DEFAULT_PANEL_SIZING['layer3-host-match'].width,
+  layer3Height: DEFAULT_PANEL_SIZING['layer3-host-match'].targetHeight,
 };

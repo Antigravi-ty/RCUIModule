@@ -45,8 +45,8 @@ const syncLegacyFields = (tokens: MenuLayoutTokens): MenuLayoutTokens => {
     layer1Height: safePanels['layer1-main'].targetHeight,
     layer2Width: safePanels['layer2-settings'].width,
     layer2Height: safePanels['layer2-settings'].targetHeight,
-    layer3Width: safePanels['layer3-online-warmup'].width,
-    layer3Height: safePanels['layer3-online-warmup'].targetHeight,
+    layer3Width: safePanels['layer3-host-match'].width,
+    layer3Height: safePanels['layer3-host-match'].targetHeight,
   };
 };
 

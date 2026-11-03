@@ -17,7 +17,10 @@ import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { SettingActionRow } from '../../compounds/SettingActionRow';
 import { SettingSliderRow } from '../../compounds/SettingSliderRow';
 import { quickNotification } from '../../stores/quickNotificationStore';
-import { useReplayViewerPanelBinding } from './useReplayViewerPanelBinding';
+import {
+  useReplayViewerPanelBinding,
+  type ReplayViewerFloatingWindowProps,
+} from './useReplayViewerPanelBinding';
 import {
   ReplayViewerTransportBar,
   type PlaybackSpeedPreset,
@@ -25,63 +28,7 @@ import {
   type ReplayViewerState,
 } from './ReplayViewerTransportBar';
 
-export interface ReplayViewerFloatingWindowProps {
-  isLight?: boolean;
-  active?: boolean;
-  /** Controlled whether a replay file is currently being parsed/loaded */
-  isLoadingReplay?: boolean;
-  /** Controlled whether a valid replay is loaded */
-  hasLoadedReplay?: boolean;
-  /** Controlled whether a retained recent match replay exists in memory */
-  hasRetainedMatch?: boolean;
-  /** Controlled replay file name */
-  fileName?: string;
-  /** Controlled current frame cursor */
-  cursorFrame?: number;
-  defaultCursorFrame?: number;
-  /** Controlled total frame count */
-  totalFrames?: number;
-  /** Controlled play/pause state */
-  isPlaying?: boolean;
-  defaultIsPlaying?: boolean;
-  /** Controlled intervention state */
-  isIntervening?: boolean;
-  defaultIsIntervening?: boolean;
-  /** Controlled playback speed preset */
-  playbackPreset?: PlaybackSpeedPreset;
-  defaultPlaybackPreset?: PlaybackSpeedPreset;
-  /** Controlled custom playback speed percentage (1..100) */
-  customSpeedPct?: number;
-  defaultCustomSpeedPct?: number;
-  /** Controlled down counter ('3' | '2' | '1' | '0') */
-  downCounter?: DownCounterOption;
-  defaultDownCounter?: DownCounterOption;
-  /** Custom incident markers */
-  incidentMarkers?: ReplayIncidentMarker[];
-  /** Custom signal markers */
-  signalMarkers?: ReplaySignalMarker[];
-  // Action callbacks
-  onLoadReplayFile?: (file?: File) => void;
-  onLoadRecentReplay?: () => void;
-  onPlay?: () => void;
-  onPause?: () => void;
-  onPlayingChange?: (isPlaying: boolean) => void;
-  onSeekFrame?: (frame: number) => void;
-  onStepFrame?: (deltaFrames: number, nextFrame: number) => void;
-  onRewindPressStart?: () => void;
-  onRewindPressEnd?: () => void;
-  onForwardPressStart?: () => void;
-  onForwardPressEnd?: () => void;
-  onPlaybackSpeedChange?: (
-    effectiveSpeedPct: number,
-    preset: PlaybackSpeedPreset,
-    customSpeedPct: number
-  ) => void;
-  onInterveneFromHere?: (frame: number, downCounterSec: number) => void;
-  onBackToReplay?: () => void;
-  onDownCounterChange?: (downCounter: DownCounterOption) => void;
-  onChange?: (state: ReplayViewerState) => void;
-}
+export type { ReplayViewerFloatingWindowProps };
 
 const RECENT_CLIPS = [
   { name: 'RLCS_GrandFinals_Game7_OT.rcreplay', totalFrames: 1800 },

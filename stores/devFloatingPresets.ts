@@ -1,7 +1,7 @@
 import { USER_PRESET_WINDOWS, type PresetConfig } from './floatingPresets';
 
 // ============================================================================
-// DEVELOPER-ONLY FLOATING WINDOWS (19 Total — Strictly Developer-Only)
+// DEVELOPER-ONLY FLOATING WINDOWS (22 Total — Strictly Developer-Only)
 // ============================================================================
 
 export const DIAGNOSTIC_DUMP_PRESET: PresetConfig = {

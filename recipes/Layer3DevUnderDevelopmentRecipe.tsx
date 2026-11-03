@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { useLayer3DevUnderDevelopmentStoreBinding } from './hooks/useLayer3DevSettingsBindings';
+import {
+  useLayer3DevUnderDevelopmentStoreBinding,
+  type Layer3DevUnderDevelopmentRecipeProps,
+} from './hooks/useLayer3DevSettingsBindings';
 import {
   AlertTriangle,
   Play,
@@ -23,23 +26,7 @@ import {
   type PerCarBoostConfig,
 } from './dev/PerCarBoostConfigSection';
 
-export interface Layer3DevUnderDevelopmentRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  threeWheelsEnabled?: boolean;
-  onThreeWheelsChange?: (enabled: boolean) => void;
-  onEnableAndDriveThreeWheels?: () => void;
-  stadiumPreset?: 'standard' | 'throwback';
-  onStadiumPresetChange?: (preset: 'standard' | 'throwback') => void;
-  onLoadAndInspectThrowback?: () => void;
-  showCollisionOverlay?: boolean;
-  onShowCollisionOverlayChange?: (visible: boolean) => void;
-  selectedCarIdx?: number;
-  onSelectedCarIdxChange?: (idx: number) => void;
-  perCarBoostConfigs?: Record<number, PerCarBoostConfig>;
-  onPerCarBoostConfigsChange?: (next: Record<number, PerCarBoostConfig>) => void;
-  sizing?: PanelSizingConfig;
-}
+export type { Layer3DevUnderDevelopmentRecipeProps };
 
 /**
  * [Recipe] Layer 3 Developer — 4. Under Development (Unstable / WIP Workspace)
@@ -205,7 +192,7 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
                     }}
                     className="fill-current shrink-0"
                   />
-                  <span>Enable &amp; Drive</span>
+                  <span>Enable & Drive</span>
                 </button>
               </div>
             }
@@ -285,7 +272,7 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
                     }}
                     className="fill-current shrink-0"
                   />
-                  <span>Load &amp; Inspect</span>
+                  <span>Load & Inspect</span>
                 </button>
               </div>
             }

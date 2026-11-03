@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
 import { useReplayViewerStore } from '../../stores/replayViewerStore';
@@ -18,12 +18,141 @@ import {
 } from '../garage/garageConstants';
 import type { VisualMaterialsConfig } from '../garage/GarageLoadoutTab';
 import { type StoredColorPrefs } from '../../config/uiConfig';
-import type { CanonicalLayer1ContextVariation } from '../layer1MenuContextSpecs';
+import type { PanelSizingConfig } from '../../tokens/menuLayoutTokens';
+import type {
+  MainMenuStyleParams,
+  MainMenuStyleVariant,
+} from '../../stores/mainMenuStyleStore';
+import type {
+  PlayCardStyleParams,
+  PlayCardStyleVariant,
+} from '../../stores/playCardStyleStore';
+import type {
+  CanonicalLayer1ContextVariation,
+  Layer1ContextVariation,
+} from '../layer1MenuContextSpecs';
 
-export function useLayer1MainMenuStoreBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export type TouchInputAgentOption = 'none' | 'necto' | 'nexto';
+
+export interface Layer1MainMenuRecipeProps {
+  isLight?: boolean;
+  showAdditionalPreviews?: boolean;
+  /** Legacy matchMode prop OR full Layer1ContextVariation */
+  matchMode?: Layer1ContextVariation | 'online-warmup' | 'static-training-pack';
+  /** Explicit context variation (overrides matchMode if provided) */
+  contextVariation?: Layer1ContextVariation;
+  /** Alias for contextVariation */
+  contextMode?: Layer1ContextVariation;
+  /** Optional developer Touch Input Agent banner (?touch=1 / ?touch=2) */
+  touchMode?: boolean;
+  touchHeadlessMode?: boolean;
+  /** Controlled Touch Input Agent takeover model ('none' | 'necto' | 'nexto') */
+  touchInputAgent?: TouchInputAgentOption;
+  /** Initial uncontrolled Touch Input Agent takeover model */
+  defaultTouchInputAgent?: TouchInputAgentOption;
+  /** Callback fired when Touch Input Agent model changes */
+  onTouchInputAgentChange?: (agent: TouchInputAgentOption) => void;
+  /** Background power saving mode ('extreme' | '15' | '30' | 'disable' | 'freeze' | 'match') */
+  menuPowerSave?: 'extreme' | '15' | '30' | 'disable' | 'freeze' | 'match';
+  /** Legacy boolean fallback for backgroundRenderPaused */
+  backgroundRenderPaused?: boolean;
+  onResume?: () => void;
+  onRestartMatch?: () => void;
+  onReturnToFreeplay?: () => void;
+  onNavigatePlay?: () => void;
+  onNavigateGarage?: () => void;
+  onNavigateSettings?: (targetTab?: string) => void;
+  onNavigatePreviews?: () => void;
+  onNavigateManageRoom?: () => void;
+  onNavigateRoomControl?: () => void;
+  onNavigateTrainingConfig?: () => void;
+  onNavigateKickoffConfig?: () => void;
+  onNavigateStaticTrainingPack?: () => void;
+  onNavigateExpMultiBots?: () => void;
+  onNavigateExpMultiBotsConfig?: () => void;
+  onOpenFloatingWindow?: (id: string) => void;
+  onLeaveRoom?: () => void;
+  onExitEditMode?: () => void;
+  /** Optional extra bottom action (e.g. "Exit Edit Mode" when EdgeInspectorDrawer is active) */
+  extraBottomAction?:
+    | {
+        title: string;
+        subtitle?: string;
+        icon?: React.ReactNode;
+        variant?: 'primary' | 'secondary' | 'danger';
+        onClick: () => void;
+      }
+    | React.ReactNode;
+  /** Optional explicit sizing override; defaults to menuLayoutStore.panels['layer1-main'] */
+  sizing?: PanelSizingConfig;
+  /** Optional explicit row style variant override (decoupled from store when provided) */
+  styleVariant?: MainMenuStyleVariant;
+  /** Optional explicit row & shell style parameters override (decoupled from store when provided) */
+  styleParams?: Partial<MainMenuStyleParams>;
+  className?: string;
+}
+
+export interface Layer2PlayRecipeProps {
+  isLight?: boolean;
+  onBack?: () => void;
+  onSelectMode?: (modeId: string) => void;
+  onSelectExhibition?: () => void;
+  onSelectHostMatch?: () => void;
+  onSelectJoinRoom?: () => void;
+  onSelectSelfTraining?: () => void;
+  /** Optional explicit card style variant override (decoupled from store when provided) */
+  cardVariant?: PlayCardStyleVariant;
+  /** Optional explicit card style parameters override (decoupled from store when provided) */
+  cardStyleParams?: Partial<PlayCardStyleParams>;
+}
+
+export type GarageTabId =
+  | 'car'
+  | 'paint'
+  | 'loadout'
+  | 'anthem'
+  | 'sync'
+  | 'colour'
+  | 'materials'
+  | 'player-name';
+
+export interface Layer2GarageRecipeProps {
+  isLight?: boolean;
+  onBack?: () => void;
+  initialTab?: string;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  // Car Tab controlled props
+  selectedCar?: string;
+  defaultSelectedCar?: string;
+  onSelectCar?: (carId: string) => void;
+  // Paint Tab controlled props
+  primaryTeam?: 'blue' | 'orange';
+  defaultPrimaryTeam?: 'blue' | 'orange';
+  onPrimaryTeamChange?: (team: 'blue' | 'orange') => void;
+  paintFinish?: 'matte' | 'metallic';
+  defaultPaintFinish?: 'matte' | 'metallic';
+  onPaintFinishChange?: (finish: 'matte' | 'metallic') => void;
+  blueOrder?: number[];
+  defaultBlueOrder?: number[];
+  onBlueOrderChange?: (next: number[]) => void;
+  orangeOrder?: number[];
+  defaultOrangeOrder?: number[];
+  onOrangeOrderChange?: (next: number[]) => void;
+  // Loadout (Materials) Tab controlled props
+  materials?: VisualMaterialsConfig;
+  onUpdateMaterials?: (partial: Partial<VisualMaterialsConfig>) => void;
+  // Anthem Tab controlled props
+  selectedAnthem?: string;
+  defaultSelectedAnthem?: string;
+  onSelectAnthem?: (anthemId: string) => void;
+  /** Whether Anthem audio assets are available (default false -> renders Under Development placeholder) */
+  anthemAvailable?: boolean;
+}
+
+export function useLayer1MainMenuStoreBinding(
+  rawProps: Layer1MainMenuRecipeProps
+): Layer1MainMenuRecipeProps {
   const matchMode = useAppStore((s) => s.matchMode);
   const onlineSession = useAppStore((s) => s.onlineSession);
   const touchMode = useAppStore((s) => s.touchMode);
@@ -83,7 +212,7 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
   ) {
     derivedVariation = 'replay-viewer';
   } else if (matchMode === 'static-training-pack') {
-    derivedVariation = props.extraBottomAction
+    derivedVariation = rawProps.extraBottomAction
       ? 'static-training-edit'
       : 'static-training-play';
   } else if (hasActiveOnlineRoom) {
@@ -95,7 +224,7 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
   }
 
   const handleReturnToFreeplay =
-    props.onReturnToFreeplay ??
+    rawProps.onReturnToFreeplay ??
     (() => {
       useAppStore.getState().setMatchMode('freeplay');
       closeMenu();
@@ -103,7 +232,7 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
     });
 
   const resolvedExtraBottomAction =
-    props.extraBottomAction ??
+    rawProps.extraBottomAction ??
     (derivedVariation === 'freeplay' && hasFreeplaySubSceneOverride
       ? {
           title: 'Exit to Free Play',
@@ -116,19 +245,19 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
   return {
     ...rawProps,
     contextVariation:
-      props.contextVariation ?? props.contextMode ?? derivedVariation,
+      rawProps.contextVariation ?? rawProps.contextMode ?? derivedVariation,
     extraBottomAction: resolvedExtraBottomAction,
-    touchMode: props.touchMode ?? touchMode,
-    touchHeadlessMode: props.touchHeadlessMode ?? touchHeadlessMode,
-    touchInputAgent: props.touchInputAgent ?? touchInputAgent,
-    onTouchInputAgentChange: props.onTouchInputAgentChange ?? setTouchInputAgent,
-    menuPowerSave: props.menuPowerSave ?? menuPowerSave,
-    onResume: props.onResume ?? closeMenu,
+    touchMode: rawProps.touchMode ?? touchMode,
+    touchHeadlessMode: rawProps.touchHeadlessMode ?? touchHeadlessMode,
+    touchInputAgent: rawProps.touchInputAgent ?? touchInputAgent,
+    onTouchInputAgentChange: rawProps.onTouchInputAgentChange ?? setTouchInputAgent,
+    menuPowerSave: rawProps.menuPowerSave ?? menuPowerSave,
+    onResume: rawProps.onResume ?? closeMenu,
     onReturnToFreeplay: handleReturnToFreeplay,
-    onNavigatePlay: props.onNavigatePlay ?? (() => navigate('play')),
-    onNavigateGarage: props.onNavigateGarage ?? (() => navigate('garage')),
+    onNavigatePlay: rawProps.onNavigatePlay ?? (() => navigate('play')),
+    onNavigateGarage: rawProps.onNavigateGarage ?? (() => navigate('garage')),
     onNavigateSettings:
-      props.onNavigateSettings ??
+      rawProps.onNavigateSettings ??
       ((tab?: string) => {
         if (tab === 'display') {
           useAppStore.getState().setHighlightSetting('menu-power-save');
@@ -136,51 +265,49 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
         navigate('settings');
       }),
     onNavigateManageRoom:
-      props.onNavigateManageRoom ?? (() => navigate('room-host-control')),
+      rawProps.onNavigateManageRoom ?? (() => navigate('manage-room')),
     onNavigateExpMultiBotsConfig:
-      props.onNavigateExpMultiBotsConfig ??
-      (() => navigate('exp-multi-bots-config')),
-  } as TProps;
+      rawProps.onNavigateExpMultiBotsConfig ??
+      (() => navigate('exp-multi-bots')),
+  };
 }
 
-export function useLayer2PlayStoreBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export function useLayer2PlayStoreBinding(
+  rawProps: Layer2PlayRecipeProps
+): Layer2PlayRecipeProps {
   const navigate = useAppStore((s) => s.navigate);
   const goBack = useAppStore((s) => s.goBack);
 
   const onSelectExhibition =
-    props.onSelectExhibition ?? (() => navigate('exhibition'));
+    rawProps.onSelectExhibition ?? (() => navigate('exhibition'));
   const onSelectHostMatch =
-    props.onSelectHostMatch ?? (() => navigate('host-match'));
+    rawProps.onSelectHostMatch ?? (() => navigate('host-match'));
   const onSelectJoinRoom =
-    props.onSelectJoinRoom ?? (() => navigate('join-room'));
+    rawProps.onSelectJoinRoom ?? (() => navigate('join-room'));
   const onSelectSelfTraining =
-    props.onSelectSelfTraining ?? (() => navigate('self-training'));
+    rawProps.onSelectSelfTraining ?? (() => navigate('self-training'));
 
   return {
     ...rawProps,
-    onBack: props.onBack ?? goBack,
+    onBack: rawProps.onBack ?? goBack,
     onSelectExhibition,
     onSelectHostMatch,
     onSelectJoinRoom,
     onSelectSelfTraining,
     onSelectMode:
-      props.onSelectMode ??
+      rawProps.onSelectMode ??
       ((modeId: string) => {
         if (modeId === 'exhibition') onSelectExhibition();
         else if (modeId === 'host-match') onSelectHostMatch();
         else if (modeId === 'join-room') onSelectJoinRoom();
         else if (modeId === 'self-training') onSelectSelfTraining();
       }),
-  } as TProps;
+  };
 }
 
-export function useLayer2GarageStoreBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export function useLayer2GarageStoreBinding(
+  rawProps: Layer2GarageRecipeProps
+): Layer2GarageRecipeProps {
   const goBack = useAppStore((s) => s.goBack);
   const activeCar = useAppStore((s) => s.activeCar);
   const setActiveCar = useAppStore((s) => s.setActiveCar);
@@ -215,43 +342,43 @@ export function useLayer2GarageStoreBinding<TProps extends object>(
   return {
     ...rawProps,
     onBack:
-      props.onBack ??
+      rawProps.onBack ??
       (() => {
         stopPreviewAnthem();
         goBack();
       }),
     onTabChange:
-      props.onTabChange ??
+      rawProps.onTabChange ??
       ((tab: string) => {
         if (tab !== 'anthem') {
           stopPreviewAnthem();
         }
       }),
-    selectedCar: props.selectedCar ?? activeCar,
-    onSelectCar: props.onSelectCar ?? handleSelectCar,
-    primaryTeam: props.primaryTeam ?? colorPrefs.primaryTeam,
+    selectedCar: rawProps.selectedCar ?? activeCar,
+    onSelectCar: rawProps.onSelectCar ?? handleSelectCar,
+    primaryTeam: rawProps.primaryTeam ?? colorPrefs.primaryTeam,
     onPrimaryTeamChange:
-      props.onPrimaryTeamChange ??
+      rawProps.onPrimaryTeamChange ??
       ((team: 'blue' | 'orange') => saveAndBroadcastColors({ ...colorPrefs, primaryTeam: team })),
-    paintFinish: props.paintFinish ?? materials.paintFinish,
+    paintFinish: rawProps.paintFinish ?? materials.paintFinish,
     onPaintFinishChange:
-      props.onPaintFinishChange ??
+      rawProps.onPaintFinishChange ??
       ((paintFinish: 'matte' | 'metallic') => updateMaterials({ paintFinish })),
-    blueOrder: props.blueOrder ?? colorPrefs.blueOrder,
+    blueOrder: rawProps.blueOrder ?? colorPrefs.blueOrder,
     onBlueOrderChange:
-      props.onBlueOrderChange ??
+      rawProps.onBlueOrderChange ??
       ((blueOrder: number[]) => saveAndBroadcastColors({ ...colorPrefs, blueOrder })),
-    orangeOrder: props.orangeOrder ?? colorPrefs.orangeOrder,
+    orangeOrder: rawProps.orangeOrder ?? colorPrefs.orangeOrder,
     onOrangeOrderChange:
-      props.onOrangeOrderChange ??
+      rawProps.onOrangeOrderChange ??
       ((orangeOrder: number[]) => saveAndBroadcastColors({ ...colorPrefs, orangeOrder })),
-    materials: props.materials ?? {
-      ...materials as VisualMaterialsConfig,
+    materials: rawProps.materials ?? {
+      ...(materials as VisualMaterialsConfig),
       boostAudio: materials.boostAudio ?? 'rush',
     },
-    onUpdateMaterials: props.onUpdateMaterials ?? updateMaterials,
-    selectedAnthem: props.selectedAnthem ?? selectedAnthem,
-    onSelectAnthem: props.onSelectAnthem ?? setSelectedAnthem,
-    anthemAvailable: props.anthemAvailable ?? true,
-  } as TProps;
+    onUpdateMaterials: rawProps.onUpdateMaterials ?? updateMaterials,
+    selectedAnthem: rawProps.selectedAnthem ?? selectedAnthem,
+    onSelectAnthem: rawProps.onSelectAnthem ?? setSelectedAnthem,
+    anthemAvailable: rawProps.anthemAvailable ?? true,
+  };
 }

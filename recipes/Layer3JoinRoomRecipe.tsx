@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLayer3JoinRoomStoreBinding } from './hooks/useLayer3OnlineRoomSetupBindings';
+import {
+  useLayer3JoinRoomStoreBinding,
+  type JoinRoomConfig,
+  type Layer3JoinRoomRecipeProps,
+} from './hooks/useLayer3OnlineRoomSetupBindings';
 import { Eye, Wifi } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -7,13 +11,15 @@ import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
-import { dispatchOnlineRoomErrorNotification } from './Layer3OnlineWarmupRecipe';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,
+  dispatchOnlineRoomErrorNotification,
   type CreationProgressStatus,
   type CreationStepSpec,
 } from './online/OnlineRoomCreationProgress';
+
+export type { JoinRoomConfig, Layer3JoinRoomRecipeProps };
 
 export const DEFAULT_JOIN_ROOM_STEPS: CreationStepSpec[] = [
   {
@@ -53,50 +59,12 @@ export const DEFAULT_JOIN_ROOM_STEPS: CreationStepSpec[] = [
   },
 ];
 
-export interface JoinRoomConfig {
-  playerName: string;
-  roomCode: string;
-  roomKey: string;
-  allowSpectating: boolean;
-}
-
 export const DEFAULT_JOIN_ROOM_CONFIG: JoinRoomConfig = {
   playerName: `Player${Math.floor(1000 + Math.random() * 9000)}`,
   roomCode: String(Math.floor(1000 + Math.random() * 9000)),
   roomKey: '',
   allowSpectating: true,
 };
-
-export interface Layer3JoinRoomRecipeProps {
-  isLight?: boolean;
-  /** Controlled join room configuration */
-  config?: Partial<JoinRoomConfig>;
-  /** Alias for controlled config */
-  settings?: Partial<JoinRoomConfig>;
-  /** Initial join room configuration for uncontrolled mode */
-  defaultConfig?: Partial<JoinRoomConfig>;
-  /** Callback fired when any join room field changes */
-  onChange?: (next: JoinRoomConfig, patch: Partial<JoinRoomConfig>) => void;
-  /** Alias for onChange */
-  onConfigChange?: (next: JoinRoomConfig, patch: Partial<JoinRoomConfig>) => void;
-  defaultPlayerName?: string;
-  defaultRoomCode?: string;
-  defaultRoomKey?: string;
-  defaultAllowSpectating?: boolean;
-  onJoinRoom?: (config: JoinRoomConfig) => void;
-  /** Controlled 5-step connection progress status */
-  progressStatus?: CreationProgressStatus;
-  /** Controlled current step (1..5) */
-  currentStep?: number;
-  /** Custom step specifications */
-  steps?: CreationStepSpec[];
-  onProgressStatusChange?: (status: CreationProgressStatus) => void;
-  onCurrentStepChange?: (step: number) => void;
-  onRetryJoin?: () => void;
-  onCancelJoin?: () => void;
-  onNavigateGarageSync?: () => void;
-  onBack?: () => void;
-}
 
 /**
  * [Recipe] Layer 3 Join Room (Connect to Peer Lobby)

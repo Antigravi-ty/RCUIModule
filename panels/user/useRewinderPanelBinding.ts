@@ -6,11 +6,68 @@ import { triggerReplayFilePicker } from './replayFilePicker';
 
 export type RewinderBadgeState = 'recording' | 'stopped' | 'idle' | 'error';
 export type RewinderDownCounterOption = '0' | '1' | '2' | '3';
+export type ShuttleSpeedPreset = '100' | '75' | '50' | '25' | 'custom';
 
-export function useRewinderPanelBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export interface RewinderConfiguratorState {
+  status: RewinderBadgeState;
+  recordedFrames: number;
+  cursorFrame: number;
+  releaseMarkerFrame: number;
+  downCounter: RewinderDownCounterOption;
+  shuttlePreset: ShuttleSpeedPreset;
+  customShuttleSpeed: number;
+}
+
+export interface RewinderConfiguratorFloatingWindowProps {
+  isLight?: boolean;
+  active?: boolean;
+  /** Controlled status ('idle' | 'recording' | 'stopped' | 'error') */
+  status?: RewinderBadgeState;
+  defaultStatus?: RewinderBadgeState;
+  /** Controlled recorded frame count */
+  recordedFrames?: number;
+  defaultRecordedFrames?: number;
+  /** Controlled cursor frame */
+  cursorFrame?: number;
+  defaultCursorFrame?: number;
+  /** Controlled release marker frame */
+  releaseMarkerFrame?: number;
+  defaultReleaseMarkerFrame?: number;
+  /** Controlled down counter ('3' | '2' | '1' | '0') */
+  downCounter?: RewinderDownCounterOption;
+  defaultDownCounter?: RewinderDownCounterOption;
+  /** Controlled shuttle speed preset */
+  shuttlePreset?: ShuttleSpeedPreset;
+  defaultShuttlePreset?: ShuttleSpeedPreset;
+  /** Controlled custom shuttle speed percentage (1..100) */
+  customShuttleSpeed?: number;
+  defaultCustomShuttleSpeed?: number;
+  // Action callbacks
+  onStartNewRecording?: () => void;
+  onStopRecording?: () => void;
+  onStatusChange?: (status: RewinderBadgeState) => void;
+  onSeekFrame?: (frame: number) => void;
+  onStepFrame?: (deltaFrames: number, nextFrame: number) => void;
+  onRewindPressStart?: () => void;
+  onRewindPressEnd?: () => void;
+  onForwardPressStart?: () => void;
+  onForwardPressEnd?: () => void;
+  onResumeFromHere?: (frame: number, downCounterSec: number) => void;
+  onClear?: () => void;
+  onImportReplay?: () => void;
+  onExportReplay?: () => void;
+  onDownCounterChange?: (downCounter: RewinderDownCounterOption) => void;
+  onShuttleSpeedChange?: (
+    effectiveSpeedPct: number,
+    preset: ShuttleSpeedPreset,
+    customSpeedPct: number
+  ) => void;
+  onChange?: (state: RewinderConfiguratorState) => void;
+}
+
+export function useRewinderPanelBinding(
+  rawProps: RewinderConfiguratorFloatingWindowProps
+): RewinderConfiguratorFloatingWindowProps {
   const {
     rewinderState,
     rewinderRecordedFrames,
@@ -38,54 +95,54 @@ export function useRewinderPanelBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    status: props.status ?? status,
-    recordedFrames: props.recordedFrames ?? Math.max(1, rewinderRecordedFrames),
-    cursorFrame: props.cursorFrame ?? rewinderCursorFrame,
-    releaseMarkerFrame: props.releaseMarkerFrame ?? rewinderTargetFrame,
+    status: rawProps.status ?? status,
+    recordedFrames: rawProps.recordedFrames ?? Math.max(1, rewinderRecordedFrames),
+    cursorFrame: rawProps.cursorFrame ?? rewinderCursorFrame,
+    releaseMarkerFrame: rawProps.releaseMarkerFrame ?? rewinderTargetFrame,
     downCounter:
-      props.downCounter ?? (String(rewinderDownCounterSec) as RewinderDownCounterOption),
+      rawProps.downCounter ?? (String(rewinderDownCounterSec) as RewinderDownCounterOption),
     onDownCounterChange:
-      props.onDownCounterChange ??
+      rawProps.onDownCounterChange ??
       ((dc: RewinderDownCounterOption) =>
         setRewinderDownCounterSec((Number(dc) || 0) as RewinderDownCounterSec)),
-    shuttlePreset: props.shuttlePreset ?? rewinderFlowPreset,
-    customShuttleSpeed: props.customShuttleSpeed ?? rewinderCustomFlowPct,
+    shuttlePreset: rawProps.shuttlePreset ?? rewinderFlowPreset,
+    customShuttleSpeed: rawProps.customShuttleSpeed ?? rewinderCustomFlowPct,
     onShuttleSpeedChange:
-      props.onShuttleSpeedChange ??
-      ((_eff: number, preset: any, customPct: number) => {
+      rawProps.onShuttleSpeedChange ??
+      ((_eff: number, preset: ShuttleSpeedPreset, customPct: number) => {
         setRewinderFlowPreset(preset);
         setRewinderCustomFlowPct(customPct);
       }),
     onStartNewRecording:
-      props.onStartNewRecording ?? (() => runtimeHandlers.onRewinderStartRecording?.()),
+      rawProps.onStartNewRecording ?? (() => runtimeHandlers.onRewinderStartRecording?.()),
     onStopRecording:
-      props.onStopRecording ?? (() => runtimeHandlers.onRewinderStopRecording?.()),
+      rawProps.onStopRecording ?? (() => runtimeHandlers.onRewinderStopRecording?.()),
     onRewindPressStart:
-      props.onRewindPressStart ?? (() => runtimeHandlers.onRewinderPushBackwardStart?.()),
+      rawProps.onRewindPressStart ?? (() => runtimeHandlers.onRewinderPushBackwardStart?.()),
     onRewindPressEnd:
-      props.onRewindPressEnd ?? (() => runtimeHandlers.onRewinderPushBackwardStop?.()),
+      rawProps.onRewindPressEnd ?? (() => runtimeHandlers.onRewinderPushBackwardStop?.()),
     onForwardPressStart:
-      props.onForwardPressStart ?? (() => runtimeHandlers.onRewinderPushForwardStart?.()),
+      rawProps.onForwardPressStart ?? (() => runtimeHandlers.onRewinderPushForwardStart?.()),
     onForwardPressEnd:
-      props.onForwardPressEnd ?? (() => runtimeHandlers.onRewinderPushForwardStop?.()),
+      rawProps.onForwardPressEnd ?? (() => runtimeHandlers.onRewinderPushForwardStop?.()),
     onSeekFrame:
-      props.onSeekFrame ??
+      rawProps.onSeekFrame ??
       ((frame: number) => runtimeHandlers.onRewinderSeekFrame?.(frame)),
     onStepFrame:
-      props.onStepFrame ??
+      rawProps.onStepFrame ??
       ((_delta: number, nextFrame: number) =>
         runtimeHandlers.onRewinderSeekFrame?.(nextFrame)),
     onResumeFromHere:
-      props.onResumeFromHere ?? (() => runtimeHandlers.onRewinderResumeFromHere?.()),
-    onClear: props.onClear ?? (() => runtimeHandlers.onRewinderClearBuffer?.()),
+      rawProps.onResumeFromHere ?? (() => runtimeHandlers.onRewinderResumeFromHere?.()),
+    onClear: rawProps.onClear ?? (() => runtimeHandlers.onRewinderClearBuffer?.()),
     onExportReplay:
-      props.onExportReplay ?? (() => runtimeHandlers.onRewinderExportReplay?.()),
+      rawProps.onExportReplay ?? (() => runtimeHandlers.onRewinderExportReplay?.()),
     onImportReplay:
-      props.onImportReplay ??
+      rawProps.onImportReplay ??
       (() =>
         triggerReplayFilePicker((file) => {
           runtimeHandlers.onRewinderImportReplay?.(file);
         })),
-  } as TProps;
+  };
 }
 

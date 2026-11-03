@@ -1,10 +1,13 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Wifi, Download, Pause, Play, User } from 'lucide-react';
 import { PacingOscilloscopeChart } from '../../charts/PacingOscilloscopeChart';
 import { PacingRingBuffer } from '../../charts/pacingRingBuffer';
 import { Button } from '../../primitives/Button';
+import { useAppStore } from '../../stores/appStore';
+import { useNetworkDiagnosticsData } from '../../stores/networkDiagnosticsStore';
+import { globalPacingTelemetryRecorder } from '../../stores/pacingTelemetryRecorder';
+import { downloadNetworkTelemetryZip } from '../../stores/pacingTelemetryExporter';
 import { quickNotification } from '../../stores/quickNotificationStore';
-import { useNetworkMonitorPanelBinding } from './useNetworkMonitorPanelBinding';
 
 export type NetworkSessionMode = 'online-client' | 'online-host' | 'single-player';
 
@@ -101,24 +104,73 @@ function createInitialPacingBuffer(seedSamples?: NetworkDiagnosticsSample[]): Pa
  * 3. Embedded `<PacingOscilloscopeChart variant="embedded" />` + `Freeze` and `Clear` (`Reset`) controls (no Inject Starvation).
  */
 export const NetworkMonitorFloatingWindow: React.FC<NetworkMonitorFloatingWindowProps> =
-  React.memo((rawProps) => {
-    const {
-      isLight = false,
-      snapshot,
-      historySamples,
-      sessionMode: controlledSessionMode,
-      defaultSessionMode = 'online-client',
-      onSessionModeChange,
-      isPaused: controlledIsPaused,
-      defaultIsPaused = false,
-      onPauseToggle,
-      isFrozen: controlledIsFrozen,
-      defaultIsFrozen = false,
-      onFreezeToggle,
-      onClear,
-      onReset,
-      onExportLog,
-    } = useNetworkMonitorPanelBinding(rawProps);
+  React.memo(({
+    isLight = false,
+    snapshot: propSnapshot,
+    historySamples,
+    sessionMode: propSessionMode,
+    defaultSessionMode = 'online-client',
+    onSessionModeChange,
+    isPaused: controlledIsPaused,
+    defaultIsPaused = false,
+    onPauseToggle,
+    isFrozen: controlledIsFrozen,
+    defaultIsFrozen = false,
+    onFreezeToggle,
+    onClear: propOnClear,
+    onReset,
+    onExportLog: propOnExportLog,
+  }) => {
+    const { metrics } = useNetworkDiagnosticsData();
+    const onlineSession = useAppStore((s) => s.onlineSession);
+    const bridge = useAppStore((s) => s.bridge);
+
+    useEffect(() => {
+      bridge?.onEnsureNetworkDiagnostics?.();
+    }, [bridge]);
+
+    const hasHostRuntime = Boolean(bridge?.onEnsureNetworkDiagnostics || metrics);
+    const storeSessionMode: NetworkSessionMode = onlineSession?.roomId
+      ? onlineSession.isHosting
+        ? 'online-host'
+        : 'online-client'
+      : 'single-player';
+
+    const storeSnapshot = useMemo<NetworkDiagnosticsSnapshot | undefined>(() => {
+      if (!hasHostRuntime) return undefined;
+      return {
+        sessionMode: storeSessionMode,
+        rttMs: metrics?.rttMs || 0,
+        jitterMs: metrics?.jitterMs || 0,
+        leadTicks: metrics?.clientLeadTicks ?? 0,
+        physicsRateHz: 120,
+        rollbackCount: metrics?.corrections ?? 0,
+        targetBuffer: metrics?.inputBufferDepth || 0,
+        serverBuffer: metrics?.rollbackWindow || 0,
+      };
+    }, [hasHostRuntime, storeSessionMode, metrics]);
+
+    const snapshot = propSnapshot ?? (hasHostRuntime ? storeSnapshot : undefined);
+    const controlledSessionMode =
+      propSessionMode ?? (hasHostRuntime ? storeSessionMode : undefined);
+    const onExportLog =
+      propOnExportLog ??
+      (hasHostRuntime
+        ? () => {
+            try {
+              downloadNetworkTelemetryZip();
+            } catch (err: unknown) {
+              console.error('[NetworkDiagnostics] Export failed:', err);
+            }
+          }
+        : undefined);
+    const onClear =
+      propOnClear ??
+      (hasHostRuntime
+        ? () => {
+            globalPacingTelemetryRecorder.reset();
+          }
+        : undefined);
       const [internalSessionMode, setInternalSessionMode] =
         useState<NetworkSessionMode>(defaultSessionMode);
       const [internalIsPaused, setInternalIsPaused] = useState<boolean>(defaultIsPaused);

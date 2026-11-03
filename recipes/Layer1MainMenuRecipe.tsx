@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { useLayer1MainMenuStoreBinding } from './hooks/useMainMenuAndPlayStoreBindings';
+import {
+  useLayer1MainMenuStoreBinding,
+  type TouchInputAgentOption,
+  type Layer1MainMenuRecipeProps,
+} from './hooks/useMainMenuAndPlayStoreBindings';
 import {
   Play,
   Gamepad2,
@@ -37,65 +41,7 @@ import {
   type Layer1CustomRowIconType,
 } from './layer1MenuContextSpecs';
 
-export type TouchInputAgentOption = 'none' | 'necto' | 'nexto';
-
-export interface Layer1MainMenuRecipeProps {
-  isLight?: boolean;
-  showAdditionalPreviews?: boolean;
-  /** Legacy matchMode prop OR full Layer1ContextVariation */
-  matchMode?: Layer1ContextVariation | 'online-warmup' | 'static-training-pack';
-  /** Explicit context variation (overrides matchMode if provided) */
-  contextVariation?: Layer1ContextVariation;
-  /** Alias for contextVariation */
-  contextMode?: Layer1ContextVariation;
-  /** Optional developer Touch Input Agent banner (?touch=1 / ?touch=2) */
-  touchMode?: boolean;
-  touchHeadlessMode?: boolean;
-  /** Controlled Touch Input Agent takeover model ('none' | 'necto' | 'nexto') */
-  touchInputAgent?: TouchInputAgentOption;
-  /** Initial uncontrolled Touch Input Agent takeover model */
-  defaultTouchInputAgent?: TouchInputAgentOption;
-  /** Callback fired when Touch Input Agent model changes */
-  onTouchInputAgentChange?: (agent: TouchInputAgentOption) => void;
-  /** Background power saving mode ('extreme' | '15' | '30' | 'disable' | 'freeze' | 'match') */
-  menuPowerSave?: 'extreme' | '15' | '30' | 'disable' | 'freeze' | 'match';
-  /** Legacy boolean fallback for backgroundRenderPaused */
-  backgroundRenderPaused?: boolean;
-  onResume?: () => void;
-  onRestartMatch?: () => void;
-  onReturnToFreeplay?: () => void;
-  onNavigatePlay?: () => void;
-  onNavigateGarage?: () => void;
-  onNavigateSettings?: (targetTab?: string) => void;
-  onNavigatePreviews?: () => void;
-  onNavigateManageRoom?: () => void;
-  onNavigateRoomControl?: () => void;
-  onNavigateTrainingConfig?: () => void;
-  onNavigateKickoffConfig?: () => void;
-  onNavigateStaticTrainingPack?: () => void;
-  onNavigateExpMultiBots?: () => void;
-  onNavigateExpMultiBotsConfig?: () => void;
-  onOpenFloatingWindow?: (id: string) => void;
-  onLeaveRoom?: () => void;
-  onExitEditMode?: () => void;
-  /** Optional extra bottom action (e.g. "Exit Edit Mode" when EdgeInspectorDrawer is active) */
-  extraBottomAction?:
-    | {
-        title: string;
-        subtitle?: string;
-        icon?: React.ReactNode;
-        variant?: 'primary' | 'secondary' | 'danger';
-        onClick: () => void;
-      }
-    | React.ReactNode;
-  /** Optional explicit sizing override; defaults to menuLayoutStore.panels['layer1-main'] */
-  sizing?: PanelSizingConfig;
-  /** Optional explicit row style variant override (decoupled from store when provided) */
-  styleVariant?: MainMenuStyleVariant;
-  /** Optional explicit row & shell style parameters override (decoupled from store when provided) */
-  styleParams?: Partial<MainMenuStyleParams>;
-  className?: string;
-}
+export type { TouchInputAgentOption, Layer1MainMenuRecipeProps };
 
 const renderCustomRowIcon = (
   iconType: Layer1CustomRowIconType,

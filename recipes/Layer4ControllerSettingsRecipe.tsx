@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLayer4ControllerSettingsStoreBinding } from './hooks/useLayer4ControllerSettingsBinding';
 import { Gamepad2 } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -9,9 +8,18 @@ import { SettingActionRow } from '../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
+import {
+  loadInputBindings,
+  saveInputBindings,
+  resetAxisBindings,
+  getSelectedController,
+  setSelectedController,
+  getConnectedGamepads,
+} from '../config/inputBindings';
 import type {
   DeadzoneAntiAliasing,
   StickAxisOption,
@@ -89,23 +97,94 @@ const STICK_AXIS_OPTIONS: Array<{ value: StickAxisOption; label: string }> = [
   { value: 'right-y', label: 'Right Stick Y' },
 ];
 
-export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRecipeProps> = React.memo((rawProps) => {
-  const {
+export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRecipeProps> = React.memo(({
   isLight = false,
   developerMode = false,
   config: controlledConfigProp,
   settings: controlledSettingsProp,
   defaultConfig,
   defaultSettings,
-  onChange,
+  onChange: propOnChange,
   onConfigChange,
-  inputDevice: controlledInputDevice,
+  inputDevice: propInputDevice,
   defaultInputDevice = 'none',
-  onInputDeviceChange,
-  onReset,
-  onBack = () => {},
+  onInputDeviceChange: propOnInputDeviceChange,
+  onReset: propOnReset,
+  onBack: propOnBack,
   className = '',
-} = useLayer4ControllerSettingsStoreBinding(rawProps);
+}) => {
+  const goBack = useAppStore((s) => s.goBack);
+  const bridge = useAppStore((s) => s.bridge);
+  const [bindings, setBindings] = useState(() => {
+    try {
+      return loadInputBindings();
+    } catch {
+      return {
+        axes: {
+          steer: { axis: 0, invert: false },
+          pitch: { axis: 1, invert: false },
+          deadzone: 0.12,
+          triggerThreshold: 0.15,
+        },
+      };
+    }
+  });
+  const [storeInputDevice, setStoreInputDevice] = useState<string>(() => {
+    try {
+      const sel = getSelectedController();
+      if (sel && sel.index !== null && sel.index !== undefined) {
+        return `pad-${sel.index}`;
+      }
+    } catch {
+      // ignore
+    }
+    return defaultInputDevice;
+  });
+
+  const onBack = propOnBack ?? goBack;
+  const onChange =
+    propOnChange ??
+    ((nextConfig: ControllerAxesConfig) => {
+      const nextBindings = {
+        ...bindings,
+        axes: {
+          ...bindings.axes,
+          steer: { ...nextConfig.steer },
+          pitch: { ...nextConfig.pitch },
+          deadzone: nextConfig.deadzone,
+          triggerThreshold: nextConfig.triggerThreshold,
+        },
+      };
+      setBindings(nextBindings);
+      saveInputBindings(nextBindings);
+      bridge.onBindingsChange?.(nextBindings);
+    });
+  const onReset =
+    propOnReset ??
+    (() => {
+      const nextBindings = { ...bindings };
+      resetAxisBindings(nextBindings);
+      setBindings(nextBindings);
+      saveInputBindings(nextBindings);
+      bridge.onBindingsChange?.(nextBindings);
+    });
+  const controlledInputDevice = propInputDevice ?? storeInputDevice;
+  const onInputDeviceChange =
+    propOnInputDeviceChange ??
+    ((deviceId: string) => {
+      setStoreInputDevice(deviceId);
+      if (deviceId === 'none' || !deviceId.startsWith('pad-')) {
+        setSelectedController(null);
+        return;
+      }
+      const padIdx = parseInt(deviceId.replace('pad-', ''), 10);
+      const pads = getConnectedGamepads().filter((p) => p && p.connected);
+      const pad = pads.find((p) => p && p.index === padIdx);
+      if (pad) {
+        setSelectedController({ id: pad.id, index: pad.index });
+      }
+    });
+
   const { rowGap } = useSettingActionRowStore();
   const sizing = useMenuLayoutStore(
     (s) => s.panels?.['layer4-controller-settings'] ?? DEFAULT_PANEL_SIZING['layer4-controller-settings']
@@ -141,7 +220,11 @@ export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRe
   };
 
   const [internalConfig, setInternalConfig] = useState<ControllerAxesConfig>(initialSeed);
-  const controlledSource = controlledConfigProp ?? controlledSettingsProp;
+  const hasDefaultConfigOverride = Boolean(defaultConfig || defaultSettings);
+  const controlledSource =
+    controlledConfigProp ??
+    controlledSettingsProp ??
+    (hasDefaultConfigOverride ? undefined : bindings.axes);
 
   const resolvedConfig: ControllerAxesConfig = {
     ...internalConfig,

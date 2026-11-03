@@ -42,7 +42,7 @@ export interface DeveloperTabProps {
  * [Layer 2] Developer Settings Tab
  * Streamlined single-line rows matching the RCUIModule visual rhythm:
  * 1. `Sandboxes` (`package-open` icon, `Browse →`) — directly opens the isolated subsystem selection list (01–07 including Experimental Multiple Bots)
- * 2. `Active Tuners` (`sliders` icon, `Browse →`) — active calibration tools, floating tuners, Advanced Audio & Event and Triggerer
+ * 2. `Active Tuners` (`sliders` icon, `Browse →`) — active calibration tools, floating tuners, Advanced Audio & Event & Trigger Rules
  * 3. `Calibrated Presets` (`book-check` icon, `Browse →`) — tuners whose baseline parameters have been calibrated and solidified
  * 4. `Bots Loadout` (`bot` icon, `Spawn`) — floating window for multi-select bot loadout pools (Car GLB models, Paint, Boost Trail, Boost Audio, Anthem)
  * 5. `Ball Opacity` (`circle-dot` icon) — single-line 70% / 100% / Custom segmented switch
@@ -130,7 +130,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         iconColor="text-sky-400"
         title="Active Tuners"
         actionLabel="Browse"
-        description="Vehicle Offsets, Goal Volume, Reachability, Kickoff PPO, Audio & Event and Triggerer"
+        description="Vehicle Offsets, Goal Volume, Reachability, Kickoff PPO, Audio & Event & Trigger Rules"
         hoverDescription="Active Tuners: Frequently accessed live calibration tools, floating window spawners, vehicle offsets, reachability, kickoff PPO, advanced audio, and event & trigger rules."
         onAction={() => (onNavigateDevActiveTuners ?? (() => navigate('dev-active-tuners')))()}
         onHover={onHover}

@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { useLayer3DevSubsystemIsolationStoreBinding } from './hooks/useLayer3DevSettingsBindings';
+import {
+  useLayer3DevSandboxesStoreBinding,
+  type DevTestLabTab,
+  type Layer3DevSandboxesRecipeProps,
+} from './hooks/useLayer3DevSettingsBindings';
 import {
   Bot,
   Sparkles,
@@ -29,29 +33,7 @@ import {
   EXPERIMENTAL_MULTI_BOTS_PRESET,
 } from '../stores/devFloatingPresets';
 
-export type DevTestLabTab =
-  | 'probes'
-  | 'multi-ghost'
-  | 'state-replay'
-  | '90s-match'
-  | 'goal-replay'
-  | 'kickoff-duel'
-  | 'demolish-respawn'
-  | 'exp-multi-bots'
-  | 'exp-botpack-9700488';
-
-export interface Layer3DevSubsystemIsolationRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  activeBenchId?: DevTestLabTab | null;
-  onEnterBench?: (tab: DevTestLabTab) => void;
-  onLaunchIsolationTab?: (tab: DevTestLabTab) => void;
-  onNavigateSubsystemIsolation?: () => void;
-  onNavigateMultiBots?: () => void;
-  onNavigateExpMultiBots?: () => void;
-  onNavigateExpBotpack9700488?: () => void;
-  sizing?: PanelSizingConfig;
-}
+export type { DevTestLabTab, Layer3DevSandboxesRecipeProps };
 
 interface SubsystemCardMeta {
   id: DevTestLabTab;
@@ -151,7 +133,7 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
  * [Recipe] Layer 3 Sandboxes — Isolated Subsystem Selector
  * Unified borderless single-line SettingActionRow list with tinted leading icons and inline [Play + Enter] buttons.
  */
-export const Layer3DevSubsystemIsolationRecipe: React.FC<Layer3DevSubsystemIsolationRecipeProps> = (rawProps) => {
+export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> = (rawProps) => {
   const {
   isLight = false,
   onBack,
@@ -161,13 +143,13 @@ export const Layer3DevSubsystemIsolationRecipe: React.FC<Layer3DevSubsystemIsola
   onNavigateExpMultiBots,
   onNavigateExpBotpack9700488,
   sizing: propSizing,
-} = useLayer3DevSubsystemIsolationStoreBinding(rawProps);
+} = useLayer3DevSandboxesStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const storeSizing = useMenuLayoutStore(
     (s) =>
-      s.panels?.['layer3-dev-subsystem-isolation'] ??
-      DEFAULT_PANEL_SIZING['layer3-dev-subsystem-isolation']
+      s.panels?.['layer3-dev-sandboxes'] ??
+      DEFAULT_PANEL_SIZING['layer3-dev-sandboxes']
   );
   const sizing = propSizing ?? storeSizing;
 

@@ -8,7 +8,7 @@ import { NetworkMonitorFloatingWindow } from './user/NetworkMonitorFloatingWindo
 import { PerformanceMonitorFloatingWindow } from './user/PerformanceMonitorFloatingWindow';
 import { FloatingWindowOpacityFloatingWindow } from './user/FloatingWindowOpacityFloatingWindow';
 
-// 19 Developer Floating Windows (Canonical UI-Aligned Filenames)
+// 22 Developer Floating Windows (Canonical UI-Aligned Filenames)
 import { DiagnosticDumpFloatingWindow } from './dev/DiagnosticDumpFloatingWindow';
 import { StaticTrainingBallCamTunerFloatingWindow } from './dev/StaticTrainingBallCamTunerFloatingWindow';
 import { NameTagTunerFloatingWindow } from './dev/NameTagTunerFloatingWindow';
@@ -46,7 +46,7 @@ export interface FloatingWindowDescriptor {
 }
 
 /**
- * Declarative, low-coupling descriptor map for all 25 Floating Windows (6 User + 19 Developer).
+ * Declarative, low-coupling descriptor map for all 28 Floating Windows (6 User + 22 Developer).
  * Allows host applications (like RocketCompanion) to mount any floating window panel
  * via a single registry lookup without cascading switch statements.
  */
@@ -83,7 +83,7 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false }) => <FloatingWindowOpacityFloatingWindow isLight={isLight} />,
   },
 
-  // --- 19 Developer-Only Floating Windows ---
+  // --- 22 Developer-Only Floating Windows ---
   'diagnostic-dump': {
     id: 'diagnostic-dump',
     category: 'developer',
@@ -240,7 +240,7 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
 
 /**
  * [L6 Floating Window Registry]
- * Maps any of the 25 `RocketCompanion` Floating Window preset IDs (6 User + 19 Developer)
+ * Maps any of the 28 `RocketCompanion` Floating Window preset IDs (6 User + 22 Developer)
  * to its normalized, low-coupling L6 Floating Window Panel.
  */
 export function renderFloatingWindowPanel(

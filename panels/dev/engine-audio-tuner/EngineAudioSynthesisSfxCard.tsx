@@ -45,7 +45,7 @@ export const EngineAudioSynthesisSfxCard: React.FC<EngineAudioSynthesisSfxCardPr
         <div className="flex items-center gap-1.5">
           <Waves className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           <span className="font-bold text-[11px] uppercase tracking-wider">
-            Entity Spawn SFX, Backfire Pops &amp; Web Audio Loop Conditioning
+            Entity Spawn SFX, Backfire Pops & Web Audio Loop Conditioning
           </span>
         </div>
         <span className={`text-[10px] font-mono ${mutedText}`}>
@@ -157,7 +157,7 @@ export const EngineAudioSynthesisSfxCard: React.FC<EngineAudioSynthesisSfxCardPr
           allowOutOfBoundsInput={false}
           showStepper={false}
           colorScheme="emerald"
-          label="Gain &amp; Filter Smoothing Time"
+          label="Gain & Filter Smoothing Time"
           unit=" ms"
           value={config.gainSmoothingTimeMs}
           min={4}

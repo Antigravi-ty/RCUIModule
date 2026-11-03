@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useLayer4StaticTrainingPackBrowseStoreBinding } from './hooks/useStaticTrainingStoreBindings';
+import {
+  useLayer4StaticTrainingPackBrowseStoreBinding,
+  type Layer4StaticTrainingPackBrowseRecipeProps,
+} from './hooks/useStaticTrainingStoreBindings';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
@@ -12,30 +15,7 @@ import {
 import { StaticTrainingPackToolbar } from './static-training/StaticTrainingPackToolbar';
 import { StaticTrainingPackMetadataInspector } from './static-training/StaticTrainingPackMetadataInspector';
 
-export interface Layer4StaticTrainingPackBrowseRecipeProps {
-  isLight?: boolean;
-  packs?: StaticTrainingPackSummary[];
-  selectedPackUuid?: string | null;
-  onSelectPack?: (uuid: string) => void;
-  defaultSelectedId?: string;
-  defaultUseDownCounter?: boolean;
-  downCounterEnabled?: boolean;
-  onDownCounterEnabledChange?: (enabled: boolean) => void;
-  downCounterValue?: StaticPackDownCounterOption;
-  onDownCounterValueChange?: (val: StaticPackDownCounterOption) => void;
-  onCreatePack?: (title: string, description: string) => Promise<void> | void;
-  onSavePackMetadata?: (uuid: string, title: string, description: string) => Promise<void> | void;
-  onDeletePack?: (uuid: string) => Promise<void> | void;
-  onImportPackFile?: (file: File) => Promise<void> | void;
-  onBack?: () => void;
-  onStartPlaySession?: (uuid: string) => void;
-  onStartEditSession?: (uuid: string) => void;
-  onPlayPack?: (pack: StaticTrainingPackSummary, useDownCounter: boolean) => void;
-  onEditPack?: (pack: StaticTrainingPackSummary) => void;
-  onImportPack?: () => void;
-  onExportPack?: (pack: StaticTrainingPackSummary) => Promise<void> | void;
-  className?: string;
-}
+export type { Layer4StaticTrainingPackBrowseRecipeProps };
 
 function generateUUID(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {

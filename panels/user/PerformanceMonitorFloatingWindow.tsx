@@ -5,13 +5,12 @@ import { TelemetryRingBuffer } from '../../charts/telemetryRingBuffer';
 import { quickNotification } from '../../stores/quickNotificationStore';
 import { useTelemetryData } from '../../stores/perfTelemetryStore';
 
-function usePerformanceMonitorPanelBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+function usePerformanceMonitorPanelBinding(
+  rawProps: PerformanceMonitorFloatingWindowProps
+): PerformanceMonitorFloatingWindowProps {
   const { data: snap } = useTelemetryData(180, true);
 
-  const telemetrySnapshot = useMemo(() => {
+  const telemetrySnapshot = useMemo((): LiveSystemTelemetrySnapshot | undefined => {
     if (!snap) return undefined;
     return {
       frameTimeMs: snap.frameMs || 8.33,
@@ -36,8 +35,8 @@ function usePerformanceMonitorPanelBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    snapshot: props.snapshot ?? telemetrySnapshot,
-  } as TProps;
+    snapshot: rawProps.snapshot ?? telemetrySnapshot,
+  };
 }
 
 const INITIAL_FRAME_SAMPLES: number[] = [
