@@ -27,7 +27,8 @@ export type CanonicalMenuPanelId =
   | 'layer4-static-training-pack'
   | 'layer4-advanced-audio'
   | 'layer4-controller-settings'
-  | 'layer4-event-trigger-rules';
+  | 'layer4-event-trigger-rules'
+  | 'layer4-dev-signaling-lab';
 
 export type MenuPanelId = CanonicalMenuPanelId;
 
@@ -378,6 +379,13 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     width: 580,
     targetHeight: 560,
     minHeight: 240,
+    maxHeight: 1120,
+  },
+  'layer4-dev-signaling-lab': {
+    mode: 'auto',
+    width: 680,
+    targetHeight: 620,
+    minHeight: 260,
     maxHeight: 1120,
   },
 };
