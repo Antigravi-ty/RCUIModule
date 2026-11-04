@@ -1,19 +1,42 @@
 import type { PanelSizingConfig } from '../../tokens/menuLayoutTokens';
 
+export type CanonicalLabRelayId = 'emqx_cn' | 'emqx_gb' | 'supabase_jp' | 'supabase_sg';
+export type CanonicalLabEdgeNodeId = 'supabase_jp' | 'supabase_sg';
+
 export type SignalingLabScenarioId =
-  | 'emqx-direct'
-  | 'supabase-direct'
-  | 'bridge-sb-to-emqx'
-  | 'bridge-emqx-to-sb'
-  | 'bridge-bidirectional'
-  | 'anti-loop-torture';
+  | 'emqx-cn-direct'
+  | 'emqx-gb-direct'
+  | 'supabase-jp-direct'
+  | 'supabase-sg-direct'
+  | 'bridge-jp-to-cn'
+  | 'bridge-sg-to-gb'
+  | 'bridge-cn-to-jp'
+  | 'bridge-gb-to-sg'
+  | 'bridge-cn-to-gb'
+  | 'bridge-jp-to-sg'
+  | 'bridge-custom-pair'
+  | 'anti-loop-torture'
+  | 'one-click-full-diagnostic';
+
+export interface SignalingLabSlotViewItem {
+  id: CanonicalLabRelayId;
+  label: string;
+  bit: number;
+  protocol: 'mqtt' | 'supabase';
+  url: string;
+  username: string;
+  edgeNodeId: CanonicalLabEdgeNodeId;
+  edgeFunctionBridgeUrl: string;
+  ok: boolean;
+  rttMs: number;
+  error: string | null;
+}
 
 export interface SignalingLabEndpointViewConfig {
-  emqx1Url: string;
-  emqx1Username: string;
-  supabase1Url: string;
-  edgeFunctionBridgeUrl: string;
   topicNamespace: string;
+  jpEdgeFunctionUrl: string;
+  sgEdgeFunctionUrl: string;
+  slots: Record<CanonicalLabRelayId, SignalingLabSlotViewItem>;
 }
 
 export interface SignalingLabPacketTraceItem {
@@ -32,6 +55,7 @@ export interface SignalingLabPacketTraceItem {
 export interface SignalingLabCloudAuditLogItem {
   id: string;
   ts: number;
+  edgeNode?: CanonicalLabEdgeNodeId;
   event: string;
   topicHash: string;
   comingFrom: string;
@@ -45,6 +69,7 @@ export interface SignalingLabCloudAuditLogItem {
 
 export interface SignalingLabCloudStatsView {
   ok: boolean;
+  edgeNode: CanonicalLabEdgeNodeId;
   totalForwardedCount: number;
   totalDroppedLoopCount: number;
   totalRateLimitedCount: number;
@@ -54,16 +79,13 @@ export interface SignalingLabCloudStatsView {
 }
 
 export interface SignalingLabProbeSummaryView {
-  emqx1Ok: boolean;
-  emqx1RttMs: number;
-  emqx1Error: string | null;
-  supabase1Ok: boolean;
-  supabase1RttMs: number;
-  supabase1Error: string | null;
+  slots: Record<CanonicalLabRelayId, SignalingLabSlotViewItem>;
   computedMask: number;
   sampleRandomCode: string;
   sampleCustomCode: string;
-  cloudStats: SignalingLabCloudStatsView | null;
+  jpEdgeStats: SignalingLabCloudStatsView | null;
+  sgEdgeStats: SignalingLabCloudStatsView | null;
+  combinedLogs: SignalingLabCloudAuditLogItem[];
 }
 
 export interface Layer4DevSignalingLabRecipeProps {
@@ -77,25 +99,85 @@ export interface Layer4DevSignalingLabRecipeProps {
   onRoomCodeChange?: (next: string) => void;
   roomPassword?: string;
   onRoomPasswordChange?: (next: string) => void;
+  customSourceRelay?: CanonicalLabRelayId;
+  onCustomSourceRelayChange?: (next: CanonicalLabRelayId) => void;
+  customTargetRelay?: CanonicalLabRelayId;
+  onCustomTargetRelayChange?: (next: CanonicalLabRelayId) => void;
   isBusy?: boolean;
   activeActionLabel?: string | null;
   lastResultBanner?: { ok: boolean; text: string } | null;
   onProbeAll?: () => void;
   onCloudSelfTest?: () => void;
+  onOneClickFullDiagnostic?: () => void;
   onRunScenario?: (scenario: SignalingLabScenarioId, label: string) => void;
   onClearTraces?: () => void;
 }
 
 export const DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG: SignalingLabEndpointViewConfig = {
-  emqx1Url: 'wss://relay.carsoccer.dev:8084/mqtt',
-  emqx1Username: 'rc_client_placeholder',
-  supabase1Url: 'https://relay-sb.carsoccer.dev',
-  edgeFunctionBridgeUrl: 'https://relay-sb.carsoccer.dev/functions/v1/signaling-bridge',
-  topicNamespace: 'rc_sig_v2',
+  topicNamespace: 'rc_7e2a4d_v2',
+  jpEdgeFunctionUrl: 'https://relay-jp.carsoccer.dev/functions/v1/signaling-bridge',
+  sgEdgeFunctionUrl: 'https://relay-sg.carsoccer.dev/functions/v1/signaling-bridge',
+  slots: {
+    emqx_cn: {
+      id: 'emqx_cn',
+      label: 'EMQX_CN (Hangzhou)',
+      bit: 8,
+      protocol: 'mqtt',
+      url: 'wss://emqx-cn.carsoccer.dev:8084/mqtt',
+      username: 'CNRCClientV2',
+      edgeNodeId: 'supabase_jp',
+      edgeFunctionBridgeUrl: 'https://relay-jp.carsoccer.dev/functions/v1/signaling-bridge',
+      ok: false,
+      rttMs: 0,
+      error: null,
+    },
+    emqx_gb: {
+      id: 'emqx_gb',
+      label: 'EMQX_GB (Asia-SE1)',
+      bit: 4,
+      protocol: 'mqtt',
+      url: 'wss://emqx-gb.carsoccer.dev:8084/mqtt',
+      username: 'GBRCClientV2',
+      edgeNodeId: 'supabase_sg',
+      edgeFunctionBridgeUrl: 'https://relay-sg.carsoccer.dev/functions/v1/signaling-bridge',
+      ok: false,
+      rttMs: 0,
+      error: null,
+    },
+    supabase_jp: {
+      id: 'supabase_jp',
+      label: 'SUPABASE_JP (Tokyo RTJP)',
+      bit: 2,
+      protocol: 'supabase',
+      url: 'https://relay-jp.carsoccer.dev',
+      username: '',
+      edgeNodeId: 'supabase_jp',
+      edgeFunctionBridgeUrl: 'https://relay-jp.carsoccer.dev/functions/v1/signaling-bridge',
+      ok: false,
+      rttMs: 0,
+      error: null,
+    },
+    supabase_sg: {
+      id: 'supabase_sg',
+      label: 'SUPABASE_SG (Singapore RTSG)',
+      bit: 1,
+      protocol: 'supabase',
+      url: 'https://relay-sg.carsoccer.dev',
+      username: '',
+      edgeNodeId: 'supabase_sg',
+      edgeFunctionBridgeUrl: 'https://relay-sg.carsoccer.dev/functions/v1/signaling-bridge',
+      ok: false,
+      rttMs: 0,
+      error: null,
+    },
+  },
 };
 
-export function buildEmqxBridgeRuleSql(topicNamespace: string): string {
-  const cleanNs = (topicNamespace || 'rc_sig_v2').replace(/\/+$/, '');
+export function buildEmqxBridgeRuleSql(
+  topicNamespace: string,
+  bridgeUser: 'CNRCEdgeBridgeV2' | 'GBRCEdgeBridgeV2' = 'CNRCEdgeBridgeV2'
+): string {
+  const cleanNs = (topicNamespace || 'rc_7e2a4d_v2').replace(/\/+$/, '');
   return `SELECT
   topic,
   payload,
@@ -105,5 +187,5 @@ export function buildEmqxBridgeRuleSql(topicNamespace: string): string {
 FROM
   "${cleanNs}/brg/+"
 WHERE
-  username <> 'CNRCEdgeBridgeV2'`;
+  username <> '${bridgeUser}'`;
 }

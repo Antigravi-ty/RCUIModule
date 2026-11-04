@@ -4,6 +4,7 @@ import {
   GraphStar,
   Info,
   RefreshCw,
+  ShieldCheck,
   Wifi,
   XCircle,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import {
   DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
+  type CanonicalLabRelayId,
   type Layer4DevSignalingLabRecipeProps,
   type SignalingLabScenarioId,
 } from './dev/signalingLabTypes';
@@ -21,6 +23,8 @@ import { SignalingLabStatusAndScenariosSection } from './dev/SignalingLabStatusA
 import { SignalingLabLiveMonitorsSection } from './dev/SignalingLabLiveMonitorsSection';
 
 export type {
+  CanonicalLabEdgeNodeId,
+  CanonicalLabRelayId,
   Layer4DevSignalingLabRecipeProps,
   SignalingLabCloudAuditLogItem,
   SignalingLabCloudStatsView,
@@ -28,13 +32,14 @@ export type {
   SignalingLabPacketTraceItem,
   SignalingLabProbeSummaryView,
   SignalingLabScenarioId,
+  SignalingLabSlotViewItem,
 } from './dev/signalingLabTypes';
 
 /**
- * [Recipe] Layer 4 Developer -> Under Development -> 4+1 Signaling & Bridge Lab
- * Theme-adaptive (light & dark) interactive workbench for inspecting EMQX_1 + SUPABASE_1
- * physical dir/brg topic isolation, 4-bit connectivity mask, Edge Function bridge routing,
- * and 4-layer anti-loop guards.
+ * [Recipe] Layer 4 Developer -> Under Development -> 4-Server Mesh & Dual Bridge Lab
+ * Theme-adaptive (light & dark) interactive workbench for inspecting `emqx_cn`, `emqx_gb`,
+ * `supabase_jp`, and `supabase_sg` physical dir/brg topic isolation, 4-bit connectivity mask,
+ * Dual Edge Function (JP + SG) 1-to-3 fanout, and 5-layer anti-loop guards.
  */
 export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipeProps> = React.memo(
   ({
@@ -48,16 +53,23 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
     onRoomCodeChange,
     roomPassword: controlledRoomPassword,
     onRoomPasswordChange,
+    customSourceRelay: controlledSource,
+    onCustomSourceRelayChange,
+    customTargetRelay: controlledTarget,
+    onCustomTargetRelayChange,
     isBusy = false,
     activeActionLabel = null,
     lastResultBanner = null,
     onProbeAll,
     onCloudSelfTest,
+    onOneClickFullDiagnostic,
     onRunScenario,
     onClearTraces,
   }) => {
-    const [localRoomCode, setLocalRoomCode] = useState('rocket-a');
+    const [localRoomCode, setLocalRoomCode] = useState('rocket-f');
     const [localRoomPassword, setLocalRoomPassword] = useState('test1234');
+    const [localSource, setLocalSource] = useState<CanonicalLabRelayId>('emqx_cn');
+    const [localTarget, setLocalTarget] = useState<CanonicalLabRelayId>('emqx_gb');
     const [showEmqxRuleGuide, setShowEmqxRuleGuide] = useState(false);
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
     const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
@@ -66,6 +78,10 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
     const setRoomCode = onRoomCodeChange ?? setLocalRoomCode;
     const roomPassword = controlledRoomPassword ?? localRoomPassword;
     const setRoomPassword = onRoomPasswordChange ?? setLocalRoomPassword;
+    const customSourceRelay = controlledSource ?? localSource;
+    const setCustomSourceRelay = onCustomSourceRelayChange ?? setLocalSource;
+    const customTargetRelay = controlledTarget ?? localTarget;
+    const setCustomTargetRelay = onCustomTargetRelayChange ?? setLocalTarget;
 
     const storeSizing = useMenuLayoutStore(
       (s) =>
@@ -89,27 +105,25 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
     return (
       <PanelContainer isLight={isLight} sizing={sizing} className="w-full select-none">
         <PanelHeader
-          title="4+1 SIGNALING & BRIDGE LAB"
+          title="4-SERVER SIGNALING & DUAL BRIDGE LAB"
           onBack={onBack}
           isLight={isLight}
         />
 
-        <PanelContent scrollable className="flex flex-col gap-2.5 text-left">
-          {/* Top Control & Namespace Toolbar Card */}
+        <PanelContent scrollable className="flex flex-col gap-2 text-left">
+          {/* Top Control & One-Click Diagnostic Toolbar Card */}
           <Card isLight={isLight} variant="outlined" padding="sm" className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <GraphStar
-                  className={`h-4 w-4 shrink-0 ${
-                    isLight ? 'text-cyan-600' : 'text-cyan-400'
-                  }`}
+                  className={`h-4 w-4 shrink-0 ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}
                 />
                 <span
                   className={`text-xs font-bold uppercase tracking-wider truncate ${
                     isLight ? 'text-neutral-800' : 'text-neutral-200'
                   }`}
                 >
-                  4+1 Multi-Relay &amp; Edge Bridge Monitor
+                  4-Server Full-Mesh &amp; Dual Edge Bridge Monitor
                 </span>
                 <span
                   className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border shrink-0 ${
@@ -122,79 +136,80 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
                 </span>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowEmqxRuleGuide((v) => !v)}
-                onMouseEnter={() =>
-                  setHoveredDesc(
-                    'Toggle copy-paste configuration for EMQX Data Integration Rule SQL (brg/+ filter) and Edge Function Webhook URL.'
-                  )
-                }
-                onMouseLeave={() => setHoveredDesc(null)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
-                  isLight
-                    ? 'border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-800'
-                    : 'border-amber-400/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300'
-                }`}
-              >
-                {showEmqxRuleGuide ? 'Hide EMQX HTTP Rule SQL' : 'EMQX HTTP Rule SQL'}
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={isBusy}
+                  onClick={() => onOneClickFullDiagnostic?.()}
+                  onMouseEnter={() =>
+                    setHoveredDesc(
+                      'One-Click Full Diagnostic: Sequentially verifies 4 Relay Slots -> Dual Cloud Edge Self-Test -> 5-Layer Anti-Loop -> Outbound Bridges -> EMQX Rule Webhooks, stopping on the exact step if anything fails.'
+                    )
+                  }
+                  onMouseLeave={() => setHoveredDesc(null)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border inline-flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50 ${
+                    isLight
+                      ? 'border-emerald-600/40 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-900'
+                      : 'border-emerald-400/40 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200'
+                  }`}
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>One-Click Full Diagnostic</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowEmqxRuleGuide((v) => !v)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
+                    isLight
+                      ? 'border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-800'
+                      : 'border-amber-400/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300'
+                  }`}
+                >
+                  {showEmqxRuleGuide ? 'Hide EMQX Rule SQL' : 'EMQX CN/GB Rule SQL'}
+                </button>
+              </div>
             </div>
 
-            {/* Room Code, Password & Primary Probe Actions */}
             <div
-              className={`flex flex-wrap items-center justify-between gap-2 pt-2 border-t ${
+              className={`flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t ${
                 isLight ? 'border-neutral-200/80' : 'border-neutral-800'
               }`}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <label
-                  className={`text-[11px] font-semibold ${
-                    isLight ? 'text-neutral-600' : 'text-neutral-400'
-                  }`}
-                >
+                <label className={`text-[11px] font-semibold ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
                   Room:
                 </label>
                 <input
                   type="text"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value)}
-                  className={`w-28 px-2 py-1 rounded-md border text-xs font-mono outline-none transition-colors ${
+                  className={`w-24 px-2 py-0.5 rounded-md border text-xs font-mono outline-none ${
                     isLight
-                      ? 'bg-white border-neutral-300 text-neutral-900 focus:border-cyan-600'
-                      : 'bg-neutral-900 border-neutral-700 text-neutral-100 focus:border-cyan-400'
+                      ? 'bg-white border-neutral-300 text-neutral-900'
+                      : 'bg-neutral-900 border-neutral-700 text-neutral-100'
                   }`}
                 />
-                <label
-                  className={`text-[11px] font-semibold ${
-                    isLight ? 'text-neutral-600' : 'text-neutral-400'
-                  }`}
-                >
+                <label className={`text-[11px] font-semibold ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
                   Key:
                 </label>
                 <input
                   type="text"
                   value={roomPassword}
                   onChange={(e) => setRoomPassword(e.target.value)}
-                  className={`w-24 px-2 py-1 rounded-md border text-xs font-mono outline-none transition-colors ${
+                  className={`w-20 px-2 py-0.5 rounded-md border text-xs font-mono outline-none ${
                     isLight
-                      ? 'bg-white border-neutral-300 text-neutral-900 focus:border-cyan-600'
-                      : 'bg-neutral-900 border-neutral-700 text-neutral-100 focus:border-cyan-400'
+                      ? 'bg-white border-neutral-300 text-neutral-900'
+                      : 'bg-neutral-900 border-neutral-700 text-neutral-100'
                   }`}
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   disabled={isBusy}
                   onClick={() => onProbeAll?.()}
-                  onMouseEnter={() =>
-                    setHoveredDesc(
-                      'Concurrently probe EMQX_1 and SUPABASE_1 loopback RTTs, compute the 4-bit connectivity mask, and sync Cloud Edge Bridge stats.'
-                    )
-                  }
-                  onMouseLeave={() => setHoveredDesc(null)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold border inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 ${
                     isLight
                       ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
@@ -202,19 +217,13 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
                   }`}
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${isBusy ? 'animate-spin' : ''}`} />
-                  <span>Probe &amp; Sync Logs</span>
+                  <span>Probe 4 Relays</span>
                 </button>
 
                 <button
                   type="button"
                   disabled={isBusy}
                   onClick={() => onCloudSelfTest?.()}
-                  onMouseEnter={() =>
-                    setHoveredDesc(
-                      'Invoke Cloud Edge Function self-test to verify server-side CNRCEdgeBridgeV2 MQTT ACL and Supabase Realtime Broadcast injection.'
-                    )
-                  }
-                  onMouseLeave={() => setHoveredDesc(null)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold border inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 ${
                     isLight
                       ? 'border-cyan-500/40 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-800'
@@ -222,23 +231,27 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
                   }`}
                 >
                   <Wifi className="h-3.5 w-3.5" />
-                  <span>Cloud Self-Test (EMQX + SB)</span>
+                  <span>Dual Cloud Self-Test</span>
                 </button>
               </div>
             </div>
           </Card>
 
-          {/* Status Cards + 6 One-Click Scenario Buttons */}
+          {/* 4+2 Status Cards + Custom Pair Runner + 9 Scenario Buttons */}
           <SignalingLabStatusAndScenariosSection
             isLight={isLight}
             endpointConfig={endpointConfig}
             probeSummary={probeSummary}
             isBusy={isBusy}
+            customSourceRelay={customSourceRelay}
+            onCustomSourceRelayChange={setCustomSourceRelay}
+            customTargetRelay={customTargetRelay}
+            onCustomTargetRelayChange={setCustomTargetRelay}
             onRunScenario={handleScenarioClick}
             onHover={setHoveredDesc}
           />
 
-          {/* Active Action / Last Result Banner */}
+          {/* Active Action / Last Result Diagnostic Banner */}
           {(activeActionLabel || lastResultBanner) && (
             <div
               className={`px-3 py-2 rounded-xl border text-xs flex items-center justify-between gap-2 ${
@@ -257,25 +270,13 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
             >
               <div className="flex items-center gap-2 min-w-0">
                 {activeActionLabel ? (
-                  <RefreshCw
-                    className={`h-4 w-4 animate-spin shrink-0 ${
-                      isLight ? 'text-cyan-600' : 'text-cyan-400'
-                    }`}
-                  />
+                  <RefreshCw className="h-4 w-4 animate-spin shrink-0 text-cyan-500" />
                 ) : lastResultBanner?.ok ? (
-                  <CheckCircle2
-                    className={`h-4 w-4 shrink-0 ${
-                      isLight ? 'text-emerald-600' : 'text-emerald-400'
-                    }`}
-                  />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
                 ) : (
-                  <XCircle
-                    className={`h-4 w-4 shrink-0 ${
-                      isLight ? 'text-rose-600' : 'text-rose-400'
-                    }`}
-                  />
+                  <XCircle className="h-4 w-4 shrink-0 text-rose-500" />
                 )}
-                <span className="truncate font-medium">
+                <span className="break-words font-medium">
                   {activeActionLabel || lastResultBanner?.text}
                 </span>
               </div>
@@ -289,7 +290,7 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
             copiedLabel={copiedLabel}
             endpointConfig={endpointConfig}
             traces={traces}
-            cloudStats={probeSummary?.cloudStats}
+            combinedLogs={probeSummary?.combinedLogs || []}
             onCopyText={handleCopyText}
             onClearTraces={() => onClearTraces?.()}
             onRefreshLogs={() => onProbeAll?.()}
@@ -299,7 +300,7 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
 
         <PanelFooter
           isLight={isLight}
-          defaultDescription="4+1 Signaling & Cloud Bridge Verification Lab: Physical dir/brg topic isolation + 4-layer anti-loop protection."
+          defaultDescription="4-Server Full-Mesh & Dual Edge Bridge Lab: emqx_cn (8), emqx_gb (4), supabase_jp (2), supabase_sg (1)."
           hoveredDescription={hoveredDesc}
           icon={<Info className="h-3.5 w-3.5 text-neutral-400 shrink-0" />}
         />

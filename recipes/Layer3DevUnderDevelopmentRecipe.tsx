@@ -296,16 +296,16 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
             isLight={isLight}
           />
 
-          {/* 4. 4+1 Signaling & Bridge Lab (Navigates to Layer 4) */}
+          {/* 4. 4-Server Signaling & Dual Bridge Lab (Navigates to Layer 4) */}
           <SettingActionRow
             icon={GraphStar}
             iconName="graph-star"
             iconColor="text-cyan-400"
-            title="4+1 Signaling & Bridge Lab"
+            title="4-Server Signaling & Bridge Lab"
             actionLabel="Configure"
             bordered={false}
             showDescription={false}
-            hoverDescription="Open Layer 4 4+1 Signaling & Cloud Bridge Lab: Inspect EMQX_1 + SUPABASE_1 physical dir/brg topic isolation, 4-bit connectivity mask, Edge Function bridge routing, and 4-layer anti-loop guards."
+            hoverDescription="Open Layer 4 4-Server Signaling & Dual Edge Bridge Lab: Inspect emqx_cn, emqx_gb, supabase_jp, and supabase_sg physical dir/brg topic isolation, 4-bit connectivity mask, and One-Click Full Diagnostic."
             onAction={() => onNavigateSignalingLab?.()}
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
@@ -326,7 +326,7 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
 
       <PanelFooter
         isLight={isLight}
-        defaultDescription="Unstable / Under Development workspace for Three-Wheeler mode, Throwback Stadium, 4+1 Signaling Lab, and Per-Car Boost."
+        defaultDescription="Unstable / Under Development workspace for Three-Wheeler mode, Throwback Stadium, 4-Server Signaling Lab, and Per-Car Boost."
         hoveredDescription={hoveredDesc}
         icon={<Info className="h-3.5 w-3.5 text-neutral-400 shrink-0" />}
       />

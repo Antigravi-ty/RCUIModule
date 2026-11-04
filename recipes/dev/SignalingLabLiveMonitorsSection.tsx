@@ -8,7 +8,7 @@ import {
 import { Card } from '../../layout/Card';
 import {
   buildEmqxBridgeRuleSql,
-  type SignalingLabCloudStatsView,
+  type SignalingLabCloudAuditLogItem,
   type SignalingLabEndpointViewConfig,
   type SignalingLabPacketTraceItem,
 } from './signalingLabTypes';
@@ -19,7 +19,7 @@ export interface SignalingLabLiveMonitorsSectionProps {
   copiedLabel: string | null;
   endpointConfig: SignalingLabEndpointViewConfig;
   traces: SignalingLabPacketTraceItem[];
-  cloudStats: SignalingLabCloudStatsView | null | undefined;
+  combinedLogs: SignalingLabCloudAuditLogItem[];
   onCopyText: (text: string, label: string) => void;
   onClearTraces: () => void;
   onRefreshLogs: () => void;
@@ -34,15 +34,16 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
       copiedLabel,
       endpointConfig,
       traces,
-      cloudStats,
+      combinedLogs,
       onCopyText,
       onClearTraces,
       onRefreshLogs,
       onHover,
     }) => {
-      const ruleSql = buildEmqxBridgeRuleSql(endpointConfig.topicNamespace);
+      const cnRuleSql = buildEmqxBridgeRuleSql(endpointConfig.topicNamespace, 'CNRCEdgeBridgeV2');
+      const gbRuleSql = buildEmqxBridgeRuleSql(endpointConfig.topicNamespace, 'GBRCEdgeBridgeV2');
 
-      const copyBtnClass = `px-2 py-1 rounded border text-[11px] font-semibold inline-flex items-center gap-1 shrink-0 cursor-pointer transition-colors ${
+      const copyBtnClass = `px-2 py-0.5 rounded border text-[10px] font-semibold inline-flex items-center gap-1 shrink-0 cursor-pointer transition-colors ${
         isLight
           ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-700'
           : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
@@ -50,10 +51,9 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
 
       return (
         <>
-          {/* Collapsible EMQX Data Integration Copy-Paste Guide */}
           {showEmqxRuleGuide && (
             <div
-              className={`p-3 rounded-xl border flex flex-col gap-2 text-xs ${
+              className={`p-2.5 rounded-xl border flex flex-col gap-2 text-xs ${
                 isLight
                   ? 'border-amber-500/35 bg-amber-500/10 text-amber-950'
                   : 'border-amber-400/30 bg-amber-500/10 text-amber-200'
@@ -61,15 +61,15 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
             >
               <div className="flex items-center justify-between gap-2">
                 <span
-                  className={`font-bold uppercase tracking-wider ${
+                  className={`font-bold uppercase tracking-wider text-[11px] ${
                     isLight ? 'text-amber-800' : 'text-amber-300'
                   }`}
                 >
-                  EMQX Data Integration (Rule Engine + HTTP Server Action) Copy-Paste Config
+                  EMQX CN &amp; EMQX GB Rule Engine + HTTP Webhook Copy-Paste Config
                 </span>
                 {copiedLabel && (
                   <span
-                    className={`font-semibold ${
+                    className={`font-semibold text-[11px] ${
                       isLight ? 'text-emerald-700' : 'text-emerald-400'
                     }`}
                   >
@@ -78,37 +78,8 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-2">
-                <div
-                  className={`p-2 rounded-lg border flex items-center justify-between gap-2 ${
-                    isLight
-                      ? 'bg-white/90 border-neutral-300 text-neutral-800'
-                      : 'bg-neutral-950/70 border-neutral-800 text-neutral-200'
-                  }`}
-                >
-                  <div className="truncate">
-                    <span
-                      className={`mr-2 ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}
-                    >
-                      Webhook URL (POST):
-                    </span>
-                    <code
-                      className={`font-mono font-semibold ${
-                        isLight ? 'text-cyan-700' : 'text-cyan-300'
-                      }`}
-                    >
-                      {endpointConfig.edgeFunctionBridgeUrl}
-                    </code>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onCopyText(endpointConfig.edgeFunctionBridgeUrl, 'Webhook URL')}
-                    className={copyBtnClass}
-                  >
-                    <Copy className="h-3 w-3" /> Copy URL
-                  </button>
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {/* EMQX CN -> JP Edge */}
                 <div
                   className={`p-2 rounded-lg border flex flex-col gap-1 ${
                     isLight
@@ -116,49 +87,79 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
                       : 'bg-neutral-950/70 border-neutral-800 text-neutral-200'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={isLight ? 'text-neutral-600' : 'text-neutral-400'}>
-                      Rule SQL (Only triggers on{' '}
-                      <code
-                        className={`font-mono font-semibold ${
-                          isLight ? 'text-amber-700' : 'text-amber-300'
-                        }`}
-                      >
-                        brg/+
-                      </code>
-                      , never on{' '}
-                      <code
-                        className={`font-mono font-semibold ${
-                          isLight ? 'text-emerald-700' : 'text-emerald-300'
-                        }`}
-                      >
-                        dir/+
-                      </code>
-                      ):
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-bold text-[11px]">
+                      1. EMQX_CN -&gt; JP Edge (x-rc-source-relay: emqx_cn)
                     </span>
                     <button
                       type="button"
-                      onClick={() => onCopyText(ruleSql, 'Rule SQL')}
+                      onClick={() => onCopyText(endpointConfig.jpEdgeFunctionUrl, 'JP Webhook URL')}
                       className={copyBtnClass}
                     >
-                      <Copy className="h-3 w-3" /> Copy SQL
+                      <Copy className="h-3 w-3" /> URL
                     </button>
                   </div>
-                  <pre
-                    className={`text-[11px] font-mono overflow-x-auto leading-tight ${
-                      isLight ? 'text-emerald-800' : 'text-emerald-300'
-                    }`}
-                  >
-                    {ruleSql}
+                  <code className="text-[10px] font-mono truncate text-cyan-500">
+                    {endpointConfig.jpEdgeFunctionUrl}
+                  </code>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] opacity-75">SQL (excludes CNRCEdgeBridgeV2):</span>
+                    <button
+                      type="button"
+                      onClick={() => onCopyText(cnRuleSql, 'EMQX_CN Rule SQL')}
+                      className={copyBtnClass}
+                    >
+                      <Copy className="h-3 w-3" /> SQL
+                    </button>
+                  </div>
+                  <pre className="text-[10px] font-mono overflow-x-auto leading-tight text-emerald-500">
+                    {cnRuleSql}
+                  </pre>
+                </div>
+
+                {/* EMQX GB -> SG Edge */}
+                <div
+                  className={`p-2 rounded-lg border flex flex-col gap-1 ${
+                    isLight
+                      ? 'bg-white/90 border-neutral-300 text-neutral-800'
+                      : 'bg-neutral-950/70 border-neutral-800 text-neutral-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-bold text-[11px]">
+                      2. EMQX_GB -&gt; SG Edge (x-rc-source-relay: emqx_gb)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onCopyText(endpointConfig.sgEdgeFunctionUrl, 'SG Webhook URL')}
+                      className={copyBtnClass}
+                    >
+                      <Copy className="h-3 w-3" /> URL
+                    </button>
+                  </div>
+                  <code className="text-[10px] font-mono truncate text-emerald-500">
+                    {endpointConfig.sgEdgeFunctionUrl}
+                  </code>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] opacity-75">SQL (excludes GBRCEdgeBridgeV2):</span>
+                    <button
+                      type="button"
+                      onClick={() => onCopyText(gbRuleSql, 'EMQX_GB Rule SQL')}
+                      className={copyBtnClass}
+                    >
+                      <Copy className="h-3 w-3" /> SQL
+                    </button>
+                  </div>
+                  <pre className="text-[10px] font-mono overflow-x-auto leading-tight text-emerald-500">
+                    {gbRuleSql}
                   </pre>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Dual Live Monitor: Browser Packet Trace + Cloud Edge Function Audit Log */}
+          {/* Dual Live Monitor: Browser Packet Trace + Dual Cloud Edge Audit Log */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            {/* Left: Browser Packet Trace */}
             <Card
               isLight={isLight}
               variant="outlined"
@@ -166,7 +167,7 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
               className="flex flex-col gap-1.5"
               onMouseEnter={() =>
                 onHover(
-                  'Client Packet Trace: Live browser-side log of outgoing/incoming E2EE dir/+ and brg/+ frames and ECDH SAS pairing verification.'
+                  'Client Packet Trace: Live browser-side log of outgoing/incoming E2EE dir/+ and brg/+ frames across all 4 servers.'
                 )
               }
               onMouseLeave={() => onHover(null)}
@@ -195,14 +196,14 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
                 </button>
               </div>
 
-              <div className="h-44 overflow-y-auto flex flex-col gap-1 pr-1 font-mono text-[10px]">
+              <div className="h-40 overflow-y-auto flex flex-col gap-1 pr-1 font-mono text-[10px]">
                 {traces.length === 0 ? (
                   <div
                     className={`py-8 text-center ${
                       isLight ? 'text-neutral-400' : 'text-neutral-500'
                     }`}
                   >
-                    Click any test button above to inspect live E2EE dir/brg frames.
+                    Click &ldquo;One-Click Full Diagnostic&rdquo; or any scenario button above.
                   </div>
                 ) : (
                   traces.map((t) => (
@@ -220,9 +221,7 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
                     >
                       <div className="flex items-center justify-between gap-1">
                         <span
-                          className={`font-bold ${
-                            isLight ? 'text-cyan-700' : 'text-cyan-300'
-                          }`}
+                          className={`font-bold ${isLight ? 'text-cyan-700' : 'text-cyan-300'}`}
                         >
                           [{t.direction}] [{t.channel.toUpperCase()}] {t.relayId}
                         </span>
@@ -243,7 +242,6 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
               </div>
             </Card>
 
-            {/* Right: Cloud Edge Function Audit Log */}
             <Card
               isLight={isLight}
               variant="outlined"
@@ -251,7 +249,7 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
               className="flex flex-col gap-1.5"
               onMouseEnter={() =>
                 onHover(
-                  'Cloud Edge Bridge Audit Log: Server-side audit ring buffer from the Supabase Edge Function bridge showing forwarded packets and dropped anti-loop events.'
+                  'Dual Cloud Edge Audit Log: Combined real-time audit logs from both JP (supabase_jp) and SG (supabase_sg) Edge Functions.'
                 )
               }
               onMouseLeave={() => onHover(null)}
@@ -263,11 +261,9 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
                   }`}
                 >
                   <Activity
-                    className={`h-3.5 w-3.5 ${
-                      isLight ? 'text-emerald-600' : 'text-emerald-400'
-                    }`}
+                    className={`h-3.5 w-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`}
                   />
-                  Cloud Edge Bridge Audit Log ({cloudStats?.logs.length ?? 0})
+                  JP + SG Cloud Edge Audit Log ({combinedLogs.length})
                 </span>
                 <button
                   type="button"
@@ -280,8 +276,8 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
                 </button>
               </div>
 
-              <div className="h-44 overflow-y-auto flex flex-col gap-1 pr-1 font-mono text-[10px]">
-                {!cloudStats || cloudStats.logs.length === 0 ? (
+              <div className="h-40 overflow-y-auto flex flex-col gap-1 pr-1 font-mono text-[10px]">
+                {combinedLogs.length === 0 ? (
                   <div
                     className={`py-8 text-center ${
                       isLight ? 'text-neutral-400' : 'text-neutral-500'
@@ -290,9 +286,9 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
                     No cloud bridge events recorded yet.
                   </div>
                 ) : (
-                  cloudStats.logs.map((log) => (
+                  combinedLogs.map((log) => (
                     <div
-                      key={log.id}
+                      key={`${log.edgeNode || 'edge'}_${log.id}`}
                       className={`p-1.5 rounded border ${
                         log.status === 'forwarded' || log.status === 'self_test'
                           ? isLight
@@ -309,7 +305,7 @@ export const SignalingLabLiveMonitorsSection: React.FC<SignalingLabLiveMonitorsS
                     >
                       <div className="flex items-center justify-between gap-1">
                         <span className="font-bold">
-                          [{log.event}] from={log.comingFrom} -&gt;{' '}
+                          [{log.edgeNode || 'edge'}:{log.event}] {log.comingFrom} -&gt;{' '}
                           {log.targets.join(',') || 'dropped'}
                         </span>
                         <span className={isLight ? 'text-neutral-500' : 'text-neutral-400'}>
