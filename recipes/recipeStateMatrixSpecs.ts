@@ -207,7 +207,7 @@ export const LAYER3_JOIN_ROOM_STATES: RecipeStateSnapshotSpec<{
   {
     id: 'running-step-2',
     label: 'Step 2/5 · Signaling Handshake',
-    description: 'Connecting to WebSocket signaling relay (wss://relay.carsoccer.dev).',
+    description: 'Connecting to WebSocket signaling relay (wss://relay.carball.dev).',
     componentName: 'Layer3JoinRoomRecipe',
     sourceFile: 'recipes/Layer3JoinRoomRecipe.tsx',
     subViewFile: 'recipes/online/OnlineRoomCreationProgress.tsx',

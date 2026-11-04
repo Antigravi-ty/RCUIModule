@@ -33,9 +33,9 @@ export const DEFAULT_JOIN_ROOM_STEPS: CreationStepSpec[] = [
   {
     step: 2,
     stageTitle: 'Connecting Signaling Relay',
-    description: 'Establishing WebSocket handshake with signaling server (wss://relay.carsoccer.dev)...',
+    description: 'Establishing WebSocket handshake with signaling server (wss://relay.carball.dev)...',
     errorTitle: 'Signaling Handshake Timed Out',
-    errorDescription: 'Could not reach wss://relay.carsoccer.dev/signaling within 10s (ERR_CONNECTION_TIMED_OUT).',
+    errorDescription: 'Could not reach wss://relay.carball.dev/signaling within 10s (ERR_CONNECTION_TIMED_OUT).',
   },
   {
     step: 3,
