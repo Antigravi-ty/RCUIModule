@@ -115,12 +115,82 @@ export function buildActivePackBundle(
   };
 }
 
+export type TrainingSyncAuthorityMode =
+  | 'driver-demo'
+  | 'retain-ghost-practice'
+  | 'free-practice';
+
+export interface SyncAllTrainingTelemetryState {
+  authority: {
+    localPeerId: string;
+    isHost: boolean;
+    driverPeerId: string;
+    isLocalDriver: boolean;
+    authorityMode: TrainingSyncAuthorityMode;
+    autoApproveControlRequest: boolean;
+    isCameraLinked: boolean;
+    pendingRequestPeerId: string | null;
+    leaseSeq: number;
+  };
+  ghostTelemetry: {
+    isRecording: boolean;
+    currentRecordingFrames: number;
+    hasLastAttemptTape: boolean;
+    lastAttemptFrameCount: number;
+    lastAttemptDurationSec: number;
+    pinnedTapeCount: number;
+    activePlaybackFrame: number;
+    ghostPlaybackEnabled: boolean;
+    showGhostCar: boolean;
+    showGhostBall: boolean;
+    ghostOpacity: number;
+    ghostPlacement: 'same' | 'opposite';
+    pinnedTapesMeta: Array<{
+      tapeId: string;
+      label: string;
+      authorName: string;
+      episodeId: string;
+      shotIndex: number;
+      frameCount: number;
+      durationSec: number;
+      paletteIndex?: number;
+    }>;
+  };
+  transferProgress?: {
+    artifactHash: string;
+    artifactName: string;
+    receivedChunks: number;
+    totalChunks: number;
+    receivedBytes: number;
+    totalBytes: number;
+    complete: boolean;
+  } | null;
+  activeEpisodeId: string;
+  remoteDriverFramesReceived: number;
+}
+
 export interface StaticTrainingPackRuntimeHandlers {
   onShotChanged?: (shotIndex: number) => void;
   onResetShotRequested?: () => void;
   onEditVariableMutated?: (draft: StaticTrainingShotItem) => void;
   onEditSubModeChanged?: (subMode: EditSubMode) => void;
   onSessionModeChanged?: (mode: StaticPackSessionMode) => void;
+  onRetainDisplayAsGhost?: (opts?: {
+    replaceExisting?: boolean;
+    label?: string;
+    switchToStudentPractice?: boolean;
+    studentPeerId?: string;
+  }) => unknown;
+  onClearPinnedGhosts?: () => void;
+  onRemovePinnedGhost?: (tapeId: string) => void;
+  onToggleGhostPlayback?: (enabled?: boolean) => void;
+  onSetGhostPlacement?: (placement: 'same' | 'opposite') => void;
+  onSetGhostOpacity?: (opacity: number) => void;
+  onSelectTrainingAuthorityMode?: (mode: TrainingSyncAuthorityMode) => void;
+  onSetAutoApproveControlRequest?: (enabled: boolean) => void;
+  onRequestTrainingControl?: (mode?: TrainingSyncAuthorityMode) => void;
+  onTakeBackTrainingControl?: (mode?: TrainingSyncAuthorityMode) => void;
+  onSetTrainingCameraLinked?: (linked: boolean) => void;
 }
 
 export interface StaticTrainingPackStoreState {
@@ -152,6 +222,7 @@ export interface StaticTrainingPackStoreState {
   replayType: 'goal' | 'expire' | null;
   isFreeCamTrajectoryTesting: boolean;
   isTestingSingleShot: boolean;
+  syncAllTrainingState: SyncAllTrainingTelemetryState | null;
 
   runtimeHandlers: StaticTrainingPackRuntimeHandlers;
 
@@ -205,6 +276,7 @@ export interface StaticTrainingPackStoreState {
       replayType: 'goal' | 'expire' | null;
       isFreeCamTrajectoryTesting: boolean;
       isTestingSingleShot: boolean;
+      syncAllTrainingState: SyncAllTrainingTelemetryState | null;
     }>
   ) => void;
   setRuntimeHandlers: (handlers: Partial<StaticTrainingPackRuntimeHandlers>) => void;
@@ -239,6 +311,7 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
   replayType: null,
   isFreeCamTrajectoryTesting: false,
   isTestingSingleShot: false,
+  syncAllTrainingState: null,
 
   runtimeHandlers: createGuardedRuntimeHandlers<StaticTrainingPackRuntimeHandlers>(
     'staticTrainingPackStore',
