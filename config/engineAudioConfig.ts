@@ -45,6 +45,20 @@ export interface EngineAudioPackDescriptor {
   redlineRPM: number;
 }
 
+export type EngineEqBandIndex = 0 | 1 | 2 | 3 | 4;
+
+export const ENGINE_AUDIO_EQ_BAND_FREQS_HZ: readonly [number, number, number, number, number] = [
+  42, 48, 56, 66, 74,
+];
+
+export const ENGINE_AUDIO_EQ_BAND_LABELS: readonly [string, string, string, string, string] = [
+  'Band 1 · 42Hz (Idle / Low RPM)',
+  'Band 2 · 48Hz (Low-Mid)',
+  'Band 3 · 56Hz (Mid Transition)',
+  'Band 4 · 66Hz (High-Mid Overdrive)',
+  'Band 5 · 74Hz (Redline Presence)',
+];
+
 export interface EngineAudioTuningConfig {
   /** Active engine sound pack identifier (default: 'turtle_modem') */
   activePackId: EngineAudioPackId;
@@ -80,8 +94,12 @@ export interface EngineAudioTuningConfig {
   reverseGearDecayFactorBase: number;
   /** Flywheel exponential response agility rate (default: 18.0) */
   flywheelAgility: number;
-  /** Minimum RPM threshold to trigger exhaust backfire pop on throttle lift / upshift (default: 4000 RPM) */
+  /** Minimum RPM threshold to trigger exhaust backfire pop on overdrive lift / upshift / reverse braking (default: 4500 RPM) */
   backfireTriggerRPM: number;
+  /** Substantial RPM drop applied immediately when an exhaust backfire pop triggers (default: 1650 RPM) */
+  backfireRpmDrop: number;
+  /** Minimum cooldown interval in seconds between exhaust backfire pops (default: 0.65 s) */
+  backfireCooldownSec: number;
   /** Volume multiplier for exhaust backfire pops (default: 0.55) */
   backfireVolume: number;
   /** Web Audio GainNode / BiquadFilterNode smoothing time constant in milliseconds (default: 15 ms) */
@@ -118,10 +136,24 @@ export interface EngineAudioTuningConfig {
   wallDecelDipThresholdUU: number;
   /** Touchdown RPM recovery mode when landing from airborne state (default: 'instant-speed-match') */
   landingRevRecoveryMode: EngineLandingRevMode;
-  /** Reset RPM to idle and gear to 1st whenever vehicle speed drops to zero (default: true) */
+  /** Reset RPM to idle and gear to Neutral whenever vehicle speed drops to zero (default: true) */
   zeroSpeedResetEnabled: boolean;
   /** Speed threshold in UU/s below which the vehicle is considered stopped (default: 18 UU/s) */
   zeroSpeedThresholdUU: number;
+  /** Enable dedicated Engine Audio frequency loudness equalizer & RMS leveling (default: true) */
+  engineEqEnabled: boolean;
+  /** Blend strength (0.0 .. 1.0) of automatic per-slice RMS loudness normalization (default: 0.85) */
+  sliceRmsAutoNormStrength: number;
+  /** Frequency-axis loudness tilt in dB across fundamental slice frequencies (37Hz -> 75Hz) (default: 1.5 dB) */
+  freqTiltDb: number;
+  /** 5-Band Engine Frequency Equalizer gains in dB (-12 .. +12 dB) at [42, 48, 56, 66, 74] Hz */
+  eqBandGainsDb: [number, number, number, number, number];
+  /** 3-Band Web Audio Parametric Output Timbre EQ: Low Shelf (90Hz) in dB (-12 .. +12 dB) */
+  timbreLowShelfDb: number;
+  /** 3-Band Web Audio Parametric Output Timbre EQ: Mid Peaking (650Hz) in dB (-12 .. +12 dB) */
+  timbreMidPeakDb: number;
+  /** 3-Band Web Audio Parametric Output Timbre EQ: High Shelf (3200Hz) in dB (-12 .. +12 dB) */
+  timbreHighShelfDb: number;
 }
 
 export interface EngineAudioLiveTelemetry {
@@ -141,6 +173,7 @@ export interface EngineAudioLiveTelemetry {
   airborneRevQuotaRemainingSec: number;
   isShiftLocked: boolean;
   isUnderStrain: boolean;
+  isInOverdrive: boolean;
   throttleLoad: number;
   smoothThrottle: number;
   isRevLimiting: boolean;
@@ -148,6 +181,7 @@ export interface EngineAudioLiveTelemetry {
   upperSliceIndex: number;
   lowerSliceFreqHz: number;
   upperSliceFreqHz: number;
+  activeEqCompensationDb: number;
   idleWeight: number;
   filterCutoffHz: number;
   lastBackfireIndex: number;
@@ -213,7 +247,9 @@ export const DEFAULT_ENGINE_AUDIO_TUNING_CONFIG: EngineAudioTuningConfig = {
   gearDecayFactorBase: 0.72,
   reverseGearDecayFactorBase: 0.52,
   flywheelAgility: 18.0,
-  backfireTriggerRPM: 4000,
+  backfireTriggerRPM: 4500,
+  backfireRpmDrop: 1650,
+  backfireCooldownSec: 0.65,
   backfireVolume: 0.55,
   gainSmoothingTimeMs: 15,
   crossfadeCurveType: 'equal-sine',
@@ -234,6 +270,13 @@ export const DEFAULT_ENGINE_AUDIO_TUNING_CONFIG: EngineAudioTuningConfig = {
   landingRevRecoveryMode: 'instant-speed-match',
   zeroSpeedResetEnabled: true,
   zeroSpeedThresholdUU: 18,
+  engineEqEnabled: true,
+  sliceRmsAutoNormStrength: 0.85,
+  freqTiltDb: 1.5,
+  eqBandGainsDb: [0.0, -1.0, 0.5, 2.0, 1.5],
+  timbreLowShelfDb: 0.0,
+  timbreMidPeakDb: 0.0,
+  timbreHighShelfDb: 0.0,
 };
 
 export const INITIAL_ENGINE_AUDIO_TELEMETRY: EngineAudioLiveTelemetry = {
@@ -243,8 +286,8 @@ export const INITIAL_ENGINE_AUDIO_TELEMETRY: EngineAudioLiveTelemetry = {
   totalSlicesCount: 40,
   currentRPM: 900,
   targetRPM: 900,
-  currentGear: 1,
-  isNeutral: false,
+  currentGear: 0,
+  isNeutral: true,
   isOnGround: true,
   driveDirection: 'stopped',
   speedUU: 0,
@@ -253,6 +296,7 @@ export const INITIAL_ENGINE_AUDIO_TELEMETRY: EngineAudioLiveTelemetry = {
   airborneRevQuotaRemainingSec: 3.0,
   isShiftLocked: false,
   isUnderStrain: false,
+  isInOverdrive: false,
   throttleLoad: 0,
   smoothThrottle: 0,
   isRevLimiting: false,
@@ -260,6 +304,7 @@ export const INITIAL_ENGINE_AUDIO_TELEMETRY: EngineAudioLiveTelemetry = {
   upperSliceIndex: 1,
   lowerSliceFreqHz: 37.6,
   upperSliceFreqHz: 38.4,
+  activeEqCompensationDb: 0,
   idleWeight: 1,
   filterCutoffHz: 2800,
   lastBackfireIndex: -1,
@@ -273,6 +318,7 @@ export const INITIAL_ENGINE_AUDIO_TELEMETRY: EngineAudioLiveTelemetry = {
 
 export const ENGINE_AUDIO_TUNING_CONFIG: EngineAudioTuningConfig = {
   ...DEFAULT_ENGINE_AUDIO_TUNING_CONFIG,
+  eqBandGainsDb: [...DEFAULT_ENGINE_AUDIO_TUNING_CONFIG.eqBandGainsDb],
 };
 
 type EngineAudioConfigListener = (config: EngineAudioTuningConfig) => void;
@@ -286,6 +332,9 @@ export function updateEngineAudioTuningConfig(
   patch: Partial<EngineAudioTuningConfig>
 ): EngineAudioTuningConfig {
   Object.assign(ENGINE_AUDIO_TUNING_CONFIG, patch);
+  if (patch.eqBandGainsDb) {
+    ENGINE_AUDIO_TUNING_CONFIG.eqBandGainsDb = [...patch.eqBandGainsDb];
+  }
   for (const listener of configListeners) {
     try {
       listener(ENGINE_AUDIO_TUNING_CONFIG);
@@ -297,7 +346,10 @@ export function updateEngineAudioTuningConfig(
 }
 
 export function resetEngineAudioTuningConfig(): EngineAudioTuningConfig {
-  return updateEngineAudioTuningConfig({ ...DEFAULT_ENGINE_AUDIO_TUNING_CONFIG });
+  return updateEngineAudioTuningConfig({
+    ...DEFAULT_ENGINE_AUDIO_TUNING_CONFIG,
+    eqBandGainsDb: [...DEFAULT_ENGINE_AUDIO_TUNING_CONFIG.eqBandGainsDb],
+  });
 }
 
 export function subscribeEngineAudioTuningConfig(

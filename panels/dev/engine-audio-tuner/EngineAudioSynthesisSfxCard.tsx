@@ -104,7 +104,7 @@ export const EngineAudioSynthesisSfxCard: React.FC<EngineAudioSynthesisSfxCardPr
         />
       </div>
 
-      {/* Idle Loop Volume & Backfire / Exhaust Pop Threshold + Volume */}
+      {/* Idle Loop Volume & Backfire / Exhaust Pop Threshold, RPM Drop, Cooldown + Volume */}
       <div className="grid grid-cols-3 gap-2">
         <SliderControl
           editable={true}
@@ -147,6 +147,37 @@ export const EngineAudioSynthesisSfxCard: React.FC<EngineAudioSynthesisSfxCardPr
           step={5}
           isLight={isLight}
           onChange={(v) => updateConfig({ backfireVolume: Math.max(0, v / 100) })}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <SliderControl
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={false}
+          colorScheme="rose"
+          label="Backfire Pop RPM Drop"
+          unit=" RPM"
+          value={config.backfireRpmDrop ?? 1650}
+          min={400}
+          max={3500}
+          step={50}
+          isLight={isLight}
+          onChange={(v) => updateConfig({ backfireRpmDrop: Math.max(400, v) })}
+        />
+        <SliderControl
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={false}
+          colorScheme="amber"
+          label="Backfire Pop Cooldown"
+          unit=" s"
+          value={config.backfireCooldownSec ?? 0.65}
+          min={0.15}
+          max={2.5}
+          step={0.05}
+          isLight={isLight}
+          onChange={(v) => updateConfig({ backfireCooldownSec: Math.max(0.15, v) })}
         />
       </div>
 

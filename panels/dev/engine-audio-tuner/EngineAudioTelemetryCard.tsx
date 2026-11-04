@@ -52,6 +52,16 @@ export const EngineAudioTelemetryCard: React.FC<EngineAudioTelemetryCardProps> =
           </span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
+          {telemetry.isInOverdrive && (
+            <Badge
+              variant="emerald"
+              size="sm"
+              isLight={isLight}
+              className="font-mono text-[9px]"
+            >
+              OVERDRIVE
+            </Badge>
+          )}
           {telemetry.isShiftLocked && (
             <Badge
               variant="amber"
