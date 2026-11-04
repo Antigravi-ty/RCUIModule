@@ -1,3 +1,4 @@
+import { safeLocalStorageGet, safeLocalStorageSet } from './storageHelpers';
 import {
   type NameTagDepthMetric,
   type NameTagFontFamily,
@@ -57,6 +58,7 @@ export {
 };
 
 export const NAME_TAG_STORAGE_KEY = 'rc_name_tag_config_v8';
+const STORAGE_KEY = NAME_TAG_STORAGE_KEY;
 
 export function sanitizeHexColor(raw: unknown, fallbackHex: string): string {
   return typeof raw === 'string' && raw.startsWith('#') && raw.length >= 4
@@ -427,4 +429,117 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
   };
 }
 
+let currentConfig: NameTagConfig = (() => {
+  try {
+    const raw = safeLocalStorageGet(STORAGE_KEY);
+    if (!raw) {
+      return sanitizeConfig(DEFAULT_NAME_TAG_CONFIG);
+    }
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return sanitizeConfig(parsed);
+  } catch {
+    return sanitizeConfig(DEFAULT_NAME_TAG_CONFIG);
+  }
+})();
+
 export const sanitizeNameTagConfig = sanitizeConfig;
+
+const callbacks: Array<() => void> = [];
+
+export function notifyNameTagListeners(): void {
+  for (const listener of callbacks) {
+    try {
+      listener();
+    } catch {
+      // Ignore listener errors
+    }
+  }
+}
+
+export function getNameTagConfig(): NameTagConfig {
+  return currentConfig;
+}
+
+export function updateNameTagConfig(patch: Partial<NameTagConfig>): NameTagConfig {
+  const merged: Partial<NameTagConfig> = { ...currentConfig, ...patch };
+  if (
+    typeof patch.pillMinWidth === 'number' &&
+    patch.pillMaxWidth === undefined &&
+    patch.pillMinWidth > currentConfig.pillMaxWidth
+  ) {
+    merged.pillMaxWidth = patch.pillMinWidth;
+  } else if (
+    typeof patch.pillMaxWidth === 'number' &&
+    patch.pillMinWidth === undefined &&
+    patch.pillMaxWidth < currentConfig.pillMinWidth
+  ) {
+    merged.pillMinWidth = patch.pillMaxWidth;
+  }
+  currentConfig = sanitizeConfig(merged);
+  try {
+    safeLocalStorageSet(STORAGE_KEY, JSON.stringify(currentConfig));
+  } catch {
+    // Ignore storage errors
+  }
+  notifyNameTagListeners();
+  return currentConfig;
+}
+
+export function updateNameTagCarOverride(
+  carIndex: number,
+  patch: Partial<NameTagCarOverride>
+): NameTagConfig {
+  const nextOverrides = currentConfig.carOverrides.map((entry, idx) =>
+    idx === carIndex
+      ? sanitizeCarOverride(
+          { ...entry, ...patch },
+          currentConfig.verticalOffsetUu,
+          currentConfig.screenVerticalOffsetPx
+        )
+      : entry
+  );
+  return updateNameTagConfig({ carOverrides: nextOverrides });
+}
+
+export function resetNameTagCarOverride(carIndex: number): NameTagConfig {
+  const nextOverrides = currentConfig.carOverrides.map((entry, idx) =>
+    idx === carIndex
+      ? createDefaultCarOverride(
+          currentConfig.verticalOffsetUu,
+          currentConfig.screenVerticalOffsetPx
+        )
+      : entry
+  );
+  return updateNameTagConfig({ carOverrides: nextOverrides });
+}
+
+export function resetAllNameTagCarOverrides(): NameTagConfig {
+  const nextOverrides = Array.from({ length: 6 }, () =>
+    createDefaultCarOverride(
+      currentConfig.verticalOffsetUu,
+      currentConfig.screenVerticalOffsetPx
+    )
+  );
+  return updateNameTagConfig({ carOverrides: nextOverrides });
+}
+
+export function resetNameTagConfig(): NameTagConfig {
+  currentConfig = sanitizeConfig(DEFAULT_NAME_TAG_CONFIG);
+  try {
+    safeLocalStorageSet(STORAGE_KEY, JSON.stringify(currentConfig));
+  } catch {
+    // Ignore storage errors
+  }
+  notifyNameTagListeners();
+  return currentConfig;
+}
+
+export function subscribeNameTagConfig(listener: () => void): () => void {
+  if (!callbacks.includes(listener)) {
+    callbacks.push(listener);
+  }
+  return () => {
+    const idx = callbacks.indexOf(listener);
+    if (idx !== -1) callbacks.splice(idx, 1);
+  };
+}

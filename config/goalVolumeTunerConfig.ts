@@ -101,6 +101,7 @@ export const goalVolumeTunerRuntimeConfig: GoalVolumeTunerConfig = {
 
 type GoalVolumeTunerCallback = (snapshot: GoalVolumeTunerConfig) => void;
 const goalVolumeCallbacks: GoalVolumeTunerCallback[] = [];
+const goalVolumeObjectCallbacks: GoalVolumeTunerCallback[] = [];
 
 export function getGoalVolumeTunerConfig(): GoalVolumeTunerConfig {
   return {
@@ -140,8 +141,26 @@ export function subscribeGoalVolumeTunerConfig(listener: GoalVolumeTunerCallback
   };
 }
 
+export function registerGoalVolumeTunerApplier(applier: GoalVolumeTunerCallback): () => void {
+  if (typeof applier !== 'function') return () => {};
+  if (!goalVolumeObjectCallbacks.includes(applier)) {
+    goalVolumeObjectCallbacks.push(applier);
+  }
+  return () => {
+    const idx = goalVolumeObjectCallbacks.indexOf(applier);
+    if (idx !== -1) goalVolumeObjectCallbacks.splice(idx, 1);
+  };
+}
+
 function notifyAll(): GoalVolumeTunerConfig {
   const snapshot = getGoalVolumeTunerConfig();
+  for (const applier of goalVolumeObjectCallbacks) {
+    try {
+      applier(snapshot);
+    } catch {
+      // ignore applier errors
+    }
+  }
   for (const listener of goalVolumeCallbacks) {
     try {
       listener(snapshot);

@@ -8,13 +8,14 @@ import { NetworkMonitorFloatingWindow } from './user/NetworkMonitorFloatingWindo
 import { PerformanceMonitorFloatingWindow } from './user/PerformanceMonitorFloatingWindow';
 import { FloatingWindowOpacityFloatingWindow } from './user/FloatingWindowOpacityFloatingWindow';
 
-// 19 Developer Floating Windows (Canonical UI-Aligned Filenames)
+// 22 Developer Floating Windows (Canonical UI-Aligned Filenames)
 import { DiagnosticDumpFloatingWindow } from './dev/DiagnosticDumpFloatingWindow';
 import { StaticTrainingBallCamTunerFloatingWindow } from './dev/StaticTrainingBallCamTunerFloatingWindow';
 import { NameTagTunerFloatingWindow } from './dev/NameTagTunerFloatingWindow';
 import { GoalVolumeTunerFloatingWindow } from './dev/GoalVolumeTunerFloatingWindow';
 import { ReplayDirectorTunerFloatingWindow } from './dev/ReplayDirectorTunerFloatingWindow';
 import { ReachabilityTunerFloatingWindow } from './dev/ReachabilityTunerFloatingWindow';
+import { BallTrajectoryTunerFloatingWindow } from './dev/BallTrajectoryTunerFloatingWindow';
 import {
   VehicleModelOffsetTunerFloatingWindow,
   type VehicleTunerTab,
@@ -24,6 +25,7 @@ import {
   type VehicleGlobalFxTab,
 } from './dev/VehicleGlobalFxTunerFloatingWindow';
 import { ExperimentalMultiBotsFloatingWindow } from './dev/ExperimentalMultiBotsFloatingWindow';
+import { ExperimentalBotPackFloatingWindow } from './dev/ExperimentalBotPackFloatingWindow';
 import {
   AtmosphereFxTunerFloatingWindow,
   type AtmosphereFxTab,
@@ -104,7 +106,7 @@ export interface FloatingWindowDescriptor {
 }
 
 /**
- * Declarative, low-coupling descriptor map for all 25 Floating Windows (6 User + 19 Developer).
+ * Declarative, low-coupling descriptor map for all Floating Windows.
  * Allows host applications (like RocketCompanion) to mount any floating window panel
  * via a single registry lookup without cascading switch statements.
  */
@@ -141,7 +143,7 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false }) => <FloatingWindowOpacityFloatingWindow isLight={isLight} />,
   },
 
-  // --- 19 Developer-Only Floating Windows ---
+  // --- Developer-Only Floating Windows ---
   'diagnostic-dump': {
     id: 'diagnostic-dump',
     category: 'developer',
@@ -172,6 +174,11 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     category: 'developer',
     render: ({ isLight = false }) => <ReachabilityTunerFloatingWindow isLight={isLight} />,
   },
+  'ball-trajectory-tuner': {
+    id: 'ball-trajectory-tuner',
+    category: 'developer',
+    render: ({ isLight = false }) => <BallTrajectoryTunerFloatingWindow isLight={isLight} />,
+  },
   'vehicle-model-offset-tuner': {
     id: 'vehicle-model-offset-tuner',
     category: 'developer',
@@ -200,6 +207,11 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     id: 'experimental-multi-bots',
     category: 'developer',
     render: ({ isLight = false }) => <ExperimentalMultiBotsFloatingWindow isLight={isLight} />,
+  },
+  'experimental-bot-pack': {
+    id: 'experimental-bot-pack',
+    category: 'developer',
+    render: ({ isLight = false }) => <ExperimentalBotPackFloatingWindow isLight={isLight} />,
   },
   'atmosphere-fx-tuner': {
     id: 'atmosphere-fx-tuner',
@@ -298,7 +310,7 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
 
 /**
  * [L6 Floating Window Registry]
- * Maps any of the 25 `RocketCompanion` Floating Window preset IDs (6 User + 19 Developer)
+ * Maps any of the 28 `RocketCompanion` Floating Window preset IDs (6 User + 22 Developer)
  * to its normalized, low-coupling L6 Floating Window Panel.
  */
 export function renderFloatingWindowPanel(

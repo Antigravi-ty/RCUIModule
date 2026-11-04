@@ -1,7 +1,7 @@
 import { USER_PRESET_WINDOWS, type PresetConfig } from './floatingPresets';
 
 // ============================================================================
-// DEVELOPER-ONLY FLOATING WINDOWS (19 Total — Strictly Developer-Only)
+// DEVELOPER-ONLY FLOATING WINDOWS (22 Total — Strictly Developer-Only)
 // ============================================================================
 
 export const DIAGNOSTIC_DUMP_PRESET: PresetConfig = {
@@ -102,6 +102,22 @@ export const REACHABILITY_TUNER_PRESET: PresetConfig = {
   sourcePath: 'panels/dev/ReachabilityTunerFloatingWindow.tsx',
 };
 
+export const BALL_TRAJECTORY_TUNER_PRESET: PresetConfig = {
+  id: 'ball-trajectory-tuner',
+  title: 'Ball Trajectory Prediction Line Tuner',
+  category: 'BallTrajectory',
+  width: 480,
+  height: 640,
+  minHeight: 220,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'WASM Incremental Tail Prediction (600t), Car-Ball Hit / Deviation Triggers, 3D Volumetric Shaded Tube, Spatial Depth Cues & JSON Export.',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'BallTrajectoryTunerFloatingWindow',
+  sourcePath: 'panels/dev/BallTrajectoryTunerFloatingWindow.tsx',
+};
+
 export const VEHICLE_MODEL_OFFSET_TUNER_PRESET: PresetConfig = {
   id: 'vehicle-model-offset-tuner',
   title: 'Vehicle Model & Offset Tuner',
@@ -159,6 +175,22 @@ export const EXPERIMENTAL_MULTI_BOTS_PRESET: PresetConfig = {
   menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
   component: 'ExperimentalMultiBotsFloatingWindow',
   sourcePath: 'panels/dev/ExperimentalMultiBotsFloatingWindow.tsx',
+};
+
+export const EXPERIMENTAL_BOT_PACK_PRESET: PresetConfig = {
+  id: 'experimental-bot-pack',
+  title: 'Experimental Bot Pack',
+  category: 'ExperimentalBots',
+  width: 490,
+  height: 620,
+  minHeight: 200,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'Live floating controller for Experimental Bot Pack (RLBot #9700488) 8 native models (Chronos, Dice, Ducky, Fury, Galactus, Kira, Rain, Ripple v1.1).',
+  menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  component: 'ExperimentalBotPackFloatingWindow',
+  sourcePath: 'panels/dev/ExperimentalBotPackFloatingWindow.tsx',
 };
 
 export const ATMOSPHERE_FX_TUNER_PRESET: PresetConfig = {
@@ -400,9 +432,11 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   GOAL_VOLUME_TUNER_PRESET,
   REPLAY_DIRECTOR_TUNER_PRESET,
   REACHABILITY_TUNER_PRESET,
+  BALL_TRAJECTORY_TUNER_PRESET,
   VEHICLE_MODEL_OFFSET_TUNER_PRESET,
   VEHICLE_GLOBAL_FX_TUNER_PRESET,
   EXPERIMENTAL_MULTI_BOTS_PRESET,
+  EXPERIMENTAL_BOT_PACK_PRESET,
   ATMOSPHERE_FX_TUNER_PRESET,
   SUBSYSTEM_ISOLATION_LAB_PRESET,
   KICKOFF_TRAINING_PRESET,

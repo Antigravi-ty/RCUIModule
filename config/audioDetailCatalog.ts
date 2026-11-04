@@ -176,8 +176,8 @@ export const ADVANCED_AUDIO_DETAIL_CATALOG: readonly AdvancedAudioDetailItem[] =
     title: 'Car Demolition Explosion',
     category: 'incidents',
     categoryLabel: 'Physics Incidents & Collisions',
-    assetHint: 'sfx_goal_poof.m4a (0.85x) · 0x03',
-    description: 'Volume level for high-speed car demolition explosions.',
+    assetHint: 'demolish/SFX_Impacts_*.m4a · 0x03',
+    description: 'Volume level for high-speed car demolition explosions (5-sample pool).',
   },
   {
     key: 'ballFloorHitVolume',

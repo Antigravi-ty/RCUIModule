@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useLayer3TrainingStoreBinding } from './hooks/useLayer3SettingsDetailBindings';
 import { Zap, Box, Shield, History, CircleSlash2, Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
@@ -21,7 +21,7 @@ export interface TrainingGameplayConfig {
   goalRestart?: boolean;
 }
 
-export interface Layer3TrainingRecipeProps {
+export interface Layer3TrainingConfigRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
   onNavigateTrajectory?: () => void;
@@ -42,16 +42,30 @@ export interface Layer3TrainingRecipeProps {
  * 4. Goal Barrier Configurator: Single-line FloatingWindowCard spawner with colored Shield icon
  * 5. Rewinder Configurator: Single-line FloatingWindowCard spawner with colored History icon
  */
-export const Layer3TrainingRecipe: React.FC<Layer3TrainingRecipeProps> = (rawProps) => {
-  const {
+export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProps> = ({
   isLight = false,
-  onBack,
+  onBack: propOnBack,
   sizing: propSizing,
-  gameplay: controlledGameplay,
-  onUpdateGameplay,
-} = useLayer3TrainingStoreBinding(rawProps);
+  gameplay: propGameplay,
+  onUpdateGameplay: propOnUpdateGameplay,
+}) => {
+  const goBack = useAppStore((s) => s.goBack);
+  const storeGameplay = useAppStore((s) => s.gameplay);
+  const storeUpdateGameplay = useAppStore((s) => s.updateGameplay);
+
+  const onBack = propOnBack ?? goBack;
+  const controlledGameplay = propGameplay ?? storeGameplay;
+  const onUpdateGameplay =
+    propOnUpdateGameplay ??
+    ((patch: Partial<TrainingGameplayConfig>) =>
+      storeUpdateGameplay({
+        ...(patch.unlimitedBoost !== undefined ? { unlimitedBoost: patch.unlimitedBoost } : {}),
+        ...(patch.goalRestart !== undefined ? { goalRestart: patch.goalRestart } : {}),
+        ...(patch.showCarHitbox !== undefined ? { showCarHitbox: Boolean(patch.showCarHitbox) } : {}),
+      }));
+
   const storeSizing = useMenuLayoutStore(
-    (s) => s.panels?.['layer3-training'] ?? DEFAULT_PANEL_SIZING['layer3-training']
+    (s) => s.panels?.['layer3-training-config'] ?? DEFAULT_PANEL_SIZING['layer3-training-config']
   );
   const sizing = propSizing ?? storeSizing;
   const { rowGap } = useSettingActionRowStore();

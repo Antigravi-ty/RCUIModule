@@ -3,13 +3,13 @@ import { floatingStore } from '../floatingStore';
 import { STORAGE_KEYS, safeStorage } from '../../config/storageHelpers';
 import { getInitialTheme } from '../../config/themeConfig';
 import { getInitialCar, loadStoredPlayerName } from '../../config/vehiclePresets';
-import { ROUTE_PARENT_MAP } from '../../config/uiConfig';
+import { ROUTE_PARENT_MAP, type ActiveMenuRoute } from '../../config/uiConfig';
 import { type AppState } from '../appStoreTypes';
 
 export const initialTheme = getInitialTheme();
 
 let lastToggleMenuTime = 0;
-let lastExpMultiBotsParentRoute: 'main-menu' | 'settings' = 'settings';
+let lastExpMultiBotsParentRoute: ActiveMenuRoute = 'dev-sandboxes';
 
 export type NavigationAndCarSlice = Pick<
   AppState,
@@ -97,8 +97,8 @@ export const createNavigationAndCarSlice: StateCreator<
   navigate: (route) => {
     const current = get().activeRoute;
     const wasCollapsed = get().isLivePreviewCollapsed;
-    if (route === 'exp-multi-bots-config') {
-      lastExpMultiBotsParentRoute = current === 'main-menu' ? 'main-menu' : 'settings';
+    if (route === 'exp-multi-bots') {
+      lastExpMultiBotsParentRoute = current;
     }
     set({ activeRoute: route, isLivePreviewCollapsed: false });
     floatingStore.triggerBatchMinimize();
@@ -110,7 +110,7 @@ export const createNavigationAndCarSlice: StateCreator<
   goBack: () => {
     const current = get().activeRoute;
     const wasCollapsed = get().isLivePreviewCollapsed;
-    if (current === 'exp-multi-bots-config') {
+    if (current === 'exp-multi-bots') {
       set({ activeRoute: lastExpMultiBotsParentRoute, isLivePreviewCollapsed: false });
       floatingStore.triggerBatchMinimize();
       if (wasCollapsed) {

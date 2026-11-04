@@ -12,10 +12,43 @@ import {
   REWINDER_CONFIGURATOR_PRESET,
 } from '../../stores/floatingPresets';
 
+export type BotDifficultyTier = 'nexto' | 'necto' | 'easy' | 'medium' | 'hard';
+export type ExhibitionMatchFormat = '1v1' | '2v2' | '3v3';
+export type ExhibitionDuration = '90' | '180' | '300' | '600' | 'unlimited';
+
 export interface ExhibitionBotSetupConfig {
-  format: '1v1' | '2v2' | '3v3';
-  difficulty: string;
-  duration: '90' | '180' | '300';
+  format: ExhibitionMatchFormat;
+  difficulty: BotDifficultyTier;
+  duration: ExhibitionDuration;
+}
+
+export interface Layer3ExhibitionRecipeProps {
+  isLight?: boolean;
+  /** Controlled exhibition setup config */
+  config?: Partial<ExhibitionBotSetupConfig>;
+  /** Alias for controlled config */
+  settings?: Partial<ExhibitionBotSetupConfig>;
+  /** Initial exhibition setup config for uncontrolled mode */
+  defaultConfig?: Partial<ExhibitionBotSetupConfig>;
+  /** Callback fired when any exhibition setup field changes */
+  onChange?: (
+    next: ExhibitionBotSetupConfig,
+    patch: Partial<ExhibitionBotSetupConfig>
+  ) => void;
+  /** Alias for onChange */
+  onConfigChange?: (
+    next: ExhibitionBotSetupConfig,
+    patch: Partial<ExhibitionBotSetupConfig>
+  ) => void;
+  defaultDifficulty?: BotDifficultyTier;
+  defaultFormat?: ExhibitionMatchFormat;
+  defaultDuration?: ExhibitionDuration;
+  difficultyOptions?: Array<{ label: string; value: BotDifficultyTier }>;
+  durationOptions?: Array<{ label: string; value: ExhibitionDuration }>;
+  onSelectDifficulty?: (difficulty: BotDifficultyTier, config?: ExhibitionBotSetupConfig) => void;
+  onNavigateAdvancedMutators?: () => void;
+  onBack?: () => void;
+  className?: string;
 }
 
 export type SelfTrainingModeId =
@@ -25,17 +58,50 @@ export type SelfTrainingModeId =
   | 'kickoff-training'
   | 'replay-viewer';
 
-export interface KickoffTrainingConfig {
-  subMode: KickoffSubMode;
-  aiSpawnSide: 'opposite-side' | 'same-position';
-  ghostMode: boolean;
-  showRhythmHighway: boolean;
+export interface Layer3SelfTrainingRecipeProps {
+  isLight?: boolean;
+  onSelectMode?: (mode: SelfTrainingModeId) => void;
+  onBack?: () => void;
+  className?: string;
 }
 
-export function useLayer3ExhibitionStoreBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export type KickoffAISpawnSide = 'same-position' | 'opposite-side';
+
+export interface KickoffTrainingConfig {
+  subMode: KickoffSubMode;
+  aiSpawnSide: KickoffAISpawnSide;
+  ghostMode: boolean;
+  showRhythmHighway?: boolean;
+}
+
+export interface Layer3KickoffTrainingRecipeProps {
+  isLight?: boolean;
+  /** Controlled kickoff training config */
+  config?: Partial<KickoffTrainingConfig>;
+  /** Alias for controlled config */
+  settings?: Partial<KickoffTrainingConfig>;
+  /** Initial kickoff training config for uncontrolled mode */
+  defaultConfig?: Partial<KickoffTrainingConfig>;
+  /** Callback fired when any kickoff training setting changes */
+  onChange?: (
+    next: KickoffTrainingConfig,
+    patch: Partial<KickoffTrainingConfig>
+  ) => void;
+  /** Alias for onChange */
+  onConfigChange?: (
+    next: KickoffTrainingConfig,
+    patch: Partial<KickoffTrainingConfig>
+  ) => void;
+  onStartTraining?: (config: KickoffTrainingConfig) => void;
+  onBack?: () => void;
+  className?: string;
+}
+
+export type { KickoffSubMode };
+
+export function useLayer3ExhibitionStoreBinding(
+  rawProps: Layer3ExhibitionRecipeProps
+): Layer3ExhibitionRecipeProps {
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -55,7 +121,7 @@ export function useLayer3ExhibitionStoreBinding<TProps extends object>(
         : expState.exhibitionTeamSize === 'double'
         ? '2v2'
         : '3v3';
-    const initialDifficulty: ExhibitionBotSetupConfig['difficulty'] =
+    const initialDifficulty: BotDifficultyTier =
       expState.exhibitionBotId === 'nexto' ? 'nexto' : 'necto';
     const initialDuration: ExhibitionBotSetupConfig['duration'] =
       expState.matchDurationSec === 180
@@ -71,7 +137,7 @@ export function useLayer3ExhibitionStoreBinding<TProps extends object>(
   });
 
   const handleStartExhibition = (
-    difficulty: ExhibitionBotSetupConfig['difficulty'],
+    difficulty: BotDifficultyTier,
     finalConfig = config
   ) => {
     const policy = difficulty === 'nexto' ? 'nexto' : 'necto';
@@ -92,20 +158,19 @@ export function useLayer3ExhibitionStoreBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : config),
-    onConfigChange: props.onConfigChange ?? ((next: ExhibitionBotSetupConfig) => setConfig(next)),
-    onSelectDifficulty: props.onSelectDifficulty ?? handleStartExhibition,
+    config: rawProps.config ?? rawProps.settings ?? (rawProps.defaultConfig ? undefined : config),
+    onConfigChange: rawProps.onConfigChange ?? ((next: ExhibitionBotSetupConfig) => setConfig(next)),
+    onSelectDifficulty: rawProps.onSelectDifficulty ?? handleStartExhibition,
     onNavigateAdvancedMutators:
-      props.onNavigateAdvancedMutators ??
-      (() => navigate('exp-multi-bots-config')),
-    onBack: props.onBack ?? goBack,
-  } as TProps;
+      rawProps.onNavigateAdvancedMutators ??
+      (() => navigate('exp-multi-bots')),
+    onBack: rawProps.onBack ?? goBack,
+  };
 }
 
-export function useLayer3SelfTrainingStoreBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export function useLayer3SelfTrainingStoreBinding(
+  rawProps: Layer3SelfTrainingRecipeProps
+): Layer3SelfTrainingRecipeProps {
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -153,15 +218,14 @@ export function useLayer3SelfTrainingStoreBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    onBack: props.onBack ?? goBack,
-    onSelectMode: props.onSelectMode ?? handleSelectMode,
-  } as TProps;
+    onBack: rawProps.onBack ?? goBack,
+    onSelectMode: rawProps.onSelectMode ?? handleSelectMode,
+  };
 }
 
-export function useLayer3KickoffTrainingStoreBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export function useLayer3KickoffTrainingStoreBinding(
+  rawProps: Layer3KickoffTrainingRecipeProps
+): Layer3KickoffTrainingRecipeProps {
   const goBack = useAppStore((s) => s.goBack);
   const closeMenu = useAppStore((s) => s.closeMenu);
   const setMatchMode = useAppStore((s) => s.setMatchMode);
@@ -179,7 +243,7 @@ export function useLayer3KickoffTrainingStoreBinding<TProps extends object>(
   } = useKickoffTrainingStore();
 
   const config: KickoffTrainingConfig = {
-    subMode,
+    subMode: subMode as KickoffSubMode,
     aiSpawnSide: ghostPlacement === 'same' ? 'same-position' : 'opposite-side',
     ghostMode: ghostModeEnabled,
     showRhythmHighway: showKeyboardOverlay,
@@ -210,9 +274,9 @@ export function useLayer3KickoffTrainingStoreBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : config),
-    onConfigChange: props.onConfigChange ?? handleConfigChange,
-    onStartTraining: props.onStartTraining ?? handleStartTraining,
-    onBack: props.onBack ?? goBack,
-  } as TProps;
+    config: rawProps.config ?? rawProps.settings ?? (rawProps.defaultConfig ? undefined : config),
+    onConfigChange: rawProps.onConfigChange ?? handleConfigChange,
+    onStartTraining: rawProps.onStartTraining ?? handleStartTraining,
+    onBack: rawProps.onBack ?? goBack,
+  };
 }

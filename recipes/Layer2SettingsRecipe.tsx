@@ -27,6 +27,11 @@ import { SettingsSubViewRouter } from './settings/SettingsSubViewRouter';
 export type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'advanced' | 'developer';
 
 export interface Layer2SettingsStateOverride {
+  initialTab?: string;
+  onDeveloperModeChange?: (unlocked: boolean) => void;
+  onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
+  onNavigateRoute?: (route: string) => void;
+  sizing?: PanelSizingConfig;
   gameplay?: Partial<GameplayConfig>;
   audio?: Partial<AudioConfig>;
   graphics?: Partial<GraphicsConfig>;
@@ -41,18 +46,25 @@ export interface Layer2SettingsStateOverride {
 export interface Layer2SettingsRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
-  onNavigateRoute?: (route: string) => void;
-  onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
-  initialTab?: string;
+  onNavigateAudioDetail?: () => void;
+  onNavigateTrajectoryDetail?: () => void;
+  onNavigateCameraDetail?: () => void;
+  onNavigateKeybindingsDetail?: () => void;
+  onNavigateTrainingDetail?: () => void;
+  onNavigateAdvancedAudio?: () => void;
+  onNavigateEventTriggerRules?: () => void;
+  onNavigateExpMultiBots?: () => void;
+  onNavigateDevSandboxes?: () => void;
+  onNavigateDevActiveTuners?: () => void;
+  onNavigateDevCalibratedPresets?: () => void;
+  onNavigateDevUnderDevelopment?: () => void;
   activeTab?: string;
   onTabChange?: (tab: SettingsTabId) => void;
   /** Whether Developer Mode is unlocked (controls visibility of 5th 'Developer' tab) */
   developerMode?: boolean;
-  onDeveloperModeChange?: (unlocked: boolean) => void;
   highlightSetting?: string | null;
   onClearHighlight?: () => void;
   stateOverride?: Layer2SettingsStateOverride;
-  sizing?: PanelSizingConfig;
 }
 
 /**
@@ -71,18 +83,32 @@ export interface Layer2SettingsRecipeProps {
 export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   isLight = false,
   onBack: propOnBack,
-  onNavigateRoute,
-  onSpawnDiagnosticWindow,
-  initialTab = 'gameplay',
+  onNavigateAudioDetail,
+  onNavigateTrajectoryDetail,
+  onNavigateCameraDetail,
+  onNavigateKeybindingsDetail,
+  onNavigateTrainingDetail,
+  onNavigateAdvancedAudio,
+  onNavigateEventTriggerRules,
+  onNavigateExpMultiBots,
+  onNavigateDevSandboxes,
+  onNavigateDevActiveTuners,
+  onNavigateDevCalibratedPresets,
+  onNavigateDevUnderDevelopment,
   activeTab: controlledTab,
   onTabChange,
   developerMode: propDevMode,
-  onDeveloperModeChange,
   highlightSetting,
   onClearHighlight,
   stateOverride,
-  sizing: propSizing,
 }) => {
+  const {
+    initialTab = 'gameplay',
+    onDeveloperModeChange,
+    onSpawnDiagnosticWindow,
+    onNavigateRoute,
+    sizing: propSizing,
+  } = stateOverride ?? {};
   const storeGoBack = useAppStore((s) => s.goBack);
   const storeDevMode = useAppStore((s) => s.developerMode);
   const setStoreDevMode = useAppStore((s) => s.setDeveloperMode);
@@ -90,7 +116,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   const onBack = propOnBack ?? storeGoBack;
 
   const [internalSubView, setInternalSubView] = useState<
-    null | 'trajectory' | 'training' | 'camera' | 'keybindings'
+    null | 'trajectory' | 'training-config' | 'camera' | 'keybindings'
   >(null);
 
   const normalizeTab = (t?: string): SettingsTabId => {
@@ -144,17 +170,37 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   const sizing = propSizing ?? storeSizing;
 
   const handleNavigateSubViewOrRoute = (route: string) => {
+    const normalizedRoute = route === 'training' ? 'training-config' : route;
+    const specificHandlers: Record<string, (() => void) | undefined> = {
+      'audio-eq': onNavigateAudioDetail,
+      trajectory: onNavigateTrajectoryDetail,
+      camera: onNavigateCameraDetail,
+      keybindings: onNavigateKeybindingsDetail,
+      'training-config': onNavigateTrainingDetail,
+      'advanced-audio': onNavigateAdvancedAudio,
+      'event-trigger-rules': onNavigateEventTriggerRules,
+      'exp-multi-bots': onNavigateExpMultiBots,
+      'dev-sandboxes': onNavigateDevSandboxes,
+      'dev-active-tuners': onNavigateDevActiveTuners,
+      'dev-calibrated-presets': onNavigateDevCalibratedPresets,
+      'dev-under-development': onNavigateDevUnderDevelopment,
+    };
+    const specificHandler = specificHandlers[normalizedRoute];
+    if (specificHandler) {
+      specificHandler();
+      return;
+    }
     if (onNavigateRoute) {
       onNavigateRoute(route);
       return;
     }
     if (
-      route === 'trajectory' ||
-      route === 'training' ||
-      route === 'camera' ||
-      route === 'keybindings'
+      normalizedRoute === 'trajectory' ||
+      normalizedRoute === 'training-config' ||
+      normalizedRoute === 'camera' ||
+      normalizedRoute === 'keybindings'
     ) {
-      setInternalSubView(route);
+      setInternalSubView(normalizedRoute);
     }
   };
 

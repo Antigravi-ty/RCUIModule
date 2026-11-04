@@ -1,6 +1,6 @@
 /**
  * replayDirectorConfig.ts
- * Pure configuration schema, defaults, and parameter sanitization for the Goal Replay Director Camera & Slow-Motion.
+ * Pure configuration schema, defaults, and parameter updates for the Goal Replay Director Camera & Slow-Motion.
  */
 
 export const DEFAULT_REPLAY_DIRECTOR_FOV_DEG = 110.0;
@@ -78,6 +78,24 @@ export const DEFAULT_REPLAY_DIRECTOR_CONFIG: Readonly<ReplayDirectorConfigState>
   muteSignalAudioInGoalReplay: true,
 });
 
+export const REPLAY_DIRECTOR_CONFIG: ReplayDirectorConfigState = {
+  ...DEFAULT_REPLAY_DIRECTOR_CONFIG,
+};
+
+export type ReplayDirectorConfigListener = (config: ReplayDirectorConfigState) => void;
+const directorConfigCallbacks: ReplayDirectorConfigListener[] = [];
+
+let _getActiveController: (() => any) | null = null;
+let _notifyActiveController: (() => void) | null = null;
+
+export function setReplayDirectorActiveControllerHooks(hooks: {
+  getActiveController: () => any;
+  notifyActiveController: () => void;
+}): void {
+  _getActiveController = hooks.getActiveController;
+  _notifyActiveController = hooks.notifyActiveController;
+}
+
 export function sanitizeReplayDirectorConfigPatch(
   current: ReplayDirectorConfigState,
   patch: Partial<ReplayDirectorConfigState> = {}
@@ -102,4 +120,71 @@ export function sanitizeReplayDirectorConfigPatch(
     }
   }
   return { nextConfig, changed };
+}
+
+export function getReplayDirectorConfig(): ReplayDirectorConfigState {
+  return { ...REPLAY_DIRECTOR_CONFIG };
+}
+
+export function updateReplayDirectorConfig(
+  patch: Partial<ReplayDirectorConfigState> = {}
+): ReplayDirectorConfigState {
+  const { nextConfig, changed } = sanitizeReplayDirectorConfigPatch(REPLAY_DIRECTOR_CONFIG, patch);
+  if (changed) {
+    Object.assign(REPLAY_DIRECTOR_CONFIG, nextConfig);
+  }
+  const activeCtrl = _getActiveController?.();
+  if (changed && activeCtrl) {
+    if (activeCtrl.isImportedPreview && activeCtrl.useRecordedCsvCamera) {
+      activeCtrl.useRecordedCsvCamera = false;
+    }
+    activeCtrl._cachedSuffixCameraPlan = null;
+    activeCtrl._cachedSmoothnessSummary = null;
+    activeCtrl._cachedAnomalyPeaks = null;
+    activeCtrl.refreshCurrentFrameDirectorPose?.();
+  }
+  for (const fn of directorConfigCallbacks) {
+    try {
+      fn({ ...REPLAY_DIRECTOR_CONFIG });
+    } catch (err) {
+      console.warn('[replayDirectorConfig] Config listener failed:', err);
+    }
+  }
+  if (changed) {
+    _notifyActiveController?.();
+  }
+  return REPLAY_DIRECTOR_CONFIG;
+}
+
+export function resetReplayDirectorConfig(): ReplayDirectorConfigState {
+  Object.assign(REPLAY_DIRECTOR_CONFIG, DEFAULT_REPLAY_DIRECTOR_CONFIG);
+  const activeCtrl = _getActiveController?.();
+  if (activeCtrl) {
+    activeCtrl._cachedSuffixCameraPlan = null;
+    activeCtrl._cachedSmoothnessSummary = null;
+    activeCtrl._cachedAnomalyPeaks = null;
+    activeCtrl.refreshCurrentFrameDirectorPose?.();
+  }
+  for (const fn of directorConfigCallbacks) {
+    try {
+      fn({ ...REPLAY_DIRECTOR_CONFIG });
+    } catch (err) {
+      console.warn('[replayDirectorConfig] Config reset listener failed:', err);
+    }
+  }
+  _notifyActiveController?.();
+  return REPLAY_DIRECTOR_CONFIG;
+}
+
+export function subscribeReplayDirectorConfig(listener: ReplayDirectorConfigListener): () => boolean {
+  if (typeof listener !== 'function') return () => false;
+  if (!directorConfigCallbacks.includes(listener)) {
+    directorConfigCallbacks.push(listener);
+  }
+  return () => {
+    const idx = directorConfigCallbacks.indexOf(listener);
+    if (idx === -1) return false;
+    directorConfigCallbacks.splice(idx, 1);
+    return true;
+  };
 }

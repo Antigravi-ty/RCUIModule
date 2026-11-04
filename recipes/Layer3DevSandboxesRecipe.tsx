@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { useLayer3DevSandboxesStoreBinding } from './hooks/useLayer3DevSettingsBindings';
+import {
+  useLayer3DevSandboxesStoreBinding,
+  type DevTestLabTab,
+  type Layer3DevSandboxesRecipeProps,
+} from './hooks/useLayer3DevSettingsBindings';
 import {
   Bot,
   Sparkles,
@@ -27,28 +31,10 @@ import { floatingStore } from '../stores/floatingStore';
 import {
   SUBSYSTEM_ISOLATION_LAB_PRESET,
   EXPERIMENTAL_MULTI_BOTS_PRESET,
+  EXPERIMENTAL_BOT_PACK_PRESET,
 } from '../stores/devFloatingPresets';
 
-export type DevTestLabTab =
-  | 'probes'
-  | 'multi-ghost'
-  | 'state-replay'
-  | '90s-match'
-  | 'goal-replay'
-  | 'kickoff-duel'
-  | 'demolish-respawn'
-  | 'exp-multi-bots'
-  | 'exp-botpack-9700488';
-
-export interface Layer3DevSandboxesRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  activeBenchId?: DevTestLabTab | null;
-  onEnterBench?: (tab: DevTestLabTab) => void;
-  onNavigateExpMultiBots?: () => void;
-  onNavigateExpBotpack9700488?: () => void;
-  sizing?: PanelSizingConfig;
-}
+export type { DevTestLabTab, Layer3DevSandboxesRecipeProps };
 
 interface SubsystemCardMeta {
   id: DevTestLabTab;
@@ -134,11 +120,11 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
   },
   {
     id: 'exp-botpack-9700488',
-    title: 'experimental  botpack#9700488',
+    title: 'Experimental Bot Pack',
     summary:
-      'Spectate all 8 RLBot botpack#9700488 models (Chronos v2.1, Dice, Ducky, Fury, Galactus v2, Kira, Rain, Ripple v1.1) at max format.',
+      'Spectate all 8 RLBot #9700488 models (Chronos v2.1, Dice, Ducky, Fury, Galactus v2, Kira, Rain, Ripple v1.1) at max format.',
     details:
-      'experimental  botpack#9700488 (8 New SafeTensors Models · Max-Format All-Bots Spectate): Launches 3v3/2v2/1v1 self-play spectate for Chronos v2.1, Dice, Ducky, Fury, Galactus v2, Kira, Rain, and Ripple v1.1.',
+      'Experimental Bot Pack (8 Native SafeTensors Models · Max-Format All-Bots Spectate): Launches 3v3/2v2/1v1 self-play spectate for Chronos v2.1, Dice, Ducky, Fury, Galactus v2, Kira, Rain, and Ripple v1.1.',
     icon: Sparkles,
     iconColor: 'text-teal-400',
   },
@@ -150,14 +136,15 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
  */
 export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> = (rawProps) => {
   const {
-    isLight = false,
-    onBack,
-    activeBenchId = null,
-    onEnterBench,
-    onNavigateExpMultiBots,
-    onNavigateExpBotpack9700488,
-    sizing: propSizing,
-  } = useLayer3DevSandboxesStoreBinding(rawProps);
+  isLight = false,
+  onBack,
+  activeBenchId = null,
+  onEnterBench,
+  onLaunchIsolationTab,
+  onNavigateExpMultiBots,
+  onNavigateExpBotpack9700488,
+  sizing: propSizing,
+} = useLayer3DevSandboxesStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const storeSizing = useMenuLayoutStore(
@@ -188,10 +175,18 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
       return;
     }
 
+    if (tab === 'exp-botpack-9700488') {
+      floatingStore.closeWindow(EXPERIMENTAL_MULTI_BOTS_PRESET.id);
+    } else if (tab === 'exp-multi-bots') {
+      floatingStore.closeWindow(EXPERIMENTAL_BOT_PACK_PRESET.id);
+    }
+
     const targetPreset =
-      tab === 'exp-multi-bots' || tab === 'exp-botpack-9700488'
-        ? EXPERIMENTAL_MULTI_BOTS_PRESET
-        : SUBSYSTEM_ISOLATION_LAB_PRESET;
+      tab === 'exp-botpack-9700488'
+        ? EXPERIMENTAL_BOT_PACK_PRESET
+        : tab === 'exp-multi-bots'
+          ? EXPERIMENTAL_MULTI_BOTS_PRESET
+          : SUBSYSTEM_ISOLATION_LAB_PRESET;
 
     floatingStore.setOpacity(70);
     const snap = floatingStore.getSnapshot();
@@ -214,7 +209,11 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
         });
       }
     }
-    onEnterBench?.(tab);
+    if (onEnterBench) {
+      onEnterBench(tab);
+    } else {
+      onLaunchIsolationTab?.(tab);
+    }
   };
 
   return (

@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { useLayer2PlayStoreBinding } from './hooks/useMainMenuAndPlayStoreBindings';
+import {
+  useLayer2PlayStoreBinding,
+  type Layer2PlayRecipeProps,
+} from './hooks/useMainMenuAndPlayStoreBindings';
 import { Bot, Server, Wifi, PencilRuler, BookOpen, SlidersHorizontal } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -12,19 +15,7 @@ import {
 } from '../stores/playCardStyleStore';
 import { useSignalingProfileStore } from '../stores/signalingProfileStore';
 
-export interface Layer2PlayRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  onSelectMode?: (modeId: string) => void;
-  onSelectExhibition?: () => void;
-  onSelectHostMatch?: () => void;
-  onSelectJoinRoom?: () => void;
-  onSelectSelfTraining?: () => void;
-  /** Optional explicit card style variant override (decoupled from store when provided) */
-  cardVariant?: PlayCardStyleVariant;
-  /** Optional explicit card style parameters override (decoupled from store when provided) */
-  cardStyleParams?: Partial<PlayCardStyleParams>;
-}
+export type { Layer2PlayRecipeProps };
 
 export interface PlayModeDef {
   id: string;
@@ -125,7 +116,8 @@ export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = (rawProps) => {
   const { panels } = useMenuLayoutStore();
   const sizing = panels['layer2-play'];
   const storeCardStyle = usePlayCardStyleStore();
-  const signalingProfileLoaded = useSignalingProfileStore((s) => s.loaded);
+  const signalingSource = useSignalingProfileStore((s) => s.source);
+  const signalingShortHash = useSignalingProfileStore((s) => s.shortHash);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const mergedCardParams: PlayCardStyleParams = {
@@ -184,10 +176,11 @@ export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = (rawProps) => {
               onClick={handleCardClick}
               onMouseEnter={() => {
                 const isOnlineCard = mode.id === 'host-match' || mode.id === 'join-room';
-                const suffix =
-                  isOnlineCard && !signalingProfileLoaded
-                    ? ' (Requires importing a .rctbnspib signaling profile in Settings → Advanced)'
-                    : '';
+                const suffix = isOnlineCard
+                  ? signalingSource === 'public'
+                    ? ` (Active: Public EMQX #${signalingShortHash}, Best-Effort / No SLA)`
+                    : ` (Active: ${signalingSource} #${signalingShortHash})`
+                  : '';
                 setHoveredDesc(`${mode.description}${suffix}`);
               }}
               onMouseLeave={() => setHoveredDesc(null)}

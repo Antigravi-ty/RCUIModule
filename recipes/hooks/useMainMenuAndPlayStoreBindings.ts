@@ -18,7 +18,37 @@ import {
 } from '../garage/garageConstants';
 import type { VisualMaterialsConfig } from '../garage/GarageLoadoutTab';
 import { type StoredColorPrefs } from '../../config/uiConfig';
+import type {
+  PlayCardStyleParams,
+  PlayCardStyleVariant,
+} from '../../stores/playCardStyleStore';
 import type { CanonicalLayer1ContextVariation } from '../layer1MenuContextSpecs';
+
+export type TouchInputAgentOption = 'none' | 'necto' | 'nexto';
+
+export interface Layer2PlayRecipeProps {
+  isLight?: boolean;
+  onBack?: () => void;
+  onSelectMode?: (modeId: string) => void;
+  onSelectExhibition?: () => void;
+  onSelectHostMatch?: () => void;
+  onSelectJoinRoom?: () => void;
+  onSelectSelfTraining?: () => void;
+  /** Optional explicit card style variant override (decoupled from store when provided) */
+  cardVariant?: PlayCardStyleVariant;
+  /** Optional explicit card style parameters override (decoupled from store when provided) */
+  cardStyleParams?: Partial<PlayCardStyleParams>;
+}
+
+export type GarageTabId =
+  | 'car'
+  | 'paint'
+  | 'loadout'
+  | 'anthem'
+  | 'sync'
+  | 'colour'
+  | 'materials'
+  | 'player-name';
 
 export function useLayer1MainMenuStoreBinding<TProps extends object>(
   rawProps: TProps
@@ -115,7 +145,8 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    contextVariation: props.contextVariation ?? derivedVariation,
+    contextVariation:
+      props.contextVariation ?? props.contextMode ?? derivedVariation,
     extraBottomAction: resolvedExtraBottomAction,
     touchMode: props.touchMode ?? touchMode,
     touchHeadlessMode: props.touchHeadlessMode ?? touchHeadlessMode,
@@ -134,46 +165,50 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
         }
         navigate('settings');
       }),
+    onNavigateManageRoom:
+      props.onNavigateManageRoom ?? (() => navigate('manage-room')),
     onNavigateRoomControl:
-      props.onNavigateRoomControl ?? (() => navigate('room-host-control')),
+      props.onNavigateRoomControl ?? (() => navigate('manage-room')),
+    onNavigateExpMultiBotsConfig:
+      props.onNavigateExpMultiBotsConfig ??
+      (() => navigate('exp-multi-bots')),
     onNavigateExpMultiBots:
       props.onNavigateExpMultiBots ??
-      (() => navigate('exp-multi-bots-config')),
+      (() => navigate('exp-multi-bots')),
   } as TProps;
 }
 
-export function useLayer2PlayStoreBinding<TProps extends object>(
-  rawProps: TProps
-): TProps {
-  const props = rawProps as Record<string, any>;
+export function useLayer2PlayStoreBinding(
+  rawProps: Layer2PlayRecipeProps
+): Layer2PlayRecipeProps {
   const navigate = useAppStore((s) => s.navigate);
   const goBack = useAppStore((s) => s.goBack);
 
   const onSelectExhibition =
-    props.onSelectExhibition ?? (() => navigate('exhibition'));
+    rawProps.onSelectExhibition ?? (() => navigate('exhibition'));
   const onSelectHostMatch =
-    props.onSelectHostMatch ?? (() => navigate('host-match'));
+    rawProps.onSelectHostMatch ?? (() => navigate('host-match'));
   const onSelectJoinRoom =
-    props.onSelectJoinRoom ?? (() => navigate('join-room'));
+    rawProps.onSelectJoinRoom ?? (() => navigate('join-room'));
   const onSelectSelfTraining =
-    props.onSelectSelfTraining ?? (() => navigate('self-training'));
+    rawProps.onSelectSelfTraining ?? (() => navigate('self-training'));
 
   return {
     ...rawProps,
-    onBack: props.onBack ?? goBack,
+    onBack: rawProps.onBack ?? goBack,
     onSelectExhibition,
     onSelectHostMatch,
     onSelectJoinRoom,
     onSelectSelfTraining,
     onSelectMode:
-      props.onSelectMode ??
+      rawProps.onSelectMode ??
       ((modeId: string) => {
         if (modeId === 'exhibition') onSelectExhibition();
         else if (modeId === 'host-match') onSelectHostMatch();
         else if (modeId === 'join-room') onSelectJoinRoom();
         else if (modeId === 'self-training') onSelectSelfTraining();
       }),
-  } as TProps;
+  };
 }
 
 export function useLayer2GarageStoreBinding<TProps extends object>(
@@ -245,7 +280,7 @@ export function useLayer2GarageStoreBinding<TProps extends object>(
       props.onOrangeOrderChange ??
       ((orangeOrder: number[]) => saveAndBroadcastColors({ ...colorPrefs, orangeOrder })),
     materials: props.materials ?? {
-      ...materials as VisualMaterialsConfig,
+      ...(materials as VisualMaterialsConfig),
       boostAudio: materials.boostAudio ?? 'rush',
     },
     onUpdateMaterials: props.onUpdateMaterials ?? updateMaterials,

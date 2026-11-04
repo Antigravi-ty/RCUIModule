@@ -32,17 +32,26 @@ export const normalizePanels = (
   return merged;
 };
 
-const normalizeTokens = (tokens: Partial<MenuLayoutTokens>): MenuLayoutTokens => {
+const syncLegacyFields = (tokens: MenuLayoutTokens): MenuLayoutTokens => {
   const safePanels = normalizePanels(tokens?.panels);
   return {
     ...DEFAULT_MENU_LAYOUT_TOKENS,
     ...tokens,
+    showAdditionalPreviews: false,
     panels: safePanels,
+    panelHeaderBackBtnSize:
+      tokens.panelHeaderBackBtnHeight ?? DEFAULT_PANEL_SHELL_TOKENS.panelHeaderBackBtnHeight,
+    layer1Width: safePanels['layer1-main'].width,
+    layer1Height: safePanels['layer1-main'].targetHeight,
+    layer2Width: safePanels['layer2-settings'].width,
+    layer2Height: safePanels['layer2-settings'].targetHeight,
+    layer3Width: safePanels['layer3-host-match'].width,
+    layer3Height: safePanels['layer3-host-match'].targetHeight,
   };
 };
 
 const cloneDefaultTokens = (): MenuLayoutTokens => {
-  return normalizeTokens({
+  return syncLegacyFields({
     ...DEFAULT_MENU_LAYOUT_TOKENS,
     panels: normalizePanels(),
   });
@@ -51,7 +60,7 @@ const cloneDefaultTokens = (): MenuLayoutTokens => {
 const loadSavedTokens = (): MenuLayoutTokens => {
   const base = cloneDefaultTokens();
   const parsed = readStorageJson<Partial<MenuLayoutTokens>>(STORAGE_KEY, base);
-  return normalizeTokens({
+  return syncLegacyFields({
     ...base,
     ...parsed,
     panels: normalizePanels(parsed?.panels),
@@ -59,13 +68,14 @@ const loadSavedTokens = (): MenuLayoutTokens => {
 };
 
 const extractTokens = (state: MenuLayoutTokens): MenuLayoutTokens =>
-  normalizeTokens({
+  syncLegacyFields({
     panels: normalizePanels(state.panels),
     dividerMarginY: state.dividerMarginY,
     menuItemGap: state.menuItemGap,
     menuItemPaddingY: state.menuItemPaddingY,
     menuContainerPadding: state.menuContainerPadding,
     panelContentPaddingY: state.panelContentPaddingY,
+    showAdditionalPreviews: state.showAdditionalPreviews,
     simulateLayer3Error: state.simulateLayer3Error,
     lockPanelPaddingX: state.lockPanelPaddingX,
     panelHeaderPaddingX: state.panelHeaderPaddingX,
@@ -74,6 +84,7 @@ const extractTokens = (state: MenuLayoutTokens): MenuLayoutTokens =>
     lockPanelHeaderBackBtnAspect: state.lockPanelHeaderBackBtnAspect,
     panelHeaderBackBtnWidth: state.panelHeaderBackBtnWidth,
     panelHeaderBackBtnHeight: state.panelHeaderBackBtnHeight,
+    panelHeaderBackBtnSize: state.panelHeaderBackBtnHeight,
     panelHeaderBackBtnShowArrow: state.panelHeaderBackBtnShowArrow,
     panelHeaderBackBtnShowLabel: state.panelHeaderBackBtnShowLabel,
     panelHeaderBackBtnIdleTone: state.panelHeaderBackBtnIdleTone,
@@ -98,6 +109,12 @@ const extractTokens = (state: MenuLayoutTokens): MenuLayoutTokens =>
     panelFooterSplitRight: state.panelFooterSplitRight,
     panelFooterRightDivider: state.panelFooterRightDivider,
     panelFooterRightPaddingX: state.panelFooterRightPaddingX,
+    layer1Width: state.layer1Width,
+    layer1Height: state.layer1Height,
+    layer2Width: state.layer2Width,
+    layer2Height: state.layer2Height,
+    layer3Width: state.layer3Width,
+    layer3Height: state.layer3Height,
   });
 
 const SYNC_KEY = 'store:menuLayout:v5';
@@ -128,6 +145,7 @@ const buildShellTokensSnapshot = (s: MenuLayoutTokens) => ({
   lockPanelHeaderBackBtnAspect: s.lockPanelHeaderBackBtnAspect,
   panelHeaderBackBtnWidth: s.panelHeaderBackBtnWidth,
   panelHeaderBackBtnHeight: s.panelHeaderBackBtnHeight,
+  panelHeaderBackBtnSize: s.panelHeaderBackBtnHeight,
   panelHeaderBackBtnShowArrow: s.panelHeaderBackBtnShowArrow,
   panelHeaderBackBtnShowLabel: s.panelHeaderBackBtnShowLabel,
   panelHeaderBackBtnIdleTone: s.panelHeaderBackBtnIdleTone,
@@ -155,7 +173,7 @@ const buildShellTokensSnapshot = (s: MenuLayoutTokens) => ({
 });
 
 const rawInitialTokens = syncBridge.get<MenuLayoutTokens>(SYNC_KEY, loadSavedTokens());
-const initialMenuLayoutTokens = normalizeTokens({
+const initialMenuLayoutTokens = syncLegacyFields({
   ...cloneDefaultTokens(),
   ...rawInitialTokens,
   panels: normalizePanels(rawInitialTokens?.panels),
@@ -187,7 +205,10 @@ export const useMenuLayoutStore = create<MenuLayoutStore>((set, get) => ({
         patch.panelBodyPaddingX = state.panelHeaderPaddingX;
         patch.panelFooterPaddingX = state.panelHeaderPaddingX;
       }
-      if (
+      if (key === 'panelHeaderBackBtnSize' && typeof value === 'number') {
+        patch.panelHeaderBackBtnWidth = value;
+        patch.panelHeaderBackBtnHeight = value;
+      } else if (
         state.lockPanelHeaderBackBtnAspect &&
         typeof value === 'number' &&
         (key === 'panelHeaderBackBtnWidth' || key === 'panelHeaderBackBtnHeight')
@@ -197,7 +218,7 @@ export const useMenuLayoutStore = create<MenuLayoutStore>((set, get) => ({
       } else if (key === 'lockPanelHeaderBackBtnAspect' && value === true) {
         patch.panelHeaderBackBtnWidth = state.panelHeaderBackBtnHeight;
       }
-      const next = normalizeTokens({
+      const next = syncLegacyFields({
         ...extractTokens(state),
         ...patch,
       });
@@ -208,7 +229,7 @@ export const useMenuLayoutStore = create<MenuLayoutStore>((set, get) => ({
 
   updateTokens: (patch) => {
     set((state) => {
-      const next = normalizeTokens({
+      const next = syncLegacyFields({
         ...extractTokens(state),
         ...patch,
       });
@@ -227,7 +248,7 @@ export const useMenuLayoutStore = create<MenuLayoutStore>((set, get) => ({
           ...patch,
         },
       };
-      const next = normalizeTokens({
+      const next = syncLegacyFields({
         ...extractTokens(state),
         panels: nextPanels,
       });
@@ -243,7 +264,7 @@ export const useMenuLayoutStore = create<MenuLayoutStore>((set, get) => ({
         ...currentPanels,
         [panelId]: { ...CANONICAL_PANEL_SIZING[panelId] },
       };
-      const next = normalizeTokens({
+      const next = syncLegacyFields({
         ...extractTokens(state),
         panels: nextPanels,
       });
@@ -254,7 +275,7 @@ export const useMenuLayoutStore = create<MenuLayoutStore>((set, get) => ({
 
   resetPanelShellTokens: () => {
     set((state) => {
-      const next = normalizeTokens({
+      const next = syncLegacyFields({
         ...extractTokens(state),
         ...DEFAULT_PANEL_SHELL_TOKENS,
       });
@@ -299,6 +320,7 @@ export const DEFAULT_MENU_LAYOUT_TOKENS = ${JSON.stringify(
         menuItemPaddingY: s.menuItemPaddingY,
         menuContainerPadding: s.menuContainerPadding,
         panelContentPaddingY: s.panelContentPaddingY,
+        showAdditionalPreviews: s.showAdditionalPreviews,
       },
       null,
       2
@@ -317,7 +339,7 @@ syncBridge.onReset((scopePrefix) => {
 
 syncBridge.subscribeKey<MenuLayoutTokens>(SYNC_KEY, (remoteTokens) => {
   if (!remoteTokens || typeof remoteTokens !== 'object') return;
-  const merged = normalizeTokens({
+  const merged = syncLegacyFields({
     ...extractTokens(useMenuLayoutStore.getState()),
     ...remoteTokens,
     panels: normalizePanels({

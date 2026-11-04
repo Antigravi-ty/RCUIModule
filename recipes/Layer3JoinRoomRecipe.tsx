@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLayer3JoinRoomStoreBinding } from './hooks/useLayer3OnlineRoomSetupBindings';
+import {
+  useLayer3JoinRoomStoreBinding,
+  type JoinRoomConfig,
+  type Layer3JoinRoomRecipeProps,
+  type Layer3JoinRoomStateOverride,
+} from './hooks/useLayer3OnlineRoomSetupBindings';
 import { Eye, Wifi } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -7,13 +12,15 @@ import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
-import { dispatchOnlineRoomErrorNotification } from './online/onlineRoomErrorNotification';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,
+  dispatchOnlineRoomErrorNotification,
   type CreationProgressStatus,
   type CreationStepSpec,
 } from './online/OnlineRoomCreationProgress';
+
+export type { JoinRoomConfig, Layer3JoinRoomRecipeProps, Layer3JoinRoomStateOverride };
 
 export const DEFAULT_JOIN_ROOM_STEPS: CreationStepSpec[] = [
   {
@@ -53,50 +60,12 @@ export const DEFAULT_JOIN_ROOM_STEPS: CreationStepSpec[] = [
   },
 ];
 
-export interface JoinRoomConfig {
-  playerName: string;
-  roomCode: string;
-  roomKey: string;
-  allowSpectating: boolean;
-}
-
 export const DEFAULT_JOIN_ROOM_CONFIG: JoinRoomConfig = {
   playerName: `Player${Math.floor(1000 + Math.random() * 9000)}`,
   roomCode: String(Math.floor(1000 + Math.random() * 9000)),
   roomKey: '',
   allowSpectating: true,
 };
-
-export interface Layer3JoinRoomRecipeProps {
-  isLight?: boolean;
-  /** Controlled join room configuration */
-  config?: Partial<JoinRoomConfig>;
-  /** Alias for controlled config */
-  settings?: Partial<JoinRoomConfig>;
-  /** Initial join room configuration for uncontrolled mode */
-  defaultConfig?: Partial<JoinRoomConfig>;
-  /** Callback fired when any join room field changes */
-  onChange?: (next: JoinRoomConfig, patch: Partial<JoinRoomConfig>) => void;
-  /** Alias for onChange */
-  onConfigChange?: (next: JoinRoomConfig, patch: Partial<JoinRoomConfig>) => void;
-  defaultPlayerName?: string;
-  defaultRoomCode?: string;
-  defaultRoomKey?: string;
-  defaultAllowSpectating?: boolean;
-  onJoinRoom?: (config: JoinRoomConfig) => void;
-  /** Controlled 5-step connection progress status */
-  progressStatus?: CreationProgressStatus;
-  /** Controlled current step (1..5) */
-  currentStep?: number;
-  /** Custom step specifications */
-  steps?: CreationStepSpec[];
-  onProgressStatusChange?: (status: CreationProgressStatus) => void;
-  onCurrentStepChange?: (step: number) => void;
-  onRetryJoin?: () => void;
-  onCancelJoin?: () => void;
-  onNavigateGarageSync?: () => void;
-  onBack?: () => void;
-}
 
 /**
  * [Recipe] Layer 3 Join Room (Connect to Peer Lobby)
@@ -108,42 +77,36 @@ export interface Layer3JoinRoomRecipeProps {
  */
 export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.memo((rawProps) => {
   const {
-  isLight = false,
-  config: controlledConfigProp,
-  settings: controlledSettingsProp,
-  defaultConfig,
-  onChange,
-  onConfigChange,
-  defaultPlayerName = DEFAULT_JOIN_ROOM_CONFIG.playerName,
-  defaultRoomCode = DEFAULT_JOIN_ROOM_CONFIG.roomCode,
-  defaultRoomKey = '',
-  defaultAllowSpectating = true,
-  onJoinRoom,
-  progressStatus: controlledProgressStatus,
-  currentStep: controlledCurrentStep,
-  steps = DEFAULT_JOIN_ROOM_STEPS,
-  onProgressStatusChange,
-  onCurrentStepChange,
-  onRetryJoin,
-  onCancelJoin,
-  onNavigateGarageSync,
-  onBack = () => {},
-} = useLayer3JoinRoomStoreBinding(rawProps);
+    isLight = false,
+    config: controlledConfigProp,
+    defaultConfig,
+    onChange,
+    onJoinRoom,
+    progressStatus: controlledProgressStatus,
+    currentStep: controlledCurrentStep,
+    steps = DEFAULT_JOIN_ROOM_STEPS,
+    onProgressStatusChange,
+    onCurrentStepChange,
+    onRetryJoin,
+    onCancelJoin,
+    onNavigateGarageSync,
+    onNavigateSignalingConfig,
+    onBack = () => {},
+  } = useLayer3JoinRoomStoreBinding(rawProps);
   const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
   const sizing = panels['layer3-join-room'];
   const { rowGap, paddingX } = useSettingActionRowStore();
 
   const [internalConfig, setInternalConfig] = useState<JoinRoomConfig>({
-    playerName: defaultConfig?.playerName ?? defaultPlayerName,
-    roomCode: defaultConfig?.roomCode ?? defaultRoomCode,
-    roomKey: defaultConfig?.roomKey ?? defaultRoomKey,
-    allowSpectating: defaultConfig?.allowSpectating ?? defaultAllowSpectating,
+    playerName: defaultConfig?.playerName ?? DEFAULT_JOIN_ROOM_CONFIG.playerName,
+    roomCode: defaultConfig?.roomCode ?? DEFAULT_JOIN_ROOM_CONFIG.roomCode,
+    roomKey: defaultConfig?.roomKey ?? DEFAULT_JOIN_ROOM_CONFIG.roomKey,
+    allowSpectating: defaultConfig?.allowSpectating ?? DEFAULT_JOIN_ROOM_CONFIG.allowSpectating,
   });
 
-  const controlledSource = controlledConfigProp ?? controlledSettingsProp;
   const resolvedConfig: JoinRoomConfig = {
     ...internalConfig,
-    ...controlledSource,
+    ...controlledConfigProp,
   };
 
   const updateConfig = (patch: Partial<JoinRoomConfig>) => {
@@ -151,11 +114,10 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
       ...resolvedConfig,
       ...patch,
     };
-    if (controlledSource === undefined) {
+    if (controlledConfigProp === undefined) {
       setInternalConfig(next);
     }
     onChange?.(next, patch);
-    onConfigChange?.(next, patch);
   };
 
   const { playerName, roomCode, roomKey, allowSpectating } = resolvedConfig;
@@ -271,14 +233,17 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
           style={{ gap: `${Math.max(8, rowGap)}px` }}
         >
           <OnlineRoomIdentityFields
-            playerName={playerName}
-            onPlayerNameChange={setPlayerName}
-            roomCode={roomCode}
-            onRoomCodeChange={setRoomCode}
-            roomKey={roomKey}
-            onRoomKeyChange={setRoomKey}
+            identity={{
+              playerName,
+              onPlayerNameChange: setPlayerName,
+              roomCode,
+              onRoomCodeChange: setRoomCode,
+              roomKey,
+              onRoomKeyChange: setRoomKey,
+            }}
             showRandomize={false}
             onNotYouClick={onNavigateGarageSync}
+            onSignalingConfigClick={onNavigateSignalingConfig}
             onHoverDesc={setHoveredDesc}
             isLight={isLight}
           />

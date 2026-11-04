@@ -62,6 +62,9 @@ let activeMaterials: MaterialsConfigState = (() => {
   return { ...DEFAULT_MATERIALS_CONFIG, boostAudio: initialBoostAudio };
 })();
 
+type MaterialsListener = (materials: MaterialsConfigState) => void;
+const materialsCallbacks: MaterialsListener[] = [];
+
 export function getMaterialsConfig(): MaterialsConfigState {
   return activeMaterials;
 }
@@ -83,6 +86,25 @@ export function setMaterialsConfig(
   if (persist) {
     safeStorage.set(MATERIALS_STORAGE_KEY, JSON.stringify(activeMaterials));
   }
+  for (const listener of materialsCallbacks) {
+    try {
+      listener(activeMaterials);
+    } catch (err) {
+      console.error('[materialsConfig] materialsConfig listener error:', err);
+    }
+  }
+}
+
+export function onMaterialsConfigChange(listener: MaterialsListener): () => boolean {
+  if (!materialsCallbacks.includes(listener)) {
+    materialsCallbacks.push(listener);
+  }
+  return () => {
+    const idx = materialsCallbacks.indexOf(listener);
+    if (idx === -1) return false;
+    materialsCallbacks.splice(idx, 1);
+    return true;
+  };
 }
 
 export function getInitialMaterials(): MaterialsConfigState {

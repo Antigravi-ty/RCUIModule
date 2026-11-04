@@ -500,7 +500,7 @@ export const Layer3KeybindingsRecipe: React.FC<Layer3KeybindingsRecipeProps> = (
   const storeGoBack = useAppStore((s) => s.goBack);
   const storeNavigate = useAppStore((s) => s.navigate);
   const onBack = propOnBack ?? storeGoBack;
-  const resolvedNavigateAdvanced = propNavigateAdvCtrl ?? onNavigateAdvanced ?? (() => storeNavigate('advanced-controller'));
+  const resolvedNavigateAdvanced = propNavigateAdvCtrl ?? onNavigateAdvanced ?? (() => storeNavigate('controller-settings'));
 
   if (!standalone) {
     return (

@@ -1,5 +1,8 @@
 import React from 'react';
 import { AlertCircle, CheckCircle2, Loader2, RotateCcw } from 'lucide-react';
+import { dispatchOnlineRoomErrorNotification } from './onlineRoomErrorNotification';
+
+export { dispatchOnlineRoomErrorNotification };
 
 export interface CreationStepSpec {
   step: number;

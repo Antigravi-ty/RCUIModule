@@ -12,8 +12,10 @@ import type {
   LobbyTeamAssignment,
 } from '../online/MatchLobbyTeamRosterSection';
 import type { ActiveMatchPlayer } from '../online/DuringMatchClientRejoinControls';
-import type { WarmupRoomPlayer } from '../online/OnlineWarmupSubView';
+import type { WarmupRoomPlayer } from '../online/OnlineWarmupRoomRecipe';
 import type { HostMatchTeamFormat } from '../online/OnlineRoomConfigSummaryCard';
+
+export type RoomStateMode = 'free-play' | 'match';
 
 export type OnlineSessionContextId =
   | 'match-lobby-host'
@@ -35,7 +37,7 @@ export const GAME_MODE_TO_FORMAT: Record<string, HostMatchTeamFormat> = {
   '3v3': 'standard',
 };
 
-export function useLayer2RoomHostControlBinding<TProps extends object>(
+export function useLayer2ManageRoomBinding<TProps extends object>(
   rawProps: TProps
 ): TProps {
   const props = rawProps as Record<string, any>;

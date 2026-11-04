@@ -15,6 +15,20 @@ import {
 } from '../../config/audioConfig';
 import type { EventCatalogEntry } from '../../compounds/tuner/EventFilterMatrix';
 
+export interface Layer4AdvancedAudioRecipeProps {
+  isLight?: boolean;
+  detailVolumes?: Record<string, number>;
+  defaultDetailVolumes?: Record<string, number>;
+  onDetailVolumeChange?: (key: string, volumePct: number) => void;
+  onResetDetailVolumes?: () => void;
+  onPreviewDetail?: (key: string) => void;
+  onStopPreview?: () => void;
+  onCopyJson?: () => { ok: boolean; bytes: number; count: number } | void;
+  onExportJson?: () => { ok: boolean; bytes: number; count: number } | void;
+  onBack?: () => void;
+  className?: string;
+}
+
 const EVENT_CATALOG_ITEMS: EventCatalogEntry[] = CONSOLE_LOG_EVENT_CATALOG.map(
   (item) => ({
     hex: item.hex,

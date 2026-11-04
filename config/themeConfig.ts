@@ -20,6 +20,8 @@ export const themeSettingsStore = createLocalStorageStore<{ theme: GameThemeId }
 );
 
 let activeGameTheme: GameThemeId = themeSettingsStore.load().theme;
+type GameThemeListener = (theme: GameThemeId) => void;
+const gameThemeCallbacks: GameThemeListener[] = [];
 
 export function applyThemeToDocument(): void {
   if (typeof document !== 'undefined' && document.documentElement?.dataset) {
@@ -34,11 +36,36 @@ export function getTheme(): GameThemeId {
 export function setTheme(theme: GameThemeId | string, options: { persist?: boolean } = {}): void {
   if (!THEMES.includes(theme as GameThemeId)) return;
   const nextTheme = theme as GameThemeId;
+  const changed = nextTheme !== activeGameTheme;
   activeGameTheme = nextTheme;
   applyThemeToDocument();
   if (options.persist !== false) {
     themeSettingsStore.save({ theme: nextTheme });
   }
+  if (changed) {
+    for (const listener of gameThemeCallbacks) {
+      try {
+        listener(nextTheme);
+      } catch (err) {
+        console.error('[ThemeConfig] listener threw error:', err);
+      }
+    }
+  }
+}
+
+export function onThemeChange(callback: GameThemeListener): () => void {
+  if (!gameThemeCallbacks.includes(callback)) {
+    gameThemeCallbacks.push(callback);
+  }
+  try {
+    callback(activeGameTheme);
+  } catch (err) {
+    console.error('[ThemeConfig] callback threw error:', err);
+  }
+  return () => {
+    const idx = gameThemeCallbacks.indexOf(callback);
+    if (idx !== -1) gameThemeCallbacks.splice(idx, 1);
+  };
 }
 
 export function getInitialTheme(): 'light' | 'dark' {

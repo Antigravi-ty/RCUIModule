@@ -13,6 +13,7 @@ import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 import { EngineAudioTelemetryCard } from './engine-audio-tuner/EngineAudioTelemetryCard';
 import { EngineAudioDrivetrainCard } from './engine-audio-tuner/EngineAudioDrivetrainCard';
+import { EngineAudioEqualizerCard } from './engine-audio-tuner/EngineAudioEqualizerCard';
 import { EngineAudioSynthesisSfxCard } from './engine-audio-tuner/EngineAudioSynthesisSfxCard';
 
 export interface EngineAudioTunerFloatingWindowProps {
@@ -79,7 +80,7 @@ export const EngineAudioTunerFloatingWindow: React.FC<
                 Turtle Modem Granular REV Powertrain Synthesizer
               </span>
               <span className={`text-[10px] truncate ${mutedText}`}>
-                40-Slice Phase-Conditioned M4A Matrix · Idle accel_ramp_7.4s · Spawn SFX Optional
+                40-Slice Phase-Conditioned M4A Matrix · 5-Band Loudness EQ · Spawn SFX Optional
               </span>
             </div>
           </div>
@@ -172,10 +173,13 @@ export const EngineAudioTunerFloatingWindow: React.FC<
       {/* 1. Realtime Powertrain & Granular Matrix Telemetry */}
       <EngineAudioTelemetryCard isLight={isLight} />
 
-      {/* 2. Drivetrain, Gearbox & Rev-Limiter Physics */}
+      {/* 2. Dedicated Engine Audio Equalizer & Loudness Leveler */}
+      <EngineAudioEqualizerCard isLight={isLight} />
+
+      {/* 3. Drivetrain, Gearbox & Rev-Limiter Physics */}
       <EngineAudioDrivetrainCard isLight={isLight} />
 
-      {/* 3. Entity Spawn SFX, Backfire Pops & Web Audio Loop Conditioning */}
+      {/* 4. Entity Spawn SFX, Backfire Pops & Web Audio Loop Conditioning */}
       <EngineAudioSynthesisSfxCard isLight={isLight} />
     </div>
   );

@@ -5,6 +5,7 @@ import {
   updateEngineAudioTuningConfig,
   resetEngineAudioTuningConfig,
   getEngineAudioRuntimeActions,
+  subscribeEngineAudioTelemetry,
   type EngineAudioTuningConfig,
   type EngineAudioLiveTelemetry,
 } from '../config/engineAudioConfig';
@@ -21,6 +22,7 @@ export interface EngineAudioStoreState {
   setManualBenchState: (patch: {
     active?: boolean;
     throttle?: boolean;
+    boost?: boolean;
     reverse?: boolean;
     airborne?: boolean;
   }) => void;
@@ -73,6 +75,8 @@ export const useEngineAudioStore = create<EngineAudioStoreState>((set) => ({
           patch.active !== undefined ? patch.active : state.telemetry.manualOverrideActive,
         manualThrottle:
           patch.throttle !== undefined ? patch.throttle : state.telemetry.manualThrottle,
+        manualBoost:
+          patch.boost !== undefined ? patch.boost : state.telemetry.manualBoost,
         manualReverse:
           patch.reverse !== undefined ? patch.reverse : state.telemetry.manualReverse,
         manualAirborne:
@@ -82,6 +86,6 @@ export const useEngineAudioStore = create<EngineAudioStoreState>((set) => ({
   },
 }));
 
-export function publishEngineAudioTelemetry(patch: Partial<EngineAudioLiveTelemetry>): void {
+subscribeEngineAudioTelemetry((patch) => {
   useEngineAudioStore.getState().updateTelemetry(patch);
-}
+});

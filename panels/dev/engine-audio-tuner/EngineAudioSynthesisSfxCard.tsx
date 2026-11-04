@@ -45,7 +45,7 @@ export const EngineAudioSynthesisSfxCard: React.FC<EngineAudioSynthesisSfxCardPr
         <div className="flex items-center gap-1.5">
           <Waves className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           <span className="font-bold text-[11px] uppercase tracking-wider">
-            Entity Spawn SFX, Backfire Pops &amp; Web Audio Loop Conditioning
+            Entity Spawn SFX, Backfire Pops & Web Audio Loop Conditioning
           </span>
         </div>
         <span className={`text-[10px] font-mono ${mutedText}`}>
@@ -104,7 +104,7 @@ export const EngineAudioSynthesisSfxCard: React.FC<EngineAudioSynthesisSfxCardPr
         />
       </div>
 
-      {/* Idle Loop Volume & Backfire / Exhaust Pop Threshold + Volume */}
+      {/* Idle Loop Volume & Backfire / Exhaust Pop Threshold, RPM Drop, Cooldown + Volume */}
       <div className="grid grid-cols-3 gap-2">
         <SliderControl
           editable={true}
@@ -150,6 +150,37 @@ export const EngineAudioSynthesisSfxCard: React.FC<EngineAudioSynthesisSfxCardPr
         />
       </div>
 
+      <div className="grid grid-cols-2 gap-2">
+        <SliderControl
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={false}
+          colorScheme="rose"
+          label="Backfire Pop RPM Drop"
+          unit=" RPM"
+          value={config.backfireRpmDrop ?? 1650}
+          min={400}
+          max={3500}
+          step={50}
+          isLight={isLight}
+          onChange={(v) => updateConfig({ backfireRpmDrop: Math.max(400, v) })}
+        />
+        <SliderControl
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={false}
+          colorScheme="amber"
+          label="Backfire Pop Cooldown"
+          unit=" s"
+          value={config.backfireCooldownSec ?? 0.65}
+          min={0.15}
+          max={2.5}
+          step={0.05}
+          isLight={isLight}
+          onChange={(v) => updateConfig({ backfireCooldownSec: Math.max(0.15, v) })}
+        />
+      </div>
+
       {/* Web Audio Buffer Smoothing & Phase Decorrelation */}
       <div className="grid grid-cols-2 gap-2">
         <SliderControl
@@ -157,7 +188,7 @@ export const EngineAudioSynthesisSfxCard: React.FC<EngineAudioSynthesisSfxCardPr
           allowOutOfBoundsInput={false}
           showStepper={false}
           colorScheme="emerald"
-          label="Gain &amp; Filter Smoothing Time"
+          label="Gain & Filter Smoothing Time"
           unit=" ms"
           value={config.gainSmoothingTimeMs}
           min={4}

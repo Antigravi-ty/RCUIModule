@@ -119,7 +119,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         iconColor="text-sky-400"
         title="Active Tuners"
         actionLabel="Browse"
-        description="Vehicle Offsets, Goal Volume, Reachability, Kickoff PPO, Audio & Event and Triggerer"
+        description="Vehicle Offsets, Goal Volume, Reachability, Kickoff PPO, Audio & Event & Trigger Rules"
         hoverDescription="Active Tuners: Frequently accessed live calibration tools, floating window spawners, vehicle offsets, reachability, kickoff PPO, advanced audio, and event & trigger rules."
         onAction={() => navigateRoute('dev-active-tuners')}
         onHover={onHover}

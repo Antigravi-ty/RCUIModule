@@ -26,6 +26,10 @@ import {
 export interface MatchLobbyRoomConfigState {
   roomCode?: string;
   pairId?: string;
+  defaultTeamFormat?: HostMatchTeamFormat;
+  defaultBotPolicy?: HostMatchBotPolicy;
+  defaultDurationPreset?: HostMatchDurationPreset;
+  defaultCustomDurationSeconds?: number;
   teamFormat?: HostMatchTeamFormat;
   onChangeTeamFormat?: (format: HostMatchTeamFormat) => void;
   botPolicy?: HostMatchBotPolicy;
@@ -45,7 +49,7 @@ export interface MatchLobbyUtilitiesState {
   onOpenNetHud?: () => void;
 }
 
-export interface MatchLobbySubViewProps {
+export interface MatchLobbyRoomRecipeProps {
   role: 'host' | 'client';
   signalingState?: SignalingHealthState;
   onRefreshSignaling?: () => void | Promise<void>;
@@ -77,7 +81,7 @@ const TEAM_SLOTS_PER_SIDE: Record<HostMatchTeamFormat, number> = {
 /**
  * Decoupled Match Lobby Content (`match-lobby-host` & `match-lobby-client`).
  */
-export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
+export const MatchLobbyRoomRecipe: React.FC<MatchLobbyRoomRecipeProps> = React.memo(({
   role,
   signalingState: controlledSignaling,
   onRefreshSignaling,
@@ -97,6 +101,10 @@ export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
   const {
     roomCode = 'RL-8924',
     pairId = '7F3A',
+    defaultTeamFormat = 'doubles',
+    defaultBotPolicy = 'auto-fill',
+    defaultDurationPreset = '300',
+    defaultCustomDurationSeconds = 180,
     teamFormat: controlledTeamFormat,
     onChangeTeamFormat,
     botPolicy: controlledBotPolicy,
@@ -118,7 +126,7 @@ export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
   const [internalSignaling, setInternalSignaling] = useState<SignalingHealthState>('green');
   const [internalLocalTeam, setInternalLocalTeam] = useState<LobbyTeamAssignment>('neutral');
   const [internalPeers, setInternalPeers] = useState<LobbyPlayerSlot[]>(INITIAL_PEERS);
-  const rosterLayout: 'stacked' | 'columns' = 'columns';
+  const [rosterLayout, setRosterLayout] = useState<'stacked' | 'columns'>('columns');
 
   const signalingState = controlledSignaling ?? internalSignaling;
   const setSignalingState = setInternalSignaling;
@@ -129,10 +137,14 @@ export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
   };
   const peers = controlledPeers ?? internalPeers;
 
-  const [internalTeamFormat, setInternalTeamFormat] = useState<HostMatchTeamFormat>('doubles');
-  const [internalBotPolicy, setInternalBotPolicy] = useState<HostMatchBotPolicy>('auto-fill');
-  const [internalDurationPreset, setInternalDurationPreset] = useState<HostMatchDurationPreset>('300');
-  const [internalCustomDurationSeconds, setInternalCustomDurationSeconds] = useState<number>(180);
+  const [internalTeamFormat, setInternalTeamFormat] = useState<HostMatchTeamFormat>(defaultTeamFormat);
+  const [internalBotPolicy, setInternalBotPolicy] = useState<HostMatchBotPolicy>(defaultBotPolicy);
+  const [internalDurationPreset, setInternalDurationPreset] = useState<HostMatchDurationPreset>(
+    defaultDurationPreset
+  );
+  const [internalCustomDurationSeconds, setInternalCustomDurationSeconds] = useState<number>(
+    defaultCustomDurationSeconds
+  );
   const teamFormat = controlledTeamFormat ?? internalTeamFormat;
   const setTeamFormat = (fmt: HostMatchTeamFormat) => {
     setInternalTeamFormat(fmt);
@@ -452,4 +464,4 @@ export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
   );
 });
 
-MatchLobbySubView.displayName = 'MatchLobbySubView';
+MatchLobbyRoomRecipe.displayName = 'MatchLobbyRoomRecipe';

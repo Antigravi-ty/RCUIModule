@@ -37,12 +37,28 @@ import {
   type Layer1CustomRowIconType,
 } from './layer1MenuContextSpecs';
 
+export {
+  LAYER1_CONTEXT_VARIATIONS,
+  LAYER1_CONTEXT_GROUPS,
+  type CanonicalLayer1ContextVariation,
+  type Layer1ContextVariation,
+  type Layer1MenuContextMode,
+  type Layer1ContextMeta,
+  type Layer1ContextGroupId,
+  type Layer1ContextGroupMeta,
+};
+
 export type TouchInputAgentOption = 'none' | 'necto' | 'nexto';
 
 export interface Layer1MainMenuStateOverride {
+  matchMode?: Layer1ContextVariation | 'online-warmup' | 'static-training-pack';
+  contextMode?: Layer1ContextVariation;
   touchHeadlessMode?: boolean;
   defaultTouchInputAgent?: TouchInputAgentOption;
-  onRestartMatch?: () => void;
+  backgroundRenderPaused?: boolean;
+  onNavigateRoomControl?: () => void;
+  onNavigateExpMultiBots?: () => void;
+  onExitEditMode?: () => void;
   sizing?: PanelSizingConfig;
   styleVariant?: MainMenuStyleVariant;
   styleParams?: Partial<MainMenuStyleParams>;
@@ -61,14 +77,14 @@ export interface Layer1MainMenuRecipeProps {
   /** Background power saving mode ('extreme' | '15' | '30' | 'disable' | 'freeze' | 'match') */
   menuPowerSave?: 'extreme' | '15' | '30' | 'disable' | 'freeze' | 'match';
   onResume?: () => void;
+  onRestartMatch?: () => void;
   onReturnToFreeplay?: () => void;
   onNavigatePlay?: () => void;
   onNavigateGarage?: () => void;
   onNavigateSettings?: (targetTab?: string) => void;
-  onNavigateRoomControl?: () => void;
-  onNavigateExpMultiBots?: () => void;
+  onNavigateManageRoom?: () => void;
+  onNavigateExpMultiBotsConfig?: () => void;
   onLeaveRoom?: () => void;
-  onExitEditMode?: () => void;
   /** Optional extra bottom action (e.g. "Exit Edit Mode" when EdgeInspectorDrawer is active) */
   extraBottomAction?:
     | {
@@ -114,20 +130,25 @@ const renderCustomRowIcon = (
 export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawProps) => {
   const {
     isLight = false,
-    contextVariation,
+    matchMode,
+    contextVariation: propContextVariation,
+    contextMode,
     touchMode = false,
     touchHeadlessMode = false,
     touchInputAgent: propTouchInputAgent,
     defaultTouchInputAgent = 'none',
     onTouchInputAgentChange,
     menuPowerSave,
+    backgroundRenderPaused = false,
     onResume,
     onRestartMatch,
     onReturnToFreeplay,
     onNavigatePlay,
     onNavigateGarage,
     onNavigateSettings,
+    onNavigateManageRoom: propNavigateManageRoom,
     onNavigateRoomControl,
+    onNavigateExpMultiBotsConfig: propNavigateExpMultiBotsConfig,
     onNavigateExpMultiBots,
     onLeaveRoom,
     onExitEditMode,
@@ -137,6 +158,9 @@ export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawPro
     styleParams,
     className = '',
   } = useLayer1MainMenuStoreBinding({ ...rawProps.stateOverride, ...rawProps });
+  const contextVariation = propContextVariation ?? contextMode;
+  const onNavigateManageRoom = propNavigateManageRoom ?? onNavigateRoomControl;
+  const onNavigateExpMultiBotsConfig = propNavigateExpMultiBotsConfig ?? onNavigateExpMultiBots;
   const storeSizing = useMenuLayoutStore(
     (s) => s.panels?.['layer1-main'] ?? DEFAULT_PANEL_SIZING['layer1-main']
   );
@@ -164,15 +188,15 @@ export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawPro
   };
 
   const rawCtxInput =
-    contextVariation ?? storeMenuStyle.previewContextMode ?? 'freeplay';
+    contextVariation ?? matchMode ?? storeMenuStyle.previewContextMode ?? 'freeplay';
   const ctxSpec = resolveLayer1ContextSpec(rawCtxInput);
 
   const handleCustomRowClick = () => {
     const actionType = ctxSpec.customActionRow?.actionType;
     if (actionType === 'manage-room') {
-      onNavigateRoomControl?.();
+      onNavigateManageRoom?.();
     } else if (actionType === 'exp-multi-bots') {
-      onNavigateExpMultiBots?.();
+      onNavigateExpMultiBotsConfig?.();
     } else {
       onNavigatePlay?.();
     }
@@ -201,7 +225,7 @@ export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawPro
         }
       : undefined);
 
-  const powerSave = menuPowerSave ?? '30';
+  const powerSave = menuPowerSave ?? (backgroundRenderPaused ? 'extreme' : '30');
   let dotColor = 'bg-emerald-500';
   let powerLabel = 'Power Saving: 30 FPS';
   if (powerSave === 'extreme' || powerSave === 'freeze') {

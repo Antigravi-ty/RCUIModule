@@ -7,18 +7,27 @@ import { create } from 'zustand';
 import {
   DEFAULT_REPLAY_DIRECTOR_CONFIG,
   DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
+  REPLAY_DIRECTOR_CONFIG,
+  type ReplayDirectorConfigListener,
   type ReplayDirectorConfigState,
-  sanitizeReplayDirectorConfigPatch,
+  getReplayDirectorConfig,
+  resetReplayDirectorConfig,
+  setReplayDirectorActiveControllerHooks,
+  subscribeReplayDirectorConfig,
+  updateReplayDirectorConfig,
 } from '../config/replayDirectorConfig';
 
 export {
   DEFAULT_REPLAY_DIRECTOR_CONFIG,
   DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
+  REPLAY_DIRECTOR_CONFIG,
+  type ReplayDirectorConfigListener,
   type ReplayDirectorConfigState,
+  getReplayDirectorConfig,
+  resetReplayDirectorConfig,
+  subscribeReplayDirectorConfig,
+  updateReplayDirectorConfig,
 };
-
-type ReplayDirectorConfigListener = (config: ReplayDirectorConfigState) => void;
-const directorConfigListeners = new Set<ReplayDirectorConfigListener>();
 
 let _activeReplayController: any = null;
 let _latestRetainedReplayController: any = null;
@@ -35,72 +44,14 @@ export interface ReplayDirectorStoreState {
 }
 
 export const useReplayDirectorStore = create<ReplayDirectorStoreState>(() => ({
-  config: { ...DEFAULT_REPLAY_DIRECTOR_CONFIG },
+  config: getReplayDirectorConfig(),
   updateConfig: (patch = {}) => updateReplayDirectorConfig(patch),
   resetConfig: () => resetReplayDirectorConfig(),
 }));
 
-export function getReplayDirectorConfig(): ReplayDirectorConfigState {
-  return useReplayDirectorStore.getState().config;
-}
-
-export function updateReplayDirectorConfig(
-  patch: Partial<ReplayDirectorConfigState> = {}
-): ReplayDirectorConfigState {
-  const current = useReplayDirectorStore.getState().config;
-  const { nextConfig, changed } = sanitizeReplayDirectorConfigPatch(current, patch);
-  if (changed) {
-    useReplayDirectorStore.setState({ config: nextConfig });
-  }
-  if (changed && _activeReplayController) {
-    if (_activeReplayController.isImportedPreview && _activeReplayController.useRecordedCsvCamera) {
-      _activeReplayController.useRecordedCsvCamera = false;
-    }
-    _activeReplayController._cachedSuffixCameraPlan = null;
-    _activeReplayController._cachedSmoothnessSummary = null;
-    _activeReplayController._cachedAnomalyPeaks = null;
-    _activeReplayController.refreshCurrentFrameDirectorPose?.();
-  }
-  const snapshot = { ...nextConfig };
-  for (const fn of directorConfigListeners) {
-    try {
-      fn(snapshot);
-    } catch (err) {
-      console.warn('[replayDirectorStore] Config listener failed:', err);
-    }
-  }
-  if (changed) {
-    notifyActiveReplayTimelineController();
-  }
-  return nextConfig;
-}
-
-export function resetReplayDirectorConfig(): ReplayDirectorConfigState {
-  const nextConfig: ReplayDirectorConfigState = { ...DEFAULT_REPLAY_DIRECTOR_CONFIG };
-  useReplayDirectorStore.setState({ config: nextConfig });
-  if (_activeReplayController) {
-    _activeReplayController._cachedSuffixCameraPlan = null;
-    _activeReplayController._cachedSmoothnessSummary = null;
-    _activeReplayController._cachedAnomalyPeaks = null;
-    _activeReplayController.refreshCurrentFrameDirectorPose?.();
-  }
-  const snapshot = { ...nextConfig };
-  for (const fn of directorConfigListeners) {
-    try {
-      fn(snapshot);
-    } catch (err) {
-      console.warn('[replayDirectorStore] Config reset listener failed:', err);
-    }
-  }
-  notifyActiveReplayTimelineController();
-  return nextConfig;
-}
-
-export function subscribeReplayDirectorConfig(listener: ReplayDirectorConfigListener): () => boolean {
-  if (typeof listener !== 'function') return () => false;
-  directorConfigListeners.add(listener);
-  return () => directorConfigListeners.delete(listener);
-}
+subscribeReplayDirectorConfig((snapshot) => {
+  useReplayDirectorStore.setState({ config: snapshot });
+});
 
 export interface ReplayDirectorPreviewHandlers {
   onImportPattern?: ((parsed: any, options: any) => any) | null;
@@ -122,6 +73,11 @@ const _previewHandlers: ReplayDirectorPreviewHandlers = {
 
 type ReplaySessionListener = (controller: any) => void;
 const _replaySessionListeners = new Set<ReplaySessionListener>();
+
+setReplayDirectorActiveControllerHooks({
+  getActiveController: () => _activeReplayController,
+  notifyActiveController: () => notifyActiveReplayTimelineController(),
+});
 
 export function markReplayTimelineControllerRetained(ctrl: any): number {
   if (!ctrl || !Array.isArray(ctrl.activeFrames) || ctrl.activeFrames.length === 0) {

@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { useLayer3DevActiveTunersStoreBinding } from './hooks/useLayer3DevSettingsBindings';
+import {
+  useLayer3DevActiveTunersStoreBinding,
+  type BoostPhaseSelectionState,
+  type Layer3DevActiveTunersRecipeProps,
+} from './hooks/useLayer3DevSettingsBindings';
 import {
   Box,
   Car,
@@ -32,6 +36,7 @@ import {
   VEHICLE_MODEL_OFFSET_TUNER_PRESET,
   GOAL_VOLUME_TUNER_PRESET,
   REACHABILITY_TUNER_PRESET,
+  BALL_TRAJECTORY_TUNER_PRESET,
   REPLAY_DIRECTOR_TUNER_PRESET,
   KICKOFF_TRAINING_PRESET,
   EVENT_STREAM_OB_PRESET,
@@ -48,32 +53,7 @@ import { SettingActionRow } from '../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
 
-export interface BoostPhaseSelectionState {
-  start: string;
-  loop: string;
-  end: string;
-}
-
-export interface Layer3DevActiveTunersRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  onNavigateAdvancedAudio?: () => void;
-  onNavigateEventTriggerRules?: () => void;
-  wsVerticalOffsetPct?: number;
-  onWsVerticalOffsetPctChange?: (val: number) => void;
-  carBallMode?: string;
-  onCarBallModeChange?: (mode: string) => void;
-  carCarMode?: string;
-  onCarCarModeChange?: (mode: string) => void;
-  boostSelection?: BoostPhaseSelectionState;
-  onSelectBoostPhase?: (variationId: string, phase: 'start' | 'loop' | 'end') => void;
-  onSelectAllBoostPhases?: (variationId: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onAddPresetWindow?: (preset: any, e: React.MouseEvent<HTMLButtonElement>) => void;
-  activeWindows?: unknown[];
-  onClosePresetWindow?: (id: string) => void;
-  sizing?: PanelSizingConfig;
-}
+export type { BoostPhaseSelectionState, Layer3DevActiveTunersRecipeProps };
 
 /**
  * [Recipe] Layer 3 Active Tuners (Developer Tier)
@@ -85,6 +65,8 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
   onBack,
   onNavigateAdvancedAudio,
   onNavigateEventTriggerRules,
+  onNavigateEventAndTriggerer,
+  onNavigateEventTriggerer,
   wsVerticalOffsetPct: propWsOffset,
   onWsVerticalOffsetPctChange,
   carBallMode: propCarBallMode,
@@ -262,6 +244,22 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             isLight={isLight}
           />
 
+          {/* 3b. Ball Trajectory Prediction Line Tuner */}
+          <FloatingWindowCard
+            preset={BALL_TRAJECTORY_TUNER_PRESET}
+            icon={Target}
+            iconColor="text-amber-400"
+            badge="WASM Incr · 3D Tube · JSON"
+            badgeClass="bg-amber-500/15 border-amber-500/30 text-amber-400"
+            bordered={false}
+            showDescription={false}
+            description="WASM Incremental Tail Prediction (600t), Car-Ball Hit / Deviation Triggers, 3D Volumetric Shaded Tube, Spatial Depth Cues & JSON Export"
+            hoverTooltip="Ball Trajectory Prediction Line Tuner: Configure continuous WASM incremental tail prediction (~20-50µs/tick), deviation triggers, 3D volumetric tube shading, bounce rings, ground drop lines, and one-click JSON export."
+            onHover={setHoveredDesc}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
           {/* 4. Replay Director Camera & Slow-Mo Tuner */}
           <FloatingWindowCard
             preset={REPLAY_DIRECTOR_TUNER_PRESET}
@@ -408,7 +406,7 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             actionLabel="Configure"
             bordered={false}
             showDescription={false}
-            onAction={() => onNavigateEventTriggerRules?.()}
+            onAction={() => (onNavigateEventTriggerRules ?? onNavigateEventAndTriggerer ?? onNavigateEventTriggerer)?.()}
             hoverDescription="Open Layer 4 Event & Trigger Rules: Configure collision impulse thresholds, audio/VFX event bindings, and trigger rules."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
