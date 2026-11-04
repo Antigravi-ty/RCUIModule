@@ -38,7 +38,11 @@ export interface Layer1MainMenuRecipeProps {
   isLight?: boolean;
   showAdditionalPreviews?: boolean;
   /** Legacy matchMode prop OR full Layer1ContextVariation */
-  matchMode?: Layer1ContextVariation | 'online-warmup' | 'static-training-pack';
+  matchMode?:
+    | Layer1ContextVariation
+    | 'online-warmup'
+    | 'static-training-pack'
+    | 'dynamic-training-pack';
   /** Explicit context variation (overrides matchMode if provided) */
   contextVariation?: Layer1ContextVariation;
   /** Alias for contextVariation */
@@ -215,6 +219,8 @@ export function useLayer1MainMenuStoreBinding(
     derivedVariation = rawProps.extraBottomAction
       ? 'static-training-edit'
       : 'static-training-play';
+  } else if (matchMode === 'dynamic-training-pack') {
+    derivedVariation = 'dynamic-training-play';
   } else if (hasActiveOnlineRoom) {
     if (isOnlineMatchRoom) {
       derivedVariation = isHosting ? 'match-lobby-host' : 'match-lobby-client';

@@ -14,6 +14,13 @@ import {
   buildVarianceConfigFromPreset,
   parseBakkesModBindString,
 } from '../config/kevpertVariancePresets';
+import {
+  saveDynamicScenarioToVfs,
+  loadAllDynamicScenariosFromVfs,
+  exportDynamicScenariosArchiveJson,
+  parseDynamicScenariosFromFile,
+  type PersistedDynamicScenarioPayload,
+} from './dynamicTrainingPackVfsStorage';
 
 export type DynamicBotFallbackPolicy =
   | 'keep-previous'
@@ -87,6 +94,8 @@ export interface DynamicTrainingRuntimeHandlers {
   onToggleOverdubRecording?: (recording: boolean) => void;
   onPinGhostRequested?: () => void;
   onClearGhostRequested?: () => void;
+  onExportActiveScenarioPayload?: () => PersistedDynamicScenarioPayload | null;
+  onImportScenarioPayloads?: (payloads: PersistedDynamicScenarioPayload[]) => void;
 }
 
 const INITIAL_SCENARIO_SUMMARIES: DynamicTrainingScenarioSummary[] = [
@@ -229,6 +238,7 @@ const INITIAL_SCENARIO_SUMMARIES: DynamicTrainingScenarioSummary[] = [
 ];
 
 export interface DynamicTrainingStoreState {
+  vfsInitialized: boolean;
   scenarios: DynamicTrainingScenarioSummary[];
   selectedScenarioId: string;
   activePlayerSlotIndex: number;
@@ -239,6 +249,7 @@ export interface DynamicTrainingStoreState {
   liveTelemetry: DynamicTrainingLiveTelemetry;
   runtimeHandlers: DynamicTrainingRuntimeHandlers;
 
+  initVfsStore: () => Promise<void>;
   selectScenario: (scenarioId: string) => void;
   nextScenario: () => void;
   prevScenario: () => void;
@@ -253,11 +264,15 @@ export interface DynamicTrainingStoreState {
   pinLastAttemptAsGhost: () => void;
   clearRetainedGhost: () => void;
   setShowRetainedGhost: (show: boolean) => void;
+  saveActiveScenarioToVfs: () => Promise<void>;
+  exportActiveScenarioRCDPack: () => void;
+  importScenariosFromFile: (file: File) => Promise<number>;
   updateLiveTelemetry: (patch: Partial<DynamicTrainingLiveTelemetry>) => void;
   setRuntimeHandlers: (handlers: Partial<DynamicTrainingRuntimeHandlers>) => void;
 }
 
 export const useDynamicTrainingStore = create<DynamicTrainingStoreState>((set, get) => ({
+  vfsInitialized: false,
   scenarios: INITIAL_SCENARIO_SUMMARIES,
   selectedScenarioId: INITIAL_SCENARIO_SUMMARIES[0].id,
   activePlayerSlotIndex: 0,
@@ -276,6 +291,45 @@ export const useDynamicTrainingStore = create<DynamicTrainingStoreState>((set, g
     lastEpisodeSeed: 1337,
   },
   runtimeHandlers: {},
+
+  initVfsStore: async () => {
+    if (get().vfsInitialized) return;
+    set({ vfsInitialized: true });
+    const persisted = await loadAllDynamicScenariosFromVfs();
+    if (persisted.length === 0) return;
+    get().runtimeHandlers.onImportScenarioPayloads?.(persisted);
+    set((s) => {
+      const merged = [...s.scenarios];
+      for (const p of persisted) {
+        const summary: DynamicTrainingScenarioSummary = {
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          category: p.category,
+          prerollSeconds: p.prerollSeconds,
+          timeoutSeconds: p.timeoutSeconds,
+          playerCarSlotIndex: p.playerCarSlotIndex,
+          recommendedKevpertPreset: p.recommendedKevpertPreset,
+          carSlots: p.carSlots.map((c) => ({
+            slotIndex: c.slotIndex,
+            team: c.team,
+            role: c.role,
+            displayName: c.displayName,
+            colorHex: c.colorHex,
+            fallbackPolicy: c.fallbackPolicy,
+            recordedTickCount: c.recordedControls?.length ?? c.recordedTickCount,
+          })),
+        };
+        const existingIdx = merged.findIndex((item) => item.id === summary.id);
+        if (existingIdx >= 0) {
+          merged[existingIdx] = summary;
+        } else {
+          merged.push(summary);
+        }
+      }
+      return { scenarios: merged };
+    });
+  },
 
   selectScenario: (scenarioId: string) => {
     const found = get().scenarios.find((s) => s.id === scenarioId) || get().scenarios[0];
@@ -329,6 +383,7 @@ export const useDynamicTrainingStore = create<DynamicTrainingStoreState>((set, g
       ),
     }));
     get().runtimeHandlers.onSlotPolicyChanged?.(slotIndex, policy);
+    void get().saveActiveScenarioToVfs();
   },
 
   setPrerollSeconds: (seconds: number) => {
@@ -341,6 +396,7 @@ export const useDynamicTrainingStore = create<DynamicTrainingStoreState>((set, g
       ),
     }));
     get().runtimeHandlers.onPrerollSecondsChanged?.(clamped);
+    void get().saveActiveScenarioToVfs();
   },
 
   toggleOverdubRecording: () => {
@@ -386,6 +442,74 @@ export const useDynamicTrainingStore = create<DynamicTrainingStoreState>((set, g
 
   setShowRetainedGhost: (show: boolean) => {
     set({ showRetainedGhost: Boolean(show) });
+  },
+
+  saveActiveScenarioToVfs: async () => {
+    const runtimePayload = get().runtimeHandlers.onExportActiveScenarioPayload?.();
+    if (runtimePayload) {
+      await saveDynamicScenarioToVfs(runtimePayload);
+      return;
+    }
+    const { scenarios, selectedScenarioId } = get();
+    const current = scenarios.find((s) => s.id === selectedScenarioId);
+    if (current) {
+      await saveDynamicScenarioToVfs(current);
+    }
+  },
+
+  exportActiveScenarioRCDPack: () => {
+    const runtimePayload = get().runtimeHandlers.onExportActiveScenarioPayload?.();
+    const { scenarios, selectedScenarioId } = get();
+    const fallback = scenarios.find((s) => s.id === selectedScenarioId) || scenarios[0];
+    const target = runtimePayload || fallback;
+    if (!target) return;
+    exportDynamicScenariosArchiveJson([target], `${target.id}.RCDPack`);
+  },
+
+  importScenariosFromFile: async (file: File) => {
+    const imported = await parseDynamicScenariosFromFile(file);
+    if (imported.length === 0) return 0;
+    for (const p of imported) {
+      await saveDynamicScenarioToVfs(p);
+    }
+    get().runtimeHandlers.onImportScenarioPayloads?.(imported);
+    set((s) => {
+      const merged = [...s.scenarios];
+      for (const p of imported) {
+        const summary: DynamicTrainingScenarioSummary = {
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          category: p.category || 'multi-car-overdub',
+          prerollSeconds: Number(p.prerollSeconds) || 2.0,
+          timeoutSeconds: Number(p.timeoutSeconds) || 10,
+          playerCarSlotIndex: Number(p.playerCarSlotIndex) || 0,
+          recommendedKevpertPreset: p.recommendedKevpertPreset,
+          carSlots: p.carSlots.map((c, idx) => ({
+            slotIndex: typeof c.slotIndex === 'number' ? c.slotIndex : idx,
+            team: c.team === 1 ? 1 : 0,
+            role: c.role || 'teammate',
+            displayName: c.displayName || `Slot ${idx + 1}`,
+            colorHex: c.colorHex,
+            fallbackPolicy: c.fallbackPolicy || 'keep-previous',
+            recordedTickCount: c.recordedControls?.length ?? c.recordedTickCount,
+          })),
+        };
+        const existingIdx = merged.findIndex((item) => item.id === summary.id);
+        if (existingIdx >= 0) {
+          merged[existingIdx] = summary;
+        } else {
+          merged.push(summary);
+        }
+      }
+      const firstId = imported[0].id;
+      return {
+        scenarios: merged,
+        selectedScenarioId: firstId,
+      };
+    });
+    get().selectScenario(imported[0].id);
+    return imported.length;
   },
 
   updateLiveTelemetry: (patch: Partial<DynamicTrainingLiveTelemetry>) => {

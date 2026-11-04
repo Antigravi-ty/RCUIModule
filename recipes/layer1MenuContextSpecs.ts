@@ -16,6 +16,7 @@ export type CanonicalLayer1ContextVariation =
   | 'kickoff-training'
   | 'static-training-play'
   | 'static-training-edit'
+  | 'dynamic-training-play'
   | 'dev-test-lab'
   | 'exp-multi-bots';
 
@@ -414,6 +415,27 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
       iconColorClass: 'text-rose-400',
       variant: 'danger',
       actionType: 'exit-edit-mode',
+    },
+  },
+  {
+    id: 'dynamic-training-play',
+    label: 'Dynamic Training Pack (DYNAMIC TRAINING)',
+    shortLabel: 'Dynamic Training',
+    tier: 'user',
+    headerTitle: 'DYNAMIC TRAINING',
+    groupId: 'training',
+    groupLabel: 'Training',
+    description: 'Dynamic Training Pack: Resume, Garage, Settings, Exit to Free Play',
+    showGarage: true,
+    showSettings: true,
+    showRestartMatch: false,
+    bottomActionRow: {
+      slotId: 'leave',
+      title: 'Exit to Free Play',
+      subtitle: 'Leave Dynamic Training Pack and return to Free Play',
+      iconColorClass: 'text-amber-400',
+      variant: 'secondary',
+      actionType: 'return-freeplay',
     },
   },
   {

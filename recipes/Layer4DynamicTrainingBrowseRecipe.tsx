@@ -6,8 +6,8 @@
  * and Kevpert / BakkesMod Seeded Training Variance).
  */
 
-import React, { useState } from 'react';
-import { Bot, Clock, Disc, Play, Users } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Bot, Clock, Disc, Download, Play, Upload, Users } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { Badge } from '../primitives/Badge';
@@ -63,8 +63,16 @@ export const Layer4DynamicTrainingBrowseRecipe: React.FC<
   const pinLastAttemptAsGhost = useDynamicTrainingStore((s) => s.pinLastAttemptAsGhost);
   const clearRetainedGhost = useDynamicTrainingStore((s) => s.clearRetainedGhost);
   const retainedGhostLabel = useDynamicTrainingStore((s) => s.liveTelemetry.retainedGhostLabel);
+  const initVfsStore = useDynamicTrainingStore((s) => s.initVfsStore);
+  const exportActiveScenarioRCDPack = useDynamicTrainingStore((s) => s.exportActiveScenarioRCDPack);
+  const importScenariosFromFile = useDynamicTrainingStore((s) => s.importScenariosFromFile);
 
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    void initVfsStore();
+  }, [initVfsStore]);
 
   const selectedScenario =
     scenarios.find((s) => s.id === selectedScenarioId) || scenarios[0] || null;
@@ -97,7 +105,36 @@ export const Layer4DynamicTrainingBrowseRecipe: React.FC<
               }`}
             >
               <span>Dynamic Scenarios ({scenarios.length})</span>
-              <Users className="h-3.5 w-3.5 opacity-60" />
+              <div className="flex items-center gap-1.5">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".RCDPack,.json"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void importScenariosFromFile(f);
+                    e.target.value = '';
+                  }}
+                />
+                <button
+                  type="button"
+                  title="Import .RCDPack / JSON into IndexedDB VFS"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-1 rounded hover:bg-neutral-500/20 cursor-pointer"
+                >
+                  <Upload className="h-3.5 w-3.5 opacity-75" />
+                </button>
+                <button
+                  type="button"
+                  title="Export active scenario as .RCDPack"
+                  onClick={() => exportActiveScenarioRCDPack()}
+                  className="p-1 rounded hover:bg-neutral-500/20 cursor-pointer"
+                >
+                  <Download className="h-3.5 w-3.5 opacity-75" />
+                </button>
+                <Users className="h-3.5 w-3.5 opacity-60" />
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5 p-2 overflow-y-auto grow min-h-0">

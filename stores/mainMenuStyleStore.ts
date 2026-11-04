@@ -134,13 +134,14 @@ export type MainMenuPlatformPreviewMode = 'auto' | 'apple' | 'non-apple-fallback
 export type MainMenuPreviewContextMode =
   | 'freeplay' | 'replay-viewer' | 'exhibition' | 'match-lobby-host' | 'match-lobby-client'
   | 'online-match-host' | 'online-match-client' | 'online-warmup-host' | 'online-warmup-client'
-  | 'kickoff-training' | 'static-training-play' | 'static-training-edit' | 'dev-test-lab'
-  | 'exp-multi-bots' | 'match' | 'custom-match-host' | 'custom-match-client';
+  | 'kickoff-training' | 'static-training-play' | 'static-training-edit' | 'dynamic-training-play'
+  | 'dev-test-lab' | 'exp-multi-bots' | 'match' | 'custom-match-host' | 'custom-match-client';
 
 const VALID_MAIN_MENU_CONTEXT_MODES = [
   'freeplay', 'replay-viewer', 'exhibition', 'match-lobby-host', 'match-lobby-client',
   'online-match-host', 'online-match-client', 'online-warmup-host', 'online-warmup-client',
-  'kickoff-training', 'static-training-play', 'static-training-edit', 'dev-test-lab', 'exp-multi-bots',
+  'kickoff-training', 'static-training-play', 'static-training-edit', 'dynamic-training-play',
+  'dev-test-lab', 'exp-multi-bots',
 ] as const;
 
 export const normalizeMainMenuContextMode = (
@@ -152,6 +153,7 @@ export const normalizeMainMenuContextMode = (
   if (raw === 'custom-match-client') return 'online-match-client';
   if (raw === 'online-warmup') return 'online-warmup-host';
   if (raw === 'static-training-pack') return 'static-training-play';
+  if (raw === 'dynamic-training-pack') return 'dynamic-training-play';
   return (VALID_MAIN_MENU_CONTEXT_MODES as readonly string[]).includes(raw) ? (raw as any) : 'freeplay';
 };
 
