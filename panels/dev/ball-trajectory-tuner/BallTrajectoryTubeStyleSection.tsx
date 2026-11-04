@@ -3,7 +3,7 @@ import { Sparkles, Layers, Lock } from 'lucide-react';
 import { useAppStore } from '../../../stores/appStore';
 import {
   DEFAULT_TRAJECTORY_CONFIG,
-  type TrajectoryRenderStyle,
+  type TrajectoryDashCapStyle,
 } from '../../../config/trainingDefaults';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { SliderControl } from '../../../primitives/SliderControl';
@@ -30,9 +30,9 @@ export const BallTrajectoryTubeStyleSection: React.FC<
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
   const horizonSeconds = Number(((cfg.predictionTicks || 600) / 120).toFixed(1));
-  const shadingPct = Math.round((cfg.shadingStrength ?? 0) * 100);
-  const taperPct = Math.round((cfg.radiusTaper ?? 0) * 100);
-  const fadePct = Math.round((cfg.horizonFade ?? 0) * 100);
+  const shadingPct = Math.round((cfg.shadingStrength ?? 0.75) * 100);
+  const taperPct = Math.round((cfg.radiusTaper ?? 0.35) * 100);
+  const fadePct = Math.round((cfg.horizonFade ?? 0.3) * 100);
   const opacityPct =
     (cfg.opacity ?? 0.5) <= 1.0
       ? Math.round((cfg.opacity ?? 0.5) * 100)
@@ -49,24 +49,24 @@ export const BallTrajectoryTubeStyleSection: React.FC<
               2. 3D Volumetric Tube &amp; Spatial Depth Perception
             </span>
             <span className={`text-[10px] ${mutedText}`}>
-              Eliminates 1-tick round-cap overdraw &amp; adds 3D cylinder shading + depth taper
+              3D parallel-transport cylinder with selectable end caps, normal lighting &amp; depth taper
             </span>
           </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className={`text-[10px] font-semibold ${mutedText}`}>3D Rendering Backend</span>
+          <span className={`text-[10px] font-semibold ${mutedText}`}>Dash End Cap Geometry</span>
           <SegmentedSwitch
             size="sm"
             fullWidth
-            value={cfg.renderStyle || 'tube-3d'}
+            value={cfg.dashCapStyle || 'round'}
             onValueChange={(val) =>
-              updateTrajectory({ renderStyle: val as TrajectoryRenderStyle })
+              updateTrajectory({ dashCapStyle: val as TrajectoryDashCapStyle })
             }
             isLight={isLight}
             options={[
-              { value: 'tube-3d', label: '3D Shaded Tube (Zero Cap Overdraw)' },
-              { value: 'decimated-line', label: 'Wide LineSegments2 (2D Flat)' },
+              { value: 'round', label: 'Rounded Capsule Cap (Hemisphere)' },
+              { value: 'chamfer', label: 'Chamfered Bevel Cap (45° Cut)' },
             ]}
           />
         </div>
