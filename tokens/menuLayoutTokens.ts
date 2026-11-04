@@ -23,12 +23,14 @@ export type CanonicalMenuPanelId =
   | 'layer3-dev-sandboxes'
   | 'layer3-dev-active-tuners'
   | 'layer3-dev-calibrated-presets'
+  | 'layer3-dev-self-test'
   | 'layer3-dev-under-development'
   | 'layer4-static-training-pack'
   | 'layer4-dynamic-training-pack'
   | 'layer4-advanced-audio'
   | 'layer4-controller-settings'
-  | 'layer4-event-trigger-rules';
+  | 'layer4-event-trigger-rules'
+  | 'layer4-dev-signaling-lab';
 
 export type MenuPanelId = CanonicalMenuPanelId;
 
@@ -346,6 +348,13 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     minHeight: 200,
     maxHeight: 960,
   },
+  'layer3-dev-self-test': {
+    mode: 'auto',
+    width: 560,
+    targetHeight: 420,
+    minHeight: 200,
+    maxHeight: 960,
+  },
   'layer3-dev-under-development': {
     mode: 'auto',
     width: 600,
@@ -386,6 +395,13 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     width: 580,
     targetHeight: 560,
     minHeight: 240,
+    maxHeight: 1120,
+  },
+  'layer4-dev-signaling-lab': {
+    mode: 'auto',
+    width: 760,
+    targetHeight: 680,
+    minHeight: 260,
     maxHeight: 1120,
   },
 };

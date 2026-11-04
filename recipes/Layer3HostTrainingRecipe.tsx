@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../stores/appStore';
 import { useSignalingProfileStore } from '../stores/signalingProfileStore';
 import {
-  applyMaskToRoomCodeInput,
+  applyConnectivityMaskToRoomCode,
   finalizeHostRoomCode,
-  generateRandomFourDigitRoomCode,
+  generateRandomRoomCode,
 } from '../config/roomCodeConnectivityCodec';
 import { Ghost, Play } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
@@ -73,7 +73,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
     defaultConfig?.playerName ?? `Player${Math.floor(1000 + Math.random() * 9000)}`
   );
   const [roomCode, setRoomCode] = useState<string>(
-    defaultConfig?.roomCode ?? generateRandomFourDigitRoomCode(hostMask)
+    defaultConfig?.roomCode ?? ''
   );
   const [roomKey, setRoomKey] = useState<string>(
     defaultConfig?.roomKey ?? ''
@@ -91,7 +91,9 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
     let cancelled = false;
     void verifyRelays().then((probedMask) => {
       if (cancelled) return;
-      setRoomCode((prev) => applyMaskToRoomCodeInput(prev, probedMask));
+      setRoomCode((prev) =>
+        prev.trim() ? applyConnectivityMaskToRoomCode(prev, probedMask) : ''
+      );
     });
     return () => {
       cancelled = true;
@@ -117,7 +119,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   }, []);
 
   const handleRandomizeCode = () => {
-    const code = generateRandomFourDigitRoomCode(hostMask);
+    const code = generateRandomRoomCode(hostMask);
     setRoomCode(code);
   };
 
@@ -134,13 +136,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   const startStepSequence = (willFail: boolean) => {
     clearStepTimer();
     const cleanCode = finalizeHostRoomCode(roomCode, hostMask);
-    if (!cleanCode) {
-      setCurrentStep(3);
-      setProgressStatus('error');
-      setToken('simulateLayer3Error', true);
-      dispatchOnlineRoomErrorNotification();
-      return;
-    }
+    setRoomCode(cleanCode);
 
     setToken('simulateLayer3Error', false);
     setCurrentStep(1);
@@ -193,12 +189,14 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
           {/* 1 & 2. Shared Identity & Room Code / Key */}
           <OnlineRoomIdentityFields
             isLight={isLight}
-            playerName={playerName}
-            onPlayerNameChange={setPlayerName}
-            roomCode={roomCode}
-            onRoomCodeChange={setRoomCode}
-            roomKey={roomKey}
-            onRoomKeyChange={setRoomKey}
+            identity={{
+              playerName,
+              onPlayerNameChange: setPlayerName,
+              roomCode,
+              onRoomCodeChange: setRoomCode,
+              roomKey,
+              onRoomKeyChange: setRoomKey,
+            }}
             showRandomize={true}
             onRandomizeRoomCode={handleRandomizeCode}
             onNotYouClick={onNavigateGarageSync ?? (() => navigate('garage'))}

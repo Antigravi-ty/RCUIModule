@@ -41,7 +41,9 @@ export type ActiveMenuRoute =
   | 'dev-sandboxes'
   | 'dev-active-tuners'
   | 'dev-calibrated-presets'
-  | 'dev-under-development';
+  | 'dev-self-test'
+  | 'dev-under-development'
+  | 'dev-signaling-lab';
 
 export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> = {
   'main-menu': null,
@@ -70,7 +72,9 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'dev-sandboxes': 'settings',
   'dev-active-tuners': 'settings',
   'dev-calibrated-presets': 'settings',
+  'dev-self-test': 'settings',
   'dev-under-development': 'settings',
+  'dev-signaling-lab': 'dev-self-test',
 };
 
 export type ContainerTransitionMode = 'fluid-morph' | 'sequenced-step';

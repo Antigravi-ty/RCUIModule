@@ -7,10 +7,9 @@ import {
   saveStoredPlayerName,
 } from '../../config/vehiclePresets';
 import {
-  applyMaskToRoomCodeInput,
+  applyConnectivityMaskToRoomCode,
   finalizeHostRoomCode,
-  generateRandomFourDigitRoomCode,
-  parseUiRoomCode,
+  parseRoomCode,
 } from '../../config/roomCodeConnectivityCodec';
 import type { HostMatchConfig } from '../online/OnlineRoomConfigSummaryCard';
 import type {
@@ -29,9 +28,17 @@ export interface JoinRoomConfig {
   allowSpectating: boolean;
 }
 
+export interface Layer3HostMatchStateOverride {
+  steps?: CreationStepSpec[];
+  onProgressStatusChange?: (status: CreationProgressStatus) => void;
+  onCurrentStepChange?: (step: number) => void;
+  onRetryHost?: () => void;
+  onCancelHost?: () => void;
+  onNavigateSignalingConfig?: () => void;
+}
+
 export interface Layer3HostMatchRecipeProps {
   isLight?: boolean;
-  developerMode?: boolean;
   /** Room type context ('match' | 'warmup') used to derive default panel header title */
   roomType?: 'match' | 'warmup';
   /** Optional explicit panel header title override */
@@ -40,66 +47,67 @@ export interface Layer3HostMatchRecipeProps {
   defaultEditingConfig?: boolean;
   /** Controlled host match configuration */
   config?: Partial<HostMatchConfig>;
-  /** Alias for controlled config */
-  settings?: Partial<HostMatchConfig>;
   /** Initial host match configuration for uncontrolled mode */
   defaultConfig?: Partial<HostMatchConfig>;
   /** Callback fired when any host match setting changes */
   onChange?: (next: HostMatchConfig, patch: Partial<HostMatchConfig>) => void;
-  /** Alias for onChange */
-  onConfigChange?: (next: HostMatchConfig, patch: Partial<HostMatchConfig>) => void;
   onStartHost?: (config: HostMatchConfig) => void;
   /** Controlled 5-step creation progress status */
   progressStatus?: CreationProgressStatus;
   /** Controlled current step (1..5) */
   currentStep?: number;
-  /** Custom step specifications */
+  onNavigateGarageSync?: () => void;
+  onNavigateAdvancedSettings?: () => void;
+  onBack?: () => void;
+  stateOverride?: Layer3HostMatchStateOverride;
+}
+
+export type ResolvedLayer3HostMatchBinding = Omit<
+  Layer3HostMatchRecipeProps,
+  'stateOverride'
+> &
+  Layer3HostMatchStateOverride;
+
+export interface Layer3JoinRoomStateOverride {
   steps?: CreationStepSpec[];
   onProgressStatusChange?: (status: CreationProgressStatus) => void;
   onCurrentStepChange?: (step: number) => void;
-  onRetryHost?: () => void;
-  onCancelHost?: () => void;
-  onNavigateGarageSync?: () => void;
+  onRetryJoin?: () => void;
+  onCancelJoin?: () => void;
   onNavigateSignalingConfig?: () => void;
-  onNavigateAdvancedSettings?: () => void;
-  onBack?: () => void;
 }
 
 export interface Layer3JoinRoomRecipeProps {
   isLight?: boolean;
   /** Controlled join room configuration */
   config?: Partial<JoinRoomConfig>;
-  /** Alias for controlled config */
-  settings?: Partial<JoinRoomConfig>;
   /** Initial join room configuration for uncontrolled mode */
   defaultConfig?: Partial<JoinRoomConfig>;
   /** Callback fired when any join room field changes */
   onChange?: (next: JoinRoomConfig, patch: Partial<JoinRoomConfig>) => void;
-  /** Alias for onChange */
-  onConfigChange?: (next: JoinRoomConfig, patch: Partial<JoinRoomConfig>) => void;
-  defaultPlayerName?: string;
-  defaultRoomCode?: string;
-  defaultRoomKey?: string;
-  defaultAllowSpectating?: boolean;
   onJoinRoom?: (config: JoinRoomConfig) => void;
   /** Controlled 5-step connection progress status */
   progressStatus?: CreationProgressStatus;
   /** Controlled current step (1..5) */
   currentStep?: number;
-  /** Custom step specifications */
-  steps?: CreationStepSpec[];
-  onProgressStatusChange?: (status: CreationProgressStatus) => void;
-  onCurrentStepChange?: (step: number) => void;
-  onRetryJoin?: () => void;
-  onCancelJoin?: () => void;
   onNavigateGarageSync?: () => void;
-  onNavigateSignalingConfig?: () => void;
   onBack?: () => void;
+  stateOverride?: Layer3JoinRoomStateOverride;
 }
+
+export type ResolvedLayer3JoinRoomBinding = Omit<
+  Layer3JoinRoomRecipeProps,
+  'stateOverride'
+> &
+  Layer3JoinRoomStateOverride;
 
 export function useLayer3HostMatchStoreBinding(
   rawProps: Layer3HostMatchRecipeProps
-): Layer3HostMatchRecipeProps {
+): ResolvedLayer3HostMatchBinding {
+  const mergedProps: ResolvedLayer3HostMatchBinding = {
+    ...rawProps.stateOverride,
+    ...rawProps,
+  };
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -117,8 +125,7 @@ export function useLayer3HostMatchStoreBinding(
       onlineSession.playerName && onlineSession.playerName !== 'Host'
         ? onlineSession.playerName
         : loadStoredPlayerName(),
-    roomCode:
-      onlineSession.roomId || generateRandomFourDigitRoomCode(hostMask),
+    roomCode: onlineSession.roomId || '',
     roomKey: onlineSession.password || '',
     teamFormat: GAME_MODE_TO_FORMAT[onlineSession.gameMode || '2v2'] || 'doubles',
     botPolicy:
@@ -138,14 +145,16 @@ export function useLayer3HostMatchStoreBinding(
     customDurationSeconds: onlineSession.matchDurationSeconds ?? 150,
   }));
 
-  // Silent Pre-Probe on Host window mount: updates 4-bit hostMask and refreshes roomCode mask
+  // Silent Pre-Probe on Host window mount: updates 4-bit hostMask and refreshes custom/randomized roomCode mask
   useEffect(() => {
     let cancelled = false;
     void verifyRelays().then((probedMask) => {
       if (cancelled) return;
       setConfig((prev) => ({
         ...prev,
-        roomCode: applyMaskToRoomCodeInput(prev.roomCode, probedMask),
+        roomCode: prev.roomCode.trim()
+          ? applyConnectivityMaskToRoomCode(prev.roomCode, probedMask)
+          : '',
       }));
     });
     return () => {
@@ -157,7 +166,7 @@ export function useLayer3HostMatchStoreBinding(
   const [currentStep, setCurrentStep] = useState<number>(1);
 
   const resolvedRoomType: 'match' | 'warmup' =
-    rawProps.roomType === 'warmup' || onlineSession.roomType === 'warmup'
+    mergedProps.roomType === 'warmup' || onlineSession.roomType === 'warmup'
       ? 'warmup'
       : 'match';
 
@@ -165,6 +174,7 @@ export function useLayer3HostMatchStoreBinding(
     const cleanName = nextConfig.playerName.trim() || generateDefaultPlayerName();
     saveStoredPlayerName(cleanName);
     const cleanRoom = finalizeHostRoomCode(nextConfig.roomCode, hostMask);
+    setConfig((prev) => ({ ...prev, roomCode: cleanRoom }));
     const durationSec =
       nextConfig.durationPreset === 'custom'
         ? nextConfig.customDurationSeconds
@@ -219,11 +229,11 @@ export function useLayer3HostMatchStoreBinding(
   };
 
   return {
-    ...rawProps,
-    roomType: rawProps.roomType ?? resolvedRoomType,
-    config: rawProps.config ?? rawProps.settings ?? (rawProps.defaultConfig ? undefined : config),
-    onConfigChange:
-      rawProps.onConfigChange ??
+    ...mergedProps,
+    roomType: mergedProps.roomType ?? resolvedRoomType,
+    config: mergedProps.config ?? (mergedProps.defaultConfig ? undefined : config),
+    onChange:
+      mergedProps.onChange ??
       ((next: HostMatchConfig, patch: Partial<HostMatchConfig>) => {
         setConfig(next);
         if (next.playerName) {
@@ -232,34 +242,39 @@ export function useLayer3HostMatchStoreBinding(
         void patch;
       }),
     progressStatus:
-      rawProps.progressStatus ?? (bridge.onHostOnlineWarmup ? progressStatus : undefined),
+      mergedProps.progressStatus ?? (bridge.onHostOnlineWarmup ? progressStatus : undefined),
     currentStep:
-      rawProps.currentStep ?? (bridge.onHostOnlineWarmup ? currentStep : undefined),
-    onStartHost: rawProps.onStartHost ?? ((cfg: HostMatchConfig) => void handleStartHost(cfg)),
-    onRetryHost: rawProps.onRetryHost ?? (() => void handleStartHost(config)),
+      mergedProps.currentStep ?? (bridge.onHostOnlineWarmup ? currentStep : undefined),
+    onStartHost:
+      mergedProps.onStartHost ?? ((cfg: HostMatchConfig) => void handleStartHost(cfg)),
+    onRetryHost: mergedProps.onRetryHost ?? (() => void handleStartHost(config)),
     onCancelHost:
-      rawProps.onCancelHost ??
+      mergedProps.onCancelHost ??
       (() => {
         setProgressStatus('idle');
         setCurrentStep(1);
         bridge.onLeaveOnlineServer?.();
       }),
     onNavigateGarageSync:
-      rawProps.onNavigateGarageSync ?? (() => navigate('garage')),
+      mergedProps.onNavigateGarageSync ?? (() => navigate('garage')),
     onNavigateSignalingConfig:
-      rawProps.onNavigateSignalingConfig ??
+      mergedProps.onNavigateSignalingConfig ??
       (() => {
         setSettingsTargetTab('advanced');
         setHighlightSetting('signaling-credential-bundle');
         navigate('settings');
       }),
-    onBack: rawProps.onBack ?? goBack,
+    onBack: mergedProps.onBack ?? goBack,
   };
 }
 
 export function useLayer3JoinRoomStoreBinding(
   rawProps: Layer3JoinRoomRecipeProps
-): Layer3JoinRoomRecipeProps {
+): ResolvedLayer3JoinRoomBinding {
+  const mergedProps: ResolvedLayer3JoinRoomBinding = {
+    ...rawProps.stateOverride,
+    ...rawProps,
+  };
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -286,7 +301,7 @@ export function useLayer3JoinRoomStoreBinding(
   const handleJoinRoom = async (nextConfig: JoinRoomConfig) => {
     const cleanName = nextConfig.playerName.trim() || generateDefaultPlayerName();
     saveStoredPlayerName(cleanName);
-    const parsed = parseUiRoomCode(nextConfig.roomCode);
+    const parsed = parseRoomCode(nextConfig.roomCode);
     const cleanRoom = parsed?.canonicalRoomCode || nextConfig.roomCode.trim().toLowerCase();
     if (!cleanRoom) {
       setCurrentStep(1);
@@ -325,10 +340,10 @@ export function useLayer3JoinRoomStoreBinding(
   };
 
   return {
-    ...rawProps,
-    config: rawProps.config ?? rawProps.settings ?? (rawProps.defaultConfig ? undefined : config),
-    onConfigChange:
-      rawProps.onConfigChange ??
+    ...mergedProps,
+    config: mergedProps.config ?? (mergedProps.defaultConfig ? undefined : config),
+    onChange:
+      mergedProps.onChange ??
       ((next: JoinRoomConfig) => {
         setConfig(next);
         if (next.playerName) {
@@ -336,27 +351,28 @@ export function useLayer3JoinRoomStoreBinding(
         }
       }),
     progressStatus:
-      rawProps.progressStatus ?? (bridge.onJoinOnlineWarmup ? progressStatus : undefined),
+      mergedProps.progressStatus ?? (bridge.onJoinOnlineWarmup ? progressStatus : undefined),
     currentStep:
-      rawProps.currentStep ?? (bridge.onJoinOnlineWarmup ? currentStep : undefined),
-    onJoinRoom: rawProps.onJoinRoom ?? ((cfg: JoinRoomConfig) => void handleJoinRoom(cfg)),
-    onRetryJoin: rawProps.onRetryJoin ?? (() => void handleJoinRoom(config)),
+      mergedProps.currentStep ?? (bridge.onJoinOnlineWarmup ? currentStep : undefined),
+    onJoinRoom:
+      mergedProps.onJoinRoom ?? ((cfg: JoinRoomConfig) => void handleJoinRoom(cfg)),
+    onRetryJoin: mergedProps.onRetryJoin ?? (() => void handleJoinRoom(config)),
     onCancelJoin:
-      rawProps.onCancelJoin ??
+      mergedProps.onCancelJoin ??
       (() => {
         setProgressStatus('idle');
         setCurrentStep(1);
         bridge.onLeaveOnlineServer?.();
       }),
     onNavigateGarageSync:
-      rawProps.onNavigateGarageSync ?? (() => navigate('garage')),
+      mergedProps.onNavigateGarageSync ?? (() => navigate('garage')),
     onNavigateSignalingConfig:
-      rawProps.onNavigateSignalingConfig ??
+      mergedProps.onNavigateSignalingConfig ??
       (() => {
         setSettingsTargetTab('advanced');
         setHighlightSetting('signaling-credential-bundle');
         navigate('settings');
       }),
-    onBack: rawProps.onBack ?? goBack,
+    onBack: mergedProps.onBack ?? goBack,
   };
 }

@@ -38,22 +38,47 @@ function triggerBundleDownload(content: string, filename: string): void {
 export const DeveloperProfileExportSection: React.FC<DeveloperProfileExportSectionProps> =
   React.memo(({ onHover, onLeave, isLight = false }) => {
     const loaded = useSignalingProfileStore((s) => s.loaded);
+    const source = useSignalingProfileStore((s) => s.source);
     const profileHash = useSignalingProfileStore((s) => s.profileHash);
     const isBusy = useSignalingProfileStore((s) => s.isBusy);
     const lastExport = useSignalingProfileStore((s) => s.lastExport);
     const exportBundle = useSignalingProfileStore((s) => s.exportBundle);
 
     const [isExpanded, setIsExpanded] = useState(false);
+    const [showOverride, setShowOverride] = useState(false);
     const [windowMinutes, setWindowMinutes] = useState<number>(15);
     const [customPin, setCustomPin] = useState<string>('');
+    const [emqxCnUsername, setEmqxCnUsername] = useState<string>('');
+    const [emqxCnPassword, setEmqxCnPassword] = useState<string>('');
+    const [emqxGbUsername, setEmqxGbUsername] = useState<string>('');
+    const [emqxGbPassword, setEmqxGbPassword] = useState<string>('');
     const [copiedPin, setCopiedPin] = useState(false);
 
     const { borderRadius, rowGap } = useSettingActionRowStore();
 
+    // Only show developer bundle export when loaded from developer private profile
+    if (source !== 'dev-private') {
+      return null;
+    }
+
     const handleExport = async () => {
+      const hasOverride =
+        Boolean(emqxCnUsername.trim()) ||
+        Boolean(emqxCnPassword) ||
+        Boolean(emqxGbUsername.trim()) ||
+        Boolean(emqxGbPassword);
+
       const result = await exportBundle({
         windowMinutes,
         pinCode: customPin.length === 6 ? customPin : undefined,
+        credentialOverrides: hasOverride
+          ? {
+              emqxCnUsername: emqxCnUsername.trim() || undefined,
+              emqxCnPassword: emqxCnPassword || undefined,
+              emqxGbUsername: emqxGbUsername.trim() || undefined,
+              emqxGbPassword: emqxGbPassword || undefined,
+            }
+          : undefined,
       });
       if (result) {
         triggerBundleDownload(result.serializedJson, result.suggestedFileName);
@@ -66,6 +91,12 @@ export const DeveloperProfileExportSection: React.FC<DeveloperProfileExportSecti
       setCopiedPin(true);
       setTimeout(() => setCopiedPin(false), 2000);
     };
+
+    const inputClass = `px-2.5 py-1 rounded-lg text-xs font-mono border outline-none ${
+      isLight
+        ? 'bg-white border-neutral-300 text-neutral-900'
+        : 'bg-neutral-950 border-neutral-700 text-neutral-100'
+    }`;
 
     return (
       <div
@@ -83,8 +114,8 @@ export const DeveloperProfileExportSection: React.FC<DeveloperProfileExportSecti
           title="Export .rctbnspib Credential Bundle"
           description={
             loaded
-              ? `Generate a time-bound AES-256-GCM encrypted .rctbnspib file + 6-digit PIN from active profile [#${profileHash.slice(0, 8) || 'local'}]`
-              : 'Requires an active signaling profile (run pnpm dev or import a bundle first)'
+              ? `Generate a minimal time-bound AES-256-GCM encrypted .rctbnspib file + 6-digit PIN [#${profileHash.slice(0, 8) || 'local'}]`
+              : 'Requires an active developer signaling profile'
           }
           onAction={() => setIsExpanded((prev) => !prev)}
           onHover={onHover}
@@ -152,11 +183,7 @@ export const DeveloperProfileExportSection: React.FC<DeveloperProfileExportSecti
                 placeholder="Auto 6-Digit PIN"
                 value={customPin}
                 onChange={(e) => setCustomPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                className={`w-36 px-2.5 py-1 rounded-lg text-xs font-mono tracking-wider text-center border outline-none ${
-                  isLight
-                    ? 'bg-white border-neutral-300 text-neutral-900'
-                    : 'bg-neutral-950 border-neutral-700 text-neutral-100'
-                }`}
+                className={`w-36 text-center tracking-wider ${inputClass}`}
               />
 
               <button
@@ -172,6 +199,55 @@ export const DeveloperProfileExportSection: React.FC<DeveloperProfileExportSecti
                 <Download className="h-3.5 w-3.5" />
                 <span>{isBusy ? 'Encrypting...' : 'Download .rctbnspib'}</span>
               </button>
+            </div>
+
+            {/* Optional Per-Friend Credential Override Section */}
+            <div className="flex flex-col gap-2 pt-1 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setShowOverride((prev) => !prev)}
+                className="inline-flex items-center justify-between text-[11px] font-semibold opacity-80 hover:opacity-100 cursor-pointer"
+              >
+                <span>Override Relay Credentials (Optional · For Per-Friend Revocation)</span>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                    showOverride ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {showOverride && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <input
+                    type="text"
+                    placeholder="emqx_cn Username (default if empty)"
+                    value={emqxCnUsername}
+                    onChange={(e) => setEmqxCnUsername(e.target.value)}
+                    className={inputClass}
+                  />
+                  <input
+                    type="password"
+                    placeholder="emqx_cn Password (default if empty)"
+                    value={emqxCnPassword}
+                    onChange={(e) => setEmqxCnPassword(e.target.value)}
+                    className={inputClass}
+                  />
+                  <input
+                    type="text"
+                    placeholder="emqx_gb Username (default if empty)"
+                    value={emqxGbUsername}
+                    onChange={(e) => setEmqxGbUsername(e.target.value)}
+                    className={inputClass}
+                  />
+                  <input
+                    type="password"
+                    placeholder="emqx_gb Password (default if empty)"
+                    value={emqxGbPassword}
+                    onChange={(e) => setEmqxGbPassword(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              )}
             </div>
 
             {lastExport && (

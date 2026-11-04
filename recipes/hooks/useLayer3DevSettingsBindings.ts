@@ -73,6 +73,7 @@ export interface Layer3DevSandboxesRecipeProps {
 export interface Layer3DevUnderDevelopmentRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
+  onNavigateSignalingLab?: () => void;
   threeWheelsEnabled?: boolean;
   onThreeWheelsChange?: (enabled: boolean) => void;
   onEnableAndDriveThreeWheels?: () => void;
@@ -315,6 +316,7 @@ export function useLayer3DevUnderDevelopmentStoreBinding(
   rawProps: Layer3DevUnderDevelopmentRecipeProps
 ): Layer3DevUnderDevelopmentRecipeProps {
   const goBack = useAppStore((s) => s.goBack);
+  const navigate = useAppStore((s) => s.navigate);
   const underDev = useAppStore((s) => s.underDevelopment);
   const updateUnderDev = useAppStore((s) => s.updateUnderDevelopment);
   const closeMenu = useAppStore((s) => s.closeMenu);
@@ -322,6 +324,8 @@ export function useLayer3DevUnderDevelopmentStoreBinding(
   return {
     ...rawProps,
     onBack: rawProps.onBack ?? goBack,
+    onNavigateSignalingLab:
+      rawProps.onNavigateSignalingLab ?? (() => navigate('dev-signaling-lab')),
     threeWheelsEnabled:
       rawProps.threeWheelsEnabled ?? Boolean(underDev?.threeWheelsEnabled),
     onThreeWheelsChange:

@@ -206,11 +206,11 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
           </span>
         </div>
 
-        {/* Experimental Bot Pack (RLBot #9700488) — 8 New Models Max-Format Spectate Showcase */}
+        {/* experimental bot pack #9700488 — 8 New Models Max-Format Spectate Showcase */}
         <Card isLight={isLight} variant="outlined" className="p-3 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-bold tracking-wider text-emerald-500">
-              Experimental Bot Pack (RLBot #9700488) — 8 Models Spectate Showcase
+              Experimental Bot Pack #9700488 — 8 Models Spectate Showcase
             </span>
             <span className={`text-[10px] font-mono ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
               Select any model to configure max-format all-bots spectate (3v3 / 2v2 / 1v1)

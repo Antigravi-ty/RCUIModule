@@ -126,7 +126,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
   const enablePredictor = resolved.enabled;
   const patternMode: 'dynamic' | 'static' = resolved.dynamicMode ? 'dynamic' : 'static';
   const trajectoryDuration =
-    resolved.duration ?? Number(((resolved.predictionTicks || 396) / 120).toFixed(1));
+    resolved.duration ?? Number(((resolved.predictionTicks || 600) / 120).toFixed(1));
   const lineThickness = resolved.thickness ?? 20;
   // Support both 0..1 fraction (RocketCompanion store) and 5..100 percentage
   const isNormalizedOpacity = (resolved.opacity ?? 0.5) <= 1.0;
@@ -229,6 +229,26 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
               { value: 'static', label: 'Static (Follows Line)' },
             ]}
             hoverDescription="Switch between velocity-scaled dynamic dashes (pushes line) or world-anchored static dash geometry (follows line)."
+            onHover={(desc) => desc && setHoveredDesc(desc)}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 2b. Dash End Cap Style */}
+          <SettingSegmentedRow
+            title="Dash End Cap Style"
+            value={resolved.dashCapStyle === 'chamfer' ? 'chamfer' : 'round'}
+            onChange={(v) =>
+              updateConfig({ dashCapStyle: v === 'chamfer' ? 'chamfer' : 'round' })
+            }
+            layout="inline"
+            bordered={false}
+            showDescription={false}
+            options={[
+              { value: 'round', label: 'Rounded Cap' },
+              { value: 'chamfer', label: 'Chamfered Cap' },
+            ]}
+            hoverDescription="Select 3D dash end-cap geometry: Rounded Capsule Cap (hemisphere dome) or Chamfered Bevel Cap (45-degree cut)."
             onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
