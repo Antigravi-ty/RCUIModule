@@ -93,7 +93,7 @@ export const getFloatingWindowIcon = (category?: string, id?: string, extraClass
     return <Car className={`${extraClass} text-amber-500 dark:text-amber-400`} />;
   }
 
-  if (normId.includes('multi-bots') || normCat === 'experimentalbots') {
+  if (normId.includes('multi-bots') || normId.includes('bot-pack') || normCat === 'experimentalbots') {
     return <Bot className={`${extraClass} text-emerald-500 dark:text-emerald-400`} />;
   }
 

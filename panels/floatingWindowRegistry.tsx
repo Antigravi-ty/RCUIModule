@@ -18,6 +18,7 @@ import { ReachabilityTunerFloatingWindow } from './dev/ReachabilityTunerFloating
 import { VehicleModelOffsetTunerFloatingWindow } from './dev/VehicleModelOffsetTunerFloatingWindow';
 import { VehicleGlobalFxTunerFloatingWindow } from './dev/VehicleGlobalFxTunerFloatingWindow';
 import { ExperimentalMultiBotsFloatingWindow } from './dev/ExperimentalMultiBotsFloatingWindow';
+import { ExperimentalBotPackFloatingWindow } from './dev/ExperimentalBotPackFloatingWindow';
 import { AtmosphereFxTunerFloatingWindow } from './dev/AtmosphereFxTunerFloatingWindow';
 import { SubsystemIsolationLabFloatingWindow } from './dev/SubsystemIsolationLabFloatingWindow';
 import { KickoffTrainingFloatingWindow } from './dev/KickoffTrainingFloatingWindow';
@@ -142,6 +143,11 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     id: 'experimental-multi-bots',
     category: 'developer',
     render: ({ isLight = false }) => <ExperimentalMultiBotsFloatingWindow isLight={isLight} />,
+  },
+  'experimental-bot-pack': {
+    id: 'experimental-bot-pack',
+    category: 'developer',
+    render: ({ isLight = false }) => <ExperimentalBotPackFloatingWindow isLight={isLight} />,
   },
   'atmosphere-fx-tuner': {
     id: 'atmosphere-fx-tuner',

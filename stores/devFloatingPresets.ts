@@ -161,6 +161,22 @@ export const EXPERIMENTAL_MULTI_BOTS_PRESET: PresetConfig = {
   sourcePath: 'panels/dev/ExperimentalMultiBotsFloatingWindow.tsx',
 };
 
+export const EXPERIMENTAL_BOT_PACK_PRESET: PresetConfig = {
+  id: 'experimental-bot-pack',
+  title: 'Experimental Bot Pack',
+  category: 'ExperimentalBots',
+  width: 490,
+  height: 620,
+  minHeight: 200,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'Live floating controller for Experimental Bot Pack (RLBot #9700488) 8 native models (Chronos, Dice, Ducky, Fury, Galactus, Kira, Rain, Ripple v1.1).',
+  menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  component: 'ExperimentalBotPackFloatingWindow',
+  sourcePath: 'panels/dev/ExperimentalBotPackFloatingWindow.tsx',
+};
+
 export const ATMOSPHERE_FX_TUNER_PRESET: PresetConfig = {
   id: 'atmosphere-fx-tuner',
   title: 'Atmosphere & FX Tuner',
@@ -403,6 +419,7 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   VEHICLE_MODEL_OFFSET_TUNER_PRESET,
   VEHICLE_GLOBAL_FX_TUNER_PRESET,
   EXPERIMENTAL_MULTI_BOTS_PRESET,
+  EXPERIMENTAL_BOT_PACK_PRESET,
   ATMOSPHERE_FX_TUNER_PRESET,
   SUBSYSTEM_ISOLATION_LAB_PRESET,
   KICKOFF_TRAINING_PRESET,

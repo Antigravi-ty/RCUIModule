@@ -7,7 +7,10 @@ import {
   type ExpSpeedMultiplier,
 } from '../../stores/experimentalMultiBotsStore';
 import { floatingStore } from '../../stores/floatingStore';
-import { EXPERIMENTAL_MULTI_BOTS_PRESET } from '../../stores/devFloatingPresets';
+import {
+  EXPERIMENTAL_MULTI_BOTS_PRESET,
+  EXPERIMENTAL_BOT_PACK_PRESET,
+} from '../../stores/devFloatingPresets';
 import type {
   TeamRosterSlotConfig,
   BotPolicyId,
@@ -167,13 +170,24 @@ export function useLayer3ExpMultiBotsStoreBinding(
       return;
     }
     floatingStore.setOpacity(70);
+    const isBotpackShowcase = Boolean(
+      useExperimentalMultiBotsStore.getState().activeBotpackShowcaseModel
+    );
+    const targetPreset = isBotpackShowcase
+      ? EXPERIMENTAL_BOT_PACK_PRESET
+      : EXPERIMENTAL_MULTI_BOTS_PRESET;
+    const otherPreset = isBotpackShowcase
+      ? EXPERIMENTAL_MULTI_BOTS_PRESET
+      : EXPERIMENTAL_BOT_PACK_PRESET;
+    floatingStore.closeWindow(otherPreset.id);
+
     const snap = floatingStore.getSnapshot();
     const exists =
-      snap.windows.some((w) => w.id === EXPERIMENTAL_MULTI_BOTS_PRESET.id) ||
-      snap.activeFlight?.preset?.id === EXPERIMENTAL_MULTI_BOTS_PRESET.id;
+      snap.windows.some((w) => w.id === targetPreset.id) ||
+      snap.activeFlight?.preset?.id === targetPreset.id;
     if (!exists) {
       floatingStore.spawnWindow({
-        ...EXPERIMENTAL_MULTI_BOTS_PRESET,
+        ...targetPreset,
         startMinimized: true,
       });
     }

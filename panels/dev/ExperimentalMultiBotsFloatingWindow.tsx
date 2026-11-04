@@ -1,26 +1,18 @@
 import React from 'react';
-import {
-  Play,
-  Eye,
-  RotateCcw,
-  Zap,
-  Users,
-  Sparkles,
-} from 'lucide-react';
+import { Play, RotateCcw, Users } from 'lucide-react';
 import {
   useExperimentalMultiBotsStore,
-  BOTPACK_9700488_POLICY_METAS,
-  getExpColorSwatch,
   type ExpPlayerParticipation,
-  type ExpSpeedMultiplier,
 } from '../../stores/experimentalMultiBotsStore';
 import { useAppStore } from '../../stores/appStore';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
-import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
-import { KeycapBadge } from '../../primitives/KeycapBadge';
 import { ExperimentalMultiBotsTeamRosterCard } from './ExperimentalMultiBotsTeamRosterCard';
+import {
+  ExperimentalBotsCameraPovCard,
+  ExperimentalBotsMatchControlsCard,
+} from './ExperimentalBotsSharedCards';
 
 export interface ExperimentalMultiBotsFloatingWindowProps {
   isLight?: boolean;
@@ -34,7 +26,6 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
     playerParticipation,
     blueSlots,
     orangeSlots,
-    activeBotpackShowcaseModel,
     activeCameraCarIndex,
     matchDurationSec,
     speedMultiplier,
@@ -55,7 +46,6 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
     setSlotBotType,
     setSlotColor,
     applyPresetRoster,
-    applyBotpack9700488Showcase,
     setActiveCameraCarIndex,
     setMatchDurationSec,
     setSpeedMultiplier,
@@ -85,12 +75,6 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
   const totalCars = blueSlots.length + orangeSlots.length;
-  const formatClock = (sec: number) => {
-    const abs = Math.max(0, Math.floor(sec));
-    const m = Math.floor(abs / 60);
-    const s = abs % 60;
-    return `${isOvertime ? '+' : ''}${m}:${String(s).padStart(2, '0')}`;
-  };
 
   return (
     <div className="flex flex-col gap-2.5 select-none text-xs">
@@ -100,9 +84,7 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
           <div className="flex items-center gap-1.5">
             <span
               className={`h-2 w-2 rounded-full shrink-0 ${
-                isInExpMode
-                  ? 'bg-emerald-400 animate-pulse'
-                  : 'bg-amber-400'
+                isInExpMode ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
               }`}
             />
             <span className="font-bold text-xs truncate">
@@ -112,7 +94,7 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
             </span>
           </div>
           <span className={`text-[10px] font-mono truncate mt-0.5 ${mutedText}`}>
-            Native SafeTensors EARL Perceiver · Zero ONNX · Up to 3v3
+            Native SafeTensors EARL Perceiver + SIMD128 · Zero ONNX · Up to 3v3
           </span>
         </div>
 
@@ -144,7 +126,9 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
       </div>
 
       {/* 2. Native Model Weights & Inference Telemetry Bar */}
-      <div className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between gap-2 ${subPanelBg}`}>
+      <div
+        className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between gap-2 ${subPanelBg}`}
+      >
         <div className="flex items-center gap-1.5 flex-wrap">
           <Badge
             variant={nextoLoaded ? 'emerald' : 'amber'}
@@ -166,46 +150,6 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
         <span className="text-[10px] font-mono text-sky-400 shrink-0">
           Infer: {lastTotalInferenceMs.toFixed(2)} ms
         </span>
-      </div>
-
-      {/* 2b. experimental  botpack#9700488 — 8 New Models One-Click Spectate Showcase */}
-      <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 ${cardBg}`}>
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-bold text-[11px] flex items-center gap-1.5 text-emerald-400">
-            <Sparkles className="h-3.5 w-3.5 shrink-0" />
-            <span>experimental  botpack#9700488</span>
-          </span>
-          <span className={`text-[10px] font-mono ${mutedText}`}>
-            1-Click Full Match Reset &amp; Spectate
-          </span>
-        </div>
-        <div className="grid grid-cols-4 gap-1">
-          {BOTPACK_9700488_POLICY_METAS.map((m) => {
-            const isSelected = activeBotpackShowcaseModel === m.id;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => {
-                  applyBotpack9700488Showcase(m.id, true);
-                  if (!isInExpMode) {
-                    bridge.onStartExpMultiBots?.();
-                  }
-                }}
-                className={`px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center justify-between gap-1 transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-emerald-500/25 border-emerald-400 text-emerald-300 font-bold shadow-xs'
-                    : isLight
-                      ? 'bg-white hover:bg-emerald-500/10 border-neutral-300 text-neutral-700'
-                      : 'bg-neutral-900/80 hover:bg-emerald-500/15 border-neutral-700/80 text-neutral-200'
-                }`}
-              >
-                <span className="truncate">{m.label}</span>
-                <span className="text-[9px] font-mono opacity-75 shrink-0">{m.formatBadge}</span>
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* 3. Player Participation & Quick Presets */}
@@ -271,70 +215,17 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
       </div>
 
       {/* 4. Bot Camera POV Hotkey Bar (1 - 6) */}
-      <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 ${cardBg}`}>
-        <div className="flex items-center justify-between">
-          <span className="font-bold text-[11px] flex items-center gap-1.5">
-            <Eye className="h-3.5 w-3.5 text-amber-400" />
-            <span>Camera POV Switcher (Keys 1–6)</span>
-          </span>
-          <span className={`text-[10px] font-mono ${mutedText}`}>
-            {playerParticipation === 'none'
-              ? 'Press 1-6 to switch bot POV'
-              : 'Click to inspect car POV'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-1.5">
-          {(spawnedCars.length > 0
-            ? spawnedCars
-            : [
-                ...blueSlots.map((s, i) => ({
-                  carIndex: i,
-                  keyNumber: i + 1,
-                  team: 0 as const,
-                  isPlayer: s.isPlayer,
-                  botType: s.botType,
-                  colorHex: getExpColorSwatch(s.colorSlot).hex,
-                  label: s.isPlayer ? 'PLAYER' : `${s.botType.toUpperCase()} #${i + 1}`,
-                })),
-                ...orangeSlots.map((s, i) => ({
-                  carIndex: blueSlots.length + i,
-                  keyNumber: blueSlots.length + i + 1,
-                  team: 1 as const,
-                  isPlayer: s.isPlayer,
-                  botType: s.botType,
-                  colorHex: getExpColorSwatch(s.colorSlot).hex,
-                  label: s.isPlayer
-                    ? 'PLAYER'
-                    : `${s.botType.toUpperCase()} #${blueSlots.length + i + 1}`,
-                })),
-              ]
-          ).map((car) => {
-            const isSelected = activeCameraCarIndex === car.carIndex;
-            return (
-              <button
-                key={car.carIndex}
-                type="button"
-                onClick={() => setActiveCameraCarIndex(car.carIndex)}
-                className={`px-2 py-1.5 rounded-lg border flex items-center gap-1.5 text-left transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold shadow-sm'
-                    : isLight
-                      ? 'bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700'
-                      : 'bg-neutral-900/70 hover:bg-neutral-800 border-neutral-700/70 text-neutral-300'
-                }`}
-              >
-                <KeycapBadge label={String(car.keyNumber)} size="sm" isLight={isLight} />
-                <span
-                  className="h-2.5 w-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: car.colorHex }}
-                />
-                <span className="text-[10px] font-mono truncate">{car.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <ExperimentalBotsCameraPovCard
+        isLight={isLight}
+        cardBg={cardBg}
+        mutedText={mutedText}
+        playerParticipation={playerParticipation}
+        blueSlots={blueSlots}
+        orangeSlots={orangeSlots}
+        spawnedCars={spawnedCars}
+        activeCameraCarIndex={activeCameraCarIndex}
+        onSelectCameraCar={setActiveCameraCarIndex}
+      />
 
       {/* 5. Blue Team (Team 0) Roster Builder (Max 3) */}
       <ExperimentalMultiBotsTeamRosterCard
@@ -373,116 +264,25 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
       />
 
       {/* 7. Live Match Scoreboard, Speed Multiplier & Sandbox Triggers */}
-      <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
-        <div className="flex items-center justify-between">
-          <span className="font-bold text-[11px] flex items-center gap-1.5">
-            <Zap className="h-3.5 w-3.5 text-amber-400" />
-            <span>Match Telemetry &amp; Controls</span>
-          </span>
-          <span className="text-[11px] font-mono font-bold text-amber-400">
-            Blue {blueScore} — {orangeScore} Orange · {formatClock(remainingSec)} ({matchPhase})
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <span className={`text-[11px] ${mutedText}`}>Match Duration</span>
-          <SegmentedSwitch
-            value={String(matchDurationSec)}
-            onChange={(v) => setMatchDurationSec(Number(v))}
-            options={[
-              { value: '90', label: '1:30' },
-              { value: '180', label: '3:00' },
-              { value: '300', label: '5:00' },
-              { value: '600', label: '10:00' },
-            ]}
-            size="sm"
-            isLight={isLight}
-          />
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <span className={`text-[11px] ${mutedText}`}>Simulation Speed</span>
-          <SegmentedSwitch
-            value={String(speedMultiplier)}
-            onChange={(v) => setSpeedMultiplier(Number(v) as ExpSpeedMultiplier)}
-            options={[
-              { value: '100', label: '1x' },
-              { value: '200', label: '2x' },
-              { value: '300', label: '3x' },
-              { value: '400', label: '4x' },
-            ]}
-            size="sm"
-            isLight={isLight}
-          />
-        </div>
-
-        <div className="flex items-center justify-between gap-4 pt-0.5">
-          <div className="flex items-center gap-2">
-            <span className={`text-[11px] ${mutedText}`}>Unlimited Boost</span>
-            <ToggleSwitch
-              checked={unlimitedBoost}
-              onChange={(v) => setUnlimitedBoost(v)}
-              isLight={isLight}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={`text-[11px] ${mutedText}`}>Fast Goal Reset</span>
-            <ToggleSwitch
-              checked={disableGoalReplay}
-              onChange={(v) => setDisableGoalReplay(v)}
-              isLight={isLight}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-5 gap-1.5 pt-1">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => triggerSandboxAction('reset_kickoff')}
-            isLight={isLight}
-            className="text-[10px] py-1"
-          >
-            Reset Kickoff
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => triggerSandboxAction('score_blue')}
-            isLight={isLight}
-            className="text-[10px] py-1"
-          >
-            +1 Blue Goal
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => triggerSandboxAction('score_orange')}
-            isLight={isLight}
-            className="text-[10px] py-1"
-          >
-            +1 Orange Goal
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => triggerSandboxAction('force_overtime')}
-            isLight={isLight}
-            className="text-[10px] py-1"
-          >
-            Force OT
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => triggerSandboxAction('end_match')}
-            isLight={isLight}
-            className="text-[10px] py-1"
-          >
-            End Match
-          </Button>
-        </div>
-      </div>
+      <ExperimentalBotsMatchControlsCard
+        isLight={isLight}
+        cardBg={cardBg}
+        mutedText={mutedText}
+        blueScore={blueScore}
+        orangeScore={orangeScore}
+        remainingSec={remainingSec}
+        isOvertime={isOvertime}
+        matchPhase={matchPhase}
+        matchDurationSec={matchDurationSec}
+        speedMultiplier={speedMultiplier}
+        unlimitedBoost={unlimitedBoost}
+        disableGoalReplay={disableGoalReplay}
+        onSetMatchDurationSec={setMatchDurationSec}
+        onSetSpeedMultiplier={setSpeedMultiplier}
+        onSetUnlimitedBoost={setUnlimitedBoost}
+        onSetDisableGoalReplay={setDisableGoalReplay}
+        onTriggerSandboxAction={triggerSandboxAction}
+      />
     </div>
   );
 };
