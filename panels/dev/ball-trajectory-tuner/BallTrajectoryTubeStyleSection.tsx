@@ -29,7 +29,7 @@ export const BallTrajectoryTubeStyleSection: React.FC<
     : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
-  const horizonSeconds = Number(((cfg.predictionTicks || 396) / 120).toFixed(1));
+  const horizonSeconds = Number(((cfg.predictionTicks || 600) / 120).toFixed(1));
   const shadingPct = Math.round((cfg.shadingStrength ?? 0) * 100);
   const taperPct = Math.round((cfg.radiusTaper ?? 0) * 100);
   const fadePct = Math.round((cfg.horizonFade ?? 0) * 100);

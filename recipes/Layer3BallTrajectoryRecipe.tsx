@@ -126,7 +126,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
   const enablePredictor = resolved.enabled;
   const patternMode: 'dynamic' | 'static' = resolved.dynamicMode ? 'dynamic' : 'static';
   const trajectoryDuration =
-    resolved.duration ?? Number(((resolved.predictionTicks || 396) / 120).toFixed(1));
+    resolved.duration ?? Number(((resolved.predictionTicks || 600) / 120).toFixed(1));
   const lineThickness = resolved.thickness ?? 20;
   // Support both 0..1 fraction (RocketCompanion store) and 5..100 percentage
   const isNormalizedOpacity = (resolved.opacity ?? 0.5) <= 1.0;

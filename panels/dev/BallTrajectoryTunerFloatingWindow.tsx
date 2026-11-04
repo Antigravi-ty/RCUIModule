@@ -125,7 +125,7 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
 
         <SliderControl
           label="Catch-Up Step Budget (Ramp After Hit)"
-          value={cfg.catchupTicksPerFrame ?? 20}
+          value={cfg.catchupTicksPerFrame ?? 5}
           min={2}
           max={120}
           step={1}
