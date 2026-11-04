@@ -126,8 +126,8 @@ export interface AppState {
   setSettingsTargetTab: (tab: string) => void;
 
   // Match mode tracking
-  matchMode: 'freeplay' | 'replay-viewer' | 'match' | 'online-warmup' | 'kickoff-training' | 'dev-test-lab' | 'exp-multi-bots' | 'static-training-pack';
-  setMatchMode: (mode: 'freeplay' | 'replay-viewer' | 'match' | 'online-warmup' | 'kickoff-training' | 'dev-test-lab' | 'exp-multi-bots' | 'static-training-pack') => void;
+  matchMode: 'freeplay' | 'replay-viewer' | 'match' | 'online-warmup' | 'kickoff-training' | 'dev-test-lab' | 'exp-multi-bots' | 'static-training-pack' | 'dynamic-training-pack';
+  setMatchMode: (mode: 'freeplay' | 'replay-viewer' | 'match' | 'online-warmup' | 'kickoff-training' | 'dev-test-lab' | 'exp-multi-bots' | 'static-training-pack' | 'dynamic-training-pack') => void;
 
   // Online warmup / multiplayer match session tracking
   onlineSession: {
@@ -178,6 +178,7 @@ export interface AppState {
     onStartKickoffTraining?: () => void;
     onStartReplayViewer?: () => void;
     onStartStaticTrainingPack?: (sessionMode?: 'play' | 'edit') => void;
+    onStartDynamicTrainingPack?: () => void;
     onStartDevTestLab?: () => void;
     onStartExpMultiBots?: () => void;
     onRestartMatch?: () => void;

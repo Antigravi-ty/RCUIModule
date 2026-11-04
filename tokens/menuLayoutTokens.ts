@@ -25,6 +25,7 @@ export type CanonicalMenuPanelId =
   | 'layer3-dev-calibrated-presets'
   | 'layer3-dev-under-development'
   | 'layer4-static-training-pack'
+  | 'layer4-dynamic-training-pack'
   | 'layer4-advanced-audio'
   | 'layer4-controller-settings'
   | 'layer4-event-trigger-rules';
@@ -356,6 +357,13 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     mode: 'auto',
     width: 680,
     targetHeight: 540,
+    minHeight: 260,
+    maxHeight: 1120,
+  },
+  'layer4-dynamic-training-pack': {
+    mode: 'auto',
+    width: 680,
+    targetHeight: 560,
     minHeight: 260,
     maxHeight: 1120,
   },

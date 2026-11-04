@@ -24,11 +24,22 @@ import {
   parseSingleShotItemFromJsonFile,
 } from './staticTrainingPackStorage';
 import { floatingStore } from './floatingStore';
+import {
+  type TrainingVarianceConfig,
+  type TrainingVariancePresetId,
+  type KevpertVarianceEra,
+  DEFAULT_TRAINING_VARIANCE_CONFIG,
+  buildVarianceConfigFromPreset,
+  parseBakkesModBindString,
+} from '../config/kevpertVariancePresets';
 
 export {
   type StaticTrainingPackMetadata,
   type StaticTrainingShotItem,
   type EditSubMode,
+  type TrainingVarianceConfig,
+  type TrainingVariancePresetId,
+  type KevpertVarianceEra,
   MAX_SHOTS_PER_PACK,
   areShotItemsEqual,
   areShotListsEqual,
@@ -121,6 +132,8 @@ export interface StaticTrainingPackRuntimeHandlers {
   onEditVariableMutated?: (draft: StaticTrainingShotItem) => void;
   onEditSubModeChanged?: (subMode: EditSubMode) => void;
   onSessionModeChanged?: (mode: StaticPackSessionMode) => void;
+  onPinGhostRequested?: () => void;
+  onClearGhostRequested?: () => void;
 }
 
 export interface StaticTrainingPackStoreState {
@@ -143,6 +156,11 @@ export interface StaticTrainingPackStoreState {
 
   downCounterEnabled: boolean;
   downCounterValue: StaticPackDownCounterOption;
+
+  varianceConfig: TrainingVarianceConfig;
+  shotAttemptCounter: number;
+  retainedGhostLabel: string | null;
+  showRetainedGhost: boolean;
 
   remainingTimeoutSec: number;
   activeCountdownSec: number;
@@ -193,6 +211,12 @@ export interface StaticTrainingPackStoreState {
 
   setDownCounterEnabled: (enabled: boolean) => void;
   setDownCounterValue: (val: StaticPackDownCounterOption) => void;
+  setVarianceConfig: (patch: Partial<TrainingVarianceConfig>) => void;
+  applyKevpertVariancePreset: (presetId: TrainingVariancePresetId, era?: KevpertVarianceEra) => void;
+  applyBakkesModBindString: (raw: string) => void;
+  pinLastAttemptAsGhost: () => void;
+  clearRetainedGhost: () => void;
+  setShowRetainedGhost: (show: boolean) => void;
   setFreeCamTrajectoryTesting: (active: boolean) => void;
   setTestingSingleShot: (active: boolean) => void;
   updateLiveTelemetry: (
@@ -205,6 +229,7 @@ export interface StaticTrainingPackStoreState {
       replayType: 'goal' | 'expire' | null;
       isFreeCamTrajectoryTesting: boolean;
       isTestingSingleShot: boolean;
+      retainedGhostLabel: string | null;
     }>
   ) => void;
   setRuntimeHandlers: (handlers: Partial<StaticTrainingPackRuntimeHandlers>) => void;
@@ -230,6 +255,11 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
 
   downCounterEnabled: false,
   downCounterValue: 1,
+
+  varianceConfig: { ...DEFAULT_TRAINING_VARIANCE_CONFIG },
+  shotAttemptCounter: 0,
+  retainedGhostLabel: null,
+  showRetainedGhost: true,
 
   remainingTimeoutSec: 10,
   activeCountdownSec: 0,
@@ -480,6 +510,56 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
     if (get().sessionMode === 'play' && get().downCounterEnabled) {
       get().resetCurrentShot();
     }
+  },
+
+  setVarianceConfig: (patch: Partial<TrainingVarianceConfig>) => {
+    set((s) => ({
+      varianceConfig: { ...s.varianceConfig, ...patch },
+      shotAttemptCounter: s.shotAttemptCounter + 1,
+    }));
+    if (get().sessionMode === 'play') {
+      get().resetCurrentShot();
+    }
+  },
+
+  applyKevpertVariancePreset: (presetId: TrainingVariancePresetId, era?: KevpertVarianceEra) => {
+    const current = get().varianceConfig;
+    const nextConfig = buildVarianceConfigFromPreset(
+      presetId,
+      era ?? current.era,
+      current.baseSeed,
+    );
+    set((s) => ({
+      varianceConfig: nextConfig,
+      shotAttemptCounter: s.shotAttemptCounter + 1,
+    }));
+    if (get().sessionMode === 'play') {
+      get().resetCurrentShot();
+    }
+  },
+
+  applyBakkesModBindString: (raw: string) => {
+    const nextConfig = parseBakkesModBindString(raw, get().varianceConfig);
+    set((s) => ({
+      varianceConfig: nextConfig,
+      shotAttemptCounter: s.shotAttemptCounter + 1,
+    }));
+    if (get().sessionMode === 'play') {
+      get().resetCurrentShot();
+    }
+  },
+
+  pinLastAttemptAsGhost: () => {
+    get().runtimeHandlers.onPinGhostRequested?.();
+  },
+
+  clearRetainedGhost: () => {
+    set({ retainedGhostLabel: null });
+    get().runtimeHandlers.onClearGhostRequested?.();
+  },
+
+  setShowRetainedGhost: (show: boolean) => {
+    set({ showRetainedGhost: Boolean(show) });
   },
 
   setFreeCamTrajectoryTesting: (active: boolean) => {

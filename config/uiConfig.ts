@@ -21,6 +21,7 @@ export type ActiveMenuRoute =
   | 'self-training'
   | 'kickoff-training'
   | 'static-training-pack'
+  | 'dynamic-training-pack'
   | 'host-match'
   | 'join-room'
   | 'host-training'
@@ -49,6 +50,7 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'self-training': 'play',
   'kickoff-training': 'self-training',
   'static-training-pack': 'self-training',
+  'dynamic-training-pack': 'self-training',
   'host-match': 'play',
   'join-room': 'play',
   'host-training': 'play',

@@ -56,10 +56,9 @@ export const SELF_TRAINING_OPTIONS: SelfTrainingOption[] = [
     id: 'dynamic-training-pack',
     slotId: 'garage',
     title: 'Dynamic Training Pack',
-    subtitle: 'Adaptive multi-agent scenarios with reactive bot passes and defense',
+    subtitle: 'Adaptive multi-agent scenarios with reactive bot passes, 4s pre-roll & Kevpert variance',
     icon: <UsersRoundCollaboration className="h-5 w-5" />,
-    hasArrow: false,
-    disabled: true,
+    hasArrow: true,
   },
   {
     id: 'kickoff-training',

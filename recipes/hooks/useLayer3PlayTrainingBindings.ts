@@ -180,6 +180,7 @@ export function useLayer3SelfTrainingStoreBinding(
 
   const handleSelectMode = (mode: SelfTrainingModeId) => {
     if (mode === 'dynamic-training-pack') {
+      navigate('dynamic-training-pack');
       return;
     }
     if (mode === 'free-play') {

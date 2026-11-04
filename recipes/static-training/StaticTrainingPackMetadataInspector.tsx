@@ -2,6 +2,8 @@ import React from 'react';
 import { Download, Pencil, Play, Save, Target, Trash2 } from 'lucide-react';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
+import { useStaticTrainingPackStore } from '../../stores/staticTrainingPackStore';
+import { KevpertVarianceInspectorCard } from './KevpertVarianceInspectorCard';
 import type {
   StaticPackDownCounterOption,
   StaticTrainingPackSummary,
@@ -53,6 +55,18 @@ export const StaticTrainingPackMetadataInspector: React.FC<
     onDeletePack,
     onHoverDesc,
   }) => {
+    const varianceConfig = useStaticTrainingPackStore((s) => s.varianceConfig);
+    const setVarianceConfig = useStaticTrainingPackStore((s) => s.setVarianceConfig);
+    const applyKevpertVariancePreset = useStaticTrainingPackStore(
+      (s) => s.applyKevpertVariancePreset
+    );
+    const applyBakkesModBindString = useStaticTrainingPackStore((s) => s.applyBakkesModBindString);
+    const retainedGhostLabel = useStaticTrainingPackStore((s) => s.retainedGhostLabel);
+    const showRetainedGhost = useStaticTrainingPackStore((s) => s.showRetainedGhost);
+    const setShowRetainedGhost = useStaticTrainingPackStore((s) => s.setShowRetainedGhost);
+    const pinLastAttemptAsGhost = useStaticTrainingPackStore((s) => s.pinLastAttemptAsGhost);
+    const clearRetainedGhost = useStaticTrainingPackStore((s) => s.clearRetainedGhost);
+
     return (
       <div
         className={`flex-1 min-h-0 flex flex-col justify-between rounded-xl border p-3.5 overflow-y-auto ${
@@ -200,6 +214,20 @@ export const StaticTrainingPackMetadataInspector: React.FC<
                   </div>
                 )}
               </div>
+
+              <KevpertVarianceInspectorCard
+                isLight={isLight}
+                varianceConfig={varianceConfig}
+                onSelectPreset={applyKevpertVariancePreset}
+                onPatchVariance={setVarianceConfig}
+                onApplyBindString={applyBakkesModBindString}
+                retainedGhostLabel={retainedGhostLabel}
+                showRetainedGhost={showRetainedGhost}
+                onToggleShowGhost={setShowRetainedGhost}
+                onPinLastAttemptGhost={pinLastAttemptAsGhost}
+                onClearGhost={clearRetainedGhost}
+                onHoverDesc={onHoverDesc}
+              />
             </div>
 
             <div className="flex flex-col gap-2 pt-3 border-t border-neutral-500/15 mt-2">
