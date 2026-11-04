@@ -122,6 +122,8 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
     switch (telemetry.lastUpdateKind) {
       case 'incremental-tail':
         return { label: 'INCREMENTAL (+1 TAIL)', cls: 'text-emerald-400 border-emerald-500/40 bg-emerald-500/15' };
+      case 'progressive-catchup':
+        return { label: 'CATCH-UP (+N RAMP)', cls: 'text-cyan-400 border-cyan-500/40 bg-cyan-500/15' };
       case 'full-car-hit':
         return { label: 'FULL (CAR-BALL HIT)', cls: 'text-amber-400 border-amber-500/40 bg-amber-500/15' };
       case 'full-deviation':
@@ -371,6 +373,17 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
           step={5}
           unit=" UU/s"
           onChange={(velocityThresholdUu) => updateTrajectory({ velocityThresholdUu })}
+          isLight={isLight}
+        />
+
+        <SliderControl
+          label="Catch-Up Step Budget (Ramp After Hit)"
+          value={cfg.catchupTicksPerFrame ?? 20}
+          min={2}
+          max={120}
+          step={1}
+          unit="t/frame"
+          onChange={(catchupTicksPerFrame) => updateTrajectory({ catchupTicksPerFrame })}
           isLight={isLight}
         />
       </div>

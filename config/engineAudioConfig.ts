@@ -76,6 +76,8 @@ export interface EngineAudioTuningConfig {
   rpmDropRate: number;
   /** Virtual overdrive forward base RPM acceleration rate (default: 1000 RPM/s) */
   baseAccelRiseRate: number;
+  /** Virtual overdrive RPM rise multiplier when boosting vs throttle-only, calibrated from RocketSim physics (default: 1.85) */
+  boostOverdriveMultiplier: number;
   /** Virtual overdrive reverse base RPM acceleration rate (default: 220 RPM/s) */
   reverseAccelRiseRate: number;
   /** Rev-limiter cutoff threshold RPM (default: 5980 RPM) */
@@ -120,17 +122,17 @@ export interface EngineAudioTuningConfig {
   downshiftRevMatchPeakRPM: number;
   /** Automatically shift to Neutral when vehicle leaves the ground (!isOnGround) (default: true) */
   airborneAutoNeutralEnabled: boolean;
-  /** Cumulative airborne throttle/boost duration quota in seconds before free-revving cuts off (default: 3.0 s) */
+  /** Cumulative airborne throttle/boost duration quota in seconds before free-revving cuts off (default: 1.25 s) */
   airborneRevQuotaDurationSec: number;
-  /** Enable physics velocity-coupled Gear 1 & 2 floor with virtual overdrive shifting (default: true) */
+  /** Enable physics velocity-coupled Gear 1 speed curve with virtual overdrive shifting (default: true) */
   velocityCoupledGearsEnabled: boolean;
   /** Maximum ground speed reachable with throttle alone (default: 1405 UU/s, RL max is 1410 UU/s) */
   maxThrottleSpeedUU: number;
-  /** Supersonic speed threshold where supersonic turning rev-bounce activates (default: 2200 UU/s) */
+  /** Supersonic speed threshold in UU/s (default: 2200 UU/s) */
   supersonicSpeedUU: number;
-  /** Bounce at redline when turning during supersonic boost instead of upshifting (default: true) */
+  /** Hold current gear (disable automatic upshifting) when continuously accelerating/boosting while steering on ground (default: true) */
   supersonicTurnRevBounceEnabled: boolean;
-  /** Steering input magnitude threshold (0..1) above which supersonic turning triggers redline bounce (default: 0.18) */
+  /** Steering input magnitude threshold (0..1) above which turning under power locks automatic upshifting (default: 0.18) */
   shiftLockSteerThreshold: number;
   /** Forward deceleration rate threshold in UU/s^2 for wall-bevel / cornering RPM dip (default: -80 UU/s^2) */
   wallDecelDipThresholdUU: number;
@@ -174,6 +176,7 @@ export interface EngineAudioLiveTelemetry {
   isShiftLocked: boolean;
   isUnderStrain: boolean;
   isInOverdrive: boolean;
+  isBoosting: boolean;
   throttleLoad: number;
   smoothThrottle: number;
   isRevLimiting: boolean;
@@ -189,6 +192,7 @@ export interface EngineAudioLiveTelemetry {
   entitySpawnCount: number;
   manualOverrideActive: boolean;
   manualThrottle: boolean;
+  manualBoost: boolean;
   manualReverse: boolean;
   manualAirborne: boolean;
 }
@@ -238,6 +242,7 @@ export const DEFAULT_ENGINE_AUDIO_TUNING_CONFIG: EngineAudioTuningConfig = {
   redlineRPM: 6000,
   rpmDropRate: 1400,
   baseAccelRiseRate: 1000,
+  boostOverdriveMultiplier: 1.85,
   reverseAccelRiseRate: 220,
   revLimitCutoffRPM: 5980,
   revLimiterBounceDrop: 200,
@@ -260,7 +265,7 @@ export const DEFAULT_ENGINE_AUDIO_TUNING_CONFIG: EngineAudioTuningConfig = {
   downshiftTriggerRPM: 2400,
   downshiftRevMatchPeakRPM: 4600,
   airborneAutoNeutralEnabled: true,
-  airborneRevQuotaDurationSec: 3.0,
+  airborneRevQuotaDurationSec: 1.25,
   velocityCoupledGearsEnabled: true,
   maxThrottleSpeedUU: 1405,
   supersonicSpeedUU: 2200,
@@ -293,10 +298,11 @@ export const INITIAL_ENGINE_AUDIO_TELEMETRY: EngineAudioLiveTelemetry = {
   speedUU: 0,
   speedKmh: 0,
   forwardAccelUU: 0,
-  airborneRevQuotaRemainingSec: 3.0,
+  airborneRevQuotaRemainingSec: 1.25,
   isShiftLocked: false,
   isUnderStrain: false,
   isInOverdrive: false,
+  isBoosting: false,
   throttleLoad: 0,
   smoothThrottle: 0,
   isRevLimiting: false,
@@ -312,6 +318,7 @@ export const INITIAL_ENGINE_AUDIO_TELEMETRY: EngineAudioLiveTelemetry = {
   entitySpawnCount: 0,
   manualOverrideActive: false,
   manualThrottle: false,
+  manualBoost: false,
   manualReverse: false,
   manualAirborne: false,
 };
@@ -368,6 +375,7 @@ export interface EngineAudioRuntimeActions {
   setManualBenchState?: (patch: {
     active?: boolean;
     throttle?: boolean;
+    boost?: boolean;
     reverse?: boolean;
     airborne?: boolean;
   }) => void;

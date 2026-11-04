@@ -43,6 +43,7 @@ export interface TrajectoryConfig {
   recomputeOnWorldBounce?: boolean;
   deviationThresholdUu?: number;
   velocityThresholdUu?: number;
+  catchupTicksPerFrame?: number;
   // 3D Geometry & Spatial Depth cues
   renderStyle?: TrajectoryRenderStyle;
   sampleStride?: number;
@@ -74,6 +75,7 @@ export const DEFAULT_TRAJECTORY_CONFIG: TrajectoryConfig = {
   recomputeOnWorldBounce: false,
   deviationThresholdUu: 5,
   velocityThresholdUu: 15,
+  catchupTicksPerFrame: 20,
   renderStyle: 'tube-3d',
   sampleStride: 1,
   tubeRadialSegments: 6,
@@ -128,6 +130,10 @@ export function loadSavedTrajectorySettings(): Omit<TrajectoryConfig, 'duration'
         velocityThresholdUu: Math.min(
           1000,
           Math.max(5, Number(parsed.velocityThresholdUu) || DEFAULT_TRAJECTORY_CONFIG.velocityThresholdUu!)
+        ),
+        catchupTicksPerFrame: Math.min(
+          600,
+          Math.max(2, Math.round(Number(parsed.catchupTicksPerFrame) || DEFAULT_TRAJECTORY_CONFIG.catchupTicksPerFrame!))
         ),
         renderStyle,
         sampleStride: Math.min(8, Math.max(1, Math.round(Number(parsed.sampleStride) || DEFAULT_TRAJECTORY_CONFIG.sampleStride!))),

@@ -3,6 +3,7 @@ import { createExternalStore } from './createExternalStore';
 
 export type TrajectoryUpdateKind =
   | 'incremental-tail'
+  | 'progressive-catchup'
   | 'full-car-hit'
   | 'full-deviation'
   | 'full-initial'
