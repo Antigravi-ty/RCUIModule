@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MonitorPlay, RefreshCw, Ruler, Gauge, Router, ChevronDown } from 'lucide-react';
+import { MonitorPlay, RefreshCw, Ruler, Gauge, Router, ChevronDown, BatteryCharging } from 'lucide-react';
 import { SettingSegmentedRow } from './SettingSegmentedRow';
+import { SettingToggleRow } from './SettingToggleRow';
 import { ToggleSwitch } from '../primitives/ToggleSwitch';
 import { SettingActionRow } from './SettingActionRow';
 import {
@@ -13,6 +14,7 @@ export type TelemetryLatencyDetailMode = 'simple' | 'advanced';
 
 export interface TelemetryConfigState {
   alwaysShow: boolean;
+  pauseTelemetryInPowerSave?: boolean;
   fpsMode: TelemetryDisplayMode;
   refreshRateMode: TelemetryDisplayMode;
   renderScaleMode: TelemetryDisplayMode;
@@ -23,6 +25,7 @@ export interface TelemetryConfigState {
 
 export const DEFAULT_TELEMETRY_CONFIG_STATE: TelemetryConfigState = {
   alwaysShow: true,
+  pauseTelemetryInPowerSave: true,
   fpsMode: 'always',
   refreshRateMode: 'always',
   renderScaleMode: 'always',
@@ -102,6 +105,21 @@ export const TelemetryConfigCard: React.FC<TelemetryConfigCardProps> = React.mem
 
     const renderSubMetricRows = () => (
       <>
+        {/* 0. Pause Sampling in Power Saving */}
+        <SettingToggleRow
+          icon={BatteryCharging}
+          iconName="battery-charging"
+          title="Pause Sampling in Power Saving"
+          description="Exclude menu and unfocused Power Saving frames from rolling FPS telemetry"
+          checked={telemetry.pauseTelemetryInPowerSave !== false}
+          onChange={(checked) => update({ pauseTelemetryInPowerSave: checked })}
+          bordered={false}
+          hoverDescription="When enabled, throttled or frozen frames during menu and unfocused Power Saving are excluded from the rolling telemetry window so FPS readouts do not slowly ramp up after resuming gameplay."
+          onHover={(desc) => desc && onHover?.(desc)}
+          onLeave={onLeave}
+          isLight={isLight}
+        />
+
         {/* 1. FPS */}
         <SettingSegmentedRow
           icon={MonitorPlay}

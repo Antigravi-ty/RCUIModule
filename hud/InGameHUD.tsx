@@ -85,11 +85,49 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   const showBallCamIndicator = useAppStore((s) => s.gameplay.ballCamIndicator);
   const telemetry = useAppStore((s) => s.telemetry);
   const telemetryEnabled = Boolean(telemetry?.alwaysShow);
+  const pauseTelemetryInPowerSave = telemetry?.pauseTelemetryInPowerSave !== false;
+  const menuPowerSave = useAppStore((s) => s.graphics?.menuPowerSave ?? '30');
+  const isLivePreviewCollapsed = useAppStore((s) => s.isLivePreviewCollapsed);
+  const activeRoute = useAppStore((s) => s.activeRoute);
   const onlineSession = useAppStore((s) => s.onlineSession);
   const renderScale = useAppStore((s) => s.graphics?.renderScale ?? 100);
 
+  const [isWindowFocused, setIsWindowFocused] = React.useState<boolean>(() =>
+    typeof document !== 'undefined'
+      ? !document.hidden && (typeof document.hasFocus === 'function' ? document.hasFocus() : true)
+      : true
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const syncFocus = () => {
+      const focused =
+        !document.hidden && (typeof document.hasFocus === 'function' ? document.hasFocus() : true);
+      setIsWindowFocused(focused);
+    };
+    window.addEventListener('blur', syncFocus);
+    window.addEventListener('focus', syncFocus);
+    document.addEventListener('visibilitychange', syncFocus);
+    return () => {
+      window.removeEventListener('blur', syncFocus);
+      window.removeEventListener('focus', syncFocus);
+      document.removeEventListener('visibilitychange', syncFocus);
+    };
+  }, []);
+
+  const isLivePreviewDockCollapsed =
+    Boolean(menuOpen) &&
+    Boolean(isLivePreviewCollapsed) &&
+    (activeRoute === 'trajectory' || activeRoute === 'camera');
+  const isPowerSaveMenuOpen = Boolean(menuOpen) && !isLivePreviewDockCollapsed;
+  const isPowerSaveModeEnabled = menuPowerSave !== 'match';
+  const isPowerSaveActive =
+    isPowerSaveModeEnabled && (isPowerSaveMenuOpen || !isWindowFocused);
+  const shouldPollTelemetry =
+    telemetryEnabled && !(pauseTelemetryInPowerSave && isPowerSaveActive);
+
   const kickoffStore = useKickoffTrainingStore();
-  const { data: perfSnap } = useTelemetryData(60, telemetryEnabled);
+  const { data: perfSnap } = useTelemetryData(60, shouldPollTelemetry);
   const netSnap = useNetworkDiagnosticsData();
 
   const hudChannel = globalHudTransientChannel;
@@ -109,18 +147,18 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   const isOnline =
     onlineSession.signalingConnected || (onlineSession.connectedPeers?.length ?? 0) > 0;
   useEffect(() => {
-    if (!telemetryEnabled) return;
+    if (!shouldPollTelemetry || !perfSnap || (perfSnap.fps <= 0 && perfSnap.frameMs <= 0)) return;
     hudChannel.setTelemetry({
-      fps: Math.round(perfSnap?.fps || 120),
-      refreshHz: Math.round(perfSnap?.refreshHz || 120),
+      fps: Math.round(perfSnap.fps || 120),
+      refreshHz: Math.round(perfSnap.refreshHz || 120),
       renderScalePct: Math.round(renderScale || 100),
-      physicsRateHz: Math.round(perfSnap?.sim?.physicsRateHz || 120),
+      physicsRateHz: Math.round(perfSnap.sim?.physicsRateHz || 120),
       baseLatencyMs: isOnline ? Math.round(netSnap.metrics?.rttMs || 0) : 0,
       extraLatencyMs: 0,
     });
   }, [
     hudChannel,
-    telemetryEnabled,
+    shouldPollTelemetry,
     isOnline,
     renderScale,
     perfSnap,

@@ -293,6 +293,7 @@ export type TelemetryLatencyFormat = 'default' | 'advanced';
 
 export interface TelemetryConfig {
   alwaysShow: boolean;
+  pauseTelemetryInPowerSave?: boolean;
   fpsMode: TelemetryDisplayMode;
   refreshRateMode: TelemetryDisplayMode;
   renderScaleMode: TelemetryDisplayMode;
@@ -303,6 +304,7 @@ export interface TelemetryConfig {
 
 export const DEFAULT_TELEMETRY_CONFIG: TelemetryConfig = {
   alwaysShow: true,
+  pauseTelemetryInPowerSave: true,
   fpsMode: 'always',
   refreshRateMode: 'always',
   renderScaleMode: 'always',
