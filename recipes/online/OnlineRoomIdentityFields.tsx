@@ -113,7 +113,7 @@ export const OnlineRoomIdentityFields: React.FC<OnlineRoomIdentityFieldsProps> =
 
   const handleRoomCodeBlur = () => {
     if (showRandomize) {
-      onRoomCodeChange(finalizeHostRoomCode(roomCode, hostMask));
+      onRoomCodeChange(roomCode.trim() ? finalizeHostRoomCode(roomCode, hostMask) : '');
     } else {
       onRoomCodeChange(sanitizeJoinRoomCodeDraft(roomCode));
     }
@@ -186,7 +186,7 @@ export const OnlineRoomIdentityFields: React.FC<OnlineRoomIdentityFieldsProps> =
           onMouseEnter={() =>
             onHoverDesc?.(
               showRandomize
-                ? 'Room Code: 4-digit random code or custom alphanumeric prefix (auto-appends -<hex> relay mask suffix, case-insensitive).'
+                ? 'Room Code: Leave blank for auto-generated 4-digit Random code, or type a custom alphanumeric room name (auto-appends -<hex> connectivity mask suffix).'
                 : 'Room Code: Enter the 4-digit room code or custom <name>-<hex> code (case-insensitive).'
             )
           }
@@ -222,7 +222,7 @@ export const OnlineRoomIdentityFields: React.FC<OnlineRoomIdentityFieldsProps> =
             onChange={(e) => handleRoomCodeInput(e.target.value)}
             onBlur={handleRoomCodeBlur}
             maxLength={24}
-            placeholder="Room Code"
+            placeholder={showRandomize ? 'Random' : 'Room Code'}
             className={`w-full px-3 py-2 rounded-xl border font-mono text-xs font-semibold text-left outline-none transition-colors ${inputSurfaceClass}`}
           />
         </div>
@@ -232,7 +232,7 @@ export const OnlineRoomIdentityFields: React.FC<OnlineRoomIdentityFieldsProps> =
           className="flex flex-col gap-1.5 min-w-0"
           onMouseEnter={() =>
             onHoverDesc?.(
-              'Key: Optional room password (combined with Room Code in SHA-256 topic & salt derivation). Leave blank for None.'
+              'Key: Recommended room password (combined with Room Code in SHA-256 topic & salt derivation to prevent 4-digit room collisions).'
             )
           }
           onMouseLeave={() => onHoverDesc?.(null)}
@@ -256,7 +256,7 @@ export const OnlineRoomIdentityFields: React.FC<OnlineRoomIdentityFieldsProps> =
             value={roomKey}
             onChange={(e) => onRoomKeyChange(sanitizeAscii(e.target.value))}
             maxLength={24}
-            placeholder="None"
+            placeholder={showRandomize ? 'None (Recommended)' : 'None'}
             className={`w-full px-3 py-2 rounded-xl border font-mono text-xs font-medium text-left outline-none transition-colors ${inputSurfaceClass}`}
           />
         </div>

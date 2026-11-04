@@ -18,7 +18,7 @@ import { ToggleSwitch } from '../primitives/ToggleSwitch';
 import { SettingActionRow } from '../compounds/SettingActionRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 import {
   PerCarBoostConfigSection,

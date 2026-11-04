@@ -45,6 +45,7 @@ export interface Layer2SettingsRecipeProps {
   onNavigateDevSubsystemIsolation?: () => void;
   onNavigateDevActiveTuners?: () => void;
   onNavigateDevCalibratedPresets?: () => void;
+  onNavigateDevSelfTest?: () => void;
   onNavigateDevUnderDevelopment?: () => void;
   onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
   initialTab?: string;
@@ -105,6 +106,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   onNavigateDevSubsystemIsolation,
   onNavigateDevActiveTuners,
   onNavigateDevCalibratedPresets,
+  onNavigateDevSelfTest,
   onNavigateDevUnderDevelopment,
   onSpawnDiagnosticWindow,
   initialTab = 'gameplay',
@@ -400,6 +402,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
                 onNavigateDevSubsystemIsolation={onNavigateDevSubsystemIsolation}
                 onNavigateDevActiveTuners={onNavigateDevActiveTuners}
                 onNavigateDevCalibratedPresets={onNavigateDevCalibratedPresets}
+                onNavigateDevSelfTest={onNavigateDevSelfTest}
                 onNavigateDevUnderDevelopment={onNavigateDevUnderDevelopment}
                 onHover={setHoveredDesc}
                 onLeave={() => setHoveredDesc(null)}

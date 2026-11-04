@@ -84,8 +84,9 @@ export const DEFAULT_HOST_CREATION_STEPS: CreationStepSpec[] = [
     step: 4,
     stageTitle: 'Gathering ICE & TURN Candidates',
     description: 'Probing STUN/TURN NAT traversal endpoints and opening WebRTC data channels...',
-    errorTitle: 'ICE / NAT Traversal Failed',
-    errorDescription: 'Strict Symmetric NAT detected and TURN relay allocation failed.',
+    errorTitle: 'Signaling Connected (SDP/ICE Exchanged) — P2P Blocked by NAT',
+    errorDescription:
+      'Signaling link exchanged SDP/ICE successfully, but direct WebRTC P2P was blocked by Strict Symmetric NAT.',
   },
   {
     step: 5,

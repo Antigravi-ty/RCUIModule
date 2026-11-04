@@ -4,6 +4,7 @@ import {
   ArrowRight,
   PackageOpen,
   BookCheck,
+  BugPlay,
   CircleDot,
   AlertTriangle,
   Scan,
@@ -33,6 +34,7 @@ export interface DeveloperTabProps {
   onNavigateDevSubsystemIsolation?: () => void;
   onNavigateDevActiveTuners?: () => void;
   onNavigateDevCalibratedPresets?: () => void;
+  onNavigateDevSelfTest?: () => void;
   onNavigateDevUnderDevelopment?: () => void;
   onHover?: (desc: string) => void;
   onLeave?: () => void;
@@ -44,10 +46,11 @@ export interface DeveloperTabProps {
  * 1. `Sandboxes` (`package-open` icon, `Browse →`) — directly opens the isolated subsystem selection list (01–07 including Experimental Multiple Bots)
  * 2. `Active Tuners` (`sliders` icon, `Browse →`) — active calibration tools, floating tuners, Advanced Audio & Event & Trigger Rules
  * 3. `Calibrated Presets` (`book-check` icon, `Browse →`) — tuners whose baseline parameters have been calibrated and solidified
- * 4. `Bots Loadout` (`bot` icon, `Spawn`) — floating window for multi-select bot loadout pools (Car GLB models, Paint, Boost Trail, Boost Audio, Anthem)
- * 5. `Ball Opacity` (`circle-dot` icon) — single-line 70% / 100% / Custom segmented switch
- * 6. `Observe Safe Area Boundary` (`scan` icon) — single-line toggle switch
- * 7. `Under Development` (`alert-triangle` icon, `Browse →`, placed at the very bottom in red/rose with extra top spacing `underDevelopmentTopMargin`)
+ * 4. `Self Test` (`bug-play` icon, `Browse →`) — developer self-test suites (4-Server Signaling & Bridge Lab when loaded in dev mode)
+ * 5. `Bots Loadout` (`bot` icon, `Spawn`) — floating window for multi-select bot loadout pools (Car GLB models, Paint, Boost Trail, Boost Audio, Anthem)
+ * 6. `Ball Opacity` (`circle-dot` icon) — single-line 70% / 100% / Custom segmented switch
+ * 7. `Observe Safe Area Boundary` (`scan` icon) — single-line toggle switch
+ * 8. `Under Development` (`alert-triangle` icon, `Browse →`, placed at the very bottom in red/rose with extra top spacing `underDevelopmentTopMargin`)
  */
 export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   isLight = false,
@@ -55,6 +58,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   onNavigateDevSubsystemIsolation,
   onNavigateDevActiveTuners,
   onNavigateDevCalibratedPresets,
+  onNavigateDevSelfTest,
   onNavigateDevUnderDevelopment,
   onHover,
   onLeave,
@@ -149,6 +153,23 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         hoverDescription="Calibrated Presets: Archive of completed tuners whose parameters have already been calibrated and solidified (Atmosphere & FX, Vehicle Global Surfaces, Driftwoods, Boost Pad & Name Tag)."
         onAction={() =>
           (onNavigateDevCalibratedPresets ?? (() => navigate('dev-calibrated-presets')))()
+        }
+        onHover={onHover}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      {/* 3a. Self Test */}
+      <SettingActionRow
+        icon={BugPlay}
+        iconName="bug-play"
+        iconColor="text-cyan-400"
+        title="Self Test"
+        actionLabel="Browse"
+        description="Automated subsystem self-test suites and verification harnesses"
+        hoverDescription="Self Test: Browse automated diagnostic and self-test suites available for the active environment."
+        onAction={() =>
+          (onNavigateDevSelfTest ?? (() => navigate('dev-self-test')))()
         }
         onHover={onHover}
         onLeave={onLeave}

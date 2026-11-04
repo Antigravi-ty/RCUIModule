@@ -50,7 +50,7 @@ export const Card: React.FC<CardProps> = React.memo(({
   return (
     <div
       data-layout="card"
-      className={`relative overflow-hidden border transition-all duration-150 ${UI_RADIUS.xl} ${paddingMap[padding]} ${variantClass} ${
+      className={`relative shrink-0 overflow-hidden border transition-all duration-150 ${UI_RADIUS.xl} ${paddingMap[padding]} ${variantClass} ${
         interactive
           ? isLight
             ? 'hover:border-neutral-300 hover:shadow-xs cursor-pointer'

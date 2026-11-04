@@ -25,11 +25,19 @@ export interface CustomRelayInputPayload {
   password?: string;
 }
 
+export interface RelayCredentialOverrideInput {
+  emqxCnUsername?: string;
+  emqxCnPassword?: string;
+  emqxGbUsername?: string;
+  emqxGbPassword?: string;
+}
+
 export interface SignalingProfileBridgeCallbacks {
   onImportBundle?: (rawContent: string, pinCode: string) => Promise<void>;
   onExportBundle?: (options: {
     pinCode?: string;
     windowMinutes?: number;
+    credentialOverrides?: RelayCredentialOverrideInput;
   }) => Promise<SignalingProfileExportSnapshot>;
   onClearBundle?: () => void;
   onSaveCustomRelay?: (payload: CustomRelayInputPayload | null) => void;
@@ -75,6 +83,7 @@ export interface SignalingProfileStoreState {
   exportBundle: (options?: {
     pinCode?: string;
     windowMinutes?: number;
+    credentialOverrides?: RelayCredentialOverrideInput;
   }) => Promise<SignalingProfileExportSnapshot | null>;
   clearProfile: () => void;
   saveCustomRelay: (payload: CustomRelayInputPayload | null) => void;

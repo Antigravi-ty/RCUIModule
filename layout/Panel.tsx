@@ -311,7 +311,7 @@ export const PanelContent: React.FC<PanelContentProps> = ({
         ...style,
       }}
       className={`flex flex-col ${flexClass} w-full box-border ${
-        scrollable ? 'overflow-y-auto' : ''
+        scrollable ? 'overflow-y-auto [&>*]:shrink-0' : ''
       } ${className}`}
     >
       {children}

@@ -90,8 +90,8 @@ export const ExperimentalBotPackFloatingWindow: React.FC<
             />
             <span className="font-bold text-xs truncate">
               {isInExpMode
-                ? `Experimental Bot Pack · ${activeMeta.label} (${blueSlots.length}v${orangeSlots.length})`
-                : `Experimental Bot Pack · ${activeMeta.label} Standby`}
+                ? `Experimental Bot Pack #9700488 · ${activeMeta.label} (${blueSlots.length}v${orangeSlots.length})`
+                : `Experimental Bot Pack #9700488 · ${activeMeta.label} Standby`}
             </span>
           </div>
           <span className={`text-[10px] font-mono truncate mt-0.5 ${mutedText}`}>
@@ -153,12 +153,12 @@ export const ExperimentalBotPackFloatingWindow: React.FC<
         </span>
       </div>
 
-      {/* 3. Experimental Bot Pack — 8 Models One-Click Spectate Selector */}
+      {/* 3. experimental bot pack #9700488 — 8 Models One-Click Spectate Selector */}
       <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 ${cardBg}`}>
         <div className="flex items-center justify-between gap-2">
           <span className="font-bold text-[11px] flex items-center gap-1.5 text-emerald-400">
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
-            <span>Experimental Bot Pack (8 Native Policies)</span>
+            <span>Experimental Bot Pack #9700488 (8 Native Policies)</span>
           </span>
           <span className={`text-[10px] font-mono ${mutedText}`}>
             1-Click Max-Format Match Reset &amp; Spectate
