@@ -183,12 +183,26 @@ export function setNameTagRuntimeState(
   return runtimeState;
 }
 
+const telemetryListeners = new Set<(snapshot: NameTagTelemetrySnapshot) => void>();
+
 export function setNameTagTelemetrySnapshot(snapshot: NameTagTelemetrySnapshot): void {
   latestTelemetrySnapshot = snapshot;
+  for (const listener of telemetryListeners) {
+    listener(snapshot);
+  }
 }
 
 export function getNameTagTelemetrySnapshot(): NameTagTelemetrySnapshot {
   return latestTelemetrySnapshot;
+}
+
+export function subscribeNameTagTelemetry(
+  listener: (snapshot: NameTagTelemetrySnapshot) => void
+): () => void {
+  telemetryListeners.add(listener);
+  return () => {
+    telemetryListeners.delete(listener);
+  };
 }
 
 export function computeFittedParametersFromSamples(): NameTagFittedParameters {

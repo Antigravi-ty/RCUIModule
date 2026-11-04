@@ -50,15 +50,6 @@ export interface AudioTabProps {
   developerMode?: boolean;
   /** Optional controlled AudioConfig override */
   audioConfig?: Partial<AudioConfig>;
-  /** Alias for audioConfig */
-  config?: Partial<AudioConfig>;
-  /** Initial AudioConfig (uncontrolled) */
-  defaultAudioConfig?: Partial<AudioConfig>;
-  /** Callback when any field of AudioConfig changes */
-  onAudioConfigChange?: (next: AudioConfig, patch: Partial<AudioConfig>) => void;
-  /** Alias for onAudioConfigChange */
-  onChange?: (next: AudioConfig, patch: Partial<AudioConfig>) => void;
-  onNavigateAudioDetail?: () => void;
   onHover: (desc: string) => void;
   onLeave: () => void;
 }
@@ -109,17 +100,12 @@ export const AudioTab: React.FC<AudioTabProps> = ({
   isLight = false,
   developerMode = false,
   audioConfig: propAudioConfig,
-  config: propAliasConfig,
-  defaultAudioConfig,
-  onAudioConfigChange,
-  onChange,
   onHover,
   onLeave,
 }) => {
   const storeAudio = useAppStore((s) => s.audio);
   const updateStoreAudio = useAppStore((s) => s.updateAudio);
 
-  const controlledCfg = propAudioConfig ?? propAliasConfig;
   const [internalConfig, setInternalConfig] = useState<AudioConfig>(() => ({
     ...DEFAULT_AUDIO_CONFIG,
     masterVolume: storeAudio.masterVolume,
@@ -130,7 +116,6 @@ export const AudioTab: React.FC<AudioTabProps> = ({
     midGain: storeAudio.midGain,
     trebleGain: storeAudio.trebleGain,
     hrtfEnabled: storeAudio.hrtfEnabled,
-    ...defaultAudioConfig,
   }));
 
   const resolvedConfig: AudioConfig = {
@@ -143,7 +128,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
     midGain: storeAudio.midGain,
     trebleGain: storeAudio.trebleGain,
     hrtfEnabled: storeAudio.hrtfEnabled,
-    ...controlledCfg,
+    ...propAudioConfig,
   };
 
   const muteWhenUnfocused = resolvedConfig.muteWhenUnfocused ?? true;
@@ -184,8 +169,6 @@ export const AudioTab: React.FC<AudioTabProps> = ({
     } else if (key === 'masterVolume' || key === 'engineVolume' || key === 'boostVolume') {
       updateStoreAudio({ [key]: Number(value) });
     }
-    onAudioConfigChange?.(nextConfig, patch);
-    onChange?.(nextConfig, patch);
   };
 
   const handleBgmVolumeChange = (next: number) => {

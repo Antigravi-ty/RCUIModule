@@ -7,21 +7,29 @@ import type {
   StaticTrainingPackSummary,
 } from './StaticTrainingPackFolderList';
 
-export interface StaticTrainingPackMetadataInspectorProps {
-  isLight: boolean;
-  selectedMeta: StaticTrainingPackSummary | null;
+export interface StaticTrainingPackMetadataDraft {
   editTitle: string;
   setEditTitle: (val: string) => void;
   editDescription: string;
   setEditDescription: (val: string) => void;
   isMetadataDirty: boolean;
+  onSaveMetadata: () => void;
+}
+
+export interface StaticTrainingPackDownCounterControl {
   downCounterEnabled: boolean;
   setDownCounterEnabled: (val: boolean) => void;
   downCounterValue: StaticPackDownCounterOption;
   setDownCounterValue: (val: StaticPackDownCounterOption) => void;
+}
+
+export interface StaticTrainingPackMetadataInspectorProps {
+  isLight: boolean;
+  selectedMeta: StaticTrainingPackSummary | null;
+  draft: StaticTrainingPackMetadataDraft;
+  downCounter: StaticTrainingPackDownCounterControl;
   confirmDeleteUuid: string | null;
   setConfirmDeleteUuid: (uuid: string | null) => void;
-  onSaveMetadata: () => void;
   onPlayPack: (meta: StaticTrainingPackSummary) => void;
   onEditPack: (meta: StaticTrainingPackSummary) => void;
   onExportPack: (meta: StaticTrainingPackSummary) => void;
@@ -35,18 +43,22 @@ export const StaticTrainingPackMetadataInspector: React.FC<
   ({
     isLight,
     selectedMeta,
-    editTitle,
-    setEditTitle,
-    editDescription,
-    setEditDescription,
-    isMetadataDirty,
-    downCounterEnabled,
-    setDownCounterEnabled,
-    downCounterValue,
-    setDownCounterValue,
+    draft: {
+      editTitle,
+      setEditTitle,
+      editDescription,
+      setEditDescription,
+      isMetadataDirty,
+      onSaveMetadata,
+    },
+    downCounter: {
+      downCounterEnabled,
+      setDownCounterEnabled,
+      downCounterValue,
+      setDownCounterValue,
+    },
     confirmDeleteUuid,
     setConfirmDeleteUuid,
-    onSaveMetadata,
     onPlayPack,
     onEditPack,
     onExportPack,

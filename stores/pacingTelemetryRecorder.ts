@@ -149,6 +149,7 @@ export class PacingTelemetryRecorder {
   activeMode: string;
   activePriority: string;
   activeParams: Record<string, any> | null;
+  private listeners = new Set<() => void>();
 
   constructor(maxTicks: number = MAX_TELEMETRY_TICKS) {
     this.maxTicks = maxTicks;
@@ -190,6 +191,19 @@ export class PacingTelemetryRecorder {
     this.activeParams = null;
   }
 
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private notifyListeners(): void {
+    for (const listener of this.listeners) {
+      listener();
+    }
+  }
+
   reset(nowMs: number = typeof performance !== 'undefined' ? performance.now() : Date.now()): void {
     this.count = 0;
     this.sessionStartMs = nowMs;
@@ -201,6 +215,7 @@ export class PacingTelemetryRecorder {
     this.catchupStepCount = 0;
     this.skipStepCount = 0;
     this.tierSwitchCount = 0;
+    this.notifyListeners();
   }
 
   setSessionMetadata(mode?: string, priority?: string, params?: Record<string, any> | null): void {
@@ -224,6 +239,7 @@ export class PacingTelemetryRecorder {
             console.warn('[PacingTelemetryRecorder] Error in onCapacityOverflow callback:', err);
           }
         }
+        this.notifyListeners();
       }
       return false;
     }
@@ -290,6 +306,9 @@ export class PacingTelemetryRecorder {
       flags |= TELEMETRY_EVENT_FLAGS.KICKOFF_MASKED;
     }
     this.eventFlags[idx] = flags;
+    if (this.count % 24 === 0) {
+      this.notifyListeners();
+    }
     return true;
   }
 

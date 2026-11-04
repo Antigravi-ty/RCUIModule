@@ -30,13 +30,15 @@ export const EventStreamOBFloatingWindow: React.FC<EventStreamOBFloatingWindowPr
   const state = useEventStreamData();
   const [now, setNow] = useState(() => performance.now());
 
-  // 30Hz timeline ticker when window is active (replaces 60Hz SVG DOM re-render loop)
+  // Event-driven timeline update when window is active
   useEffect(() => {
     if (!active) return;
-    const intervalId = window.setInterval(() => {
+    const unsubscribe = eventStreamStore.subscribe(() => {
       setNow(performance.now());
-    }, 33);
-    return () => window.clearInterval(intervalId);
+    });
+    return () => {
+      unsubscribe();
+    };
   }, [active]);
 
   const windowMs = state.timeWindowSec * 1000;

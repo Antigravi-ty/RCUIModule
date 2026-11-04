@@ -396,18 +396,22 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
             <StaticTrainingPackMetadataInspector
               isLight={isLight}
               selectedMeta={selectedMeta}
-              editTitle={editTitle}
-              setEditTitle={setEditTitle}
-              editDescription={editDescription}
-              setEditDescription={setEditDescription}
-              isMetadataDirty={isMetadataDirty}
-              downCounterEnabled={downCounterEnabled}
-              setDownCounterEnabled={setDownCounterEnabled}
-              downCounterValue={downCounterValue}
-              setDownCounterValue={setDownCounterValue}
+              draft={{
+                editTitle,
+                setEditTitle,
+                editDescription,
+                setEditDescription,
+                isMetadataDirty,
+                onSaveMetadata: () => void handleSaveMetadata(),
+              }}
+              downCounter={{
+                downCounterEnabled,
+                setDownCounterEnabled,
+                downCounterValue,
+                setDownCounterValue,
+              }}
               confirmDeleteUuid={confirmDeleteUuid}
               setConfirmDeleteUuid={setConfirmDeleteUuid}
-              onSaveMetadata={() => void handleSaveMetadata()}
               onPlayPack={(meta) => {
                 onStartPlaySession?.(meta.uuid);
                 onPlayPack?.(meta, downCounterEnabled);

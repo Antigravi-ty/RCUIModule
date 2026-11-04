@@ -18,6 +18,8 @@ import {
 import {
   computeFittedParametersFromSamples,
   getNameTagTelemetrySnapshot,
+  subscribeNameTagConfig,
+  subscribeNameTagTelemetry,
   useNameTagTunerStore,
 } from '../../../stores/nameTagTunerStore';
 import { useAppStore } from '../../../stores/appStore';
@@ -73,8 +75,14 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
       setTelemetry({ ...getNameTagTelemetrySnapshot() });
     };
     refreshTelemetry();
-    const timer = window.setInterval(refreshTelemetry, 160);
-    return () => window.clearInterval(timer);
+    const unsubTelemetry = subscribeNameTagTelemetry((snapshot) => {
+      setTelemetry({ ...snapshot });
+    });
+    const unsubConfig = subscribeNameTagConfig(refreshTelemetry);
+    return () => {
+      unsubTelemetry();
+      unsubConfig();
+    };
   }, []);
 
   const isFreeCamApp = useAppStore((state) => state.isFreeCam);

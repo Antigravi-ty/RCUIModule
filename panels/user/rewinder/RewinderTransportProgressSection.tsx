@@ -1,48 +1,107 @@
 import React from 'react';
 import { FastForward, Play, Rewind, Square } from 'lucide-react';
 import { KeycapBadge } from '../../../primitives/KeycapBadge';
+import { useRewinderStore } from '../../../stores/rewinderStore';
 
 export type RewinderBadgeState = 'idle' | 'recording' | 'stopped' | 'error';
 
 export const BUFFER_WARMUP_FRAMES = 120; // 1.00s @ 120Hz required before rewind is selectable
 
-export interface RewinderTransportProgressSectionProps {
-  isLight: boolean;
-  status: RewinderBadgeState;
-  recordedFrames: number;
-  cursorFrame: number;
-  releaseMarkerFrame: number;
-  onStartNewRecording: () => void;
-  onStopRecording: () => void;
-  onStepFrame: (delta: number) => void;
+export interface RewinderTransportStateOverride {
+  status?: RewinderBadgeState;
+  recordedFrames?: number;
+  cursorFrame?: number;
+  releaseMarkerFrame?: number;
+  onStartNewRecording?: () => void;
+  onStopRecording?: () => void;
+  onStepFrame?: (delta: number) => void;
   onRewindPressStart?: () => void;
   onRewindPressEnd?: () => void;
   onForwardPressStart?: () => void;
   onForwardPressEnd?: () => void;
-  onCycleBadgeState: () => void;
-  onScrubBar: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onCycleBadgeState?: () => void;
+  onScrubBar?: (e: React.MouseEvent<HTMLDivElement>) => void;
+}
+
+export interface RewinderTransportProgressSectionProps {
+  isLight: boolean;
+  stateOverride?: RewinderTransportStateOverride;
 }
 
 export const RewinderTransportProgressSection: React.FC<
   RewinderTransportProgressSectionProps
-> = React.memo(
-  ({
-    isLight,
-    status,
-    recordedFrames,
-    cursorFrame,
-    releaseMarkerFrame,
-    onStartNewRecording,
-    onStopRecording,
-    onStepFrame,
-    onRewindPressStart,
-    onRewindPressEnd,
-    onForwardPressStart,
-    onForwardPressEnd,
-    onCycleBadgeState,
-    onScrubBar,
-  }) => {
+> = React.memo(({ isLight, stateOverride }) => {
+    const {
+      rewinderState,
+      rewinderRecordedFrames,
+      rewinderCursorFrame,
+      rewinderTargetFrame,
+      runtimeHandlers,
+      updateLiveTelemetry,
+    } = useRewinderStore();
+
+    const storeStatus: RewinderBadgeState =
+      rewinderState === 'recording'
+        ? 'recording'
+        : rewinderState === 'idle'
+        ? 'idle'
+        : 'stopped';
+
+    const status = stateOverride?.status ?? storeStatus;
+    const recordedFrames = stateOverride?.recordedFrames ?? rewinderRecordedFrames;
+    const cursorFrame = stateOverride?.cursorFrame ?? rewinderCursorFrame;
+    const releaseMarkerFrame = stateOverride?.releaseMarkerFrame ?? rewinderTargetFrame;
+
     const isReady = recordedFrames >= BUFFER_WARMUP_FRAMES;
+
+    const onStartNewRecording =
+      stateOverride?.onStartNewRecording ??
+      (() => runtimeHandlers.onRewinderStartRecording?.());
+    const onStopRecording =
+      stateOverride?.onStopRecording ??
+      (() => runtimeHandlers.onRewinderStopRecording?.());
+    const onStepFrame =
+      stateOverride?.onStepFrame ??
+      ((delta: number) => {
+        if (!isReady) return;
+        const clamped = Math.max(
+          BUFFER_WARMUP_FRAMES,
+          Math.min(recordedFrames, Math.max(BUFFER_WARMUP_FRAMES, cursorFrame) + delta)
+        );
+        runtimeHandlers.onRewinderSeekFrame?.(clamped);
+        updateLiveTelemetry({ rewinderState: 'stopped', rewinderCursorFrame: clamped });
+      });
+    const onRewindPressStart =
+      stateOverride?.onRewindPressStart ??
+      (() => runtimeHandlers.onRewinderPushBackwardStart?.());
+    const onRewindPressEnd =
+      stateOverride?.onRewindPressEnd ??
+      (() => runtimeHandlers.onRewinderPushBackwardStop?.());
+    const onForwardPressStart =
+      stateOverride?.onForwardPressStart ??
+      (() => runtimeHandlers.onRewinderPushForwardStart?.());
+    const onForwardPressEnd =
+      stateOverride?.onForwardPressEnd ??
+      (() => runtimeHandlers.onRewinderPushForwardStop?.());
+    const onCycleBadgeState =
+      stateOverride?.onCycleBadgeState ??
+      (() => {
+        const nextState =
+          status === 'idle' ? 'recording' : status === 'recording' ? 'stopped' : 'idle';
+        updateLiveTelemetry({ rewinderState: nextState });
+      });
+    const onScrubBar =
+      stateOverride?.onScrubBar ??
+      ((e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isReady) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
+        const targetFrame =
+          BUFFER_WARMUP_FRAMES +
+          Math.round(ratio * Math.max(0, recordedFrames - BUFFER_WARMUP_FRAMES));
+        runtimeHandlers.onRewinderSeekFrame?.(targetFrame);
+        updateLiveTelemetry({ rewinderState: 'stopped', rewinderCursorFrame: targetFrame });
+      });
 
     const effectiveCursorFrame = isReady
       ? Math.max(BUFFER_WARMUP_FRAMES, Math.min(recordedFrames, cursorFrame))

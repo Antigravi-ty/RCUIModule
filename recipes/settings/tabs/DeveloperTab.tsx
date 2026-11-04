@@ -26,13 +26,7 @@ import type { BallOpacityMode } from './GameplayTab';
 
 export interface DeveloperTabProps {
   isLight?: boolean;
-  onNavigateAdvancedAudio?: () => void;
-  onNavigateEventTriggerRules?: () => void;
-  onNavigateExpMultiBots?: () => void;
-  onNavigateDevSandboxes?: () => void;
-  onNavigateDevActiveTuners?: () => void;
-  onNavigateDevCalibratedPresets?: () => void;
-  onNavigateDevUnderDevelopment?: () => void;
+  onNavigateRoute?: (route: string) => void;
   onHover?: (desc: string) => void;
   onLeave?: () => void;
 }
@@ -50,16 +44,21 @@ export interface DeveloperTabProps {
  */
 export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   isLight = false,
-  onNavigateDevSandboxes,
-  onNavigateDevActiveTuners,
-  onNavigateDevCalibratedPresets,
-  onNavigateDevUnderDevelopment,
+  onNavigateRoute,
   onHover,
   onLeave,
 }) => {
   const navigate = useAppStore((s) => s.navigate);
   const { showSafeAreaHud } = useViewportStore();
   const setShowSafeAreaHud = viewportStore.setShowSafeAreaHud;
+
+  const navigateRoute = (route: string) => {
+    if (onNavigateRoute) {
+      onNavigateRoute(route);
+    } else {
+      navigate(route as Parameters<typeof navigate>[0]);
+    }
+  };
 
   const [ballOpacityMode, setBallOpacityMode] = useState<BallOpacityMode>(() => {
     const op = getBallVisualConfig()?.opacity ?? 1.0;
@@ -92,10 +91,6 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
     underDevelopmentTopMargin,
   } = useSettingActionRowStore();
 
-  const handleOpenSandboxes = () => {
-    (onNavigateDevSandboxes ?? (() => navigate('dev-sandboxes')))();
-  };
-
   return (
     <div
       data-layout="developer-settings-list"
@@ -111,7 +106,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         actionLabel="Browse"
         description="Subsystem Isolation & MVP Lab (01–07) and Experimental Multiple Bots Mode"
         hoverDescription="Sandboxes: Choose which isolated subsystem or sandbox scene (Probes, Multi-World Ghost, State Replay, 90s Match, Goal Replay, Kickoff Duel, Demolish Respawn, or Experimental Multiple Bots) you want to test."
-        onAction={handleOpenSandboxes}
+        onAction={() => navigateRoute('dev-sandboxes')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -126,7 +121,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         actionLabel="Browse"
         description="Vehicle Offsets, Goal Volume, Reachability, Kickoff PPO, Audio & Event and Triggerer"
         hoverDescription="Active Tuners: Frequently accessed live calibration tools, floating window spawners, vehicle offsets, reachability, kickoff PPO, advanced audio, and event & trigger rules."
-        onAction={() => (onNavigateDevActiveTuners ?? (() => navigate('dev-active-tuners')))()}
+        onAction={() => navigateRoute('dev-active-tuners')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -141,9 +136,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         actionLabel="Browse"
         description="Atmosphere & FX, Vehicle Global Surfaces, Driftwoods, Boost Pad & Name Tag"
         hoverDescription="Calibrated Presets: Archive of completed tuners whose parameters have already been calibrated and solidified (Atmosphere & FX, Vehicle Global Surfaces, Driftwoods, Boost Pad & Name Tag)."
-        onAction={() =>
-          (onNavigateDevCalibratedPresets ?? (() => navigate('dev-calibrated-presets')))()
-        }
+        onAction={() => navigateRoute('dev-calibrated-presets')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -214,9 +207,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         }
         description="Unstable staging workspace: Three-Wheeler (Tricycle / Psyclops), Throwback Stadium & Per-Car Boost"
         hoverDescription="Under Development: Unstable staging workspace for early experimental prototypes (Three-Wheeler Tricycle physics, Throwback Stadium 36 CMF & GLB, and Per-Car Boost mechanics)."
-        onAction={() =>
-          (onNavigateDevUnderDevelopment ?? (() => navigate('dev-under-development')))()
-        }
+        onAction={() => navigateRoute('dev-under-development')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -233,7 +224,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              (onNavigateDevUnderDevelopment ?? (() => navigate('dev-under-development')))();
+              navigateRoute('dev-under-development');
             }}
             style={{
               fontSize: `${buttonFontSize}px`,

@@ -42,14 +42,6 @@ export interface DisplayTabProps {
   developerMode?: boolean;
   /** Optional controlled GraphicsConfig override */
   graphicsConfig?: Partial<GraphicsConfig>;
-  /** Alias for graphicsConfig */
-  config?: Partial<GraphicsConfig>;
-  /** Initial GraphicsConfig (uncontrolled) */
-  defaultGraphicsConfig?: Partial<GraphicsConfig>;
-  /** Callback when any field of GraphicsConfig changes */
-  onGraphicsConfigChange?: (next: GraphicsConfig, patch: Partial<GraphicsConfig>) => void;
-  /** Alias for onGraphicsConfigChange */
-  onChange?: (next: GraphicsConfig, patch: Partial<GraphicsConfig>) => void;
   highlightSetting?: string | null;
   onClearHighlight?: () => void;
   onHover: (desc: string) => void;
@@ -72,10 +64,6 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
   isLight = false,
   developerMode = false,
   graphicsConfig: propGraphicsConfig,
-  config: propAliasConfig,
-  defaultGraphicsConfig,
-  onGraphicsConfigChange,
-  onChange,
   highlightSetting: propHighlightSetting,
   onClearHighlight: propOnClearHighlight,
   onHover,
@@ -122,8 +110,6 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
     safeAreaMargin
   );
 
-  const controlledGfx = propGraphicsConfig ?? propAliasConfig;
-
   const normalizePowerSave = (val?: MenuPowerSaveOption): 'extreme' | '15' | '30' | 'disable' => {
     if (val === 'freeze' || val === 'extreme') return 'extreme';
     if (val === 'match' || val === 'disable') return 'disable';
@@ -137,12 +123,11 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
     limitFps: storeGraphics.limitFps,
     maxFps: storeGraphics.maxFps,
     menuPowerSave: normalizePowerSave(storeGraphics.menuPowerSave),
-    ...defaultGraphicsConfig,
   }));
 
   const [internalFpsSelection, setInternalFpsSelection] = useState<string>(() => {
-    const initLimit = defaultGraphicsConfig?.limitFps ?? storeGraphics.limitFps;
-    const initMax = defaultGraphicsConfig?.maxFps ?? storeGraphics.maxFps;
+    const initLimit = storeGraphics.limitFps;
+    const initMax = storeGraphics.maxFps;
     if (initLimit === false) return 'unlimited';
     if (initMax !== undefined) {
       return FPS_PRESET_VALUES.has(initMax) ? String(initMax) : 'custom';
@@ -151,7 +136,7 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
   });
 
   const [internalCustomFps, setInternalCustomFps] = useState<number>(() => {
-    const initMax = defaultGraphicsConfig?.maxFps ?? storeGraphics.maxFps;
+    const initMax = storeGraphics.maxFps;
     if (initMax !== undefined && !FPS_PRESET_VALUES.has(initMax)) {
       return initMax;
     }
@@ -159,18 +144,18 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
   });
 
   const resolvedLimitFps =
-    controlledGfx?.limitFps ?? storeGraphics.limitFps ?? internalGraphics.limitFps;
+    propGraphicsConfig?.limitFps ?? storeGraphics.limitFps ?? internalGraphics.limitFps;
   const resolvedMaxFps =
-    controlledGfx?.maxFps ?? storeGraphics.maxFps ?? internalGraphics.maxFps;
+    propGraphicsConfig?.maxFps ?? storeGraphics.maxFps ?? internalGraphics.maxFps;
   const resolvedRenderScale =
-    controlledGfx?.renderScale ?? storeRenderScale ?? internalGraphics.renderScale;
+    propGraphicsConfig?.renderScale ?? storeRenderScale ?? internalGraphics.renderScale;
   const rawPowerSave =
-    controlledGfx?.menuPowerSave ?? storeGraphics.menuPowerSave ?? internalGraphics.menuPowerSave;
+    propGraphicsConfig?.menuPowerSave ?? storeGraphics.menuPowerSave ?? internalGraphics.menuPowerSave;
   const powerSaveValue = normalizePowerSave(rawPowerSave);
 
   const customFps =
-    controlledGfx?.maxFps !== undefined && !FPS_PRESET_VALUES.has(controlledGfx.maxFps)
-      ? controlledGfx.maxFps
+    propGraphicsConfig?.maxFps !== undefined && !FPS_PRESET_VALUES.has(propGraphicsConfig.maxFps)
+      ? propGraphicsConfig.maxFps
       : internalCustomFps;
 
   const fpsSelection = (() => {
@@ -188,8 +173,6 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
     };
     const nextConfig: GraphicsConfig = { ...currentFull, ...patch };
     setInternalGraphics(nextConfig);
-    onGraphicsConfigChange?.(nextConfig, patch);
-    onChange?.(nextConfig, patch);
   };
 
   const handleFpsPresetChange = (preset: string) => {

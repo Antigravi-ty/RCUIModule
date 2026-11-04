@@ -10,6 +10,7 @@ import {
   getReplayDirectorConfig,
   getActiveReplayTimelineController,
   subscribeActiveReplayTimelineController,
+  subscribeReplayDirectorConfig,
   exportActiveReplayDirectorDiagnosticPattern,
   importActiveReplayDirectorDiagnosticPattern,
   buildActiveReplayDirectorWindowDiagnostic,
@@ -71,18 +72,16 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
   const devRuntimeHandlers = useSubsystemIsolationLabStore((s) => s.runtimeHandlers);
 
   useEffect(() => {
-    const unsubCtrl = subscribeActiveReplayTimelineController(() => {
+    const bumpRevision = () => {
       setTickRevision((r) => r + 1);
-    });
-    const interval = setInterval(() => {
-      const ctrl = getActiveReplayTimelineController();
-      if ((ctrl && ctrl.isActive) || useAppStore.getState().isFreeCam) {
-        setTickRevision((r) => r + 1);
-      }
-    }, 100);
+    };
+    const unsubCtrl = subscribeActiveReplayTimelineController(bumpRevision);
+    const unsubConfig = subscribeReplayDirectorConfig(bumpRevision);
+    const unsubApp = useAppStore.subscribe(bumpRevision);
     return () => {
       unsubCtrl();
-      clearInterval(interval);
+      unsubConfig();
+      unsubApp();
     };
   }, []);
 
