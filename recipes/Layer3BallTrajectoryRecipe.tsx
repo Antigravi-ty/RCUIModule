@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cpu, Palette } from 'lucide-react';
+import { Cpu, Palette, Sliders } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
@@ -12,32 +12,15 @@ import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
+import {
+  DEFAULT_TRAJECTORY_CONFIG,
+  type TrajectoryConfig,
+  type TrajectoryUpdateMode,
+} from '../config/trainingDefaults';
+import { BALL_TRAJECTORY_TUNER_PRESET } from '../stores/devFloatingPresets';
+import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 
-export interface TrajectoryConfig {
-  enabled: boolean;
-  calculationMode?: 'fast' | 'accurate';
-  predictionTicks: number;   // Duration: 60..600 ticks (0.5s..5.0s)
-  solidTicks: number;        // Solid Dash: 5..240 ticks (default 50)
-  transparentTicks: number;  // Transparent Gap: 5..240 ticks (default 20)
-  thickness: number;         // Line Thickness: 1..75 (% of ball diameter, default 10)
-  opacity: number;           // 0.05..1.0 (or 5..100 %)
-  color: string;
-  dynamicMode: boolean;
-  duration?: number;
-}
-
-export const DEFAULT_TRAJECTORY_CONFIG: TrajectoryConfig = {
-  enabled: true,
-  calculationMode: 'fast',
-  predictionTicks: 600, // 5.0s @ 120Hz
-  solidTicks: 50,
-  transparentTicks: 20,
-  thickness: 10,
-  opacity: 0.5,
-  color: '#fbbf24',
-  dynamicMode: true,
-  duration: 5.0,
-};
+export { DEFAULT_TRAJECTORY_CONFIG, type TrajectoryConfig };
 
 const PRESET_COLOR_MAP: Array<{ value: string; label: string }> = [
   { value: '#000000', label: 'Black' },
@@ -70,9 +53,9 @@ export interface Layer3BallTrajectoryRecipeProps {
 /**
  * [Recipe] Layer 3 Ball Trajectory Predictor
  * Streamlined single-column vertical layout sharing unified Settings row typography & spacing:
- * - Icons retained only on Enable Predictor, Line Color Tone, and Calculation Mode
- * - Trajectory Pattern Mode & Line Color Tone split into 2-line stacked rows with full-width SegmentedSwitch
- * - Iconless inline sliders with expanded label room so titles never truncate
+ * - Developer-gated controls (`Line Thickness`, `Solid Dash Length`, `Transparent Gap`) respect
+ *   `allowUserThicknessEdit` and `allowUserDashEdit` calibrated in `BallTrajectoryTunerFloatingWindow`.
+ * - Calculation Mode selects between Continuous Incremental Tail Prediction (600t) and Event Snapshot.
  */
 export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProps> = ({
   isLight = false,
@@ -107,7 +90,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
   );
   const { rowGap } = useSettingActionRowStore();
 
-  const initialSeed = {
+  const initialSeed: TrajectoryConfig = {
     ...DEFAULT_TRAJECTORY_CONFIG,
     ...defaultSettings,
     ...defaultConfig,
@@ -152,7 +135,13 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
     : Math.round(resolved.opacity ?? 50);
   const solidDashLength = resolved.solidTicks ?? 50;
   const transparentGap = resolved.transparentTicks ?? 20;
-  const calculationMode = resolved.calculationMode === 'accurate' ? 'fast' : 'fast';
+  const updateMode: TrajectoryUpdateMode =
+    resolved.updateMode === 'event-snapshot' || resolved.updateMode === 'full-every-tick'
+      ? resolved.updateMode
+      : 'continuous-incremental';
+
+  const canEditThickness = Boolean(developerMode || resolved.allowUserThicknessEdit);
+  const canEditDashes = Boolean(developerMode || resolved.allowUserDashEdit !== false);
 
   const normalizedColor = (resolved.color || '#fbbf24').toLowerCase();
   const matchedPreset = PRESET_COLOR_MAP.find(
@@ -193,6 +182,24 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
           className="flex flex-col w-full"
           style={{ gap: `${rowGap}px` }}
         >
+          {/* Developer Active Tuner Launcher (Visible when Developer Mode is enabled) */}
+          {developerMode && (
+            <FloatingWindowCard
+              preset={BALL_TRAJECTORY_TUNER_PRESET}
+              icon={Sliders}
+              iconColor="text-amber-400"
+              badge="WASM Incr · 3D Tube · JSON"
+              badgeClass="bg-amber-500/15 border-amber-500/30 text-amber-400"
+              bordered={false}
+              showDescription={false}
+              description="Open Ball Trajectory Prediction Line Tuner for WASM incremental tail thresholds, 3D tube shading, spatial depth cues & JSON export"
+              hoverTooltip="Ball Trajectory Prediction Line Tuner (Developer Floating Window): Live telemetry, WASM incremental triggers, 3D volumetric tube shading, bounce markers, ground drop lines, user access locks, and JSON export."
+              onHover={setHoveredDesc}
+              onLeave={() => setHoveredDesc(null)}
+              isLight={isLight}
+            />
+          )}
+
           {/* 1. Enable Predictor */}
           <SettingToggleRow
             icon={BounceSolidSvg}
@@ -221,7 +228,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
               { value: 'dynamic', label: 'Dynamic (Pushes Line)' },
               { value: 'static', label: 'Static (Follows Line)' },
             ]}
-            hoverDescription="Switch between velocity-scaled dynamic dashes (pushes line) or uniform static dash geometry (follows line)."
+            hoverDescription="Switch between velocity-scaled dynamic dashes (pushes line) or world-anchored static dash geometry (follows line)."
             onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -252,25 +259,27 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
             isLight={isLight}
           />
 
-          {/* 4. Line Thickness */}
-          <SettingSliderRow
-            label="Line Thickness"
-            title="Line Thickness"
-            value={lineThickness}
-            min={1}
-            max={75}
-            step={1}
-            unit="%"
-            developerMode={developerMode}
-            layout="inline"
-            bordered={false}
-            showDescription={false}
-            onChange={(thickness) => updateConfig({ thickness })}
-            hoverDescription="3D trajectory ribbon thickness as percentage of ball diameter (1% to 75%)."
-            onHover={(desc) => desc && setHoveredDesc(desc)}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
+          {/* 4. Line Thickness (Developer-only by default unless unlocked in Developer Tuner) */}
+          {canEditThickness && (
+            <SettingSliderRow
+              label="Line Thickness"
+              title="Line Thickness"
+              value={lineThickness}
+              min={1}
+              max={75}
+              step={1}
+              unit="%"
+              developerMode={developerMode}
+              layout="inline"
+              bordered={false}
+              showDescription={false}
+              onChange={(thickness) => updateConfig({ thickness })}
+              hoverDescription="3D trajectory tube/ribbon thickness as percentage of ball diameter (1% to 75%). Developer-locked by default."
+              onHover={(desc) => desc && setHoveredDesc(desc)}
+              onLeave={() => setHoveredDesc(null)}
+              isLight={isLight}
+            />
+          )}
 
           {/* 5. Line Opacity */}
           <SettingSliderRow
@@ -296,45 +305,48 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
             isLight={isLight}
           />
 
-          {/* 6. Solid Dash Length (RocketCompanion range: 5..240 ticks) */}
-          <SettingSliderRow
-            label="Solid Dash Length"
-            title="Solid Dash Length"
-            value={solidDashLength}
-            min={5}
-            max={240}
-            step={5}
-            unit=" ticks"
-            developerMode={developerMode}
-            layout="inline"
-            bordered={false}
-            showDescription={false}
-            onChange={(solidTicks) => updateConfig({ solidTicks })}
-            hoverDescription="Length of each solid dash segment along the trajectory in physics ticks (5 to 240 ticks)."
-            onHover={(desc) => desc && setHoveredDesc(desc)}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
+          {/* 6 & 7. Solid Dash Length & Transparent Gap (Gated by allowUserDashEdit) */}
+          {canEditDashes && (
+            <>
+              <SettingSliderRow
+                label="Solid Dash Length"
+                title="Solid Dash Length"
+                value={solidDashLength}
+                min={5}
+                max={240}
+                step={5}
+                unit=" ticks"
+                developerMode={developerMode}
+                layout="inline"
+                bordered={false}
+                showDescription={false}
+                onChange={(solidTicks) => updateConfig({ solidTicks })}
+                hoverDescription="Length of each solid dash segment along the trajectory in physics ticks (5 to 240 ticks)."
+                onHover={(desc) => desc && setHoveredDesc(desc)}
+                onLeave={() => setHoveredDesc(null)}
+                isLight={isLight}
+              />
 
-          {/* 7. Transparent Gap (RocketCompanion range: 5..240 ticks) */}
-          <SettingSliderRow
-            label="Transparent Gap"
-            title="Transparent Gap"
-            value={transparentGap}
-            min={5}
-            max={240}
-            step={5}
-            unit=" ticks"
-            developerMode={developerMode}
-            layout="inline"
-            bordered={false}
-            showDescription={false}
-            onChange={(transparentTicks) => updateConfig({ transparentTicks })}
-            hoverDescription="Spacing gap between trajectory dash segments in physics ticks (5 to 240 ticks)."
-            onHover={(desc) => desc && setHoveredDesc(desc)}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
+              <SettingSliderRow
+                label="Transparent Gap"
+                title="Transparent Gap"
+                value={transparentGap}
+                min={5}
+                max={240}
+                step={5}
+                unit=" ticks"
+                developerMode={developerMode}
+                layout="inline"
+                bordered={false}
+                showDescription={false}
+                onChange={(transparentTicks) => updateConfig({ transparentTicks })}
+                hoverDescription="Spacing gap between trajectory dash segments in physics ticks (5 to 240 ticks)."
+                onHover={(desc) => desc && setHoveredDesc(desc)}
+                onLeave={() => setHoveredDesc(null)}
+                isLight={isLight}
+              />
+            </>
+          )}
 
           {/* 8. Line Color Tone */}
           <SettingActionRow
@@ -343,7 +355,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
             title="Line Color Tone"
             bordered={false}
             showDescription={false}
-            hoverDescription="Select visual color preset or pick a custom hex color for the predictive trajectory ribbon."
+            hoverDescription="Select visual color preset or pick a custom hex color for the predictive trajectory tube."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -388,24 +400,28 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
             }
           />
 
-          {/* 9. Calculation Mode (Fast selected by default, Accurate disabled) */}
+          {/* 9. Calculation Mode (Continuous Incremental 600t Tail vs Event Snapshot) */}
           <SettingSegmentedRow
             icon={Cpu}
             iconColor="text-emerald-400"
             title="Calculation Mode"
-            value={calculationMode}
+            value={updateMode === 'event-snapshot' ? 'event-snapshot' : 'continuous-incremental'}
             onChange={(v) => {
-              if (v === 'accurate') return;
-              updateConfig({ calculationMode: 'fast' });
+              const nextMode: TrajectoryUpdateMode =
+                v === 'event-snapshot' ? 'event-snapshot' : 'continuous-incremental';
+              updateConfig({
+                updateMode: nextMode,
+                calculationMode: nextMode === 'continuous-incremental' ? 'fast' : 'accurate',
+              });
             }}
             layout="inline"
             bordered={false}
             showDescription={false}
             options={[
-              { value: 'fast', label: 'Fast' },
-              { value: 'accurate', label: 'Accurate', disabled: true },
+              { value: 'continuous-incremental', label: 'Incremental (600t)' },
+              { value: 'event-snapshot', label: 'Snapshot (Hit Only)' },
             ]}
-            hoverDescription="Switch between fast trajectory prediction (default) or accurate sub-tick physics integration (coming soon)."
+            hoverDescription="Incremental (600t): Continuously extends the tail to maintain a full 5.0s lookahead at ~1/100th CPU cost, recomputing from scratch only on Car-Ball Hit or deviation. Snapshot: Recomputes only on collision/deviation and shrinks as the ball flies."
             onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -415,7 +431,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
 
       <PanelFooter
         isLight={isLight}
-        defaultDescription="Configure predictive ball flight horizon, dash geometry, line color tone, and calculation mode."
+        defaultDescription="Configure predictive ball flight horizon, dash geometry, line color tone, and WASM incremental mode."
         hoveredDescription={hoveredDesc}
         rightLabel="Live Preview"
         rightShortcut="TAB"

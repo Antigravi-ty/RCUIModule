@@ -15,6 +15,7 @@ import { NameTagTunerFloatingWindow } from './dev/NameTagTunerFloatingWindow';
 import { GoalVolumeTunerFloatingWindow } from './dev/GoalVolumeTunerFloatingWindow';
 import { ReplayDirectorTunerFloatingWindow } from './dev/ReplayDirectorTunerFloatingWindow';
 import { ReachabilityTunerFloatingWindow } from './dev/ReachabilityTunerFloatingWindow';
+import { BallTrajectoryTunerFloatingWindow } from './dev/BallTrajectoryTunerFloatingWindow';
 import { VehicleModelOffsetTunerFloatingWindow } from './dev/VehicleModelOffsetTunerFloatingWindow';
 import { VehicleGlobalFxTunerFloatingWindow } from './dev/VehicleGlobalFxTunerFloatingWindow';
 import { ExperimentalMultiBotsFloatingWindow } from './dev/ExperimentalMultiBotsFloatingWindow';
@@ -46,7 +47,7 @@ export interface FloatingWindowDescriptor {
 }
 
 /**
- * Declarative, low-coupling descriptor map for all 28 Floating Windows (6 User + 22 Developer).
+ * Declarative, low-coupling descriptor map for all Floating Windows.
  * Allows host applications (like RocketCompanion) to mount any floating window panel
  * via a single registry lookup without cascading switch statements.
  */
@@ -83,7 +84,7 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false }) => <FloatingWindowOpacityFloatingWindow isLight={isLight} />,
   },
 
-  // --- 22 Developer-Only Floating Windows ---
+  // --- Developer-Only Floating Windows ---
   'diagnostic-dump': {
     id: 'diagnostic-dump',
     category: 'developer',
@@ -113,6 +114,11 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     id: 'reachability-tuner',
     category: 'developer',
     render: ({ isLight = false }) => <ReachabilityTunerFloatingWindow isLight={isLight} />,
+  },
+  'ball-trajectory-tuner': {
+    id: 'ball-trajectory-tuner',
+    category: 'developer',
+    render: ({ isLight = false }) => <BallTrajectoryTunerFloatingWindow isLight={isLight} />,
   },
   'vehicle-model-offset-tuner': {
     id: 'vehicle-model-offset-tuner',

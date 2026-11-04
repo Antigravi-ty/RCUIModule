@@ -102,6 +102,22 @@ export const REACHABILITY_TUNER_PRESET: PresetConfig = {
   sourcePath: 'panels/dev/ReachabilityTunerFloatingWindow.tsx',
 };
 
+export const BALL_TRAJECTORY_TUNER_PRESET: PresetConfig = {
+  id: 'ball-trajectory-tuner',
+  title: 'Ball Trajectory Prediction Line Tuner',
+  category: 'BallTrajectory',
+  width: 480,
+  height: 640,
+  minHeight: 220,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'WASM Incremental Tail Prediction (600t), Car-Ball Hit / Deviation Triggers, 3D Volumetric Shaded Tube, Spatial Depth Cues & JSON Export.',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'BallTrajectoryTunerFloatingWindow',
+  sourcePath: 'panels/dev/BallTrajectoryTunerFloatingWindow.tsx',
+};
+
 export const VEHICLE_MODEL_OFFSET_TUNER_PRESET: PresetConfig = {
   id: 'vehicle-model-offset-tuner',
   title: 'Vehicle Model & Offset Tuner',
@@ -400,6 +416,7 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   GOAL_VOLUME_TUNER_PRESET,
   REPLAY_DIRECTOR_TUNER_PRESET,
   REACHABILITY_TUNER_PRESET,
+  BALL_TRAJECTORY_TUNER_PRESET,
   VEHICLE_MODEL_OFFSET_TUNER_PRESET,
   VEHICLE_GLOBAL_FX_TUNER_PRESET,
   EXPERIMENTAL_MULTI_BOTS_PRESET,
