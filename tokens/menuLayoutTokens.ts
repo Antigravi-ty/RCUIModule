@@ -383,8 +383,8 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
   },
   'layer4-dev-signaling-lab': {
     mode: 'auto',
-    width: 680,
-    targetHeight: 620,
+    width: 760,
+    targetHeight: 680,
     minHeight: 260,
     maxHeight: 1120,
   },
