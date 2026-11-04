@@ -3,7 +3,7 @@ import { Play, Trophy, Car, Settings, Keyboard, LogOut, RotateCcw } from 'lucide
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { MenuContainer, MenuDivider, MenuSectionTitle } from '../layout/MenuContainer';
-import { MenuItem } from '../compounds/MenuItem';
+import { MainMenuRow } from '../layout/MainMenuRow';
 import { Badge } from '../primitives/Badge';
 
 export interface Layer1MatchPostRecipeProps {
@@ -42,7 +42,7 @@ export const Layer1MatchPostRecipe: React.FC<Layer1MatchPostRecipeProps> = ({
 
       <PanelContent scrollable={false}>
         <MenuContainer ariaLabel="Match Post Menu">
-          <MenuItem
+          <MainMenuRow
             icon={<Play className="h-5 w-5" />}
             title="Next Match"
             subtitle="Search for next competitive queue"
@@ -53,7 +53,7 @@ export const Layer1MatchPostRecipe: React.FC<Layer1MatchPostRecipeProps> = ({
             isLight={isLight}
           />
 
-          <MenuItem
+          <MainMenuRow
             icon={<Trophy className="h-5 w-5" />}
             title="Match Stats & Telemetry"
             subtitle="Goals, saves, MVPs & player telemetry"
@@ -65,7 +65,7 @@ export const Layer1MatchPostRecipe: React.FC<Layer1MatchPostRecipeProps> = ({
           <MenuDivider isLight={isLight} />
           <MenuSectionTitle isLight={isLight}>Customization & Setup</MenuSectionTitle>
 
-          <MenuItem
+          <MainMenuRow
             icon={<Car className="h-5 w-5" />}
             title="Garage Loadout"
             subtitle="Change chassis, decals, wheels & boost"
@@ -74,7 +74,7 @@ export const Layer1MatchPostRecipe: React.FC<Layer1MatchPostRecipeProps> = ({
             isLight={isLight}
           />
 
-          <MenuItem
+          <MainMenuRow
             icon={<Settings className="h-5 w-5" />}
             title="Game Settings"
             subtitle="Audio equalizer, graphics & camera"
@@ -83,7 +83,7 @@ export const Layer1MatchPostRecipe: React.FC<Layer1MatchPostRecipeProps> = ({
             isLight={isLight}
           />
 
-          <MenuItem
+          <MainMenuRow
             icon={<Keyboard className="h-5 w-5" />}
             title="Key Controls"
             subtitle="Keyboard bindings & gamepad sensitivity"
@@ -94,7 +94,7 @@ export const Layer1MatchPostRecipe: React.FC<Layer1MatchPostRecipeProps> = ({
 
           <MenuDivider isLight={isLight} />
 
-          <MenuItem
+          <MainMenuRow
             icon={<LogOut className="h-5 w-5" />}
             title="Return to Lobby"
             subtitle="Leave current server to arena lobby"

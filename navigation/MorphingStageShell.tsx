@@ -18,6 +18,12 @@ export interface MorphingStageShellProps {
   isContentVisible?: boolean;
   onExpandFromDock?: () => void;
   contentWrapperRef?: React.RefObject<HTMLDivElement | null>;
+  shellRef?: React.Ref<HTMLDivElement>;
+  dataUiElement?: string;
+  dataComponent?: string;
+  dataSourcePath?: string;
+  zIndexClassName?: string;
+  className?: string;
   children: React.ReactNode;
 }
 
@@ -43,6 +49,12 @@ export const MorphingStageShell: React.FC<MorphingStageShellProps> = ({
   isContentVisible = true,
   onExpandFromDock,
   contentWrapperRef,
+  shellRef,
+  dataUiElement,
+  dataComponent,
+  dataSourcePath,
+  zIndexClassName = 'z-30',
+  className = '',
   children,
 }) => {
   return (
@@ -52,12 +64,16 @@ export const MorphingStageShell: React.FC<MorphingStageShellProps> = ({
         animate={isShaking ? { x: [0, -10, 10, -7, 7, -3, 3, 0] } : { x: 0 }}
         transition={{ duration: 0.35, ease: 'easeInOut' }}
         style={{ transform: isShaking ? undefined : 'none' }}
-        className="absolute inset-0 pointer-events-none z-30"
+        className={`absolute inset-0 pointer-events-none ${zIndexClassName}`}
       >
         <motion.div
+          ref={shellRef}
           key="decoupled-menu-stage-container"
+          data-ui-element={dataUiElement}
           data-morph-container="true"
           data-panel="container"
+          data-component={dataComponent}
+          data-source-path={dataSourcePath}
           initial={false}
           animate={{
             left: targetX,
@@ -86,7 +102,7 @@ export const MorphingStageShell: React.FC<MorphingStageShellProps> = ({
               : isLight
               ? 'border border-neutral-300/80 bg-neutral-50/98 text-neutral-900 shadow-[0_0_0_1px_rgba(0,0,0,0.12),0_0_24px_rgba(0,0,0,0.16),0_0_48px_rgba(0,0,0,0.10)]'
               : 'border border-neutral-700/60 bg-neutral-900/98 text-neutral-100 shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_0_25px_rgba(0,0,0,0.85),0_0_35px_rgba(255,255,255,0.08)]'
-          }`}
+          } ${className}`}
           onClick={isDockState ? onExpandFromDock : undefined}
           onMouseEnter={() => isDockState && onPillHoverChange?.(true)}
           onMouseLeave={() => onPillHoverChange?.(false)}

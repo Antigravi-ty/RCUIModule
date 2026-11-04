@@ -2,9 +2,6 @@ import React from 'react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { Card } from '../layout/Card';
-import { HStack } from '../layout/HStack';
-import { VStack } from '../layout/VStack';
-import { GridStack } from '../layout/GridStack';
 import { Badge } from '../primitives/Badge';
 import { KeycapBadge } from '../primitives/KeycapBadge';
 import { Button } from '../primitives/Button';
@@ -88,7 +85,7 @@ export const Layer2MatchStatsRecipe: React.FC<Layer2MatchStatsRecipeProps> = ({
             Individual Player Telemetry
           </div>
 
-          <GridStack cols={2} gap="sm">
+          <div className="grid grid-cols-2 gap-2">
             {stats.map((s) => (
               <Card key={s.label} isLight={isLight} variant="outlined" className="p-3">
                 <div className="flex items-center justify-between">
@@ -102,7 +99,7 @@ export const Layer2MatchStatsRecipe: React.FC<Layer2MatchStatsRecipeProps> = ({
                 </div>
               </Card>
             ))}
-          </GridStack>
+          </div>
         </div>
 
         {/* Progression Card */}
@@ -111,24 +108,24 @@ export const Layer2MatchStatsRecipe: React.FC<Layer2MatchStatsRecipeProps> = ({
             <Trophy className="h-4 w-4 text-amber-500" />
             <span className="text-xs font-semibold">Competitive Tier Progress:</span>
           </div>
-          <HStack gap="sm">
+          <div className="flex items-center gap-2">
             <Badge variant="warning" size="sm" isLight={isLight}>
               Champion I (Div 3)
             </Badge>
             <KeycapBadge shortcut="ESC" isLight={isLight} size="sm" />
-          </HStack>
+          </div>
         </Card>
       </PanelContent>
 
       <PanelFooter isLight={isLight}>
-        <HStack gap="sm">
+        <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={onBack} isLight={isLight}>
             Back
           </Button>
           <Button variant="primary" size="sm" onClick={onRematch} isLight={isLight}>
             Next Match
           </Button>
-        </HStack>
+        </div>
       </PanelFooter>
     </PanelContainer>
   );
