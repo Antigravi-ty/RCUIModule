@@ -39,7 +39,7 @@ export const EngineAudioDrivetrainCard: React.FC<EngineAudioDrivetrainCardProps>
           </span>
         </div>
         <span className={`text-[10px] font-mono ${mutedText}`}>
-          G1:{config.maxThrottleSpeedUU}uu · G2:{config.supersonicSpeedUU}uu · AirQuota:{config.airborneRevQuotaDurationSec.toFixed(1)}s
+          G1:{config.maxThrottleSpeedUU}uu · Boost:{config.boostOverdriveMultiplier.toFixed(2)}x · AirQuota:{config.airborneRevQuotaDurationSec.toFixed(2)}s
         </span>
       </div>
 
@@ -64,7 +64,7 @@ export const EngineAudioDrivetrainCard: React.FC<EngineAudioDrivetrainCardProps>
           allowOutOfBoundsInput={true}
           showStepper={false}
           colorScheme="sky"
-          label="Gear 2 Redline Speed (Supersonic)"
+          label="Supersonic Reference Speed"
           unit=" UU/s"
           value={config.supersonicSpeedUU}
           min={1600}
@@ -81,25 +81,25 @@ export const EngineAudioDrivetrainCard: React.FC<EngineAudioDrivetrainCardProps>
           label="Airborne Rev Quota Duration"
           unit=" s"
           value={config.airborneRevQuotaDurationSec}
-          min={0.5}
-          max={8.0}
-          step={0.1}
+          min={0.25}
+          max={5.0}
+          step={0.05}
           isLight={isLight}
-          onChange={(v) => updateConfig({ airborneRevQuotaDurationSec: Math.max(0.2, v) })}
+          onChange={(v) => updateConfig({ airborneRevQuotaDurationSec: Math.max(0.1, v) })}
         />
         <SliderControl
           editable={true}
-          allowOutOfBoundsInput={false}
+          allowOutOfBoundsInput={true}
           showStepper={false}
-          colorScheme="rose"
-          label="Reverse Gear Decay Base (R2+)"
+          colorScheme="amber"
+          label="Boost Overdrive Accel Mult"
           unit="x"
-          value={config.reverseGearDecayFactorBase}
-          min={0.25}
-          max={0.9}
-          step={0.01}
+          value={config.boostOverdriveMultiplier}
+          min={1.0}
+          max={3.0}
+          step={0.05}
           isLight={isLight}
-          onChange={(v) => updateConfig({ reverseGearDecayFactorBase: v })}
+          onChange={(v) => updateConfig({ boostOverdriveMultiplier: Math.max(1.0, v) })}
         />
       </div>
 
@@ -209,21 +209,21 @@ export const EngineAudioDrivetrainCard: React.FC<EngineAudioDrivetrainCardProps>
         />
         <SliderControl
           editable={true}
-          allowOutOfBoundsInput={true}
+          allowOutOfBoundsInput={false}
           showStepper={false}
-          colorScheme="sky"
-          label="Flywheel Agility Rate"
-          unit=""
-          value={config.flywheelAgility}
-          min={2.0}
-          max={35.0}
-          step={0.5}
+          colorScheme="rose"
+          label="Reverse Gear Decay Base (R2+)"
+          unit="x"
+          value={config.reverseGearDecayFactorBase}
+          min={0.25}
+          max={0.9}
+          step={0.01}
           isLight={isLight}
-          onChange={(v) => updateConfig({ flywheelAgility: Math.max(1.0, v) })}
+          onChange={(v) => updateConfig({ reverseGearDecayFactorBase: v })}
         />
       </div>
 
-      {/* Physics Gearing, Supersonic Turn Bounce & Transmission Rules */}
+      {/* Physics Gearing, Turn Shift-Lock & Transmission Rules */}
       <div className="grid grid-cols-2 gap-2">
         <div className={`p-2 rounded-lg border flex items-center justify-between gap-2 ${rowBg}`}>
           <div className="flex flex-col min-w-0">
@@ -232,7 +232,7 @@ export const EngineAudioDrivetrainCard: React.FC<EngineAudioDrivetrainCardProps>
               Velocity Floor + Overdrive
             </span>
             <span className={`text-[9px] truncate ${mutedText}`}>
-              Speed-coupled G1/G2 + virtual shifting on turn/cruise
+              Speed-coupled G1 + boost-scaled virtual overdrive
             </span>
           </div>
           <ToggleSwitch
@@ -246,11 +246,11 @@ export const EngineAudioDrivetrainCard: React.FC<EngineAudioDrivetrainCardProps>
         <div className={`p-2 rounded-lg border flex items-center justify-between gap-2 ${rowBg}`}>
           <div className="flex flex-col min-w-0">
             <span className="font-semibold text-[11px] truncate flex items-center gap-1">
-              <Compass className="w-3 h-3 text-rose-400 shrink-0" />
-              Supersonic Turn Rev-Bounce
+              <Compass className="w-3 h-3 text-amber-400 shrink-0" />
+              Turn + Accel Shift-Lock
             </span>
             <span className={`text-[9px] truncate ${mutedText}`}>
-              Bounce at redline when steering during supersonic boost
+              Hold gear (no auto-upshift) when turning under power
             </span>
           </div>
           <ToggleSwitch
@@ -286,7 +286,7 @@ export const EngineAudioDrivetrainCard: React.FC<EngineAudioDrivetrainCardProps>
               Airborne Instant Rev + Quota
             </span>
             <span className={`text-[9px] truncate ${mutedText}`}>
-              Instant redline bounce for {config.airborneRevQuotaDurationSec.toFixed(1)}s cumulative air gas
+              Instant redline bounce for {config.airborneRevQuotaDurationSec.toFixed(2)}s cumulative air gas
             </span>
           </div>
           <ToggleSwitch

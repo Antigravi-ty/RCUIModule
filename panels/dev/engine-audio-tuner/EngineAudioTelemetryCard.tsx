@@ -52,6 +52,16 @@ export const EngineAudioTelemetryCard: React.FC<EngineAudioTelemetryCardProps> =
           </span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
+          {telemetry.isBoosting && (
+            <Badge
+              variant="amber"
+              size="sm"
+              isLight={isLight}
+              className="font-mono text-[9px]"
+            >
+              BOOST
+            </Badge>
+          )}
           {telemetry.isInOverdrive && (
             <Badge
               variant="emerald"
@@ -90,7 +100,7 @@ export const EngineAudioTelemetryCard: React.FC<EngineAudioTelemetryCardProps> =
           >
             {telemetry.isOnGround
               ? 'ON GROUND'
-              : `AIRBORNE (${(telemetry.airborneRevQuotaRemainingSec ?? 0).toFixed(1)}s)`}
+              : `AIRBORNE (${(telemetry.airborneRevQuotaRemainingSec ?? 0).toFixed(2)}s)`}
           </Badge>
           <Badge
             variant={
@@ -204,14 +214,17 @@ export const EngineAudioTelemetryCard: React.FC<EngineAudioTelemetryCardProps> =
           <button
             type="button"
             onMouseDown={() =>
-              setManualBenchState({ active: true, throttle: true, reverse: false })
+              setManualBenchState({ active: true, throttle: true, boost: false, reverse: false })
             }
             onMouseUp={() => setManualBenchState({ throttle: false })}
             onMouseLeave={() => {
               if (telemetry.manualThrottle) setManualBenchState({ throttle: false });
             }}
             className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-colors cursor-pointer ${
-              telemetry.manualOverrideActive && telemetry.manualThrottle && !telemetry.manualReverse
+              telemetry.manualOverrideActive &&
+              telemetry.manualThrottle &&
+              !telemetry.manualBoost &&
+              !telemetry.manualReverse
                 ? 'bg-emerald-500 text-neutral-950 border-emerald-400'
                 : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25'
             }`}
@@ -222,7 +235,25 @@ export const EngineAudioTelemetryCard: React.FC<EngineAudioTelemetryCardProps> =
           <button
             type="button"
             onMouseDown={() =>
-              setManualBenchState({ active: true, throttle: true, reverse: true })
+              setManualBenchState({ active: true, throttle: true, boost: true, reverse: false })
+            }
+            onMouseUp={() => setManualBenchState({ throttle: false, boost: false })}
+            onMouseLeave={() => {
+              if (telemetry.manualBoost) setManualBenchState({ throttle: false, boost: false });
+            }}
+            className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-colors cursor-pointer ${
+              telemetry.manualOverrideActive && telemetry.manualBoost && !telemetry.manualReverse
+                ? 'bg-sky-500 text-neutral-950 border-sky-400'
+                : 'bg-sky-500/15 border-sky-500/40 text-sky-300 hover:bg-sky-500/25'
+            }`}
+          >
+            Hold Boost
+          </button>
+
+          <button
+            type="button"
+            onMouseDown={() =>
+              setManualBenchState({ active: true, throttle: true, boost: false, reverse: true })
             }
             onMouseUp={() => setManualBenchState({ throttle: false })}
             onMouseLeave={() => {
@@ -262,6 +293,7 @@ export const EngineAudioTelemetryCard: React.FC<EngineAudioTelemetryCardProps> =
               setManualBenchState({
                 active: false,
                 throttle: false,
+                boost: false,
                 reverse: false,
                 airborne: false,
               });
