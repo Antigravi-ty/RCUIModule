@@ -3,27 +3,65 @@
  * Pure-function room code encoder/decoder and 4-bit relay connectivity bitmask pipeline.
  *
  * Fixed 4-relay slot bitmask definition (mask in [0, 15]):
- *   Bit 3 (0b1000 = 8): EMQX_1
- *   Bit 2 (0b0100 = 4): EMQX_2
- *   Bit 1 (0b0010 = 2): SUPABASE_1
- *   Bit 0 (0b0001 = 1): SUPABASE_2
+ *   Bit 3 (0b1000 = 8): emqx_cn      (EMQX Hangzhou)
+ *   Bit 2 (0b0100 = 4): emqx_gb      (EMQX Global Asia-SE1)
+ *   Bit 1 (0b0010 = 2): supabase_jp  (Supabase Tokyo RTJP)
+ *   Bit 0 (0b0001 = 1): supabase_sg  (Supabase Singapore RTSG)
  */
 
-export const RELAY_SLOT_BITS = Object.freeze({
-  EMQX_1: 0b1000,
-  EMQX_2: 0b0100,
-  SUPABASE_1: 0b0010,
-  SUPABASE_2: 0b0001,
+export type CanonicalRelayId = 'emqx_cn' | 'emqx_gb' | 'supabase_jp' | 'supabase_sg';
+export type CanonicalEdgeNodeId = 'supabase_jp' | 'supabase_sg';
+export type RelaySlotKey = CanonicalRelayId;
+
+export const RELAY_SLOT_BITS: Readonly<Record<CanonicalRelayId, number>> = Object.freeze({
+  emqx_cn: 0b1000, // 8
+  emqx_gb: 0b0100, // 4
+  supabase_jp: 0b0010, // 2
+  supabase_sg: 0b0001, // 1
 });
 
-export type RelaySlotKey = keyof typeof RELAY_SLOT_BITS;
-
-export const RELAY_SLOT_ORDER: readonly RelaySlotKey[] = Object.freeze([
-  'EMQX_1',
-  'EMQX_2',
-  'SUPABASE_1',
-  'SUPABASE_2',
+export const CANONICAL_RELAY_ORDER: readonly CanonicalRelayId[] = Object.freeze([
+  'emqx_cn',
+  'emqx_gb',
+  'supabase_jp',
+  'supabase_sg',
 ]);
+
+export const RELAY_SLOT_ORDER: readonly CanonicalRelayId[] = CANONICAL_RELAY_ORDER;
+
+/**
+ * Normalizes a raw relay identifier to one of the 4 canonical IDs:
+ *   'emqx_cn' | 'emqx_gb' | 'supabase_jp' | 'supabase_sg'
+ * Returns null for unrecognized or legacy identifiers.
+ */
+export function normalizeCanonicalRelayId(raw: string | null | undefined): CanonicalRelayId | null {
+  const clean = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  if (
+    clean === 'emqx_cn' ||
+    clean === 'emqx_gb' ||
+    clean === 'supabase_jp' ||
+    clean === 'supabase_sg'
+  ) {
+    return clean;
+  }
+  return null;
+}
+
+export function getSlotBitForRelayId(rawId: string | null | undefined): number {
+  const canonical = normalizeCanonicalRelayId(rawId);
+  return canonical ? RELAY_SLOT_BITS[canonical] : 0;
+}
+
+export function computeConnectivityMaskFromRelayIds(relayIds: Iterable<string>): number {
+  let mask = 0;
+  for (const id of relayIds) {
+    mask |= getSlotBitForRelayId(id);
+  }
+  return mask & 0x0f;
+}
 
 export interface DecodedRandomRoomCode {
   mask: number;
@@ -43,7 +81,7 @@ export interface SignalingRouteDecision {
   hostMask: number;
   clientMask: number;
   sharedMask: number;
-  candidateSlots: RelaySlotKey[];
+  candidateSlots: CanonicalRelayId[];
 }
 
 const AFFINE_MUL = 3333;
@@ -226,15 +264,15 @@ export function parseRoomCode(rawInput: string): ParsedRoomCodeResult | null {
   return null;
 }
 
-export function extractSlotsFromMask(mask: number): RelaySlotKey[] {
+export function extractSlotsFromMask(mask: number): CanonicalRelayId[] {
   const clean = clampConnectivityMask(mask);
-  return RELAY_SLOT_ORDER.filter((slot) => (clean & RELAY_SLOT_BITS[slot]) !== 0);
+  return CANONICAL_RELAY_ORDER.filter((slot) => (clean & RELAY_SLOT_BITS[slot]) !== 0);
 }
 
 /**
  * Instant routing decision between Host's 4-bit mask and Client's 4-bit mask:
  * - `sharedMask !== 0`: Direct connection on shared relay(s).
- * - `sharedMask === 0 && hostMask !== 0 && clientMask !== 0`: Isolated network islands -> Path 5 (Supabase Edge Function bridge).
+ * - `sharedMask === 0 && hostMask !== 0 && clientMask !== 0`: Isolated network islands -> Dual Edge Function Bridge.
  */
 export function resolveSignalingRouteDecision(
   hostMask: number,
