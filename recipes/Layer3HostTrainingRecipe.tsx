@@ -73,7 +73,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
     defaultConfig?.playerName ?? `Player${Math.floor(1000 + Math.random() * 9000)}`
   );
   const [roomCode, setRoomCode] = useState<string>(
-    defaultConfig?.roomCode ?? generateRandomRoomCode(hostMask)
+    defaultConfig?.roomCode ?? ''
   );
   const [roomKey, setRoomKey] = useState<string>(
     defaultConfig?.roomKey ?? ''
@@ -91,7 +91,9 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
     let cancelled = false;
     void verifyRelays().then((probedMask) => {
       if (cancelled) return;
-      setRoomCode((prev) => applyConnectivityMaskToRoomCode(prev, probedMask));
+      setRoomCode((prev) =>
+        prev.trim() ? applyConnectivityMaskToRoomCode(prev, probedMask) : ''
+      );
     });
     return () => {
       cancelled = true;
@@ -134,13 +136,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   const startStepSequence = (willFail: boolean) => {
     clearStepTimer();
     const cleanCode = finalizeHostRoomCode(roomCode, hostMask);
-    if (!cleanCode) {
-      setCurrentStep(3);
-      setProgressStatus('error');
-      setToken('simulateLayer3Error', true);
-      dispatchOnlineRoomErrorNotification();
-      return;
-    }
+    setRoomCode(cleanCode);
 
     setToken('simulateLayer3Error', false);
     setCurrentStep(1);

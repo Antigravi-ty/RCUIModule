@@ -10,7 +10,8 @@ import { PanelFooter } from '../layout/PanelFooter';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
-import { generateRandomRoomCode } from '../config/roomCodeConnectivityCodec';
+import { useSignalingProfileStore } from '../stores/signalingProfileStore';
+import { finalizeHostRoomCode } from '../config/roomCodeConnectivityCodec';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,
@@ -29,7 +30,7 @@ export type { Layer3HostMatchRecipeProps, Layer3HostMatchStateOverride };
 
 export const DEFAULT_HOST_MATCH_CONFIG: HostMatchConfig = {
   playerName: `Player${Math.floor(1000 + Math.random() * 9000)}`,
-  roomCode: generateRandomRoomCode(0x0f),
+  roomCode: '',
   roomKey: '',
   teamFormat: 'doubles',
   botPolicy: 'auto-fill',
@@ -146,18 +147,15 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
     return () => clearStepTimer();
   }, []);
 
+  const hostMask = useSignalingProfileStore((s) => s.hostMask);
   const resolvedDurationSeconds =
     durationPreset === 'custom' ? customDurationSeconds : Number(durationPreset);
 
   const startStepSequence = (willFail: boolean) => {
     clearStepTimer();
-    const cleanCode = roomCode.trim();
-    if (!cleanCode) {
-      setCurrentStep(3);
-      setProgressStatus('error');
-      setToken('simulateLayer3Error', true);
-      dispatchOnlineRoomErrorNotification();
-      return;
+    const cleanCode = finalizeHostRoomCode(roomCode, hostMask);
+    if (cleanCode !== roomCode) {
+      setRoomCode(cleanCode);
     }
 
     if (controlledProgressStatus !== undefined) {

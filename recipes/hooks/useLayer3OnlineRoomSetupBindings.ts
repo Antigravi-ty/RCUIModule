@@ -9,7 +9,6 @@ import {
 import {
   applyConnectivityMaskToRoomCode,
   finalizeHostRoomCode,
-  generateRandomRoomCode,
   parseRoomCode,
 } from '../../config/roomCodeConnectivityCodec';
 import type { HostMatchConfig } from '../online/OnlineRoomConfigSummaryCard';
@@ -127,8 +126,7 @@ export function useLayer3HostMatchStoreBinding(
       onlineSession.playerName && onlineSession.playerName !== 'Host'
         ? onlineSession.playerName
         : loadStoredPlayerName(),
-    roomCode:
-      onlineSession.roomId || generateRandomRoomCode(hostMask),
+    roomCode: onlineSession.roomId || '',
     roomKey: onlineSession.password || '',
     teamFormat: GAME_MODE_TO_FORMAT[onlineSession.gameMode || '2v2'] || 'doubles',
     botPolicy:
@@ -148,14 +146,16 @@ export function useLayer3HostMatchStoreBinding(
     customDurationSeconds: onlineSession.matchDurationSeconds ?? 150,
   }));
 
-  // Silent Pre-Probe on Host window mount: updates 4-bit hostMask and refreshes roomCode mask
+  // Silent Pre-Probe on Host window mount: updates 4-bit hostMask and refreshes custom/randomized roomCode mask
   useEffect(() => {
     let cancelled = false;
     void verifyRelays().then((probedMask) => {
       if (cancelled) return;
       setConfig((prev) => ({
         ...prev,
-        roomCode: applyConnectivityMaskToRoomCode(prev.roomCode, probedMask),
+        roomCode: prev.roomCode.trim()
+          ? applyConnectivityMaskToRoomCode(prev.roomCode, probedMask)
+          : '',
       }));
     });
     return () => {
@@ -175,6 +175,7 @@ export function useLayer3HostMatchStoreBinding(
     const cleanName = nextConfig.playerName.trim() || generateDefaultPlayerName();
     saveStoredPlayerName(cleanName);
     const cleanRoom = finalizeHostRoomCode(nextConfig.roomCode, hostMask);
+    setConfig((prev) => ({ ...prev, roomCode: cleanRoom }));
     const durationSec =
       nextConfig.durationPreset === 'custom'
         ? nextConfig.customDurationSeconds

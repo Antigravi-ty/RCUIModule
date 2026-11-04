@@ -119,12 +119,13 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
     iconColor: 'text-emerald-400',
   },
   {
+    // experimental bot pack #9700488
     id: 'exp-botpack-9700488',
-    title: 'Experimental Bot Pack',
+    title: 'Experimental Bot Pack #9700488',
     summary:
       'Spectate all 8 RLBot #9700488 models (Chronos v2.1, Dice, Ducky, Fury, Galactus v2, Kira, Rain, Ripple v1.1) at max format.',
     details:
-      'Experimental Bot Pack (8 Native SafeTensors Models · Max-Format All-Bots Spectate): Launches 3v3/2v2/1v1 self-play spectate for Chronos v2.1, Dice, Ducky, Fury, Galactus v2, Kira, Rain, and Ripple v1.1.',
+      'Experimental Bot Pack #9700488 (8 Native SafeTensors Models · Max-Format All-Bots Spectate): Launches 3v3/2v2/1v1 self-play spectate for Chronos v2.1, Dice, Ducky, Fury, Galactus v2, Kira, Rain, and Ripple v1.1.',
     icon: Sparkles,
     iconColor: 'text-teal-400',
   },

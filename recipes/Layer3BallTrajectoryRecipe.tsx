@@ -234,6 +234,26 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
             isLight={isLight}
           />
 
+          {/* 2b. Dash End Cap Style */}
+          <SettingSegmentedRow
+            title="Dash End Cap Style"
+            value={resolved.dashCapStyle === 'chamfer' ? 'chamfer' : 'round'}
+            onChange={(v) =>
+              updateConfig({ dashCapStyle: v === 'chamfer' ? 'chamfer' : 'round' })
+            }
+            layout="inline"
+            bordered={false}
+            showDescription={false}
+            options={[
+              { value: 'round', label: 'Rounded Cap' },
+              { value: 'chamfer', label: 'Chamfered Cap' },
+            ]}
+            hoverDescription="Select 3D dash end-cap geometry: Rounded Capsule Cap (hemisphere dome) or Chamfered Bevel Cap (45-degree cut)."
+            onHover={(desc) => desc && setHoveredDesc(desc)}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
           {/* 3. Trajectory Horizon */}
           <SettingSliderRow
             label="Trajectory Horizon"

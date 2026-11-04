@@ -31,6 +31,8 @@ export interface Layer2SettingsStateOverride {
   onDeveloperModeChange?: (unlocked: boolean) => void;
   onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
   onNavigateRoute?: (route: string) => void;
+  onNavigateAdvancedAudio?: () => void;
+  onNavigateEventTriggerRules?: () => void;
   sizing?: PanelSizingConfig;
   gameplay?: Partial<GameplayConfig>;
   audio?: Partial<AudioConfig>;
@@ -51,12 +53,11 @@ export interface Layer2SettingsRecipeProps {
   onNavigateCameraDetail?: () => void;
   onNavigateKeybindingsDetail?: () => void;
   onNavigateTrainingDetail?: () => void;
-  onNavigateAdvancedAudio?: () => void;
-  onNavigateEventTriggerRules?: () => void;
   onNavigateExpMultiBots?: () => void;
   onNavigateDevSandboxes?: () => void;
   onNavigateDevActiveTuners?: () => void;
   onNavigateDevCalibratedPresets?: () => void;
+  onNavigateDevSelfTest?: () => void;
   onNavigateDevUnderDevelopment?: () => void;
   activeTab?: string;
   onTabChange?: (tab: SettingsTabId) => void;
@@ -88,12 +89,11 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   onNavigateCameraDetail,
   onNavigateKeybindingsDetail,
   onNavigateTrainingDetail,
-  onNavigateAdvancedAudio,
-  onNavigateEventTriggerRules,
   onNavigateExpMultiBots,
   onNavigateDevSandboxes,
   onNavigateDevActiveTuners,
   onNavigateDevCalibratedPresets,
+  onNavigateDevSelfTest,
   onNavigateDevUnderDevelopment,
   activeTab: controlledTab,
   onTabChange,
@@ -107,6 +107,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
     onDeveloperModeChange,
     onSpawnDiagnosticWindow,
     onNavigateRoute,
+    onNavigateAdvancedAudio,
+    onNavigateEventTriggerRules,
     sizing: propSizing,
   } = stateOverride ?? {};
   const storeGoBack = useAppStore((s) => s.goBack);
@@ -183,6 +185,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
       'dev-sandboxes': onNavigateDevSandboxes,
       'dev-active-tuners': onNavigateDevActiveTuners,
       'dev-calibrated-presets': onNavigateDevCalibratedPresets,
+      'dev-self-test': onNavigateDevSelfTest,
       'dev-under-development': onNavigateDevUnderDevelopment,
     };
     const specificHandler = specificHandlers[normalizedRoute];

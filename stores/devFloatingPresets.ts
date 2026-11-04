@@ -177,9 +177,10 @@ export const EXPERIMENTAL_MULTI_BOTS_PRESET: PresetConfig = {
   sourcePath: 'panels/dev/ExperimentalMultiBotsFloatingWindow.tsx',
 };
 
+// experimental bot pack #9700488 (RLBot Pack commit #9700488 — 8 native SafeTensors models)
 export const EXPERIMENTAL_BOT_PACK_PRESET: PresetConfig = {
   id: 'experimental-bot-pack',
-  title: 'Experimental Bot Pack',
+  title: 'Experimental Bot Pack #9700488',
   category: 'ExperimentalBots',
   width: 490,
   height: 620,
@@ -187,7 +188,7 @@ export const EXPERIMENTAL_BOT_PACK_PRESET: PresetConfig = {
   resizable: true,
   singleton: true,
   tier: 'developer',
-  summary: 'Live floating controller for Experimental Bot Pack (RLBot #9700488) 8 native models (Chronos, Dice, Ducky, Fury, Galactus, Kira, Rain, Ripple v1.1).',
+  summary: 'Live floating controller for Experimental Bot Pack #9700488 (8 native models: Chronos, Dice, Ducky, Fury, Galactus, Kira, Rain, Ripple v1.1).',
   menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
   component: 'ExperimentalBotPackFloatingWindow',
   sourcePath: 'panels/dev/ExperimentalBotPackFloatingWindow.tsx',

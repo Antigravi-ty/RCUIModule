@@ -16,7 +16,7 @@ export const STORAGE_KEYS = Object.freeze({
   GRAPHICS_SETTINGS: 'graphics-settings',
   AUDIO_SETTINGS: 'audio-settings',
   MATERIALS: 'visual-materials',
-  TRAJECTORY: 'ball-trajectory-config-v2',
+  TRAJECTORY: 'ball-trajectory-config-v3',
   TELEMETRY_SETTINGS: 'telemetry-settings',
   BOOST_PAD_TUNER: 'boost-pad-tuner',
   DRIFTWOODS_TUNER: 'driftwoods-tuner',

@@ -25,7 +25,9 @@ export type TrajectoryUpdateMode =
   | 'event-snapshot'
   | 'full-every-tick';
 
-export type TrajectoryRenderStyle = 'tube-3d' | 'decimated-line';
+export type TrajectoryRenderStyle = 'tube-3d';
+
+export type TrajectoryDashCapStyle = 'round' | 'chamfer';
 
 export interface TrajectoryConfig {
   enabled: boolean;
@@ -46,6 +48,7 @@ export interface TrajectoryConfig {
   catchupTicksPerFrame?: number;
   // 3D Geometry & Spatial Depth cues
   renderStyle?: TrajectoryRenderStyle;
+  dashCapStyle?: TrajectoryDashCapStyle;
   sampleStride?: number;
   tubeRadialSegments?: number;
   shadingStrength?: number;
@@ -77,11 +80,12 @@ export const DEFAULT_TRAJECTORY_CONFIG: TrajectoryConfig = {
   velocityThresholdUu: 15,
   catchupTicksPerFrame: 5,
   renderStyle: 'tube-3d',
+  dashCapStyle: 'round',
   sampleStride: 1,
   tubeRadialSegments: 6,
-  shadingStrength: 0,
-  radiusTaper: 0,
-  horizonFade: 0,
+  shadingStrength: 0.75,
+  radiusTaper: 0.35,
+  horizonFade: 0.3,
   showBounceMarkers: false,
   showGroundProjection: false,
   dropLineIntervalTicks: 104,
@@ -100,10 +104,10 @@ export function loadSavedTrajectorySettings(): Omit<TrajectoryConfig, 'duration'
         parsed.updateMode === 'continuous-incremental'
           ? parsed.updateMode
           : DEFAULT_TRAJECTORY_CONFIG.updateMode!;
-      const renderStyle: TrajectoryRenderStyle =
-        parsed.renderStyle === 'decimated-line' || parsed.renderStyle === 'tube-3d'
-          ? parsed.renderStyle
-          : DEFAULT_TRAJECTORY_CONFIG.renderStyle!;
+      const dashCapStyle: TrajectoryDashCapStyle =
+        parsed.dashCapStyle === 'chamfer' || parsed.dashCapStyle === 'round'
+          ? parsed.dashCapStyle
+          : DEFAULT_TRAJECTORY_CONFIG.dashCapStyle!;
       return {
         ...DEFAULT_TRAJECTORY_CONFIG,
         enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : DEFAULT_TRAJECTORY_CONFIG.enabled,
@@ -135,7 +139,8 @@ export function loadSavedTrajectorySettings(): Omit<TrajectoryConfig, 'duration'
           600,
           Math.max(2, Math.round(Number(parsed.catchupTicksPerFrame) || DEFAULT_TRAJECTORY_CONFIG.catchupTicksPerFrame!))
         ),
-        renderStyle,
+        renderStyle: 'tube-3d',
+        dashCapStyle,
         sampleStride: Math.min(8, Math.max(1, Math.round(Number(parsed.sampleStride) || DEFAULT_TRAJECTORY_CONFIG.sampleStride!))),
         tubeRadialSegments: Math.min(8, Math.max(4, Math.round(Number(parsed.tubeRadialSegments) || DEFAULT_TRAJECTORY_CONFIG.tubeRadialSegments!))),
         shadingStrength: Math.min(

@@ -25,11 +25,19 @@ export interface CustomRelayInputPayload {
   password?: string;
 }
 
+export interface RelayCredentialOverrideInput {
+  emqxCnUsername?: string;
+  emqxCnPassword?: string;
+  emqxGbUsername?: string;
+  emqxGbPassword?: string;
+}
+
 export interface SignalingProfileBridgeCallbacks {
   onImportBundle?: (rawContent: string, pinCode: string) => Promise<void>;
   onExportBundle?: (options: {
     pinCode?: string;
     windowMinutes?: number;
+    credentialOverrides?: RelayCredentialOverrideInput;
   }) => Promise<SignalingProfileExportSnapshot>;
   onClearBundle?: () => void;
   onSaveCustomRelay?: (payload: CustomRelayInputPayload | null) => void;
@@ -75,6 +83,7 @@ export interface SignalingProfileStoreState {
   exportBundle: (options?: {
     pinCode?: string;
     windowMinutes?: number;
+    credentialOverrides?: RelayCredentialOverrideInput;
   }) => Promise<SignalingProfileExportSnapshot | null>;
   clearProfile: () => void;
   saveCustomRelay: (payload: CustomRelayInputPayload | null) => void;
@@ -96,9 +105,9 @@ export const useSignalingProfileStore = create<SignalingProfileStoreState>((set,
   loaded: false,
   source: 'public',
   profileHash: '',
-  shortHash: 'emqx',
+  shortHash: 'publ',
   relayCount: 1,
-  relayLabels: ['Public EMQX Broker (No SLA)'],
+  relayLabels: ['Public Fallback Broker (Unverified / No SLA)'],
   turnServerCount: 0,
   customUrl: '',
   customUsername: '',
@@ -116,7 +125,7 @@ export const useSignalingProfileStore = create<SignalingProfileStoreState>((set,
   syncStatus: (patch) => {
     const shortHash =
       patch.shortHash ||
-      (patch.profileHash ? patch.profileHash.slice(0, 4).toLowerCase() : 'emqx');
+      (patch.profileHash ? patch.profileHash.slice(0, 4).toLowerCase() : 'publ');
     set({
       loaded: patch.loaded,
       source: patch.source,
@@ -223,7 +232,7 @@ export const useSignalingProfileStore = create<SignalingProfileStoreState>((set,
         statusMessage:
           payload && payload.url.trim()
             ? 'Saved custom self-hosted signaling server.'
-            : 'Cleared custom server. Reverted to default Public EMQX Broker.',
+            : 'Cleared custom server. Reverted to default public fallback state.',
         errorMessage: null,
       });
       void get().verifyRelays();

@@ -1,7 +1,5 @@
 import React from 'react';
 import { Activity } from 'lucide-react';
-import { useAppStore } from '../../../stores/appStore';
-import { DEFAULT_TRAJECTORY_CONFIG } from '../../../config/trainingDefaults';
 import {
   useBallTrajectoryTunerStore,
   type BallTrajectoryTelemetry,
@@ -72,9 +70,6 @@ function resolveUpdateBadge(kind: BallTrajectoryTelemetry['lastUpdateKind']): {
 export const BallTrajectoryTelemetryCard: React.FC<
   BallTrajectoryTelemetryCardProps
 > = ({ isLight = false }) => {
-  const renderStyle = useAppStore(
-    (s) => s.trajectory?.renderStyle ?? DEFAULT_TRAJECTORY_CONFIG.renderStyle
-  );
   const { telemetry } = useBallTrajectoryTunerStore();
 
   const cardBg = isLight
@@ -118,9 +113,7 @@ export const BallTrajectoryTelemetryCard: React.FC<
           </span>
         </div>
         <div className="p-1.5 rounded-lg bg-black/20 border border-white/5 flex flex-col">
-          <span className={mutedText}>
-            {renderStyle === 'tube-3d' ? '3D Triangles' : 'Line Segs'}
-          </span>
+          <span className={mutedText}>3D Triangles</span>
           <span className="font-bold text-purple-400">{telemetry.primitiveCount}</span>
         </div>
       </div>

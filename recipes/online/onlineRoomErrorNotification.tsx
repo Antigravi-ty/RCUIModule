@@ -7,7 +7,7 @@ import { dialogue } from '../../compounds/dialogue/dialogueStore';
 
 export function dispatchOnlineRoomErrorNotification(
   summary = 'Could not bind or connect to signaling room within 10s.',
-  details = 'WebSocket Signaling Handshake Failed (ERR_CONNECTION_TIMED_OUT).\nEndpoint: wss://relay.carsoccer.dev/signaling\nAttempted Room: #4829 (120Hz Sub-Tick WebRTC)'
+  details = 'WebSocket Signaling Handshake Failed (ERR_CONNECTION_TIMED_OUT).\nEndpoint: wss://relay.carball.dev/signaling\nAttempted Room: #4829 (120Hz Sub-Tick WebRTC)'
 ) {
   const store = useQuickNotificationStore.getState();
   const existing =
