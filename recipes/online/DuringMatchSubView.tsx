@@ -30,24 +30,27 @@ import {
 import type { LobbyTeamAssignment } from './MatchLobbyTeamRosterSection';
 
 
-export interface DuringMatchSubViewProps {
-  role: 'host' | 'client';
+export interface DuringMatchRoomConfig {
   roomCode?: string;
   pairId?: string;
+  teamFormat?: HostMatchTeamFormat;
+  botPolicy?: HostMatchBotPolicy;
+  durationPreset?: HostMatchDurationPreset;
+  customDurationSeconds?: number;
+}
+
+export interface DuringMatchSubViewProps {
+  role: 'host' | 'client';
   signalingState?: SignalingHealthState;
   onRefreshSignaling?: () => void | Promise<void>;
   players?: ActiveMatchPlayer[];
   onKickPlayer?: (id: string) => void;
   isMatchPaused?: boolean;
   onTogglePause?: () => void;
-  teamFormat?: HostMatchTeamFormat;
-  botPolicy?: HostMatchBotPolicy;
-  durationPreset?: HostMatchDurationPreset;
-  customDurationSeconds?: number;
+  roomConfig?: DuringMatchRoomConfig;
   localTeam?: LobbyTeamAssignment;
   onSwitchTeam?: (team: LobbyTeamAssignment) => void;
   onEnterMatch?: () => void;
-  onOpenNetHud?: () => void;
   onShutdownOrLeave?: () => void;
   onHoverDesc?: (desc: string | null) => void;
   isLight?: boolean;
@@ -102,18 +105,13 @@ const INITIAL_SPECTATORS: SpectatorRouteEntry[] = [
  */
 export const DuringMatchSubView: React.FC<DuringMatchSubViewProps> = React.memo(({
   role,
-  roomCode = 'RL-8924',
-  pairId = '7F3A',
   signalingState: controlledSignaling,
   onRefreshSignaling,
   players: controlledPlayers,
   onKickPlayer,
   isMatchPaused: controlledPaused,
   onTogglePause,
-  teamFormat = 'standard',
-  botPolicy = 'auto-fill',
-  durationPreset = '300',
-  customDurationSeconds = 300,
+  roomConfig,
   localTeam: controlledLocalTeam,
   onSwitchTeam,
   onEnterMatch,
@@ -121,6 +119,14 @@ export const DuringMatchSubView: React.FC<DuringMatchSubViewProps> = React.memo(
   onHoverDesc,
   isLight = false,
 }) => {
+  const {
+    roomCode = 'RL-8924',
+    pairId = '7F3A',
+    teamFormat = 'standard',
+    botPolicy = 'auto-fill',
+    durationPreset = '300',
+    customDurationSeconds = 300,
+  } = roomConfig ?? {};
   const isHost = role === 'host';
   const [internalSignaling, setInternalSignaling] = useState<SignalingHealthState>('green');
   const [internalPlayers, setInternalPlayers] = useState<ActiveMatchPlayer[]>(INITIAL_MATCH_PLAYERS);

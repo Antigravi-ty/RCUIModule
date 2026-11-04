@@ -34,7 +34,6 @@ const GRID_V = BARRIER_GRID_ROWS;
 
 export interface GoalBarrier2DEditorProps {
   isLight?: boolean;
-  defaultPreset?: GoalBarrierPresetId;
   /** Controlled 32x16 barrier grid */
   grid?: Uint8Array;
   onGridChange?: (grid: Uint8Array, decomposition: GoalBarrierDecomposition) => void;
@@ -74,7 +73,6 @@ interface DragState {
 export const GoalBarrier2DEditor: React.FC<GoalBarrier2DEditorProps> = React.memo(
   ({
     isLight = true,
-    defaultPreset = 'top-corners-open',
     grid: controlledGrid,
     onGridChange,
     selectionMode: controlledSelectionMode,
@@ -98,7 +96,7 @@ export const GoalBarrier2DEditor: React.FC<GoalBarrier2DEditorProps> = React.mem
       useState<GoalBarrierTargetGoal>('both');
     const [internalOpacity, setInternalOpacity] = useState(0.65);
     const [internalGrid, setInternalGrid] = useState<Uint8Array>(() =>
-      buildPresetBarrierGrid(defaultPreset)
+      buildPresetBarrierGrid('top-corners-open')
     );
 
     const enabled = controlledEnabled ?? internalEnabled;

@@ -20,7 +20,8 @@ export interface AudioDebugTelemetryProps {
   onForceRecovery?: () => void;
 }
 
-export interface AudioDebugSectionProps extends AudioDebugTelemetryProps {
+export interface AudioDebugSectionProps {
+  telemetry?: AudioDebugTelemetryProps;
   audioDebugMode?: boolean;
   onAudioDebugModeChange?: (enabled: boolean) => void;
   masterVolume?: number;
@@ -38,29 +39,32 @@ export interface AudioDebugSectionProps extends AudioDebugTelemetryProps {
  * - Expanded sub-panel: Embedded live Web Audio telemetry grid (`Context State`, `Master Bus`, `Realtime PCM Out`, `Buffers / Voices`), verdict banner, and recovery probes (`Dump Console Report`, `Test Tone`, `Force Resume / Recover`), without a redundant inner header or badge.
  */
 export const AudioDebugSection: React.FC<AudioDebugSectionProps> = React.memo(({
-  audioDebugEnabled,
-  onAudioDebugEnabledChange,
+  telemetry,
   audioDebugMode: propExpanded,
   onAudioDebugModeChange,
   masterVolume = 100,
-  masterRmsDb,
-  masterPeakDb,
-  activeVoices,
-  maxVoices = 10,
-  loadedBuffers = 42,
-  totalBuffers = 42,
-  contextState,
-  verdictText,
-  probeStatusText,
-  onPlayTestTone,
-  onDumpConsole,
-  onForceRecovery,
   bordered,
   onHover,
   onLeave,
   isLight = false,
   className = '',
 }) => {
+  const {
+    audioDebugEnabled,
+    onAudioDebugEnabledChange,
+    masterRmsDb,
+    masterPeakDb,
+    activeVoices,
+    maxVoices = 10,
+    loadedBuffers = 42,
+    totalBuffers = 42,
+    contextState,
+    verdictText,
+    probeStatusText,
+    onPlayTestTone,
+    onDumpConsole,
+    onForceRecovery,
+  } = telemetry ?? {};
   const controlledExpanded = audioDebugEnabled ?? propExpanded;
   const [internalExpanded, setInternalExpanded] = useState<boolean>(controlledExpanded ?? false);
   const isExpanded = controlledExpanded ?? internalExpanded;

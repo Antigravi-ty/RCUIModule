@@ -39,33 +39,34 @@ import {
 
 export type TouchInputAgentOption = 'none' | 'necto' | 'nexto';
 
+export interface Layer1MainMenuStateOverride {
+  touchHeadlessMode?: boolean;
+  defaultTouchInputAgent?: TouchInputAgentOption;
+  onRestartMatch?: () => void;
+  sizing?: PanelSizingConfig;
+  styleVariant?: MainMenuStyleVariant;
+  styleParams?: Partial<MainMenuStyleParams>;
+}
+
 export interface Layer1MainMenuRecipeProps {
   isLight?: boolean;
   /** Explicit context variation */
   contextVariation?: Layer1ContextVariation;
   /** Optional developer Touch Input Agent banner (?touch=1 / ?touch=2) */
   touchMode?: boolean;
-  touchHeadlessMode?: boolean;
   /** Controlled Touch Input Agent takeover model ('none' | 'necto' | 'nexto') */
   touchInputAgent?: TouchInputAgentOption;
-  /** Initial uncontrolled Touch Input Agent takeover model */
-  defaultTouchInputAgent?: TouchInputAgentOption;
   /** Callback fired when Touch Input Agent model changes */
   onTouchInputAgentChange?: (agent: TouchInputAgentOption) => void;
   /** Background power saving mode ('extreme' | '15' | '30' | 'disable' | 'freeze' | 'match') */
   menuPowerSave?: 'extreme' | '15' | '30' | 'disable' | 'freeze' | 'match';
   onResume?: () => void;
-  onRestartMatch?: () => void;
   onReturnToFreeplay?: () => void;
   onNavigatePlay?: () => void;
   onNavigateGarage?: () => void;
   onNavigateSettings?: (targetTab?: string) => void;
   onNavigateRoomControl?: () => void;
-  onNavigateTrainingConfig?: () => void;
-  onNavigateKickoffConfig?: () => void;
-  onNavigateStaticTrainingPack?: () => void;
   onNavigateExpMultiBots?: () => void;
-  onOpenFloatingWindow?: (id: string) => void;
   onLeaveRoom?: () => void;
   onExitEditMode?: () => void;
   /** Optional extra bottom action (e.g. "Exit Edit Mode" when EdgeInspectorDrawer is active) */
@@ -78,12 +79,11 @@ export interface Layer1MainMenuRecipeProps {
         onClick: () => void;
       }
     | React.ReactNode;
-  /** Optional explicit sizing override; defaults to menuLayoutStore.panels['layer1-main'] */
-  sizing?: PanelSizingConfig;
   /** Optional explicit row style variant override (decoupled from store when provided) */
   styleVariant?: MainMenuStyleVariant;
   /** Optional explicit row & shell style parameters override (decoupled from store when provided) */
   styleParams?: Partial<MainMenuStyleParams>;
+  stateOverride?: Layer1MainMenuStateOverride;
   className?: string;
 }
 
@@ -136,7 +136,7 @@ export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawPro
     styleVariant,
     styleParams,
     className = '',
-  } = useLayer1MainMenuStoreBinding(rawProps);
+  } = useLayer1MainMenuStoreBinding({ ...rawProps.stateOverride, ...rawProps });
   const storeSizing = useMenuLayoutStore(
     (s) => s.panels?.['layer1-main'] ?? DEFAULT_PANEL_SIZING['layer1-main']
   );

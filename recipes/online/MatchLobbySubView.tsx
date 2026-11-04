@@ -23,20 +23,9 @@ import {
 } from './MatchLobbyTeamRosterSection';
 
 
-export interface MatchLobbySubViewProps {
-  role: 'host' | 'client';
+export interface MatchLobbyRoomConfigState {
   roomCode?: string;
   pairId?: string;
-  signalingState?: SignalingHealthState;
-  onRefreshSignaling?: () => void | Promise<void>;
-  localTeam?: LobbyTeamAssignment;
-  onSwitchTeam?: (team: LobbyTeamAssignment) => void;
-  peers?: LobbyPlayerSlot[];
-  onKickPeer?: (peerId: string) => void;
-  defaultTeamFormat?: HostMatchTeamFormat;
-  defaultBotPolicy?: HostMatchBotPolicy;
-  defaultDurationPreset?: HostMatchDurationPreset;
-  defaultCustomDurationSeconds?: number;
   teamFormat?: HostMatchTeamFormat;
   onChangeTeamFormat?: (format: HostMatchTeamFormat) => void;
   botPolicy?: HostMatchBotPolicy;
@@ -45,14 +34,29 @@ export interface MatchLobbySubViewProps {
   onChangeDurationPreset?: (preset: HostMatchDurationPreset) => void;
   customDurationSeconds?: number;
   onChangeCustomDurationSeconds?: (seconds: number) => void;
+}
+
+export interface MatchLobbyUtilitiesState {
   zeroGProbes?: boolean;
   onToggleZeroGProbes?: () => void;
   testSfx?: boolean;
   onToggleTestSfx?: () => void;
   onResetBall?: () => void;
+  onOpenNetHud?: () => void;
+}
+
+export interface MatchLobbySubViewProps {
+  role: 'host' | 'client';
+  signalingState?: SignalingHealthState;
+  onRefreshSignaling?: () => void | Promise<void>;
+  localTeam?: LobbyTeamAssignment;
+  onSwitchTeam?: (team: LobbyTeamAssignment) => void;
+  peers?: LobbyPlayerSlot[];
+  onKickPeer?: (peerId: string) => void;
+  roomConfig?: MatchLobbyRoomConfigState;
+  utilities?: MatchLobbyUtilitiesState;
   onStartMatch?: () => void;
   onEnterMatch?: () => void;
-  onOpenNetHud?: () => void;
   onNavigateAdvancedSettings?: () => void;
   onStopOrLeave?: () => void;
   onHoverDesc?: (desc: string | null) => void;
@@ -75,44 +79,46 @@ const TEAM_SLOTS_PER_SIDE: Record<HostMatchTeamFormat, number> = {
  */
 export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
   role,
-  roomCode = 'RL-8924',
-  pairId = '7F3A',
   signalingState: controlledSignaling,
   onRefreshSignaling,
   localTeam: controlledLocalTeam,
   onSwitchTeam,
   peers: controlledPeers,
   onKickPeer,
-  defaultTeamFormat = 'doubles',
-  defaultBotPolicy = 'auto-fill',
-  defaultDurationPreset = '300',
-  defaultCustomDurationSeconds = 180,
-  teamFormat: controlledTeamFormat,
-  onChangeTeamFormat,
-  botPolicy: controlledBotPolicy,
-  onChangeBotPolicy,
-  durationPreset: controlledDurationPreset,
-  onChangeDurationPreset,
-  customDurationSeconds: controlledCustomDurationSeconds,
-  onChangeCustomDurationSeconds,
-  zeroGProbes: controlledZeroGProbes,
-  onToggleZeroGProbes,
-  testSfx: controlledTestSfx,
-  onToggleTestSfx,
-  onResetBall,
+  roomConfig,
+  utilities,
   onStartMatch,
   onEnterMatch,
-  onOpenNetHud,
   onNavigateAdvancedSettings,
   onStopOrLeave,
   onHoverDesc,
   isLight = false,
 }) => {
+  const {
+    roomCode = 'RL-8924',
+    pairId = '7F3A',
+    teamFormat: controlledTeamFormat,
+    onChangeTeamFormat,
+    botPolicy: controlledBotPolicy,
+    onChangeBotPolicy,
+    durationPreset: controlledDurationPreset,
+    onChangeDurationPreset,
+    customDurationSeconds: controlledCustomDurationSeconds,
+    onChangeCustomDurationSeconds,
+  } = roomConfig ?? {};
+  const {
+    zeroGProbes: controlledZeroGProbes,
+    onToggleZeroGProbes,
+    testSfx: controlledTestSfx,
+    onToggleTestSfx,
+    onResetBall,
+    onOpenNetHud,
+  } = utilities ?? {};
   const isHost = role === 'host';
   const [internalSignaling, setInternalSignaling] = useState<SignalingHealthState>('green');
   const [internalLocalTeam, setInternalLocalTeam] = useState<LobbyTeamAssignment>('neutral');
   const [internalPeers, setInternalPeers] = useState<LobbyPlayerSlot[]>(INITIAL_PEERS);
-  const [rosterLayout, setRosterLayout] = useState<'stacked' | 'columns'>('columns');
+  const rosterLayout: 'stacked' | 'columns' = 'columns';
 
   const signalingState = controlledSignaling ?? internalSignaling;
   const setSignalingState = setInternalSignaling;
@@ -123,14 +129,10 @@ export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
   };
   const peers = controlledPeers ?? internalPeers;
 
-  const [internalTeamFormat, setInternalTeamFormat] = useState<HostMatchTeamFormat>(defaultTeamFormat);
-  const [internalBotPolicy, setInternalBotPolicy] = useState<HostMatchBotPolicy>(defaultBotPolicy);
-  const [internalDurationPreset, setInternalDurationPreset] = useState<HostMatchDurationPreset>(
-    defaultDurationPreset
-  );
-  const [internalCustomDurationSeconds, setInternalCustomDurationSeconds] = useState<number>(
-    defaultCustomDurationSeconds
-  );
+  const [internalTeamFormat, setInternalTeamFormat] = useState<HostMatchTeamFormat>('doubles');
+  const [internalBotPolicy, setInternalBotPolicy] = useState<HostMatchBotPolicy>('auto-fill');
+  const [internalDurationPreset, setInternalDurationPreset] = useState<HostMatchDurationPreset>('300');
+  const [internalCustomDurationSeconds, setInternalCustomDurationSeconds] = useState<number>(180);
   const teamFormat = controlledTeamFormat ?? internalTeamFormat;
   const setTeamFormat = (fmt: HostMatchTeamFormat) => {
     setInternalTeamFormat(fmt);
@@ -257,11 +259,9 @@ export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
         localTeam={localTeam}
         setLocalTeam={setLocalTeam}
         rosterLayout={rosterLayout}
-        setRosterLayout={setRosterLayout}
         slotsPerSide={slotsPerSide}
         maxPlayers={maxPlayers}
         humanCount={allHumans.length}
-        botCount={blueBotSlots.length + orangeBotSlots.length}
         blueRoster={blueRoster}
         neutralRoster={neutralRoster}
         orangeRoster={orangeRoster}

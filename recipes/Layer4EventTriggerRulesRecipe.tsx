@@ -39,11 +39,7 @@ export interface EventTriggerRule {
   enabled: boolean;
 }
 
-export interface Layer4EventTriggerRulesRecipeProps {
-  isLight?: boolean;
-  defaultRules?: EventTriggerRule[];
-  onChange?: (rules: EventTriggerRule[]) => void;
-  eventCatalogItems?: EventCatalogEntry[];
+export interface Layer4EventTriggerRulesStateOverride {
   hitCooldownMs?: number;
   onHitCooldownMsChange?: (val: number) => void;
   scrapeCooldownMs?: number;
@@ -68,7 +64,15 @@ export interface Layer4EventTriggerRulesRecipeProps {
   onToggleEventHex?: (hex: string) => void;
   onSelectAllEvents?: () => void;
   onDeselectAllEvents?: () => void;
+}
+
+export interface Layer4EventTriggerRulesRecipeProps {
+  isLight?: boolean;
+  defaultRules?: EventTriggerRule[];
+  onChange?: (rules: EventTriggerRule[]) => void;
+  eventCatalogItems?: EventCatalogEntry[];
   onBack?: () => void;
+  stateOverride?: Layer4EventTriggerRulesStateOverride;
   className?: string;
 }
 
@@ -140,7 +144,7 @@ export const Layer4EventTriggerRulesRecipe: React.FC<Layer4EventTriggerRulesReci
   onDeselectAllEvents,
   onBack = () => {},
   className = '',
-} = useLayer4EventTriggerRulesStoreBinding(rawProps);
+} = useLayer4EventTriggerRulesStoreBinding({ ...rawProps.stateOverride, ...rawProps });
   const { rowGap } = useSettingActionRowStore();
   const [rules, setRules] = useState<EventTriggerRule[]>(defaultRules);
   // Audio Debounce & Shielding (3 sliders)

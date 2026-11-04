@@ -24,17 +24,10 @@ export type GarageTabId =
   | 'anthem'
   | 'sync';
 
-export interface Layer2GarageRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  initialTab?: string;
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
-  // Car Tab controlled props
+export interface Layer2GarageStateOverride {
   selectedCar?: string;
   defaultSelectedCar?: string;
   onSelectCar?: (carId: string) => void;
-  // Paint Tab controlled props
   primaryTeam?: 'blue' | 'orange';
   defaultPrimaryTeam?: 'blue' | 'orange';
   onPrimaryTeamChange?: (team: 'blue' | 'orange') => void;
@@ -47,15 +40,22 @@ export interface Layer2GarageRecipeProps {
   orangeOrder?: number[];
   defaultOrangeOrder?: number[];
   onOrangeOrderChange?: (next: number[]) => void;
-  // Loadout (Materials) Tab controlled props
   materials?: VisualMaterialsConfig;
   onUpdateMaterials?: (partial: Partial<VisualMaterialsConfig>) => void;
-  // Anthem Tab controlled props
   selectedAnthem?: string;
   defaultSelectedAnthem?: string;
   onSelectAnthem?: (anthemId: string) => void;
+}
+
+export interface Layer2GarageRecipeProps {
+  isLight?: boolean;
+  onBack?: () => void;
+  initialTab?: string;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
   /** Whether Anthem audio assets are available (default false -> renders Under Development placeholder) */
   anthemAvailable?: boolean;
+  stateOverride?: Layer2GarageStateOverride;
 }
 
 /**
@@ -95,7 +95,7 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
     defaultSelectedAnthem = 'none',
     onSelectAnthem,
     anthemAvailable = true,
-  } = useLayer2GarageStoreBinding(rawProps);
+  } = useLayer2GarageStoreBinding({ ...rawProps.stateOverride, ...rawProps });
   const { panels, panelBodyPaddingX } = useMenuLayoutStore();
   const sizing = panels['layer2-garage'];
   const normalizeTab = (t?: string): GarageTabId => {

@@ -116,9 +116,7 @@ export const resolveOnlineSessionContextId = (
   }
 };
 
-export interface Layer2OnlineRoomControlRecipeProps {
-  isLight?: boolean;
-  developerMode?: boolean;
+export interface Layer2OnlineRoomControlStateOverride {
   roomCode?: string;
   signalingState?: SignalingHealthState;
   onRefreshSignaling?: () => void | Promise<void>;
@@ -143,11 +141,12 @@ export interface Layer2OnlineRoomControlRecipeProps {
   onResetBall?: () => void;
   isMatchPaused?: boolean;
   onTogglePause?: () => void;
+}
+
+export interface Layer2OnlineRoomControlRecipeProps {
+  isLight?: boolean;
+  developerMode?: boolean;
   topSlot?: React.ReactNode;
-  defaultRoomState?: RoomStateMode;
-  onRoomStateChange?: (state: RoomStateMode) => void;
-  defaultMatchLengthMin?: number;
-  onStartState?: (state: RoomStateMode, matchLengthMin: number) => void;
   /** Active online session context ('match-lobby-host' | 'match-lobby-client' | 'online-match-host' | 'online-match-client' | 'online-warmup-host' | 'online-warmup-client') */
   sessionContext?: OnlineSessionContextId;
   onSessionContextChange?: (ctx: OnlineSessionContextId) => void;
@@ -157,6 +156,7 @@ export interface Layer2OnlineRoomControlRecipeProps {
   onOpenNetHud?: () => void;
   onCloseRoom?: () => void;
   onBack?: () => void;
+  stateOverride?: Layer2OnlineRoomControlStateOverride;
   className?: string;
 }
 
@@ -206,7 +206,7 @@ export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlReci
     onCloseRoom,
     onBack = () => {},
     className = '',
-  } = useLayer2RoomHostControlBinding(rawProps);
+  } = useLayer2RoomHostControlBinding({ ...rawProps.stateOverride, ...rawProps });
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const activeContextId = controlledContext ?? 'match-lobby-host';
@@ -239,29 +239,33 @@ export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlReci
         {activeSpec.stage === 'lobby' && (
           <MatchLobbySubView
             role={activeSpec.role}
-            roomCode={resolvedRoomCode}
             signalingState={signalingState}
             onRefreshSignaling={onRefreshSignaling}
             localTeam={localTeam}
             onSwitchTeam={onSwitchTeam}
-            teamFormat={teamFormat}
-            onChangeTeamFormat={onChangeTeamFormat}
-            botPolicy={botPolicy}
-            onChangeBotPolicy={onChangeBotPolicy}
-            durationPreset={durationPreset}
-            onChangeDurationPreset={onChangeDurationPreset}
-            customDurationSeconds={customDurationSeconds}
-            onChangeCustomDurationSeconds={onChangeCustomDurationSeconds}
+            roomConfig={{
+              roomCode: resolvedRoomCode,
+              teamFormat,
+              onChangeTeamFormat,
+              botPolicy,
+              onChangeBotPolicy,
+              durationPreset,
+              onChangeDurationPreset,
+              customDurationSeconds,
+              onChangeCustomDurationSeconds,
+            }}
             peers={lobbyPeers}
             onKickPeer={onKickPeer}
-            zeroGProbes={zeroGProbes}
-            onToggleZeroGProbes={onToggleZeroGProbes}
-            testSfx={testSfx}
-            onToggleTestSfx={onToggleTestSfx}
-            onResetBall={onResetBall}
+            utilities={{
+              zeroGProbes,
+              onToggleZeroGProbes,
+              testSfx,
+              onToggleTestSfx,
+              onResetBall,
+              onOpenNetHud,
+            }}
             onStartMatch={onStartMatch}
             onEnterMatch={onEnterMatch}
-            onOpenNetHud={onOpenNetHud}
             onNavigateAdvancedSettings={onNavigateAdvancedSettings}
             onStopOrLeave={onCloseRoom}
             onHoverDesc={setHoveredDesc}
@@ -272,21 +276,22 @@ export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlReci
         {activeSpec.stage === 'during-match' && (
           <DuringMatchSubView
             role={activeSpec.role}
-            roomCode={resolvedRoomCode}
             signalingState={signalingState}
             onRefreshSignaling={onRefreshSignaling}
             players={matchPlayers}
             onKickPlayer={onKickPeer}
             isMatchPaused={isMatchPaused}
             onTogglePause={onTogglePause}
-            teamFormat={teamFormat}
-            botPolicy={botPolicy}
-            durationPreset={durationPreset}
-            customDurationSeconds={customDurationSeconds}
+            roomConfig={{
+              roomCode: resolvedRoomCode,
+              teamFormat,
+              botPolicy,
+              durationPreset,
+              customDurationSeconds,
+            }}
             localTeam={localTeam}
             onSwitchTeam={onSwitchTeam}
             onEnterMatch={onEnterMatch}
-            onOpenNetHud={onOpenNetHud}
             onShutdownOrLeave={onCloseRoom}
             onHoverDesc={setHoveredDesc}
             isLight={isLight}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Cpu } from 'lucide-react';
 import type { TelemetryComputedStats } from './telemetryRingBuffer';
 export interface TelemetryPhaseItem {
@@ -6,6 +6,10 @@ export interface TelemetryPhaseItem {
   avgMs: number;
   share: number;
   color?: string;
+}
+
+export interface TelemetrySparklineFooterHandle {
+  syncStats: (stats: TelemetryComputedStats) => void;
 }
 
 const PHASE_COLORS: Record<string, string> = {
@@ -26,32 +30,94 @@ export interface TelemetrySparklineFooterProps {
   budgetMs: number;
   initialStats: TelemetryComputedStats;
   phases?: TelemetryPhaseItem[];
-  p50ValRef: React.RefObject<HTMLSpanElement | null>;
-  p95ValRef: React.RefObject<HTMLSpanElement | null>;
-  p99ValRef: React.RefObject<HTMLSpanElement | null>;
-  peakValRef: React.RefObject<HTMLSpanElement | null>;
-  budgetBoxRef: React.RefObject<HTMLDivElement | null>;
-  budgetTextRef: React.RefObject<HTMLSpanElement | null>;
 }
 
-export const TelemetrySparklineFooter: React.FC<TelemetrySparklineFooterProps> = ({
-  showQuantiles,
-  compact,
-  isEmbedded,
-  isLight,
-  unit,
-  budgetMs,
-  initialStats,
-  phases,
-  p50ValRef,
-  p95ValRef,
-  p99ValRef,
-  peakValRef,
-  budgetBoxRef,
-  budgetTextRef,
-}) => {
-  return (
-    <>
+export const TelemetrySparklineFooter = forwardRef<
+  TelemetrySparklineFooterHandle,
+  TelemetrySparklineFooterProps
+>(
+  (
+    {
+      showQuantiles,
+      compact,
+      isEmbedded,
+      isLight,
+      unit,
+      budgetMs,
+      initialStats,
+      phases,
+    },
+    ref
+  ) => {
+    const p50ValRef = useRef<HTMLSpanElement | null>(null);
+    const p95ValRef = useRef<HTMLSpanElement | null>(null);
+    const p99ValRef = useRef<HTMLSpanElement | null>(null);
+    const peakValRef = useRef<HTMLSpanElement | null>(null);
+    const budgetBoxRef = useRef<HTMLDivElement | null>(null);
+    const budgetTextRef = useRef<HTMLSpanElement | null>(null);
+    const dirtyRef = useRef({
+      p50Str: '',
+      p95Str: '',
+      p99Str: '',
+      peakStr: '',
+      budgetStr: '',
+      isPeakOver: null as boolean | null,
+      isBudgetOver: null as boolean | null,
+    });
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        syncStats: (s: TelemetryComputedStats) => {
+          const d = dirtyRef.current;
+          const p50Str = `${s.p50.toFixed(2)}${unit}`;
+          if (d.p50Str !== p50Str && p50ValRef.current) {
+            d.p50Str = p50Str;
+            p50ValRef.current.textContent = p50Str;
+          }
+          const p95Str = `${s.p95.toFixed(2)}${unit}`;
+          if (d.p95Str !== p95Str && p95ValRef.current) {
+            d.p95Str = p95Str;
+            p95ValRef.current.textContent = p95Str;
+          }
+          const p99Str = `${s.p99.toFixed(2)}${unit}`;
+          if (d.p99Str !== p99Str && p99ValRef.current) {
+            d.p99Str = p99Str;
+            p99ValRef.current.textContent = p99Str;
+          }
+          const peakStr = `${s.worstMs.toFixed(2)}${unit}`;
+          if (d.peakStr !== peakStr && peakValRef.current) {
+            d.peakStr = peakStr;
+            peakValRef.current.textContent = peakStr;
+          }
+          const isPeakOver = s.worstMs > budgetMs * 1.2;
+          if (d.isPeakOver !== isPeakOver && peakValRef.current) {
+            d.isPeakOver = isPeakOver;
+            peakValRef.current.className = `text-[11px] font-bold tabular-nums ${
+              isPeakOver ? 'text-rose-500' : ''
+            }`;
+          }
+          const hasOver = s.overBudgetCount > 0;
+          if (d.isBudgetOver !== hasOver && budgetBoxRef.current) {
+            d.isBudgetOver = hasOver;
+            budgetBoxRef.current.className = `p-1.5 rounded-lg border ${
+              hasOver
+                ? 'bg-rose-500/10 border-rose-500/30 text-rose-500'
+                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+            }`;
+          }
+          const budgetStr = hasOver ? `${s.overBudgetPct}% Over` : '100% OK';
+          if (d.budgetStr !== budgetStr && budgetTextRef.current) {
+            d.budgetStr = budgetStr;
+            budgetTextRef.current.textContent = budgetStr;
+          }
+        },
+      }),
+      [budgetMs, unit]
+    );
+
+    return (
+      <>
       {showQuantiles && !compact && !isEmbedded && (
         <div className="grid grid-cols-5 gap-1.5 text-center font-mono">
           {[
@@ -142,4 +208,6 @@ export const TelemetrySparklineFooter: React.FC<TelemetrySparklineFooterProps> =
       )}
     </>
   );
-};
+});
+
+TelemetrySparklineFooter.displayName = 'TelemetrySparklineFooter';

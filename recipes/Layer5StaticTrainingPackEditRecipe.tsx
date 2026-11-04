@@ -53,25 +53,8 @@ export function openStaticTrainingExitConfirmDialogue(
   });
 }
 
-export interface Layer5StaticTrainingPackEditRecipeProps {
-  isLight?: boolean;
-  transparent?: boolean;
-  packTitle?: string;
-  /** Controlled or uncontrolled shots list */
-  shots?: StaticTrainingShotItem[];
-  onShotsChange?: (shots: StaticTrainingShotItem[]) => void;
-  /** Optional active shot override (e.g. from fast in-memory edit variable) */
+export interface Layer5StaticTrainingPackEditStateOverride {
   currentShotOverride?: StaticTrainingShotItem | null;
-  /** Controlled or uncontrolled selected shot index */
-  selectedShotIndex?: number;
-  onSelectedShotIndexChange?: (idx: number) => void;
-  /** Controlled or uncontrolled item inspection state (false = full list, true = compressed rail + detail inspector) */
-  isInspectingShot?: boolean;
-  onInspectingShotChange?: (inspecting: boolean) => void;
-  /** Controlled or uncontrolled 3D edit sub-mode */
-  editSubMode?: EditSubMode;
-  onEditSubModeChange?: (mode: EditSubMode) => void;
-  /** Controlled or uncontrolled dirty flag for current shot */
   isDirty?: boolean;
   onMutateCurrentShot?: (updater: (draft: StaticTrainingShotItem) => void) => void;
   onSaveCurrentShot?: () => void | Promise<void>;
@@ -81,10 +64,29 @@ export interface Layer5StaticTrainingPackEditRecipeProps {
   onDeleteShot?: (idx: number) => void | Promise<void>;
   onExportSingleShot?: (idx: number) => void;
   onImportSingleShot?: (file: File) => void | Promise<void>;
+}
+
+export interface Layer5StaticTrainingPackEditRecipeProps {
+  isLight?: boolean;
+  transparent?: boolean;
+  packTitle?: string;
+  /** Controlled or uncontrolled shots list */
+  shots?: StaticTrainingShotItem[];
+  onShotsChange?: (shots: StaticTrainingShotItem[]) => void;
+  /** Controlled or uncontrolled selected shot index */
+  selectedShotIndex?: number;
+  onSelectedShotIndexChange?: (idx: number) => void;
+  /** Controlled or uncontrolled item inspection state (false = full list, true = compressed rail + detail inspector) */
+  isInspectingShot?: boolean;
+  onInspectingShotChange?: (inspecting: boolean) => void;
+  /** Controlled or uncontrolled 3D edit sub-mode */
+  editSubMode?: EditSubMode;
+  onEditSubModeChange?: (mode: EditSubMode) => void;
   /** Callback when user clicks Collapse [TAB] in header */
   onCollapseDrawer?: () => void;
   /** Callback when user confirms Exit in the double-check dialogue */
   onExitSession?: (action: 'save' | 'ignore') => void | Promise<void>;
+  stateOverride?: Layer5StaticTrainingPackEditStateOverride;
 }
 
 /**
@@ -122,7 +124,7 @@ export const Layer5StaticTrainingPackEditRecipe: React.FC<Layer5StaticTrainingPa
   onExportSingleShot,
   onImportSingleShot,
   onCollapseDrawer,
-} = useLayer5StaticTrainingPackEditStoreBinding(rawProps);
+} = useLayer5StaticTrainingPackEditStoreBinding({ ...rawProps.stateOverride, ...rawProps });
   const [internalShots, setInternalShots] = useState<StaticTrainingShotItem[]>(
     INITIAL_TRAINING_SHOTS
   );

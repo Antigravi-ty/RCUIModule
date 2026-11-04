@@ -5,7 +5,6 @@ import {
   updateEngineAudioTuningConfig,
   resetEngineAudioTuningConfig,
   getEngineAudioRuntimeActions,
-  subscribeEngineAudioTelemetry,
   type EngineAudioTuningConfig,
   type EngineAudioLiveTelemetry,
 } from '../config/engineAudioConfig';
@@ -83,6 +82,6 @@ export const useEngineAudioStore = create<EngineAudioStoreState>((set) => ({
   },
 }));
 
-subscribeEngineAudioTelemetry((patch) => {
+export function publishEngineAudioTelemetry(patch: Partial<EngineAudioLiveTelemetry>): void {
   useEngineAudioStore.getState().updateTelemetry(patch);
-});
+}

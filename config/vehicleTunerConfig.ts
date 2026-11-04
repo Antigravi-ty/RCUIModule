@@ -326,17 +326,6 @@ export const anodizedPaintTuning: AnodizedPaintTuning = {
   pearlBlendStrength: 0.82,
 };
 
-type AnodizedPaintListener = (patch: Partial<AnodizedPaintTuning>, state: AnodizedPaintTuning) => void;
-const anodizedPaintListeners = new Set<AnodizedPaintListener>();
-
-export function subscribeAnodizedPaintTuning(listener: AnodizedPaintListener): () => void {
-  if (typeof listener !== 'function') return () => {};
-  anodizedPaintListeners.add(listener);
-  return () => {
-    anodizedPaintListeners.delete(listener);
-  };
-}
-
 export function getAnodizedPaintTuning(): AnodizedPaintTuning {
   return { ...anodizedPaintTuning };
 }
@@ -346,13 +335,6 @@ export function updateAnodizedPaintTuning(
 ): AnodizedPaintTuning {
   if (!patch) return anodizedPaintTuning;
   Object.assign(anodizedPaintTuning, patch);
-  for (const listener of anodizedPaintListeners) {
-    try {
-      listener(patch, anodizedPaintTuning);
-    } catch (err) {
-      console.warn('[vehicleTunerConfig] Anodized paint listener threw an error:', err);
-    }
-  }
   return anodizedPaintTuning;
 }
 
@@ -412,23 +394,4 @@ export function setBoostParticleRuntimeConfig(
   }
   Object.assign(boostParticleRuntimeConfig, patch);
   return boostParticleRuntimeConfig;
-}
-
-type VehicleTunerListener = (payload: Record<string, any>) => void;
-const vehicleTunerListeners = new Set<VehicleTunerListener>();
-
-export function subscribeVehicleTunerConfig(listener: VehicleTunerListener): () => boolean {
-  if (typeof listener !== 'function') return () => false;
-  vehicleTunerListeners.add(listener);
-  return () => vehicleTunerListeners.delete(listener);
-}
-
-export function notifyVehicleTunerConfigChange(payload: Record<string, any> = {}): void {
-  for (const fn of vehicleTunerListeners) {
-    try {
-      fn(payload);
-    } catch (err) {
-      console.warn('[vehicleTunerConfig] Listener error:', err);
-    }
-  }
 }

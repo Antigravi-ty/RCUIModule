@@ -62,9 +62,6 @@ let activeMaterials: MaterialsConfigState = (() => {
   return { ...DEFAULT_MATERIALS_CONFIG, boostAudio: initialBoostAudio };
 })();
 
-type MaterialsListener = (materials: MaterialsConfigState) => void;
-const materialsListeners = new Set<MaterialsListener>();
-
 export function getMaterialsConfig(): MaterialsConfigState {
   return activeMaterials;
 }
@@ -86,18 +83,6 @@ export function setMaterialsConfig(
   if (persist) {
     safeStorage.set(MATERIALS_STORAGE_KEY, JSON.stringify(activeMaterials));
   }
-  for (const listener of materialsListeners) {
-    try {
-      listener(activeMaterials);
-    } catch (err) {
-      console.error('[materialsConfig] materialsConfig listener error:', err);
-    }
-  }
-}
-
-export function onMaterialsConfigChange(listener: MaterialsListener): () => boolean {
-  materialsListeners.add(listener);
-  return () => materialsListeners.delete(listener);
 }
 
 export function getInitialMaterials(): MaterialsConfigState {

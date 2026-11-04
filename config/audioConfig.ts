@@ -37,11 +37,11 @@ export type AudioConfigSubscriber = (config: AudioConfigSettings) => void;
 
 export class AudioConfigManager {
   config: AudioConfigSettings;
-  subscribers: Set<AudioConfigSubscriber>;
+  subscribers: AudioConfigSubscriber[];
 
   constructor() {
     this.config = { ...DEFAULT_AUDIO_CONFIG };
-    this.subscribers = new Set();
+    this.subscribers = [];
     this.load();
   }
 
@@ -106,8 +106,15 @@ export class AudioConfigManager {
   }
 
   subscribe(callback: AudioConfigSubscriber): () => boolean {
-    this.subscribers.add(callback);
-    return () => this.subscribers.delete(callback);
+    if (!this.subscribers.includes(callback)) {
+      this.subscribers.push(callback);
+    }
+    return () => {
+      const idx = this.subscribers.indexOf(callback);
+      if (idx === -1) return false;
+      this.subscribers.splice(idx, 1);
+      return true;
+    };
   }
 
   notify(): void {

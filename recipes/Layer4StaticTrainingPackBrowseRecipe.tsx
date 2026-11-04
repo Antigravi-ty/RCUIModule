@@ -12,8 +12,7 @@ import {
 import { StaticTrainingPackToolbar } from './static-training/StaticTrainingPackToolbar';
 import { StaticTrainingPackMetadataInspector } from './static-training/StaticTrainingPackMetadataInspector';
 
-export interface Layer4StaticTrainingPackBrowseRecipeProps {
-  isLight?: boolean;
+export interface Layer4StaticTrainingPackBrowseStateOverride {
   packs?: StaticTrainingPackSummary[];
   selectedPackUuid?: string | null;
   onSelectPack?: (uuid: string) => void;
@@ -27,13 +26,18 @@ export interface Layer4StaticTrainingPackBrowseRecipeProps {
   onSavePackMetadata?: (uuid: string, title: string, description: string) => Promise<void> | void;
   onDeletePack?: (uuid: string) => Promise<void> | void;
   onImportPackFile?: (file: File) => Promise<void> | void;
+  onExportPack?: (pack: StaticTrainingPackSummary) => Promise<void> | void;
+}
+
+export interface Layer4StaticTrainingPackBrowseRecipeProps {
+  isLight?: boolean;
   onBack?: () => void;
   onStartPlaySession?: (uuid: string) => void;
   onStartEditSession?: (uuid: string) => void;
   onPlayPack?: (pack: StaticTrainingPackSummary, useDownCounter: boolean) => void;
   onEditPack?: (pack: StaticTrainingPackSummary) => void;
   onImportPack?: () => void;
-  onExportPack?: (pack: StaticTrainingPackSummary) => Promise<void> | void;
+  stateOverride?: Layer4StaticTrainingPackBrowseStateOverride;
   className?: string;
 }
 
@@ -147,7 +151,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
   onImportPack,
   onExportPack,
   className = '',
-} = useLayer4StaticTrainingPackBrowseStoreBinding(rawProps);
+} = useLayer4StaticTrainingPackBrowseStoreBinding({ ...rawProps.stateOverride, ...rawProps });
   const sizing = useMenuLayoutStore(
     (s) => s.panels?.['layer4-static-training-pack'] ?? DEFAULT_PANEL_SIZING['layer4-static-training-pack']
   );

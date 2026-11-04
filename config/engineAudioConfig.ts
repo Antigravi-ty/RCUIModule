@@ -275,9 +275,6 @@ export const ENGINE_AUDIO_TUNING_CONFIG: EngineAudioTuningConfig = {
   ...DEFAULT_ENGINE_AUDIO_TUNING_CONFIG,
 };
 
-type EngineAudioConfigListener = (config: EngineAudioTuningConfig) => void;
-const configListeners = new Set<EngineAudioConfigListener>();
-
 export function getEngineAudioTuningConfig(): EngineAudioTuningConfig {
   return ENGINE_AUDIO_TUNING_CONFIG;
 }
@@ -286,27 +283,11 @@ export function updateEngineAudioTuningConfig(
   patch: Partial<EngineAudioTuningConfig>
 ): EngineAudioTuningConfig {
   Object.assign(ENGINE_AUDIO_TUNING_CONFIG, patch);
-  for (const listener of configListeners) {
-    try {
-      listener(ENGINE_AUDIO_TUNING_CONFIG);
-    } catch (err) {
-      console.warn('[engineAudioConfig] Listener error:', err);
-    }
-  }
   return ENGINE_AUDIO_TUNING_CONFIG;
 }
 
 export function resetEngineAudioTuningConfig(): EngineAudioTuningConfig {
   return updateEngineAudioTuningConfig({ ...DEFAULT_ENGINE_AUDIO_TUNING_CONFIG });
-}
-
-export function subscribeEngineAudioTuningConfig(
-  listener: EngineAudioConfigListener
-): () => void {
-  configListeners.add(listener);
-  return () => {
-    configListeners.delete(listener);
-  };
 }
 
 export interface EngineAudioRuntimeActions {
@@ -329,26 +310,4 @@ export function registerEngineAudioRuntimeActions(actions: EngineAudioRuntimeAct
 
 export function getEngineAudioRuntimeActions(): EngineAudioRuntimeActions {
   return runtimeActions;
-}
-
-type EngineAudioTelemetryListener = (patch: Partial<EngineAudioLiveTelemetry>) => void;
-const telemetryListeners = new Set<EngineAudioTelemetryListener>();
-
-export function publishEngineAudioTelemetry(patch: Partial<EngineAudioLiveTelemetry>): void {
-  for (const listener of telemetryListeners) {
-    try {
-      listener(patch);
-    } catch {
-      // Ignore telemetry listener errors
-    }
-  }
-}
-
-export function subscribeEngineAudioTelemetry(
-  listener: EngineAudioTelemetryListener
-): () => void {
-  telemetryListeners.add(listener);
-  return () => {
-    telemetryListeners.delete(listener);
-  };
 }

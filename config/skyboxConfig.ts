@@ -474,17 +474,6 @@ export const skyboxRuntimeConfig: SkyboxConfig = {
   ...DEFAULT_SKYBOX_CONFIG,
 };
 
-type SkyboxConfigListener = (config: SkyboxConfig) => void;
-const skyboxConfigListeners = new Set<SkyboxConfigListener>();
-
-export function subscribeSkyboxConfig(listener: SkyboxConfigListener): () => void {
-  if (typeof listener !== 'function') return () => {};
-  skyboxConfigListeners.add(listener);
-  return () => {
-    skyboxConfigListeners.delete(listener);
-  };
-}
-
 export function getSkyboxConfig(): SkyboxConfig {
   return { ...skyboxRuntimeConfig };
 }
@@ -548,12 +537,5 @@ export function updateSkyboxConfig(patch: Partial<SkyboxConfig> = {}): SkyboxCon
   if (!patch) return skyboxRuntimeConfig;
   const normalized = normalizeSkyboxPatch(patch);
   Object.assign(skyboxRuntimeConfig, normalized);
-  for (const listener of skyboxConfigListeners) {
-    try {
-      listener(skyboxRuntimeConfig);
-    } catch (err) {
-      console.warn('[skyboxConfig] Listener threw an error:', err);
-    }
-  }
   return skyboxRuntimeConfig;
 }

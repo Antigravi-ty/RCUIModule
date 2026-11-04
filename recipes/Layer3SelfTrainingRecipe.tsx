@@ -135,7 +135,6 @@ export const Layer3SelfTrainingRecipe: React.FC<Layer3SelfTrainingRecipeProps> =
           {SELF_TRAINING_OPTIONS.map((opt) => (
             <MainMenuRow
               key={opt.id}
-              id={opt.id}
               slotId={opt.slotId}
               title={opt.title}
               subtitle={opt.subtitle}

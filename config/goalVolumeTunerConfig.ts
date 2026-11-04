@@ -100,8 +100,7 @@ export const goalVolumeTunerRuntimeConfig: GoalVolumeTunerConfig = {
 };
 
 type GoalVolumeTunerCallback = (snapshot: GoalVolumeTunerConfig) => void;
-const goalVolumeListeners = new Set<GoalVolumeTunerCallback>();
-const goalVolumeAppliers = new Set<GoalVolumeTunerCallback>();
+const goalVolumeCallbacks: GoalVolumeTunerCallback[] = [];
 
 export function getGoalVolumeTunerConfig(): GoalVolumeTunerConfig {
   return {
@@ -132,30 +131,18 @@ export function getBallGoalRimFxConfig(): BallGoalRimFxConfig {
 
 export function subscribeGoalVolumeTunerConfig(listener: GoalVolumeTunerCallback): () => void {
   if (typeof listener !== 'function') return () => {};
-  goalVolumeListeners.add(listener);
+  if (!goalVolumeCallbacks.includes(listener)) {
+    goalVolumeCallbacks.push(listener);
+  }
   return () => {
-    goalVolumeListeners.delete(listener);
-  };
-}
-
-export function registerGoalVolumeTunerApplier(applier: GoalVolumeTunerCallback): () => void {
-  if (typeof applier !== 'function') return () => {};
-  goalVolumeAppliers.add(applier);
-  return () => {
-    goalVolumeAppliers.delete(applier);
+    const idx = goalVolumeCallbacks.indexOf(listener);
+    if (idx !== -1) goalVolumeCallbacks.splice(idx, 1);
   };
 }
 
 function notifyAll(): GoalVolumeTunerConfig {
   const snapshot = getGoalVolumeTunerConfig();
-  for (const applier of goalVolumeAppliers) {
-    try {
-      applier(snapshot);
-    } catch {
-      // ignore applier errors
-    }
-  }
-  for (const listener of goalVolumeListeners) {
+  for (const listener of goalVolumeCallbacks) {
     try {
       listener(snapshot);
     } catch {

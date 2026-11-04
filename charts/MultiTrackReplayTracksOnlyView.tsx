@@ -27,8 +27,6 @@ export interface MultiTrackReplayTracksOnlyViewProps {
   isTrackDisabled: boolean;
   isLight: boolean;
   className: string;
-  trackBgClass: string;
-  cursorLineClass: string;
   incidentMarkers: ReplayIncidentMarker[];
   signalMarkers: ReplaySignalMarker[];
   trackRefs: MultiTrackReplayDomRefs;
@@ -46,8 +44,6 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
   isTrackDisabled,
   isLight,
   className,
-  trackBgClass,
-  cursorLineClass,
   incidentMarkers,
   signalMarkers,
   trackRefs: { trackAFillRef, trackBCursorRef, trackCCursorRef },
@@ -55,6 +51,8 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
   applyCursorToDom,
   onSeekFrame,
 }) => {
+  const trackBgClass = isLight ? 'bg-neutral-200/90' : 'bg-neutral-800/95';
+  const cursorLineClass = isLight ? 'bg-neutral-900' : 'bg-white';
   const clampedCursor = isTrackDisabled ? 0 : Math.max(0, Math.min(totalFrames, effectiveInitialFrame));
   const cursorSec = (clampedCursor / 120).toFixed(2);
   const totalSec = (Math.max(0, totalFrames) / 120).toFixed(2);

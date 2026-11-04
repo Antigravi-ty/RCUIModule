@@ -18,7 +18,6 @@ import {
 } from '../stores/mainMenuStyleStore';
 
 export interface MainMenuRowProps {
-  id?: string;
   slotId?: MainMenuItemSlotId;
   icon?: React.ReactNode;
   iconColorToken?: MainMenuIconColorValue;
@@ -47,7 +46,6 @@ export interface MainMenuRowProps {
  * Decoupled from generic `MenuItem` so tuning Layer 1 Main Menu never causes side effects on other menus.
  */
 export const MainMenuRow: React.FC<MainMenuRowProps> = React.memo(({
-  id,
   slotId = 'play',
   icon,
   iconColorToken,
@@ -186,7 +184,6 @@ export const MainMenuRow: React.FC<MainMenuRowProps> = React.memo(({
   return (
     <button
       ref={buttonRef}
-      id={id}
       type="button"
       role="menuitem"
       disabled={disabled}

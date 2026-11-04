@@ -357,20 +357,7 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
 
       {/* 8. Audio Debug & Pipeline Diagnostics Section (Relocated from AudioTab) */}
       <AudioDebugSection
-        audioDebugEnabled={audioDebug?.audioDebugEnabled}
-        onAudioDebugEnabledChange={audioDebug?.onAudioDebugEnabledChange}
-        masterRmsDb={audioDebug?.masterRmsDb}
-        masterPeakDb={audioDebug?.masterPeakDb}
-        activeVoices={audioDebug?.activeVoices}
-        maxVoices={audioDebug?.maxVoices}
-        loadedBuffers={audioDebug?.loadedBuffers}
-        totalBuffers={audioDebug?.totalBuffers}
-        contextState={audioDebug?.contextState}
-        verdictText={audioDebug?.verdictText}
-        probeStatusText={audioDebug?.probeStatusText}
-        onPlayTestTone={audioDebug?.onPlayTestTone}
-        onDumpConsole={audioDebug?.onDumpConsole}
-        onForceRecovery={audioDebug?.onForceRecovery}
+        telemetry={audioDebug}
         masterVolume={masterVolume}
         bordered={resolvedBordered}
         onHover={onHover}

@@ -10,8 +10,7 @@ import { TeamRosterCard, TeamRosterSlotConfig, BotPolicyId, CarColorSwatch, DEFA
 import { BOTPACK_9700488_POLICY_METAS } from '../stores/experimentalMultiBotsRosterUtils';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 
-export interface Layer3ExpMultiBotsRecipeProps {
-  isLight?: boolean;
+export interface Layer3ExpMultiBotsStateOverride {
   defaultBlueSlots?: TeamRosterSlotConfig[];
   defaultOrangeSlots?: TeamRosterSlotConfig[];
   blueSlots?: TeamRosterSlotConfig[];
@@ -43,6 +42,10 @@ export interface Layer3ExpMultiBotsRecipeProps {
   onTriggerSandboxAction?: (
     action: 'reset_kickoff' | 'score_blue' | 'score_orange' | 'force_overtime'
   ) => void;
+}
+
+export interface Layer3ExpMultiBotsRecipeProps {
+  isLight?: boolean;
   onStartSimulation?: (config: {
     blueSlots: TeamRosterSlotConfig[];
     orangeSlots: TeamRosterSlotConfig[];
@@ -51,6 +54,7 @@ export interface Layer3ExpMultiBotsRecipeProps {
   onLaunchFloatingControl?: () => void;
   onEnterGame?: () => void;
   onBack?: () => void;
+  stateOverride?: Layer3ExpMultiBotsStateOverride;
   className?: string;
 }
 
@@ -91,7 +95,7 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
   onEnterGame,
   onBack = () => {},
   className = '',
-} = useLayer3ExpMultiBotsStoreBinding(rawProps);
+} = useLayer3ExpMultiBotsStoreBinding({ ...rawProps.stateOverride, ...rawProps });
   const [internalBlueSlots, setInternalBlueSlots] = useState<TeamRosterSlotConfig[]>(defaultBlueSlots);
   const [internalOrangeSlots, setInternalOrangeSlots] = useState<TeamRosterSlotConfig[]>(defaultOrangeSlots);
   const [internalActiveCameraCarIndex, setInternalActiveCameraCarIndex] = useState<number>(0);
