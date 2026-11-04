@@ -5,7 +5,7 @@ import { audioConfig } from '../../config/audioConfig';
 import { loadStoredBgmPrefs } from '../../config/spatialAudioConfig';
 import { type AppState } from '../appStoreTypes';
 
-function getInitialAppAudio() {
+function getInitialAppAudio(): AppState['audio'] {
   const cfg = audioConfig.config as Record<string, any>;
   const bgmPrefs = loadStoredBgmPrefs();
   const toPct = (v: unknown, defPct: number) => {
@@ -17,6 +17,21 @@ function getInitialAppAudio() {
   };
   const muteWhenUnfocused =
     cfg.continueAudioOnLostFocus !== undefined ? !cfg.continueAudioOnLostFocus : true;
+  const rawPanModel: 'equalpower' | 'HRTF' =
+    cfg.spatialPanningModel === 'HRTF' ? 'HRTF' : 'equalpower';
+  const rawDynProfile: 'compressed' | 'dynamic' | 'monitor' =
+    cfg.dynamicRangeProfile === 'compressed' ||
+    cfg.dynamicRangeProfile === 'monitor' ||
+    cfg.dynamicRangeProfile === 'dynamic'
+      ? cfg.dynamicRangeProfile
+      : 'dynamic';
+  const rawDistModel: 'smoothstep' | 'inverse' | 'linear' | 'exponential' =
+    cfg.distanceModel === 'inverse' ||
+    cfg.distanceModel === 'linear' ||
+    cfg.distanceModel === 'exponential' ||
+    cfg.distanceModel === 'smoothstep'
+      ? cfg.distanceModel
+      : 'smoothstep';
   return {
     masterVolume: toPct(cfg.masterVolume, 100),
     engineVolume: toPct(cfg.engineVolume, 100),
@@ -28,6 +43,18 @@ function getInitialAppAudio() {
     midGain: Number.isFinite(Number(cfg.eqMid)) ? Number(cfg.eqMid) : 0,
     trebleGain: Number.isFinite(Number(cfg.eqTreble)) ? Number(cfg.eqTreble) : 0,
     hrtfEnabled: cfg.spatialAudio !== undefined ? Boolean(cfg.spatialAudio) : true,
+    dynamicRangeProfile: rawDynProfile,
+    spatialPanningModel: rawPanModel,
+    distanceModel: rawDistModel,
+    audibilityFloor: Number.isFinite(Number(cfg.minAudibleGainFloor))
+      ? Math.round(Math.max(0, Math.min(0.5, Number(cfg.minAudibleGainFloor))) * 100)
+      : 15,
+    arenaAcousticScale: Number.isFinite(Number(cfg.arenaAcousticScale))
+      ? Number(cfg.arenaAcousticScale)
+      : 1.0,
+    farFieldHighShelfDb: Number.isFinite(Number(cfg.farFieldHighShelfDb))
+      ? Number(cfg.farFieldHighShelfDb)
+      : 0,
   };
 }
 
@@ -92,16 +119,37 @@ export const createAudioAndGameplaySlice: StateCreator<
         audioConfig.set('continueAudioOnLostFocus', Boolean(nextAudio.continueAudioOnLostFocus));
       }
       if (patch.bassGain !== undefined) {
-        audioConfig.set('eqBass', patch.bassGain);
+        audioConfig.set('eqBass', Math.max(-12, Math.min(12, Number(patch.bassGain) || 0)));
       }
       if (patch.midGain !== undefined) {
-        audioConfig.set('eqMid', patch.midGain);
+        audioConfig.set('eqMid', Math.max(-12, Math.min(12, Number(patch.midGain) || 0)));
       }
       if (patch.trebleGain !== undefined) {
-        audioConfig.set('eqTreble', patch.trebleGain);
+        audioConfig.set('eqTreble', Math.max(-12, Math.min(12, Number(patch.trebleGain) || 0)));
       }
       if (patch.hrtfEnabled !== undefined) {
         audioConfig.set('spatialAudio', Boolean(patch.hrtfEnabled));
+      }
+      if (patch.dynamicRangeProfile !== undefined) {
+        audioConfig.set('dynamicRangeProfile', patch.dynamicRangeProfile);
+      }
+      if (patch.spatialPanningModel !== undefined) {
+        audioConfig.set('spatialPanningModel', patch.spatialPanningModel);
+      }
+      if (patch.distanceModel !== undefined) {
+        audioConfig.set('distanceModel', patch.distanceModel);
+      }
+      if (patch.audibilityFloor !== undefined) {
+        const clampedFloor = Math.max(0, Math.min(50, Number(patch.audibilityFloor) || 0)) / 100;
+        audioConfig.set('minAudibleGainFloor', clampedFloor);
+      }
+      if (patch.arenaAcousticScale !== undefined) {
+        const clampedScale = Math.max(0.5, Math.min(2.0, Number(patch.arenaAcousticScale) || 1.0));
+        audioConfig.set('arenaAcousticScale', clampedScale);
+      }
+      if (patch.farFieldHighShelfDb !== undefined) {
+        const clampedShelf = Math.max(-12, Math.min(0, Number(patch.farFieldHighShelfDb) || 0));
+        audioConfig.set('farFieldHighShelfDb', clampedShelf);
       }
       get().bridge.onAudioChange?.(nextAudio);
       return { audio: nextAudio };

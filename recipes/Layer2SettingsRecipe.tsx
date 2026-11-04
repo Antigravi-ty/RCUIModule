@@ -137,7 +137,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   const resolvedPropDevMode = propDevMode ?? developerModeEnabled;
 
   const [internalSubView, setInternalSubView] = useState<
-    null | 'trajectory' | 'training-config' | 'camera' | 'keybindings'
+    null | 'trajectory' | 'training-config' | 'camera' | 'keybindings' | 'audio-eq'
   >(null);
 
   const normalizeTab = (t?: string): SettingsTabId => {
@@ -223,6 +223,14 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
       onNavigateKeybindingsDetail();
     } else {
       setInternalSubView('keybindings');
+    }
+  };
+
+  const handleNavigateAudioDetail = () => {
+    if (onNavigateAudioDetail) {
+      onNavigateAudioDetail();
+    } else {
+      setInternalSubView('audio-eq');
     }
   };
 
@@ -333,7 +341,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
               isLight={isLight}
               developerMode={developerMode}
               audioConfig={audioConfig}
-              onNavigateAudioDetail={onNavigateAudioDetail}
+              onNavigateAudioDetail={handleNavigateAudioDetail}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />

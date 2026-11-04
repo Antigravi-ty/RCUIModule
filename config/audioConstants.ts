@@ -232,13 +232,22 @@ export function dbToLinear(dB: number): number {
 export const AUDIO_SETTINGS_KEY = STORAGE_KEYS.AUDIO_SETTINGS;
 export const AUDIO_SETTINGS_CHANGED_EVENT = 'audio-settings-changed';
 
+export type DynamicRangeProfileId = 'compressed' | 'dynamic' | 'monitor';
+
 export type AudioConfigSettings = typeof staticAudioConfig & {
   carBallSoundMode: string;
   carCarSoundMode: string;
   boostStartVariation: string;
   boostLoopVariation: string;
   boostEndVariation: string;
+  spatialAudio: boolean;
   spatialPanningModel: string;
+  dynamicRangeProfile: DynamicRangeProfileId;
+  eqBass: number;
+  eqMid: number;
+  eqTreble: number;
+  farFieldHighShelfDb: number;
+  arenaAcousticScale: number;
   distanceModel: string;
   distanceUnitScale: number;
   rolloffMinDistance: number;
@@ -257,7 +266,14 @@ export const DEFAULT_AUDIO_CONFIG: Readonly<AudioConfigSettings> = Object.freeze
   boostStartVariation: DEFAULT_BOOST_VARIATION,
   boostLoopVariation: DEFAULT_BOOST_VARIATION,
   boostEndVariation: DEFAULT_BOOST_VARIATION,
+  spatialAudio: true,
   spatialPanningModel: 'equalpower',
+  dynamicRangeProfile: 'dynamic',
+  eqBass: 0.0,
+  eqMid: 0.0,
+  eqTreble: 0.0,
+  farFieldHighShelfDb: 0.0,
+  arenaAcousticScale: 1.0,
   distanceModel: 'smoothstep',
   distanceUnitScale: 0.01,
   rolloffMinDistance: 400.0,
@@ -269,3 +285,4 @@ export const DEFAULT_AUDIO_CONFIG: Readonly<AudioConfigSettings> = Object.freeze
 });
 
 export const DEFAULT_AUDIO_SETTINGS = DEFAULT_AUDIO_CONFIG;
+

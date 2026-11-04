@@ -10,6 +10,7 @@ import {
   Users,
   Trophy,
   Timer,
+  Sliders,
 } from 'lucide-react';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
 import { SettingSliderRow } from '../../../compounds/SettingSliderRow';
@@ -104,6 +105,7 @@ const BGM_SCENE_ITEMS: readonly {
  * 4. `Engine Volume` (`engine`, read-only value readout + draggable slider)
  * 5. `Boost Volume` (Noun Project `4873540` Jet Thrust SVG, read-only value readout + draggable slider)
  * 6. `Background Music Volume` (`eighth-notes`, adjustable when Background Music is enabled, locked when disabled)
+ * 7. `Acoustics & Equalizer` (`sliders`, navigates to Layer 3 Acoustics & Equalizer panel)
  */
 export const AudioTab: React.FC<AudioTabProps> = ({
   isLight = false,
@@ -113,9 +115,11 @@ export const AudioTab: React.FC<AudioTabProps> = ({
   defaultAudioConfig,
   onAudioConfigChange,
   onChange,
+  onNavigateAudioDetail,
   onHover,
   onLeave,
 }) => {
+  const navigate = useAppStore((s) => s.navigate);
   const storeAudio = useAppStore((s) => s.audio);
   const updateStoreAudio = useAppStore((s) => s.updateAudio);
 
@@ -458,6 +462,18 @@ export const AudioTab: React.FC<AudioTabProps> = ({
         onChange={handleBgmVolumeChange}
         hoverDescription="Adjust Background Music volume level. Available when Background Music is enabled; temporarily locked when disabled."
         onHover={(desc) => desc && onHover(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      <SettingActionRow
+        icon={Sliders}
+        title="Acoustics & Equalizer"
+        description="3-band parametric equalizer, dynamic range compressor & 3D spatial acoustics"
+        hoverDescription="Configure 3-band parametric equalizer (Bass 100Hz, Midrange 1kHz, Treble 10kHz), Dynamic Range Profile (Night, Dynamic, Studio), and 3D spatial acoustics."
+        buttonHoverDescription="Open Acoustics & Equalizer panel to tune 3-band EQ, dynamic range compression, and 3D spatial roll-off."
+        onAction={onNavigateAudioDetail ?? (() => navigate('audio-eq'))}
+        onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
       />
