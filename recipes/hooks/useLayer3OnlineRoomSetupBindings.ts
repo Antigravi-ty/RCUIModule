@@ -1,11 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
+import { useSignalingProfileStore } from '../../stores/signalingProfileStore';
 import {
   generateDefaultPlayerName,
-  generateRandomFourDigits,
   loadStoredPlayerName,
   saveStoredPlayerName,
 } from '../../config/vehiclePresets';
+import {
+  applyMaskToRoomCodeInput,
+  finalizeHostRoomCode,
+  generateRandomFourDigitRoomCode,
+  parseUiRoomCode,
+} from '../../config/roomCodeConnectivityCodec';
 import type { HostMatchConfig } from '../online/OnlineRoomConfigSummaryCard';
 import type {
   CreationProgressStatus,
@@ -54,6 +60,7 @@ export interface Layer3HostMatchRecipeProps {
   onRetryHost?: () => void;
   onCancelHost?: () => void;
   onNavigateGarageSync?: () => void;
+  onNavigateSignalingConfig?: () => void;
   onNavigateAdvancedSettings?: () => void;
   onBack?: () => void;
 }
@@ -86,6 +93,7 @@ export interface Layer3JoinRoomRecipeProps {
   onRetryJoin?: () => void;
   onCancelJoin?: () => void;
   onNavigateGarageSync?: () => void;
+  onNavigateSignalingConfig?: () => void;
   onBack?: () => void;
 }
 
@@ -96,16 +104,21 @@ export function useLayer3HostMatchStoreBinding(
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
   const setMatchMode = useAppStore((s) => s.setMatchMode);
+  const setSettingsTargetTab = useAppStore((s) => s.setSettingsTargetTab);
+  const setHighlightSetting = useAppStore((s) => s.setHighlightSetting);
   const onlineSession = useAppStore((s) => s.onlineSession);
   const setOnlineSession = useAppStore((s) => s.setOnlineSession);
   const bridge = useAppStore((s) => s.bridge);
+  const hostMask = useSignalingProfileStore((s) => s.hostMask);
+  const verifyRelays = useSignalingProfileStore((s) => s.verifyRelays);
 
   const [config, setConfig] = useState<HostMatchConfig>(() => ({
     playerName:
       onlineSession.playerName && onlineSession.playerName !== 'Host'
         ? onlineSession.playerName
         : loadStoredPlayerName(),
-    roomCode: onlineSession.roomId || generateRandomFourDigits(),
+    roomCode:
+      onlineSession.roomId || generateRandomFourDigitRoomCode(hostMask),
     roomKey: onlineSession.password || '',
     teamFormat: GAME_MODE_TO_FORMAT[onlineSession.gameMode || '2v2'] || 'doubles',
     botPolicy:
@@ -125,6 +138,21 @@ export function useLayer3HostMatchStoreBinding(
     customDurationSeconds: onlineSession.matchDurationSeconds ?? 150,
   }));
 
+  // Silent Pre-Probe on Host window mount: updates 4-bit hostMask and refreshes roomCode mask
+  useEffect(() => {
+    let cancelled = false;
+    void verifyRelays().then((probedMask) => {
+      if (cancelled) return;
+      setConfig((prev) => ({
+        ...prev,
+        roomCode: applyMaskToRoomCodeInput(prev.roomCode, probedMask),
+      }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [verifyRelays]);
+
   const [progressStatus, setProgressStatus] = useState<CreationProgressStatus>('idle');
   const [currentStep, setCurrentStep] = useState<number>(1);
 
@@ -136,7 +164,7 @@ export function useLayer3HostMatchStoreBinding(
   const handleStartHost = async (nextConfig: HostMatchConfig) => {
     const cleanName = nextConfig.playerName.trim() || generateDefaultPlayerName();
     saveStoredPlayerName(cleanName);
-    const cleanRoom = nextConfig.roomCode.trim() || generateRandomFourDigits();
+    const cleanRoom = finalizeHostRoomCode(nextConfig.roomCode, hostMask);
     const durationSec =
       nextConfig.durationPreset === 'custom'
         ? nextConfig.customDurationSeconds
@@ -218,6 +246,13 @@ export function useLayer3HostMatchStoreBinding(
       }),
     onNavigateGarageSync:
       rawProps.onNavigateGarageSync ?? (() => navigate('garage')),
+    onNavigateSignalingConfig:
+      rawProps.onNavigateSignalingConfig ??
+      (() => {
+        setSettingsTargetTab('advanced');
+        setHighlightSetting('signaling-credential-bundle');
+        navigate('settings');
+      }),
     onBack: rawProps.onBack ?? goBack,
   };
 }
@@ -229,6 +264,8 @@ export function useLayer3JoinRoomStoreBinding(
   const navigate = useAppStore((s) => s.navigate);
   const closeMenu = useAppStore((s) => s.closeMenu);
   const setMatchMode = useAppStore((s) => s.setMatchMode);
+  const setSettingsTargetTab = useAppStore((s) => s.setSettingsTargetTab);
+  const setHighlightSetting = useAppStore((s) => s.setHighlightSetting);
   const onlineSession = useAppStore((s) => s.onlineSession);
   const setOnlineSession = useAppStore((s) => s.setOnlineSession);
   const bridge = useAppStore((s) => s.bridge);
@@ -249,7 +286,8 @@ export function useLayer3JoinRoomStoreBinding(
   const handleJoinRoom = async (nextConfig: JoinRoomConfig) => {
     const cleanName = nextConfig.playerName.trim() || generateDefaultPlayerName();
     saveStoredPlayerName(cleanName);
-    const cleanRoom = nextConfig.roomCode.trim();
+    const parsed = parseUiRoomCode(nextConfig.roomCode);
+    const cleanRoom = parsed?.canonicalRoomCode || nextConfig.roomCode.trim().toLowerCase();
     if (!cleanRoom) {
       setCurrentStep(1);
       setProgressStatus('error');
@@ -312,6 +350,13 @@ export function useLayer3JoinRoomStoreBinding(
       }),
     onNavigateGarageSync:
       rawProps.onNavigateGarageSync ?? (() => navigate('garage')),
+    onNavigateSignalingConfig:
+      rawProps.onNavigateSignalingConfig ??
+      (() => {
+        setSettingsTargetTab('advanced');
+        setHighlightSetting('signaling-credential-bundle');
+        navigate('settings');
+      }),
     onBack: rawProps.onBack ?? goBack,
   };
 }

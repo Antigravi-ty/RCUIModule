@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../stores/appStore';
+import { useSignalingProfileStore } from '../stores/signalingProfileStore';
+import {
+  applyMaskToRoomCodeInput,
+  finalizeHostRoomCode,
+  generateRandomFourDigitRoomCode,
+} from '../config/roomCodeConnectivityCodec';
 import { Ghost, Play } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -31,6 +37,7 @@ export interface Layer3HostTrainingRecipeProps {
   currentStep?: number;
   onStartTraining?: (config: HostTrainingConfig) => void;
   onNavigateGarageSync?: () => void;
+  onNavigateSignalingConfig?: () => void;
   onBack?: () => void;
   className?: string;
 }
@@ -51,16 +58,22 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   currentStep: controlledCurrentStep,
   onStartTraining,
   onNavigateGarageSync,
+  onNavigateSignalingConfig,
   onBack: propOnBack,
   className = '',
 }) => {
   const storeGoBack = useAppStore((s) => s.goBack);
+  const navigate = useAppStore((s) => s.navigate);
+  const setSettingsTargetTab = useAppStore((s) => s.setSettingsTargetTab);
+  const setHighlightSetting = useAppStore((s) => s.setHighlightSetting);
+  const hostMask = useSignalingProfileStore((s) => s.hostMask);
+  const verifyRelays = useSignalingProfileStore((s) => s.verifyRelays);
   const onBack = propOnBack ?? storeGoBack;
   const [playerName, setPlayerName] = useState<string>(
     defaultConfig?.playerName ?? `Player${Math.floor(1000 + Math.random() * 9000)}`
   );
   const [roomCode, setRoomCode] = useState<string>(
-    defaultConfig?.roomCode ?? String(Math.floor(1000 + Math.random() * 9000))
+    defaultConfig?.roomCode ?? generateRandomFourDigitRoomCode(hostMask)
   );
   const [roomKey, setRoomKey] = useState<string>(
     defaultConfig?.roomKey ?? ''
@@ -73,6 +86,17 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
   const sizing = panels['layer3-host-training'];
   const { rowGap, paddingX } = useSettingActionRowStore();
+
+  useEffect(() => {
+    let cancelled = false;
+    void verifyRelays().then((probedMask) => {
+      if (cancelled) return;
+      setRoomCode((prev) => applyMaskToRoomCodeInput(prev, probedMask));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [verifyRelays]);
 
   // 5-Step Creation Progress State
   const [internalProgressStatus, setProgressStatus] = useState<CreationProgressStatus>('idle');
@@ -93,13 +117,23 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   }, []);
 
   const handleRandomizeCode = () => {
-    const code = String(Math.floor(1000 + Math.random() * 9000));
+    const code = generateRandomFourDigitRoomCode(hostMask);
     setRoomCode(code);
+  };
+
+  const handleSignalingConfigJump = () => {
+    if (onNavigateSignalingConfig) {
+      onNavigateSignalingConfig();
+      return;
+    }
+    setSettingsTargetTab('advanced');
+    setHighlightSetting('signaling-credential-bundle');
+    navigate('settings');
   };
 
   const startStepSequence = (willFail: boolean) => {
     clearStepTimer();
-    const cleanCode = roomCode.trim();
+    const cleanCode = finalizeHostRoomCode(roomCode, hostMask);
     if (!cleanCode) {
       setCurrentStep(3);
       setProgressStatus('error');
@@ -167,7 +201,8 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
             onRoomKeyChange={setRoomKey}
             showRandomize={true}
             onRandomizeRoomCode={handleRandomizeCode}
-            onNotYouClick={onNavigateGarageSync}
+            onNotYouClick={onNavigateGarageSync ?? (() => navigate('garage'))}
+            onSignalingConfigClick={handleSignalingConfigJump}
             onHoverDesc={setHoveredDesc}
           />
 

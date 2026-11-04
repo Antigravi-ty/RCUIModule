@@ -116,7 +116,8 @@ export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = (rawProps) => {
   const { panels } = useMenuLayoutStore();
   const sizing = panels['layer2-play'];
   const storeCardStyle = usePlayCardStyleStore();
-  const signalingProfileLoaded = useSignalingProfileStore((s) => s.loaded);
+  const signalingSource = useSignalingProfileStore((s) => s.source);
+  const signalingShortHash = useSignalingProfileStore((s) => s.shortHash);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const mergedCardParams: PlayCardStyleParams = {
@@ -175,10 +176,11 @@ export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = (rawProps) => {
               onClick={handleCardClick}
               onMouseEnter={() => {
                 const isOnlineCard = mode.id === 'host-match' || mode.id === 'join-room';
-                const suffix =
-                  isOnlineCard && !signalingProfileLoaded
-                    ? ' (Requires importing a .rctbnspib signaling profile in Settings → Advanced)'
-                    : '';
+                const suffix = isOnlineCard
+                  ? signalingSource === 'public'
+                    ? ` (Active: Public EMQX #${signalingShortHash}, Best-Effort / No SLA)`
+                    : ` (Active: ${signalingSource} #${signalingShortHash})`
+                  : '';
                 setHoveredDesc(`${mode.description}${suffix}`);
               }}
               onMouseLeave={() => setHoveredDesc(null)}
