@@ -1,20 +1,49 @@
 /**
  * roomCodeConnectivityCodec.ts
- * Pure-function room code encoder/decoder and 4-bit relay connectivity bitmask pipeline
- * for UI recipes and store bindings.
+ * Pure-function room code encoder/decoder and 4-bit relay connectivity bitmask pipeline.
+ *
+ * Fixed 4-relay slot bitmask definition (mask in [0, 15]):
+ *   Bit 3 (0b1000 = 8): EMQX_1
+ *   Bit 2 (0b0100 = 4): EMQX_2
+ *   Bit 1 (0b0010 = 2): SUPABASE_1
+ *   Bit 0 (0b0001 = 1): SUPABASE_2
  */
+
+export const RELAY_SLOT_BITS = Object.freeze({
+  EMQX_1: 0b1000,
+  EMQX_2: 0b0100,
+  SUPABASE_1: 0b0010,
+  SUPABASE_2: 0b0001,
+});
+
+export type RelaySlotKey = keyof typeof RELAY_SLOT_BITS;
+
+export const RELAY_SLOT_ORDER: readonly RelaySlotKey[] = Object.freeze([
+  'EMQX_1',
+  'EMQX_2',
+  'SUPABASE_1',
+  'SUPABASE_2',
+]);
 
 export interface DecodedRandomRoomCode {
   mask: number;
   seed: number;
 }
 
-export interface ParsedUiRoomCode {
+export interface ParsedRoomCodeResult {
   mode: 'random' | 'custom';
   canonicalRoomCode: string;
   customPrefix: string;
   hostMask: number;
   seed: number | null;
+}
+
+export interface SignalingRouteDecision {
+  routeType: 'direct-shared' | 'edge-function-bridge' | 'unroutable';
+  hostMask: number;
+  clientMask: number;
+  sharedMask: number;
+  candidateSlots: RelaySlotKey[];
 }
 
 const AFFINE_MUL = 3333;
@@ -23,13 +52,17 @@ const AFFINE_INV = 9997;
 const AFFINE_MOD = 10000;
 const MAX_RANDOM_SEED = 624;
 
-export function clampRoomConnectivityMask(mask: number): number {
+export function clampConnectivityMask(mask: number): number {
   if (!Number.isFinite(mask)) return 0;
   return Math.floor(mask) & 0x0f;
 }
 
-export function generateRandomFourDigitRoomCode(mask = 0x0f, explicitSeed?: number): string {
-  const cleanMask = clampRoomConnectivityMask(mask);
+/**
+ * Scheme A: Bijective affine obfuscation for 4-digit numeric room codes ("0000".."9999").
+ * Embeds a 4-bit connectivity mask (0..15) and a random seed (0..624).
+ */
+export function generateRandomRoomCode(mask = 0x0f, explicitSeed?: number): string {
+  const cleanMask = clampConnectivityMask(mask);
   const seed =
     typeof explicitSeed === 'number' && Number.isFinite(explicitSeed)
       ? Math.max(0, Math.min(MAX_RANDOM_SEED, Math.floor(explicitSeed)))
@@ -40,9 +73,11 @@ export function generateRandomFourDigitRoomCode(mask = 0x0f, explicitSeed?: numb
   return String(code).padStart(4, '0');
 }
 
-export function decodeRandomFourDigitRoomCode(code4: string): DecodedRandomRoomCode | null {
+export function decodeRandomRoomCode(code4: string): DecodedRandomRoomCode | null {
   const trimmed = String(code4 || '').trim();
-  if (!/^\d{4}$/.test(trimmed)) return null;
+  if (!/^\d{4}$/.test(trimmed)) {
+    return null;
+  }
   const numeric = Number(trimmed);
   const shifted = (((numeric - AFFINE_ADD) % AFFINE_MOD) + AFFINE_MOD) % AFFINE_MOD;
   const x = (shifted * AFFINE_INV) % AFFINE_MOD;
@@ -52,31 +87,49 @@ export function decodeRandomFourDigitRoomCode(code4: string): DecodedRandomRoomC
   };
 }
 
-export function sanitizeCustomRoomPrefixInput(rawInput: string): string {
+/**
+ * Sanitizes user input for Custom room codes:
+ * strips spaces, hyphens, and non-alphanumeric characters.
+ */
+export function sanitizeCustomRoomPrefix(rawInput: string): string {
   return String(rawInput || '').replace(/[^a-zA-Z0-9]/g, '');
 }
 
-export function formatCustomRoomCodeWithMask(customInput: string, mask: number): string {
-  const cleanPrefix = sanitizeCustomRoomPrefixInput(customInput).toLowerCase();
+/**
+ * Scheme B: Formats a custom alphanumeric room prefix with a `-${hex}` 4-bit mask suffix.
+ * Always normalizes to lowercase for case-insensitive room derivation.
+ */
+export function formatCustomRoomCode(customInput: string, mask: number): string {
+  const cleanPrefix = sanitizeCustomRoomPrefix(customInput).toLowerCase();
   if (!cleanPrefix) return '';
-  return `${cleanPrefix}-${clampRoomConnectivityMask(mask).toString(16)}`;
+  const hexMask = clampConnectivityMask(mask).toString(16);
+  return `${cleanPrefix}-${hexMask}`;
 }
 
-export function applyMaskToRoomCodeInput(rawRoomCode: string, mask: number): string {
+/**
+ * Strips an existing `-[0-9a-f]` suffix if present and re-applies the updated mask.
+ * If the input is a 4-digit random code, preserves the random seed and updates the embedded mask.
+ */
+export function applyConnectivityMaskToRoomCode(rawRoomCode: string, mask: number): string {
   const trimmed = String(rawRoomCode || '').trim();
-  const cleanMask = clampRoomConnectivityMask(mask);
+  const cleanMask = clampConnectivityMask(mask);
 
-  const decoded = decodeRandomFourDigitRoomCode(trimmed);
-  if (decoded) {
-    return generateRandomFourDigitRoomCode(cleanMask, decoded.seed);
+  const decodedRandom = decodeRandomRoomCode(trimmed);
+  if (decodedRandom) {
+    return generateRandomRoomCode(cleanMask, decodedRandom.seed);
   }
 
-  const customWithSuffix = /^([a-zA-Z0-9]+)(?:-[0-9a-fA-F])?$/.exec(trimmed);
-  if (customWithSuffix && !/^\d+$/.test(customWithSuffix[1])) {
-    return formatCustomRoomCodeWithMask(customWithSuffix[1], cleanMask);
+  const customMatch = /^([a-zA-Z0-9]+)(?:-[0-9a-fA-F])?$/.exec(trimmed);
+  if (customMatch && !/^\d+$/.test(customMatch[1])) {
+    return formatCustomRoomCode(customMatch[1], cleanMask);
   }
 
-  return generateRandomFourDigitRoomCode(cleanMask);
+  const sanitized = sanitizeCustomRoomPrefix(trimmed);
+  if (sanitized && !/^\d+$/.test(sanitized)) {
+    return formatCustomRoomCode(sanitized, cleanMask);
+  }
+
+  return generateRandomRoomCode(cleanMask);
 }
 
 /**
@@ -91,7 +144,7 @@ export function sanitizeHostRoomCodeDraft(rawInput: string): string {
   if (withSingleSuffix) {
     return `${withSingleSuffix[1].toLowerCase()}-${withSingleSuffix[2].toLowerCase()}`;
   }
-  return sanitizeCustomRoomPrefixInput(trimmed);
+  return sanitizeCustomRoomPrefix(trimmed);
 }
 
 export function sanitizeJoinRoomCodeDraft(rawInput: string): string {
@@ -102,9 +155,9 @@ export function sanitizeJoinRoomCodeDraft(rawInput: string): string {
 
 export function finalizeHostRoomCode(rawInput: string, mask: number): string {
   const trimmed = String(rawInput || '').trim();
-  const cleanMask = clampRoomConnectivityMask(mask);
+  const cleanMask = clampConnectivityMask(mask);
   if (!trimmed) {
-    return generateRandomFourDigitRoomCode(cleanMask);
+    return generateRandomRoomCode(cleanMask);
   }
   if (/^\d{4}$/.test(trimmed)) {
     return trimmed;
@@ -113,25 +166,30 @@ export function finalizeHostRoomCode(rawInput: string, mask: number): string {
   if (matchSuffix) {
     const prefix = matchSuffix[1];
     if (/^\d+$/.test(prefix)) {
-      return generateRandomFourDigitRoomCode(cleanMask, Number(prefix) % 625);
+      return generateRandomRoomCode(cleanMask, Number(prefix) % (MAX_RANDOM_SEED + 1));
     }
-    return formatCustomRoomCodeWithMask(prefix, cleanMask);
+    return formatCustomRoomCode(prefix, cleanMask);
   }
-  const cleanPrefix = sanitizeCustomRoomPrefixInput(trimmed);
+  const cleanPrefix = sanitizeCustomRoomPrefix(trimmed);
   if (!cleanPrefix) {
-    return generateRandomFourDigitRoomCode(cleanMask);
+    return generateRandomRoomCode(cleanMask);
   }
-  return formatCustomRoomCodeWithMask(cleanPrefix, cleanMask);
+  return formatCustomRoomCode(cleanPrefix, cleanMask);
 }
 
-export function parseUiRoomCode(rawInput: string): ParsedUiRoomCode | null {
+/**
+ * Unified parser for both 4-digit random codes and `<custom>-<hex>` room codes.
+ * Normalizes `canonicalRoomCode` to lowercase.
+ */
+export function parseRoomCode(rawInput: string): ParsedRoomCodeResult | null {
   const clean = String(rawInput || '')
     .trim()
     .toLowerCase();
   if (!clean) return null;
 
-  const decoded = decodeRandomFourDigitRoomCode(clean);
-  if (decoded) {
+  if (/^\d{4}$/.test(clean)) {
+    const decoded = decodeRandomRoomCode(clean);
+    if (!decoded) return null;
     return {
       mode: 'random',
       canonicalRoomCode: clean,
@@ -141,28 +199,76 @@ export function parseUiRoomCode(rawInput: string): ParsedUiRoomCode | null {
     };
   }
 
-  const customMatch = /^([a-z0-9]+)-([0-9a-f])$/.exec(clean);
-  if (customMatch) {
-    const hostMask = parseInt(customMatch[2], 16) & 0x0f;
+  const customWithSuffix = /^([a-z0-9]+)-([0-9a-f])$/.exec(clean);
+  if (customWithSuffix) {
+    const prefix = customWithSuffix[1];
+    const hostMask = parseInt(customWithSuffix[2], 16) & 0x0f;
     return {
       mode: 'custom',
-      canonicalRoomCode: `${customMatch[1]}-${hostMask.toString(16)}`,
-      customPrefix: customMatch[1],
+      canonicalRoomCode: `${prefix}-${hostMask.toString(16)}`,
+      customPrefix: prefix,
       hostMask,
       seed: null,
     };
   }
 
-  const prefixOnly = sanitizeCustomRoomPrefixInput(clean);
-  if (prefixOnly) {
+  const bareAlphanumeric = sanitizeCustomRoomPrefix(clean);
+  if (bareAlphanumeric) {
     return {
       mode: 'custom',
-      canonicalRoomCode: prefixOnly,
-      customPrefix: prefixOnly,
+      canonicalRoomCode: bareAlphanumeric,
+      customPrefix: bareAlphanumeric,
       hostMask: 0x0f,
       seed: null,
     };
   }
 
   return null;
+}
+
+export function extractSlotsFromMask(mask: number): RelaySlotKey[] {
+  const clean = clampConnectivityMask(mask);
+  return RELAY_SLOT_ORDER.filter((slot) => (clean & RELAY_SLOT_BITS[slot]) !== 0);
+}
+
+/**
+ * Instant routing decision between Host's 4-bit mask and Client's 4-bit mask:
+ * - `sharedMask !== 0`: Direct connection on shared relay(s).
+ * - `sharedMask === 0 && hostMask !== 0 && clientMask !== 0`: Isolated network islands -> Path 5 (Supabase Edge Function bridge).
+ */
+export function resolveSignalingRouteDecision(
+  hostMask: number,
+  clientMask: number
+): SignalingRouteDecision {
+  const h = clampConnectivityMask(hostMask);
+  const c = clampConnectivityMask(clientMask);
+  const shared = h & c;
+
+  if (shared !== 0) {
+    return {
+      routeType: 'direct-shared',
+      hostMask: h,
+      clientMask: c,
+      sharedMask: shared,
+      candidateSlots: extractSlotsFromMask(shared),
+    };
+  }
+
+  if (h !== 0 && c !== 0) {
+    return {
+      routeType: 'edge-function-bridge',
+      hostMask: h,
+      clientMask: c,
+      sharedMask: 0,
+      candidateSlots: [],
+    };
+  }
+
+  return {
+    routeType: 'unroutable',
+    hostMask: h,
+    clientMask: c,
+    sharedMask: 0,
+    candidateSlots: [],
+  };
 }

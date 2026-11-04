@@ -4,17 +4,22 @@ import { useSettingActionRowStore } from '../../stores/settingRowStore';
 import { useSignalingProfileStore } from '../../stores/signalingProfileStore';
 import {
   finalizeHostRoomCode,
+  generateRandomRoomCode,
   sanitizeHostRoomCodeDraft,
   sanitizeJoinRoomCodeDraft,
 } from '../../config/roomCodeConnectivityCodec';
 
-export interface OnlineRoomIdentityFieldsProps {
+export interface OnlineRoomIdentityState {
   playerName: string;
   onPlayerNameChange: (value: string) => void;
   roomCode: string;
   onRoomCodeChange: (value: string) => void;
   roomKey: string;
   onRoomKeyChange: (value: string) => void;
+}
+
+export interface OnlineRoomIdentityFieldsProps {
+  identity: OnlineRoomIdentityState;
   showRandomize?: boolean;
   onRandomizeRoomCode?: () => void;
   onNotYouClick?: () => void;
@@ -37,12 +42,7 @@ const sanitizeAscii = (raw: string): string => raw.replace(/[^\x20-\x7E]/g, '');
  *     and a `"Not expected? / Self-hosted / Import?"` underlined link that jumps directly to Settings -> Advanced.
  */
 export const OnlineRoomIdentityFields: React.FC<OnlineRoomIdentityFieldsProps> = React.memo(({
-  playerName,
-  onPlayerNameChange,
-  roomCode,
-  onRoomCodeChange,
-  roomKey,
-  onRoomKeyChange,
+  identity,
   showRandomize = false,
   onRandomizeRoomCode,
   onNotYouClick,
@@ -51,6 +51,14 @@ export const OnlineRoomIdentityFields: React.FC<OnlineRoomIdentityFieldsProps> =
   isLight = true,
   className = '',
 }) => {
+  const {
+    playerName,
+    onPlayerNameChange,
+    roomCode,
+    onRoomCodeChange,
+    roomKey,
+    onRoomKeyChange,
+  } = identity;
   const { titleFontSize, paddingX } = useSettingActionRowStore();
   const source = useSignalingProfileStore((s) => s.source);
   const shortHash = useSignalingProfileStore((s) => s.shortHash);
@@ -108,6 +116,14 @@ export const OnlineRoomIdentityFields: React.FC<OnlineRoomIdentityFieldsProps> =
       onRoomCodeChange(finalizeHostRoomCode(roomCode, hostMask));
     } else {
       onRoomCodeChange(sanitizeJoinRoomCodeDraft(roomCode));
+    }
+  };
+
+  const handleRandomizeClick = () => {
+    if (onRandomizeRoomCode) {
+      onRandomizeRoomCode();
+    } else {
+      onRoomCodeChange(generateRandomRoomCode(hostMask));
     }
   };
 
@@ -186,7 +202,7 @@ export const OnlineRoomIdentityFields: React.FC<OnlineRoomIdentityFieldsProps> =
             {showRandomize && (
               <button
                 type="button"
-                onClick={onRandomizeRoomCode}
+                onClick={handleRandomizeClick}
                 className={`inline-flex items-center gap-1 text-xs font-mono font-medium cursor-pointer transition-colors shrink-0 ${
                   isLight
                     ? 'text-amber-600 hover:text-amber-700'

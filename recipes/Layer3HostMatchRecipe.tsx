@@ -2,48 +2,34 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   useLayer3HostMatchStoreBinding,
   type Layer3HostMatchRecipeProps,
+  type Layer3HostMatchStateOverride,
 } from './hooks/useLayer3OnlineRoomSetupBindings';
-import {
-  Bot,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Play,
-  SlidersHorizontal,
-  Users,
-} from 'lucide-react';
+import { Play } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
-import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
-import { SliderControl } from '../primitives/SliderControl';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
-import { useSignalingProfileStore } from '../stores/signalingProfileStore';
-import { generateRandomFourDigitRoomCode } from '../config/roomCodeConnectivityCodec';
+import { generateRandomRoomCode } from '../config/roomCodeConnectivityCodec';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,
   dispatchOnlineRoomErrorNotification,
   type CreationProgressStatus,
-  type CreationStepSpec,
 } from './online/OnlineRoomCreationProgress';
-
 import {
-  BOT_POLICY_LABELS,
-  FORMAT_LABELS,
-  formatMatchDurationLabel,
+  OnlineRoomConfigSummaryCard,
   type HostMatchBotPolicy,
   type HostMatchConfig,
   type HostMatchDurationPreset,
   type HostMatchTeamFormat,
 } from './online/OnlineRoomConfigSummaryCard';
 
-export type { Layer3HostMatchRecipeProps };
+export type { Layer3HostMatchRecipeProps, Layer3HostMatchStateOverride };
 
 export const DEFAULT_HOST_MATCH_CONFIG: HostMatchConfig = {
   playerName: `Player${Math.floor(1000 + Math.random() * 9000)}`,
-  roomCode: generateRandomFourDigitRoomCode(0x0f),
+  roomCode: generateRandomRoomCode(0x0f),
   roomKey: '',
   teamFormat: 'doubles',
   botPolicy: 'auto-fill',
@@ -56,38 +42,46 @@ export const DEFAULT_HOST_MATCH_CONFIG: HostMatchConfig = {
  * Updated layout:
  * 1. Player Name: + "Not you?" (jumps to Garage Sync)
  * 2. Room Code (left 50% + Randomize) | Lock + Key (right 50%, gray "None" placeholder)
- * 3. Current Configuration box (framed like Settings -> Advanced -> Show box):
- *    - Header: "Current Configuration" + "Edit" underlined disclosure button
+ * 3. Current Configuration box (OnlineRoomConfigSummaryCard):
+ *    - Header: "Current Configuration" + disclosure toggle
  *    - Summary row: Format | Bot Policy | Duration
- *    - Expanded Edit drawer:
- *      - Team Format (Standard | Doubles | Duel)
- *      - Bot Fill Policy (No Bots | Auto-Fill | Vs AI | Custom)
- *      - Match Duration (1:30 | 3:00 | 5:00 | Custom -> 0s..300s slider)
- *      - Full-width "Advanced Settings" bar button
- * 4. 5-step creation progress bar on "Create & Host" (Stage Name left, X/5 right, Description below, Progress Bar at bottom, with Error Simulation)
+ *    - Expanded Edit drawer: Team Format, Bot Fill Policy, Match Duration, Advanced Settings
+ * 4. 5-step creation progress bar on "Create & Host"
  */
 export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React.memo((rawProps) => {
   const {
-  isLight = false, roomType = 'match', title, defaultEditingConfig = false, config: controlledConfigProp, settings: controlledSettingsProp,
-  defaultConfig, onChange, onConfigChange, onBack = () => {}, onNavigateGarageSync,
-  onNavigateSignalingConfig, onNavigateAdvancedSettings, onStartHost, onCancelHost, onRetryHost,
-  progressStatus: controlledProgressStatus, currentStep: controlledCurrentStep,
-  onProgressStatusChange, onCurrentStepChange, steps,
-} = useLayer3HostMatchStoreBinding(rawProps);
-  const hostMask = useSignalingProfileStore((s) => s.hostMask);
+    isLight = false,
+    roomType = 'match',
+    title,
+    defaultEditingConfig = false,
+    config: controlledConfigProp,
+    defaultConfig,
+    onChange,
+    onBack = () => {},
+    onNavigateGarageSync,
+    onNavigateSignalingConfig,
+    onNavigateAdvancedSettings,
+    onStartHost,
+    onCancelHost,
+    onRetryHost,
+    progressStatus: controlledProgressStatus,
+    currentStep: controlledCurrentStep,
+    onProgressStatusChange,
+    onCurrentStepChange,
+    steps,
+  } = useLayer3HostMatchStoreBinding(rawProps);
   const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
   const sizing = panels['layer3-host-match'];
-  const { titleFontSize, rowGap, paddingX } = useSettingActionRowStore();
+  const { paddingX } = useSettingActionRowStore();
 
   const [internalConfig, setInternalConfig] = useState<HostMatchConfig>({
     ...DEFAULT_HOST_MATCH_CONFIG,
     ...defaultConfig,
   });
 
-  const controlledSource = controlledConfigProp ?? controlledSettingsProp;
   const resolvedConfig: HostMatchConfig = {
     ...internalConfig,
-    ...controlledSource,
+    ...controlledConfigProp,
   };
 
   const updateConfig = (patch: Partial<HostMatchConfig>) => {
@@ -95,11 +89,10 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
       ...resolvedConfig,
       ...patch,
     };
-    if (controlledSource === undefined) {
+    if (controlledConfigProp === undefined) {
       setInternalConfig(next);
     }
     onChange?.(next, patch);
-    onConfigChange?.(next, patch);
   };
 
   const { playerName, roomCode, roomKey, teamFormat, botPolicy, durationPreset, customDurationSeconds } = resolvedConfig;
@@ -153,14 +146,8 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
     return () => clearStepTimer();
   }, []);
 
-  const handleRandomizeCode = () => {
-    const code = generateRandomFourDigitRoomCode(hostMask);
-    setRoomCode(code);
-  };
-
   const resolvedDurationSeconds =
     durationPreset === 'custom' ? customDurationSeconds : Number(durationPreset);
-  const durationSummaryText = formatMatchDurationLabel(resolvedDurationSeconds);
 
   const startStepSequence = (willFail: boolean) => {
     clearStepTimer();
@@ -235,14 +222,15 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
         >
           {/* 1 & 2. Player Name + Room Code / Key */}
           <OnlineRoomIdentityFields
-            playerName={playerName}
-            onPlayerNameChange={setPlayerName}
-            roomCode={roomCode}
-            onRoomCodeChange={setRoomCode}
-            roomKey={roomKey}
-            onRoomKeyChange={setRoomKey}
+            identity={{
+              playerName,
+              onPlayerNameChange: setPlayerName,
+              roomCode,
+              onRoomCodeChange: setRoomCode,
+              roomKey,
+              onRoomKeyChange: setRoomKey,
+            }}
             showRandomize={true}
-            onRandomizeRoomCode={handleRandomizeCode}
             onNotYouClick={onNavigateGarageSync}
             onSignalingConfigClick={onNavigateSignalingConfig}
             onHoverDesc={setHoveredDesc}
@@ -256,190 +244,24 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
               marginRight: `${Math.max(0, paddingX)}px`,
             }}
             data-ui-element="host-match-current-config-box"
-            className={`rounded-xl border transition-colors ${
-              isLight
-                ? 'border-neutral-300/90 bg-neutral-100/55'
-                : 'border-neutral-800 bg-neutral-900/45'
-            }`}
           >
-            {/* Box Header: Current Configuration + Edit */}
-            <div className="flex items-center justify-between gap-3 px-3.5 pt-3 pb-2">
-              <span
-                style={{ fontSize: `${Math.max(13, titleFontSize)}px` }}
-                className={`font-semibold tracking-tight ${
-                  isLight ? 'text-neutral-900' : 'text-neutral-100'
-                }`}
-              >
-                Current Configuration
-              </span>
-
-              <button
-                type="button"
-                onClick={() => setIsEditingConfig((prev) => !prev)}
-                onMouseEnter={() =>
-                  setHoveredDesc(
-                    'Edit: Expand or collapse Team Format, Bot Fill Policy, Match Duration, and Advanced Settings.'
-                  )
-                }
-                onMouseLeave={() => setHoveredDesc(null)}
-                className={`inline-flex items-center gap-1 text-xs font-medium underline underline-offset-4 decoration-1 cursor-pointer transition-colors ${
-                  isEditingConfig
-                    ? isLight
-                      ? 'text-neutral-900 decoration-neutral-900'
-                      : 'text-white decoration-white'
-                    : isLight
-                    ? 'text-neutral-600 hover:text-neutral-900 decoration-neutral-400 hover:decoration-neutral-800'
-                    : 'text-neutral-300 hover:text-white decoration-neutral-500 hover:decoration-neutral-200'
-                }`}
-              >
-                <span>Edit</span>
-                {isEditingConfig ? (
-                  <ChevronUp className="h-3.5 w-3.5" />
-                ) : (
-                  <ChevronDown className="h-3.5 w-3.5" />
-                )}
-              </button>
-            </div>
-
-            {/* 3-Column Summary Strip: Format | Bot Policy | Duration */}
-            <div className="grid grid-cols-3 gap-2 px-3.5 pb-3">
-              {[
-                { label: 'Format', val: FORMAT_LABELS[teamFormat], mono: false },
-                { label: 'Bot Policy', val: BOT_POLICY_LABELS[botPolicy], mono: false },
-                { label: 'Duration', val: durationSummaryText, mono: true },
-              ].map((cell) => (
-                <div
-                  key={cell.label}
-                  className={`flex flex-col gap-0.5 px-2.5 py-2 rounded-lg border ${
-                    isLight ? 'bg-white/80 border-neutral-200/90' : 'bg-neutral-950/60 border-neutral-800/90'
-                  }`}
-                >
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400">
-                    {cell.label}
-                  </span>
-                  <span
-                    className={`text-xs ${cell.mono ? 'font-mono ' : ''}font-semibold truncate ${
-                      isLight ? 'text-neutral-800' : 'text-neutral-100'
-                    }`}
-                  >
-                    {cell.val}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Expanded Editable Controls */}
-            {isEditingConfig && (
-              <div
-                className={`flex flex-col px-2.5 pt-2.5 pb-3 border-t ${
-                  isLight ? 'border-neutral-200/90' : 'border-neutral-800/90'
-                }`}
-                style={{ gap: `${Math.max(4, rowGap)}px` }}
-              >
-                {/* Team Format (3 options) */}
-                <SettingSegmentedRow
-                  icon={Users}
-                  iconColor="text-sky-400"
-                  title="Team Format"
-                  value={teamFormat}
-                  onChange={(v) => setTeamFormat(v as HostMatchTeamFormat)}
-                  layout="inline"
-                  bordered={false}
-                  showDescription={false}
-                  options={[{ value: 'standard', label: 'Standard' }, { value: 'doubles', label: 'Doubles' }, { value: 'duel', label: 'Duel' }]}
-                  hoverDescription="Team Format: Standard (3v3), Doubles (2v2), or Duel (1v1) team slot allocation."
-                  onHover={(desc) => desc && setHoveredDesc(desc)}
-                  onLeave={() => setHoveredDesc(null)}
-                  isLight={isLight}
-                />
-
-                {/* Bot Fill Policy (4 options) */}
-                <SettingSegmentedRow
-                  icon={Bot}
-                  iconColor="text-rose-400"
-                  title="Bot Fill Policy"
-                  value={botPolicy}
-                  onChange={(v) => setBotPolicy(v as HostMatchBotPolicy)}
-                  layout="inline"
-                  bordered={false}
-                  showDescription={false}
-                  options={[{ value: 'none', label: 'No Bots' }, { value: 'auto-fill', label: 'Auto-Fill' }, { value: 'vs-ai', label: 'Vs AI' }, { value: 'custom', label: 'Custom' }]}
-                  hoverDescription="Bot Fill Policy: Control whether empty slots stay open, auto-fill with bots, or pit human party vs AI."
-                  onHover={(desc) => desc && setHoveredDesc(desc)}
-                  onLeave={() => setHoveredDesc(null)}
-                  isLight={isLight}
-                />
-
-                {/* Match Duration (1:30 | 3:00 | 5:00 | Custom) */}
-                <SettingSegmentedRow
-                  icon={Clock}
-                  iconColor="text-emerald-400"
-                  title="Match Duration"
-                  value={durationPreset}
-                  onChange={(v) => setDurationPreset(v as HostMatchDurationPreset)}
-                  layout="inline"
-                  bordered={false}
-                  showDescription={false}
-                  options={[{ value: '90', label: '1:30' }, { value: '180', label: '3:00' }, { value: '300', label: '5:00' }, { value: 'custom', label: 'Custom' }]}
-                  hoverDescription="Match Duration: Regulation clock length. Select Custom to set any duration from 0s (instant Overtime) up to 5:00."
-                  onHover={(desc) => desc && setHoveredDesc(desc)}
-                  onLeave={() => setHoveredDesc(null)}
-                  isLight={isLight}
-                />
-
-                {/* Custom Duration Slider (0s .. 300s) */}
-                {durationPreset === 'custom' && (
-                  <div
-                    className={`mx-2 my-1 px-3 py-2.5 rounded-xl border ${
-                      isLight
-                        ? 'bg-white/90 border-neutral-200/90'
-                        : 'bg-neutral-950/70 border-neutral-800'
-                    }`}
-                    onMouseEnter={() =>
-                      setHoveredDesc(
-                        'Custom Match Duration: 0s to 300s (5 minutes). Setting 0s starts the match directly in Overtime.'
-                      )
-                    }
-                    onMouseLeave={() => setHoveredDesc(null)}
-                  >
-                    <SliderControl
-                      label={`Custom Duration (${formatMatchDurationLabel(customDurationSeconds)})`}
-                      value={customDurationSeconds}
-                      min={0}
-                      max={300}
-                      step={1}
-                      unit="s"
-                      editable={true}
-                      colorScheme="amber"
-                      onChange={setCustomDurationSeconds}
-                      isLight={isLight}
-                    />
-                  </div>
-                )}
-
-                {/* Full-width Long Bar Button: Advanced Settings */}
-                <div className="pt-1.5 px-1">
-                  <button
-                    type="button"
-                    onClick={onNavigateAdvancedSettings}
-                    onMouseEnter={() =>
-                      setHoveredDesc(
-                        'Advanced Settings: Configure custom bot counts, mutator physics presets, and simulation rules.'
-                      )
-                    }
-                    onMouseLeave={() => setHoveredDesc(null)}
-                    className={`w-full py-2 px-4 rounded-xl border text-xs font-semibold tracking-wide flex items-center justify-center gap-2 transition-colors cursor-pointer ${
-                      isLight
-                        ? 'bg-white hover:bg-neutral-200/70 border-neutral-300 text-neutral-800 shadow-2xs'
-                        : 'bg-neutral-800/90 hover:bg-neutral-700/90 border-neutral-700 text-neutral-100'
-                    }`}
-                  >
-                    <SlidersHorizontal className="h-3.5 w-3.5 text-amber-500" />
-                    <span>Advanced Settings</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            <OnlineRoomConfigSummaryCard
+              title="Current Configuration"
+              teamFormat={teamFormat}
+              onChangeTeamFormat={setTeamFormat}
+              botPolicy={botPolicy}
+              onChangeBotPolicy={setBotPolicy}
+              durationPreset={durationPreset}
+              onChangeDurationPreset={setDurationPreset}
+              customDurationSeconds={customDurationSeconds}
+              onChangeCustomDurationSeconds={setCustomDurationSeconds}
+              editable={true}
+              isEditing={isEditingConfig}
+              onToggleEditing={() => setIsEditingConfig((prev) => !prev)}
+              onNavigateAdvancedSettings={onNavigateAdvancedSettings}
+              onHoverDesc={setHoveredDesc}
+              isLight={isLight}
+            />
           </div>
         </div>
 
