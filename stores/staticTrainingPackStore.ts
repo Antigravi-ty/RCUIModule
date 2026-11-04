@@ -1,4 +1,10 @@
 import { createStaticTrainingShotActions } from './staticTrainingShotActions';
+import {
+  createStaticTrainingVarianceActions,
+  type StaticTrainingPackRuntimeHandlers,
+  type SyncAllTrainingTelemetryState,
+  type TrainingSyncAuthorityMode,
+} from './staticTrainingSyncAndVarianceSlice';
 import { create } from 'zustand';
 import {
   type StaticTrainingPackMetadata,
@@ -6,22 +12,15 @@ import {
   type EditSubMode,
   EDIT_SUB_MODES_ORDER,
   MAX_SHOTS_PER_PACK,
-  generateUUID,
-  createDefaultShotItem,
   cloneShotItem,
   areShotItemsEqual,
   areShotListsEqual,
   listStaticTrainingPacks,
   loadStaticTrainingPackByUuid,
   saveStaticTrainingPackFull,
-  deleteStaticTrainingPackByUuid,
   saveEditWorkspacePackFull,
   saveSingleEditWorkspaceShotItem,
   clearEditWorkspaceByUuid,
-  exportStaticTrainingPackRCSPack,
-  importStaticTrainingPackFromFile,
-  exportSingleShotItemToJson,
-  parseSingleShotItemFromJsonFile,
 } from './staticTrainingPackStorage';
 import { floatingStore } from './floatingStore';
 import {
@@ -29,8 +28,6 @@ import {
   type TrainingVariancePresetId,
   type KevpertVarianceEra,
   DEFAULT_TRAINING_VARIANCE_CONFIG,
-  buildVarianceConfigFromPreset,
-  parseBakkesModBindString,
 } from '../config/kevpertVariancePresets';
 
 export {
@@ -40,6 +37,9 @@ export {
   type TrainingVarianceConfig,
   type TrainingVariancePresetId,
   type KevpertVarianceEra,
+  type StaticTrainingPackRuntimeHandlers,
+  type SyncAllTrainingTelemetryState,
+  type TrainingSyncAuthorityMode,
   MAX_SHOTS_PER_PACK,
   areShotItemsEqual,
   areShotListsEqual,
@@ -126,16 +126,6 @@ export function buildActivePackBundle(
   };
 }
 
-export interface StaticTrainingPackRuntimeHandlers {
-  onShotChanged?: (shotIndex: number) => void;
-  onResetShotRequested?: () => void;
-  onEditVariableMutated?: (draft: StaticTrainingShotItem) => void;
-  onEditSubModeChanged?: (subMode: EditSubMode) => void;
-  onSessionModeChanged?: (mode: StaticPackSessionMode) => void;
-  onPinGhostRequested?: () => void;
-  onClearGhostRequested?: () => void;
-}
-
 export interface StaticTrainingPackStoreState {
   initialized: boolean;
   isLoading: boolean;
@@ -170,6 +160,7 @@ export interface StaticTrainingPackStoreState {
   replayType: 'goal' | 'expire' | null;
   isFreeCamTrajectoryTesting: boolean;
   isTestingSingleShot: boolean;
+  syncAllTrainingState: SyncAllTrainingTelemetryState | null;
 
   runtimeHandlers: StaticTrainingPackRuntimeHandlers;
 
@@ -230,6 +221,7 @@ export interface StaticTrainingPackStoreState {
       isFreeCamTrajectoryTesting: boolean;
       isTestingSingleShot: boolean;
       retainedGhostLabel: string | null;
+      syncAllTrainingState: SyncAllTrainingTelemetryState | null;
     }>
   ) => void;
   setRuntimeHandlers: (handlers: Partial<StaticTrainingPackRuntimeHandlers>) => void;
@@ -269,6 +261,7 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
   replayType: null,
   isFreeCamTrajectoryTesting: false,
   isTestingSingleShot: false,
+  syncAllTrainingState: null,
 
   runtimeHandlers: createGuardedRuntimeHandlers<StaticTrainingPackRuntimeHandlers>(
     'staticTrainingPackStore',
@@ -512,55 +505,7 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
     }
   },
 
-  setVarianceConfig: (patch: Partial<TrainingVarianceConfig>) => {
-    set((s) => ({
-      varianceConfig: { ...s.varianceConfig, ...patch },
-      shotAttemptCounter: s.shotAttemptCounter + 1,
-    }));
-    if (get().sessionMode === 'play') {
-      get().resetCurrentShot();
-    }
-  },
-
-  applyKevpertVariancePreset: (presetId: TrainingVariancePresetId, era?: KevpertVarianceEra) => {
-    const current = get().varianceConfig;
-    const nextConfig = buildVarianceConfigFromPreset(
-      presetId,
-      era ?? current.era,
-      current.baseSeed,
-    );
-    set((s) => ({
-      varianceConfig: nextConfig,
-      shotAttemptCounter: s.shotAttemptCounter + 1,
-    }));
-    if (get().sessionMode === 'play') {
-      get().resetCurrentShot();
-    }
-  },
-
-  applyBakkesModBindString: (raw: string) => {
-    const nextConfig = parseBakkesModBindString(raw, get().varianceConfig);
-    set((s) => ({
-      varianceConfig: nextConfig,
-      shotAttemptCounter: s.shotAttemptCounter + 1,
-    }));
-    if (get().sessionMode === 'play') {
-      get().resetCurrentShot();
-    }
-  },
-
-  pinLastAttemptAsGhost: () => {
-    get().runtimeHandlers.onPinGhostRequested?.();
-  },
-
-  clearRetainedGhost: () => {
-    set({ retainedGhostLabel: null });
-    get().runtimeHandlers.onClearGhostRequested?.();
-  },
-
-  setShowRetainedGhost: (show: boolean) => {
-    set({ showRetainedGhost: Boolean(show) });
-  },
+  ...createStaticTrainingVarianceActions(set, get),
 
   setFreeCamTrajectoryTesting: (active: boolean) => {
     set({ isFreeCamTrajectoryTesting: Boolean(active) });
@@ -574,11 +519,11 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
     set((state) => ({ ...state, ...patch }));
   },
 
-  setRuntimeHandlers: (handlers) => {
-    set((s) => ({
+  setRuntimeHandlers: (handlers: Partial<StaticTrainingPackRuntimeHandlers>) => {
+    set((state) => ({
       runtimeHandlers: createGuardedRuntimeHandlers<StaticTrainingPackRuntimeHandlers>(
         'staticTrainingPackStore',
-        { ...s.runtimeHandlers, ...handlers }
+        Object.assign({}, state.runtimeHandlers, handlers)
       ),
     }));
   },

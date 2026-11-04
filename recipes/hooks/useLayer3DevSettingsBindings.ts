@@ -52,7 +52,8 @@ export interface Layer3DevActiveTunersRecipeProps {
 export type DevTestLabTab =
   | IsolationDevTestLabTab
   | 'exp-multi-bots'
-  | 'exp-botpack-9700488';
+  | 'exp-botpack-9700488'
+  | 'syncall-ghost-training';
 
 export type LayerDevTestLabTab = DevTestLabTab;
 
@@ -258,6 +259,15 @@ export function useLayer3DevSandboxesStoreBinding(
       return;
     }
 
+    if (tab === 'syncall-ghost-training') {
+      if (matchMode === 'static-training-pack') {
+        closeMenu();
+      } else {
+        bridge.onStartStaticTrainingPack?.('play');
+      }
+      return;
+    }
+
     const labTab = tab as IsolationDevTestLabTab;
     setSelectedTab(labTab);
     applyAndRestartLab(labTab);
@@ -280,6 +290,8 @@ export function useLayer3DevSandboxesStoreBinding(
         ? rawProps.activeBenchId
         : isInDevLab
         ? activeTab
+        : matchMode === 'static-training-pack'
+        ? 'syncall-ghost-training'
         : matchMode === 'exp-multi-bots' &&
           useExperimentalMultiBotsStore.getState().activeBotpackShowcaseModel
         ? 'exp-botpack-9700488'

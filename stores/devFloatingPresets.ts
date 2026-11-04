@@ -425,6 +425,22 @@ export const BOTS_LOADOUT_PRESET: PresetConfig = {
   sourcePath: 'panels/dev/BotsLoadoutFloatingWindow.tsx',
 };
 
+export const SYNCALL_GHOST_TRAINING_PRESET: PresetConfig = {
+  id: 'syncall-ghost-training',
+  title: 'Online Training & Ghost Tape (Buddy-Box)',
+  category: 'Training',
+  width: 480,
+  height: 610,
+  minHeight: 220,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'Experimental P2P Online Training (Host/Client Join), Buddy-Box 3-Mode Authority Lease, and 120Hz Retained Ghost Tape (幽灵陪跑).',
+  menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  component: 'SyncAllGhostTrainingFloatingWindow',
+  sourcePath: 'panels/dev/SyncAllGhostTrainingFloatingWindow.tsx',
+};
+
 export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   DIAGNOSTIC_DUMP_PRESET,
   STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
@@ -450,6 +466,7 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   SPATIAL_AUDIO_TUNER_PRESET,
   ENGINE_AUDIO_TUNER_PRESET,
   BOTS_LOADOUT_PRESET,
+  SYNCALL_GHOST_TRAINING_PRESET,
 ];
 
 export const PRESET_WINDOWS: PresetConfig[] = [

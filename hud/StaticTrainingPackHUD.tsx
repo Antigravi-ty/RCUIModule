@@ -1,10 +1,13 @@
 import React from 'react';
-import { Compass, Gauge, CircleDot, Camera } from 'lucide-react';
+import { Compass, Gauge, CircleDot, Camera, Pin, Ghost } from 'lucide-react';
 import type { EditSubMode, StaticTrainingHudShot } from '../stores/hudTransientTypes';
 import {
   useStaticTrainingPackStore,
   getActiveEditItemVariable,
 } from '../stores/staticTrainingPackStore';
+import { useAppStore } from '../stores/appStore';
+import { floatingStore } from '../stores/floatingStore';
+import { SYNCALL_GHOST_TRAINING_PRESET } from '../stores/devFloatingPresets';
 
 export interface StaticTrainingPackHUDProps {
   isLight?: boolean;
@@ -58,6 +61,11 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
   );
   const isTestingSingleShot = useStaticTrainingPackStore((s) => s.isTestingSingleShot);
   const setEditSubMode = useStaticTrainingPackStore((s) => s.setEditSubMode);
+  const runtimeHandlers = useStaticTrainingPackStore((s) => s.runtimeHandlers);
+  const pinnedGhostCount = useStaticTrainingPackStore(
+    (s) => s.syncAllTrainingState?.ghostTelemetry?.pinnedTapeCount ?? 0
+  );
+  const developerMode = useAppStore((s) => s.developerMode);
 
   void editVarVersion;
 
@@ -140,6 +148,38 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-bold">
                 TEST SHOT [G]
               </span>
+            )}
+            {developerMode && (
+              <div className="flex items-center gap-1.5 pointer-events-auto ml-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    runtimeHandlers.onRetainDisplayAsGhost?.({
+                      replaceExisting: true,
+                      switchToStudentPractice: false,
+                    })
+                  }
+                  title="Pin last or current attempt as holographic Ghost Tape"
+                  className="px-2 py-0.5 rounded border text-[10px] font-bold inline-flex items-center gap-1 bg-sky-500/20 hover:bg-sky-500/30 border-sky-400/40 text-sky-300 cursor-pointer"
+                >
+                  <Pin className="h-3 w-3" />
+                  <span>Pin Ghost{pinnedGhostCount > 0 ? ` (${pinnedGhostCount})` : ''}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    floatingStore.spawnWindow({
+                      ...SYNCALL_GHOST_TRAINING_PRESET,
+                      startMinimized: false,
+                    });
+                  }}
+                  title="Open Online Training & Ghost Tape (Buddy-Box) Dev Window"
+                  className="px-2 py-0.5 rounded border text-[10px] font-bold inline-flex items-center gap-1 bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-400/40 text-cyan-300 cursor-pointer"
+                >
+                  <Ghost className="h-3 w-3" />
+                  <span>Buddy-Box</span>
+                </button>
+              </div>
             )}
           </div>
         ) : (

@@ -32,6 +32,7 @@ import {
   SUBSYSTEM_ISOLATION_LAB_PRESET,
   EXPERIMENTAL_MULTI_BOTS_PRESET,
   EXPERIMENTAL_BOT_PACK_PRESET,
+  SYNCALL_GHOST_TRAINING_PRESET,
 } from '../stores/devFloatingPresets';
 
 export type { DevTestLabTab, Layer3DevSandboxesRecipeProps };
@@ -128,6 +129,16 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
     icon: Sparkles,
     iconColor: 'text-teal-400',
   },
+  {
+    id: 'syncall-ghost-training',
+    title: 'Online Training & Ghost Tape (Buddy-Box)',
+    summary:
+      'Experimental P2P Host/Client Join, 3-Mode Buddy-Box Authority Lease & 120Hz Retained Ghost Tape (幽灵陪跑).',
+    details:
+      'Online Training & Ghost Tape (Host/Client Join · Coach Demo · Retain Display Ghost · Free Practice): Stream 120Hz training demos over P2P, pin attempts as holographic ghost cars/balls, and hand over control.',
+    icon: Layers,
+    iconColor: 'text-cyan-400',
+  },
 ];
 
 /**
@@ -182,11 +193,13 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
     }
 
     const targetPreset =
-      tab === 'exp-botpack-9700488'
-        ? EXPERIMENTAL_BOT_PACK_PRESET
-        : tab === 'exp-multi-bots'
-          ? EXPERIMENTAL_MULTI_BOTS_PRESET
-          : SUBSYSTEM_ISOLATION_LAB_PRESET;
+      tab === 'syncall-ghost-training'
+        ? SYNCALL_GHOST_TRAINING_PRESET
+        : tab === 'exp-botpack-9700488'
+          ? EXPERIMENTAL_BOT_PACK_PRESET
+          : tab === 'exp-multi-bots'
+            ? EXPERIMENTAL_MULTI_BOTS_PRESET
+            : SUBSYSTEM_ISOLATION_LAB_PRESET;
 
     floatingStore.setOpacity(70);
     const snap = floatingStore.getSnapshot();
@@ -205,7 +218,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
       } else {
         floatingStore.spawnWindow({
           ...targetPreset,
-          startMinimized: true,
+          startMinimized: tab !== 'syncall-ghost-training',
         });
       }
     }
