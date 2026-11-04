@@ -92,6 +92,9 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   const onlineSession = useAppStore((s) => s.onlineSession);
   const renderScale = useAppStore((s) => s.graphics?.renderScale ?? 100);
 
+  const [isWindowMinimized, setIsWindowMinimized] = React.useState<boolean>(() =>
+    typeof document !== 'undefined' ? Boolean(document.hidden) : false
+  );
   const [isWindowFocused, setIsWindowFocused] = React.useState<boolean>(() =>
     typeof document !== 'undefined'
       ? !document.hidden && (typeof document.hasFocus === 'function' ? document.hasFocus() : true)
@@ -101,8 +104,10 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
     const syncFocus = () => {
+      const minimized = Boolean(document.hidden);
       const focused =
-        !document.hidden && (typeof document.hasFocus === 'function' ? document.hasFocus() : true);
+        !minimized && (typeof document.hasFocus === 'function' ? document.hasFocus() : true);
+      setIsWindowMinimized(minimized);
       setIsWindowFocused(focused);
     };
     window.addEventListener('blur', syncFocus);
@@ -122,7 +127,7 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   const isPowerSaveMenuOpen = Boolean(menuOpen) && !isLivePreviewDockCollapsed;
   const isPowerSaveModeEnabled = menuPowerSave !== 'match';
   const isPowerSaveActive =
-    isPowerSaveModeEnabled && (isPowerSaveMenuOpen || !isWindowFocused);
+    isWindowMinimized || (isPowerSaveModeEnabled && (isPowerSaveMenuOpen || !isWindowFocused));
   const shouldPollTelemetry =
     telemetryEnabled && !(pauseTelemetryInPowerSave && isPowerSaveActive);
 

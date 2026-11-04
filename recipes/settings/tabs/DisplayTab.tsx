@@ -402,7 +402,7 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
             { value: '30', label: '30 FPS' },
             { value: 'disable', label: 'Disable' },
           ]}
-          hoverDescription="Controls 3D background rendering while menus are open or the window is unfocused: Extreme halts GPU rendering completely while keeping deterministic physics aligned, 15/30 FPS throttles render rate to save battery, and Disable follows your FPS Target."
+          hoverDescription="Controls 3D rendering while menus are open, window is unfocused, or minimized: Minimized windows always pause GPU rendering; Extreme freezes 3D rendering in menus and caps unfocused visible windows to 30 FPS; 15/30 FPS throttles render rate; Disable follows your FPS Target."
           onHover={(desc) => desc && onHover(desc)}
           onLeave={onLeave}
           isLight={isLight}
