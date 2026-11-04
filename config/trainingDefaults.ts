@@ -61,28 +61,28 @@ export interface TrajectoryConfig {
 
 export const DEFAULT_TRAJECTORY_CONFIG: TrajectoryConfig = {
   enabled: true,
-  predictionTicks: 600,
+  predictionTicks: 396,
   solidTicks: 50,
   transparentTicks: 20,
-  thickness: 10,
+  thickness: 20,
   opacity: 0.5,
-  color: '#B2B2B2',
+  color: '#ffffff',
   dynamicMode: true,
-  duration: 5.0,
+  duration: 3.3,
   updateMode: 'continuous-incremental',
   recomputeOnCarHit: true,
   recomputeOnWorldBounce: false,
-  deviationThresholdUu: 5.0,
-  velocityThresholdUu: 250.0,
+  deviationThresholdUu: 5,
+  velocityThresholdUu: 15,
   renderStyle: 'tube-3d',
-  sampleStride: 2,
+  sampleStride: 1,
   tubeRadialSegments: 6,
-  shadingStrength: 0.68,
-  radiusTaper: 0.35,
-  horizonFade: 0.4,
-  showBounceMarkers: true,
+  shadingStrength: 0,
+  radiusTaper: 0,
+  horizonFade: 0,
+  showBounceMarkers: false,
   showGroundProjection: false,
-  dropLineIntervalTicks: 48,
+  dropLineIntervalTicks: 104,
   allowUserThicknessEdit: false,
   allowUserDashEdit: true,
 };
@@ -127,14 +127,38 @@ export function loadSavedTrajectorySettings(): Omit<TrajectoryConfig, 'duration'
         ),
         velocityThresholdUu: Math.min(
           1000,
-          Math.max(10, Number(parsed.velocityThresholdUu) || DEFAULT_TRAJECTORY_CONFIG.velocityThresholdUu!)
+          Math.max(5, Number(parsed.velocityThresholdUu) || DEFAULT_TRAJECTORY_CONFIG.velocityThresholdUu!)
         ),
         renderStyle,
         sampleStride: Math.min(8, Math.max(1, Math.round(Number(parsed.sampleStride) || DEFAULT_TRAJECTORY_CONFIG.sampleStride!))),
         tubeRadialSegments: Math.min(8, Math.max(4, Math.round(Number(parsed.tubeRadialSegments) || DEFAULT_TRAJECTORY_CONFIG.tubeRadialSegments!))),
-        shadingStrength: Math.min(1, Math.max(0, Number.isFinite(Number(parsed.shadingStrength)) ? Number(parsed.shadingStrength) : DEFAULT_TRAJECTORY_CONFIG.shadingStrength!)),
-        radiusTaper: Math.min(0.9, Math.max(0, Number.isFinite(Number(parsed.radiusTaper)) ? Number(parsed.radiusTaper) : DEFAULT_TRAJECTORY_CONFIG.radiusTaper!)),
-        horizonFade: Math.min(0.9, Math.max(0, Number.isFinite(Number(parsed.horizonFade)) ? Number(parsed.horizonFade) : DEFAULT_TRAJECTORY_CONFIG.horizonFade!)),
+        shadingStrength: Math.min(
+          1,
+          Math.max(
+            0,
+            typeof parsed.shadingStrength === 'number' && Number.isFinite(parsed.shadingStrength)
+              ? parsed.shadingStrength
+              : DEFAULT_TRAJECTORY_CONFIG.shadingStrength!
+          )
+        ),
+        radiusTaper: Math.min(
+          0.9,
+          Math.max(
+            0,
+            typeof parsed.radiusTaper === 'number' && Number.isFinite(parsed.radiusTaper)
+              ? parsed.radiusTaper
+              : DEFAULT_TRAJECTORY_CONFIG.radiusTaper!
+          )
+        ),
+        horizonFade: Math.min(
+          0.9,
+          Math.max(
+            0,
+            typeof parsed.horizonFade === 'number' && Number.isFinite(parsed.horizonFade)
+              ? parsed.horizonFade
+              : DEFAULT_TRAJECTORY_CONFIG.horizonFade!
+          )
+        ),
         showBounceMarkers:
           typeof parsed.showBounceMarkers === 'boolean'
             ? parsed.showBounceMarkers

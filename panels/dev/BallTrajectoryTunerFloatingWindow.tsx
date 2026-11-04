@@ -141,10 +141,10 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
     }
   })();
 
-  const horizonSeconds = Number(((cfg.predictionTicks || 600) / 120).toFixed(1));
-  const shadingPct = Math.round((cfg.shadingStrength ?? 0.68) * 100);
-  const taperPct = Math.round((cfg.radiusTaper ?? 0.35) * 100);
-  const fadePct = Math.round((cfg.horizonFade ?? 0.4) * 100);
+  const horizonSeconds = Number(((cfg.predictionTicks || 396) / 120).toFixed(1));
+  const shadingPct = Math.round((cfg.shadingStrength ?? 0) * 100);
+  const taperPct = Math.round((cfg.radiusTaper ?? 0) * 100);
+  const fadePct = Math.round((cfg.horizonFade ?? 0) * 100);
   const opacityPct =
     (cfg.opacity ?? 0.5) <= 1.0
       ? Math.round((cfg.opacity ?? 0.5) * 100)
@@ -365,8 +365,8 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
 
         <SliderControl
           label="Activation Velocity Threshold"
-          value={cfg.velocityThresholdUu ?? 250}
-          min={15}
+          value={cfg.velocityThresholdUu ?? 15}
+          min={5}
           max={600}
           step={5}
           unit=" UU/s"
@@ -407,7 +407,7 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
         <div className="grid grid-cols-2 gap-2">
           <SliderControl
             label="Tick Sample Stride"
-            value={cfg.sampleStride ?? 2}
+            value={cfg.sampleStride ?? 1}
             min={1}
             max={6}
             step={1}
@@ -468,7 +468,7 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
               <span className={`text-[9px] ${mutedText}`}>Surface-aligned impact discs</span>
             </div>
             <ToggleSwitch
-              checked={cfg.showBounceMarkers !== false}
+              checked={Boolean(cfg.showBounceMarkers)}
               onChange={(showBounceMarkers) => updateTrajectory({ showBounceMarkers })}
               isLight={isLight}
             />
@@ -492,7 +492,7 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
         {cfg.showGroundProjection && (
           <SliderControl
             label="Altitude Drop Line Interval"
-            value={cfg.dropLineIntervalTicks ?? 48}
+            value={cfg.dropLineIntervalTicks ?? 104}
             min={16}
             max={120}
             step={8}
@@ -520,7 +520,7 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
         <div className="grid grid-cols-2 gap-2">
           <SliderControl
             label="Line Thickness (% Ball)"
-            value={cfg.thickness ?? 10}
+            value={cfg.thickness ?? 20}
             min={1}
             max={75}
             step={1}

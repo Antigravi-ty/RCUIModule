@@ -98,7 +98,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
 
   const [internalConfig, setInternalConfig] = useState<TrajectoryConfig>(initialSeed);
   const [customHexColor, setCustomHexColor] = useState<string>(() =>
-    initialSeed.color.startsWith('#') ? initialSeed.color : '#fbbf24'
+    initialSeed.color.startsWith('#') ? initialSeed.color : '#ffffff'
   );
 
   const hasInitialSeedOverride = Boolean(defaultConfig || defaultSettings);
@@ -126,8 +126,8 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
   const enablePredictor = resolved.enabled;
   const patternMode: 'dynamic' | 'static' = resolved.dynamicMode ? 'dynamic' : 'static';
   const trajectoryDuration =
-    resolved.duration ?? Number(((resolved.predictionTicks || 600) / 120).toFixed(1));
-  const lineThickness = resolved.thickness ?? 10;
+    resolved.duration ?? Number(((resolved.predictionTicks || 396) / 120).toFixed(1));
+  const lineThickness = resolved.thickness ?? 20;
   // Support both 0..1 fraction (RocketCompanion store) and 5..100 percentage
   const isNormalizedOpacity = (resolved.opacity ?? 0.5) <= 1.0;
   const lineOpacityPct = isNormalizedOpacity
@@ -143,7 +143,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
   const canEditThickness = Boolean(developerMode || resolved.allowUserThicknessEdit);
   const canEditDashes = Boolean(developerMode || resolved.allowUserDashEdit !== false);
 
-  const normalizedColor = (resolved.color || '#fbbf24').toLowerCase();
+  const normalizedColor = (resolved.color || '#ffffff').toLowerCase();
   const matchedPreset = PRESET_COLOR_MAP.find(
     (p) => p.value.toLowerCase() === normalizedColor
   );
