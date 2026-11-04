@@ -36,6 +36,7 @@ export const STORAGE_KEYS = Object.freeze({
   PLAYER_ANTHEM_RANDOM_PREFS: 'player-anthem-random-prefs',
   BGM_PREFS: 'bgm-preferences',
   SPATIAL_AUDIO_TUNER: 'spatial-audio-tuner',
+  SPATIAL_ATTENUATION_PROFILES: 'spatial-attenuation-profiles-v1',
   BOTS_LOADOUT_CONFIG: 'bots-loadout-config',
   ACCENT_THEME: 'rc-accent-theme-v2',
   BOOST_GAUGE_TOKENS: 'rc-boost-gauge-tokens-v2',
