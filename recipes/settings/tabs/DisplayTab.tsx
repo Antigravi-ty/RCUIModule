@@ -393,7 +393,7 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
           icon={BatteryCharging}
           iconName="battery-charging"
           label="Power Saving"
-          subtitle="3D scene render behavior while menus are open (Disable follows FPS Target)"
+          subtitle="3D scene render behavior while menus are open or window is unfocused (Disable follows FPS Target)"
           value={powerSaveValue}
           onChange={handlePowerSaveChange}
           options={[
@@ -402,7 +402,7 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
             { value: '30', label: '30 FPS' },
             { value: 'disable', label: 'Disable' },
           ]}
-          hoverDescription="Controls 3D background rendering while menus are open: Extreme halts GPU rendering completely, 15/30 FPS throttles render rate to save battery, and Disable follows your FPS Target."
+          hoverDescription="Controls 3D rendering while menus are open, window is unfocused, or minimized: Minimized windows always pause GPU rendering; Extreme freezes 3D rendering in menus and caps unfocused visible windows to 30 FPS; 15/30 FPS throttles render rate; Disable follows your FPS Target."
           onHover={(desc) => desc && onHover(desc)}
           onLeave={onLeave}
           isLight={isLight}
