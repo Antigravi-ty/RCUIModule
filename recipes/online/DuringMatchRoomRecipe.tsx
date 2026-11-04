@@ -39,7 +39,7 @@ export interface DuringMatchRoomConfig {
   customDurationSeconds?: number;
 }
 
-export interface DuringMatchSubViewProps {
+export interface DuringMatchRoomRecipeProps {
   role: 'host' | 'client';
   signalingState?: SignalingHealthState;
   onRefreshSignaling?: () => void | Promise<void>;
@@ -103,7 +103,7 @@ const INITIAL_SPECTATORS: SpectatorRouteEntry[] = [
  *   - Host: Sees total spectators + `from player` route diagnostics, with icon-only `UserRoundX` kick.
  *   - Client: Sees spectators relaying through this client (`SPECTATING VIA YOU`), with icon-only `UserRoundX` remove.
  */
-export const DuringMatchSubView: React.FC<DuringMatchSubViewProps> = React.memo(({
+export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React.memo(({
   role,
   signalingState: controlledSignaling,
   onRefreshSignaling,
@@ -495,4 +495,4 @@ export const DuringMatchSubView: React.FC<DuringMatchSubViewProps> = React.memo(
   );
 });
 
-DuringMatchSubView.displayName = 'DuringMatchSubView';
+DuringMatchRoomRecipe.displayName = 'DuringMatchRoomRecipe';

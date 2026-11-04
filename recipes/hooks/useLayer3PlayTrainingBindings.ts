@@ -97,7 +97,7 @@ export function useLayer3ExhibitionStoreBinding<TProps extends object>(
     onSelectDifficulty: props.onSelectDifficulty ?? handleStartExhibition,
     onNavigateAdvancedMutators:
       props.onNavigateAdvancedMutators ??
-      (() => navigate('exp-multi-bots-config')),
+      (() => navigate('exp-multi-bots')),
     onBack: props.onBack ?? goBack,
   } as TProps;
 }

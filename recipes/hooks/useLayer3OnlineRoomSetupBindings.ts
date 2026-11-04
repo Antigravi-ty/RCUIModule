@@ -11,7 +11,7 @@ import type { CreationProgressStatus } from '../online/OnlineRoomCreationProgres
 import {
   FORMAT_TO_GAME_MODE,
   GAME_MODE_TO_FORMAT,
-} from './useLayer2RoomHostControlBinding';
+} from './useLayer2ManageRoomBinding';
 
 export interface JoinRoomConfig {
   playerName: string;

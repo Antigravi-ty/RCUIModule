@@ -25,18 +25,18 @@ export type ActiveMenuRoute =
   | 'join-room'
   | 'host-training'
   | 'custom-play'
-  | 'room-host-control'
+  | 'manage-room'
   | 'garage'
   | 'settings'
   | 'audio-eq'
   | 'trajectory'
   | 'camera'
-  | 'training'
+  | 'training-config'
   | 'keybindings'
-  | 'advanced-controller'
+  | 'controller-settings'
   | 'advanced-audio'
   | 'event-trigger-rules'
-  | 'exp-multi-bots-config'
+  | 'exp-multi-bots'
   | 'dev-sandboxes'
   | 'dev-active-tuners'
   | 'dev-calibrated-presets'
@@ -53,18 +53,18 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'join-room': 'play',
   'host-training': 'play',
   'custom-play': 'play',
-  'room-host-control': 'main-menu',
+  'manage-room': 'main-menu',
   'garage': 'main-menu',
   'settings': 'main-menu',
   'audio-eq': 'settings',
   'trajectory': 'settings',
   'camera': 'settings',
-  'training': 'settings',
+  'training-config': 'settings',
   'keybindings': 'settings',
-  'advanced-controller': 'keybindings',
+  'controller-settings': 'keybindings',
   'advanced-audio': 'dev-active-tuners',
   'event-trigger-rules': 'dev-active-tuners',
-  'exp-multi-bots-config': 'dev-sandboxes',
+  'exp-multi-bots': 'dev-sandboxes',
   'dev-sandboxes': 'settings',
   'dev-active-tuners': 'settings',
   'dev-calibrated-presets': 'settings',

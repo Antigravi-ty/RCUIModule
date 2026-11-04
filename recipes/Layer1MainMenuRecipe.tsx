@@ -65,7 +65,7 @@ export interface Layer1MainMenuRecipeProps {
   onNavigatePlay?: () => void;
   onNavigateGarage?: () => void;
   onNavigateSettings?: (targetTab?: string) => void;
-  onNavigateRoomControl?: () => void;
+  onNavigateManageRoom?: () => void;
   onNavigateExpMultiBots?: () => void;
   onLeaveRoom?: () => void;
   onExitEditMode?: () => void;
@@ -127,7 +127,7 @@ export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawPro
     onNavigatePlay,
     onNavigateGarage,
     onNavigateSettings,
-    onNavigateRoomControl,
+    onNavigateManageRoom,
     onNavigateExpMultiBots,
     onLeaveRoom,
     onExitEditMode,
@@ -170,7 +170,7 @@ export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawPro
   const handleCustomRowClick = () => {
     const actionType = ctxSpec.customActionRow?.actionType;
     if (actionType === 'manage-room') {
-      onNavigateRoomControl?.();
+      onNavigateManageRoom?.();
     } else if (actionType === 'exp-multi-bots') {
       onNavigateExpMultiBots?.();
     } else {

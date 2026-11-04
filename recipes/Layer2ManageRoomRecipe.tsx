@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
-import { useLayer2RoomHostControlBinding } from './hooks/useLayer2RoomHostControlBinding';
+import { useLayer2ManageRoomBinding } from './hooks/useLayer2ManageRoomBinding';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
-import { MatchLobbySubView } from './online/MatchLobbySubView';
+import { MatchLobbyRoomRecipe } from './online/MatchLobbyRoomRecipe';
 import type {
   LobbyPlayerSlot,
   LobbyTeamAssignment,
 } from './online/MatchLobbyTeamRosterSection';
-import { DuringMatchSubView } from './online/DuringMatchSubView';
+import { DuringMatchRoomRecipe } from './online/DuringMatchRoomRecipe';
 import type { ActiveMatchPlayer } from './online/DuringMatchClientRejoinControls';
 import {
-  OnlineWarmupSubView,
+  OnlineWarmupRoomRecipe,
   type WarmupRoomPlayer,
-} from './online/OnlineWarmupSubView';
+} from './online/OnlineWarmupRoomRecipe';
 import type { SignalingHealthState } from './online/OnlineRoomTopStatusBar';
 
 export type RoomStateMode = 'free-play' | 'match';
@@ -116,7 +116,7 @@ export const resolveOnlineSessionContextId = (
   }
 };
 
-export interface Layer2OnlineRoomControlStateOverride {
+export interface Layer2ManageRoomStateOverride {
   roomCode?: string;
   signalingState?: SignalingHealthState;
   onRefreshSignaling?: () => void | Promise<void>;
@@ -143,7 +143,7 @@ export interface Layer2OnlineRoomControlStateOverride {
   onTogglePause?: () => void;
 }
 
-export interface Layer2OnlineRoomControlRecipeProps {
+export interface Layer2ManageRoomRecipeProps {
   isLight?: boolean;
   developerMode?: boolean;
   topSlot?: React.ReactNode;
@@ -156,21 +156,21 @@ export interface Layer2OnlineRoomControlRecipeProps {
   onOpenNetHud?: () => void;
   onCloseRoom?: () => void;
   onBack?: () => void;
-  stateOverride?: Layer2OnlineRoomControlStateOverride;
+  stateOverride?: Layer2ManageRoomStateOverride;
   className?: string;
 }
 
 /**
- * [Recipe] Layer 2 Online Session Room Control / Info (`Layer2OnlineRoomControlRecipe`)
+ * [Recipe] Layer 2 Online Session Room Control / Info (`Layer2ManageRoomRecipe`)
  * Decoupled router that renders the exact view for each of the 6 online session states:
- * 1. `match-lobby-host` (`MatchLobbySubView` role="host")
- * 2. `match-lobby-client` (`MatchLobbySubView` role="client")
- * 3. `online-match-host` (`DuringMatchSubView` role="host")
- * 4. `online-match-client` (`DuringMatchSubView` role="client")
- * 5. `online-warmup-host` (`OnlineWarmupSubView` role="host")
- * 6. `online-warmup-client` (`OnlineWarmupSubView` role="client")
+ * 1. `match-lobby-host` (`MatchLobbyRoomRecipe` role="host")
+ * 2. `match-lobby-client` (`MatchLobbyRoomRecipe` role="client")
+ * 3. `online-match-host` (`DuringMatchRoomRecipe` role="host")
+ * 4. `online-match-client` (`DuringMatchRoomRecipe` role="client")
+ * 5. `online-warmup-host` (`OnlineWarmupRoomRecipe` role="host")
+ * 6. `online-warmup-client` (`OnlineWarmupRoomRecipe` role="client")
  */
-export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlRecipeProps> = React.memo((rawProps) => {
+export const Layer2ManageRoomRecipe: React.FC<Layer2ManageRoomRecipeProps> = React.memo((rawProps) => {
   const {
     isLight = true,
     roomCode = 'RL-8924',
@@ -206,7 +206,7 @@ export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlReci
     onCloseRoom,
     onBack = () => {},
     className = '',
-  } = useLayer2RoomHostControlBinding({ ...rawProps.stateOverride, ...rawProps });
+  } = useLayer2ManageRoomBinding({ ...rawProps.stateOverride, ...rawProps });
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const activeContextId = controlledContext ?? 'match-lobby-host';
@@ -215,7 +215,7 @@ export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlReci
     ONLINE_SESSION_CONTEXT_SPECS[0];
 
   const sizing = useMenuLayoutStore(
-    (s) => s.panels?.['layer2-room-host-control'] ?? DEFAULT_PANEL_SIZING['layer2-room-host-control']
+    (s) => s.panels?.['layer2-manage-room'] ?? DEFAULT_PANEL_SIZING['layer2-manage-room']
   );
 
   const resolvedRoomCode =
@@ -237,7 +237,7 @@ export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlReci
         {topSlot}
 
         {activeSpec.stage === 'lobby' && (
-          <MatchLobbySubView
+          <MatchLobbyRoomRecipe
             role={activeSpec.role}
             signalingState={signalingState}
             onRefreshSignaling={onRefreshSignaling}
@@ -274,7 +274,7 @@ export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlReci
         )}
 
         {activeSpec.stage === 'during-match' && (
-          <DuringMatchSubView
+          <DuringMatchRoomRecipe
             role={activeSpec.role}
             signalingState={signalingState}
             onRefreshSignaling={onRefreshSignaling}
@@ -299,7 +299,7 @@ export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlReci
         )}
 
         {activeSpec.stage === 'warmup' && (
-          <OnlineWarmupSubView
+          <OnlineWarmupRoomRecipe
             role={activeSpec.role}
             roomCode={resolvedRoomCode}
             signalingState={signalingState}
@@ -322,4 +322,4 @@ export const Layer2OnlineRoomControlRecipe: React.FC<Layer2OnlineRoomControlReci
   );
 });
 
-Layer2OnlineRoomControlRecipe.displayName = 'Layer2OnlineRoomControlRecipe';
+Layer2ManageRoomRecipe.displayName = 'Layer2ManageRoomRecipe';

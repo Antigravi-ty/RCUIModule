@@ -97,7 +97,7 @@ export const createNavigationAndCarSlice: StateCreator<
   navigate: (route) => {
     const current = get().activeRoute;
     const wasCollapsed = get().isLivePreviewCollapsed;
-    if (route === 'exp-multi-bots-config') {
+    if (route === 'exp-multi-bots') {
       lastExpMultiBotsParentRoute = current === 'main-menu' ? 'main-menu' : 'settings';
     }
     set({ activeRoute: route, isLivePreviewCollapsed: false });
@@ -110,7 +110,7 @@ export const createNavigationAndCarSlice: StateCreator<
   goBack: () => {
     const current = get().activeRoute;
     const wasCollapsed = get().isLivePreviewCollapsed;
-    if (current === 'exp-multi-bots-config') {
+    if (current === 'exp-multi-bots') {
       set({ activeRoute: lastExpMultiBotsParentRoute, isLivePreviewCollapsed: false });
       floatingStore.triggerBatchMinimize();
       if (wasCollapsed) {

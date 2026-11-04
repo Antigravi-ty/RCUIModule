@@ -5,8 +5,8 @@ export type CanonicalMenuPanelId =
   | 'layer2-play'
   | 'layer2-garage'
   | 'layer2-settings'
-  | 'layer2-room-host-control'
-  | 'layer3-training'
+  | 'layer2-manage-room'
+  | 'layer3-training-config'
   | 'layer3-audio-eq'
   | 'layer3-ball-trajectory'
   | 'layer3-host-match'
@@ -206,14 +206,14 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     minHeight: 220,
     maxHeight: 1120,
   },
-  'layer2-room-host-control': {
+  'layer2-manage-room': {
     mode: 'auto',
     width: 720,
     targetHeight: 500,
     minHeight: 220,
     maxHeight: 1080,
   },
-  'layer3-training': {
+  'layer3-training-config': {
     mode: 'auto',
     width: 480,
     targetHeight: 460,

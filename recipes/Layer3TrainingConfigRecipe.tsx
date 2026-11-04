@@ -21,7 +21,7 @@ export interface TrainingGameplayConfig {
   goalRestart?: boolean;
 }
 
-export interface Layer3TrainingRecipeProps {
+export interface Layer3TrainingConfigRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
   onNavigateTrajectory?: () => void;
@@ -42,7 +42,7 @@ export interface Layer3TrainingRecipeProps {
  * 4. Goal Barrier Configurator: Single-line FloatingWindowCard spawner with colored Shield icon
  * 5. Rewinder Configurator: Single-line FloatingWindowCard spawner with colored History icon
  */
-export const Layer3TrainingRecipe: React.FC<Layer3TrainingRecipeProps> = (rawProps) => {
+export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProps> = (rawProps) => {
   const {
   isLight = false,
   onBack,
@@ -51,7 +51,7 @@ export const Layer3TrainingRecipe: React.FC<Layer3TrainingRecipeProps> = (rawPro
   onUpdateGameplay,
 } = useLayer3TrainingStoreBinding(rawProps);
   const storeSizing = useMenuLayoutStore(
-    (s) => s.panels?.['layer3-training'] ?? DEFAULT_PANEL_SIZING['layer3-training']
+    (s) => s.panels?.['layer3-training-config'] ?? DEFAULT_PANEL_SIZING['layer3-training-config']
   );
   const sizing = propSizing ?? storeSizing;
   const { rowGap } = useSettingActionRowStore();

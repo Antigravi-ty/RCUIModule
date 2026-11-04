@@ -2,7 +2,7 @@ import {
   LAYER1_CONTEXT_VARIATIONS,
   type Layer1MenuContextMode,
 } from './layer1MenuContextSpecs';
-import type { OnlineSessionContextId } from './Layer2OnlineRoomControlRecipe';
+import type { OnlineSessionContextId } from './Layer2ManageRoomRecipe';
 import type { CreationProgressStatus } from './online/OnlineRoomCreationProgress';
 import type { HostMatchConfig } from './online/OnlineRoomConfigSummaryCard';
 import type { JoinRoomConfig } from './Layer3JoinRoomRecipe';
@@ -132,61 +132,61 @@ export const LAYER2_SETTINGS_STATES: RecipeStateSnapshotSpec<{
   },
 ];
 
-export const LAYER2_ROOM_HOST_CONTROL_STATES: RecipeStateSnapshotSpec<{
+export const LAYER2_MANAGE_ROOM_STATES: RecipeStateSnapshotSpec<{
   sessionContext: OnlineSessionContextId;
 }>[] = [
   {
     id: 'match-lobby-host',
     label: 'Match Lobby (Host)',
     description: 'Pre-match lobby managed by the room host with team slots, bot fill controls, and Start Match CTA.',
-    componentName: 'Layer2OnlineRoomControlRecipe',
-    sourceFile: 'recipes/Layer2OnlineRoomControlRecipe.tsx',
-    subViewFile: 'recipes/online/MatchLobbySubView.tsx',
+    componentName: 'Layer2ManageRoomRecipe',
+    sourceFile: 'recipes/Layer2ManageRoomRecipe.tsx',
+    subViewFile: 'recipes/online/MatchLobbyRoomRecipe.tsx',
     props: { sessionContext: 'match-lobby-host' },
   },
   {
     id: 'match-lobby-client',
     label: 'Match Lobby (Client)',
     description: 'Pre-match lobby viewed by a connected peer with team selection and daisy-chain spectating status.',
-    componentName: 'Layer2OnlineRoomControlRecipe',
-    sourceFile: 'recipes/Layer2OnlineRoomControlRecipe.tsx',
-    subViewFile: 'recipes/online/MatchLobbySubView.tsx',
+    componentName: 'Layer2ManageRoomRecipe',
+    sourceFile: 'recipes/Layer2ManageRoomRecipe.tsx',
+    subViewFile: 'recipes/online/MatchLobbyRoomRecipe.tsx',
     props: { sessionContext: 'match-lobby-client' },
   },
   {
     id: 'online-match-host',
     label: 'During Match (Host)',
     description: 'Live match room control for the host with pause toggle, spectator routing diagnostics, and server shutdown.',
-    componentName: 'Layer2OnlineRoomControlRecipe',
-    sourceFile: 'recipes/Layer2OnlineRoomControlRecipe.tsx',
-    subViewFile: 'recipes/online/DuringMatchSubView.tsx',
+    componentName: 'Layer2ManageRoomRecipe',
+    sourceFile: 'recipes/Layer2ManageRoomRecipe.tsx',
+    subViewFile: 'recipes/online/DuringMatchRoomRecipe.tsx',
     props: { sessionContext: 'online-match-host' },
   },
   {
     id: 'online-match-client',
     label: 'During Match (Client)',
     description: 'Live match room info for a connected client with pause request, relay status, and leave room action.',
-    componentName: 'Layer2OnlineRoomControlRecipe',
-    sourceFile: 'recipes/Layer2OnlineRoomControlRecipe.tsx',
-    subViewFile: 'recipes/online/DuringMatchSubView.tsx',
+    componentName: 'Layer2ManageRoomRecipe',
+    sourceFile: 'recipes/Layer2ManageRoomRecipe.tsx',
+    subViewFile: 'recipes/online/DuringMatchRoomRecipe.tsx',
     props: { sessionContext: 'online-match-client' },
   },
   {
     id: 'online-warmup-host',
     label: 'Online Warmup (Host)',
     description: 'Teamless warmup session control for the host with up to 6 active players and advanced management.',
-    componentName: 'Layer2OnlineRoomControlRecipe',
-    sourceFile: 'recipes/Layer2OnlineRoomControlRecipe.tsx',
-    subViewFile: 'recipes/online/OnlineWarmupSubView.tsx',
+    componentName: 'Layer2ManageRoomRecipe',
+    sourceFile: 'recipes/Layer2ManageRoomRecipe.tsx',
+    subViewFile: 'recipes/online/OnlineWarmupRoomRecipe.tsx',
     props: { sessionContext: 'online-warmup-host' },
   },
   {
     id: 'online-warmup-client',
     label: 'Online Warmup (Client)',
     description: 'Teamless warmup session info for a peer with client-side Ghost Mode toggle and leave room action.',
-    componentName: 'Layer2OnlineRoomControlRecipe',
-    sourceFile: 'recipes/Layer2OnlineRoomControlRecipe.tsx',
-    subViewFile: 'recipes/online/OnlineWarmupSubView.tsx',
+    componentName: 'Layer2ManageRoomRecipe',
+    sourceFile: 'recipes/Layer2ManageRoomRecipe.tsx',
+    subViewFile: 'recipes/online/OnlineWarmupRoomRecipe.tsx',
     props: { sessionContext: 'online-warmup-client' },
   },
 ];

@@ -179,7 +179,7 @@ export function useLayer3DevSandboxesStoreBinding<
       if (props.onNavigateExpMultiBots) {
         props.onNavigateExpMultiBots();
       } else {
-        navigate('exp-multi-bots-config');
+        navigate('exp-multi-bots');
       }
       return;
     }
@@ -226,14 +226,14 @@ export function useLayer3DevSandboxesStoreBinding<
     onEnterBench: props.onEnterBench ?? handleEnterBench,
     onNavigateExpMultiBots:
       props.onNavigateExpMultiBots ??
-      (() => navigate('exp-multi-bots-config')),
+      (() => navigate('exp-multi-bots')),
     onNavigateExpBotpack9700488:
       props.onNavigateExpBotpack9700488 ??
       (() => {
         const expStore = useExperimentalMultiBotsStore.getState();
         const targetModel = expStore.activeBotpackShowcaseModel || 'ripple_v1_1';
         expStore.applyBotpack9700488Showcase(targetModel, false);
-        navigate('exp-multi-bots-config');
+        navigate('exp-multi-bots');
       }),
   } as TProps;
 }

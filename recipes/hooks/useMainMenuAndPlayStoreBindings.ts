@@ -134,11 +134,12 @@ export function useLayer1MainMenuStoreBinding<TProps extends object>(
         }
         navigate('settings');
       }),
-    onNavigateRoomControl:
-      props.onNavigateRoomControl ?? (() => navigate('room-host-control')),
+    onNavigateManageRoom:
+      props.onNavigateManageRoom ??
+      (() => navigate('manage-room')),
     onNavigateExpMultiBots:
       props.onNavigateExpMultiBots ??
-      (() => navigate('exp-multi-bots-config')),
+      (() => navigate('exp-multi-bots')),
   } as TProps;
 }
 

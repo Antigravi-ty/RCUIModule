@@ -45,7 +45,7 @@ export interface MatchLobbyUtilitiesState {
   onOpenNetHud?: () => void;
 }
 
-export interface MatchLobbySubViewProps {
+export interface MatchLobbyRoomRecipeProps {
   role: 'host' | 'client';
   signalingState?: SignalingHealthState;
   onRefreshSignaling?: () => void | Promise<void>;
@@ -77,7 +77,7 @@ const TEAM_SLOTS_PER_SIDE: Record<HostMatchTeamFormat, number> = {
 /**
  * Decoupled Match Lobby Content (`match-lobby-host` & `match-lobby-client`).
  */
-export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
+export const MatchLobbyRoomRecipe: React.FC<MatchLobbyRoomRecipeProps> = React.memo(({
   role,
   signalingState: controlledSignaling,
   onRefreshSignaling,
@@ -452,4 +452,4 @@ export const MatchLobbySubView: React.FC<MatchLobbySubViewProps> = React.memo(({
   );
 });
 
-MatchLobbySubView.displayName = 'MatchLobbySubView';
+MatchLobbyRoomRecipe.displayName = 'MatchLobbyRoomRecipe';

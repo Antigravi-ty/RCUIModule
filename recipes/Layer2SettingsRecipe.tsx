@@ -90,7 +90,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   const onBack = propOnBack ?? storeGoBack;
 
   const [internalSubView, setInternalSubView] = useState<
-    null | 'trajectory' | 'training' | 'camera' | 'keybindings'
+    null | 'trajectory' | 'training-config' | 'camera' | 'keybindings'
   >(null);
 
   const normalizeTab = (t?: string): SettingsTabId => {
@@ -150,7 +150,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
     }
     if (
       route === 'trajectory' ||
-      route === 'training' ||
+      route === 'training-config' ||
       route === 'camera' ||
       route === 'keybindings'
     ) {
