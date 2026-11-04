@@ -299,19 +299,21 @@ export const RewinderConfiguratorFloatingWindow: React.FC<RewinderConfiguratorFl
       <div className="p-3.5 flex flex-col gap-3 text-xs select-none">
         <RewinderTransportProgressSection
           isLight={isLight}
-          status={status}
-          recordedFrames={recordedFrames}
-          cursorFrame={cursorFrame}
-          releaseMarkerFrame={releaseMarkerFrame}
-          onStartNewRecording={handleStartNewRecording}
-          onStopRecording={handleStopRecording}
-          onStepFrame={handleStepFrame}
-          onRewindPressStart={onRewindPressStart}
-          onRewindPressEnd={onRewindPressEnd}
-          onForwardPressStart={onForwardPressStart}
-          onForwardPressEnd={onForwardPressEnd}
-          onCycleBadgeState={cycleBadgeStateForPreview}
-          onScrubBar={handleScrubBar}
+          stateOverride={{
+            status,
+            recordedFrames,
+            cursorFrame,
+            releaseMarkerFrame,
+            onStartNewRecording: handleStartNewRecording,
+            onStopRecording: handleStopRecording,
+            onStepFrame: handleStepFrame,
+            onRewindPressStart,
+            onRewindPressEnd,
+            onForwardPressStart,
+            onForwardPressEnd,
+            onCycleBadgeState: cycleBadgeStateForPreview,
+            onScrubBar: handleScrubBar,
+          }}
         />
 
         {/* 3. Down Counter Row */}

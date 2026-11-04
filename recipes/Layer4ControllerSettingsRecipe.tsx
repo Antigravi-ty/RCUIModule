@@ -453,8 +453,15 @@ export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRe
           />
 
           <ControllerVisualizerOptionsSection
-            stickDeadzone={stickDeadzone}
-            dodgeDeadzone={dodgeDeadzone}
+            controllerState={{
+              stickDeadzone,
+              dodgeDeadzone,
+              steerAxisRole,
+              invertSteerAxis,
+              pitchAxisRole,
+              invertPitchAxis,
+              selectedGamepadIndex,
+            }}
             showCircularOverlay={showCircularOverlay}
             onShowCircularOverlayChange={setShowCircularOverlay}
             maxDiagonal={maxDiagonal}
@@ -463,11 +470,6 @@ export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRe
             onAltArrowChange={setAltArrow}
             antiAliasing={antiAliasing}
             onAntiAliasingChange={setAntiAliasing}
-            steerAxisRole={steerAxisRole}
-            invertSteerAxis={invertSteerAxis}
-            pitchAxisRole={pitchAxisRole}
-            invertPitchAxis={invertPitchAxis}
-            selectedGamepadIndex={selectedGamepadIndex}
             developerMode={developerMode}
             isLight={isLight}
             onHoverDesc={setHoveredDesc}

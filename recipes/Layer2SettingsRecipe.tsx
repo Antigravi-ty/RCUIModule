@@ -26,21 +26,22 @@ import { SettingsSubViewRouter } from './settings/SettingsSubViewRouter';
 
 export type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'advanced' | 'developer';
 
+export interface Layer2SettingsStateOverride {
+  gameplay?: Partial<GameplayConfig>;
+  audio?: Partial<AudioConfig>;
+  graphics?: Partial<GraphicsConfig>;
+  telemetry?: Partial<TelemetryOverlayConfig>;
+  audioDebug?: AudioDebugTelemetryProps;
+  camera?: Partial<CameraConfig>;
+  onCameraConfigChange?: (next: CameraConfig, patch: Partial<CameraConfig>) => void;
+  trajectory?: Partial<TrajectoryConfig>;
+  onTrajectoryConfigChange?: (next: TrajectoryConfig, patch: Partial<TrajectoryConfig>) => void;
+}
+
 export interface Layer2SettingsRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
-  onNavigateTrainingDetail?: () => void;
-  onNavigateAudioDetail?: () => void;
-  onNavigateKeybindingsDetail?: () => void;
-  onNavigateTrajectoryDetail?: () => void;
-  onNavigateCameraDetail?: () => void;
-  onNavigateAdvancedAudio?: () => void;
-  onNavigateEventTriggerRules?: () => void;
-  onNavigateExpMultiBots?: () => void;
-  onNavigateDevSandboxes?: () => void;
-  onNavigateDevActiveTuners?: () => void;
-  onNavigateDevCalibratedPresets?: () => void;
-  onNavigateDevUnderDevelopment?: () => void;
+  onNavigateRoute?: (route: string) => void;
   onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
   initialTab?: string;
   activeTab?: string;
@@ -50,18 +51,7 @@ export interface Layer2SettingsRecipeProps {
   onDeveloperModeChange?: (unlocked: boolean) => void;
   highlightSetting?: string | null;
   onClearHighlight?: () => void;
-
-  // --- Structured domain config overrides (optional) ---
-  gameplayConfig?: Partial<GameplayConfig>;
-  audioConfig?: Partial<AudioConfig>;
-  graphicsConfig?: Partial<GraphicsConfig>;
-  telemetryConfig?: Partial<TelemetryOverlayConfig>;
-  audioDebug?: AudioDebugTelemetryProps;
-  cameraConfig?: Partial<CameraConfig>;
-  onCameraConfigChange?: (next: CameraConfig, patch: Partial<CameraConfig>) => void;
-  trajectoryConfig?: Partial<TrajectoryConfig>;
-  onTrajectoryConfigChange?: (next: TrajectoryConfig, patch: Partial<TrajectoryConfig>) => void;
-
+  stateOverride?: Layer2SettingsStateOverride;
   sizing?: PanelSizingConfig;
 }
 
@@ -81,18 +71,7 @@ export interface Layer2SettingsRecipeProps {
 export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   isLight = false,
   onBack: propOnBack,
-  onNavigateTrainingDetail,
-  onNavigateKeybindingsDetail,
-  onNavigateTrajectoryDetail,
-  onNavigateCameraDetail,
-  onNavigateAudioDetail,
-  onNavigateAdvancedAudio,
-  onNavigateEventTriggerRules,
-  onNavigateExpMultiBots,
-  onNavigateDevSandboxes,
-  onNavigateDevActiveTuners,
-  onNavigateDevCalibratedPresets,
-  onNavigateDevUnderDevelopment,
+  onNavigateRoute,
   onSpawnDiagnosticWindow,
   initialTab = 'gameplay',
   activeTab: controlledTab,
@@ -101,15 +80,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   onDeveloperModeChange,
   highlightSetting,
   onClearHighlight,
-  gameplayConfig,
-  audioConfig,
-  graphicsConfig,
-  telemetryConfig,
-  audioDebug,
-  cameraConfig,
-  onCameraConfigChange,
-  trajectoryConfig,
-  onTrajectoryConfigChange,
+  stateOverride,
   sizing: propSizing,
 }) => {
   const storeGoBack = useAppStore((s) => s.goBack);
@@ -172,35 +143,18 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   const panelBodyPaddingX = useMenuLayoutStore((s) => s.panelBodyPaddingX ?? 18);
   const sizing = propSizing ?? storeSizing;
 
-  const handleNavigateTrajectory = () => {
-    if (onNavigateTrajectoryDetail) {
-      onNavigateTrajectoryDetail();
-    } else {
-      setInternalSubView('trajectory');
+  const handleNavigateSubViewOrRoute = (route: string) => {
+    if (onNavigateRoute) {
+      onNavigateRoute(route);
+      return;
     }
-  };
-
-  const handleNavigateTraining = () => {
-    if (onNavigateTrainingDetail) {
-      onNavigateTrainingDetail();
-    } else {
-      setInternalSubView('training');
-    }
-  };
-
-  const handleNavigateCamera = () => {
-    if (onNavigateCameraDetail) {
-      onNavigateCameraDetail();
-    } else {
-      setInternalSubView('camera');
-    }
-  };
-
-  const handleNavigateKeybindings = () => {
-    if (onNavigateKeybindingsDetail) {
-      onNavigateKeybindingsDetail();
-    } else {
-      setInternalSubView('keybindings');
+    if (
+      route === 'trajectory' ||
+      route === 'training' ||
+      route === 'camera' ||
+      route === 'keybindings'
+    ) {
+      setInternalSubView(route);
     }
   };
 
@@ -210,10 +164,10 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
         subView={internalSubView}
         isLight={isLight}
         developerMode={developerMode}
-        trajectoryConfig={trajectoryConfig}
-        onTrajectoryConfigChange={onTrajectoryConfigChange}
-        cameraConfig={cameraConfig}
-        onCameraConfigChange={onCameraConfigChange}
+        trajectoryConfig={stateOverride?.trajectory}
+        onTrajectoryConfigChange={stateOverride?.onTrajectoryConfigChange}
+        cameraConfig={stateOverride?.camera}
+        onCameraConfigChange={stateOverride?.onCameraConfigChange}
         onChangeSubView={setInternalSubView}
       />
     );
@@ -286,11 +240,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
           >
             <GameplayTab
               isLight={isLight}
-              gameplayConfig={gameplayConfig}
-              onNavigateTrainingDetail={handleNavigateTraining}
-              onNavigateKeybindingsDetail={handleNavigateKeybindings}
-              onNavigateTrajectoryDetail={handleNavigateTrajectory}
-              onNavigateCameraDetail={handleNavigateCamera}
+              gameplayConfig={stateOverride?.gameplay}
+              onNavigateRoute={handleNavigateSubViewOrRoute}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />
@@ -309,8 +260,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
             <AudioTab
               isLight={isLight}
               developerMode={developerMode}
-              audioConfig={audioConfig}
-              onNavigateAudioDetail={onNavigateAudioDetail}
+              audioConfig={stateOverride?.audio}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />
@@ -329,7 +279,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
             <DisplayTab
               isLight={isLight}
               developerMode={developerMode}
-              graphicsConfig={graphicsConfig}
+              graphicsConfig={stateOverride?.graphics}
               highlightSetting={highlightSetting}
               onClearHighlight={onClearHighlight}
               onHover={setHoveredDesc}
@@ -352,8 +302,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
               developerMode={developerMode}
               onDeveloperModeChange={handleDeveloperModeChange}
               onSpawnDiagnosticWindow={onSpawnDiagnosticWindow}
-              telemetryConfig={telemetryConfig}
-              audioDebug={audioDebug}
+              telemetryConfig={stateOverride?.telemetry}
+              audioDebug={stateOverride?.audioDebug}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />
@@ -372,13 +322,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
             >
               <DeveloperTab
                 isLight={isLight}
-                onNavigateAdvancedAudio={onNavigateAdvancedAudio}
-                onNavigateEventTriggerRules={onNavigateEventTriggerRules}
-                onNavigateExpMultiBots={onNavigateExpMultiBots}
-                onNavigateDevSandboxes={onNavigateDevSandboxes}
-                onNavigateDevActiveTuners={onNavigateDevActiveTuners}
-                onNavigateDevCalibratedPresets={onNavigateDevCalibratedPresets}
-                onNavigateDevUnderDevelopment={onNavigateDevUnderDevelopment}
+                onNavigateRoute={handleNavigateSubViewOrRoute}
                 onHover={setHoveredDesc}
                 onLeave={() => setHoveredDesc(null)}
               />

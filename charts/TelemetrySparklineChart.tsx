@@ -40,9 +40,6 @@ export interface TelemetrySparklineChartProps {
   title?: string;
   height?: number;
   compact?: boolean;
-  showHeader?: boolean;
-  showQuantiles?: boolean;
-  showFreezeControl?: boolean;
   /** Controlled freeze state */
   isFrozen?: boolean;
   onFreezeToggle?: (isFrozen: boolean) => void;
@@ -82,9 +79,6 @@ export const TelemetrySparklineChart = React.memo(
         title = 'Frame Time Telemetry',
         height = 112,
         compact = false,
-        showHeader = true,
-        showQuantiles = true,
-        showFreezeControl = true,
         isFrozen: controlledIsFrozen,
         onFreezeToggle,
         onReset,
@@ -94,6 +88,9 @@ export const TelemetrySparklineChart = React.memo(
       },
       ref
     ) => {
+      const showHeader = true;
+      const showQuantiles = true;
+      const showFreezeControl = true;
       const canvasRef = useRef<HTMLCanvasElement | null>(null);
       const containerRef = useRef<HTMLDivElement | null>(null);
       const renderCacheRef = useRef<CanvasRenderCache>({

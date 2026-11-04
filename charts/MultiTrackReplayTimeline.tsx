@@ -184,9 +184,11 @@ export const MultiTrackReplayTimeline = React.memo(
             cursorLineClass={cursorLineClass}
             incidentMarkers={incidentMarkers}
             signalMarkers={signalMarkers}
-            trackAFillRef={trackAFillRef}
-            trackBCursorRef={trackBCursorRef}
-            trackCCursorRef={trackCCursorRef}
+            trackRefs={{
+              trackAFillRef,
+              trackBCursorRef,
+              trackCCursorRef,
+            }}
             handleTrackSeek={handleTrackSeek}
             applyCursorToDom={applyCursorToDom}
             onSeekFrame={onSeekFrame}

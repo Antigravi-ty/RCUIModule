@@ -12,6 +12,12 @@ export interface ReplaySignalMarker {
   synthesized?: boolean;
 }
 
+export interface MultiTrackReplayDomRefs {
+  trackAFillRef: React.RefObject<HTMLDivElement | null>;
+  trackBCursorRef: React.RefObject<HTMLDivElement | null>;
+  trackCCursorRef: React.RefObject<HTMLDivElement | null>;
+}
+
 export interface MultiTrackReplayTracksOnlyViewProps {
   fileName: string;
   totalFrames: number;
@@ -25,9 +31,7 @@ export interface MultiTrackReplayTracksOnlyViewProps {
   cursorLineClass: string;
   incidentMarkers: ReplayIncidentMarker[];
   signalMarkers: ReplaySignalMarker[];
-  trackAFillRef: React.RefObject<HTMLDivElement | null>;
-  trackBCursorRef: React.RefObject<HTMLDivElement | null>;
-  trackCCursorRef: React.RefObject<HTMLDivElement | null>;
+  trackRefs: MultiTrackReplayDomRefs;
   handleTrackSeek: (e: React.MouseEvent<HTMLDivElement>) => void;
   applyCursorToDom: (frameIndex: number) => void;
   onSeekFrame?: (frameIndex: number) => void;
@@ -46,9 +50,7 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
   cursorLineClass,
   incidentMarkers,
   signalMarkers,
-  trackAFillRef,
-  trackBCursorRef,
-  trackCCursorRef,
+  trackRefs: { trackAFillRef, trackBCursorRef, trackCCursorRef },
   handleTrackSeek,
   applyCursorToDom,
   onSeekFrame,

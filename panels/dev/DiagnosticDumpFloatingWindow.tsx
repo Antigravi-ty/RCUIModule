@@ -56,10 +56,9 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
 
   useEffect(() => {
     if (!active) return;
-    const id = window.setInterval(() => {
+    return globalPacingTelemetryRecorder.subscribe(() => {
       setTickRefresh((v) => (v + 1) % 100000);
-    }, 200);
-    return () => window.clearInterval(id);
+    });
   }, [active]);
 
   const isOnlineSession = Boolean(diag?.isOnlineSession || metrics.connected);

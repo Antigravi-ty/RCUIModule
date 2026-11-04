@@ -24,9 +24,7 @@ export interface MainMenuRowProps {
   iconColorToken?: MainMenuIconColorValue;
   title: string;
   subtitle?: string;
-  badge?: React.ReactNode;
   shortcut?: string;
-  rightElement?: React.ReactNode;
   hasArrow?: boolean;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'danger';
@@ -37,10 +35,6 @@ export interface MainMenuRowProps {
     platformPreviewMode?: MainMenuPlatformPreviewMode;
     titleOffsetYPx?: number;
   };
-  /** Optional runtime preview override for Apple Sans (800) vs Non-Apple Fallback (JetBrains Mono 400 Regular) */
-  platformPreviewMode?: MainMenuPlatformPreviewMode;
-  /** Optional vertical optical offset in px for row title text (default: 0) */
-  titleOffsetYPx?: number;
   isLight?: boolean;
   onClick?: () => void;
   autoFocus?: boolean;
@@ -59,16 +53,12 @@ export const MainMenuRow: React.FC<MainMenuRowProps> = React.memo(({
   iconColorToken,
   title,
   subtitle,
-  badge,
   shortcut,
-  rightElement,
   hasArrow = false,
   disabled = false,
   variant = 'secondary',
   styleVariant,
   styleParams,
-  platformPreviewMode,
-  titleOffsetYPx,
   isLight = false,
   onClick,
   autoFocus = false,
@@ -93,9 +83,9 @@ export const MainMenuRow: React.FC<MainMenuRowProps> = React.memo(({
   };
 
   const activePlatformPreviewMode: MainMenuPlatformPreviewMode =
-    platformPreviewMode ?? styleParams?.platformPreviewMode ?? 'auto';
+    styleParams?.platformPreviewMode ?? 'auto';
   const activeTitleOffsetYPx: number =
-    titleOffsetYPx ?? styleParams?.titleOffsetYPx ?? 0;
+    styleParams?.titleOffsetYPx ?? 0;
 
   const activeStyleVariant: MainMenuStyleVariant = styleVariant ?? cfg.variant;
   const isPrimaryRole = variant === 'primary';
@@ -357,13 +347,10 @@ export const MainMenuRow: React.FC<MainMenuRowProps> = React.memo(({
         </div>
       </div>
 
-      {/* Foreground Right Grouping: [Badge / Shortcut / Arrow] */}
-      {(badge ||
-        (cfg.showShortcutBadge && shortcut) ||
-        rightElement ||
+      {/* Foreground Right Grouping: [Shortcut / Arrow] */}
+      {((cfg.showShortcutBadge && shortcut) ||
         (cfg.showRightArrow && hasArrow)) && (
         <div className="relative z-10 flex items-center gap-2 shrink-0 ml-3">
-          {badge}
           {cfg.showShortcutBadge && shortcut && (
             <KeycapBadge
               size="sm"
@@ -371,7 +358,6 @@ export const MainMenuRow: React.FC<MainMenuRowProps> = React.memo(({
               isLight={isSolidPrimary ? !isLight : isLight}
             />
           )}
-          {rightElement}
           {cfg.showRightArrow && hasArrow && (
             <ChevronRight
               style={{
