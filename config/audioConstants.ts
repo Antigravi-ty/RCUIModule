@@ -41,6 +41,16 @@ export const SIDEWALL_HIT_AUDIO_FILES = Object.freeze([
   '/assets/audio/sidewallhit/SFX_Impacts_0627.m4a',
 ]);
 
+export const CAR_DEMO_AUDIO_FILES = Object.freeze([
+  '/assets/audio/demolish/SFX_Impacts_0118.m4a',
+  '/assets/audio/demolish/SFX_Impacts_0489.m4a',
+  '/assets/audio/demolish/SFX_Impacts_0637.m4a',
+  '/assets/audio/demolish/SFX_Impacts_0640.m4a',
+  '/assets/audio/demolish/SFX_Impacts_0714.m4a',
+]);
+
+export const DEMOLISH_AUDIO_FILES = CAR_DEMO_AUDIO_FILES;
+
 export const SFX_CAR_COLLISION_FILE = '/assets/audio/sfx_car_collision.m4a';
 export const BOOST_COLLECT_FILE = '/assets/audio/boost_collect.m4a';
 export const GOAL_SCORED_FILE = '/assets/audio/sfx_goal_poof.m4a';
