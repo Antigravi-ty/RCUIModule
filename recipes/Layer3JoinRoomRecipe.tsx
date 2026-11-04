@@ -95,6 +95,7 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
   onRetryJoin,
   onCancelJoin,
   onNavigateGarageSync,
+  onNavigateSignalingConfig,
   onBack = () => {},
 } = useLayer3JoinRoomStoreBinding(rawProps);
   const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
@@ -247,6 +248,7 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
             onRoomKeyChange={setRoomKey}
             showRandomize={false}
             onNotYouClick={onNavigateGarageSync}
+            onSignalingConfigClick={onNavigateSignalingConfig}
             onHoverDesc={setHoveredDesc}
             isLight={isLight}
           />

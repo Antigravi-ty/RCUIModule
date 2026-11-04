@@ -20,6 +20,13 @@ export const DEFAULT_GRAPHICS_SETTINGS = Object.freeze({
 
 export const TRAJECTORY_STORAGE_KEY = STORAGE_KEYS.TRAJECTORY;
 
+export type TrajectoryUpdateMode =
+  | 'continuous-incremental'
+  | 'event-snapshot'
+  | 'full-every-tick';
+
+export type TrajectoryRenderStyle = 'tube-3d' | 'decimated-line';
+
 export interface TrajectoryConfig {
   enabled: boolean;
   predictionTicks: number;
@@ -30,19 +37,56 @@ export interface TrajectoryConfig {
   color: string;
   dynamicMode: boolean;
   duration: number;
+  // WASM incremental & trigger policy
+  updateMode?: TrajectoryUpdateMode;
+  recomputeOnCarHit?: boolean;
+  recomputeOnWorldBounce?: boolean;
+  deviationThresholdUu?: number;
+  velocityThresholdUu?: number;
+  catchupTicksPerFrame?: number;
+  // 3D Geometry & Spatial Depth cues
+  renderStyle?: TrajectoryRenderStyle;
+  sampleStride?: number;
+  tubeRadialSegments?: number;
+  shadingStrength?: number;
+  radiusTaper?: number;
+  horizonFade?: number;
+  showBounceMarkers?: boolean;
+  showGroundProjection?: boolean;
+  dropLineIntervalTicks?: number;
+  // Developer vs User menu exposure locks
+  allowUserThicknessEdit?: boolean;
+  allowUserDashEdit?: boolean;
   [key: string]: any;
 }
 
 export const DEFAULT_TRAJECTORY_CONFIG: TrajectoryConfig = {
   enabled: true,
-  predictionTicks: 600,
+  predictionTicks: 396,
   solidTicks: 50,
   transparentTicks: 20,
-  thickness: 10,
+  thickness: 20,
   opacity: 0.5,
-  color: '#B2B2B2',
+  color: '#ffffff',
   dynamicMode: true,
-  duration: 5.0,
+  duration: 3.3,
+  updateMode: 'continuous-incremental',
+  recomputeOnCarHit: true,
+  recomputeOnWorldBounce: false,
+  deviationThresholdUu: 5,
+  velocityThresholdUu: 15,
+  catchupTicksPerFrame: 20,
+  renderStyle: 'tube-3d',
+  sampleStride: 1,
+  tubeRadialSegments: 6,
+  shadingStrength: 0,
+  radiusTaper: 0,
+  horizonFade: 0,
+  showBounceMarkers: false,
+  showGroundProjection: false,
+  dropLineIntervalTicks: 104,
+  allowUserThicknessEdit: false,
+  allowUserDashEdit: true,
 };
 
 export function loadSavedTrajectorySettings(): Omit<TrajectoryConfig, 'duration'> & { duration?: number } {
@@ -50,7 +94,18 @@ export function loadSavedTrajectorySettings(): Omit<TrajectoryConfig, 'duration'
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
+      const updateMode: TrajectoryUpdateMode =
+        parsed.updateMode === 'event-snapshot' ||
+        parsed.updateMode === 'full-every-tick' ||
+        parsed.updateMode === 'continuous-incremental'
+          ? parsed.updateMode
+          : DEFAULT_TRAJECTORY_CONFIG.updateMode!;
+      const renderStyle: TrajectoryRenderStyle =
+        parsed.renderStyle === 'decimated-line' || parsed.renderStyle === 'tube-3d'
+          ? parsed.renderStyle
+          : DEFAULT_TRAJECTORY_CONFIG.renderStyle!;
       return {
+        ...DEFAULT_TRAJECTORY_CONFIG,
         enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : DEFAULT_TRAJECTORY_CONFIG.enabled,
         predictionTicks: Math.min(600, Math.max(60, Number(parsed.predictionTicks) || DEFAULT_TRAJECTORY_CONFIG.predictionTicks)),
         solidTicks: Math.min(240, Math.max(5, Number(parsed.solidTicks) || DEFAULT_TRAJECTORY_CONFIG.solidTicks)),
@@ -59,6 +114,77 @@ export function loadSavedTrajectorySettings(): Omit<TrajectoryConfig, 'duration'
         opacity: Math.min(1.0, Math.max(0.05, Number(parsed.opacity) || DEFAULT_TRAJECTORY_CONFIG.opacity)),
         color: typeof parsed.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(parsed.color) ? parsed.color : DEFAULT_TRAJECTORY_CONFIG.color,
         dynamicMode: typeof parsed.dynamicMode === 'boolean' ? parsed.dynamicMode : DEFAULT_TRAJECTORY_CONFIG.dynamicMode,
+        updateMode,
+        recomputeOnCarHit:
+          typeof parsed.recomputeOnCarHit === 'boolean'
+            ? parsed.recomputeOnCarHit
+            : DEFAULT_TRAJECTORY_CONFIG.recomputeOnCarHit,
+        recomputeOnWorldBounce:
+          typeof parsed.recomputeOnWorldBounce === 'boolean'
+            ? parsed.recomputeOnWorldBounce
+            : DEFAULT_TRAJECTORY_CONFIG.recomputeOnWorldBounce,
+        deviationThresholdUu: Math.min(
+          100,
+          Math.max(0.5, Number(parsed.deviationThresholdUu) || DEFAULT_TRAJECTORY_CONFIG.deviationThresholdUu!)
+        ),
+        velocityThresholdUu: Math.min(
+          1000,
+          Math.max(5, Number(parsed.velocityThresholdUu) || DEFAULT_TRAJECTORY_CONFIG.velocityThresholdUu!)
+        ),
+        catchupTicksPerFrame: Math.min(
+          600,
+          Math.max(2, Math.round(Number(parsed.catchupTicksPerFrame) || DEFAULT_TRAJECTORY_CONFIG.catchupTicksPerFrame!))
+        ),
+        renderStyle,
+        sampleStride: Math.min(8, Math.max(1, Math.round(Number(parsed.sampleStride) || DEFAULT_TRAJECTORY_CONFIG.sampleStride!))),
+        tubeRadialSegments: Math.min(8, Math.max(4, Math.round(Number(parsed.tubeRadialSegments) || DEFAULT_TRAJECTORY_CONFIG.tubeRadialSegments!))),
+        shadingStrength: Math.min(
+          1,
+          Math.max(
+            0,
+            typeof parsed.shadingStrength === 'number' && Number.isFinite(parsed.shadingStrength)
+              ? parsed.shadingStrength
+              : DEFAULT_TRAJECTORY_CONFIG.shadingStrength!
+          )
+        ),
+        radiusTaper: Math.min(
+          0.9,
+          Math.max(
+            0,
+            typeof parsed.radiusTaper === 'number' && Number.isFinite(parsed.radiusTaper)
+              ? parsed.radiusTaper
+              : DEFAULT_TRAJECTORY_CONFIG.radiusTaper!
+          )
+        ),
+        horizonFade: Math.min(
+          0.9,
+          Math.max(
+            0,
+            typeof parsed.horizonFade === 'number' && Number.isFinite(parsed.horizonFade)
+              ? parsed.horizonFade
+              : DEFAULT_TRAJECTORY_CONFIG.horizonFade!
+          )
+        ),
+        showBounceMarkers:
+          typeof parsed.showBounceMarkers === 'boolean'
+            ? parsed.showBounceMarkers
+            : DEFAULT_TRAJECTORY_CONFIG.showBounceMarkers,
+        showGroundProjection:
+          typeof parsed.showGroundProjection === 'boolean'
+            ? parsed.showGroundProjection
+            : DEFAULT_TRAJECTORY_CONFIG.showGroundProjection,
+        dropLineIntervalTicks: Math.min(
+          180,
+          Math.max(15, Math.round(Number(parsed.dropLineIntervalTicks) || DEFAULT_TRAJECTORY_CONFIG.dropLineIntervalTicks!))
+        ),
+        allowUserThicknessEdit:
+          typeof parsed.allowUserThicknessEdit === 'boolean'
+            ? parsed.allowUserThicknessEdit
+            : DEFAULT_TRAJECTORY_CONFIG.allowUserThicknessEdit,
+        allowUserDashEdit:
+          typeof parsed.allowUserDashEdit === 'boolean'
+            ? parsed.allowUserDashEdit
+            : DEFAULT_TRAJECTORY_CONFIG.allowUserDashEdit,
       };
     } catch (err) {
       console.warn('[trainingDefaults] Failed to load trajectory settings:', err);

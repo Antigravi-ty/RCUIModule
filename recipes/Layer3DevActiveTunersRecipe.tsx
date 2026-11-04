@@ -36,6 +36,7 @@ import {
   VEHICLE_MODEL_OFFSET_TUNER_PRESET,
   GOAL_VOLUME_TUNER_PRESET,
   REACHABILITY_TUNER_PRESET,
+  BALL_TRAJECTORY_TUNER_PRESET,
   REPLAY_DIRECTOR_TUNER_PRESET,
   KICKOFF_TRAINING_PRESET,
   EVENT_STREAM_OB_PRESET,
@@ -238,6 +239,22 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             showDescription={false}
             description="Ground 1s/2s/3s Isochrone LUT (Boost=0), Boost-Driven 3D Horn & Optimal Intercept 3D Cross"
             hoverTooltip="Reachability & Intercept Tuner: Real-time 1.4µs WASM LUT ground reachability, boost-driven 3D spacetime interception horn, and 3D orthogonal intercept cross."
+            onHover={setHoveredDesc}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 3b. Ball Trajectory Prediction Line Tuner */}
+          <FloatingWindowCard
+            preset={BALL_TRAJECTORY_TUNER_PRESET}
+            icon={Target}
+            iconColor="text-amber-400"
+            badge="WASM Incr · 3D Tube · JSON"
+            badgeClass="bg-amber-500/15 border-amber-500/30 text-amber-400"
+            bordered={false}
+            showDescription={false}
+            description="WASM Incremental Tail Prediction (600t), Car-Ball Hit / Deviation Triggers, 3D Volumetric Shaded Tube, Spatial Depth Cues & JSON Export"
+            hoverTooltip="Ball Trajectory Prediction Line Tuner: Configure continuous WASM incremental tail prediction (~20-50µs/tick), deviation triggers, 3D volumetric tube shading, bounce rings, ground drop lines, and one-click JSON export."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}

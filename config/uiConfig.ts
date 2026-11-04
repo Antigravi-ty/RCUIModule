@@ -153,17 +153,12 @@ export interface GameplayConfig {
   ballCamIndicator: boolean;
 }
 
-export interface TrajectoryConfig {
-  enabled: boolean;
-  predictionTicks: number;
-  solidTicks: number;
-  transparentTicks: number;
-  thickness: number;
-  opacity: number;
-  color: string;
-  dynamicMode: boolean;
-  duration?: number;
-}
+export {
+  type TrajectoryConfig,
+  type TrajectoryUpdateMode,
+  type TrajectoryRenderStyle,
+  DEFAULT_TRAJECTORY_CONFIG,
+} from './trainingDefaults';
 
 export interface BoostPadTunerConfig {
   bottomOpacity: number;

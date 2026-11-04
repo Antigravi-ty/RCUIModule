@@ -19,6 +19,8 @@ import { SliderControl } from '../primitives/SliderControl';
 import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { useSignalingProfileStore } from '../stores/signalingProfileStore';
+import { generateRandomFourDigitRoomCode } from '../config/roomCodeConnectivityCodec';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,
@@ -41,7 +43,7 @@ export type { Layer3HostMatchRecipeProps };
 
 export const DEFAULT_HOST_MATCH_CONFIG: HostMatchConfig = {
   playerName: `Player${Math.floor(1000 + Math.random() * 9000)}`,
-  roomCode: String(Math.floor(1000 + Math.random() * 9000)),
+  roomCode: generateRandomFourDigitRoomCode(0x0f),
   roomKey: '',
   teamFormat: 'doubles',
   botPolicy: 'auto-fill',
@@ -68,10 +70,11 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
   const {
   isLight = false, roomType = 'match', title, defaultEditingConfig = false, config: controlledConfigProp, settings: controlledSettingsProp,
   defaultConfig, onChange, onConfigChange, onBack = () => {}, onNavigateGarageSync,
-  onNavigateAdvancedSettings, onStartHost, onCancelHost, onRetryHost,
+  onNavigateSignalingConfig, onNavigateAdvancedSettings, onStartHost, onCancelHost, onRetryHost,
   progressStatus: controlledProgressStatus, currentStep: controlledCurrentStep,
   onProgressStatusChange, onCurrentStepChange, steps,
 } = useLayer3HostMatchStoreBinding(rawProps);
+  const hostMask = useSignalingProfileStore((s) => s.hostMask);
   const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
   const sizing = panels['layer3-host-match'];
   const { titleFontSize, rowGap, paddingX } = useSettingActionRowStore();
@@ -151,7 +154,7 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
   }, []);
 
   const handleRandomizeCode = () => {
-    const code = String(Math.floor(1000 + Math.random() * 9000));
+    const code = generateRandomFourDigitRoomCode(hostMask);
     setRoomCode(code);
   };
 
@@ -241,6 +244,7 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
             showRandomize={true}
             onRandomizeRoomCode={handleRandomizeCode}
             onNotYouClick={onNavigateGarageSync}
+            onSignalingConfigClick={onNavigateSignalingConfig}
             onHoverDesc={setHoveredDesc}
             isLight={isLight}
           />
