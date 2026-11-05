@@ -43,6 +43,7 @@ export type ActiveMenuRoute =
   | 'dev-calibrated-presets'
   | 'dev-self-test'
   | 'dev-under-development'
+  | 'dev-remote-profile'
   | 'dev-signaling-lab';
 
 export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> = {
@@ -74,6 +75,7 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'dev-calibrated-presets': 'settings',
   'dev-self-test': 'settings',
   'dev-under-development': 'settings',
+  'dev-remote-profile': 'settings',
   'dev-signaling-lab': 'dev-self-test',
 };
 

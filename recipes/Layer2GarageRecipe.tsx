@@ -20,6 +20,7 @@ import { GarageCarTab } from './garage/GarageCarTab';
 import { GaragePaintTab, DEFAULT_BLUE_ORDER, DEFAULT_ORANGE_ORDER } from './garage/GaragePaintTab';
 import { GarageLoadoutTab, type VisualMaterialsConfig } from './garage/GarageLoadoutTab';
 import { GarageAnthemTab } from './garage/GarageAnthemTab';
+import { GarageSyncTab } from './garage/GarageSyncTab';
 
 export type { GarageTabId, Layer2GarageRecipeProps };
 
@@ -231,16 +232,15 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
             aria-hidden={activeTab !== 'sync'}
             inert={activeTab !== 'sync' ? true : undefined}
             data-tab-active={activeTab === 'sync' ? 'true' : 'false'}
-            className={`col-start-1 row-start-1 w-full h-full flex flex-col ${
+            data-envelope-exclude="true"
+            className={`absolute inset-0 w-full h-full flex flex-col overflow-hidden ${
               activeTab === 'sync'
                 ? 'visible opacity-100 pointer-events-auto z-10'
                 : 'invisible opacity-0 pointer-events-none select-none z-0'
             }`}
           >
-            <UnderConstructionPlaceholder
-              title="Cloud Sync Configuration Under Construction"
-              description="Cloud profile synchronization, cross-device loadout backup and account binding modules are currently under construction."
-              badge="IN DEVELOPMENT"
+            <GarageSyncTab
+              onHoverDesc={setHoveredDesc}
               isLight={isLight}
             />
           </div>
