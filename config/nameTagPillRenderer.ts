@@ -2,7 +2,7 @@ import {
   DEFAULT_NAME_TAG_CONFIG,
   type NameTagBoostIndicatorMode,
   type NameTagConfig,
-} from './nameTagCalibrationMath';
+} from './nameTagConfig';
 
 export interface NameTagPillRenderCard2D {
   carIndex: number;

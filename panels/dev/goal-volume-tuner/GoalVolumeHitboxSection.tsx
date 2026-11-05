@@ -8,11 +8,10 @@ import {
   getGoalVolumeTunerConfig,
   subscribeGoalVolumeTunerConfig,
   updateGoalVolumeTunerConfig,
+  type GoalVolumeBoxSpec,
+  type GoalVolumeTunerConfig,
 } from '../../../config/goalVolumeTunerConfig';
 import { useAppStore } from '../../../stores/appStore';
-
-export type GoalBoxBounds = Record<string, any>;
-export type GoalVolumeTunerConfig = Record<string, any>;
 
 export type PresetTab = 'standard' | 'throwback';
 
@@ -27,22 +26,23 @@ export const GoalVolumeHitboxSection: React.FC<GoalVolumeHitboxSectionProps> = (
   const [selectedPreset, setSelectedPreset] = useState<PresetTab>(
     stadiumPreset === 'throwback' ? 'throwback' : 'standard'
   );
-  const [cfg, setCfg] = useState(() => getGoalVolumeTunerConfig());
+  const [cfg, setCfg] = useState<GoalVolumeTunerConfig>(() => getGoalVolumeTunerConfig());
 
   useEffect(() => {
     setSelectedPreset(stadiumPreset === 'throwback' ? 'throwback' : 'standard');
   }, [stadiumPreset]);
 
   useEffect(() => {
-    return subscribeGoalVolumeTunerConfig((next: ReturnType<typeof getGoalVolumeTunerConfig>) => {
+    return subscribeGoalVolumeTunerConfig((next: GoalVolumeTunerConfig) => {
       setCfg(next);
     });
   }, []);
 
-  const currentBox = selectedPreset === 'throwback' ? cfg.throwback : cfg.standard;
+  const currentBox: Required<GoalVolumeBoxSpec> =
+    selectedPreset === 'throwback' ? cfg.throwback : cfg.standard;
   const isThrowbackTab = selectedPreset === 'throwback';
 
-  const applyBoxPatch = (patch: Partial<typeof currentBox>) => {
+  const applyBoxPatch = (patch: Partial<GoalVolumeBoxSpec>) => {
     if (isThrowbackTab) {
       updateGoalVolumeTunerConfig({ throwback: { ...cfg.throwback, ...patch } });
     } else {
@@ -100,7 +100,7 @@ export const GoalVolumeHitboxSection: React.FC<GoalVolumeHitboxSectionProps> = (
               value={selectedPreset}
               onValueChange={(val) => setSelectedPreset(val as PresetTab)}
               options={[
-                { value: 'standard', label: 'Standard Soccar (5120)' },
+                { value: 'standard', label: 'Standard Arena (5120)' },
                 { value: 'throwback', label: 'Throwback Stadium (4922)' },
               ]}
               size="sm"

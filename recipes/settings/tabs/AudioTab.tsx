@@ -59,7 +59,7 @@ export interface AudioTabProps {
   onAudioConfigChange?: (next: AudioConfig, patch: Partial<AudioConfig>) => void;
   /** Alias for onAudioConfigChange */
   onChange?: (next: AudioConfig, patch: Partial<AudioConfig>) => void;
-  onNavigateAudioDetail?: () => void;
+  onNavigateAcousticsEqualizer?: () => void;
   onHover: (desc: string) => void;
   onLeave: () => void;
 }
@@ -115,7 +115,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
   defaultAudioConfig,
   onAudioConfigChange,
   onChange,
-  onNavigateAudioDetail,
+  onNavigateAcousticsEqualizer,
   onHover,
   onLeave,
 }) => {
@@ -472,7 +472,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
         description="3-band parametric equalizer, dynamic range compressor & 3D spatial acoustics"
         hoverDescription="Configure 3-band parametric equalizer (Bass 100Hz, Midrange 1kHz, Treble 10kHz), Dynamic Range Profile (Night, Dynamic, Studio), and 3D spatial acoustics."
         buttonHoverDescription="Open Acoustics & Equalizer panel to tune 3-band EQ, dynamic range compression, and 3D spatial roll-off."
-        onAction={onNavigateAudioDetail ?? (() => navigate('audio-eq'))}
+        onAction={onNavigateAcousticsEqualizer ?? (() => navigate('acoustics-equalizer'))}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}

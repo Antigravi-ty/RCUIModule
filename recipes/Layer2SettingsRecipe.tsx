@@ -27,7 +27,7 @@ export interface Layer2SettingsRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
   onNavigateTrainingDetail?: () => void;
-  onNavigateAudioDetail?: () => void;
+  onNavigateAcousticsEqualizer?: () => void;
   onNavigateKeybindingsDetail?: () => void;
   onNavigateTrajectoryDetail?: () => void;
   /** Alias for onNavigateTrajectoryDetail */
@@ -90,7 +90,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   onNavigateTrajectory,
   onNavigateCameraDetail,
   onNavigateCameraSettings,
-  onNavigateAudioDetail,
+  onNavigateAcousticsEqualizer,
   onNavigateAdvancedAudio,
   onNavigateEventTriggerRules,
   onNavigateEventAndTriggerer,
@@ -195,8 +195,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
     onNavigateKeybindingsDetail?.();
   };
 
-  const handleNavigateAudioDetail = () => {
-    onNavigateAudioDetail?.();
+  const handleNavigateAcousticsEqualizer = () => {
+    onNavigateAcousticsEqualizer?.();
   };
 
   const tabs: TabItem[] = [
@@ -291,7 +291,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
               isLight={isLight}
               developerMode={developerMode}
               audioConfig={audioConfig}
-              onNavigateAudioDetail={handleNavigateAudioDetail}
+              onNavigateAcousticsEqualizer={handleNavigateAcousticsEqualizer}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />

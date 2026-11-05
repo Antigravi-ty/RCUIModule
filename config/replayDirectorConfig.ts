@@ -85,11 +85,20 @@ export const REPLAY_DIRECTOR_CONFIG: ReplayDirectorConfigState = {
 type ReplayDirectorConfigListener = (config: ReplayDirectorConfigState) => void;
 const directorConfigListeners = new Set<ReplayDirectorConfigListener>();
 
-let _getActiveController: (() => any) | null = null;
+export interface ReplayDirectorActiveControllerConfigTarget {
+  isImportedPreview?: boolean;
+  useRecordedCsvCamera?: boolean;
+  _cachedSuffixCameraPlan?: unknown;
+  _cachedSmoothnessSummary?: unknown;
+  _cachedAnomalyPeaks?: unknown;
+  refreshCurrentFrameDirectorPose?: () => void;
+}
+
+let _getActiveController: (() => ReplayDirectorActiveControllerConfigTarget | null) | null = null;
 let _notifyActiveController: (() => void) | null = null;
 
 export function setReplayDirectorActiveControllerHooks(hooks: {
-  getActiveController: () => any;
+  getActiveController: () => ReplayDirectorActiveControllerConfigTarget | null;
   notifyActiveController: () => void;
 }): void {
   _getActiveController = hooks.getActiveController;

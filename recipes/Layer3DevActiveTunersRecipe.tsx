@@ -38,15 +38,15 @@ import {
   REACHABILITY_TUNER_PRESET,
   BALL_TRAJECTORY_TUNER_PRESET,
   REPLAY_DIRECTOR_TUNER_PRESET,
-  KICKOFF_TRAINING_PRESET,
-  EVENT_STREAM_OB_PRESET,
+  KICKOFF_TRAINING_TUNER_PRESET,
+  EVENT_STREAM_OBSERVER_PRESET,
   DUAL_ARENA_DETERMINISM_HARNESS_PRESET,
   CAMERA_DETERMINISM_PRESET,
   CLOCK_PACING_TUNER_PRESET,
   NETWORK_STRESS_INJECTION_PRESET,
   SPATIAL_AUDIO_TUNER_PRESET,
   ENGINE_AUDIO_TUNER_PRESET,
-  BOTS_LOADOUT_PRESET,
+  BOTS_LOADOUT_TUNER_PRESET,
 } from '../stores/devFloatingPresets';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 import { SettingActionRow } from '../compounds/SettingActionRow';
@@ -138,9 +138,9 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             isLight={isLight}
           />
 
-          {/* Bots Loadout Floating Window */}
+          {/* Bots Loadout Tuner Floating Window */}
           <FloatingWindowCard
-            preset={BOTS_LOADOUT_PRESET}
+            preset={BOTS_LOADOUT_TUNER_PRESET}
             icon={Bot}
             iconColor="text-amber-400"
             badge="3 GLB Default · Multi-Select"
@@ -148,7 +148,7 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             bordered={false}
             showDescription={false}
             description="Multi-select randomizable Bot Loadout pool (3 GLB models default, Metallic paint, Cartoon boost, Standard boost audio, Random TrainStation anthem)"
-            hoverTooltip="Bots Loadout: Configure multi-select randomizable bot loadout pools for Exhibition and Auto-Fill."
+            hoverTooltip="Bots Loadout Tuner: Configure multi-select randomizable bot loadout pools for Exhibition and Auto-Fill."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -299,9 +299,9 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             isLight={isLight}
           />
 
-          {/* 5. Kickoff Training (PPO) Floating Window */}
+          {/* 5. Kickoff Training Tuner (PPO) Floating Window */}
           <FloatingWindowCard
-            preset={KICKOFF_TRAINING_PRESET}
+            preset={KICKOFF_TRAINING_TUNER_PRESET}
             icon={PencilRuler}
             iconColor="text-sky-400"
             badge="PPO AI"
@@ -309,7 +309,7 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             bordered={false}
             showDescription={false}
             description="Kickoff sub-modes, realistic wait (0.25s steps), N/120 speed & W/S offset"
-            hoverTooltip="Kickoff Training Config: Floating tuner for PPO AI kickoff training parameters."
+            hoverTooltip="Kickoff Training Tuner (PPO): Floating tuner for PPO AI kickoff training parameters."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -436,15 +436,15 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             isLight={isLight}
           />
 
-          {/* 10. Event Stream OB */}
+          {/* 10. Event Stream Observer */}
           <FloatingWindowCard
-            preset={EVENT_STREAM_OB_PRESET}
+            preset={EVENT_STREAM_OBSERVER_PRESET}
             icon={Activity}
             iconColor="text-sky-400"
             bordered={false}
             showDescription={false}
             description="Physics collision observer, impulse curves & threshold visualizer"
-            hoverTooltip="Event Stream OB: Real-time collision dynamics observer, impulse curves & audio threshold calibration."
+            hoverTooltip="Event Stream Observer: Real-time collision dynamics observer, impulse curves & audio threshold calibration."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}

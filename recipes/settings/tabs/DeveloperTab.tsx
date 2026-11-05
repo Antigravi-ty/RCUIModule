@@ -26,7 +26,7 @@ import {
   getBallVisualConfig,
   updateBallVisualConfig,
 } from '../../../config/ballVisualConfig';
-import { BOTS_LOADOUT_PRESET } from '../../../stores/devFloatingPresets';
+import { BOTS_LOADOUT_TUNER_PRESET } from '../../../stores/devFloatingPresets';
 import { FloatingWindowCard } from '../components/FloatingWindowCard';
 import { DeveloperProfileExportSection } from '../components/DeveloperProfileExportSection';
 import type { BallOpacityMode } from './GameplayTab';
@@ -55,7 +55,7 @@ export interface DeveloperTabProps {
  * 3. `Calibrated Presets` (`book-check` icon, `Browse →`) — tuners whose baseline parameters have been calibrated and solidified
  * 4. `Self Test` (`bug-play` icon, `Browse →`) — developer self-test suites (4-Server Signaling & Bridge Lab when loaded in dev mode)
  * 5. `Remote Profile Management` (`user-cog` icon, `Browse →`) — Set Others Profile (`SETTINGS # <alias>`) & Manage Accounts
- * 6. `Bots Loadout` (`bot` icon, `Spawn`) — floating window for multi-select bot loadout pools (Car GLB models, Paint, Boost Trail, Boost Audio, Anthem)
+ * 6. `Bots Loadout Tuner` (`bot` icon, `Spawn`) — floating window for multi-select bot loadout pools (Car GLB models, Paint, Boost Trail, Boost Audio, Anthem)
  * 7. `Ball Opacity` (`circle-dot` icon) — single-line 70% / 100% / Custom segmented switch
  * 8. `Observe Safe Area Boundary` (`scan` icon) — single-line toggle switch
  * 9. `Under Development` (`alert-triangle` icon, `Browse →`, placed at the very bottom in red/rose with extra top spacing `underDevelopmentTopMargin`)
@@ -204,15 +204,15 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 3c. Bots Loadout Floating Window */}
+      {/* 3c. Bots Loadout Tuner Floating Window */}
       <FloatingWindowCard
-        preset={BOTS_LOADOUT_PRESET}
+        preset={BOTS_LOADOUT_TUNER_PRESET}
         icon={Bot}
         iconColor="text-amber-400"
         badge="3 GLB Default · Multi-Select"
         badgeClass="bg-amber-500/15 border-amber-500/30 text-amber-400"
         description="Configure multi-select Bot Loadout randomizer pools (Car GLB models, Metallic paint, Cartoon boost, Standard boost audio, Random TrainStation anthem)"
-        hoverTooltip="Bots Loadout: Spawn floating window to configure multi-select randomizable bot loadout pools for Exhibition and Auto-Fill."
+        hoverTooltip="Bots Loadout Tuner: Spawn floating window to configure multi-select randomizable bot loadout pools for Exhibition and Auto-Fill."
         onHover={(desc) => onHover?.(desc)}
         onLeave={() => onLeave?.()}
         isLight={isLight}

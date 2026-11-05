@@ -22,8 +22,8 @@ import { ExperimentalMultiBotsFloatingWindow } from './dev/ExperimentalMultiBots
 import { ExperimentalBotPackFloatingWindow } from './dev/ExperimentalBotPackFloatingWindow';
 import { AtmosphereFxTunerFloatingWindow } from './dev/AtmosphereFxTunerFloatingWindow';
 import { SubsystemIsolationLabFloatingWindow } from './dev/SubsystemIsolationLabFloatingWindow';
-import { KickoffTrainingFloatingWindow } from './dev/KickoffTrainingFloatingWindow';
-import { EventStreamOBFloatingWindow } from './dev/EventStreamOBFloatingWindow';
+import { KickoffTrainingTunerFloatingWindow } from './dev/KickoffTrainingTunerFloatingWindow';
+import { EventStreamObserverFloatingWindow } from './dev/EventStreamObserverFloatingWindow';
 import { DualArenaDeterminismHarnessFloatingWindow } from './dev/DualArenaDeterminismHarnessFloatingWindow';
 import { CameraDeterminismFloatingWindow } from './dev/CameraDeterminismFloatingWindow';
 import { NetworkStressInjectionFloatingWindow } from './dev/NetworkStressInjectionFloatingWindow';
@@ -32,7 +32,7 @@ import { BoostPadTunerFloatingWindow } from './dev/BoostPadTunerFloatingWindow';
 import { DriftwoodsTunerFloatingWindow } from './dev/DriftwoodsTunerFloatingWindow';
 import { SpatialAudioTunerFloatingWindow } from './dev/SpatialAudioTunerFloatingWindow';
 import { EngineAudioTunerFloatingWindow } from './dev/EngineAudioTunerFloatingWindow';
-import { BotsLoadoutFloatingWindow } from './dev/BotsLoadoutFloatingWindow';
+import { BotsLoadoutTunerFloatingWindow } from './dev/BotsLoadoutTunerFloatingWindow';
 
 export interface RenderFloatingWindowPanelOptions {
   isLight?: boolean;
@@ -128,8 +128,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <VehicleModelOffsetTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as any}
-        onTabChange={onTabChange as any}
+        activeTab={activeTab as React.ComponentProps<typeof VehicleModelOffsetTunerFloatingWindow>['activeTab']}
+        onTabChange={onTabChange as React.ComponentProps<typeof VehicleModelOffsetTunerFloatingWindow>['onTabChange']}
       />
     ),
   },
@@ -140,8 +140,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <VehicleGlobalFxTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as any}
-        onTabChange={onTabChange as any}
+        activeTab={activeTab as React.ComponentProps<typeof VehicleGlobalFxTunerFloatingWindow>['activeTab']}
+        onTabChange={onTabChange as React.ComponentProps<typeof VehicleGlobalFxTunerFloatingWindow>['onTabChange']}
       />
     ),
   },
@@ -162,8 +162,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <AtmosphereFxTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as any}
-        onTabChange={onTabChange as any}
+        activeTab={activeTab as React.ComponentProps<typeof AtmosphereFxTunerFloatingWindow>['activeTab']}
+        onTabChange={onTabChange as React.ComponentProps<typeof AtmosphereFxTunerFloatingWindow>['onTabChange']}
       />
     ),
   },
@@ -174,20 +174,20 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <SubsystemIsolationLabFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as any}
-        onTabChange={onTabChange as any}
+        activeTab={activeTab as React.ComponentProps<typeof SubsystemIsolationLabFloatingWindow>['activeTab']}
+        onTabChange={onTabChange as React.ComponentProps<typeof SubsystemIsolationLabFloatingWindow>['onTabChange']}
       />
     ),
   },
-  'kickoff-training': {
-    id: 'kickoff-training',
+  'kickoff-training-tuner': {
+    id: 'kickoff-training-tuner',
     category: 'developer',
-    render: ({ isLight = false }) => <KickoffTrainingFloatingWindow isLight={isLight} />,
+    render: ({ isLight = false }) => <KickoffTrainingTunerFloatingWindow isLight={isLight} />,
   },
-  'event-stream-ob': {
-    id: 'event-stream-ob',
+  'event-stream-observer': {
+    id: 'event-stream-observer',
     category: 'developer',
-    render: ({ isLight = false }) => <EventStreamOBFloatingWindow isLight={isLight} />,
+    render: ({ isLight = false }) => <EventStreamObserverFloatingWindow isLight={isLight} />,
   },
   'dual-arena-determinism-harness': {
     id: 'dual-arena-determinism-harness',
@@ -216,8 +216,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <BoostPadTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as any}
-        onTabChange={onTabChange as any}
+        activeTab={activeTab as React.ComponentProps<typeof BoostPadTunerFloatingWindow>['activeTab']}
+        onTabChange={onTabChange as React.ComponentProps<typeof BoostPadTunerFloatingWindow>['onTabChange']}
       />
     ),
   },
@@ -228,8 +228,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <DriftwoodsTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as any}
-        onTabChange={onTabChange as any}
+        activeTab={activeTab as React.ComponentProps<typeof DriftwoodsTunerFloatingWindow>['activeTab']}
+        onTabChange={onTabChange as React.ComponentProps<typeof DriftwoodsTunerFloatingWindow>['onTabChange']}
       />
     ),
   },
@@ -243,10 +243,10 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     category: 'developer',
     render: ({ isLight = false }) => <EngineAudioTunerFloatingWindow isLight={isLight} />,
   },
-  'bots-loadout': {
-    id: 'bots-loadout',
+  'bots-loadout-tuner': {
+    id: 'bots-loadout-tuner',
     category: 'developer',
-    render: ({ isLight = false }) => <BotsLoadoutFloatingWindow isLight={isLight} />,
+    render: ({ isLight = false }) => <BotsLoadoutTunerFloatingWindow isLight={isLight} />,
   },
 };
 

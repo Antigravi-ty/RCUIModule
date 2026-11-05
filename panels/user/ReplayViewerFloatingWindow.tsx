@@ -36,7 +36,7 @@ const RECENT_CLIPS = [
 ] as const;
 
 /**
- * 1. [User] RC Replay Viewer (`replay-viewer-window`)
+ * 1. [User] Replay Viewer (`replay-viewer-window`)
  * Standalone L6 Floating Window Panel composing the L5 `<MultiTrackReplayTimeline />`:
  * 1. Top Row: 2 Buttons:
  *    - Left: Black Primary `Load Replay Files` with `Upload` icon

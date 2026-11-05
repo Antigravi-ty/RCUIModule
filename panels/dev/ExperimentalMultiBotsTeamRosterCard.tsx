@@ -8,7 +8,7 @@ import {
   getExpColorSwatch,
   type ExpBotPolicyId,
   type ExperimentalMultiBotsSlotConfig,
-} from '../../stores/experimentalMultiBotsStore';
+} from '../../stores/experimentalMultiBotsRosterUtils';
 import { KeycapBadge } from '../../primitives/KeycapBadge';
 
 export const BOT_POLICY_OPTIONS: { value: ExpBotPolicyId; label: string }[] =

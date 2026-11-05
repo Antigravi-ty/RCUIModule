@@ -22,7 +22,7 @@ import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 
-export interface Layer3AudioEqStateOverride {
+export interface Layer3AcousticsEqualizerStateOverride {
   dynamicRangeProfile?: DynamicRangeProfileId;
   spatialAudio?: boolean;
   spatialPanningModel?: 'equalpower' | 'HRTF';
@@ -35,13 +35,13 @@ export interface Layer3AudioEqStateOverride {
   farFieldHighShelfDb?: number;
 }
 
-export interface Layer3AudioEqRecipeProps {
+export interface Layer3AcousticsEqualizerRecipeProps {
   isLight?: boolean;
   developerMode?: boolean;
   onBack?: () => void;
   hasError?: boolean;
   onCheckNotification?: () => void;
-  stateOverride?: Layer3AudioEqStateOverride;
+  stateOverride?: Layer3AcousticsEqualizerStateOverride;
 }
 
 /**
@@ -49,7 +49,7 @@ export interface Layer3AudioEqRecipeProps {
  * Streamlined single-column vertical layout sharing unified Settings row typography & spacing,
  * wired directly to `useAppStore` and `audioConfig` -> `MasterAcousticProcessor`.
  */
-export const Layer3AudioEqRecipe: React.FC<Layer3AudioEqRecipeProps> = ({
+export const Layer3AcousticsEqualizerRecipe: React.FC<Layer3AcousticsEqualizerRecipeProps> = ({
   isLight = false,
   developerMode: propDevMode,
   onBack: propOnBack,
@@ -65,7 +65,7 @@ export const Layer3AudioEqRecipe: React.FC<Layer3AudioEqRecipeProps> = ({
   const onBack = propOnBack ?? storeGoBack;
   const developerMode = propDevMode ?? storeDevMode ?? true;
   const { panels, simulateLayer3Error } = useMenuLayoutStore();
-  const sizing = panels['layer3-audio-eq'];
+  const sizing = panels['layer3-acoustics-equalizer'];
   const showError = propHasError ?? simulateLayer3Error;
   const { rowGap } = useSettingActionRowStore();
 

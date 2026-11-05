@@ -25,13 +25,13 @@ import {
   type BotAnthemCategoryOption,
 } from '../../config/botsLoadoutConfig';
 
-export interface BotsLoadoutFloatingWindowProps {
+export interface BotsLoadoutTunerFloatingWindowProps {
   isLight?: boolean;
   active?: boolean;
 }
 
-export const BotsLoadoutFloatingWindow: React.FC<
-  BotsLoadoutFloatingWindowProps
+export const BotsLoadoutTunerFloatingWindow: React.FC<
+  BotsLoadoutTunerFloatingWindowProps
 > = ({ isLight = false, active = true }) => {
   const visualIds = useBotsLoadoutStore((s) => s.visualIds);
   const paintFinishes = useBotsLoadoutStore((s) => s.paintFinishes);

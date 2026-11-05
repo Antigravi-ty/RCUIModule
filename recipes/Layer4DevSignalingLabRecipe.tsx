@@ -13,27 +13,14 @@ import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
-import {
-  DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
-  type CanonicalLabRelayId,
-  type Layer4DevSignalingLabRecipeProps,
-  type SignalingLabScenarioId,
+import type {
+  Layer4DevSignalingLabRecipeProps,
+  SignalingLabScenarioId,
 } from './dev/signalingLabTypes';
+import { Layer3DevSelfTestRecipe } from './Layer3DevSelfTestRecipe';
+import { useLayer4DevSignalingLabBinding } from './hooks/useLayer4DevSignalingLabBinding';
 import { SignalingLabStatusAndScenariosSection } from './dev/SignalingLabStatusAndScenariosSection';
 import { SignalingLabLiveMonitorsSection } from './dev/SignalingLabLiveMonitorsSection';
-
-export type {
-  CanonicalLabEdgeNodeId,
-  CanonicalLabRelayId,
-  Layer4DevSignalingLabRecipeProps,
-  SignalingLabCloudAuditLogItem,
-  SignalingLabCloudStatsView,
-  SignalingLabEndpointViewConfig,
-  SignalingLabPacketTraceItem,
-  SignalingLabProbeSummaryView,
-  SignalingLabScenarioId,
-  SignalingLabSlotViewItem,
-} from './dev/signalingLabTypes';
 
 /**
  * [Recipe] Layer 4 Developer -> Under Development -> 4-Server Mesh & Dual Bridge Lab
@@ -42,46 +29,36 @@ export type {
  * Dual Edge Function (JP + SG) 1-to-3 fanout, and 5-layer anti-loop guards.
  */
 export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipeProps> = React.memo(
-  ({
-    isLight = false,
-    onBack,
-    sizing: propSizing,
-    endpointConfig = DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
-    probeSummary = null,
-    traces = [],
-    roomCode: controlledRoomCode,
-    onRoomCodeChange,
-    roomPassword: controlledRoomPassword,
-    onRoomPasswordChange,
-    customSourceRelay: controlledSource,
-    onCustomSourceRelayChange,
-    customTargetRelay: controlledTarget,
-    onCustomTargetRelayChange,
-    isBusy = false,
-    activeActionLabel = null,
-    lastResultBanner = null,
-    onProbeAll,
-    onCloudSelfTest,
-    onOneClickFullDiagnostic,
-    onRunScenario,
-    onClearTraces,
-  }) => {
-    const [localRoomCode, setLocalRoomCode] = useState('rocket-f');
-    const [localRoomPassword, setLocalRoomPassword] = useState('test1234');
-    const [localSource, setLocalSource] = useState<CanonicalLabRelayId>('emqx_cn');
-    const [localTarget, setLocalTarget] = useState<CanonicalLabRelayId>('emqx_gb');
+  (rawProps) => {
+    const {
+      isDevPrivateSource,
+      isLight,
+      onBack,
+      sizing: propSizing,
+      endpointConfig,
+      probeSummary,
+      traces,
+      roomCode,
+      onRoomCodeChange,
+      roomPassword,
+      onRoomPasswordChange,
+      customSourceRelay,
+      onCustomSourceRelayChange,
+      customTargetRelay,
+      onCustomTargetRelayChange,
+      isBusy,
+      activeActionLabel,
+      lastResultBanner,
+      onProbeAll,
+      onCloudSelfTest,
+      onOneClickFullDiagnostic,
+      onRunScenario,
+      onClearTraces,
+    } = useLayer4DevSignalingLabBinding(rawProps);
+
     const [showEmqxRuleGuide, setShowEmqxRuleGuide] = useState(false);
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
     const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
-
-    const roomCode = controlledRoomCode ?? localRoomCode;
-    const setRoomCode = onRoomCodeChange ?? setLocalRoomCode;
-    const roomPassword = controlledRoomPassword ?? localRoomPassword;
-    const setRoomPassword = onRoomPasswordChange ?? setLocalRoomPassword;
-    const customSourceRelay = controlledSource ?? localSource;
-    const setCustomSourceRelay = onCustomSourceRelayChange ?? setLocalSource;
-    const customTargetRelay = controlledTarget ?? localTarget;
-    const setCustomTargetRelay = onCustomTargetRelayChange ?? setLocalTarget;
 
     const storeSizing = useMenuLayoutStore(
       (s) =>
@@ -89,6 +66,10 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
         DEFAULT_PANEL_SIZING['layer4-dev-signaling-lab']
     );
     const sizing = propSizing ?? storeSizing;
+
+    if (!isDevPrivateSource) {
+      return <Layer3DevSelfTestRecipe isLight={isLight} onBack={onBack} />;
+    }
 
     const handleCopyText = (text: string, label: string) => {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -99,7 +80,7 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
     };
 
     const handleScenarioClick = (scenario: SignalingLabScenarioId, label: string) => {
-      onRunScenario?.(scenario, label);
+      onRunScenario(scenario, label);
     };
 
     return (
@@ -140,7 +121,7 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
                 <button
                   type="button"
                   disabled={isBusy}
-                  onClick={() => onOneClickFullDiagnostic?.()}
+                  onClick={() => onOneClickFullDiagnostic()}
                   onMouseEnter={() =>
                     setHoveredDesc(
                       'One-Click Full Diagnostic: Sequentially verifies 4 Relay Slots -> Dual Cloud Edge Self-Test -> 5-Layer Anti-Loop -> Outbound Bridges -> EMQX Rule Webhooks, stopping on the exact step if anything fails.'
@@ -183,7 +164,7 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
                 <input
                   type="text"
                   value={roomCode}
-                  onChange={(e) => setRoomCode(e.target.value)}
+                  onChange={(e) => onRoomCodeChange(e.target.value)}
                   className={`w-24 px-2 py-0.5 rounded-md border text-xs font-mono outline-none ${
                     isLight
                       ? 'bg-white border-neutral-300 text-neutral-900'
@@ -196,7 +177,7 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
                 <input
                   type="text"
                   value={roomPassword}
-                  onChange={(e) => setRoomPassword(e.target.value)}
+                  onChange={(e) => onRoomPasswordChange(e.target.value)}
                   className={`w-20 px-2 py-0.5 rounded-md border text-xs font-mono outline-none ${
                     isLight
                       ? 'bg-white border-neutral-300 text-neutral-900'
@@ -209,7 +190,7 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
                 <button
                   type="button"
                   disabled={isBusy}
-                  onClick={() => onProbeAll?.()}
+                  onClick={() => onProbeAll()}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold border inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 ${
                     isLight
                       ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
@@ -223,7 +204,7 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
                 <button
                   type="button"
                   disabled={isBusy}
-                  onClick={() => onCloudSelfTest?.()}
+                  onClick={() => onCloudSelfTest()}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold border inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 ${
                     isLight
                       ? 'border-cyan-500/40 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-800'
@@ -244,9 +225,9 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
             probeSummary={probeSummary}
             isBusy={isBusy}
             customSourceRelay={customSourceRelay}
-            onCustomSourceRelayChange={setCustomSourceRelay}
+            onCustomSourceRelayChange={onCustomSourceRelayChange}
             customTargetRelay={customTargetRelay}
-            onCustomTargetRelayChange={setCustomTargetRelay}
+            onCustomTargetRelayChange={onCustomTargetRelayChange}
             onRunScenario={handleScenarioClick}
             onHover={setHoveredDesc}
           />
@@ -292,8 +273,8 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
             traces={traces}
             combinedLogs={probeSummary?.combinedLogs || []}
             onCopyText={handleCopyText}
-            onClearTraces={() => onClearTraces?.()}
-            onRefreshLogs={() => onProbeAll?.()}
+            onClearTraces={() => onClearTraces()}
+            onRefreshLogs={() => onProbeAll()}
             onHover={setHoveredDesc}
           />
         </PanelContent>

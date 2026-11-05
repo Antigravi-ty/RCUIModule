@@ -8,7 +8,7 @@ export type CanonicalMenuPanelId =
   | 'layer2-previews'
   | 'layer2-manage-room'
   | 'layer3-training-config'
-  | 'layer3-audio-eq'
+  | 'layer3-acoustics-equalizer'
   | 'layer3-ball-trajectory'
   | 'layer3-host-match'
   | 'layer3-host-training'
@@ -244,7 +244,7 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     minHeight: 200,
     maxHeight: 960,
   },
-  'layer3-audio-eq': {
+  'layer3-acoustics-equalizer': {
     mode: 'auto',
     width: 480,
     targetHeight: 540,

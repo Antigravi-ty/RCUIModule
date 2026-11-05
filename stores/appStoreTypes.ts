@@ -6,11 +6,11 @@ import {
   VisualMaterialsConfig,
   AudioConfig,
   GameplayConfig,
-  TrajectoryConfig,
   BoostPadTunerConfig,
   TouchInputAgentMode,
   TelemetryConfig,
 } from '../config/uiConfig';
+import { type TrajectoryConfig } from '../config/trainingDefaults';
 import {
   type ClockPacingMode,
   type ClockPacingPriority,

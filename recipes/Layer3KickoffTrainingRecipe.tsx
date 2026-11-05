@@ -11,7 +11,7 @@ import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
-import { KICKOFF_TRAINING_PRESET } from '../stores/devFloatingPresets';
+import { KICKOFF_TRAINING_TUNER_PRESET } from '../stores/devFloatingPresets';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
@@ -54,7 +54,7 @@ const DRILL_MODE_CARDS: Array<{
  * 1. Drill Mode — small header + 3 selectable cards (Instant | Easy Learning | Realistic) with checkmark & inverted active state
  * 2. AI Spawn Position — inline SegmentedSwitch (Same Side | Opposite Side)
  * 3. Ghost Mode — single-line ToggleSwitch
- * 4. Kickoff Training (PPO) — single-line FloatingWindowCard spawner (Rhythm Note Highway toggle resides inside the Floating Window)
+ * 4. Kickoff Training Tuner (PPO) — single-line FloatingWindowCard spawner (Rhythm Note Highway toggle resides inside the Floating Window)
  * 5. Start Kickoff Drill — primary action button
  */
 export const Layer3KickoffTrainingRecipe: React.FC<Layer3KickoffTrainingRecipeProps> = React.memo((rawProps) => {
@@ -216,12 +216,12 @@ export const Layer3KickoffTrainingRecipe: React.FC<Layer3KickoffTrainingRecipePr
 
           {/* 4. Kickoff Spawn & Mirror Floating Window Launcher */}
           <FloatingWindowCard
-            preset={KICKOFF_TRAINING_PRESET}
+            preset={KICKOFF_TRAINING_TUNER_PRESET}
             icon={Crosshair}
             iconColor="text-amber-500"
             bordered={false}
             showDescription={false}
-            hoverTooltip="Kickoff Training (PPO): Spawn floating window to configure exact kickoff spawn slots and PPO opponent mirror settings."
+            hoverTooltip="Kickoff Training Tuner (PPO): Spawn floating window to configure exact kickoff spawn slots and PPO opponent mirror settings."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}

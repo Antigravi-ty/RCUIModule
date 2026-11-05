@@ -21,12 +21,12 @@ import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 
-export interface KickoffTrainingFloatingWindowProps {
+export interface KickoffTrainingTunerFloatingWindowProps {
   isLight?: boolean;
   active?: boolean;
 }
 
-export const KickoffTrainingFloatingWindow: React.FC<KickoffTrainingFloatingWindowProps> = ({
+export const KickoffTrainingTunerFloatingWindow: React.FC<KickoffTrainingTunerFloatingWindowProps> = ({
   isLight = false,
 }) => {
   const {

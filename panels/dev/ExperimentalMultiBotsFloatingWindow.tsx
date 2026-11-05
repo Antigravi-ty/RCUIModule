@@ -1,9 +1,7 @@
 import React from 'react';
 import { Play, RotateCcw, Users } from 'lucide-react';
-import {
-  useExperimentalMultiBotsStore,
-  type ExpPlayerParticipation,
-} from '../../stores/experimentalMultiBotsStore';
+import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
+import type { ExpPlayerParticipation } from '../../stores/experimentalMultiBotsRosterUtils';
 import { useAppStore } from '../../stores/appStore';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { Badge } from '../../primitives/Badge';

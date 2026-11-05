@@ -36,7 +36,7 @@ export interface PresetConfig {
 
 export const REPLAY_VIEWER_PRESET: PresetConfig = {
   id: 'replay-viewer',
-  title: 'RC Replay Viewer',
+  title: 'Replay Viewer',
   category: 'ReplayViewer',
   width: 471,
   height: 456,
@@ -47,7 +47,7 @@ export const REPLAY_VIEWER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'user',
   summary: 'Multi-track replay timeline scrubber, camera mode switcher, and speed flow controls.',
-  menuEntryPath: 'Play -> RC Replay Viewer',
+  menuEntryPath: 'Play -> Self-Training -> Replay Viewer',
   component: 'ReplayViewerFloatingWindow',
   sourcePath: 'panels/user/ReplayViewerFloatingWindow.tsx',
 };

@@ -13,15 +13,14 @@ import {
   type NameTagRuntimeSyncSnapshot,
   type NameTagTelemetrySnapshot,
   createDefaultCarOverride,
-  mergeNameTagConfigPatch,
-  resolveNameTagBoostBorderVisible,
-  sanitizeCarOverride,
-  sanitizeConfig,
-  sanitizeRuntimeSyncSnapshot,
 } from '../config/nameTagConfig';
 import {
   buildNameTagCalibrationExportPayload as buildExportPayloadFromConfigAndSnapshot,
   computeFittedParametersFromSamples as computeFittedFromConfigAndSnapshot,
+  mergeNameTagConfigPatch,
+  sanitizeCarOverride,
+  sanitizeConfig,
+  sanitizeRuntimeSyncSnapshot,
 } from '../config/nameTagCalibrationMath';
 import {
   safeLocalStorageGet,
@@ -29,8 +28,6 @@ import {
   safeStorage,
 } from '../config/storageHelpers';
 import { syncBridge } from './syncBridge';
-
-export { resolveNameTagBoostBorderVisible, type NameTagRuntimeSyncSnapshot };
 
 const CONFIG_SYNC_KEY = 'store:nameTagConfig:v1';
 const RUNTIME_SYNC_KEY = 'store:nameTagRuntime:v1';

@@ -6,7 +6,7 @@ import {
   type ExpPlayerParticipation,
   type ExpSpawnedCarInfo,
   type ExpSpeedMultiplier,
-} from '../../stores/experimentalMultiBotsStore';
+} from '../../stores/experimentalMultiBotsRosterUtils';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { Button } from '../../primitives/Button';

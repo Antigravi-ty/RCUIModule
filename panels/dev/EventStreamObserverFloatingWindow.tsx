@@ -10,7 +10,7 @@ import {
   type CollisionImpulseEvent,
 } from '../../charts/EventImpulseScatterChart';
 
-export interface EventStreamOBFloatingWindowProps {
+export interface EventStreamObserverFloatingWindowProps {
   isLight?: boolean;
   active?: boolean;
 }
@@ -23,7 +23,7 @@ const PARAM_UNIT_MAP: Record<EventParamType, string> = {
   z: 'uu',
 };
 
-export const EventStreamOBFloatingWindow: React.FC<EventStreamOBFloatingWindowProps> = ({
+export const EventStreamObserverFloatingWindow: React.FC<EventStreamObserverFloatingWindowProps> = ({
   isLight = false,
   active = true,
 }) => {

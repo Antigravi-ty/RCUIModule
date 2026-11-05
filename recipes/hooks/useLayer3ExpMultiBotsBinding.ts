@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../../stores/appStore';
+import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
 import {
-  useExperimentalMultiBotsStore,
   EXP_CAR_COLOR_PALETTE,
   type ExpPlayerParticipation,
   type ExpSpeedMultiplier,
-} from '../../stores/experimentalMultiBotsStore';
+} from '../../stores/experimentalMultiBotsRosterUtils';
 import { floatingStore } from '../../stores/floatingStore';
 import {
   EXPERIMENTAL_MULTI_BOTS_PRESET,

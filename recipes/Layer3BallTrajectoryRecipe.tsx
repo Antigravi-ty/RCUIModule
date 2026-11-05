@@ -20,8 +20,6 @@ import {
 import { BALL_TRAJECTORY_TUNER_PRESET } from '../stores/devFloatingPresets';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 
-export { DEFAULT_TRAJECTORY_CONFIG, type TrajectoryConfig };
-
 const PRESET_COLOR_MAP: Array<{ value: string; label: string }> = [
   { value: '#000000', label: 'Black' },
   { value: '#ffffff', label: 'White' },

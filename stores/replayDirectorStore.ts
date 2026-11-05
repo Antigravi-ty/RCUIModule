@@ -5,32 +5,146 @@
 import {
   REPLAY_DIRECTOR_CONFIG,
   updateReplayDirectorConfig,
-  resetReplayDirectorConfig,
-  subscribeReplayDirectorConfig,
   setReplayDirectorActiveControllerHooks,
+  type ReplayDirectorActiveControllerConfigTarget,
 } from '../config/replayDirectorConfig';
 
-export {
-  updateReplayDirectorConfig,
-  resetReplayDirectorConfig,
-  subscribeReplayDirectorConfig,
-};
+export interface ReplayDirectorAnomalyPeakEntry {
+  frameId?: number;
+  replayFrameIndex?: number;
+  valueUu?: number;
+  valueDeg?: number;
+}
 
-let _activeReplayController: any = null;
-let _latestRetainedReplayController: any = null;
+export interface ReplayDirectorAnomalyPeaks {
+  maxEyeStep?: ReplayDirectorAnomalyPeakEntry;
+  maxYawStep?: ReplayDirectorAnomalyPeakEntry;
+  maxEyeAccel?: ReplayDirectorAnomalyPeakEntry;
+}
+
+export interface ReplayDirectorFrameCameraPose {
+  dampedEyeUnreal: [number, number, number];
+  dampedTargetUnreal: [number, number, number];
+  yawDeg: number;
+  pitchDeg: number;
+  distanceToTarget: number;
+  carViewAngleDeg?: number;
+  ballViewAngleDeg?: number;
+  interceptorViewAngleDeg?: number;
+  eyeStepUu?: number;
+  yawStepDeg?: number;
+}
+
+export interface ReplayDirectorFrameLookahead {
+  activeTouchCarIndex: number;
+  nextTouchCarIndex: number;
+  interceptorCarIndex?: number;
+  interceptorBlend?: number;
+}
+
+export interface ReplayDirectorDiagnosticSnapshot {
+  frameId?: number;
+  replayFrameIndex?: number;
+  totalReplayFrames?: number;
+  importedFileName?: string;
+  hasRecordedCsvCamera?: boolean;
+  useRecordedCsvCamera?: boolean;
+  anomalyPeaks?: ReplayDirectorAnomalyPeaks | null;
+  importedSummary?: {
+    totalYawPathDeg?: number;
+    netYawSpanDeg?: number;
+  } | null;
+  cameraPose: ReplayDirectorFrameCameraPose;
+  lookahead: ReplayDirectorFrameLookahead;
+  cars?: unknown[];
+  [key: string]: unknown;
+}
+
+export interface ReplayDirectorLiveCameraState {
+  eyeUnreal?: [number, number, number];
+  yawUnrealDeg?: number;
+  pitchUnrealDeg?: number;
+  fovDeg?: number;
+  [key: string]: unknown;
+}
+
+export interface ReplayDirectorExportResult {
+  filename?: string;
+  content?: string;
+  [key: string]: unknown;
+}
+
+export interface ReplayDirectorDiagnosticPattern {
+  name?: string;
+  activeFrames?: unknown[];
+  directorConfig?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface ReplayDirectorControllerHandle extends ReplayDirectorActiveControllerConfigTarget {
+  isActive?: boolean;
+  isPaused?: boolean;
+  isPersistent?: boolean;
+  isScrubbing?: boolean;
+  isImportedPreview?: boolean;
+  hasRetainedReplay?: boolean;
+  ActiveWindowCount?: number;
+  playbackSpeed?: number;
+  activeFrames?: unknown[];
+  retainedReplaySeq?: number;
+  useRecordedCsvCamera?: boolean;
+  copyRetainedReplayFrom?: (other: ReplayDirectorControllerHandle) => void;
+  getCurrentFrameDiagnosticSnapshot: () => ReplayDirectorDiagnosticSnapshot | null;
+  togglePause: () => void;
+  cyclePlaybackSpeed: () => void;
+  seekToNormalized: (norm01: number) => void;
+  endReplaySession?: () => void;
+  buildDirectorFrameWindowDiagnostic?: (windowRadius: number) => Record<string, unknown> | null;
+  loadImportedDiagnosticPattern?: (
+    parsed: ReplayDirectorDiagnosticPattern,
+    options: Record<string, unknown>
+  ) => void;
+}
+
+export type ReplayDirectorDiagnosticExporterFn = (
+  ctrl: ReplayDirectorControllerHandle | null,
+  format: string,
+  options: Record<string, unknown>
+) => ReplayDirectorExportResult | null;
+
+export type ReplayDirectorDiagnosticParserFn = (
+  fileOrInput: unknown,
+  fileName: string
+) => Promise<ReplayDirectorDiagnosticPattern | null>;
+
+export type ReplayDirectorWindowDiagnosticBuilderFn = (
+  ctrl: ReplayDirectorControllerHandle,
+  windowRadius: number
+) => Record<string, unknown> | null;
+
+export type ReplayDirectorReferenceKeyframeExporterFn = (
+  ctrl: ReplayDirectorControllerHandle,
+  options: Record<string, unknown>
+) => ReplayDirectorExportResult | null;
+
+let _activeReplayController: ReplayDirectorControllerHandle | null = null;
+let _latestRetainedReplayController: ReplayDirectorControllerHandle | null = null;
 let _retainedReplaySequence = 0;
-let _diagnosticExporter: ((ctrl: any, format: string, options: any) => any) | null = null;
-let _diagnosticParser: ((fileOrInput: any, fileName: string) => Promise<any>) | null = null;
-let _windowDiagnosticBuilder: ((ctrl: any, windowRadius: number) => any) | null = null;
-let _referenceKeyframeExporter: ((ctrl: any, options: any) => any) | null = null;
+let _diagnosticExporter: ReplayDirectorDiagnosticExporterFn | null = null;
+let _diagnosticParser: ReplayDirectorDiagnosticParserFn | null = null;
+let _windowDiagnosticBuilder: ReplayDirectorWindowDiagnosticBuilderFn | null = null;
+let _referenceKeyframeExporter: ReplayDirectorReferenceKeyframeExporterFn | null = null;
 
 export interface ReplayDirectorPreviewHandlers {
-  onImportPattern?: ((parsed: any, options: any) => any) | null;
-  onStartPreview?: ((options: any) => boolean) | null;
+  onImportPattern?: ((
+    parsed: ReplayDirectorDiagnosticPattern,
+    options: Record<string, unknown>
+  ) => ReplayDirectorDiagnosticPattern | null) | null;
+  onStartPreview?: ((options: Record<string, unknown>) => boolean) | null;
   onExitPreview?: (() => boolean) | null;
-  onEnterReferenceFreeCam?: ((options: any) => boolean) | null;
+  onEnterReferenceFreeCam?: ((options: Record<string, unknown>) => boolean) | null;
   onExitReferenceFreeCam?: (() => boolean) | null;
-  onGetLiveCameraState?: (() => any) | null;
+  onGetLiveCameraState?: (() => ReplayDirectorLiveCameraState | null) | null;
 }
 
 const _previewHandlers: ReplayDirectorPreviewHandlers = {
@@ -42,7 +156,7 @@ const _previewHandlers: ReplayDirectorPreviewHandlers = {
   onGetLiveCameraState: null,
 };
 
-type ReplaySessionListener = (controller: any) => void;
+export type ReplaySessionListener = (controller: ReplayDirectorControllerHandle | null) => void;
 const _replaySessionListeners = new Set<ReplaySessionListener>();
 
 setReplayDirectorActiveControllerHooks({
@@ -50,7 +164,9 @@ setReplayDirectorActiveControllerHooks({
   notifyActiveController: () => notifyActiveReplayTimelineController(),
 });
 
-export function markReplayTimelineControllerRetained(ctrl: any): number {
+export function markReplayTimelineControllerRetained(
+  ctrl: ReplayDirectorControllerHandle | null | undefined
+): number {
   if (!ctrl || !Array.isArray(ctrl.activeFrames) || ctrl.activeFrames.length === 0) {
     return 0;
   }
@@ -60,7 +176,7 @@ export function markReplayTimelineControllerRetained(ctrl: any): number {
   return _retainedReplaySequence;
 }
 
-export function getLatestRetainedReplayTimelineController(): any {
+export function getLatestRetainedReplayTimelineController(): ReplayDirectorControllerHandle | null {
   return _latestRetainedReplayController;
 }
 
@@ -74,7 +190,9 @@ export function notifyActiveReplayTimelineController(): void {
   }
 }
 
-export function setActiveReplayTimelineController(ctrl: any): void {
+export function setActiveReplayTimelineController(
+  ctrl: ReplayDirectorControllerHandle | null
+): void {
   if (
     ctrl &&
     !ctrl.isActive &&
@@ -91,21 +209,23 @@ export function setActiveReplayTimelineController(ctrl: any): void {
   notifyActiveReplayTimelineController();
 }
 
-export function getActiveReplayTimelineController(): any {
+export function getActiveReplayTimelineController(): ReplayDirectorControllerHandle | null {
   return _activeReplayController;
 }
 
-export function subscribeActiveReplayTimelineController(listener: ReplaySessionListener): () => boolean {
+export function subscribeActiveReplayTimelineController(
+  listener: ReplaySessionListener
+): () => boolean {
   if (typeof listener !== 'function') return () => false;
   _replaySessionListeners.add(listener);
   return () => _replaySessionListeners.delete(listener);
 }
 
 export function registerReplayDirectorDiagnosticExporter(
-  exporterFn: (ctrl: any, format: string, options: any) => any,
-  parserFn: ((fileOrInput: any, fileName: string) => Promise<any>) | null = null,
-  windowBuilderFn: ((ctrl: any, windowRadius: number) => any) | null = null,
-  referenceKeyframeExporterFn: ((ctrl: any, options: any) => any) | null = null
+  exporterFn: ReplayDirectorDiagnosticExporterFn,
+  parserFn: ReplayDirectorDiagnosticParserFn | null = null,
+  windowBuilderFn: ReplayDirectorWindowDiagnosticBuilderFn | null = null,
+  referenceKeyframeExporterFn: ReplayDirectorReferenceKeyframeExporterFn | null = null
 ): void {
   _diagnosticExporter = exporterFn;
   if (typeof parserFn === 'function') {
@@ -119,7 +239,9 @@ export function registerReplayDirectorDiagnosticExporter(
   }
 }
 
-export function registerReplayDirectorPreviewHandlers(handlers: ReplayDirectorPreviewHandlers = {}): void {
+export function registerReplayDirectorPreviewHandlers(
+  handlers: ReplayDirectorPreviewHandlers = {}
+): void {
   if (!handlers || typeof handlers !== 'object') return;
   if (typeof handlers.onImportPattern === 'function') {
     _previewHandlers.onImportPattern = handlers.onImportPattern;
@@ -141,7 +263,9 @@ export function registerReplayDirectorPreviewHandlers(handlers: ReplayDirectorPr
   }
 }
 
-export function enterActiveReplayDirectorReferenceFreeCam(options: Record<string, any> = {}): boolean {
+export function enterActiveReplayDirectorReferenceFreeCam(
+  options: Record<string, unknown> = {}
+): boolean {
   if (typeof _previewHandlers.onEnterReferenceFreeCam === 'function') {
     return _previewHandlers.onEnterReferenceFreeCam(options);
   }
@@ -155,14 +279,20 @@ export function exitActiveReplayDirectorReferenceFreeCam(): boolean {
   return false;
 }
 
-export function getActiveReplayDirectorLiveCameraState(): any {
+export function getActiveReplayDirectorLiveCameraState(): ReplayDirectorLiveCameraState | null {
   if (typeof _previewHandlers.onGetLiveCameraState === 'function') {
     return _previewHandlers.onGetLiveCameraState();
   }
   return null;
 }
 
-export function exportActiveReplayDirectorReferenceKeyframe(options: Record<string, any> = {}): any {
+export function exportActiveReplayDirectorReferenceKeyframe(
+  options: {
+    controller?: ReplayDirectorControllerHandle | null;
+    liveCameraState?: ReplayDirectorLiveCameraState | null;
+    [key: string]: unknown;
+  } = {}
+): ReplayDirectorExportResult | null {
   const ctrl = options.controller || _activeReplayController;
   if (!ctrl) return null;
   const liveCameraState = options.liveCameraState || getActiveReplayDirectorLiveCameraState();
@@ -174,8 +304,11 @@ export function exportActiveReplayDirectorReferenceKeyframe(options: Record<stri
 
 export function exportActiveReplayDirectorDiagnosticPattern(
   format = 'rcgr',
-  options: Record<string, any> = {}
-): any {
+  options: {
+    controller?: ReplayDirectorControllerHandle | null;
+    [key: string]: unknown;
+  } = {}
+): ReplayDirectorExportResult | null {
   const ctrl = options.controller || _activeReplayController;
   if (typeof _diagnosticExporter === 'function') {
     return _diagnosticExporter(ctrl, format, options);
@@ -185,8 +318,11 @@ export function exportActiveReplayDirectorDiagnosticPattern(
 
 export function buildActiveReplayDirectorWindowDiagnostic(
   windowRadius = 15,
-  options: Record<string, any> = {}
-): any {
+  options: {
+    controller?: ReplayDirectorControllerHandle | null;
+    [key: string]: unknown;
+  } = {}
+): Record<string, unknown> | null {
   const ctrl = options.controller || _activeReplayController;
   if (!ctrl) return null;
   if (typeof ctrl.buildDirectorFrameWindowDiagnostic === 'function') {
@@ -199,21 +335,25 @@ export function buildActiveReplayDirectorWindowDiagnostic(
 }
 
 export async function importActiveReplayDirectorDiagnosticPattern(
-  fileOrInput: any,
-  options: Record<string, any> = {}
-): Promise<any> {
+  fileOrInput: unknown,
+  options: {
+    fileName?: string;
+    applyImportedConfig?: boolean;
+    [key: string]: unknown;
+  } = {}
+): Promise<ReplayDirectorDiagnosticPattern | null> {
+  const inputRecord =
+    fileOrInput && typeof fileOrInput === 'object'
+      ? (fileOrInput as ReplayDirectorDiagnosticPattern)
+      : null;
   const fileName =
     options.fileName ||
-    (fileOrInput && typeof fileOrInput === 'object' && fileOrInput.name) ||
+    (inputRecord && typeof inputRecord.name === 'string' && inputRecord.name) ||
     'imported.rcgr.gz';
 
-  let parsed: any = null;
-  if (
-    fileOrInput &&
-    typeof fileOrInput === 'object' &&
-    Array.isArray(fileOrInput.activeFrames)
-  ) {
-    parsed = fileOrInput;
+  let parsed: ReplayDirectorDiagnosticPattern | null = null;
+  if (inputRecord && Array.isArray(inputRecord.activeFrames)) {
+    parsed = inputRecord;
   } else if (typeof _diagnosticParser === 'function') {
     parsed = await _diagnosticParser(fileOrInput, fileName);
   }
@@ -232,7 +372,7 @@ export async function importActiveReplayDirectorDiagnosticPattern(
     updateReplayDirectorConfig(patch);
   }
 
-  const effectiveOptions = {
+  const effectiveOptions: Record<string, unknown> = {
     useRecordedCsvCamera: false,
     ...options,
     fileName,
@@ -249,7 +389,9 @@ export async function importActiveReplayDirectorDiagnosticPattern(
   return parsed;
 }
 
-export function startActiveReplayDirectorPreview(options: Record<string, any> = {}): boolean {
+export function startActiveReplayDirectorPreview(
+  options: Record<string, unknown> = {}
+): boolean {
   if (typeof _previewHandlers.onStartPreview === 'function') {
     return _previewHandlers.onStartPreview(options);
   }

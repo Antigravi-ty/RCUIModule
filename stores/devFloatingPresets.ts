@@ -15,7 +15,7 @@ export const DIAGNOSTIC_DUMP_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Live Client Replay, Reconcile & Pacing Telemetry, and Server Replay buffer gauges + one-click .zip dump.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'DiagnosticDumpFloatingWindow',
   sourcePath: 'panels/dev/DiagnosticDumpFloatingWindow.tsx',
 };
@@ -31,7 +31,7 @@ export const STATIC_TRAINING_BALL_CAM_TUNER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Relative ball camera (Distance, Height, Angle, Lateral Offset) and Edit-Mode 70% Ball Opacity override.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'StaticTrainingBallCamTunerFloatingWindow',
   sourcePath: 'panels/dev/StaticTrainingBallCamTunerFloatingWindow.tsx',
 };
@@ -65,7 +65,7 @@ export const GOAL_VOLUME_TUNER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Goal Volume Hitbox 3D wireframe overlay, Standard & Throwback AABB calibration & JSON export.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'GoalVolumeTunerFloatingWindow',
   sourcePath: 'panels/dev/GoalVolumeTunerFloatingWindow.tsx',
 };
@@ -81,7 +81,7 @@ export const REPLAY_DIRECTOR_TUNER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: '.rcgr.gz Goal Replay container export/import, 3D Arena preview, anomaly peak seek chips & +-15f window.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'ReplayDirectorTunerFloatingWindow',
   sourcePath: 'panels/dev/ReplayDirectorTunerFloatingWindow.tsx',
 };
@@ -97,7 +97,7 @@ export const REACHABILITY_TUNER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Ground 1s/2s/3s Isochrone LUT (Boost=0), Boost-Driven 3D Horn & Optimal Intercept 3D Cross.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'ReachabilityTunerFloatingWindow',
   sourcePath: 'panels/dev/ReachabilityTunerFloatingWindow.tsx',
 };
@@ -113,7 +113,7 @@ export const BALL_TRAJECTORY_TUNER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'WASM Incremental Tail Prediction (600t), Car-Ball Hit / Deviation Triggers, 3D Volumetric Shaded Tube, Spatial Depth Cues & JSON Export.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'BallTrajectoryTunerFloatingWindow',
   sourcePath: 'panels/dev/BallTrajectoryTunerFloatingWindow.tsx',
 };
@@ -129,7 +129,7 @@ export const VEHICLE_MODEL_OFFSET_TUNER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Per-vehicle Hitbox & Align, Wheel Hub Anchors & Dual Boost Exhaust Nozzle Offsets (Fennec & Insidio).',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'VehicleModelOffsetTunerFloatingWindow',
   sourcePath: 'panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx',
   tabs: [
@@ -172,7 +172,7 @@ export const EXPERIMENTAL_MULTI_BOTS_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Live floating controller for up to 3v3 Native SafeTensors Nexto/Necto POV switching & inference telemetry.',
-  menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  menuEntryPath: 'Settings -> Developer -> Sandboxes',
   component: 'ExperimentalMultiBotsFloatingWindow',
   sourcePath: 'panels/dev/ExperimentalMultiBotsFloatingWindow.tsx',
 };
@@ -189,7 +189,7 @@ export const EXPERIMENTAL_BOT_PACK_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Live floating controller for Experimental Bot Pack #9700488 (8 native models: Chronos, Dice, Ducky, Fury, Galactus, Kira, Rain, Ripple v1.1).',
-  menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  menuEntryPath: 'Settings -> Developer -> Sandboxes',
   component: 'ExperimentalBotPackFloatingWindow',
   sourcePath: 'panels/dev/ExperimentalBotPackFloatingWindow.tsx',
 };
@@ -227,7 +227,7 @@ export const SUBSYSTEM_ISOLATION_LAB_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: '7 isolated test benches: Probes, Multi-World Ghost, State Replay, 90s Match, Goal Replay, Kickoff Duel & Demolish Respawn.',
-  menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  menuEntryPath: 'Settings -> Developer -> Sandboxes',
   component: 'SubsystemIsolationLabFloatingWindow',
   sourcePath: 'panels/dev/SubsystemIsolationLabFloatingWindow.tsx',
   tabs: [
@@ -241,9 +241,9 @@ export const SUBSYSTEM_ISOLATION_LAB_PRESET: PresetConfig = {
   ],
 };
 
-export const KICKOFF_TRAINING_PRESET: PresetConfig = {
-  id: 'kickoff-training',
-  title: 'Kickoff Training (PPO)',
+export const KICKOFF_TRAINING_TUNER_PRESET: PresetConfig = {
+  id: 'kickoff-training-tuner',
+  title: 'Kickoff Training Tuner (PPO)',
   category: 'Training',
   width: 460,
   height: 595,
@@ -252,14 +252,14 @@ export const KICKOFF_TRAINING_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Kickoff sub-modes, realistic wait (0.25s steps), N/120 speed & W/S rhythm overlay offset.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
-  component: 'KickoffTrainingFloatingWindow',
-  sourcePath: 'panels/dev/KickoffTrainingFloatingWindow.tsx',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  component: 'KickoffTrainingTunerFloatingWindow',
+  sourcePath: 'panels/dev/KickoffTrainingTunerFloatingWindow.tsx',
 };
 
-export const EVENT_STREAM_OB_PRESET: PresetConfig = {
-  id: 'event-stream-ob',
-  title: 'Event Stream OB',
+export const EVENT_STREAM_OBSERVER_PRESET: PresetConfig = {
+  id: 'event-stream-observer',
+  title: 'Event Stream Observer',
   category: 'Observer',
   width: 460,
   height: 420,
@@ -268,9 +268,9 @@ export const EVENT_STREAM_OB_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Real-time physics collision observer, impulse scatter chart & audio threshold visualizer.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
-  component: 'EventStreamOBFloatingWindow',
-  sourcePath: 'panels/dev/EventStreamOBFloatingWindow.tsx',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  component: 'EventStreamObserverFloatingWindow',
+  sourcePath: 'panels/dev/EventStreamObserverFloatingWindow.tsx',
 };
 
 export const DUAL_ARENA_DETERMINISM_HARNESS_PRESET: PresetConfig = {
@@ -284,7 +284,7 @@ export const DUAL_ARENA_DETERMINISM_HARNESS_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Bit-exact parallel RocketSim physics rollback verification & desync delta monitoring.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'DualArenaDeterminismHarnessFloatingWindow',
   sourcePath: 'panels/dev/DualArenaDeterminismHarnessFloatingWindow.tsx',
 };
@@ -300,7 +300,7 @@ export const CAMERA_DETERMINISM_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Side-by-side comparison between Legacy WASM & Clean JS camera with 600+600f CSV auto-capture.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'CameraDeterminismFloatingWindow',
   sourcePath: 'panels/dev/CameraDeterminismFloatingWindow.tsx',
 };
@@ -316,7 +316,7 @@ export const NETWORK_STRESS_INJECTION_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Asymmetric uplink/downlink delay, jitter, packet loss & burst drop injection + 2-Car 0G probes.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'NetworkStressInjectionFloatingWindow',
   sourcePath: 'panels/dev/NetworkStressInjectionFloatingWindow.tsx',
 };
@@ -332,7 +332,7 @@ export const CLOCK_PACING_TUNER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Low-level STS/CSTS hysteresis, PD gains, RTT bias compensation, trace import & What-If simulator.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'ClockPacingTunerFloatingWindow',
   sourcePath: 'panels/dev/ClockPacingTunerFloatingWindow.tsx',
 };
@@ -389,7 +389,7 @@ export const SPATIAL_AUDIO_TUNER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Stadium spatial acoustics (HPF 425Hz, LPF 3500Hz, Wet 69%, 3.0s Decay) & 2.0s directional non-linear transition curve.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'SpatialAudioTunerFloatingWindow',
   sourcePath: 'panels/dev/SpatialAudioTunerFloatingWindow.tsx',
 };
@@ -405,14 +405,14 @@ export const ENGINE_AUDIO_TUNER_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Turtle Modem 40-slice granular REV powertrain synthesizer, RPM/gear/reverse physics, backfire pops & Entity Spawn SFX.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners',
   component: 'EngineAudioTunerFloatingWindow',
   sourcePath: 'panels/dev/EngineAudioTunerFloatingWindow.tsx',
 };
 
-export const BOTS_LOADOUT_PRESET: PresetConfig = {
-  id: 'bots-loadout',
-  title: 'Bots Loadout',
+export const BOTS_LOADOUT_TUNER_PRESET: PresetConfig = {
+  id: 'bots-loadout-tuner',
+  title: 'Bots Loadout Tuner',
   category: 'BotsLoadout',
   width: 480,
   height: 580,
@@ -421,9 +421,9 @@ export const BOTS_LOADOUT_PRESET: PresetConfig = {
   singleton: true,
   tier: 'developer',
   summary: 'Multi-select randomizable Bot Loadout pool (3 GLB models default, Metallic paint, Cartoon boost, Standard boost audio, Random TrainStation anthem).',
-  menuEntryPath: 'Settings -> Developer -> Bots Loadout',
-  component: 'BotsLoadoutFloatingWindow',
-  sourcePath: 'panels/dev/BotsLoadoutFloatingWindow.tsx',
+  menuEntryPath: 'Settings -> Developer -> Bots Loadout Tuner',
+  component: 'BotsLoadoutTunerFloatingWindow',
+  sourcePath: 'panels/dev/BotsLoadoutTunerFloatingWindow.tsx',
 };
 
 export const DEV_PRESET_WINDOWS: PresetConfig[] = [
@@ -440,8 +440,8 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   EXPERIMENTAL_BOT_PACK_PRESET,
   ATMOSPHERE_FX_TUNER_PRESET,
   SUBSYSTEM_ISOLATION_LAB_PRESET,
-  KICKOFF_TRAINING_PRESET,
-  EVENT_STREAM_OB_PRESET,
+  KICKOFF_TRAINING_TUNER_PRESET,
+  EVENT_STREAM_OBSERVER_PRESET,
   DUAL_ARENA_DETERMINISM_HARNESS_PRESET,
   CAMERA_DETERMINISM_PRESET,
   NETWORK_STRESS_INJECTION_PRESET,
@@ -450,7 +450,7 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   DRIFTWOODS_TUNER_PRESET,
   SPATIAL_AUDIO_TUNER_PRESET,
   ENGINE_AUDIO_TUNER_PRESET,
-  BOTS_LOADOUT_PRESET,
+  BOTS_LOADOUT_TUNER_PRESET,
 ];
 
 export const PRESET_WINDOWS: PresetConfig[] = [

@@ -20,12 +20,12 @@ export interface SpatialAudio3dGizmoControlCardProps {
 const ANCHOR_MODES: { id: SpatialAudioAnchorMode; label: string; desc: string }[] = [
   {
     id: 'emitter',
-    label: 'Emitter-Centered (声源中心)',
+    label: 'Emitter-Centered',
     desc: 'Spheres wrap sound source; drive your car in/out to test',
   },
   {
     id: 'listener',
-    label: 'Listener Radar (听者雷达)',
+    label: 'Listener Radar',
     desc: 'Spheres wrap camera/car to show audible range radar',
   },
 ];

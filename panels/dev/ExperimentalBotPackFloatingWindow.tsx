@@ -1,10 +1,10 @@
 import React from 'react';
 import { Play, RotateCcw, Sparkles } from 'lucide-react';
+import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
 import {
-  useExperimentalMultiBotsStore,
   BOTPACK_9700488_POLICY_METAS,
   getExpBotPolicyMeta,
-} from '../../stores/experimentalMultiBotsStore';
+} from '../../stores/experimentalMultiBotsRosterUtils';
 import { useAppStore } from '../../stores/appStore';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';

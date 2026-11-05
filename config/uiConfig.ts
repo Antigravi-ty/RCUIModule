@@ -28,7 +28,7 @@ export type ActiveMenuRoute =
   | 'manage-room'
   | 'garage'
   | 'settings'
-  | 'audio-eq'
+  | 'acoustics-equalizer'
   | 'trajectory'
   | 'camera'
   | 'training-config'
@@ -60,7 +60,7 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'manage-room': 'main-menu',
   'garage': 'main-menu',
   'settings': 'main-menu',
-  'audio-eq': 'settings',
+  'acoustics-equalizer': 'settings',
   'trajectory': 'settings',
   'camera': 'settings',
   'training-config': 'settings',
@@ -167,13 +167,6 @@ export interface GameplayConfig {
   showAllCarHitboxes?: boolean;
   ballCamIndicator: boolean;
 }
-
-export {
-  type TrajectoryConfig,
-  type TrajectoryUpdateMode,
-  type TrajectoryRenderStyle,
-  DEFAULT_TRAJECTORY_CONFIG,
-} from './trainingDefaults';
 
 export interface BoostPadTunerConfig {
   bottomOpacity: number;
