@@ -91,13 +91,17 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
           const isFillMode =
             config.boostBorderEnabled &&
             (mode === 'bottom-up-fill' || mode === 'left-right-fill');
-          const unfilledHex = resolveUnfilledBaseHexColor(backgroundHex);
+          const unfilledHex = resolveUnfilledBaseHexColor(
+            backgroundHex,
+            config.boostUnfilledDarkenRatio
+          );
           const activeFillHex = resolveActiveBoostFillColor(
             backgroundHex,
-            boostBorderHex
+            boostBorderHex,
+            config.boostFillColorBlendRatio
           );
           const baseBgCss = isFillMode
-            ? hexToRgba(unfilledHex, config.boostUnfilledBgOpacity)
+            ? 'transparent'
             : hexToRgba(backgroundHex, config.bgOpacity);
           const circleDiaPx = Math.max(
             10,
@@ -123,7 +127,7 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
               }}
               className="relative flex items-center justify-center px-1.5 shadow-sm transition-all"
             >
-              {isFillMode && sampleBoostPct > 0 && (
+              {isFillMode && (
                 <div
                   className="absolute inset-0 overflow-hidden pointer-events-none"
                   style={{
@@ -131,45 +135,83 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                   }}
                 >
                   {mode === 'bottom-up-fill' ? (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: `${sampleBoostPct}%`,
-                        backgroundColor: hexToRgba(
-                          activeFillHex,
-                          config.boostFillOpacity
-                        ),
-                        borderTop:
-                          config.boostShowHorizonLine &&
-                          sampleBoostPct > 2 &&
-                          sampleBoostPct < 98
-                            ? `1.5px solid ${boostBorderHex}`
-                            : undefined,
-                      }}
-                    />
+                    <>
+                      {sampleBoostPct < 100 && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            height: `${100 - sampleBoostPct}%`,
+                            backgroundColor: hexToRgba(
+                              unfilledHex,
+                              config.boostUnfilledBgOpacity
+                            ),
+                          }}
+                        />
+                      )}
+                      {sampleBoostPct > 0 && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: `${sampleBoostPct}%`,
+                            backgroundColor: hexToRgba(
+                              activeFillHex,
+                              config.boostFillOpacity
+                            ),
+                            borderTop:
+                              config.boostShowHorizonLine &&
+                              sampleBoostPct > 2 &&
+                              sampleBoostPct < 98
+                                ? `1.5px solid ${boostBorderHex}`
+                                : undefined,
+                          }}
+                        />
+                      )}
+                    </>
                   ) : (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: `${sampleBoostPct}%`,
-                        backgroundColor: hexToRgba(
-                          activeFillHex,
-                          config.boostFillOpacity
-                        ),
-                        borderRight:
-                          config.boostShowHorizonLine &&
-                          sampleBoostPct > 2 &&
-                          sampleBoostPct < 98
-                            ? `1.5px solid ${boostBorderHex}`
-                            : undefined,
-                      }}
-                    />
+                    <>
+                      {sampleBoostPct < 100 && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: `${100 - sampleBoostPct}%`,
+                            backgroundColor: hexToRgba(
+                              unfilledHex,
+                              config.boostUnfilledBgOpacity
+                            ),
+                          }}
+                        />
+                      )}
+                      {sampleBoostPct > 0 && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: `${sampleBoostPct}%`,
+                            backgroundColor: hexToRgba(
+                              activeFillHex,
+                              config.boostFillOpacity
+                            ),
+                            borderRight:
+                              config.boostShowHorizonLine &&
+                              sampleBoostPct > 2 &&
+                              sampleBoostPct < 98
+                                ? `1.5px solid ${boostBorderHex}`
+                                : undefined,
+                          }}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               )}

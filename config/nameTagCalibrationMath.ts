@@ -59,7 +59,9 @@ export interface NameTagConfig {
   boostBorderEnabled: boolean;
   boostIndicatorMode: NameTagBoostIndicatorMode;
   boostFillOpacity: number;
+  boostFillColorBlendRatio: number;
   boostUnfilledBgOpacity: number;
+  boostUnfilledDarkenRatio: number;
   boostShowHorizonLine: boolean;
   boostBorderColorMode: NameTagBoostBorderColorMode;
   blueBoostBorderColor: string;
@@ -149,7 +151,6 @@ export interface NameTagRuntimeState {
   onFocusFreeCamOverview: (() => void) | null;
 }
 
-const STORAGE_KEY = 'rc_name_tag_config_v8';
 export const NAME_TAG_REFERENCE_DEPTH_UU = 3500;
 export const NAME_TAG_NEAR_CALIBRATION_DEPTH_UU = 500;
 export const NAME_TAG_FAR_CALIBRATION_DEPTH_UU = 9000;
@@ -206,7 +207,9 @@ export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   boostBorderEnabled: true,
   boostIndicatorMode: 'bottom-up-fill',
   boostFillOpacity: 1.0,
+  boostFillColorBlendRatio: 1.0,
   boostUnfilledBgOpacity: 0.3,
+  boostUnfilledDarkenRatio: 0.45,
   boostShowHorizonLine: true,
   boostBorderColorMode: 'shared',
   blueBoostBorderColor: '#000000',
