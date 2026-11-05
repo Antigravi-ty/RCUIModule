@@ -24,6 +24,11 @@ function resolveUpdateBadge(kind: BallTrajectoryTelemetry['lastUpdateKind']): {
         label: 'CATCH-UP (+N RAMP)',
         cls: 'text-cyan-400 border-cyan-500/40 bg-cyan-500/15',
       };
+    case 'wasm-seam-resync':
+      return {
+        label: 'SEAM RESYNC (600T)',
+        cls: 'text-purple-400 border-purple-500/40 bg-purple-500/15',
+      };
     case 'full-car-hit':
       return {
         label: 'FULL (CAR-BALL HIT)',

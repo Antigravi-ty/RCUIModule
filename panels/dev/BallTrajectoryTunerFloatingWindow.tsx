@@ -10,6 +10,7 @@ import { SliderControl } from '../../primitives/SliderControl';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { BallTrajectoryPresetIoSection } from './ball-trajectory-tuner/BallTrajectoryPresetIoSection';
 import { BallTrajectoryTelemetryCard } from './ball-trajectory-tuner/BallTrajectoryTelemetryCard';
+import { BallTrajectoryAnomalyDebugCard } from './ball-trajectory-tuner/BallTrajectoryAnomalyDebugCard';
 import { BallTrajectoryTubeStyleSection } from './ball-trajectory-tuner/BallTrajectoryTubeStyleSection';
 
 export interface BallTrajectoryTunerFloatingWindowProps {
@@ -40,6 +41,9 @@ export const BallTrajectoryTunerFloatingWindow: React.FC<
 
       {/* Live 120Hz WASM Incremental vs Full Recompute Telemetry */}
       <BallTrajectoryTelemetryCard isLight={isLight} />
+
+      {/* Dual-Space Anomaly Capture & Export (Space A vs Space B + Rolling Buffer) */}
+      <BallTrajectoryAnomalyDebugCard isLight={isLight} />
 
       {/* 1. WASM Incremental Prediction & Trigger Policy */}
       <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
