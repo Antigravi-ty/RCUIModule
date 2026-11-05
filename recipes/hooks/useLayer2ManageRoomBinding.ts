@@ -265,11 +265,13 @@ export function useLayer2ManageRoomBinding(
 
   return {
     ...rawProps,
-    roomCode: rawProps.roomCode ?? (onlineSession?.roomId || '8924'),
+    roomCode: rawProps.roomCode ?? (onlineSession?.roomId || '7468'),
     sessionContext: rawProps.sessionContext ?? sessionContext,
     signalingState:
       rawProps.signalingState ??
-      (onlineSession?.signalingConnected ? 'green' : 'yellow'),
+      (onlineSession?.signalingConnected && onlineSession?.signalingHealthLevel !== 'degraded'
+        ? 'green'
+        : 'yellow'),
     onRefreshSignaling:
       rawProps.onRefreshSignaling ?? (() => bridge.onReconnectSignaling?.()),
     localTeam: rawProps.localTeam ?? localTeam,

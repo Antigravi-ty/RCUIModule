@@ -19,6 +19,10 @@ import {
   type CreationProgressStatus,
   type CreationStepSpec,
 } from './online/OnlineRoomCreationProgress';
+import {
+  generateRandomRoomCode,
+  parseRoomCode,
+} from '../config/roomCodeConnectivityCodec';
 
 export type { JoinRoomConfig, Layer3JoinRoomRecipeProps, Layer3JoinRoomStateOverride };
 
@@ -26,9 +30,9 @@ export const DEFAULT_JOIN_ROOM_STEPS: CreationStepSpec[] = [
   {
     step: 1,
     stageTitle: 'Validating Room Code & Key',
-    description: 'Verifying room code syntax and preparing client authentication payload...',
+    description: 'Verifying room code checksum and preparing client authentication payload...',
     errorTitle: 'Invalid Room Code',
-    errorDescription: 'Room code is empty or malformed. Please enter a valid room code.',
+    errorDescription: 'Room code is empty or failed checksum validation. Please enter a valid room code.',
   },
   {
     step: 2,
@@ -62,7 +66,7 @@ export const DEFAULT_JOIN_ROOM_STEPS: CreationStepSpec[] = [
 
 export const DEFAULT_JOIN_ROOM_CONFIG: JoinRoomConfig = {
   playerName: `Player${Math.floor(1000 + Math.random() * 9000)}`,
-  roomCode: String(Math.floor(1000 + Math.random() * 9000)),
+  roomCode: generateRandomRoomCode(0x0f),
   roomKey: '',
   allowSpectating: true,
 };
@@ -166,7 +170,8 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
   const startJoinSequence = (willFail: boolean) => {
     clearStepTimer();
     const cleanCode = roomCode.trim();
-    if (!cleanCode) {
+    const parsedCode = parseRoomCode(cleanCode);
+    if (!parsedCode) {
       setCurrentStep(1);
       setProgressStatus('error');
       setToken('simulateLayer3Error', true);
@@ -177,7 +182,7 @@ export const Layer3JoinRoomRecipe: React.FC<Layer3JoinRoomRecipeProps> = React.m
     if (controlledProgressStatus !== undefined) {
       onJoinRoom?.({
         playerName: playerName.trim() || DEFAULT_JOIN_ROOM_CONFIG.playerName,
-        roomCode: cleanCode,
+        roomCode: parsedCode.canonicalRoomCode,
         roomKey,
         allowSpectating,
       });

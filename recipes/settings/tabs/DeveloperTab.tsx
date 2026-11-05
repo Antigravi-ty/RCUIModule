@@ -223,6 +223,24 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         isLight={isLight}
       />
 
+      {/* 5a. Signaling Match Relay Policy */}
+      <SettingSegmentedRow
+        icon={Radio}
+        iconName="radio"
+        title="Signaling Match Relay Policy"
+        description="Smart Prune keeps active player relays + probed EMQX · Keep All keeps all probed relays open"
+        value={relayMatchPolicy}
+        onChange={(v) => setRelayMatchPolicy(v as SignalingRelayMatchPolicyMode)}
+        options={[
+          { value: 'smart-prune', label: 'Smart Prune' },
+          { value: 'keep-all-probed', label: 'Keep All' },
+        ]}
+        hoverDescription="Signaling Match Relay Policy: Controls whether Host pauses unused non-EMQX relays during an active Match (Smart Prune, default) or keeps all probed relays open."
+        onHover={(desc) => desc && onHover?.(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
       {/* 5b. Export Time-Bound .rctbnspib Credential Bundle */}
       <DeveloperProfileExportSection
         onHover={onHover}

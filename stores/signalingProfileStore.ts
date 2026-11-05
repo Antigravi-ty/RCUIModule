@@ -32,6 +32,8 @@ export interface RelayCredentialOverrideInput {
   emqxGbPassword?: string;
 }
 
+export type SignalingRelayMatchPolicyMode = 'smart-prune' | 'keep-all-probed';
+
 export interface SignalingProfileBridgeCallbacks {
   onImportBundle?: (rawContent: string, pinCode: string) => Promise<void>;
   onExportBundle?: (options: {
@@ -42,6 +44,7 @@ export interface SignalingProfileBridgeCallbacks {
   onClearBundle?: () => void;
   onSaveCustomRelay?: (payload: CustomRelayInputPayload | null) => void;
   onVerifyRelays?: () => Promise<SignalingRelayProbeViewItem[]>;
+  onSetRelayMatchPolicy?: (policy: SignalingRelayMatchPolicyMode) => void;
 }
 
 export interface SignalingProfileStoreState {
@@ -56,6 +59,7 @@ export interface SignalingProfileStoreState {
   customUsername: string;
   noKeySimulationActive: boolean;
   hostMask: number;
+  relayMatchPolicy: SignalingRelayMatchPolicyMode;
   hasProbedOnce: boolean;
   isBusy: boolean;
   isProbing: boolean;
@@ -87,6 +91,7 @@ export interface SignalingProfileStoreState {
   }) => Promise<SignalingProfileExportSnapshot | null>;
   clearProfile: () => void;
   saveCustomRelay: (payload: CustomRelayInputPayload | null) => void;
+  setRelayMatchPolicy: (policy: SignalingRelayMatchPolicyMode) => void;
   verifyRelays: () => Promise<number>;
 }
 
@@ -113,6 +118,7 @@ export const useSignalingProfileStore = create<SignalingProfileStoreState>((set,
   customUsername: '',
   noKeySimulationActive: false,
   hostMask: 0x0f,
+  relayMatchPolicy: 'smart-prune',
   hasProbedOnce: false,
   isBusy: false,
   isProbing: false,
@@ -241,6 +247,11 @@ export const useSignalingProfileStore = create<SignalingProfileStoreState>((set,
         errorMessage: err?.message || 'Failed to update custom signaling configuration.',
       });
     }
+  },
+
+  setRelayMatchPolicy: (policy) => {
+    set({ relayMatchPolicy: policy });
+    get().bridge.onSetRelayMatchPolicy?.(policy);
   },
 
   verifyRelays: async () => {

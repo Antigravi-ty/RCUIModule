@@ -136,6 +136,8 @@ export interface AppState {
     password?: string;
     playerName: string;
     signalingConnected: boolean;
+    signalingHealthLevel?: 'healthy' | 'degraded' | 'offline';
+    hostMask?: number;
     activeRelayLabel?: string;
     pairingCode?: string;
     roomType?: 'warmup' | 'match';
