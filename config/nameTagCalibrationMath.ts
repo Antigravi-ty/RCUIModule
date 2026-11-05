@@ -23,6 +23,17 @@ export type NameTagBoostBorderOverride =
   | NameTagBoostBorderSceneFlags
   | null;
 
+export type NameTagAerialClimbTriggerMode =
+  | 'both'
+  | 'hold-jump-pitch'
+  | 'double-jump';
+
+export type NameTagAerialClimbTriggerReason =
+  | 'none'
+  | 'hold-jump-pitch'
+  | 'double-jump'
+  | 'manual-override';
+
 export interface NameTagCarOverride {
   enabled: boolean;
   scaleMultiplier: number;
@@ -86,10 +97,15 @@ export interface NameTagConfig {
   offscreenRoiSideInsetPx: number;
   aerialClimbAlertEnabled: boolean;
   aerialClimbAlertAudience: NameTagBoostBorderAudience;
+  aerialClimbTriggerMode: NameTagAerialClimbTriggerMode;
+  aerialClimbMinAltitudeUu: number;
   aerialClimbMinVelZUu: number;
+  aerialClimbHoldJumpMinMs: number;
+  aerialClimbMinPitchFwdZ: number;
   aerialClimbGlowColor: string;
   aerialClimbGlowRadiusPx: number;
   aerialClimbGlowOpacity: number;
+  aerialClimbSimulatePovInTuner: boolean;
   previewBoostAmounts: number[];
   previewAerialClimbingFlags: boolean[];
   showOnLocalCar: boolean;
@@ -104,6 +120,7 @@ export interface NameTagCarEntry {
   boostAmount?: number;
   showBoostBorder?: boolean | null;
   isDoubleJumpedAndClimbing?: boolean | null;
+  aerialClimbTriggerReason?: NameTagAerialClimbTriggerReason;
 }
 
 export type NameTagCameraMode =
@@ -124,6 +141,11 @@ export interface NameTagCarTelemetry {
   boostBorderVisible?: boolean;
   isOffscreen?: boolean;
   isDoubleJumpedAndClimbing?: boolean;
+  aerialClimbTriggerReason?: NameTagAerialClimbTriggerReason;
+  carAltitudeUu?: number;
+  carVelZUu?: number;
+  carPitchFwdZ?: number;
+  carJumpHoldMs?: number;
   carWorldPos: [number, number, number];
   anchorWorldPos: [number, number, number];
   spriteWorldPos: [number, number, number];
@@ -172,7 +194,6 @@ export interface NameTagRuntimeState {
   onFocusFreeCamOverview: (() => void) | null;
 }
 
-const STORAGE_KEY = 'rc_name_tag_config_v8';
 export const NAME_TAG_REFERENCE_DEPTH_UU = 3500;
 export const NAME_TAG_NEAR_CALIBRATION_DEPTH_UU = 500;
 export const NAME_TAG_FAR_CALIBRATION_DEPTH_UU = 9000;
@@ -245,20 +266,25 @@ export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   offscreenAudience: 'teammates',
   offscreenShowBoostCircle: true,
   offscreenShowArrow: true,
-  offscreenCircleRadiusPx: 18,
+  offscreenCircleRadiusPx: 24,
   offscreenArrowLengthPx: 12,
-  offscreenArrowBaseWidthPx: 14,
-  offscreenArrowGapPx: 4,
+  offscreenArrowBaseWidthPx: 12,
+  offscreenArrowGapPx: 10,
   offscreenRoiAvoidHud: true,
   offscreenRoiTopInsetPx: 72,
-  offscreenRoiBottomInsetPx: 88,
-  offscreenRoiSideInsetPx: 56,
+  offscreenRoiBottomInsetPx: 132,
+  offscreenRoiSideInsetPx: 60,
   aerialClimbAlertEnabled: true,
-  aerialClimbAlertAudience: 'all',
+  aerialClimbAlertAudience: 'teammates',
+  aerialClimbTriggerMode: 'both',
+  aerialClimbMinAltitudeUu: 110,
   aerialClimbMinVelZUu: 120,
+  aerialClimbHoldJumpMinMs: 110,
+  aerialClimbMinPitchFwdZ: 0.15,
   aerialClimbGlowColor: '#facc15',
-  aerialClimbGlowRadiusPx: 16,
+  aerialClimbGlowRadiusPx: 50,
   aerialClimbGlowOpacity: 0.9,
+  aerialClimbSimulatePovInTuner: false,
   previewBoostAmounts: [100, 66, 33, 85, 50, 18],
   previewAerialClimbingFlags: [false, true, false, true, false, false],
   showOnLocalCar: false,
@@ -561,6 +587,7 @@ export function buildNameTagCalibrationExportPayload(
       boostBorderVisible: car.boostBorderVisible,
       isOffscreen: car.isOffscreen ?? false,
       isDoubleJumpedAndClimbing: car.isDoubleJumpedAndClimbing ?? false,
+      aerialClimbTriggerReason: car.aerialClimbTriggerReason ?? 'none',
       override: config.carOverrides[car.carIndex] || null,
       telemetry: {
         carWorldPos: car.carWorldPos,
@@ -578,6 +605,10 @@ export function buildNameTagCalibrationExportPayload(
         effectiveWorldOffsetUu: car.effectiveWorldOffsetUu,
         effectiveScreenOffsetPx: car.effectiveScreenOffsetPx,
         totalWorldVerticalOffsetUu: car.totalWorldVerticalOffsetUu,
+        carAltitudeUu: car.carAltitudeUu ?? 0,
+        carVelZUu: car.carVelZUu ?? 0,
+        carPitchFwdZ: car.carPitchFwdZ ?? 0,
+        carJumpHoldMs: car.carJumpHoldMs ?? 0,
       },
     })),
   };

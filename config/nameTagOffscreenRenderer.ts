@@ -165,6 +165,52 @@ export function clampRayToRoiBoundary2D(
   };
 }
 
+export function resolveAerialClimbInwardFillFraction(
+  rawGlowRadiusValue: number | undefined
+): number {
+  const numeric = Number.isFinite(Number(rawGlowRadiusValue))
+    ? Number(rawGlowRadiusValue)
+    : DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowRadiusPx;
+  return Math.max(0.08, Math.min(1.0, numeric / 100));
+}
+
+export function drawAerialClimbInwardRing2D(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  circleRadiusPx: number,
+  config: Pick<
+    NameTagConfig,
+    'aerialClimbGlowColor' | 'aerialClimbGlowRadiusPx' | 'aerialClimbGlowOpacity'
+  >
+): void {
+  const alertColor =
+    config.aerialClimbGlowColor || DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowColor;
+  const fillFraction = resolveAerialClimbInwardFillFraction(
+    config.aerialClimbGlowRadiusPx
+  );
+  const alertOpacity = Math.max(
+    0.1,
+    Math.min(
+      1.0,
+      Number(config.aerialClimbGlowOpacity) ??
+        DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowOpacity
+    )
+  );
+
+  const innerRadiusPx = Math.max(0, circleRadiusPx * (1 - fillFraction));
+
+  ctx.save();
+  ctx.fillStyle = hexToRgba(alertColor, alertOpacity);
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, circleRadiusPx, 0, Math.PI * 2, false);
+  if (innerRadiusPx > 0.5) {
+    ctx.arc(centerX, centerY, innerRadiusPx, 0, Math.PI * 2, true);
+  }
+  ctx.fill('evenodd');
+  ctx.restore();
+}
+
 export function drawAerialClimbOuterGlow2D(
   ctx: CanvasRenderingContext2D,
   config: Pick<
@@ -176,14 +222,6 @@ export function drawAerialClimbOuterGlow2D(
 ): void {
   const glowColor =
     config.aerialClimbGlowColor || DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowColor;
-  const glowRadius = Math.max(
-    4,
-    Math.min(
-      48,
-      Number(config.aerialClimbGlowRadiusPx) ||
-        DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowRadiusPx
-    )
-  );
   const glowOpacity = Math.max(
     0.1,
     Math.min(
@@ -194,12 +232,9 @@ export function drawAerialClimbOuterGlow2D(
   );
 
   ctx.save();
-  ctx.shadowColor = hexToRgba(glowColor, glowOpacity);
-  ctx.shadowBlur = glowRadius;
-  ctx.strokeStyle = hexToRgba(glowColor, Math.min(1, glowOpacity * 0.95));
+  ctx.strokeStyle = hexToRgba(glowColor, glowOpacity);
   ctx.lineWidth = Math.max(2, strokeWidthPx);
   drawShapePath();
-  ctx.stroke();
   ctx.stroke();
   ctx.restore();
 }
@@ -256,6 +291,17 @@ export function drawOffscreenIndicatorCard2D(
   const showHorizon =
     config.boostShowHorizonLine ?? DEFAULT_NAME_TAG_CONFIG.boostShowHorizonLine;
 
+  const alertColor =
+    config.aerialClimbGlowColor || DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowColor;
+  const alertOpacity = Math.max(
+    0.1,
+    Math.min(
+      1.0,
+      Number(config.aerialClimbGlowOpacity) ??
+        DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowOpacity
+    )
+  );
+
   const cosA = Math.cos(angleRad);
   const sinA = Math.sin(angleRad);
   const perpX = -sinA;
@@ -276,26 +322,6 @@ export function drawOffscreenIndicatorCard2D(
 
   ctx.save();
   ctx.globalAlpha = opacity;
-
-  if (aerialClimbGlowVisible) {
-    drawAerialClimbOuterGlow2D(
-      ctx,
-      config,
-      () => {
-        ctx.beginPath();
-        if (showBoostCircle) {
-          ctx.arc(centerX, centerY, circleRadiusPx + borderW * 0.5, 0, Math.PI * 2);
-        }
-        if (showArrow) {
-          ctx.moveTo(tipX, tipY);
-          ctx.lineTo(baseLeftX, baseLeftY);
-          ctx.lineTo(baseRightX, baseRightY);
-          ctx.closePath();
-        }
-      },
-      Math.max(2.5, borderW * 1.15)
-    );
-  }
 
   if (showBoostCircle) {
     const circleDia = circleRadiusPx * 2;
@@ -340,16 +366,24 @@ export function drawOffscreenIndicatorCard2D(
         circleDia
       );
     }
+
+    // Solid inward yellow alert ring when off-screen car is climbing:
+    // Shrinks inward from outer circumference toward center (50% leaves center boost visible, 100% fills solid yellow dot).
+    if (aerialClimbGlowVisible) {
+      drawAerialClimbInwardRing2D(ctx, centerX, centerY, circleRadiusPx, config);
+    }
     ctx.restore();
 
     if (borderW > 0) {
       ctx.beginPath();
       ctx.arc(centerX, centerY, circleRadiusPx, 0, Math.PI * 2);
       ctx.lineWidth = borderW;
-      ctx.strokeStyle = borderColor;
+      ctx.strokeStyle = aerialClimbGlowVisible
+        ? hexToRgba(alertColor, alertOpacity)
+        : borderColor;
       ctx.stroke();
 
-      if (boostBorderVisible && clampedBoost > 0.001) {
+      if (!aerialClimbGlowVisible && boostBorderVisible && clampedBoost > 0.001) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(
@@ -368,8 +402,9 @@ export function drawOffscreenIndicatorCard2D(
   }
 
   if (showArrow) {
-    const arrowFillHex =
-      boostBorderVisible && clampedBoost > 0.02
+    const arrowFillHex = aerialClimbGlowVisible
+      ? alertColor
+      : boostBorderVisible && clampedBoost > 0.02
         ? resolveActiveBoostFillColor(bgColor, boostBorderColor)
         : bgColor;
     ctx.beginPath();
@@ -379,14 +414,21 @@ export function drawOffscreenIndicatorCard2D(
     ctx.closePath();
     ctx.fillStyle = hexToRgba(
       arrowFillHex,
-      boostBorderVisible ? Math.max(bgOpacity, boostFillAlpha * 0.9) : bgOpacity
+      aerialClimbGlowVisible
+        ? alertOpacity
+        : boostBorderVisible
+          ? Math.max(bgOpacity, boostFillAlpha * 0.9)
+          : bgOpacity
     );
     ctx.fill();
 
     if (borderW > 0) {
       ctx.lineWidth = Math.max(1.25, borderW * 0.75);
-      ctx.strokeStyle =
-        boostBorderVisible && clampedBoost > 0.02 ? boostBorderColor : borderColor;
+      ctx.strokeStyle = aerialClimbGlowVisible
+        ? hexToRgba(alertColor, alertOpacity)
+        : boostBorderVisible && clampedBoost > 0.02
+          ? boostBorderColor
+          : borderColor;
       ctx.stroke();
     }
   }

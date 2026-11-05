@@ -9,6 +9,7 @@ import {
 import {
   hexToRgba,
   resolveActiveBoostFillColor,
+  resolveAerialClimbInwardFillFraction,
   resolveUnfilledBaseHexColor,
 } from '../../../config/nameTagPillRenderer';
 import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
@@ -109,15 +110,12 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
             config.aerialClimbAlertEnabled &&
             config.aerialClimbAlertAudience !== 'none' &&
             Boolean(config.previewAerialClimbingFlags?.[sampleSlotIndex]);
-          const glowShadowCss = isAerialClimbing
-            ? `0 0 ${Math.round(config.aerialClimbGlowRadiusPx * 0.85)}px ${hexToRgba(
-                config.aerialClimbGlowColor,
-                config.aerialClimbGlowOpacity
-              )}, 0 0 2px ${hexToRgba(config.aerialClimbGlowColor, Math.min(1, config.aerialClimbGlowOpacity * 1.1))}`
-            : undefined;
+          const inwardFillFraction = resolveAerialClimbInwardFillFraction(
+            config.aerialClimbGlowRadiusPx
+          );
           const offscreenCircleDiaPx = Math.max(
             18,
-            Math.min(36, Math.round(config.offscreenCircleRadiusPx * 1.15))
+            Math.min(38, Math.round(config.offscreenCircleRadiusPx * 1.15))
           );
           const offscreenArrowW = Math.max(
             6,
@@ -127,15 +125,23 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
             5,
             Math.min(18, Math.round(config.offscreenArrowLengthPx * 0.65))
           );
+          const inwardRingThicknessPx = Math.round(
+            offscreenCircleDiaPx * 0.5 * inwardFillFraction
+          );
+          const alertRingRgba = hexToRgba(
+            config.aerialClimbGlowColor,
+            config.aerialClimbGlowOpacity
+          );
 
           return (
             <div key={team} className="flex items-center gap-2.5">
+              {/* On-Screen Pill Card: never shows aerial climb yellow ring */}
               <div
                 style={{
                   width: `${scaledWidthPx}px`,
                   height: `${scaledHeightPx}px`,
                   backgroundColor: baseBgCss,
-                  borderColor: isAerialClimbing ? config.aerialClimbGlowColor : borderHex,
+                  borderColor: borderHex,
                   borderWidth: `${scaledBorderPx}px`,
                   borderStyle: 'solid',
                   borderRadius: `${scaledRadiusPx}px`,
@@ -144,7 +150,6 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                   fontSize: `${Math.max(9, Math.round(config.fontSize * previewScale))}px`,
                   fontWeight: config.fontWeight,
                   fontFamily: resolveNameTagFontFamilyCss(config.fontFamily),
-                  boxShadow: glowShadowCss,
                 }}
                 className="relative flex items-center justify-center px-1.5 shadow-sm transition-all"
               >
@@ -254,9 +259,10 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                 </div>
               </div>
 
+              {/* Off-Screen Edge Circle + Arrow: displays solid inward yellow ring when climbing */}
               {config.offscreenIndicatorEnabled && (
                 <div
-                  title="Off-Screen Edge Indicator Preview (Pure Boost Circle + Directional Triangle, No Name)"
+                  title="Off-Screen Edge Indicator Preview (Solid Inward Yellow Ring Only On Off-Screen Circle)"
                   className="flex flex-col items-center justify-center shrink-0"
                   style={{
                     opacity:
@@ -271,12 +277,9 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                         borderLeft: `${offscreenArrowW * 0.5}px solid transparent`,
                         borderRight: `${offscreenArrowW * 0.5}px solid transparent`,
                         borderBottom: `${offscreenArrowH}px solid ${
-                          isAerialClimbing ? config.aerialClimbGlowColor : boostBorderHex
+                          isAerialClimbing ? alertRingRgba : boostBorderHex
                         }`,
                         marginBottom: `${Math.max(1, Math.round(config.offscreenArrowGapPx * 0.5))}px`,
-                        filter: isAerialClimbing
-                          ? `drop-shadow(0 0 4px ${config.aerialClimbGlowColor})`
-                          : undefined,
                       }}
                     />
                   )}
@@ -287,13 +290,12 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                         height: `${offscreenCircleDiaPx}px`,
                         backgroundColor: baseBgCss,
                         borderColor: isAerialClimbing
-                          ? config.aerialClimbGlowColor
+                          ? alertRingRgba
                           : sampleBoostPct > 2
                             ? boostBorderHex
                             : borderHex,
                         borderWidth: `${Math.max(1.5, scaledBorderPx)}px`,
                         borderStyle: 'solid',
-                        boxShadow: glowShadowCss,
                       }}
                       className="relative rounded-full overflow-hidden"
                     >
@@ -315,6 +317,17 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                               sampleBoostPct < 98
                                 ? `1.5px solid ${boostBorderHex}`
                                 : undefined,
+                          }}
+                        />
+                      )}
+                      {isAerialClimbing && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: '9999px',
+                            boxShadow: `inset 0 0 0 ${inwardRingThicknessPx}px ${alertRingRgba}`,
+                            pointerEvents: 'none',
                           }}
                         />
                       )}

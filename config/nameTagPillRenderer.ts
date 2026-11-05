@@ -4,23 +4,27 @@ import {
   type NameTagConfig,
 } from './nameTagCalibrationMath';
 import {
+  drawAerialClimbInwardRing2D,
   drawAerialClimbOuterGlow2D,
   drawOffscreenIndicatorCard2D,
   hexToRgba,
   mixHexColors,
   parseHexRgb,
   resolveActiveBoostFillColor,
+  resolveAerialClimbInwardFillFraction,
   resolveUnfilledBaseHexColor,
   type NameTagOffscreenIndicatorCard2D,
 } from './nameTagOffscreenRenderer';
 
 export {
+  drawAerialClimbInwardRing2D,
   drawAerialClimbOuterGlow2D,
   drawOffscreenIndicatorCard2D,
   hexToRgba,
   mixHexColors,
   parseHexRgb,
   resolveActiveBoostFillColor,
+  resolveAerialClimbInwardFillFraction,
   resolveUnfilledBaseHexColor,
   type NameTagOffscreenIndicatorCard2D,
 };
@@ -106,33 +110,6 @@ export function drawNameTagPillCard2D(
     config.boostShowHorizonLine ?? DEFAULT_NAME_TAG_CONFIG.boostShowHorizonLine;
 
   ctx.globalAlpha = card.opacity;
-
-  if (card.aerialClimbGlowVisible) {
-    drawAerialClimbOuterGlow2D(
-      ctx,
-      {
-        aerialClimbGlowColor:
-          config.aerialClimbGlowColor || DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowColor,
-        aerialClimbGlowRadiusPx:
-          config.aerialClimbGlowRadiusPx ??
-          DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowRadiusPx,
-        aerialClimbGlowOpacity:
-          config.aerialClimbGlowOpacity ??
-          DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowOpacity,
-      },
-      () => {
-        ctx.beginPath();
-        ctx.roundRect(
-          card.outerLeft,
-          card.outerTop,
-          card.outerWidth,
-          card.outerHeight,
-          card.outerRadius
-        );
-      },
-      Math.max(2.5, card.borderW * 1.15)
-    );
-  }
 
   if (
     card.boostBorderVisible &&

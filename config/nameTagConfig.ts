@@ -1,4 +1,5 @@
 import {
+  type NameTagAerialClimbTriggerMode,
   type NameTagBoostBorderAudience,
   type NameTagBoostBorderColorMode,
   type NameTagBoostBorderOverride,
@@ -19,6 +20,8 @@ export {
   type NameTagBoostBorderColorMode,
   type NameTagBoostBorderAudience,
   type NameTagOffscreenAudience,
+  type NameTagAerialClimbTriggerMode,
+  type NameTagAerialClimbTriggerReason,
   type NameTagBoostBorderSceneFlags,
   type NameTagBoostBorderOverride,
   type NameTagCarOverride,
@@ -41,7 +44,7 @@ export {
   resolveNameTagCornerRadiusPx,
 } from './nameTagCalibrationMath';
 
-export const NAME_TAG_STORAGE_KEY = 'rc_name_tag_config_v10';
+export const NAME_TAG_STORAGE_KEY = 'rc_name_tag_config_v11';
 
 export function sanitizeHexColor(raw: unknown, fallbackHex: string): string {
   return typeof raw === 'string' && raw.startsWith('#') && raw.length >= 4
@@ -57,6 +60,16 @@ export function sanitizeBoostBorderAudience(
     return raw;
   }
   return fallbackAudience;
+}
+
+export function sanitizeAerialClimbTriggerMode(
+  raw: unknown,
+  fallbackMode: NameTagAerialClimbTriggerMode
+): NameTagAerialClimbTriggerMode {
+  if (raw === 'both' || raw === 'hold-jump-pitch' || raw === 'double-jump') {
+    return raw;
+  }
+  return fallbackMode;
 }
 
 export function sanitizeBoostIndicatorMode(
@@ -419,19 +432,51 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
       source.aerialClimbAlertAudience,
       DEFAULT_NAME_TAG_CONFIG.aerialClimbAlertAudience
     ),
+    aerialClimbTriggerMode: sanitizeAerialClimbTriggerMode(
+      source.aerialClimbTriggerMode,
+      DEFAULT_NAME_TAG_CONFIG.aerialClimbTriggerMode
+    ),
+    aerialClimbMinAltitudeUu: sanitizeClampedNumber(
+      source.aerialClimbMinAltitudeUu,
+      0,
+      1200,
+      DEFAULT_NAME_TAG_CONFIG.aerialClimbMinAltitudeUu,
+      true
+    ),
     aerialClimbMinVelZUu: sanitizeClampedNumber(
       source.aerialClimbMinVelZUu, 0, 1200, DEFAULT_NAME_TAG_CONFIG.aerialClimbMinVelZUu, true
+    ),
+    aerialClimbHoldJumpMinMs: sanitizeClampedNumber(
+      source.aerialClimbHoldJumpMinMs,
+      25,
+      200,
+      DEFAULT_NAME_TAG_CONFIG.aerialClimbHoldJumpMinMs,
+      true
+    ),
+    aerialClimbMinPitchFwdZ: sanitizeClampedNumber(
+      source.aerialClimbMinPitchFwdZ,
+      -0.2,
+      0.85,
+      DEFAULT_NAME_TAG_CONFIG.aerialClimbMinPitchFwdZ
     ),
     aerialClimbGlowColor: sanitizeHexColor(
       source.aerialClimbGlowColor,
       DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowColor
     ),
     aerialClimbGlowRadiusPx: sanitizeClampedNumber(
-      source.aerialClimbGlowRadiusPx, 4, 48, DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowRadiusPx
+      source.aerialClimbGlowRadiusPx,
+      8,
+      100,
+      DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowRadiusPx,
+      true
     ),
     aerialClimbGlowOpacity: sanitizeClampedNumber(
       source.aerialClimbGlowOpacity, 0.1, 1.0, DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowOpacity
     ),
+    aerialClimbSimulatePovInTuner:
+      typeof source.aerialClimbSimulatePovInTuner === 'boolean'
+        ? source.aerialClimbSimulatePovInTuner
+        : DEFAULT_NAME_TAG_CONFIG.aerialClimbSimulatePovInTuner,
     showOnLocalCar:
       typeof source.showOnLocalCar === 'boolean'
         ? source.showOnLocalCar
