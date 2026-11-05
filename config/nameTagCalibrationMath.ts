@@ -475,3 +475,66 @@ export function computeFittedParametersFromSamples(
   };
 }
 
+export function buildNameTagCalibrationExportPayload(
+  config: NameTagConfig,
+  snapshot: NameTagTelemetrySnapshot,
+  kickoffPermutationIndex: number
+) {
+  const fitted = computeFittedParametersFromSamples(config, snapshot);
+  const {
+    previewNames: _pn,
+    previewBoostAmounts: _pb,
+    carOverrides: _co,
+    enabled: _en,
+    ...globalConfig
+  } = config;
+  return {
+    schema: 'rc_name_tag_calibration_v1',
+    exportedAt: new Date().toISOString(),
+    viewport: {
+      widthPx: snapshot.viewportWidthPx,
+      heightPx: snapshot.viewportHeightPx,
+      aspectRatio: Number(snapshot.aspectRatio.toFixed(4)),
+      devicePixelRatio: snapshot.devicePixelRatio,
+    },
+    camera: {
+      mode: snapshot.cameraMode,
+      focusedCarIndex: snapshot.focusedCarIndex,
+      kickoffPermutationIndex,
+      fovDeg: snapshot.cameraFovDeg,
+      position: snapshot.cameraPosition,
+      forward: snapshot.cameraForward,
+      up: snapshot.cameraUp,
+    },
+    globalConfig,
+    fittedRecommendation: fitted,
+    cars: snapshot.cars.map((car) => ({
+      carIndex: car.carIndex,
+      slotCode: car.slotCode,
+      name: car.name,
+      team: car.team,
+      visible: car.visible,
+      boostAmount: car.boostAmount,
+      boostBorderVisible: car.boostBorderVisible,
+      override: config.carOverrides[car.carIndex] || null,
+      telemetry: {
+        carWorldPos: car.carWorldPos,
+        anchorWorldPos: car.anchorWorldPos,
+        spriteWorldPos: car.spriteWorldPos,
+        euclideanDistanceUu: car.euclideanDistanceUu,
+        viewZDepthUu: car.viewZDepthUu,
+        activeDepthUu: car.activeDepthUu,
+        offAxisAngleDeg: car.offAxisAngleDeg,
+        worldScaleWidthUu: car.worldScaleWidthUu,
+        worldScaleHeightUu: car.worldScaleHeightUu,
+        screenPillWidthPx: car.screenPillWidthPx,
+        screenPillHeightPx: car.screenPillHeightPx,
+        effectiveScaleMultiplier: car.effectiveScaleMultiplier,
+        effectiveWorldOffsetUu: car.effectiveWorldOffsetUu,
+        effectiveScreenOffsetPx: car.effectiveScreenOffsetPx,
+        totalWorldVerticalOffsetUu: car.totalWorldVerticalOffsetUu,
+      },
+    })),
+  };
+}
+
