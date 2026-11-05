@@ -3,6 +3,27 @@ import {
   type NameTagBoostIndicatorMode,
   type NameTagConfig,
 } from './nameTagCalibrationMath';
+import {
+  drawAerialClimbOuterGlow2D,
+  drawOffscreenIndicatorCard2D,
+  hexToRgba,
+  mixHexColors,
+  parseHexRgb,
+  resolveActiveBoostFillColor,
+  resolveUnfilledBaseHexColor,
+  type NameTagOffscreenIndicatorCard2D,
+} from './nameTagOffscreenRenderer';
+
+export {
+  drawAerialClimbOuterGlow2D,
+  drawOffscreenIndicatorCard2D,
+  hexToRgba,
+  mixHexColors,
+  parseHexRgb,
+  resolveActiveBoostFillColor,
+  resolveUnfilledBaseHexColor,
+  type NameTagOffscreenIndicatorCard2D,
+};
 
 export interface NameTagPillRenderCard2D {
   carIndex: number;
@@ -36,6 +57,7 @@ export interface NameTagPillRenderCard2D {
   boostBorderVisible: boolean;
   boostFraction: number;
   boostBorderColor: string;
+  aerialClimbGlowVisible?: boolean;
 }
 
 export interface NameTagBallOcclusionProjection2D {
@@ -47,55 +69,6 @@ export interface NameTagBallOcclusionProjection2D {
   opacity: number;
 }
 
-export function parseHexRgb(hexColor: string): [number, number, number] {
-  const cleanHex = String(hexColor || '#075985').replace('#', '').trim();
-  const expanded =
-    cleanHex.length === 3
-      ? cleanHex
-          .split('')
-          .map((ch) => ch + ch)
-          .join('')
-      : cleanHex;
-  const numericValue = Number.parseInt(expanded, 16);
-  if (!Number.isFinite(numericValue)) return [12, 45, 72];
-  return [
-    (numericValue >> 16) & 255,
-    (numericValue >> 8) & 255,
-    numericValue & 255,
-  ];
-}
-
-export function hexToRgba(hexColor: string, alpha = 1.0): string {
-  const [r, g, b] = parseHexRgb(hexColor);
-  const clampedAlpha = Math.max(0, Math.min(1, Number(alpha) || 0));
-  return `rgba(${r}, ${g}, ${b}, ${clampedAlpha})`;
-}
-
-export function mixHexColors(hexA: string, hexB: string, weightB = 0.35): string {
-  const [rA, gA, bA] = parseHexRgb(hexA);
-  const [rB, gB, bB] = parseHexRgb(hexB);
-  const t = Math.max(0, Math.min(1, weightB));
-  const r = Math.round(rA + (rB - rA) * t);
-  const g = Math.round(gGChannel(gA, gB, t));
-  const b = Math.round(bA + (bB - bA) * t);
-  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
-}
-
-function gGChannel(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-export function resolveActiveBoostFillColor(
-  bgColor: string,
-  boostBorderColor: string
-): string {
-  return mixHexColors(bgColor, boostBorderColor, 0.38);
-}
-
-export function resolveUnfilledBaseHexColor(bgColor: string): string {
-  return mixHexColors(bgColor, '#040914', 0.45);
-}
-
 export function drawNameTagPillCard2D(
   ctx: CanvasRenderingContext2D,
   card: NameTagPillRenderCard2D,
@@ -105,7 +78,15 @@ export function drawNameTagPillCard2D(
     | 'boostFillOpacity'
     | 'boostUnfilledBgOpacity'
     | 'boostShowHorizonLine'
-  >
+  > &
+    Partial<
+      Pick<
+        NameTagConfig,
+        | 'aerialClimbGlowColor'
+        | 'aerialClimbGlowRadiusPx'
+        | 'aerialClimbGlowOpacity'
+      >
+    >
 ): void {
   const mode: NameTagBoostIndicatorMode =
     config.boostIndicatorMode || DEFAULT_NAME_TAG_CONFIG.boostIndicatorMode;
@@ -125,6 +106,33 @@ export function drawNameTagPillCard2D(
     config.boostShowHorizonLine ?? DEFAULT_NAME_TAG_CONFIG.boostShowHorizonLine;
 
   ctx.globalAlpha = card.opacity;
+
+  if (card.aerialClimbGlowVisible) {
+    drawAerialClimbOuterGlow2D(
+      ctx,
+      {
+        aerialClimbGlowColor:
+          config.aerialClimbGlowColor || DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowColor,
+        aerialClimbGlowRadiusPx:
+          config.aerialClimbGlowRadiusPx ??
+          DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowRadiusPx,
+        aerialClimbGlowOpacity:
+          config.aerialClimbGlowOpacity ??
+          DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowOpacity,
+      },
+      () => {
+        ctx.beginPath();
+        ctx.roundRect(
+          card.outerLeft,
+          card.outerTop,
+          card.outerWidth,
+          card.outerHeight,
+          card.outerRadius
+        );
+      },
+      Math.max(2.5, card.borderW * 1.15)
+    );
+  }
 
   if (
     card.boostBorderVisible &&
@@ -305,83 +313,94 @@ export function renderNameTagOverlayPass2D(
   viewportWidthPx: number,
   viewportHeightPx: number,
   config: NameTagConfig,
-  ballOcclusion?: NameTagBallOcclusionProjection2D | null
+  ballOcclusion?: NameTagBallOcclusionProjection2D | null,
+  offscreenIndicators2D: NameTagOffscreenIndicatorCard2D[] = []
 ): void {
-  if (visibleCards2D.length === 0) return;
+  if (visibleCards2D.length === 0 && offscreenIndicators2D.length === 0) return;
 
-  visibleCards2D.sort(
-    (a, b) => (a.cameraDistanceSq || 0) - (b.cameraDistanceSq || 0)
-  );
-
-  const drawSingleRankWithCloserClips = (rank: number) => {
-    const card = visibleCards2D[rank];
-    ctx.save();
-    for (let closerIdx = 0; closerIdx < rank; closerIdx++) {
-      const closer = visibleCards2D[closerIdx];
-      if (
-        closer.outerRight <= card.outerLeft ||
-        closer.outerLeft >= card.outerRight ||
-        closer.outerBottom <= card.outerTop ||
-        closer.outerTop >= card.outerBottom
-      ) {
-        continue;
-      }
-      ctx.beginPath();
-      ctx.rect(0, 0, viewportWidthPx, viewportHeightPx);
-      ctx.roundRect(
-        closer.outerLeft,
-        closer.outerTop,
-        closer.outerWidth,
-        closer.outerHeight,
-        closer.outerRadius
-      );
-      ctx.clip('evenodd');
-    }
-
-    drawNameTagPillCard2D(ctx, card, config);
-    ctx.restore();
-  };
-
-  const applyBallOcclusion =
-    Boolean(config.ballOcclusionEnabled) &&
-    Boolean(ballOcclusion?.visible) &&
-    (ballOcclusion?.screenRadiusPx || 0) > 1 &&
-    (ballOcclusion?.opacity || 0) > 0.001;
-
-  if (!applyBallOcclusion || !ballOcclusion) {
-    for (let rank = 0; rank < visibleCards2D.length; rank++) {
-      drawSingleRankWithCloserClips(rank);
-    }
-    return;
-  }
-
-  let drewBehindBallCard = false;
-  for (let rank = 0; rank < visibleCards2D.length; rank++) {
-    if (visibleCards2D[rank].viewZDepthUu > ballOcclusion.viewZDepthUu) {
-      drawSingleRankWithCloserClips(rank);
-      drewBehindBallCard = true;
-    }
-  }
-
-  if (drewBehindBallCard) {
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.globalAlpha = Math.max(0, Math.min(1, ballOcclusion.opacity));
-    ctx.beginPath();
-    ctx.arc(
-      ballOcclusion.screenX,
-      ballOcclusion.screenY,
-      ballOcclusion.screenRadiusPx,
-      0,
-      Math.PI * 2
+  if (visibleCards2D.length > 0) {
+    visibleCards2D.sort(
+      (a, b) => (a.cameraDistanceSq || 0) - (b.cameraDistanceSq || 0)
     );
-    ctx.fill();
-    ctx.restore();
+
+    const drawSingleRankWithCloserClips = (rank: number) => {
+      const card = visibleCards2D[rank];
+      ctx.save();
+      for (let closerIdx = 0; closerIdx < rank; closerIdx++) {
+        const closer = visibleCards2D[closerIdx];
+        if (
+          closer.outerRight <= card.outerLeft ||
+          closer.outerLeft >= card.outerRight ||
+          closer.outerBottom <= card.outerTop ||
+          closer.outerTop >= card.outerBottom
+        ) {
+          continue;
+        }
+        ctx.beginPath();
+        ctx.rect(0, 0, viewportWidthPx, viewportHeightPx);
+        ctx.roundRect(
+          closer.outerLeft,
+          closer.outerTop,
+          closer.outerWidth,
+          closer.outerHeight,
+          closer.outerRadius
+        );
+        ctx.clip('evenodd');
+      }
+
+      drawNameTagPillCard2D(ctx, card, config);
+      ctx.restore();
+    };
+
+    const applyBallOcclusion =
+      Boolean(config.ballOcclusionEnabled) &&
+      Boolean(ballOcclusion?.visible) &&
+      (ballOcclusion?.screenRadiusPx || 0) > 1 &&
+      (ballOcclusion?.opacity || 0) > 0.001;
+
+    if (!applyBallOcclusion || !ballOcclusion) {
+      for (let rank = 0; rank < visibleCards2D.length; rank++) {
+        drawSingleRankWithCloserClips(rank);
+      }
+    } else {
+      let drewBehindBallCard = false;
+      for (let rank = 0; rank < visibleCards2D.length; rank++) {
+        if (visibleCards2D[rank].viewZDepthUu > ballOcclusion.viewZDepthUu) {
+          drawSingleRankWithCloserClips(rank);
+          drewBehindBallCard = true;
+        }
+      }
+
+      if (drewBehindBallCard) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.globalAlpha = Math.max(0, Math.min(1, ballOcclusion.opacity));
+        ctx.beginPath();
+        ctx.arc(
+          ballOcclusion.screenX,
+          ballOcclusion.screenY,
+          ballOcclusion.screenRadiusPx,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        ctx.restore();
+      }
+
+      for (let rank = 0; rank < visibleCards2D.length; rank++) {
+        if (visibleCards2D[rank].viewZDepthUu <= ballOcclusion.viewZDepthUu) {
+          drawSingleRankWithCloserClips(rank);
+        }
+      }
+    }
   }
 
-  for (let rank = 0; rank < visibleCards2D.length; rank++) {
-    if (visibleCards2D[rank].viewZDepthUu <= ballOcclusion.viewZDepthUu) {
-      drawSingleRankWithCloserClips(rank);
+  if (offscreenIndicators2D.length > 0) {
+    offscreenIndicators2D.sort(
+      (a, b) => (b.cameraDistanceSq || 0) - (a.cameraDistanceSq || 0)
+    );
+    for (let i = 0; i < offscreenIndicators2D.length; i++) {
+      drawOffscreenIndicatorCard2D(ctx, offscreenIndicators2D[i], config);
     }
   }
 }

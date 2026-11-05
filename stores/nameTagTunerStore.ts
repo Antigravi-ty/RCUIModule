@@ -301,6 +301,7 @@ export interface NameTagTunerStoreState {
   updateConfig: (patch: Partial<NameTagConfig>) => void;
   updatePreviewName: (index: number, name: string) => void;
   updatePreviewBoostAmount: (index: number, boostAmount: number) => void;
+  updatePreviewAerialClimbingFlag: (index: number, climbing: boolean) => void;
   setBoostBorderOverride: (override: NameTagBoostBorderOverride) => void;
   selectCalibrationCar: (carIndex: number) => void;
   updateCarOverride: (carIndex: number, patch: Partial<NameTagCarOverride>) => void;
@@ -343,6 +344,14 @@ export const useNameTagTunerStore = create<NameTagTunerStoreState>((_set, get) =
       nextBoosts[index] = Math.max(0, Math.min(100, Math.round(Number(boostAmount) || 0)));
     }
     updateNameTagConfig({ previewBoostAmounts: nextBoosts });
+  },
+
+  updatePreviewAerialClimbingFlag: (index, climbing) => {
+    const nextFlags = [...get().config.previewAerialClimbingFlags];
+    if (index >= 0 && index < 6) {
+      nextFlags[index] = Boolean(climbing);
+    }
+    updateNameTagConfig({ previewAerialClimbingFlags: nextFlags });
   },
 
   setBoostBorderOverride: (override) => {

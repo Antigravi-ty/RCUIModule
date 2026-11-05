@@ -18,6 +18,7 @@ export {
   type NameTagBoostIndicatorMode,
   type NameTagBoostBorderColorMode,
   type NameTagBoostBorderAudience,
+  type NameTagOffscreenAudience,
   type NameTagBoostBorderSceneFlags,
   type NameTagBoostBorderOverride,
   type NameTagCarOverride,
@@ -40,7 +41,7 @@ export {
   resolveNameTagCornerRadiusPx,
 } from './nameTagCalibrationMath';
 
-export const NAME_TAG_STORAGE_KEY = 'rc_name_tag_config_v9';
+export const NAME_TAG_STORAGE_KEY = 'rc_name_tag_config_v10';
 
 export function sanitizeHexColor(raw: unknown, fallbackHex: string): string {
   return typeof raw === 'string' && raw.startsWith('#') && raw.length >= 4
@@ -73,6 +74,19 @@ export function sanitizeBoostIndicatorMode(
   return fallbackMode;
 }
 
+function sanitizeClampedNumber(
+  raw: unknown,
+  min: number,
+  max: number,
+  fallback: number,
+  round = false
+): number {
+  const parsed = Number(raw);
+  const val = Number.isFinite(parsed) ? parsed : fallback;
+  const clamped = Math.max(min, Math.min(max, val));
+  return round ? Math.round(clamped) : clamped;
+}
+
 export function sanitizeCarOverride(
   raw: Partial<NameTagCarOverride> | null | undefined,
   fallbackWorldOffsetUu: number,
@@ -81,32 +95,18 @@ export function sanitizeCarOverride(
   const source = raw && typeof raw === 'object' ? raw : {};
   return {
     enabled: Boolean(source.enabled),
-    scaleMultiplier: Math.max(
-      0.2,
-      Math.min(
-        3.0,
-        Number.isFinite(Number(source.scaleMultiplier))
-          ? Number(source.scaleMultiplier)
-          : 1.0
-      )
-    ),
-    worldOffsetUu: Math.max(
+    scaleMultiplier: sanitizeClampedNumber(source.scaleMultiplier, 0.2, 3.0, 1.0),
+    worldOffsetUu: sanitizeClampedNumber(
+      source.worldOffsetUu,
       0,
-      Math.min(
-        360,
-        Number.isFinite(Number(source.worldOffsetUu))
-          ? Number(source.worldOffsetUu)
-          : fallbackWorldOffsetUu
-      )
+      360,
+      fallbackWorldOffsetUu
     ),
-    screenOffsetPx: Math.max(
+    screenOffsetPx: sanitizeClampedNumber(
+      source.screenOffsetPx,
       -60,
-      Math.min(
-        160,
-        Number.isFinite(Number(source.screenOffsetPx))
-          ? Number(source.screenOffsetPx)
-          : fallbackScreenOffsetPx
-      )
+      160,
+      fallbackScreenOffsetPx
     ),
   };
 }
@@ -122,34 +122,38 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
 
   const previewBoostAmounts =
     Array.isArray(source.previewBoostAmounts) && source.previewBoostAmounts.length === 6
-      ? source.previewBoostAmounts.map((boostValue, index) => {
-          const parsed = Number(boostValue);
-          const fallback = DEFAULT_NAME_TAG_CONFIG.previewBoostAmounts[index] ?? 100;
-          return Math.max(
+      ? source.previewBoostAmounts.map((boostValue, index) =>
+          sanitizeClampedNumber(
+            boostValue,
             0,
-            Math.min(100, Math.round(Number.isFinite(parsed) ? parsed : fallback))
-          );
-        })
+            100,
+            DEFAULT_NAME_TAG_CONFIG.previewBoostAmounts[index] ?? 100,
+            true
+          )
+        )
       : [...DEFAULT_NAME_TAG_CONFIG.previewBoostAmounts];
 
-  const verticalOffsetUu = Math.max(
-    0,
-    Math.min(
-      360,
-      Number.isFinite(Number(source.verticalOffsetUu))
-        ? Number(source.verticalOffsetUu)
-        : DEFAULT_NAME_TAG_CONFIG.verticalOffsetUu
-    )
-  );
+  const previewAerialClimbingFlags =
+    Array.isArray(source.previewAerialClimbingFlags) &&
+    source.previewAerialClimbingFlags.length === 6
+      ? source.previewAerialClimbingFlags.map((flag, index) =>
+          typeof flag === 'boolean'
+            ? flag
+            : Boolean(DEFAULT_NAME_TAG_CONFIG.previewAerialClimbingFlags[index])
+        )
+      : [...DEFAULT_NAME_TAG_CONFIG.previewAerialClimbingFlags];
 
-  const screenVerticalOffsetPx = Math.max(
+  const verticalOffsetUu = sanitizeClampedNumber(
+    source.verticalOffsetUu,
+    0,
+    360,
+    DEFAULT_NAME_TAG_CONFIG.verticalOffsetUu
+  );
+  const screenVerticalOffsetPx = sanitizeClampedNumber(
+    source.screenVerticalOffsetPx,
     -60,
-    Math.min(
-      160,
-      Number.isFinite(Number(source.screenVerticalOffsetPx))
-        ? Number(source.screenVerticalOffsetPx)
-        : DEFAULT_NAME_TAG_CONFIG.screenVerticalOffsetPx
-    )
+    160,
+    DEFAULT_NAME_TAG_CONFIG.screenVerticalOffsetPx
   );
 
   const carOverrides = Array.from({ length: 6 }, (_, index) =>
@@ -160,14 +164,18 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
     )
   );
 
-  const rawMinWidth = Number.isFinite(Number(source.pillMinWidth))
-    ? Number(source.pillMinWidth)
-    : DEFAULT_NAME_TAG_CONFIG.pillMinWidth;
-  const rawMaxWidth = Number.isFinite(Number(source.pillMaxWidth))
-    ? Number(source.pillMaxWidth)
-    : DEFAULT_NAME_TAG_CONFIG.pillMaxWidth;
-  const clampedMinWidth = Math.max(40, Math.min(460, rawMinWidth));
-  const clampedMaxWidth = Math.max(clampedMinWidth, Math.min(480, rawMaxWidth));
+  const clampedMinWidth = sanitizeClampedNumber(
+    source.pillMinWidth,
+    40,
+    460,
+    DEFAULT_NAME_TAG_CONFIG.pillMinWidth
+  );
+  const clampedMaxWidth = sanitizeClampedNumber(
+    source.pillMaxWidth,
+    clampedMinWidth,
+    480,
+    DEFAULT_NAME_TAG_CONFIG.pillMaxWidth
+  );
 
   const validFontFamilies: NameTagFontFamily[] = ['jetbrains-mono', 'sf-mono', 'archivo'];
   const fontFamily: NameTagFontFamily = validFontFamilies.includes(
@@ -202,109 +210,77 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
         : DEFAULT_NAME_TAG_CONFIG.enabled,
     pillMinWidth: clampedMinWidth,
     pillMaxWidth: clampedMaxWidth,
-    pillHeight: Math.max(
+    pillHeight: sanitizeClampedNumber(
+      source.pillHeight,
       28,
-      Math.min(
-        120,
-        Number.isFinite(Number(source.pillHeight))
-          ? Number(source.pillHeight)
-          : DEFAULT_NAME_TAG_CONFIG.pillHeight
-      )
+      120,
+      DEFAULT_NAME_TAG_CONFIG.pillHeight
     ),
-    cornerRadius: Math.max(
+    cornerRadius: sanitizeClampedNumber(
+      source.cornerRadius,
       0,
-      Math.min(
-        60,
-        Number.isFinite(Number(source.cornerRadius))
-          ? Number(source.cornerRadius)
-          : DEFAULT_NAME_TAG_CONFIG.cornerRadius
-      )
+      60,
+      DEFAULT_NAME_TAG_CONFIG.cornerRadius
     ),
-    borderWidth: Math.max(
+    borderWidth: sanitizeClampedNumber(
+      source.borderWidth,
       0,
-      Math.min(
-        12,
-        Number.isFinite(Number(source.borderWidth))
-          ? Number(source.borderWidth)
-          : DEFAULT_NAME_TAG_CONFIG.borderWidth
-      )
-    ),
-    fontSize: Math.max(
       12,
-      Math.min(
-        48,
-        Number.isFinite(Number(source.fontSize))
-          ? Number(source.fontSize)
-          : DEFAULT_NAME_TAG_CONFIG.fontSize
-      )
+      DEFAULT_NAME_TAG_CONFIG.borderWidth
+    ),
+    fontSize: sanitizeClampedNumber(
+      source.fontSize,
+      12,
+      48,
+      DEFAULT_NAME_TAG_CONFIG.fontSize
     ),
     fontFamily,
     fontWeight,
     cardRenderScale: Math.max(25, Math.min(200, Math.round(normalizedCardRenderScale))),
-    maxChars: Math.max(
+    maxChars: sanitizeClampedNumber(
+      source.maxChars,
       4,
-      Math.min(
-        32,
-        Number.isFinite(Number(source.maxChars))
-          ? Math.round(Number(source.maxChars))
-          : DEFAULT_NAME_TAG_CONFIG.maxChars
-      )
+      32,
+      DEFAULT_NAME_TAG_CONFIG.maxChars,
+      true
     ),
-    opacity: Math.max(
+    opacity: sanitizeClampedNumber(
+      source.opacity,
       0.1,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.opacity))
-          ? Number(source.opacity)
-          : DEFAULT_NAME_TAG_CONFIG.opacity
-      )
+      1.0,
+      DEFAULT_NAME_TAG_CONFIG.opacity
     ),
-    bgOpacity: Math.max(
+    bgOpacity: sanitizeClampedNumber(
+      source.bgOpacity,
       0.0,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.bgOpacity))
-          ? Number(source.bgOpacity)
-          : DEFAULT_NAME_TAG_CONFIG.bgOpacity
-      )
+      1.0,
+      DEFAULT_NAME_TAG_CONFIG.bgOpacity
     ),
     verticalOffsetUu,
     screenVerticalOffsetPx,
-    cameraScaleFactor: Math.max(
+    cameraScaleFactor: sanitizeClampedNumber(
+      source.cameraScaleFactor,
       0.02,
-      Math.min(
-        0.3,
-        Number.isFinite(Number(source.cameraScaleFactor))
-          ? Number(source.cameraScaleFactor)
-          : DEFAULT_NAME_TAG_CONFIG.cameraScaleFactor
-      )
+      0.3,
+      DEFAULT_NAME_TAG_CONFIG.cameraScaleFactor
     ),
-    distanceScaleExponent: Math.max(
+    distanceScaleExponent: sanitizeClampedNumber(
+      source.distanceScaleExponent,
       0.0,
-      Math.min(
-        1.5,
-        Number.isFinite(Number(source.distanceScaleExponent))
-          ? Number(source.distanceScaleExponent)
-          : DEFAULT_NAME_TAG_CONFIG.distanceScaleExponent
-      )
+      1.5,
+      DEFAULT_NAME_TAG_CONFIG.distanceScaleExponent
     ),
-    nearScaleMultiplier: Math.max(
+    nearScaleMultiplier: sanitizeClampedNumber(
+      source.nearScaleMultiplier,
       0.2,
-      Math.min(
-        2.5,
-        Number.isFinite(Number(source.nearScaleMultiplier))
-          ? Number(source.nearScaleMultiplier)
-          : DEFAULT_NAME_TAG_CONFIG.nearScaleMultiplier
-      )
+      2.5,
+      DEFAULT_NAME_TAG_CONFIG.nearScaleMultiplier
     ),
-    farScaleMultiplier: Math.max(
+    farScaleMultiplier: sanitizeClampedNumber(
+      source.farScaleMultiplier,
       0.2,
-      Math.min(
-        2.5,
-        Number.isFinite(Number(source.farScaleMultiplier))
-          ? Number(source.farScaleMultiplier)
-          : DEFAULT_NAME_TAG_CONFIG.farScaleMultiplier
-      )
+      2.5,
+      DEFAULT_NAME_TAG_CONFIG.farScaleMultiplier
     ),
     depthMetric: source.depthMetric === 'euclidean' ? 'euclidean' : 'viewZ',
     blueBgColor: sanitizeHexColor(
@@ -339,23 +315,17 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
       source.boostIndicatorMode,
       DEFAULT_NAME_TAG_CONFIG.boostIndicatorMode
     ),
-    boostFillOpacity: Math.max(
+    boostFillOpacity: sanitizeClampedNumber(
+      source.boostFillOpacity,
       0.05,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.boostFillOpacity))
-          ? Number(source.boostFillOpacity)
-          : DEFAULT_NAME_TAG_CONFIG.boostFillOpacity
-      )
+      1.0,
+      DEFAULT_NAME_TAG_CONFIG.boostFillOpacity
     ),
-    boostUnfilledBgOpacity: Math.max(
+    boostUnfilledBgOpacity: sanitizeClampedNumber(
+      source.boostUnfilledBgOpacity,
       0.0,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.boostUnfilledBgOpacity))
-          ? Number(source.boostUnfilledBgOpacity)
-          : DEFAULT_NAME_TAG_CONFIG.boostUnfilledBgOpacity
-      )
+      1.0,
+      DEFAULT_NAME_TAG_CONFIG.boostUnfilledBgOpacity
     ),
     boostShowHorizonLine:
       typeof source.boostShowHorizonLine === 'boolean'
@@ -394,14 +364,73 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
       typeof source.ballOcclusionEnabled === 'boolean'
         ? source.ballOcclusionEnabled
         : DEFAULT_NAME_TAG_CONFIG.ballOcclusionEnabled,
-    ballOcclusionOpacity: Math.max(
+    ballOcclusionOpacity: sanitizeClampedNumber(
+      source.ballOcclusionOpacity,
       0.0,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.ballOcclusionOpacity))
-          ? Number(source.ballOcclusionOpacity)
-          : DEFAULT_NAME_TAG_CONFIG.ballOcclusionOpacity
-      )
+      1.0,
+      DEFAULT_NAME_TAG_CONFIG.ballOcclusionOpacity
+    ),
+    offscreenIndicatorEnabled:
+      typeof source.offscreenIndicatorEnabled === 'boolean'
+        ? source.offscreenIndicatorEnabled
+        : DEFAULT_NAME_TAG_CONFIG.offscreenIndicatorEnabled,
+    offscreenAudience: sanitizeBoostBorderAudience(
+      source.offscreenAudience,
+      DEFAULT_NAME_TAG_CONFIG.offscreenAudience
+    ),
+    offscreenShowBoostCircle:
+      typeof source.offscreenShowBoostCircle === 'boolean'
+        ? source.offscreenShowBoostCircle
+        : DEFAULT_NAME_TAG_CONFIG.offscreenShowBoostCircle,
+    offscreenShowArrow:
+      typeof source.offscreenShowArrow === 'boolean'
+        ? source.offscreenShowArrow
+        : DEFAULT_NAME_TAG_CONFIG.offscreenShowArrow,
+    offscreenCircleRadiusPx: sanitizeClampedNumber(
+      source.offscreenCircleRadiusPx, 8, 48, DEFAULT_NAME_TAG_CONFIG.offscreenCircleRadiusPx
+    ),
+    offscreenArrowLengthPx: sanitizeClampedNumber(
+      source.offscreenArrowLengthPx, 4, 36, DEFAULT_NAME_TAG_CONFIG.offscreenArrowLengthPx
+    ),
+    offscreenArrowBaseWidthPx: sanitizeClampedNumber(
+      source.offscreenArrowBaseWidthPx, 4, 36, DEFAULT_NAME_TAG_CONFIG.offscreenArrowBaseWidthPx
+    ),
+    offscreenArrowGapPx: sanitizeClampedNumber(
+      source.offscreenArrowGapPx, 0, 20, DEFAULT_NAME_TAG_CONFIG.offscreenArrowGapPx
+    ),
+    offscreenRoiAvoidHud:
+      typeof source.offscreenRoiAvoidHud === 'boolean'
+        ? source.offscreenRoiAvoidHud
+        : DEFAULT_NAME_TAG_CONFIG.offscreenRoiAvoidHud,
+    offscreenRoiTopInsetPx: sanitizeClampedNumber(
+      source.offscreenRoiTopInsetPx, 12, 260, DEFAULT_NAME_TAG_CONFIG.offscreenRoiTopInsetPx, true
+    ),
+    offscreenRoiBottomInsetPx: sanitizeClampedNumber(
+      source.offscreenRoiBottomInsetPx, 12, 260, DEFAULT_NAME_TAG_CONFIG.offscreenRoiBottomInsetPx, true
+    ),
+    offscreenRoiSideInsetPx: sanitizeClampedNumber(
+      source.offscreenRoiSideInsetPx, 12, 260, DEFAULT_NAME_TAG_CONFIG.offscreenRoiSideInsetPx, true
+    ),
+    aerialClimbAlertEnabled:
+      typeof source.aerialClimbAlertEnabled === 'boolean'
+        ? source.aerialClimbAlertEnabled
+        : DEFAULT_NAME_TAG_CONFIG.aerialClimbAlertEnabled,
+    aerialClimbAlertAudience: sanitizeBoostBorderAudience(
+      source.aerialClimbAlertAudience,
+      DEFAULT_NAME_TAG_CONFIG.aerialClimbAlertAudience
+    ),
+    aerialClimbMinVelZUu: sanitizeClampedNumber(
+      source.aerialClimbMinVelZUu, 0, 1200, DEFAULT_NAME_TAG_CONFIG.aerialClimbMinVelZUu, true
+    ),
+    aerialClimbGlowColor: sanitizeHexColor(
+      source.aerialClimbGlowColor,
+      DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowColor
+    ),
+    aerialClimbGlowRadiusPx: sanitizeClampedNumber(
+      source.aerialClimbGlowRadiusPx, 4, 48, DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowRadiusPx
+    ),
+    aerialClimbGlowOpacity: sanitizeClampedNumber(
+      source.aerialClimbGlowOpacity, 0.1, 1.0, DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowOpacity
     ),
     showOnLocalCar:
       typeof source.showOnLocalCar === 'boolean'
@@ -409,6 +438,7 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
         : DEFAULT_NAME_TAG_CONFIG.showOnLocalCar,
     previewNames,
     previewBoostAmounts,
+    previewAerialClimbingFlags,
     carOverrides,
   };
 }

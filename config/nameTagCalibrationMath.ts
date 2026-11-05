@@ -4,6 +4,7 @@ export type NameTagFontFamily = 'jetbrains-mono' | 'sf-mono' | 'archivo';
 export type NameTagFontWeight = 400 | 500 | 600 | 700;
 export type NameTagBoostBorderColorMode = 'team' | 'shared';
 export type NameTagBoostBorderAudience = 'teammates' | 'all' | 'none';
+export type NameTagOffscreenAudience = NameTagBoostBorderAudience;
 export type NameTagBoostIndicatorMode =
   | 'bottom-up-fill'
   | 'left-right-fill'
@@ -71,7 +72,26 @@ export interface NameTagConfig {
   boostBorderReplayAudience: NameTagBoostBorderAudience;
   ballOcclusionEnabled: boolean;
   ballOcclusionOpacity: number;
+  offscreenIndicatorEnabled: boolean;
+  offscreenAudience: NameTagBoostBorderAudience;
+  offscreenShowBoostCircle: boolean;
+  offscreenShowArrow: boolean;
+  offscreenCircleRadiusPx: number;
+  offscreenArrowLengthPx: number;
+  offscreenArrowBaseWidthPx: number;
+  offscreenArrowGapPx: number;
+  offscreenRoiAvoidHud: boolean;
+  offscreenRoiTopInsetPx: number;
+  offscreenRoiBottomInsetPx: number;
+  offscreenRoiSideInsetPx: number;
+  aerialClimbAlertEnabled: boolean;
+  aerialClimbAlertAudience: NameTagBoostBorderAudience;
+  aerialClimbMinVelZUu: number;
+  aerialClimbGlowColor: string;
+  aerialClimbGlowRadiusPx: number;
+  aerialClimbGlowOpacity: number;
   previewBoostAmounts: number[];
+  previewAerialClimbingFlags: boolean[];
   showOnLocalCar: boolean;
   previewNames: string[];
   carOverrides: NameTagCarOverride[];
@@ -83,6 +103,7 @@ export interface NameTagCarEntry {
   team: 0 | 1 | number;
   boostAmount?: number;
   showBoostBorder?: boolean | null;
+  isDoubleJumpedAndClimbing?: boolean | null;
 }
 
 export type NameTagCameraMode =
@@ -101,6 +122,8 @@ export interface NameTagCarTelemetry {
   visible: boolean;
   boostAmount?: number;
   boostBorderVisible?: boolean;
+  isOffscreen?: boolean;
+  isDoubleJumpedAndClimbing?: boolean;
   carWorldPos: [number, number, number];
   anchorWorldPos: [number, number, number];
   spriteWorldPos: [number, number, number];
@@ -206,19 +229,38 @@ export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   boostBorderEnabled: true,
   boostIndicatorMode: 'bottom-up-fill',
   boostFillOpacity: 1.0,
-  boostUnfilledBgOpacity: 0.3,
+  boostUnfilledBgOpacity: 0.1,
   boostShowHorizonLine: true,
   boostBorderColorMode: 'shared',
-  blueBoostBorderColor: '#000000',
-  orangeBoostBorderColor: '#000000',
-  sharedBoostBorderColor: '#000000',
+  blueBoostBorderColor: '#ffffff',
+  orangeBoostBorderColor: '#ffffff',
+  sharedBoostBorderColor: '#ffffff',
   showBoostBorderInMatchPlaying: true,
   boostBorderMatchAudience: 'teammates',
   showBoostBorderInGoalReplay: true,
   boostBorderReplayAudience: 'all',
   ballOcclusionEnabled: true,
   ballOcclusionOpacity: 1.0,
+  offscreenIndicatorEnabled: true,
+  offscreenAudience: 'teammates',
+  offscreenShowBoostCircle: true,
+  offscreenShowArrow: true,
+  offscreenCircleRadiusPx: 18,
+  offscreenArrowLengthPx: 12,
+  offscreenArrowBaseWidthPx: 14,
+  offscreenArrowGapPx: 4,
+  offscreenRoiAvoidHud: true,
+  offscreenRoiTopInsetPx: 72,
+  offscreenRoiBottomInsetPx: 88,
+  offscreenRoiSideInsetPx: 56,
+  aerialClimbAlertEnabled: true,
+  aerialClimbAlertAudience: 'all',
+  aerialClimbMinVelZUu: 120,
+  aerialClimbGlowColor: '#facc15',
+  aerialClimbGlowRadiusPx: 16,
+  aerialClimbGlowOpacity: 0.9,
   previewBoostAmounts: [100, 66, 33, 85, 50, 18],
+  previewAerialClimbingFlags: [false, true, false, true, false, false],
   showOnLocalCar: false,
   previewNames: [
     'AlphaStriker',
@@ -484,6 +526,7 @@ export function buildNameTagCalibrationExportPayload(
   const {
     previewNames: _pn,
     previewBoostAmounts: _pb,
+    previewAerialClimbingFlags: _pa,
     carOverrides: _co,
     enabled: _en,
     ...globalConfig
@@ -516,6 +559,8 @@ export function buildNameTagCalibrationExportPayload(
       visible: car.visible,
       boostAmount: car.boostAmount,
       boostBorderVisible: car.boostBorderVisible,
+      isOffscreen: car.isOffscreen ?? false,
+      isDoubleJumpedAndClimbing: car.isDoubleJumpedAndClimbing ?? false,
       override: config.carOverrides[car.carIndex] || null,
       telemetry: {
         carWorldPos: car.carWorldPos,
