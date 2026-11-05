@@ -436,7 +436,7 @@ export const SUPERSONIC_TRAIL_TUNER_PRESET: PresetConfig = {
   resizable: true,
   singleton: true,
   tier: 'developer',
-  summary: 'Dual rear-wheel contact trail ribbons (-10t to -60t window, white-to-purple luminous gradient, head-to-tail taper, surface alignment & Force Active toggle).',
+  summary: 'Dual rear-wheel contact trail ribbons (-1t to -30t window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright tilt & Force Active toggle).',
   menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
   component: 'SupersonicTrailTunerFloatingWindow',
   sourcePath: 'panels/dev/SupersonicTrailTunerFloatingWindow.tsx',

@@ -218,12 +218,12 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             preset={SUPERSONIC_TRAIL_TUNER_PRESET}
             icon={Zap}
             iconColor="text-purple-400"
-            badge="-10t..-60t · White→Purple"
+            badge="-1t..-30t · White→Pink→Purple"
             badgeClass="bg-purple-500/15 border-purple-500/30 text-purple-400"
             bordered={false}
             showDescription={false}
-            description="Dual rear-wheel contact trail ribbons (-10t to -60t window, white-to-purple luminous gradient, head-to-tail taper, surface alignment & Force Active toggle)"
-            hoverTooltip="Supersonic Wheel Trail Tuner: Calibrate dual rear-wheel contact trail ribbons (-10t to -60t history window, white-to-purple luminous gradient, head-to-tail width taper, surface-aligned orientation, and Force Active preview)."
+            description="Dual rear-wheel contact trail ribbons (-1t to -30t window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright tilt & POV preview)"
+            hoverTooltip="Supersonic Wheel Trail Tuner: Calibrate dual rear-wheel contact trail ribbons (-1t to -30t history window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright stand, and Force Active / POV Upright preview)."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
