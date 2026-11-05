@@ -117,13 +117,7 @@ export function updateReplayDirectorConfig(
   }
   const activeCtrl = _getActiveController?.();
   if (changed && activeCtrl) {
-    if (activeCtrl.isImportedPreview && activeCtrl.useRecordedCsvCamera) {
-      activeCtrl.useRecordedCsvCamera = false;
-    }
-    activeCtrl._cachedSuffixCameraPlan = null;
-    activeCtrl._cachedSmoothnessSummary = null;
-    activeCtrl._cachedAnomalyPeaks = null;
-    activeCtrl.refreshCurrentFrameDirectorPose?.();
+    activeCtrl.invalidateCachedDirectorPlans?.(true);
   }
   for (const fn of directorConfigListeners) {
     try {
@@ -142,10 +136,7 @@ export function resetReplayDirectorConfig(): ReplayDirectorConfigState {
   Object.assign(REPLAY_DIRECTOR_CONFIG, DEFAULT_REPLAY_DIRECTOR_CONFIG);
   const activeCtrl = _getActiveController?.();
   if (activeCtrl) {
-    activeCtrl._cachedSuffixCameraPlan = null;
-    activeCtrl._cachedSmoothnessSummary = null;
-    activeCtrl._cachedAnomalyPeaks = null;
-    activeCtrl.refreshCurrentFrameDirectorPose?.();
+    activeCtrl.invalidateCachedDirectorPlans?.(false);
   }
   for (const fn of directorConfigListeners) {
     try {

@@ -173,8 +173,8 @@ export function useLayer1MainMenuStoreBinding(
 
   const activeDirectorCtrl = getActiveReplayTimelineController();
   const isDirectorPreviewActive = Boolean(
-    activeDirectorCtrl?.isActive &&
-      (activeDirectorCtrl?.isImportedPreview || activeDirectorCtrl?.isPersistent)
+    activeDirectorCtrl?.sessionState?.isActive &&
+      (activeDirectorCtrl?.sessionState?.isImportedPreview || activeDirectorCtrl?.sessionState?.isPersistent)
   );
   const isRewinderBlocking =
     rewinderState === 'paused-scrub' ||
