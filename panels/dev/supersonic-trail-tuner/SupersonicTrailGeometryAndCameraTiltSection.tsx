@@ -6,6 +6,7 @@ import {
 } from '../../../config/supersonicTrailConfig';
 import { SegmentedSwitch } from '../../../primitives/SegmentedSwitch';
 import { SliderControl } from '../../../primitives/SliderControl';
+import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 
 export interface SupersonicTrailGeometryAndCameraTiltSectionProps {
   cfg: SupersonicTrailConfig;
@@ -23,7 +24,7 @@ export const SupersonicTrailGeometryAndCameraTiltSection: React.FC<
   return (
     <div className={`p-2.5 rounded-xl border flex flex-col gap-2 shrink-0 ${cardBg}`}>
       <span className="font-bold text-[11px] text-purple-400 border-b border-neutral-500/20 pb-1">
-        3. Taper Geometry, Surface Lift &amp; View-Adaptive Camera Tilt
+        3. Taper Geometry, Ground-Hinge Upright Stand &amp; POV Preview
       </span>
 
       <div className="flex flex-col gap-1">
@@ -36,9 +37,9 @@ export const SupersonicTrailGeometryAndCameraTiltSection: React.FC<
             })
           }
           options={[
-            { value: 'surface-aligned', label: 'Adaptive (Hug Near / Stand Far)' },
-            { value: 'flat-ground', label: 'Pure Flat Surface' },
-            { value: 'camera-facing', label: 'Full Camera Billboard' },
+            { value: 'surface-aligned', label: 'POV Flat + Remote Tilt' },
+            { value: 'flat-ground', label: 'All Cars Pure Flat' },
+            { value: 'camera-facing', label: 'Full Upright Stand' },
           ]}
           size="sm"
           fullWidth
@@ -46,45 +47,70 @@ export const SupersonicTrailGeometryAndCameraTiltSection: React.FC<
         />
       </div>
 
-      {cfg.orientationMode === 'surface-aligned' && (
+      {/* POV Force Upright Preview Toggle */}
+      <div className="flex items-center justify-between px-2.5 py-2 rounded-lg border border-amber-500/35 bg-amber-500/10">
+        <div className="flex flex-col pr-2">
+          <span className="text-[11px] font-bold text-amber-400">
+            Force Upright in POV (Calibration Preview)
+          </span>
+          <span className={`text-[9px] leading-tight ${mutedText}`}>
+            Normally POV trails hug the surface flat; enable to stand your own POV trail 90° upright from the ground hinge to tune vertical height &amp; visibility in Free Play / Exhibition
+          </span>
+        </div>
+        <ToggleSwitch
+          checked={Boolean(cfg.povForceUprightPreview)}
+          onCheckedChange={(povForceUprightPreview) =>
+            updateSupersonicTrailConfig({ povForceUprightPreview })
+          }
+          isLight={isLight}
+        />
+      </div>
+
+      {cfg.orientationMode !== 'flat-ground' && (
         <div className="p-2 rounded-lg border border-purple-500/25 bg-purple-500/5 flex flex-col gap-2">
+          {cfg.orientationMode === 'surface-aligned' && (
+            <SliderControl
+              label="Other-Car Camera Tilt Strength"
+              description="Rotates non-POV car ribbons upright toward the camera around their ground-contact hinge"
+              value={cfg.cameraTiltStrength ?? 0.8}
+              min={0.0}
+              max={1.0}
+              step={0.02}
+              editable={true}
+              onChange={(cameraTiltStrength) =>
+                updateSupersonicTrailConfig({ cameraTiltStrength })
+              }
+              isLight={isLight}
+            />
+          )}
+
           <SliderControl
-            label="Camera-Assisted Tilt Strength"
-            description="Rotates ribbon around path tangent when drifting/angled or viewing distant cars, hinging upward from the ground"
-            value={cfg.cameraTiltStrength ?? 0.88}
-            min={0.0}
-            max={1.0}
-            step={0.02}
+            label="Upright Vertical Height Scale"
+            description="Scales ribbon height when tilted upright so vertical stand reaches slightly above wheel axle (~20 UU) for clear long-range visibility"
+            value={cfg.uprightHeightScale ?? 1.35}
+            min={0.5}
+            max={3.0}
+            step={0.05}
+            unit="x"
             editable={true}
-            onChange={(cameraTiltStrength) =>
-              updateSupersonicTrailConfig({ cameraTiltStrength })
+            onChange={(uprightHeightScale) =>
+              updateSupersonicTrailConfig({ uprightHeightScale })
             }
             isLight={isLight}
           />
 
           <SliderControl
-            label="Near Ground-Hug Distance"
-            description="Within this camera distance, straight-behind view stays flat on the ground"
-            value={cfg.tiltNearDistUu ?? 260}
-            min={100}
-            max={800}
-            step={20}
-            unit=" UU"
+            label="Ground-Hinge Axis Lift"
+            description="1.0 = bottom edge stays planted on ground while full height extends upward (0.0 = center pivot, >1.0 = extra axle lift)"
+            value={cfg.uprightGroundHingeLift ?? 1.0}
+            min={0.0}
+            max={2.0}
+            step={0.05}
+            unit="x"
             editable={true}
-            onChange={(tiltNearDistUu) => updateSupersonicTrailConfig({ tiltNearDistUu })}
-            isLight={isLight}
-          />
-
-          <SliderControl
-            label="Far Upright Stand Distance"
-            description="Beyond this distance, ribbons tilt upright toward camera for clear long-range visibility"
-            value={cfg.tiltFarDistUu ?? 1350}
-            min={500}
-            max={4000}
-            step={50}
-            unit=" UU"
-            editable={true}
-            onChange={(tiltFarDistUu) => updateSupersonicTrailConfig({ tiltFarDistUu })}
+            onChange={(uprightGroundHingeLift) =>
+              updateSupersonicTrailConfig({ uprightGroundHingeLift })
+            }
             isLight={isLight}
           />
         </div>

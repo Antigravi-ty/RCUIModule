@@ -38,11 +38,12 @@ export interface SupersonicTrailConfig {
   fadeCurve: number;
   surfaceLiftUu: number;
 
-  // Orientation & View-Adaptive Camera Tilt
+  // Orientation, Ground-Hinge Vertical Stand & POV Rules
   orientationMode: SupersonicTrailOrientationMode;
   cameraTiltStrength: number;
-  tiltNearDistUu: number;
-  tiltFarDistUu: number;
+  uprightHeightScale: number;
+  uprightGroundHingeLift: number;
+  povForceUprightPreview: boolean;
 
   blendingMode: SupersonicTrailBlendingMode;
   minSampleDistUu: number;
@@ -63,19 +64,19 @@ export const DEFAULT_SUPERSONIC_TRAIL_CONFIG: Readonly<SupersonicTrailConfig> = 
   headColor: '#ffffff',
   midColor: '#ff4fd8',
   tailColor: '#8300ff',
-  midColorPosPct: 24,
+  midColorPosPct: 24.1,
   headGlowStrength: 1,
   colorTransitionCurve: 0.2,
 
-  headToMidBezierP1X: 0.15,
-  headToMidBezierP1Y: 0.85,
-  headToMidBezierP2X: 0.3,
-  headToMidBezierP2Y: 1.0,
+  headToMidBezierP1X: 0.6,
+  headToMidBezierP1Y: 0.25,
+  headToMidBezierP2X: 0.62,
+  headToMidBezierP2Y: 0.93,
 
-  midToTailBezierP1X: 0.25,
-  midToTailBezierP1Y: 0.7,
-  midToTailBezierP2X: 0.35,
-  midToTailBezierP2Y: 1.0,
+  midToTailBezierP1X: 0.1,
+  midToTailBezierP1Y: 0.76,
+  midToTailBezierP2X: 0.14,
+  midToTailBezierP2Y: 0.63,
 
   headWidthUu: 15,
   tailWidthUu: 1,
@@ -85,9 +86,10 @@ export const DEFAULT_SUPERSONIC_TRAIL_CONFIG: Readonly<SupersonicTrailConfig> = 
   surfaceLiftUu: 1,
 
   orientationMode: 'surface-aligned',
-  cameraTiltStrength: 0.88,
-  tiltNearDistUu: 260,
-  tiltFarDistUu: 1350,
+  cameraTiltStrength: 0.8,
+  uprightHeightScale: 1.35,
+  uprightGroundHingeLift: 1.0,
+  povForceUprightPreview: false,
 
   blendingMode: 'normal',
   minSampleDistUu: 3.5,
@@ -107,7 +109,7 @@ export function midPctToAgeTicks(
   endAgeTicks: number
 ): number {
   const span = Math.max(1, endAgeTicks - startAgeTicks);
-  const clampedPct = Math.max(1, Math.min(99, Number(midPct) || 24));
+  const clampedPct = Math.max(1, Math.min(99, Number(midPct) || 24.1));
   return Number((startAgeTicks + (clampedPct / 100) * span).toFixed(2));
 }
 
@@ -150,17 +152,25 @@ function notifySupersonicTrailListeners(): SupersonicTrailConfig {
   return snapshot;
 }
 
+const VALID_TRAIL_KEYS = new Set<string>(Object.keys(DEFAULT_SUPERSONIC_TRAIL_CONFIG));
+
 export function updateSupersonicTrailConfig(
   patch: SupersonicTrailConfigPatch = {}
 ): SupersonicTrailConfig {
   if (!patch || typeof patch !== 'object') return getSupersonicTrailConfig();
-  Object.assign(supersonicTrailRuntimeConfig, patch);
+  const sanitized: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (VALID_TRAIL_KEYS.has(k) && v !== undefined) {
+      sanitized[k] = v;
+    }
+  }
+  Object.assign(supersonicTrailRuntimeConfig, sanitized);
   if (supersonicTrailRuntimeConfig.endAgeTicks <= supersonicTrailRuntimeConfig.startAgeTicks) {
     supersonicTrailRuntimeConfig.endAgeTicks = supersonicTrailRuntimeConfig.startAgeTicks + 1;
   }
   supersonicTrailRuntimeConfig.midColorPosPct = Math.max(
     1,
-    Math.min(99, Number(supersonicTrailRuntimeConfig.midColorPosPct) || 24)
+    Math.min(99, Number(supersonicTrailRuntimeConfig.midColorPosPct) || 24.1)
   );
   return notifySupersonicTrailListeners();
 }
