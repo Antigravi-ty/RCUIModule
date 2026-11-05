@@ -19,7 +19,11 @@ export type ClockPacingPriority =
   | 'low_latency_5050'
   | 'balanced'
   | 'anti_starvation'
-  | 'rate_stability';
+  | 'rate_stability'
+  | 'competitive'
+  | 'motion'
+  | 'input_consistency'
+  | 'custom';
 
 export type ClockRateStepMode = 'discrete_2tier' | 'continuous_pd' | 'hybrid';
 
@@ -71,6 +75,10 @@ export const ALLOWED_CLOCK_PACING_PRIORITIES: readonly ClockPacingPriority[] = O
   'balanced',
   'anti_starvation',
   'rate_stability',
+  'competitive',
+  'motion',
+  'input_consistency',
+  'custom',
 ]);
 
 export const ALLOWED_RATE_STEP_MODES: readonly ClockRateStepMode[] = Object.freeze([

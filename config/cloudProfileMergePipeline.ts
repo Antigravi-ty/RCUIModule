@@ -147,6 +147,40 @@ export function computeProfileThreeWayMerge(
   };
 }
 
+export function buildEffectiveDevMergeBase(
+  sessionBaseSnapshot: ProfileFlatSnapshot | null | undefined,
+  previousAppliedDevSnapshot: ProfileFlatSnapshot | null | undefined,
+  currentLocalSnapshot: ProfileFlatSnapshot
+): ProfileFlatSnapshot {
+  const sessionBase = sessionBaseSnapshot ?? {};
+  const prevDev = previousAppliedDevSnapshot ?? {};
+  if (Object.keys(prevDev).length === 0) {
+    return { ...sessionBase };
+  }
+
+  const allKeys = new Set<string>([
+    ...Object.keys(sessionBase),
+    ...Object.keys(prevDev),
+    ...Object.keys(currentLocalSnapshot),
+  ]);
+
+  const effectiveBase: ProfileFlatSnapshot = {};
+  for (const key of allKeys) {
+    const localVal = currentLocalSnapshot[key];
+    const prevDevVal = prevDev[key];
+    const sessionVal = sessionBase[key];
+
+    if (isDeepEqualJsonValue(localVal, prevDevVal)) {
+      if (prevDevVal !== undefined) {
+        effectiveBase[key] = prevDevVal;
+      }
+    } else if (sessionVal !== undefined) {
+      effectiveBase[key] = sessionVal;
+    }
+  }
+  return effectiveBase;
+}
+
 export function normalizeCloudUsername(raw: string): string {
   return String(raw || '')
     .trim()
@@ -155,6 +189,23 @@ export function normalizeCloudUsername(raw: string): string {
 }
 
 export function generateCloudUserId(seedHint?: string): string {
+  const cleanHint = seedHint ? normalizeCloudUsername(seedHint) : '';
+  if (cleanHint) {
+    let h1 = 0x811c9dc5;
+    let h2 = 0x9e3779b9;
+    const saltStr = `rc_uid_v2:${cleanHint}`;
+    for (let i = 0; i < saltStr.length; i++) {
+      const ch = saltStr.charCodeAt(i);
+      h1 ^= ch;
+      h1 = Math.imul(h1, 0x01000193);
+      h2 ^= ch + 0x9e3779b9 + (h2 << 6) + (h2 >>> 2);
+      h2 = Math.imul(h2, 0x85ebca6b);
+    }
+    const p1 = ((h1 >>> 0) & 0xffff).toString(16).padStart(4, '0');
+    const p2 = ((h2 >>> 0) & 0xffff).toString(16).padStart(4, '0');
+    return `u_${p1}${p2}`;
+  }
+
   const bytes = new Uint8Array(4);
   if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.getRandomValues === 'function') {
     globalThis.crypto.getRandomValues(bytes);
@@ -168,15 +219,6 @@ export function generateCloudUserId(seedHint?: string): string {
   let hex = '';
   for (let i = 0; i < bytes.length; i++) {
     hex += bytes[i].toString(16).padStart(2, '0');
-  }
-  if (seedHint) {
-    let h = 0x811c9dc5;
-    for (let i = 0; i < seedHint.length; i++) {
-      h ^= seedHint.charCodeAt(i);
-      h = Math.imul(h, 0x01000193);
-    }
-    const prefix = ((h >>> 0) & 0xffff).toString(16).padStart(4, '0');
-    return `u_${prefix}${hex.slice(0, 4)}`;
   }
   return `u_${hex}`;
 }

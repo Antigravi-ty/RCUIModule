@@ -8,6 +8,7 @@ import {
   exportUserBackupFromLoggedInState,
 } from '../config/cloudProfileBackupExporter';
 import {
+  buildEffectiveDevMergeBase,
   computeCommitHashSync,
   computeProfileThreeWayMerge,
   formatCloudCommitHash,
@@ -29,6 +30,46 @@ import { loadStoredPlayerName } from '../config/vehiclePresets';
 
 const CLOUD_AUTH_STORAGE_KEY = 'rc_cloud_profile_auth_v1';
 const ALLOW_REMOTE_DEPLOY_STORAGE_KEY = 'rc_allow_remote_profile_deployment_v1';
+const CLOUD_DEV_ACK_STORAGE_KEY = 'rc_cloud_profile_dev_ack_v1';
+
+export interface StoredDevAckState {
+  devRev: number;
+  devRevHash: string;
+  appliedDevSnapshot: ProfileFlatSnapshot | null;
+}
+
+export function loadStoredDevAckState(userId: string): StoredDevAckState | null {
+  if (!userId) return null;
+  try {
+    const raw = safeStorage.get(`${CLOUD_DEV_ACK_STORAGE_KEY}:${userId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    return {
+      devRev: typeof parsed.devRev === 'number' ? parsed.devRev : 0,
+      devRevHash: typeof parsed.devRevHash === 'string' ? parsed.devRevHash : 'none',
+      appliedDevSnapshot:
+        parsed.appliedDevSnapshot && typeof parsed.appliedDevSnapshot === 'object'
+          ? (parsed.appliedDevSnapshot as ProfileFlatSnapshot)
+          : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function saveStoredDevAckState(
+  userId: string,
+  state: StoredDevAckState | null
+): void {
+  if (!userId) return;
+  const key = `${CLOUD_DEV_ACK_STORAGE_KEY}:${userId}`;
+  if (!state) {
+    safeStorage.remove(key);
+  } else {
+    safeStorage.set(key, JSON.stringify(state));
+  }
+}
 
 export function loadSavedCloudUser(): LoggedInCloudUser | null {
   try {
@@ -90,6 +131,7 @@ export interface EvaluatedCloudLoginMerge {
   userRevHash: string;
   devRev: number;
   devRevHash: string;
+  appliedDevSnapshot: ProfileFlatSnapshot | null;
 }
 
 export function evaluateRecordMergeOnLogin(params: {
@@ -98,6 +140,7 @@ export function evaluateRecordMergeOnLogin(params: {
   record: CloudFetchedUserCompleteRecord;
   currentLocalSnapshot: ProfileFlatSnapshot;
   allowRemoteDeployment: boolean;
+  previousAppliedDevSnapshot?: ProfileFlatSnapshot | null;
 }): EvaluatedCloudLoginMerge {
   const {
     usernameInput,
@@ -105,6 +148,7 @@ export function evaluateRecordMergeOnLogin(params: {
     record,
     currentLocalSnapshot,
     allowRemoteDeployment,
+    previousAppliedDevSnapshot,
   } = params;
 
   const normalizedUsername = normalizeCloudUsername(usernameInput);
@@ -122,19 +166,45 @@ export function evaluateRecordMergeOnLogin(params: {
   let conflicts: ProfileMergeConflictItem[] = [];
   let autoAppliedCount = 0;
 
+  const devRev = record.devSlot?.rev ?? record.index?.devRev ?? 0;
+  const devRevHash = formatCloudCommitHash(
+    record.devSlot?.revHash ?? record.index?.devRevHash,
+    devRev
+  );
+
+  const storedAck = loadStoredDevAckState(resolvedUserId);
+  const ackRev = record.userSlot?.ackDevRev ?? storedAck?.devRev ?? 0;
+  const ackHash = record.userSlot?.ackDevRevHash ?? storedAck?.devRevHash ?? 'none';
+  const isDevSlotAlreadyAcknowledged =
+    devRev > 0 &&
+    ackRev >= devRev &&
+    (ackHash === devRevHash || devRevHash === 'none');
+
+  let appliedDevSnapshot: ProfileFlatSnapshot | null =
+    previousAppliedDevSnapshot ?? storedAck?.appliedDevSnapshot ?? null;
+
   if (
     allowRemoteDeployment &&
+    !isDevSlotAlreadyAcknowledged &&
     record.devSlot?.snapshot &&
     Object.keys(record.devSlot.snapshot).length > 0
   ) {
-    const mergeResult = computeProfileThreeWayMerge(
+    const effectiveBase = buildEffectiveDevMergeBase(
       record.devSlot.baseSnapshot,
+      appliedDevSnapshot,
+      baselineUserSnap
+    );
+    const mergeResult = computeProfileThreeWayMerge(
+      effectiveBase,
       baselineUserSnap,
       record.devSlot.snapshot
     );
     targetSnap = mergeResult.mergedSnapshot;
     conflicts = mergeResult.conflicts;
     autoAppliedCount = mergeResult.autoAppliedDevKeys.length;
+    appliedDevSnapshot = record.devSlot.snapshot;
+  } else if (record.devSlot?.snapshot && Object.keys(record.devSlot.snapshot).length > 0) {
+    appliedDevSnapshot = record.devSlot.snapshot;
   }
 
   const snapshotDisplayName =
@@ -150,14 +220,9 @@ export function evaluateRecordMergeOnLogin(params: {
   targetSnap['garage.displayName'] = resolvedDisplayName;
 
   const userRev = record.userSlot?.rev ?? record.index?.userRev ?? 0;
-  const devRev = record.devSlot?.rev ?? record.index?.devRev ?? 0;
   const userRevHash = formatCloudCommitHash(
     record.userSlot?.revHash ?? record.index?.userRevHash,
     userRev
-  );
-  const devRevHash = formatCloudCommitHash(
-    record.devSlot?.revHash ?? record.index?.devRevHash,
-    devRev
   );
 
   const userObj: LoggedInCloudUser = {
@@ -177,24 +242,51 @@ export function evaluateRecordMergeOnLogin(params: {
     userRevHash,
     devRev,
     devRevHash,
+    appliedDevSnapshot,
   };
 }
 
 export function shouldApplyIncomingDevSlot(
   devPayload: CloudDevSlotRecord,
   currentDevRev: number,
-  currentDevRevHash: string
+  currentDevRevHash: string,
+  userId?: string
 ): boolean {
   const incomingHash = formatCloudCommitHash(devPayload.revHash, devPayload.rev);
+  if (userId) {
+    const storedAck = loadStoredDevAckState(userId);
+    if (
+      storedAck &&
+      storedAck.devRev === devPayload.rev &&
+      storedAck.devRevHash === incomingHash &&
+      incomingHash !== 'none'
+    ) {
+      return false;
+    }
+  }
   if (devPayload.rev > currentDevRev) return true;
-  if (
-    devPayload.rev === currentDevRev &&
-    incomingHash !== currentDevRevHash &&
-    incomingHash !== 'none'
-  ) {
+  if (incomingHash !== currentDevRevHash && incomingHash !== 'none') {
     return true;
   }
   return false;
+}
+
+export function evaluateIncomingDevSlotMerge(params: {
+  devPayload: CloudDevSlotRecord;
+  previousAppliedDevSnapshot: ProfileFlatSnapshot | null;
+  currentLocalSnapshot: ProfileFlatSnapshot;
+}) {
+  const { devPayload, previousAppliedDevSnapshot, currentLocalSnapshot } = params;
+  const effectiveBase = buildEffectiveDevMergeBase(
+    devPayload.baseSnapshot,
+    previousAppliedDevSnapshot,
+    currentLocalSnapshot
+  );
+  return computeProfileThreeWayMerge(
+    effectiveBase,
+    currentLocalSnapshot,
+    devPayload.snapshot
+  );
 }
 
 export function buildUpdatedIndexAfterRemotePush(params: {

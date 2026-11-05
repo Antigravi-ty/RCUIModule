@@ -16,6 +16,7 @@ import {
 import { type ProfileFlatSnapshot } from '../config/cloudProfileSyncTypes';
 import { ALLOWED_CLOCK_PACING_PRIORITIES, type ClockPacingPriority } from '../config/clockPacingConfig';
 import { loadStoredBotsLoadoutConfig } from '../config/botsLoadoutConfig';
+import { loadInputBindings } from '../config/inputBindings';
 import { spatialAttenuationProfiles } from '../config/spatialAttenuationProfiles';
 import { STORAGE_KEYS, safeStorage } from '../config/storageHelpers';
 import { getInitialKickoffWsOffset } from '../config/trainingDefaults';
@@ -34,7 +35,7 @@ import { useSpatialAudioStore } from './spatialAudioStore';
 import { useStaticTrainingBallCamTunerStore } from './staticTrainingBallCamTunerStore';
 import { viewportStore } from './viewportStore';
 
-const SYNCABLE_EXTRA_STORAGE_KEYS: ReadonlyArray<string> = [
+export const SYNCABLE_EXTRA_STORAGE_KEYS: ReadonlyArray<string> = [
   STORAGE_KEYS.UI_SCALE,
   STORAGE_KEYS.SAFE_AREA_MARGIN,
   STORAGE_KEYS.SAFE_AREA_VISIBLE,
@@ -119,6 +120,10 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
     if (typeof val === 'string') {
       safeStorage.set(storageKey, val);
     }
+  }
+
+  if (typeof snapshot[`storage.${STORAGE_KEYS.INPUT_BINDINGS}`] === 'string') {
+    app.bridge.onBindingsChange?.(loadInputBindings());
   }
 
   // Hydrate stores backed by SYNCABLE_EXTRA_STORAGE_KEYS so UI & runtime update immediately
@@ -245,12 +250,12 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
     'pacing.custom',
     app.customClockPacingParams
   );
-  if (snapshot['pacing.mode'] === 'custom') {
-    app.updateCustomClockPacingParams(nextCustomPacing);
-  } else if (
+  app.updateCustomClockPacingParams(nextCustomPacing);
+  if (
     snapshot['pacing.mode'] === 'legacy' ||
     snapshot['pacing.mode'] === 'sts' ||
-    snapshot['pacing.mode'] === 'csts'
+    snapshot['pacing.mode'] === 'csts' ||
+    snapshot['pacing.mode'] === 'custom'
   ) {
     app.setClockPacingMode(snapshot['pacing.mode']);
   }

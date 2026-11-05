@@ -61,6 +61,8 @@ export interface CloudUserSlotRecord {
   updatedAt: number;
   passphraseHash: string;
   snapshot: ProfileFlatSnapshot;
+  ackDevRev?: number;
+  ackDevRevHash?: string;
 }
 
 export interface CloudDevSlotRecord {
@@ -90,6 +92,8 @@ export interface CloudProfileSyncBridgeCallbacks {
     password?: string;
     snapshot: ProfileFlatSnapshot;
     prevIndex?: CloudManagedAccountItem | null;
+    ackDevRev?: number;
+    ackDevRevHash?: string;
   }) => Promise<{ rev: number; revHash: string }>;
   publishDevProfileSlot: (params: {
     userId: string;
@@ -116,7 +120,8 @@ export interface CloudProfileSyncBridgeCallbacks {
     onUpdate: (
       devPayload: CloudDevSlotRecord,
       indexPayload: CloudManagedAccountItem | null
-    ) => void
+    ) => void,
+    username?: string
   ) => () => void;
   computePassphraseHash: (userId: string, password: string) => Promise<string>;
 }
