@@ -178,7 +178,7 @@ export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = (rawProps) => {
                 const isOnlineCard = mode.id === 'host-match' || mode.id === 'join-room';
                 const suffix = isOnlineCard
                   ? signalingSource === 'public'
-                    ? ` (Active: Public EMQX #${signalingShortHash}, Best-Effort / No SLA)`
+                    ? ` (Active: Public Fallback #${signalingShortHash}, Unverified / No SLA)`
                     : ` (Active: ${signalingSource} #${signalingShortHash})`
                   : '';
                 setHoveredDesc(`${mode.description}${suffix}`);
