@@ -114,7 +114,7 @@ export interface Layer4DevSignalingLabRecipeProps {
 }
 
 export const DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG: SignalingLabEndpointViewConfig = {
-  topicNamespace: 'rc_7e2a4d_v2',
+  topicNamespace: 'rc/sig',
   jpEdgeFunctionUrl: 'https://relay-jp.carball.dev/functions/v1/signaling-bridge',
   sgEdgeFunctionUrl: 'https://relay-sg.carball.dev/functions/v1/signaling-bridge',
   slots: {
@@ -186,7 +186,7 @@ export function buildEmqxBridgeRuleSql(
   topicNamespace: string,
   bridgeUser = '<bridge_mqtt_username>'
 ): string {
-  const cleanNs = (topicNamespace || 'rc_7e2a4d_v2').replace(/\/+$/, '');
+  const cleanNs = (topicNamespace || 'rc/sig').replace(/\/+$/, '');
   return `SELECT
   topic,
   payload,
