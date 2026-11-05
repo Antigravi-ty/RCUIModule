@@ -47,6 +47,7 @@ import {
   SPATIAL_AUDIO_TUNER_PRESET,
   ENGINE_AUDIO_TUNER_PRESET,
   BOTS_LOADOUT_PRESET,
+  SUPERSONIC_TRAIL_TUNER_PRESET,
 } from '../stores/devFloatingPresets';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 import { SettingActionRow } from '../compounds/SettingActionRow';
@@ -207,6 +208,22 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             showDescription={false}
             description="Hitbox & Align, Per-Vehicle Wheel Hub Anchors & Dual Boost Exhaust Nozzle Offsets"
             hoverTooltip="Vehicle Model & Offset Tuner: Per-vehicle spatial calibration for Fennec & Insidio (Hitbox archetype, Chassis Center Offset, Wheel Hub Anchors & Boost Nozzle Offsets)."
+            onHover={setHoveredDesc}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 1b. Supersonic Wheel Trail Tuner */}
+          <FloatingWindowCard
+            preset={SUPERSONIC_TRAIL_TUNER_PRESET}
+            icon={Zap}
+            iconColor="text-purple-400"
+            badge="-10t..-60t · White→Purple"
+            badgeClass="bg-purple-500/15 border-purple-500/30 text-purple-400"
+            bordered={false}
+            showDescription={false}
+            description="Dual rear-wheel contact trail ribbons (-10t to -60t window, white-to-purple luminous gradient, head-to-tail taper, surface alignment & Force Active toggle)"
+            hoverTooltip="Supersonic Wheel Trail Tuner: Calibrate dual rear-wheel contact trail ribbons (-10t to -60t history window, white-to-purple luminous gradient, head-to-tail width taper, surface-aligned orientation, and Force Active preview)."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}

@@ -33,6 +33,7 @@ import { DriftwoodsTunerFloatingWindow } from './dev/DriftwoodsTunerFloatingWind
 import { SpatialAudioTunerFloatingWindow } from './dev/SpatialAudioTunerFloatingWindow';
 import { EngineAudioTunerFloatingWindow } from './dev/EngineAudioTunerFloatingWindow';
 import { BotsLoadoutFloatingWindow } from './dev/BotsLoadoutFloatingWindow';
+import { SupersonicTrailTunerFloatingWindow } from './dev/SupersonicTrailTunerFloatingWindow';
 
 export interface RenderFloatingWindowPanelOptions {
   isLight?: boolean;
@@ -247,6 +248,11 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     id: 'bots-loadout',
     category: 'developer',
     render: ({ isLight = false }) => <BotsLoadoutFloatingWindow isLight={isLight} />,
+  },
+  'supersonic-trail-tuner': {
+    id: 'supersonic-trail-tuner',
+    category: 'developer',
+    render: ({ isLight = false }) => <SupersonicTrailTunerFloatingWindow isLight={isLight} />,
   },
 };
 
