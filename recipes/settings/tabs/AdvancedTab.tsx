@@ -74,7 +74,6 @@ export interface AdvancedTabProps {
 export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   isLight = false,
   developerMode: propDevMode,
-  onDeveloperModeChange,
   telemetryConfig: propTelemetryConfig,
   defaultTelemetryConfig,
   onTelemetryConfigChange,
@@ -84,15 +83,13 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   onLeave,
 }) => {
   const storeDevMode = useAppStore((s) => s.developerMode);
-  const setStoreDevMode = useAppStore((s) => s.setDeveloperMode);
   const storeTelemetry = useAppStore((s) => s.telemetry);
   const updateStoreTelemetry = useAppStore((s) => s.updateTelemetry);
   const setAppInputBufferTarget = useAppStore((s) => s.setInputBufferTarget);
   const setAppInputBufferThreshold = useAppStore((s) => s.setInputBufferThreshold);
   const masterVolume = useAppStore((s) => s.audio.masterVolume);
 
-  const [internalDevMode, setInternalDevMode] = useState(propDevMode ?? storeDevMode ?? false);
-  const developerMode = propDevMode ?? storeDevMode ?? internalDevMode;
+  const developerMode = propDevMode ?? storeDevMode ?? false;
 
   const [allowRemoteProfileDeployment, setAllowRemoteProfileDeployment] = useState(true);
 
@@ -152,12 +149,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   const resolvedBordered = storeBordered || advancedBordered;
   const isCustomPacing = clockPacingMode === 'custom';
 
-  const handleToggleDeveloper = (next: boolean) => {
-    setInternalDevMode(next);
-    setStoreDevMode(next);
-    onDeveloperModeChange?.(next);
-  };
-
   const opacityManagerCard = (
     <FloatingWindowCard
       preset={FLOATING_WINDOW_OPACITY_PRESET}
@@ -186,12 +177,12 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
       className="flex flex-col w-full"
       style={{ gap: `${rowGap}px` }}
     >
-      {/* 1. First Position: Developer Settings Status Badge Row (Decoupled SettingDeveloperStatusRow) */}
+      {/* 1. First Position: Developer Settings Status Badge Row (Read-Only, URL Query Gated) */}
       <SettingDeveloperStatusRow
         icon={Code2}
         title="Developer Settings"
         developerMode={developerMode}
-        onDeveloperModeChange={handleToggleDeveloper}
+        interactiveToggle={false}
         bordered={resolvedBordered}
         onHover={onHover}
         onLeave={onLeave}

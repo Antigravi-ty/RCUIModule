@@ -147,7 +147,7 @@ export const DEFAULT_SETTING_ACTION_ROW_TOKENS: SettingActionRowTokens = {
   presetCustomSliderWidth: 220,
   presetCustomAnimDuration: 260,
   devStatusAccentColor: 'amber',
-  devStatusInteractiveToggle: true,
+  devStatusInteractiveToggle: false,
   telemetryVariation: 'underline-disclosure',
   telemetryTriggerPosition: 'left',
   telemetryDefaultCollapsed: true,
@@ -161,6 +161,7 @@ const SYNC_KEY = 'store:settingActionRow:v7';
 const normalizeTokens = (raw?: Partial<SettingActionRowTokens>): SettingActionRowTokens => ({
   ...DEFAULT_SETTING_ACTION_ROW_TOKENS,
   ...(raw && typeof raw === 'object' ? raw : {}),
+  devStatusInteractiveToggle: false,
 });
 
 const loadSavedTokens = (): SettingActionRowTokens =>
