@@ -37,7 +37,7 @@ export const StaticTrainingPackToolbar: React.FC<StaticTrainingPackToolbarProps>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".rcspack,.RCSPack,.gz,.json"
+            accept=".rcspack,.RCSPack,.Tem,.tem,.gz,.json"
             onChange={onImportFileChange}
             className="hidden"
           />

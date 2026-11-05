@@ -162,6 +162,10 @@ export interface StaticTrainingPackStoreState {
   deletePack: (uuid: string) => Promise<void>;
   exportPackRCS: (uuid?: string) => Promise<string | null>;
   importPackRCS: (file: File) => Promise<StaticTrainingPackMetadata>;
+  importConvertedTemBundle: (
+    metadata: StaticTrainingPackMetadata,
+    items: StaticTrainingShotItem[]
+  ) => Promise<StaticTrainingPackMetadata>;
 
   setSessionMode: (mode: StaticPackSessionMode) => void;
   setEdgeInspectorExpanded: (expanded: boolean) => void;

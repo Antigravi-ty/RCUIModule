@@ -43,7 +43,8 @@ export type ActiveMenuRoute =
   | 'dev-calibrated-presets'
   | 'dev-self-test'
   | 'dev-under-development'
-  | 'dev-signaling-lab';
+  | 'dev-signaling-lab'
+  | 'dev-tem-pack-converter';
 
 export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> = {
   'main-menu': null,
@@ -69,6 +70,7 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'event-trigger-rules': 'dev-active-tuners',
   'exp-multi-bots': 'dev-sandboxes',
   'exp-botpack-9700488': 'dev-sandboxes',
+  'dev-tem-pack-converter': 'dev-sandboxes',
   'dev-sandboxes': 'settings',
   'dev-active-tuners': 'settings',
   'dev-calibrated-presets': 'settings',

@@ -185,6 +185,35 @@ export function createStaticTrainingShotActions<
     return metadata;
   },
 
+  importConvertedTemBundle: async (
+    metadata: StaticTrainingPackMetadata,
+    items: StaticTrainingShotItem[]
+  ) => {
+    const normalizedItems = (items.length > 0 ? items : [createDefaultShotItem(0)])
+      .slice(0, MAX_SHOTS_PER_PACK)
+      .map((it, idx) => cloneShotItem(it, idx));
+    const finalMeta: StaticTrainingPackMetadata = {
+      ...metadata,
+      itemCount: normalizedItems.length,
+      updatedAt: Date.now(),
+    };
+    await saveStaticTrainingPackFull(finalMeta, normalizedItems);
+    const packs = await listStaticTrainingPacks();
+    const bundle = buildActivePackBundle(finalMeta, normalizedItems);
+    setActiveEditItemVariable(null);
+    set({
+      packs,
+      selectedPackUuid: finalMeta.uuid,
+      activePack: bundle,
+      activeItems: normalizedItems,
+      committedSessionItems: normalizedItems.map((item, idx) => cloneShotItem(item, idx)),
+      currentShotIndex: 0,
+      isEditingItem: false,
+      activeEditItemDraft: null,
+    });
+    return finalMeta;
+  },
+
   setSessionMode: (mode: StaticPackSessionMode) => {
     set({ sessionMode: mode });
     get().runtimeHandlers.onSessionModeChanged?.(mode);

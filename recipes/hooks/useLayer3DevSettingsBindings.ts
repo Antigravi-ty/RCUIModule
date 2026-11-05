@@ -52,7 +52,8 @@ export interface Layer3DevActiveTunersRecipeProps {
 export type DevTestLabTab =
   | IsolationDevTestLabTab
   | 'exp-multi-bots'
-  | 'exp-botpack-9700488';
+  | 'exp-botpack-9700488'
+  | 'tem-pack-converter';
 
 export type LayerDevTestLabTab = DevTestLabTab;
 
@@ -66,6 +67,7 @@ export interface Layer3DevSandboxesRecipeProps {
   onNavigateMultiBots?: () => void;
   onNavigateExpMultiBots?: () => void;
   onNavigateExpBotpack9700488?: () => void;
+  onNavigateTemPackConverter?: () => void;
   sizing?: PanelSizingConfig;
 }
 
@@ -261,6 +263,11 @@ export function useLayer3DevSandboxesStoreBinding(
       return;
     }
 
+    if (tab === 'tem-pack-converter') {
+      navigate('dev-tem-pack-converter');
+      return;
+    }
+
     const labTab = tab as IsolationDevTestLabTab;
     setSelectedTab(labTab);
     applyAndRestartLab(labTab);
@@ -302,6 +309,11 @@ export function useLayer3DevSandboxesStoreBinding(
         const expStore = useExperimentalMultiBotsStore.getState();
         expStore.activateBotpackSubMode(undefined, false);
         navigate('exp-botpack-9700488');
+      }),
+    onNavigateTemPackConverter:
+      rawProps.onNavigateTemPackConverter ??
+      (() => {
+        navigate('dev-tem-pack-converter');
       }),
   };
 }

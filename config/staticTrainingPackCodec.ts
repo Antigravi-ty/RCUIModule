@@ -11,6 +11,23 @@ import {
   createDefaultShotItem,
   cloneShotItem,
 } from './staticTrainingPackTypes';
+import {
+  isTemBinaryPayload,
+  convertTemFileToRCSPackBundle,
+  parseTemBinaryBytes,
+  convertParsedTemToRCSPackBundle,
+  type ParsedTemTrainingPack,
+  type TemToRCSPackConversionResult,
+} from './temTrainingPackParser';
+
+export {
+  isTemBinaryPayload,
+  convertTemFileToRCSPackBundle,
+  parseTemBinaryBytes,
+  convertParsedTemToRCSPackBundle,
+  type ParsedTemTrainingPack,
+  type TemToRCSPackConversionResult,
+};
 
 export async function compressGzipBytes(rawBytes: Uint8Array): Promise<Uint8Array> {
   if (typeof CompressionStream !== 'undefined') {
@@ -103,13 +120,20 @@ export async function exportStaticTrainingPackRCSPack(
 }
 
 /**
- * Decodes a `.RCSPack` file payload into normalized metadata and shot items.
+ * Decodes a `.RCSPack` or `.Tem` file payload into normalized metadata and shot items.
  */
 export async function decodeRCSPackFilePayload(
   file: File
 ): Promise<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }> {
   const buf = await file.arrayBuffer();
   const bytes = new Uint8Array(buf);
+
+  if (isTemBinaryPayload(bytes, file.name)) {
+    const parsedTem = parseTemBinaryBytes(bytes, file.name);
+    const converted = convertParsedTemToRCSPackBundle(parsedTem);
+    return { metadata: converted.metadata, items: converted.items };
+  }
+
   const text = await decompressGzipOrText(bytes);
   const parsed = JSON.parse(text);
 

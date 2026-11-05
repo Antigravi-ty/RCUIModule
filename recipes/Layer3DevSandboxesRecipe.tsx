@@ -7,6 +7,7 @@ import {
 import {
   Bot,
   Sparkles,
+  FileArchive,
   Radio,
   Layers,
   History,
@@ -129,6 +130,16 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
     icon: Sparkles,
     iconColor: 'text-teal-400',
   },
+  {
+    id: 'tem-pack-converter',
+    title: 'TEM to RCSPack Importer',
+    summary:
+      'Decrypt & convert Rocket League .Tem training packs (v32 & v34) into .RCSPack with full JSON metadata.',
+    details:
+      'TEM to RCSPack Importer (AES-256-ECB · UE3 Property Tree): Decrypts Rocket League .Tem training packs, maps Ball & DynamicSpawnPointMesh rounds into StaticTrainingShotItems, and dumps all extra attributes into description JSON.',
+    icon: FileArchive,
+    iconColor: 'text-cyan-400',
+  },
 ];
 
 /**
@@ -144,6 +155,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
   onLaunchIsolationTab,
   onNavigateExpMultiBots,
   onNavigateExpBotpack9700488,
+  onNavigateTemPackConverter,
   sizing: propSizing,
 } = useLayer3DevSandboxesStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
@@ -167,6 +179,14 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
     tab: DevTestLabTab,
     sourceEl?: HTMLElement | null
   ) => {
+    if (tab === 'tem-pack-converter') {
+      if (onNavigateTemPackConverter) {
+        onNavigateTemPackConverter();
+      } else if (onEnterBench) {
+        onEnterBench(tab);
+      }
+      return;
+    }
     if (tab === 'exp-multi-bots' && !sourceEl && onNavigateExpMultiBots) {
       onNavigateExpMultiBots();
       return;

@@ -178,9 +178,9 @@ export function cloneShotItem(
       : 10,
     car: {
       location: [
-        Number(carLoc[0]) || 0,
-        Number(carLoc[1]) || -2400,
-        Number(carLoc[2]) || 17.05,
+        Number.isFinite(Number(carLoc[0])) ? Number(carLoc[0]) : 0,
+        Number.isFinite(Number(carLoc[1])) ? Number(carLoc[1]) : -2400,
+        Number.isFinite(Number(carLoc[2])) ? Number(carLoc[2]) : 17.05,
       ],
       headingYaw,
       headingPitch,
@@ -203,9 +203,12 @@ export function cloneShotItem(
     },
     ball: {
       location: [
-        Number(ballLoc[0]) || 0,
-        Number(ballLoc[1]) || 0,
-        Math.max(93.15, Number(ballLoc[2]) || 93.15),
+        Number.isFinite(Number(ballLoc[0])) ? Number(ballLoc[0]) : 0,
+        Number.isFinite(Number(ballLoc[1])) ? Number(ballLoc[1]) : 0,
+        Math.max(
+          93.15,
+          Number.isFinite(Number(ballLoc[2])) ? Number(ballLoc[2]) : 93.15
+        ),
       ],
       speed: Math.max(0, Math.min(4000, Number(rawBall.speed) || 0)),
       speedYaw: Number(rawBall.speedYaw ?? Math.PI / 2),
