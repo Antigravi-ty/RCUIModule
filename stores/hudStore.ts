@@ -99,6 +99,7 @@ export interface HudStoreState {
     onReplayToggleCameraMode: ((() => void) | null);
     onReplaySelectPovCar: (((carIndex: number | null) => void) | null);
   }>) => void;
+  clearReplayState: () => void;
   setMatchState: (state: Partial<{
     localTeam: 0 | 1;
     blueScore: number;

@@ -404,18 +404,50 @@ export async function importBatchStaticTrainingPacksFromFiles(
 let devCatalogSeededInSession = false;
 
 /**
- * Ensures the 73 built-in Developer Mode `.RLRCSPack` training packs from `Training.zip`
- * are seeded into the IndexedDB VFS when Dev Mode is opened.
+ * Ensures the 134 built-in Developer Mode `.RLRCSPack` training packs from `Training.zip` + `TrainingA.zip`
+ * are seeded into the IndexedDB VFS when Dev Mode is opened, and refreshes metadata on existing built-in packs.
  */
 export async function ensureBuiltInDevPacksSeeded(forceReseed = false): Promise<number> {
   if (devCatalogSeededInSession && !forceReseed) return 0;
   const existing = await listStaticTrainingPacks();
-  const existingUuidSet = new Set(existing.map((m) => m.uuid));
+  const existingByUuid = new Map(existing.map((m) => [m.uuid, m]));
 
   const catalog = await loadBuiltInDevPacksCatalog();
   let seededCount = 0;
   for (const entry of catalog) {
-    if (!forceReseed && existingUuidSet.has(entry.metadata.uuid)) {
+    const prevMeta = existingByUuid.get(entry.metadata.uuid);
+    if (!forceReseed && prevMeta) {
+      // Refresh built-in metadata if tags, rankTier, or recommendedVariation were updated in catalog
+      const prevTagsJson = JSON.stringify(prevMeta.tags || []);
+      const nextTagsJson = JSON.stringify(entry.metadata.tags || []);
+      const prevVarJson = JSON.stringify(prevMeta.recommendedVariation || null);
+      const nextVarJson = JSON.stringify(entry.metadata.recommendedVariation || null);
+      if (
+        prevMeta.rankTier !== entry.metadata.rankTier ||
+        prevTagsJson !== nextTagsJson ||
+        prevVarJson !== nextVarJson ||
+        prevMeta.creator !== entry.metadata.creator
+      ) {
+        const now = Date.now();
+        await vfsPutNodes([
+          {
+            path: buildMetaPath(entry.metadata.uuid),
+            category: 'static-training-pack',
+            uuid: entry.metadata.uuid,
+            nodeType: 'metadata',
+            updatedAt: prevMeta.updatedAt || now,
+            data: {
+              ...prevMeta,
+              creator: entry.metadata.creator,
+              tags: entry.metadata.tags,
+              rankTier: entry.metadata.rankTier,
+              releaseYearMonth: entry.metadata.releaseYearMonth,
+              recommendedVariation: entry.metadata.recommendedVariation,
+              isBuiltInDevPack: true,
+            },
+          },
+        ]);
+      }
       continue;
     }
     await saveStaticTrainingPackFull(entry.metadata, entry.items);

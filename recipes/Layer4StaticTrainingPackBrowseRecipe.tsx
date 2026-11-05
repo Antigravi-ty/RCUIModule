@@ -492,7 +492,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
         isLight={isLight}
         defaultDescription={
           isDevMode
-            ? 'Dev Mode: 73 built-in .RLRCSPack packs loaded • Click the top-right Gear icon for Training Variations (F3–F12).'
+            ? 'Dev Mode: 134 built-in .RLRCSPack packs loaded • Click the top-right Gear icon for Training Variations (F3–F12 / Custom).'
             : 'Select a Static Training Pack on the left to Play, Edit, Export (.RCSPack / .RCSPackE), or Delete.'
         }
         hoveredDescription={hoveredDesc}

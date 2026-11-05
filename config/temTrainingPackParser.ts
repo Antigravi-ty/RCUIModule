@@ -60,6 +60,7 @@ export const RANK_ORDER_MAP: Record<string, number> = {
   Champion: 6,
   'Grand Champion': 7,
   'Supersonic Legend': 8,
+  Progression: 9,
 };
 
 const MONTH_NAME_TO_NUM: Record<string, string> = {
@@ -172,6 +173,13 @@ export function derivePackTagsAndMetadata(params: {
     tagSet.add('Wayprotein');
   } else if (creatorLower.includes('biddles')) {
     tagSet.add('Biddles');
+  } else if (creatorLower.includes('virge')) {
+    tagSet.add('Virge');
+  } else if (creatorLower.includes('coco')) {
+    tagSet.add('Coco');
+  } else if (code && code.trim().toUpperCase() === '0FB6-C16F-D26D-0A6F') {
+    if (!normalizedCreator) normalizedCreator = 'Iowa';
+    tagSet.add('Iowa');
   } else if (creatorLower.includes('mark_maboco') || titleLower.startsWith('boo ')) {
     tagSet.add('Mark_MaBoCo');
   }
@@ -204,9 +212,12 @@ export function derivePackTagsAndMetadata(params: {
     }
   }
 
-  // Detect Rank Tier
+  // Detect Rank Tier or Progression
   let rankTier: string | undefined;
-  if (/\b(ssl|supersonic legend)\b/i.test(title)) {
+  if (/\bprogression\b/i.test(title)) {
+    rankTier = 'Progression';
+    tagSet.add('Progression');
+  } else if (/\b(ssl|supersonic legend)\b/i.test(title)) {
     rankTier = 'Supersonic Legend';
   } else if (/\b(gc|grand champion)\b/i.test(title)) {
     rankTier = 'Grand Champion';

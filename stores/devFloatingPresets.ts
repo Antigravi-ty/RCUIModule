@@ -22,16 +22,16 @@ export const DIAGNOSTIC_DUMP_PRESET: PresetConfig = {
 
 export const STATIC_TRAINING_BALL_CAM_TUNER_PRESET: PresetConfig = {
   id: 'static-training-ball-cam-tuner',
-  title: 'Static Training Ball Camera & Opacity Tuner',
+  title: 'Static Training Visuals, 3D Arrow & Ball Cam Tuner',
   category: 'TrainingBallCam',
-  width: 460,
-  height: 580,
-  minHeight: 200,
+  width: 480,
+  height: 620,
+  minHeight: 220,
   resizable: true,
   singleton: true,
   tier: 'developer',
-  summary: 'Relative ball camera (Distance, Height, Angle, Lateral Offset) and Edit-Mode 70% Ball Opacity override.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  summary: '3D Direction Arrow (Cone/Shaft/Tip/Shadow/Halo/Opacity), 0s Expired Ball Opacity (70%), and Relative Ball Camera tuner.',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics (or Training Variations Modal -> 3D Arrow & Visuals Tuner)',
   component: 'StaticTrainingBallCamTunerFloatingWindow',
   sourcePath: 'panels/dev/StaticTrainingBallCamTunerFloatingWindow.tsx',
 };
