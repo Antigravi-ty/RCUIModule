@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState } from 'react';
-import { ArrowLeft, Info, Minimize2 } from 'lucide-react';
+import { ArrowLeft, Info, LogOut, Minimize2 } from 'lucide-react';
 import { KeycapBadge } from '../primitives/KeycapBadge';
 import { UI_RADIUS } from '../tokens/radius';
+import { useCloudProfileSyncStore } from '../stores/cloudProfileSyncStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
   resolvePanelHeaderBackBtnGeometry,
@@ -78,6 +79,9 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   const rightBtnExpandOnHover = useMenuLayoutStore((s) => s.panelHeaderRightBtnExpandOnHover);
   const panelOuterRadius = useMenuLayoutStore((s) => s.panelOuterRadius);
 
+  const activeRemoteSession = useCloudProfileSyncStore((s) => s.activeRemoteSession);
+  const exitRemoteTuningSession = useCloudProfileSyncStore((s) => s.exitRemoteTuningSession);
+
   const [rightHovered, setRightHovered] = useState(false);
 
   const btnGeom = resolvePanelHeaderBackBtnGeometry({
@@ -143,17 +147,28 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   const minHeaderHeight = btnGeom.height + headerPadY * 2;
   const labelFontSize = Math.max(10, Math.min(13, Math.round(btnGeom.height * 0.36)));
 
+  const isRemoteSessionActive = Boolean(activeRemoteSession);
   const shouldRenderRightAction =
-    showRightBtnToken && Boolean(showRightAction ?? onRightAction);
+    isRemoteSessionActive || (showRightBtnToken && Boolean(showRightAction ?? onRightAction));
 
   const rightIconTransformStyle: React.CSSProperties =
-    rightBtnTransform === 'flip-x'
-      ? { transform: 'scaleX(-1)' }
-      : rightBtnTransform === 'rotate-90'
-      ? { transform: 'rotate(90deg)' }
-      : {};
+    isRemoteSessionActive
+      ? {}
+      : rightBtnTransform === 'flip-x'
+        ? { transform: 'scaleX(-1)' }
+        : rightBtnTransform === 'rotate-90'
+          ? { transform: 'rotate(90deg)' }
+          : {};
 
   const isRightExpanded = rightHovered && rightBtnExpandOnHover;
+
+  const remoteLogoutSurfaceClasses = isLight
+    ? 'bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border-rose-500/35 hover:border-rose-500/50 text-rose-600 hover:text-rose-700 cursor-pointer'
+    : 'bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border-rose-500/35 hover:border-rose-500/50 text-rose-400 hover:text-rose-300 cursor-pointer';
+
+  const effectiveRightLabel = isRemoteSessionActive
+    ? `Exit #${activeRemoteSession?.alias || activeRemoteSession?.userId}`
+    : rightActionLabel;
 
   return (
     <div
@@ -179,7 +194,22 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
           style={{ fontSize: `${titleFontSize}px` }}
           className={`font-bold tracking-wider uppercase whitespace-nowrap leading-snug text-center ${titleClassName}`}
         >
-          {title}
+          {activeRemoteSession ? (
+            <>
+              <span className={isLight ? 'text-neutral-400 font-semibold' : 'text-neutral-500 font-semibold'}>
+                {title}
+              </span>
+              <span
+                className={`ml-2 font-extrabold normal-case ${
+                  isLight ? 'text-black' : 'text-white'
+                }`}
+              >
+                # {activeRemoteSession.alias || activeRemoteSession.userId}
+              </span>
+            </>
+          ) : (
+            title
+          )}
         </h2>
       </div>
 
@@ -219,19 +249,30 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
         )}
       </div>
 
-      {/* Layer 2 (Right): Standardized carved Right Action Button (Minimize2 / Custom Icon -> Hover "Live Preview") or custom rightElement */}
+      {/* Layer 2 (Right): Forced Red LogOut button during Remote Profile Tuning, or Standardized Right Action Button */}
       {shouldRenderRightAction ? (
         <div className="relative z-10 flex items-center shrink-0 ml-auto">
           <button
             type="button"
-            onClick={onRightAction}
+            data-testid={isRemoteSessionActive ? 'remote-profile-logout-btn' : undefined}
+            onClick={
+              isRemoteSessionActive
+                ? () => {
+                    void exitRemoteTuningSession();
+                  }
+                : onRightAction
+            }
             onMouseEnter={() => {
               setRightHovered(true);
-              onRightActionHoverChange?.(true);
+              if (!isRemoteSessionActive) {
+                onRightActionHoverChange?.(true);
+              }
             }}
             onMouseLeave={() => {
               setRightHovered(false);
-              onRightActionHoverChange?.(false);
+              if (!isRemoteSessionActive) {
+                onRightActionHoverChange?.(false);
+              }
             }}
             style={{
               minWidth: `${btnGeom.width}px`,
@@ -241,27 +282,46 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
               paddingLeft: isRightExpanded ? '10px' : undefined,
               paddingRight: isRightExpanded ? '10px' : undefined,
             }}
-            className={`inline-flex items-center justify-center gap-1.5 shrink-0 ${rightBorderStructureClass} transition-all outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 ${getBtnSurfaceClasses(false)}`}
-            aria-label={rightActionLabel}
-            title={`${rightActionLabel} [TAB]`}
+            className={`inline-flex items-center justify-center gap-1.5 shrink-0 ${
+              isRemoteSessionActive
+                ? isFlushDividerMode
+                  ? 'border-0 border-l'
+                  : 'border'
+                : rightBorderStructureClass
+            } transition-all outline-none focus-visible:ring-2 focus-visible:ring-rose-400 ${
+              isRemoteSessionActive ? remoteLogoutSurfaceClasses : getBtnSurfaceClasses(false)
+            }`}
+            aria-label={effectiveRightLabel}
+            title={
+              isRemoteSessionActive
+                ? `Exit remote profile tuning (#${activeRemoteSession?.alias || activeRemoteSession?.userId}) and restore local settings`
+                : `${rightActionLabel} [TAB]`
+            }
           >
             {isRightExpanded && (
               <span
                 style={{ fontSize: `${labelFontSize}px` }}
                 className="font-bold tracking-wider uppercase leading-none whitespace-nowrap select-none"
               >
-                {rightActionLabel}
+                {effectiveRightLabel}
               </span>
             )}
             <span
               className="inline-flex items-center justify-center shrink-0 transition-transform duration-150"
               style={rightIconTransformStyle}
             >
-              {rightActionIcon ?? (
-                <Minimize2
+              {isRemoteSessionActive ? (
+                <LogOut
                   className="shrink-0"
                   style={{ width: `${btnGeom.iconSize}px`, height: `${btnGeom.iconSize}px` }}
                 />
+              ) : (
+                rightActionIcon ?? (
+                  <Minimize2
+                    className="shrink-0"
+                    style={{ width: `${btnGeom.iconSize}px`, height: `${btnGeom.iconSize}px` }}
+                  />
+                )
               )}
             </span>
           </button>

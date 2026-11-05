@@ -6,6 +6,7 @@ import {
   Sliders,
   ArrowRight,
   Crosshair,
+  Box,
   SmilePlus,
 } from 'lucide-react';
 import { BounceSolidSvg } from '../../../primitives/packagedSvgIcons';
@@ -26,6 +27,7 @@ export interface GameplayConfig {
   goalRestart: boolean;
   unlimitedBoost: boolean;
   showCarHitbox: boolean;
+  showAllCarHitboxes?: boolean;
   ballCamIndicator: boolean;
 }
 
@@ -33,6 +35,7 @@ export const DEFAULT_GAMEPLAY_CONFIG: GameplayConfig = {
   goalRestart: true,
   unlimitedBoost: true,
   showCarHitbox: false,
+  showAllCarHitboxes: false,
   ballCamIndicator: true,
 };
 

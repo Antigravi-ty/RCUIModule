@@ -2,9 +2,18 @@ import { type StateCreator } from 'zustand';
 import { floatingStore } from '../floatingStore';
 import { STORAGE_KEYS, safeStorage } from '../../config/storageHelpers';
 import { getInitialTheme } from '../../config/themeConfig';
-import { getInitialCar, loadStoredPlayerName } from '../../config/vehiclePresets';
+import {
+  getInitialCar,
+  garageSettingsStore,
+  loadStoredPlayerName,
+  loadStoredColorPrefs,
+  saveStoredColorPrefs,
+  getPreferredColorHex,
+  type StoredColorPrefs,
+} from '../../config/vehiclePresets';
 import { ROUTE_PARENT_MAP, type ActiveMenuRoute } from '../../config/uiConfig';
 import { type AppState } from '../appStoreTypes';
+import { useExperimentalMultiBotsStore } from '../experimentalMultiBotsStore';
 
 export const initialTheme = getInitialTheme();
 
@@ -17,6 +26,7 @@ export type NavigationAndCarSlice = Pick<
   | 'activeRoute'
   | 'transitionMode'
   | 'activeCar'
+  | 'colorPrefs'
   | 'theme'
   | 'highlightSetting'
   | 'settingsTargetTab'
@@ -33,6 +43,7 @@ export type NavigationAndCarSlice = Pick<
   | 'goBack'
   | 'setTransitionMode'
   | 'setActiveCar'
+  | 'setColorPrefs'
   | 'setTheme'
   | 'setLivePreviewCollapsed'
   | 'matchMode'
@@ -51,6 +62,7 @@ export const createNavigationAndCarSlice: StateCreator<
   activeRoute: 'main-menu',
   transitionMode: 'fluid-morph',
   activeCar: getInitialCar(),
+  colorPrefs: loadStoredColorPrefs(),
   theme: initialTheme,
   highlightSetting: null,
   settingsTargetTab: 'gameplay',
@@ -134,11 +146,31 @@ export const createNavigationAndCarSlice: StateCreator<
 
   setActiveCar: (carId) => {
     set({ activeCar: carId });
+    garageSettingsStore.save({ vehiclePreset: carId, carVisual: carId });
     safeStorage.set(
       STORAGE_KEYS.DISPLAY_SETTINGS,
       JSON.stringify({ vehiclePreset: carId, carVisual: carId })
     );
     get().bridge.onVehicleChange?.(carId);
+  },
+
+  setColorPrefs: (prefs: StoredColorPrefs) => {
+    const normalized: StoredColorPrefs = {
+      primaryTeam: prefs.primaryTeam === 'blue' ? 'blue' : 'orange',
+      blueOrder:
+        Array.isArray(prefs.blueOrder) && prefs.blueOrder.length > 0
+          ? prefs.blueOrder.map((n) => Number(n))
+          : [1, 5, 3],
+      orangeOrder:
+        Array.isArray(prefs.orangeOrder) && prefs.orangeOrder.length > 0
+          ? prefs.orangeOrder.map((n) => Number(n))
+          : [2, 4, 0],
+    };
+    const activeSlotId = saveStoredColorPrefs(normalized);
+    const activeHex = getPreferredColorHex(normalized);
+    set({ colorPrefs: normalized });
+    useExperimentalMultiBotsStore.getState().syncExhibitionFromColorPrefs(false);
+    get().bridge.onColorChange?.(activeHex, activeSlotId);
   },
 
   setTheme: (theme) => {

@@ -58,7 +58,9 @@ export const RANK_ORDER_MAP: Record<string, number> = {
   Platinum: 4,
   Diamond: 5,
   Champion: 6,
+  GC: 7,
   'Grand Champion': 7,
+  SSL: 8,
   'Supersonic Legend': 8,
   Progression: 9,
 };
@@ -153,6 +155,7 @@ export function derivePackTagsAndMetadata(params: {
   const rawCreator = (creator || '').trim();
   const titleLower = (title || '').toLowerCase();
   const creatorLower = rawCreator.toLowerCase();
+  const hasPublishedCode = Boolean(code && code.trim());
 
   let normalizedCreator = rawCreator || undefined;
 
@@ -164,14 +167,25 @@ export function derivePackTagsAndMetadata(params: {
   ) {
     tagSet.add('Kevpert');
     if (!normalizedCreator) normalizedCreator = 'Kevpert';
-  } else if (creatorLower === 'psyonix' || titleLower.includes('psyonix')) {
+  } else if (
+    creatorLower === 'psyonix' ||
+    titleLower.includes('psyonix') ||
+    /^(progression|ssl|gc|champion|diamond|platinum|gold|silver|bronze)\s+(pack|goals)\s+/i.test(
+      (title || '').trim()
+    )
+  ) {
     tagSet.add('Psyonix');
     normalizedCreator = 'Psyonix';
   } else {
     if (code && code.trim().toUpperCase() === '0FB6-C16F-D26D-0A6F' && !normalizedCreator) {
       normalizedCreator = 'Iowa';
     }
-    tagSet.add('Others');
+    if (!hasPublishedCode) {
+      tagSet.add('Local');
+    } else {
+      tagSet.add('Others');
+      tagSet.add('Community');
+    }
   }
 
   // Extract Kevpert F-key tag if present
@@ -192,6 +206,9 @@ export function derivePackTagsAndMetadata(params: {
     releaseYearMonth = `${yr}-${mNum}`;
     tagSet.add(yr);
     tagSet.add(releaseYearMonth);
+    if (tagSet.has('Psyonix')) {
+      tagSet.add(`Psyonix ${yr}`);
+    }
   }
 
   // Detect Rank Tier or Progression

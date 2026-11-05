@@ -52,6 +52,7 @@ import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 import { SettingActionRow } from '../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
+import { SettingToggleRow } from '../compounds/SettingToggleRow';
 
 export type { BoostPhaseSelectionState, Layer3DevActiveTunersRecipeProps };
 
@@ -73,6 +74,8 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
   onCarBallModeChange,
   carCarMode: propCarCarMode,
   onCarCarModeChange,
+  showAllCarHitboxes: propShowAllCarHitboxes,
+  onShowAllCarHitboxesChange,
   boostSelection,
   onSelectBoostPhase,
   onSelectAllBoostPhases,
@@ -82,6 +85,7 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
   const [localWsOffset, setLocalWsOffset] = useState<number>(10);
   const [localCarBallMode, setLocalCarBallMode] = useState<string>('vehicle_body');
   const [localCarCarMode, setLocalCarCarMode] = useState<string>('vehicle_detail');
+  const [localShowAllCarHitboxes, setLocalShowAllCarHitboxes] = useState<boolean>(false);
 
   const wsVerticalOffsetPct = propWsOffset ?? localWsOffset;
   const setWsVerticalOffsetPct = onWsVerticalOffsetPctChange ?? setLocalWsOffset;
@@ -89,6 +93,8 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
   const handleCarBallModeChange = onCarBallModeChange ?? setLocalCarBallMode;
   const carCarMode = propCarCarMode ?? localCarCarMode;
   const handleCarCarModeChange = onCarCarModeChange ?? setLocalCarCarMode;
+  const showAllCarHitboxes = propShowAllCarHitboxes ?? localShowAllCarHitboxes;
+  const handleShowAllCarHitboxesChange = onShowAllCarHitboxesChange ?? setLocalShowAllCarHitboxes;
 
   const storeSizing = useMenuLayoutStore(
     (s) => s.panels?.['layer3-dev-active-tuners'] ?? DEFAULT_PANEL_SIZING['layer3-dev-active-tuners']
@@ -208,6 +214,23 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             description="Hitbox & Align, Per-Vehicle Wheel Hub Anchors & Dual Boost Exhaust Nozzle Offsets"
             hoverTooltip="Vehicle Model & Offset Tuner: Per-vehicle spatial calibration for Fennec & Insidio (Hitbox archetype, Chassis Center Offset, Wheel Hub Anchors & Boost Nozzle Offsets)."
             onHover={setHoveredDesc}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 1b. Show All Car Hitboxes (Developer Global Override) */}
+          <SettingToggleRow
+            icon={Box}
+            iconName="box"
+            iconColor="text-emerald-400"
+            title="Show All Car Hitboxes"
+            description="Developer override to render 3D OBB collision wireframes on all vehicles in the arena"
+            checked={showAllCarHitboxes}
+            onChange={handleShowAllCarHitboxesChange}
+            bordered={false}
+            showDescription={false}
+            hoverDescription="Show All Car Hitboxes: Developer override that renders 3D oriented bounding box (OBB) collision wireframes on every vehicle in the arena regardless of POV."
+            onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
           />

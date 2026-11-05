@@ -6,10 +6,67 @@
  * 3. Helpers to compare a pack's video spec against the latest F-key preset and resolve Old vs New mode.
  */
 
-import type {
-  KevpertPresetKey,
-  StaticTrainingVariationConfig,
-} from './staticTrainingVariationTypes';
+export type KevpertPresetKey =
+  | 'F1'
+  | 'F2'
+  | 'F3'
+  | 'F4'
+  | 'F5'
+  | 'F6'
+  | 'F7'
+  | 'F8'
+  | 'F9'
+  | 'F10'
+  | 'F11'
+  | 'F12';
+
+export const KEVPERT_PRESET_KEYS: KevpertPresetKey[] = [
+  'F1',
+  'F2',
+  'F3',
+  'F4',
+  'F5',
+  'F6',
+  'F7',
+  'F8',
+  'F9',
+  'F10',
+  'F11',
+  'F12',
+];
+
+export interface StaticTrainingVariationConfig {
+  /** Preset identifier if derived from Kevpert F1-F12 or custom */
+  presetKey?: KevpertPresetKey | 'CUSTOM' | 'custom';
+  /** Human-readable preset or source description */
+  label?: string;
+  /** Human-readable label alias */
+  presetLabel?: string;
+  /** Source YouTube video ID if matched from Kevpert video description */
+  sourceVideoId?: string;
+  /** Ball speed modifier percentage [minPct, maxPct] (e.g., [-1.9, 3.5]) */
+  ballSpeedModifierPct: [number, number];
+  /** Ball horizontal XY location modifier in Unreal Units [minUU, maxUU] */
+  ballLocationModifierXY: [number, number];
+  /** Ball vertical Z height modifier in Unreal Units [minUU, maxUU] */
+  ballHeightModifierZ: [number, number];
+  /** Ball velocity direction rotation modifier in degrees [minDeg, maxDeg] */
+  ballRotationModifierDeg: [number, number];
+  /** Ball angular velocity spin modifier in rad/s [minSpin, maxSpin] */
+  ballSpinModifier: [number, number];
+  /** Vehicle launch speed override range in UU/s [minSpeed, maxSpeed] (null = keep pack default) */
+  vehicleSpeedRange: [number, number] | null;
+  /** Vehicle XY location modifier in Unreal Units [minUU, maxUU] */
+  vehicleLocationModifier: [number, number];
+  /** Vehicle yaw rotation modifier in degrees [minDeg, maxDeg] */
+  vehicleRotationModifierDeg: [number, number];
+  /** Boost limit override [0..100] (null = keep pack default) */
+  boostLimitOverride: number | null;
+  /** Force vehicle to spawn snapped on the ground */
+  forceSpawnVehicleOnGround: boolean;
+  /** Force unlimited boost */
+  forceUnlimitedBoost: boolean;
+}
 
 /**
  * Latest Kevpert BakkesMod Keybindings (F1 - F12) from Kevpert's latest videos

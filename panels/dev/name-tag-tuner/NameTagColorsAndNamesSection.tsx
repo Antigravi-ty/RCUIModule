@@ -19,11 +19,11 @@ const COLOR_PALETTE_PRESETS = [
     label: 'RL Calibrated',
     blueBgColor: '#075985',
     blueBorderColor: '#38bdf8',
-    blueBoostBorderColor: '#a5f3fc',
+    blueBoostBorderColor: '#000000',
     blueTextColor: '#ffffff',
     orangeBgColor: '#9a3412',
     orangeBorderColor: '#fb923c',
-    orangeBoostBorderColor: '#fde047',
+    orangeBoostBorderColor: '#000000',
     orangeTextColor: '#ffffff',
   },
   {

@@ -24,10 +24,18 @@ export const normalizePanels = (
   const merged = {} as Record<MenuPanelId, PanelSizingConfig>;
   (Object.keys(CANONICAL_PANEL_SIZING) as CanonicalMenuPanelId[]).forEach((id) => {
     const incoming = rawPanels && typeof rawPanels === 'object' ? rawPanels[id] : undefined;
-    merged[id] = {
-      ...CANONICAL_PANEL_SIZING[id],
-      ...(incoming && typeof incoming === 'object' ? incoming : {}),
-    };
+    const isStaleStaticTrainingPanel =
+      (id === 'layer4-static-training-pack' || id === 'layer3-dev-tem-pack-converter') &&
+      incoming &&
+      (incoming.mode === 'auto' ||
+        (typeof incoming.width === 'number' && incoming.width < 900) ||
+        (typeof incoming.targetHeight === 'number' && incoming.targetHeight < 700));
+    merged[id] = isStaleStaticTrainingPanel
+      ? { ...CANONICAL_PANEL_SIZING[id] }
+      : {
+          ...CANONICAL_PANEL_SIZING[id],
+          ...(incoming && typeof incoming === 'object' ? incoming : {}),
+        };
   });
   return merged;
 };

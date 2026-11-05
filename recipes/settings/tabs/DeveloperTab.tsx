@@ -9,12 +9,18 @@ import {
   AlertTriangle,
   Scan,
   Bot,
+  Radio,
+  UserCog,
 } from 'lucide-react';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../../../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../../../compounds/SettingToggleRow';
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import { useAppStore } from '../../../stores/appStore';
+import {
+  useSignalingProfileStore,
+  type SignalingRelayMatchPolicyMode,
+} from '../../../stores/signalingProfileStore';
 import { useViewportStore, viewportStore } from '../../../stores/viewportStore';
 import {
   getBallVisualConfig,
@@ -36,6 +42,7 @@ export interface DeveloperTabProps {
   onNavigateDevCalibratedPresets?: () => void;
   onNavigateDevSelfTest?: () => void;
   onNavigateDevUnderDevelopment?: () => void;
+  onNavigateDevRemoteProfile?: () => void;
   onHover?: (desc: string) => void;
   onLeave?: () => void;
 }
@@ -47,10 +54,11 @@ export interface DeveloperTabProps {
  * 2. `Active Tuners` (`sliders` icon, `Browse →`) — active calibration tools, floating tuners, Advanced Audio & Event & Trigger Rules
  * 3. `Calibrated Presets` (`book-check` icon, `Browse →`) — tuners whose baseline parameters have been calibrated and solidified
  * 4. `Self Test` (`bug-play` icon, `Browse →`) — developer self-test suites (4-Server Signaling & Bridge Lab when loaded in dev mode)
- * 5. `Bots Loadout` (`bot` icon, `Spawn`) — floating window for multi-select bot loadout pools (Car GLB models, Paint, Boost Trail, Boost Audio, Anthem)
- * 6. `Ball Opacity` (`circle-dot` icon) — single-line 70% / 100% / Custom segmented switch
- * 7. `Observe Safe Area Boundary` (`scan` icon) — single-line toggle switch
- * 8. `Under Development` (`alert-triangle` icon, `Browse →`, placed at the very bottom in red/rose with extra top spacing `underDevelopmentTopMargin`)
+ * 5. `Remote Profile Management` (`user-cog` icon, `Browse →`) — Set Others Profile (`SETTINGS # <alias>`) & Manage Accounts
+ * 6. `Bots Loadout` (`bot` icon, `Spawn`) — floating window for multi-select bot loadout pools (Car GLB models, Paint, Boost Trail, Boost Audio, Anthem)
+ * 7. `Ball Opacity` (`circle-dot` icon) — single-line 70% / 100% / Custom segmented switch
+ * 8. `Observe Safe Area Boundary` (`scan` icon) — single-line toggle switch
+ * 9. `Under Development` (`alert-triangle` icon, `Browse →`, placed at the very bottom in red/rose with extra top spacing `underDevelopmentTopMargin`)
  */
 export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   isLight = false,
@@ -60,12 +68,15 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   onNavigateDevCalibratedPresets,
   onNavigateDevSelfTest,
   onNavigateDevUnderDevelopment,
+  onNavigateDevRemoteProfile,
   onHover,
   onLeave,
 }) => {
   const navigate = useAppStore((s) => s.navigate);
   const { showSafeAreaHud } = useViewportStore();
   const setShowSafeAreaHud = viewportStore.setShowSafeAreaHud;
+  const relayMatchPolicy = useSignalingProfileStore((s) => s.relayMatchPolicy);
+  const setRelayMatchPolicy = useSignalingProfileStore((s) => s.setRelayMatchPolicy);
 
   const [ballOpacityMode, setBallOpacityMode] = useState<BallOpacityMode>(() => {
     const op = getBallVisualConfig()?.opacity ?? 1.0;
@@ -176,7 +187,24 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 3b. Bots Loadout Floating Window */}
+      {/* 3b. Remote Profile Management (Set Others Profile & Manage Accounts) */}
+      <SettingActionRow
+        icon={UserCog}
+        iconName="user-cog"
+        iconColor="text-violet-400"
+        title="Remote Profile Management"
+        actionLabel="Browse"
+        description="Set Others Profile (SETTINGS # alias) & Manage Cloud Accounts (username / password / alias)"
+        hoverDescription="Remote Profile Management: Remotely tune another user's settings & active floating windows in real time, or manage plaintext cloud user accounts."
+        onAction={() =>
+          (onNavigateDevRemoteProfile ?? (() => navigate('dev-remote-profile')))()
+        }
+        onHover={onHover}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      {/* 3c. Bots Loadout Floating Window */}
       <FloatingWindowCard
         preset={BOTS_LOADOUT_PRESET}
         icon={Bot}
@@ -218,6 +246,24 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         checked={showSafeAreaHud}
         onChange={handleObserveSafeAreaChange}
         hoverDescription="Observe Safe Area Boundary: Displays boundary guides and bottom telemetry pill to observe and calibrate UI scaling and bezel margins in real-time."
+        onHover={(desc) => desc && onHover?.(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      {/* 5a. Signaling Match Relay Policy */}
+      <SettingSegmentedRow
+        icon={Radio}
+        iconName="radio"
+        title="Signaling Match Relay Policy"
+        description="Smart Prune keeps active player relays + probed EMQX · Keep All keeps all probed relays open"
+        value={relayMatchPolicy}
+        onChange={(v) => setRelayMatchPolicy(v as SignalingRelayMatchPolicyMode)}
+        options={[
+          { value: 'smart-prune', label: 'Smart Prune' },
+          { value: 'keep-all-probed', label: 'Keep All' },
+        ]}
+        hoverDescription="Signaling Match Relay Policy: Controls whether Host pauses unused non-EMQX relays during an active Match (Smart Prune, default) or keeps all probed relays open."
         onHover={(desc) => desc && onHover?.(desc)}
         onLeave={onLeave}
         isLight={isLight}

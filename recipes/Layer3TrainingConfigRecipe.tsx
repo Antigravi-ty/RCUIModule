@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Zap, Box, Shield, History, CircleSlash2, Info } from 'lucide-react';
+import { Zap, Shield, History, CircleSlash2, Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
@@ -35,12 +35,13 @@ export interface Layer3TrainingConfigRecipeProps {
 
 /**
  * [Recipe] Layer 3 Training Configuration Panel (User Tier)
- * Streamlined borderless 5-row configuration panel sharing unified Settings row typography & spacing:
- * 1. Boost: Inline SegmentedSwitch (Unlimited | Standard) with colored Zap icon
- * 2. Show Hitbox: ToggleSwitch with colored Box icon
- * 3. Disable Goal Reset: ToggleSwitch with colored CircleSlash2 ('circle-slash-2') icon
- * 4. Goal Barrier Configurator: Single-line FloatingWindowCard spawner with colored Shield icon
- * 5. Rewinder Configurator: Single-line FloatingWindowCard spawner with colored History icon
+ * Organized into two explicit mode-scope sections so competitive modes (Exhibition & Multiplayer) remain isolated:
+ * - Free Play Scope (Free Play Only):
+ *   1. Boost: Inline SegmentedSwitch (Unlimited | Standard)
+ *   2. Disable Goal Reset: ToggleSwitch
+ *   3. Rewinder Configurator: FloatingWindowCard spawner
+ * - Training Scope (Free Play, Static Training Pack & Kickoff Training):
+ *   4. Goal Barrier Configurator: FloatingWindowCard spawner
  */
 export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProps> = ({
   isLight = false,
@@ -71,22 +72,15 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
   const { rowGap } = useSettingActionRowStore();
 
   const [internalUnlimitedBoost, setInternalUnlimitedBoost] = useState(true);
-  const [internalShowCarHitbox, setInternalShowCarHitbox] = useState(false);
   const [internalGoalRestart, setInternalGoalRestart] = useState(true);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const unlimitedBoost = controlledGameplay?.unlimitedBoost ?? internalUnlimitedBoost;
-  const showCarHitbox = Boolean(controlledGameplay?.showCarHitbox ?? internalShowCarHitbox);
   const goalRestart = controlledGameplay?.goalRestart ?? internalGoalRestart;
 
   const handleSetUnlimitedBoost = (next: boolean) => {
     setInternalUnlimitedBoost(next);
     onUpdateGameplay?.({ unlimitedBoost: next });
-  };
-
-  const handleSetShowCarHitbox = (next: boolean) => {
-    setInternalShowCarHitbox(next);
-    onUpdateGameplay?.({ showCarHitbox: next });
   };
 
   const handleSetGoalRestart = (next: boolean) => {
@@ -95,6 +89,9 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
   };
 
   const boostValue = unlimitedBoost ? 'unlimited' : 'standard';
+  const sectionLabelClass = isLight
+    ? 'text-neutral-500 border-neutral-200/80'
+    : 'text-neutral-400 border-white/[0.08]';
 
   return (
     <PanelContainer isLight={isLight} sizing={sizing} className="w-full">
@@ -106,6 +103,18 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
           className="flex flex-col w-full"
           style={{ gap: `${rowGap}px` }}
         >
+          {/* Scope Group 1: Free Play Only */}
+          <div
+            className={`flex items-center justify-between px-3 pt-1 pb-1.5 border-b ${sectionLabelClass}`}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              Free Play Scope
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider font-semibold bg-amber-500/15 border-amber-500/30 text-amber-400">
+              Free Play Only
+            </span>
+          </div>
+
           {/* 1. Boost: Unlimited | Standard (Inline Segmented Control) */}
           <SettingSegmentedRow
             icon={Zap}
@@ -121,29 +130,13 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
               { value: 'unlimited', label: 'Unlimited' },
               { value: 'standard', label: 'Standard' },
             ]}
-            hoverDescription="Choose between continuous unlimited boost refill or standard 100% capacity limitation in practice."
+            hoverDescription="Free Play Only: Choose between continuous unlimited boost refill or standard 100% capacity limitation in Free Play."
             onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
           />
 
-          {/* 2. Show Hitbox: ToggleSwitch */}
-          <SettingToggleRow
-            icon={Box}
-            iconName="box"
-            iconColor="text-emerald-500"
-            title="Show Hitbox"
-            checked={showCarHitbox}
-            onChange={handleSetShowCarHitbox}
-            bordered={false}
-            showDescription={false}
-            hoverDescription="Draws accurate 3D oriented bounding box (OBB) collision wireframe around the vehicle in real time."
-            onHover={(desc) => desc && setHoveredDesc(desc)}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
-
-          {/* 3. Disable Goal Reset: ToggleSwitch with CircleSlash2 ('circle-slash-2') icon */}
+          {/* 2. Disable Goal Reset: ToggleSwitch with CircleSlash2 ('circle-slash-2') icon */}
           <SettingToggleRow
             icon={CircleSlash2}
             iconName="circle-slash-2"
@@ -153,11 +146,36 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
             onChange={(disableReset) => handleSetGoalRestart(!disableReset)}
             bordered={false}
             showDescription={false}
-            hoverDescription="When enabled, scoring a goal will not trigger goal replay or reset the ball to kickoff, allowing continuous practice."
+            hoverDescription="Free Play Only: When enabled, scoring a goal in Free Play will not trigger goal replay or reset the ball to kickoff."
             onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
           />
+
+          {/* 3. Rewinder Configurator: Floating Window Spawner */}
+          <FloatingWindowCard
+            preset={REWINDER_CONFIGURATOR_PRESET}
+            icon={History}
+            iconColor="text-amber-500"
+            bordered={false}
+            showDescription={false}
+            hoverTooltip="Free Play Only: Spawn the Rewinder Configurator floating window to record, scrub, rewind, and resume Free Play state history with hotkeys (O / P / [ / ] / G)."
+            onHover={setHoveredDesc}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* Scope Group 2: All Training Modes */}
+          <div
+            className={`flex items-center justify-between px-3 pt-2.5 pb-1.5 border-b ${sectionLabelClass}`}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              Training Scope
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider font-semibold bg-sky-500/15 border-sky-500/30 text-sky-400">
+              Free Play · Packs · Kickoff
+            </span>
+          </div>
 
           {/* 4. Goal Barrier Configurator: Floating Window Spawner */}
           <FloatingWindowCard
@@ -166,20 +184,7 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
             iconColor="text-sky-500"
             bordered={false}
             showDescription={false}
-            hoverTooltip="Spawn the Goal Barrier Configurator floating window to draw custom rectangular barrier regions with boolean union/subtraction and native RocketSim collision."
-            onHover={setHoveredDesc}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
-
-          {/* 5. Rewinder Configurator: Floating Window Spawner */}
-          <FloatingWindowCard
-            preset={REWINDER_CONFIGURATOR_PRESET}
-            icon={History}
-            iconColor="text-amber-500"
-            bordered={false}
-            showDescription={false}
-            hoverTooltip="Spawn the Rewinder Configurator floating window to record, scrub, rewind, and resume free play state history with hotkeys (O / P / [ / ] / G)."
+            hoverTooltip="Training Scope: Spawn the Goal Barrier Configurator floating window to draw custom barrier regions in Free Play, Static Training Pack, and Kickoff Training (automatically bypassed in Exhibition & Multiplayer)."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -189,7 +194,7 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
 
       <PanelFooter
         isLight={isLight}
-        defaultDescription="Configure free play boost rules, hitbox overlay, goal reset, goal barrier, and rewinder."
+        defaultDescription="Configure Free Play rules (boost, goal reset, rewinder) and Training goal barrier. Automatically bypassed in Exhibition & Multiplayer."
         hoveredDescription={hoveredDesc}
         icon={<Info className="h-3.5 w-3.5 text-neutral-400 shrink-0" />}
       />

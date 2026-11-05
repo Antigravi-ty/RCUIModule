@@ -9,7 +9,31 @@ export const DEFAULT_TRAINING_SETTINGS = Object.freeze({
   disableGoalReset: false,
   boostOption: 'unlimited',
   showCarHitbox: true,
+  showAllCarHitboxes: false,
 });
+
+export function isFreeplayConfigScopeActive(
+  matchMode?: string | null,
+  isOnlineOrServerActive = false
+): boolean {
+  const normalizedMode = matchMode || 'freeplay';
+  return normalizedMode === 'freeplay' && !isOnlineOrServerActive;
+}
+
+export function isTrainingGoalBarrierScopeActive(
+  matchMode?: string | null,
+  isOnlineOrServerActive = false
+): boolean {
+  if (isOnlineOrServerActive) return false;
+  const normalizedMode = matchMode || 'freeplay';
+  return (
+    normalizedMode === 'freeplay' ||
+    normalizedMode === 'static-training-pack' ||
+    normalizedMode === 'kickoff-training' ||
+    normalizedMode === 'dev-test-lab' ||
+    normalizedMode === 'replay-viewer'
+  );
+}
 
 export const DEFAULT_GRAPHICS_SETTINGS = Object.freeze({
   showStadium: true,

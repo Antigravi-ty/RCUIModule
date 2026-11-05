@@ -37,6 +37,8 @@ export interface CompactTelemetryBarHUDProps {
   errorMessage?: string | null;
   /** Optional high-frequency transient channel subscription (0 React VDOM re-renders) */
   subscribeTelemetry?: (listener: CompactTelemetryTransientListener) => () => void;
+  /** Turns the top-left FPS icon and readout yellow when ESC menu is open or window loses focus */
+  isFpsPaused?: boolean;
   isLight?: boolean;
   className?: string;
 }
@@ -67,6 +69,7 @@ export const CompactTelemetryBarHUD = React.memo(
         },
         errorMessage = null,
         subscribeTelemetry,
+        isFpsPaused = false,
         isLight = true,
         className = '',
       },
@@ -161,12 +164,34 @@ export const CompactTelemetryBarHUD = React.memo(
     const items: React.ReactNode[] = [];
 
     if (showFps) {
+      const fpsIconColorClass = isFpsPaused
+        ? isLight
+          ? 'text-amber-500'
+          : 'text-amber-400'
+        : isLight
+          ? 'text-emerald-600'
+          : 'text-emerald-400';
+      const fpsValueColorClass = isFpsPaused
+        ? isLight
+          ? 'text-amber-600'
+          : 'text-amber-400'
+        : isLight
+          ? 'text-neutral-900'
+          : 'text-white';
       items.push(
-        <div key="fps" className="flex items-center gap-1">
-          <MonitorPlay className={`h-3 w-3 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+        <div
+          key="fps"
+          className="flex items-center gap-1"
+          title={
+            isFpsPaused
+              ? 'Gameplay telemetry paused (menu open or window unfocused)'
+              : 'Live foreground gameplay FPS'
+          }
+        >
+          <MonitorPlay className={`h-3 w-3 transition-colors ${fpsIconColorClass}`} />
           <span
             ref={fpsTextRef}
-            className={`font-bold tabular-nums ${isLight ? 'text-neutral-900' : 'text-white'}`}
+            className={`font-bold tabular-nums transition-colors ${fpsValueColorClass}`}
           >
             {Math.round(snapshot.fps)}
           </span>

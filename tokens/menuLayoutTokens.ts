@@ -26,7 +26,11 @@ export type CanonicalMenuPanelId =
   | 'layer3-dev-calibrated-presets'
   | 'layer3-dev-self-test'
   | 'layer3-dev-under-development'
+<<<<<<< HEAD
   | 'layer3-dev-tem-pack-converter'
+=======
+  | 'layer3-dev-remote-profile'
+>>>>>>> b4aac6ee08f7cedd6dce7081e27fb1be6cb3dbfa
   | 'layer4-static-training-pack'
   | 'layer4-advanced-audio'
   | 'layer4-controller-settings'
@@ -371,17 +375,24 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     maxHeight: 1120,
   },
   'layer3-dev-tem-pack-converter': {
+    mode: 'fixed',
+    width: 920,
+    targetHeight: 740,
+    minHeight: 320,
+    maxHeight: 1120,
+  },
+  'layer3-dev-remote-profile': {
     mode: 'auto',
-    width: 680,
-    targetHeight: 580,
-    minHeight: 260,
+    width: 620,
+    targetHeight: 540,
+    minHeight: 240,
     maxHeight: 1120,
   },
   'layer4-static-training-pack': {
-    mode: 'auto',
-    width: 820,
-    targetHeight: 560,
-    minHeight: 260,
+    mode: 'fixed',
+    width: 920,
+    targetHeight: 740,
+    minHeight: 320,
     maxHeight: 1120,
   },
   'layer4-advanced-audio': {

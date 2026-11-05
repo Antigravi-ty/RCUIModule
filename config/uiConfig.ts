@@ -43,8 +43,13 @@ export type ActiveMenuRoute =
   | 'dev-calibrated-presets'
   | 'dev-self-test'
   | 'dev-under-development'
+<<<<<<< HEAD
   | 'dev-signaling-lab'
   | 'dev-tem-pack-converter';
+=======
+  | 'dev-remote-profile'
+  | 'dev-signaling-lab';
+>>>>>>> b4aac6ee08f7cedd6dce7081e27fb1be6cb3dbfa
 
 export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> = {
   'main-menu': null,
@@ -76,6 +81,7 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'dev-calibrated-presets': 'settings',
   'dev-self-test': 'settings',
   'dev-under-development': 'settings',
+  'dev-remote-profile': 'settings',
   'dev-signaling-lab': 'dev-self-test',
 };
 
@@ -164,6 +170,7 @@ export interface GameplayConfig {
   goalRestart: boolean;
   unlimitedBoost: boolean;
   showCarHitbox: boolean;
+  showAllCarHitboxes?: boolean;
   ballCamIndicator: boolean;
 }
 
