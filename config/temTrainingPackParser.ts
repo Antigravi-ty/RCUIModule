@@ -1,19 +1,22 @@
 /**
  * temTrainingPackParser.ts
  * Converts parsed Rocket League Custom Training Pack (.Tem) documents into native
- * RocketCompanion .RCSPack bundles (StaticTrainingPackMetadata + StaticTrainingShotItem[]),
- * preserving all extra .Tem attributes inside metadata.description as structured JSON.
+ * RocketCompanion Generation-2 .RLRCSPack / .RCSPack bundles (StaticTrainingPackMetadata + StaticTrainingShotItem[]),
+ * mapping VelocityStartRotationR and EditorFreeCam directly into shot items, setting description to
+ * "$Code by $CreatorName" (or empty), and storing remaining unmapped .Tem attributes in originalDescription.
  */
 
 import {
   type StaticTrainingPackMetadata,
   type StaticTrainingShotItem,
+  type StaticTrainingEditorFreeCam,
   type RCSPackArchive,
   MAX_SHOTS_PER_PACK,
   generateUUID,
   createDefaultShotItem,
   cloneShotItem,
 } from './staticTrainingPackTypes';
+import { resolveRecommendedVariationForPack } from './staticTrainingVariationTypes';
 import {
   type TemSaveDataEnvelope,
   type TemObjectTypeEntry,
@@ -48,6 +51,44 @@ const CAR_GROUND_SETTLE_THRESHOLD_Z = 45.0;
 const CAR_GROUND_DEFAULT_Z = 17.05;
 const BALL_GROUND_MIN_Z = 93.15;
 
+export const RANK_ORDER_MAP: Record<string, number> = {
+  Bronze: 1,
+  Silver: 2,
+  Gold: 3,
+  Platinum: 4,
+  Diamond: 5,
+  Champion: 6,
+  'Grand Champion': 7,
+  'Supersonic Legend': 8,
+};
+
+const MONTH_NAME_TO_NUM: Record<string, string> = {
+  jan: '01',
+  january: '01',
+  feb: '02',
+  february: '02',
+  mar: '03',
+  march: '03',
+  apr: '04',
+  april: '04',
+  may: '05',
+  jun: '06',
+  june: '06',
+  jul: '07',
+  july: '07',
+  aug: '08',
+  august: '08',
+  sep: '09',
+  sept: '09',
+  september: '09',
+  oct: '10',
+  october: '10',
+  nov: '11',
+  november: '11',
+  dec: '12',
+  december: '12',
+};
+
 export interface TemToRCSPackConversionResult {
   parsedTem: ParsedTemTrainingPack;
   metadata: StaticTrainingPackMetadata;
@@ -74,14 +115,141 @@ function extractEpochMs(val: unknown, fallbackMs: number): number {
 }
 
 /**
- * Converts a parsed `.Tem` document into a native RocketCompanion Static Training Pack
- * (`StaticTrainingPackMetadata` + `StaticTrainingShotItem[]` + `RCSPackArchive`).
+ * Checks whether an EditorFreeCam pose in a `.Tem` round is Rocket League's untouched
+ * default editor spawn camera (`location: [-600, -700, 530], pitch: -15°, yaw: 65°`).
+ */
+export function isDefaultRlEditorFreeCam(
+  loc: [number, number, number],
+  pitchDeg: number,
+  yawDeg: number
+): boolean {
+  return (
+    Math.abs(loc[0] - -600) < 25 &&
+    Math.abs(loc[1] - -700) < 25 &&
+    Math.abs(loc[2] - 530) < 25 &&
+    Math.abs(pitchDeg - -15) < 1.8 &&
+    Math.abs(yawDeg - 65) < 1.8
+  );
+}
+
+/**
+ * Derives structured folder/filter tags, competitive rank tier, and official release date
+ * from a training pack's title, creator, code, and difficulty.
+ */
+export function derivePackTagsAndMetadata(params: {
+  title: string;
+  creator?: string | null;
+  code?: string | null;
+  difficulty?: unknown;
+}): {
+  tags: string[];
+  rankTier?: string;
+  releaseYearMonth?: string;
+  normalizedCreator?: string;
+} {
+  const { title, creator, code, difficulty } = params;
+  const tagSet = new Set<string>();
+  const rawCreator = (creator || '').trim();
+  const titleLower = (title || '').toLowerCase();
+  const creatorLower = rawCreator.toLowerCase();
+
+  let normalizedCreator = rawCreator || undefined;
+
+  if (
+    creatorLower.includes('kevpert') ||
+    creatorLower.includes('hampert') ||
+    creatorLower.includes('samuraipert') ||
+    titleLower.includes('kevpert')
+  ) {
+    tagSet.add('Kevpert');
+    if (!normalizedCreator) normalizedCreator = 'Kevpert';
+  } else if (creatorLower === 'psyonix' || titleLower.includes('psyonix')) {
+    tagSet.add('Psyonix');
+    normalizedCreator = 'Psyonix';
+  } else if (creatorLower.includes('poquito')) {
+    tagSet.add('Poquito');
+  } else if (creatorLower.includes('wayprotein')) {
+    tagSet.add('Wayprotein');
+  } else if (creatorLower.includes('biddles')) {
+    tagSet.add('Biddles');
+  } else if (creatorLower.includes('mark_maboco') || titleLower.startsWith('boo ')) {
+    tagSet.add('Mark_MaBoCo');
+  }
+
+  if (!code || !code.trim()) {
+    tagSet.add('Local');
+  } else if (normalizedCreator && !tagSet.has('Kevpert') && !tagSet.has('Psyonix')) {
+    tagSet.add('Community');
+  }
+
+  // Extract Kevpert F-key tag if present
+  const fKeyMatch = title.match(/\b(F3|F5|F7|F8|F9|F10|F11|F12)\b/i);
+  if (fKeyMatch) {
+    tagSet.add(fKeyMatch[1].toUpperCase());
+  }
+
+  // Detect Month + Year (e.g. "Sept 2022", "July 2023", "Nov 2024")
+  let releaseYearMonth: string | undefined;
+  const dateMatch = title.match(
+    /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(20\d{2})\b/i
+  );
+  if (dateMatch) {
+    const mKey = dateMatch[1].toLowerCase();
+    const yr = dateMatch[2];
+    const mNum = MONTH_NAME_TO_NUM[mKey] || '01';
+    releaseYearMonth = `${yr}-${mNum}`;
+    tagSet.add(releaseYearMonth);
+    if (tagSet.has('Psyonix')) {
+      tagSet.add(`Psyonix ${yr}`);
+    }
+  }
+
+  // Detect Rank Tier
+  let rankTier: string | undefined;
+  if (/\b(ssl|supersonic legend)\b/i.test(title)) {
+    rankTier = 'Supersonic Legend';
+  } else if (/\b(gc|grand champion)\b/i.test(title)) {
+    rankTier = 'Grand Champion';
+  } else if (/\bchampion\b/i.test(title)) {
+    rankTier = 'Champion';
+  } else if (/\bdiamond\b/i.test(title)) {
+    rankTier = 'Diamond';
+  } else if (/\bplatinum\b/i.test(title)) {
+    rankTier = 'Platinum';
+  } else if (/\bgold\b/i.test(title)) {
+    rankTier = 'Gold';
+  } else if (/\bsilver\b/i.test(title)) {
+    rankTier = 'Silver';
+  } else if (/\bbronze\b/i.test(title)) {
+    rankTier = 'Bronze';
+  } else if (difficulty && typeof difficulty === 'object' && 'EDifficulty' in difficulty) {
+    const ediff = String((difficulty as { EDifficulty?: unknown }).EDifficulty || '');
+    if (ediff === 'D_Easy') rankTier = 'Gold';
+    else if (ediff === 'D_Medium') rankTier = 'Diamond';
+    else if (ediff === 'D_Hard') rankTier = 'Champion';
+  }
+
+  if (rankTier) {
+    tagSet.add(rankTier);
+  }
+
+  return {
+    tags: Array.from(tagSet),
+    rankTier,
+    releaseYearMonth,
+    normalizedCreator,
+  };
+}
+
+/**
+ * Converts a parsed `.Tem` document into a Generation-2 RocketCompanion Static Training Pack
+ * (`RLRCSPack` / `RCSPackArchive`).
  *
  * - Maps directly supported physics/timing fields (`TM_Name`, `TM_Guid`, `CreatedAt`, `UpdatedAt`,
- *   `TimeLimit`, `Ball_GameEditor` location/speed/direction, `DynamicSpawnPointMesh` location/rotation/speed)
- * - Dumps all remaining `.Tem` metadata and per-round unmapped attributes (`Code`, `Type`, `Difficulty`,
- *   `CreatorName`, `CreatorPlayerID`, `MapName`, `Tags`, `bUnowned`, `VelocityStartRotationR`, `EditorFreeCam`,
- *   `savedataEnvelope`, `header`) as structured JSON into `metadata.description`.
+ *   `TimeLimit`, `Ball_GameEditor` location/speed/direction + `VelocityStartRotationR`,
+ *   `DynamicSpawnPointMesh` location/rotation/speed, and `EditorFreeCam` camera pose).
+ * - Sets `metadata.description` to `"$Code by $CreatorName"` (or `""` if neither exists).
+ * - Stores only the remaining unmapped `.Tem` attributes in `metadata.originalDescription`.
  */
 export function convertParsedTemToRCSPackBundle(
   parsedTem: ParsedTemTrainingPack
@@ -100,6 +268,13 @@ export function convertParsedTemToRCSPackBundle(
     typeof props.TM_Name === 'string' && props.TM_Name.trim()
       ? props.TM_Name.trim()
       : parsedTem.fileName.replace(/\.tem$/i, '') || 'Imported .Tem Pack';
+
+  const rawCode =
+    typeof props.Code === 'string' && props.Code.trim() ? props.Code.trim() : undefined;
+  const rawCreator =
+    typeof props.CreatorName === 'string' && props.CreatorName.trim()
+      ? props.CreatorName.trim()
+      : undefined;
 
   const createdAt = extractEpochMs(props.CreatedAt, now);
   const updatedAt = extractEpochMs(props.UpdatedAt, createdAt);
@@ -154,7 +329,7 @@ export function convertParsedTemToRCSPackBundle(
     const ballSpeed = Math.max(0, Math.min(4000, Number(ballArch?.VelocityStartSpeed ?? 0)));
     const ballPitchRad = uruToRadians(Number(ballArch?.VelocityStartRotationP ?? 0));
     const ballYawRad = uruToRadians(Number(ballArch?.VelocityStartRotationY ?? 0));
-    const ballRollUru = Number(ballArch?.VelocityStartRotationR ?? 0);
+    const ballRollRad = uruToRadians(Number(ballArch?.VelocityStartRotationR ?? 0));
 
     const kickoffState = ballSpeed <= 1e-3 && ballZ > BALL_GROUND_MIN_Z + 5.0;
 
@@ -174,28 +349,31 @@ export function convertParsedTemToRCSPackBundle(
       ? CAR_GROUND_DEFAULT_Z
       : Math.max(CAR_GROUND_DEFAULT_Z, rawCarZ);
 
-    const roundExtra: Record<string, unknown> = {
-      roundIndex: round.round_index ?? idx + 1,
-    };
-    if (ballRollUru !== 0) {
-      roundExtra.ballVelocityStartRotationRUru = ballRollUru;
-      roundExtra.ballVelocityStartRotationRDeg = uruToDegrees(ballRollUru);
-    }
+    let editorFreeCam: StaticTrainingEditorFreeCam | undefined;
     if (camArch) {
-      roundExtra.editorFreeCam = {
-        location: [
-          Number(camArch.LocationX ?? 0),
-          Number(camArch.LocationY ?? 0),
-          Number(camArch.LocationZ ?? 0),
-        ],
-        rotationUru: [
-          Number(camArch.RotationP ?? 0),
-          Number(camArch.RotationY ?? 0),
-          Number(camArch.RotationR ?? 0),
-        ],
-        rotationDeg: camArch.computed?.rotation_deg ?? null,
+      const camLoc: [number, number, number] = [
+        Number(camArch.LocationX ?? 0),
+        Number(camArch.LocationY ?? 0),
+        Number(camArch.LocationZ ?? 0),
+      ];
+      const camPitchUru = Number(camArch.RotationP ?? 0);
+      const camYawUru = Number(camArch.RotationY ?? 0);
+      const camRollUru = Number(camArch.RotationR ?? 0);
+      const isDefaultOverview = isDefaultRlEditorFreeCam(
+        camLoc,
+        uruToDegrees(camPitchUru),
+        uruToDegrees(camYawUru)
+      );
+      editorFreeCam = {
+        location: camLoc,
+        pitch: uruToRadians(camPitchUru),
+        yaw: uruToRadians(camYawUru),
+        roll: uruToRadians(camRollUru),
+        ...(isDefaultOverview ? { isDefaultOverview: true } : {}),
       };
     }
+
+    const roundExtra: Record<string, unknown> = {};
     if (unknownArchetypes.length > 0) {
       roundExtra.unrecognizedArchetypes = unknownArchetypes;
     }
@@ -204,7 +382,12 @@ export function convertParsedTemToRCSPackBundle(
         roundExtra[rk] = rv;
       }
     }
-    extraRoundAttributes.push(roundExtra);
+    if (Object.keys(roundExtra).length > 0) {
+      extraRoundAttributes.push({
+        roundIndex: round.round_index ?? idx + 1,
+        ...roundExtra,
+      });
+    }
 
     return cloneShotItem(
       {
@@ -231,10 +414,12 @@ export function convertParsedTemToRCSPackBundle(
           speed: ballSpeed,
           speedYaw: ballYawRad,
           speedPitch: ballPitchRad,
+          ...(Math.abs(ballRollRad) > 1e-6 ? { startRotationRoll: ballRollRad } : {}),
           kickoffState,
-          randomAngularVelocity: true,
+          randomAngularVelocity: false,
           angularVelocity: [0, 0, 0],
         },
+        ...(editorFreeCam ? { editorFreeCam } : {}),
       },
       idx
     );
@@ -246,7 +431,15 @@ export function convertParsedTemToRCSPackBundle(
 
   const unmappedPackProperties: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(props)) {
-    if (key === 'Rounds' || key === 'TM_Name' || key === 'TM_Guid') continue;
+    if (
+      key === 'Rounds' ||
+      key === 'TM_Name' ||
+      key === 'TM_Guid' ||
+      key === 'CreatedAt' ||
+      key === 'UpdatedAt'
+    ) {
+      continue;
+    }
     unmappedPackProperties[key] = val;
   }
 
@@ -256,32 +449,64 @@ export function convertParsedTemToRCSPackBundle(
     temVariant: parsedTem.variant,
     crcValid: parsedTem.header.crcValid,
     storedCrc32: parsedTem.header.storedCrc32,
-    calculatedCrc32: parsedTem.header.calculatedCrc32,
-    savedataEnvelope: parsedTem.savedataEnvelope,
-    rootProperties: parsedTem.rootProperties,
+    ...(parsedTem.savedataEnvelope ? { savedataEnvelope: parsedTem.savedataEnvelope } : {}),
+    ...(Object.keys(parsedTem.rootProperties || {}).length > 0
+      ? { rootProperties: parsedTem.rootProperties }
+      : {}),
     properties: unmappedPackProperties,
     totalRoundsInTem: totalTemRoundsCount,
     importedShotsCount: items.length,
     ...(truncatedFromRoundsCount !== null
       ? { truncatedFromRounds: truncatedFromRoundsCount }
       : {}),
-    roundExtras: extraRoundAttributes,
+    ...(extraRoundAttributes.length > 0 ? { roundExtras: extraRoundAttributes } : {}),
   };
 
-  const descriptionJson = JSON.stringify(unmappedDescriptionDump, null, 2);
+  const originalDescriptionJson = JSON.stringify(unmappedDescriptionDump, null, 2);
+
+  // Default description: "$Code by $CreatorName" (e.g. "DEC7-4CAD-1452-30D3 by Kevpert") or empty
+  let defaultDescription = '';
+  if (rawCode && rawCreator) {
+    defaultDescription = `${rawCode} by ${rawCreator}`;
+  } else if (rawCode) {
+    defaultDescription = rawCode;
+  } else if (rawCreator) {
+    defaultDescription = `by ${rawCreator}`;
+  }
+
+  const derived = derivePackTagsAndMetadata({
+    title: rawTitle,
+    creator: rawCreator,
+    code: rawCode,
+    difficulty: props.Difficulty,
+  });
+
+  const recommendedVariation = resolveRecommendedVariationForPack(
+    rawCode,
+    rawTitle,
+    rawCreator
+  );
 
   const metadata: StaticTrainingPackMetadata = {
     uuid: rawGuid,
     title: rawTitle,
-    description: descriptionJson,
+    description: defaultDescription,
+    originalDescription: originalDescriptionJson,
+    ...(rawCode ? { code: rawCode } : {}),
+    ...(derived.normalizedCreator ? { creator: derived.normalizedCreator } : {}),
+    ...(derived.tags.length > 0 ? { tags: derived.tags } : {}),
+    ...(derived.releaseYearMonth ? { releaseYearMonth: derived.releaseYearMonth } : {}),
+    ...(derived.rankTier ? { rankTier: derived.rankTier } : {}),
+    sourcePackType: 'RLRCSPack',
+    ...(recommendedVariation ? { recommendedVariation } : {}),
     createdAt,
     updatedAt,
     itemCount: items.length,
   };
 
   const archive: RCSPackArchive = {
-    format: 'RCSPack',
-    version: 1,
+    format: 'RLRCSPack',
+    version: 2,
     category: 'static-training-pack',
     metadata,
     items,

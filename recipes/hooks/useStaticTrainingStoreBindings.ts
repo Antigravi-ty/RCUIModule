@@ -14,8 +14,16 @@ import type {
   StaticTrainingPackSummary,
 } from '../static-training/StaticTrainingPackFolderList';
 
+import type {
+  StaticTrainingVariationConfig,
+  StaticTrainingQuickVariationToggles,
+  KevpertPresetKey,
+} from '../../config/staticTrainingVariationTypes';
+import { DEFAULT_QUICK_VARIATION_TOGGLES, KEVPERT_LATEST_PRESETS } from '../../config/staticTrainingVariationTypes';
+
 export interface Layer4StaticTrainingPackBrowseRecipeProps {
   isLight?: boolean;
+  isDevMode?: boolean;
   packs?: StaticTrainingPackSummary[];
   selectedPackUuid?: string | null;
   onSelectPack?: (uuid: string) => void;
@@ -25,17 +33,28 @@ export interface Layer4StaticTrainingPackBrowseRecipeProps {
   onDownCounterEnabledChange?: (enabled: boolean) => void;
   downCounterValue?: StaticPackDownCounterOption;
   onDownCounterValueChange?: (val: StaticPackDownCounterOption) => void;
+  variationToggles?: StaticTrainingQuickVariationToggles;
+  onUpdateVariationToggles?: (patch: Partial<StaticTrainingQuickVariationToggles>) => void;
+  customVariation?: StaticTrainingVariationConfig;
+  onUpdateCustomVariation?: (patch: Partial<StaticTrainingVariationConfig>) => void;
+  onSelectKevpertPreset?: (key: KevpertPresetKey) => void;
   onCreatePack?: (title: string, description: string) => Promise<void> | void;
   onSavePackMetadata?: (uuid: string, title: string, description: string) => Promise<void> | void;
   onDeletePack?: (uuid: string) => Promise<void> | void;
   onImportPackFile?: (file: File) => Promise<void> | void;
+  onImportBatchPackFiles?: (files: File[] | FileList) => Promise<number> | void;
+  onExportBatchPacksZip?: (
+    uuids: string[],
+    bundleName: string,
+    editable: boolean
+  ) => Promise<string | null> | void;
   onBack?: () => void;
   onStartPlaySession?: (uuid: string) => void;
   onStartEditSession?: (uuid: string) => void;
   onPlayPack?: (pack: StaticTrainingPackSummary, useDownCounter: boolean) => void;
   onEditPack?: (pack: StaticTrainingPackSummary) => void;
   onImportPack?: () => void;
-  onExportPack?: (pack: StaticTrainingPackSummary) => Promise<void> | void;
+  onExportPack?: (pack: StaticTrainingPackSummary, editable?: boolean) => Promise<void> | void;
   className?: string;
 }
 
@@ -88,7 +107,10 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
   const updatePackInfo = useStaticTrainingPackStore((s) => s.updatePackInfo);
   const deletePack = useStaticTrainingPackStore((s) => s.deletePack);
   const exportPackRCS = useStaticTrainingPackStore((s) => s.exportPackRCS);
+  const exportBatchPacksZip = useStaticTrainingPackStore((s) => s.exportBatchPacksZip);
   const importPackRCS = useStaticTrainingPackStore((s) => s.importPackRCS);
+  const importBatchPacks = useStaticTrainingPackStore((s) => s.importBatchPacks);
+  const seedDevBuiltInPacks = useStaticTrainingPackStore((s) => s.seedDevBuiltInPacks);
   const downCounterEnabled = useStaticTrainingPackStore(
     (s) => s.downCounterEnabled
   );
@@ -101,12 +123,25 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
   const setDownCounterValue = useStaticTrainingPackStore(
     (s) => s.setDownCounterValue
   );
+  const variationToggles = useStaticTrainingPackStore((s) => s.variationToggles);
+  const customVariation = useStaticTrainingPackStore((s) => s.customVariation);
+  const setVariationToggles = useStaticTrainingPackStore((s) => s.setVariationToggles);
+  const setCustomVariation = useStaticTrainingPackStore((s) => s.setCustomVariation);
+  const applyKevpertVariationPreset = useStaticTrainingPackStore(
+    (s) => s.applyKevpertVariationPreset
+  );
 
   useEffect(() => {
     if (!initialized) {
       void initStore();
     }
   }, [initialized, initStore]);
+
+  useEffect(() => {
+    if (rawProps.isDevMode && initialized) {
+      void seedDevBuiltInPacks(false);
+    }
+  }, [rawProps.isDevMode, initialized, seedDevBuiltInPacks]);
 
   return {
     ...rawProps,
@@ -123,6 +158,11 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
     downCounterValue: rawProps.downCounterValue ?? downCounterValue,
     onDownCounterValueChange:
       rawProps.onDownCounterValueChange ?? setDownCounterValue,
+    variationToggles: rawProps.variationToggles ?? variationToggles ?? DEFAULT_QUICK_VARIATION_TOGGLES,
+    onUpdateVariationToggles: rawProps.onUpdateVariationToggles ?? setVariationToggles,
+    customVariation: rawProps.customVariation ?? customVariation ?? KEVPERT_LATEST_PRESETS.F7,
+    onUpdateCustomVariation: rawProps.onUpdateCustomVariation ?? setCustomVariation,
+    onSelectKevpertPreset: rawProps.onSelectKevpertPreset ?? applyKevpertVariationPreset,
     onCreatePack:
       rawProps.onCreatePack ??
       (async (title: string, desc: string) => {
@@ -140,13 +180,24 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
       }),
     onExportPack:
       rawProps.onExportPack ??
-      (async (pack: { uuid: string }) => {
-        await exportPackRCS(pack.uuid);
+      (async (pack: { uuid: string }, editable?: boolean) => {
+        await exportPackRCS(pack.uuid, { editable: Boolean(editable) });
+      }),
+    onExportBatchPacksZip:
+      rawProps.onExportBatchPacksZip ??
+      (async (uuids: string[], bundleName: string, editable: boolean) => {
+        return await exportBatchPacksZip(uuids, bundleName, { editable });
       }),
     onImportPackFile:
       rawProps.onImportPackFile ??
       (async (file: File) => {
         await importPackRCS(file);
+      }),
+    onImportBatchPackFiles:
+      rawProps.onImportBatchPackFiles ??
+      (async (files: File[] | FileList) => {
+        const imported = await importBatchPacks(files);
+        return imported.length;
       }),
     onBack: rawProps.onBack ?? goBack,
   };

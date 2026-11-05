@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Settings } from 'lucide-react';
 import {
   useLayer4StaticTrainingPackBrowseStoreBinding,
   type Layer4StaticTrainingPackBrowseRecipeProps,
@@ -14,6 +15,11 @@ import {
 } from './static-training/StaticTrainingPackFolderList';
 import { StaticTrainingPackToolbar } from './static-training/StaticTrainingPackToolbar';
 import { StaticTrainingPackMetadataInspector } from './static-training/StaticTrainingPackMetadataInspector';
+import { StaticTrainingVariationsModal } from './static-training/StaticTrainingVariationsModal';
+import {
+  DEFAULT_QUICK_VARIATION_TOGGLES,
+  KEVPERT_LATEST_PRESETS,
+} from '../config/staticTrainingVariationTypes';
 
 export type { Layer4StaticTrainingPackBrowseRecipeProps };
 
@@ -28,7 +34,10 @@ function generateUUID(): string {
   });
 }
 
-function normalizePackSummary(raw: Partial<StaticTrainingPackSummary>, idx = 0): StaticTrainingPackSummary {
+function normalizePackSummary(
+  raw: Partial<StaticTrainingPackSummary>,
+  idx = 0
+): StaticTrainingPackSummary {
   const uuid = raw.uuid || raw.id || `pack-${idx + 1}`;
   const title = raw.title || raw.name || 'Untitled Training Pack';
   const description = raw.description ?? '';
@@ -58,6 +67,7 @@ const DEFAULT_PACKS: StaticTrainingPackSummary[] = [
     description:
       'Starter static training pack featuring a midfield volley, a suspended kickoff-state aerial, and a backboard read.',
     itemCount: 3,
+    tags: ['Local'],
     createdAt: 1740000000000,
     updatedAt: 1740000000000,
   },
@@ -67,6 +77,7 @@ const DEFAULT_PACKS: StaticTrainingPackSummary[] = [
     description:
       '12 progressive mid-field wall setups with top-corner goal mouth barrier masks.',
     itemCount: 12,
+    tags: ['Local'],
     createdAt: 1739836800000,
     updatedAt: 1739836800000,
   },
@@ -76,6 +87,7 @@ const DEFAULT_PACKS: StaticTrainingPackSummary[] = [
     description:
       'High-speed backboard clears and offensive double-tap angles with randomized initial impulse.',
     itemCount: 8,
+    tags: ['Local'],
     createdAt: 1740009600000,
     updatedAt: 1740009600000,
   },
@@ -98,38 +110,48 @@ async function decodeRCSPackText(file: File): Promise<string> {
 
 /**
  * [Recipe] Layer 4 Static Training Pack Browser (Width: 680px, 2-Column Layout)
- * - Left column (5 cols): Folder / Training Packs list (`StaticTrainingPackFolderList`)
- * - Right column (7 cols):
- *   - Upper section: Import .RCSPack & Create Pack toolbar (`StaticTrainingPackToolbar`)
- *   - Lower section: Selected Pack Metadata & Actions (`StaticTrainingPackMetadataInspector`)
+ * Reused for both standard `STATIC TRAINING PACKS` and Developer Sandbox `STATIC TRAINING PACKS (DEV MODE)`.
  */
-export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTrainingPackBrowseRecipeProps> = React.memo((rawProps) => {
+export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
+  Layer4StaticTrainingPackBrowseRecipeProps
+> = React.memo((rawProps) => {
   const {
-  isLight = false,
-  packs: controlledPacks,
-  selectedPackUuid: controlledSelectedUuid,
-  onSelectPack,
-  defaultSelectedId = 'starter-aerial-striker-pack',
-  defaultUseDownCounter = false,
-  downCounterEnabled: controlledDownCounterEnabled,
-  onDownCounterEnabledChange,
-  downCounterValue: controlledDownCounterValue,
-  onDownCounterValueChange,
-  onCreatePack,
-  onSavePackMetadata,
-  onDeletePack,
-  onImportPackFile,
-  onBack = () => {},
-  onStartPlaySession,
-  onStartEditSession,
-  onPlayPack,
-  onEditPack,
-  onImportPack,
-  onExportPack,
-  className = '',
-} = useLayer4StaticTrainingPackBrowseStoreBinding(rawProps);
+    isLight = false,
+    isDevMode = false,
+    packs: controlledPacks,
+    selectedPackUuid: controlledSelectedUuid,
+    onSelectPack,
+    defaultSelectedId = 'starter-aerial-striker-pack',
+    defaultUseDownCounter = false,
+    downCounterEnabled: controlledDownCounterEnabled,
+    onDownCounterEnabledChange,
+    downCounterValue: controlledDownCounterValue,
+    onDownCounterValueChange,
+    variationToggles = DEFAULT_QUICK_VARIATION_TOGGLES,
+    onUpdateVariationToggles = () => {},
+    customVariation = KEVPERT_LATEST_PRESETS.F7,
+    onUpdateCustomVariation = () => {},
+    onSelectKevpertPreset = () => {},
+    onCreatePack,
+    onSavePackMetadata,
+    onDeletePack,
+    onImportPackFile,
+    onImportBatchPackFiles,
+    onExportBatchPacksZip,
+    onBack = () => {},
+    onStartPlaySession,
+    onStartEditSession,
+    onPlayPack,
+    onEditPack,
+    onImportPack,
+    onExportPack,
+    className = '',
+  } = useLayer4StaticTrainingPackBrowseStoreBinding(rawProps);
+
   const sizing = useMenuLayoutStore(
-    (s) => s.panels?.['layer4-static-training-pack'] ?? DEFAULT_PANEL_SIZING['layer4-static-training-pack']
+    (s) =>
+      s.panels?.['layer4-static-training-pack'] ??
+      DEFAULT_PANEL_SIZING['layer4-static-training-pack']
   );
 
   const [internalPacks, setInternalPacks] = useState<StaticTrainingPackSummary[]>(() =>
@@ -149,17 +171,22 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
   );
 
   const [internalSelectedUuid, setInternalSelectedUuid] = useState<string | null>(() => {
-    const initial = (controlledPacks ?? DEFAULT_PACKS).map((p, i) => normalizePackSummary(p, i));
-    const found = initial.find((p) => p.uuid === defaultSelectedId || p.id === defaultSelectedId);
+    const initial = (controlledPacks ?? DEFAULT_PACKS).map((p, i) =>
+      normalizePackSummary(p, i)
+    );
+    const found = initial.find(
+      (p) => p.uuid === defaultSelectedId || p.id === defaultSelectedId
+    );
     return found?.uuid ?? initial[0]?.uuid ?? null;
   });
 
   const selectedPackUuid =
-    controlledSelectedUuid !== undefined ? controlledSelectedUuid : internalSelectedUuid;
+    controlledSelectedUuid !== undefined
+      ? controlledSelectedUuid
+      : internalSelectedUuid;
 
-  const [internalDownCounterEnabled, setInternalDownCounterEnabled] = useState<boolean>(
-    defaultUseDownCounter
-  );
+  const [internalDownCounterEnabled, setInternalDownCounterEnabled] =
+    useState<boolean>(defaultUseDownCounter);
   const [internalDownCounterValue, setInternalDownCounterValue] =
     useState<StaticPackDownCounterOption>(1);
 
@@ -174,6 +201,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
 
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
   const [isCreatingPack, setIsCreatingPack] = useState(false);
+  const [isVariationsModalOpen, setIsVariationsModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
@@ -210,7 +238,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
 
   const handleCreateSubmit = async () => {
     const title = newTitle.trim() || 'Custom Training Pack';
-    const desc = newDescription.trim() || 'Custom static training pack scenarios.';
+    const desc = newDescription.trim();
     if (onCreatePack) {
       await onCreatePack(title, desc);
     } else {
@@ -220,6 +248,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
         title,
         description: desc,
         itemCount: 1,
+        tags: ['Local'],
         createdAt: now,
         updatedAt: now,
       });
@@ -271,27 +300,52 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
     setConfirmDeleteUuid(null);
   };
 
-  const handleExportPack = async (pack: StaticTrainingPackSummary) => {
+  const handleExportPack = async (
+    pack: StaticTrainingPackSummary,
+    editable = false
+  ) => {
     if (onExportPack) {
-      await onExportPack(pack);
+      await onExportPack(pack, editable);
     }
     const safeTitle =
       (pack.title || 'TrainingPack')
         .trim()
         .replace(/[^a-zA-Z0-9_\-\u4e00-\u9fa5]+/g, '_')
         .replace(/^_+|_+$/g, '') || 'TrainingPack';
-    const filename = `${safeTitle}_${pack.uuid}.RCSPack`;
+    const ext = editable ? 'RCSPackE' : 'RCSPack';
+    const filename = `${safeTitle}_${pack.uuid}.${ext}`;
     setHoveredDesc(`Exported ${filename}`);
   };
 
+  const handleBatchExportFiltered = async (
+    filteredPacks: StaticTrainingPackSummary[],
+    folderLabel: string,
+    editable: boolean
+  ) => {
+    const uuids = filteredPacks.map((p) => p.uuid);
+    if (uuids.length === 0) return;
+    if (onExportBatchPacksZip) {
+      const zipName = await onExportBatchPacksZip(uuids, folderLabel, editable);
+      setHoveredDesc(
+        `Exported ${uuids.length} packs from "${folderLabel}" as ${zipName || '.zip'}`
+      );
+    }
+  };
+
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
     try {
-      if (onImportPackFile) {
-        await onImportPackFile(file);
-        setHoveredDesc(`Imported pack from ${file.name}`);
+      if (onImportBatchPackFiles && (fileList.length > 1 || /\.zip$/i.test(fileList[0].name))) {
+        const count = await onImportBatchPackFiles(fileList);
+        setHoveredDesc(
+          `Batch imported ${count || fileList.length} training pack(s) into VFS.`
+        );
+      } else if (onImportPackFile) {
+        await onImportPackFile(fileList[0]);
+        setHoveredDesc(`Imported pack from ${fileList[0].name}`);
       } else {
+        const file = fileList[0];
         const text = await decodeRCSPackText(file);
         const parsed = JSON.parse(text);
         const rawMeta = parsed?.metadata || parsed || {};
@@ -304,11 +358,9 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
           title:
             typeof rawMeta.title === 'string' && rawMeta.title.trim()
               ? rawMeta.title.trim()
-              : file.name.replace(/\.(rcspack|gz|json)$/i, '') || 'Imported Pack',
+              : file.name.replace(/\.(rcspacke?|rlrcspack|gz|json)$/i, '') || 'Imported Pack',
           description:
-            typeof rawMeta.description === 'string'
-              ? rawMeta.description
-              : 'Imported .RCSPack static training pack archive.',
+            typeof rawMeta.description === 'string' ? rawMeta.description : '',
           itemCount:
             rawItems.length > 0
               ? rawItems.length
@@ -326,7 +378,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
         setHoveredDesc(`Imported pack from ${file.name}`);
       }
     } catch (err: any) {
-      setHoveredDesc(`Import failed: ${err?.message || 'Invalid .RCSPack file'}`);
+      setHoveredDesc(`Import failed: ${err?.message || 'Invalid training pack file'}`);
     } finally {
       e.target.value = '';
     }
@@ -339,9 +391,22 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
       className={`w-full select-none ${className}`}
     >
       <PanelHeader
-        title="STATIC TRAINING PACKS"
+        title={isDevMode ? 'STATIC TRAINING PACKS (DEV MODE)' : 'STATIC TRAINING PACKS'}
         onBack={onBack}
         isLight={isLight}
+        showRightAction={isDevMode}
+        onRightAction={isDevMode ? () => setIsVariationsModalOpen(true) : undefined}
+        rightActionIcon={<Settings className="h-4 w-4" />}
+        rightActionLabel="Training Variations"
+        onRightActionHoverChange={(hovered) => {
+          if (hovered) {
+            setHoveredDesc(
+              'Open Training Variations (Experimental): Configure BakkesMod / Kevpert F3–F12 presets, Ball/Car variance, and Quick Toggles.'
+            );
+          } else {
+            setHoveredDesc(null);
+          }
+        }}
       />
 
       <PanelContent scrollable={false} className="flex flex-col gap-3 h-full overflow-hidden">
@@ -352,6 +417,9 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
             selectedUuid={selectedMeta?.uuid}
             onSelectPack={handleSelectPack}
             onHoverDesc={setHoveredDesc}
+            onBatchExportFiltered={(filtered, folderLabel, editable) =>
+              void handleBatchExportFiltered(filtered, folderLabel, editable)
+            }
           />
 
           <div className="col-span-7 flex flex-col gap-2.5 min-h-0 overflow-hidden">
@@ -375,6 +443,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
 
             <StaticTrainingPackMetadataInspector
               isLight={isLight}
+              isDevMode={isDevMode}
               selectedMeta={selectedMeta}
               editTitle={editTitle}
               setEditTitle={setEditTitle}
@@ -396,7 +465,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
                 onStartEditSession?.(meta.uuid);
                 onEditPack?.(meta);
               }}
-              onExportPack={(meta) => void handleExportPack(meta)}
+              onExportPack={(meta, editable) => void handleExportPack(meta, editable)}
               onDeletePack={(uuid) => void handleDeletePack(uuid)}
               onHoverDesc={setHoveredDesc}
             />
@@ -404,9 +473,28 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
         </div>
       </PanelContent>
 
+      {isDevMode && (
+        <StaticTrainingVariationsModal
+          isLight={isLight}
+          isOpen={isVariationsModalOpen}
+          onClose={() => setIsVariationsModalOpen(false)}
+          toggles={variationToggles}
+          onUpdateToggles={onUpdateVariationToggles}
+          customVariation={customVariation}
+          onUpdateCustomVariation={onUpdateCustomVariation}
+          onSelectKevpertPreset={onSelectKevpertPreset}
+          packRecommendedVariation={selectedMeta?.recommendedVariation}
+          packTitle={selectedMeta?.title}
+        />
+      )}
+
       <PanelFooter
         isLight={isLight}
-        defaultDescription="Select a Static Training Pack on the left to Play, Edit, Export (.RCSPack), or Delete."
+        defaultDescription={
+          isDevMode
+            ? 'Dev Mode: 73 built-in .RLRCSPack packs loaded • Click the top-right Gear icon for Training Variations (F3–F12).'
+            : 'Select a Static Training Pack on the left to Play, Edit, Export (.RCSPack / .RCSPackE), or Delete.'
+        }
         hoveredDescription={hoveredDesc}
       />
     </PanelContainer>

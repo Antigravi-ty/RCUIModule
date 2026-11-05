@@ -4,6 +4,7 @@ import {
   type StaticTrainingPackMetadata,
   type StaticTrainingShotItem,
   type EditSubMode,
+  type ExportRCSPackOptions,
   EDIT_SUB_MODES_ORDER,
   MAX_SHOTS_PER_PACK,
   generateUUID,
@@ -23,13 +24,26 @@ import {
   exportSingleShotItemToJson,
   parseSingleShotItemFromJsonFile,
 } from './staticTrainingPackStorage';
+import {
+  type StaticTrainingVariationConfig,
+  type StaticTrainingQuickVariationToggles,
+  type KevpertPresetKey,
+  DEFAULT_QUICK_VARIATION_TOGGLES,
+  KEVPERT_LATEST_PRESETS,
+  cloneVariationConfig,
+} from '../config/staticTrainingVariationTypes';
 import { floatingStore } from './floatingStore';
 
 export {
   type StaticTrainingPackMetadata,
   type StaticTrainingShotItem,
   type EditSubMode,
+  type ExportRCSPackOptions,
+  type StaticTrainingVariationConfig,
+  type StaticTrainingQuickVariationToggles,
+  type KevpertPresetKey,
   MAX_SHOTS_PER_PACK,
+  KEVPERT_LATEST_PRESETS,
   areShotItemsEqual,
   areShotListsEqual,
 };
@@ -144,6 +158,10 @@ export interface StaticTrainingPackStoreState {
   downCounterEnabled: boolean;
   downCounterValue: StaticPackDownCounterOption;
 
+  /** Training Variations (Experimental Dev Feature) */
+  variationToggles: StaticTrainingQuickVariationToggles;
+  customVariation: StaticTrainingVariationConfig;
+
   remainingTimeoutSec: number;
   activeCountdownSec: number;
   isShotLaunched: boolean;
@@ -160,12 +178,23 @@ export interface StaticTrainingPackStoreState {
   createPack: (title: string, description: string) => Promise<StaticTrainingPackMetadata>;
   updatePackInfo: (uuid: string, title: string, description: string) => Promise<void>;
   deletePack: (uuid: string) => Promise<void>;
-  exportPackRCS: (uuid?: string) => Promise<string | null>;
+  exportPackRCS: (uuid?: string, options?: ExportRCSPackOptions) => Promise<string | null>;
+  exportBatchPacksZip: (
+    uuids: string[],
+    bundleName?: string,
+    options?: ExportRCSPackOptions
+  ) => Promise<string | null>;
   importPackRCS: (file: File) => Promise<StaticTrainingPackMetadata>;
+  importBatchPacks: (files: File[] | FileList) => Promise<StaticTrainingPackMetadata[]>;
+  seedDevBuiltInPacks: (forceReseed?: boolean) => Promise<number>;
   importConvertedTemBundle: (
     metadata: StaticTrainingPackMetadata,
     items: StaticTrainingShotItem[]
   ) => Promise<StaticTrainingPackMetadata>;
+
+  setVariationToggles: (patch: Partial<StaticTrainingQuickVariationToggles>) => void;
+  setCustomVariation: (patch: Partial<StaticTrainingVariationConfig>) => void;
+  applyKevpertVariationPreset: (key: KevpertPresetKey) => void;
 
   setSessionMode: (mode: StaticPackSessionMode) => void;
   setEdgeInspectorExpanded: (expanded: boolean) => void;
@@ -234,6 +263,9 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
 
   downCounterEnabled: false,
   downCounterValue: 1,
+
+  variationToggles: { ...DEFAULT_QUICK_VARIATION_TOGGLES },
+  customVariation: cloneVariationConfig(KEVPERT_LATEST_PRESETS.F7),
 
   remainingTimeoutSec: 10,
   activeCountdownSec: 0,
@@ -482,6 +514,46 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
     const clamped = (val === 1 || val === 2 || val === 3 ? val : 1) as StaticPackDownCounterOption;
     set({ downCounterValue: clamped });
     if (get().sessionMode === 'play' && get().downCounterEnabled) {
+      get().resetCurrentShot();
+    }
+  },
+
+  setVariationToggles: (patch) => {
+    set((state) => ({
+      variationToggles: {
+        ...state.variationToggles,
+        ...patch,
+      },
+    }));
+    if (get().sessionMode === 'play') {
+      get().resetCurrentShot();
+    }
+  },
+
+  setCustomVariation: (patch) => {
+    set((state) => ({
+      customVariation: cloneVariationConfig({
+        ...state.customVariation,
+        ...patch,
+        presetKey: patch.presetKey ?? 'CUSTOM',
+      }),
+    }));
+    if (get().sessionMode === 'play' && get().variationToggles.enableCustomVariationOverride) {
+      get().resetCurrentShot();
+    }
+  },
+
+  applyKevpertVariationPreset: (key: KevpertPresetKey) => {
+    const preset = KEVPERT_LATEST_PRESETS[key];
+    if (!preset) return;
+    set((state) => ({
+      variationToggles: {
+        ...state.variationToggles,
+        enableCustomVariationOverride: true,
+      },
+      customVariation: cloneVariationConfig(preset),
+    }));
+    if (get().sessionMode === 'play') {
       get().resetCurrentShot();
     }
   },

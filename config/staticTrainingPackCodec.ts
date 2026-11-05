@@ -1,33 +1,60 @@
 /**
  * StaticTrainingPackCodec.ts
- * GZIP archive compression/decompression, .RCSPack export/import, and single-shot .json codec.
+ * GZIP archive compression/decompression, .RCSPack / .RCSPackE / .RLRCSPack export/import,
+ * batch .zip import/export, and single-shot .json codec.
  */
 
 import {
   type StaticTrainingPackMetadata,
   type StaticTrainingShotItem,
+  type StaticTrainingPackFormatType,
   type RCSPackArchive,
   generateUUID,
   createDefaultShotItem,
   cloneShotItem,
+  cloneVariationConfig,
 } from './staticTrainingPackTypes';
 import {
   isTemBinaryPayload,
   convertTemFileToRCSPackBundle,
   parseTemBinaryBytes,
   convertParsedTemToRCSPackBundle,
+  derivePackTagsAndMetadata,
   type ParsedTemTrainingPack,
   type TemToRCSPackConversionResult,
 } from './temTrainingPackParser';
+import { resolveRecommendedVariationForPack } from './staticTrainingVariationTypes';
+import {
+  isZipBinaryPayload,
+  extractFilesFromZipBytes,
+  createZipArchiveBytes,
+  type ZipEntryFile,
+} from './staticTrainingZipCodec';
 
 export {
   isTemBinaryPayload,
   convertTemFileToRCSPackBundle,
   parseTemBinaryBytes,
   convertParsedTemToRCSPackBundle,
+  isZipBinaryPayload,
+  extractFilesFromZipBytes,
+  createZipArchiveBytes,
   type ParsedTemTrainingPack,
   type TemToRCSPackConversionResult,
+  type ZipEntryFile,
 };
+
+export interface ExportRCSPackOptions {
+  /**
+   * When true, exports as `.RCSPackE` (Editable pack) preserving `editorFreeCam` on each shot.
+   * When false (default), exports as `.RCSPack` and strips `editorFreeCam` to reduce payload size.
+   */
+  editable?: boolean;
+  /**
+   * Optional explicit format override (`RLRCSPack` | `RCSPackE` | `RCSPack`).
+   */
+  formatOverride?: StaticTrainingPackFormatType;
+}
 
 export async function compressGzipBytes(rawBytes: Uint8Array): Promise<Uint8Array> {
   if (typeof CompressionStream !== 'undefined') {
@@ -88,22 +115,42 @@ export function triggerBrowserDownload(blob: Blob, filename: string): void {
 }
 
 /**
- * Exports a Static Training Pack as a compressed `<Title>_<UUID>.RCSPack` file
- * containing embedded metadata and ordered items.
+ * Serializes a Static Training Pack into a GZIP-compressed binary payload + filename.
  */
-export async function exportStaticTrainingPackRCSPack(
+export async function encodeStaticTrainingPackBytes(
   metadata: StaticTrainingPackMetadata,
-  items: StaticTrainingShotItem[]
-): Promise<string> {
+  items: StaticTrainingShotItem[],
+  options?: ExportRCSPackOptions
+): Promise<{ filename: string; bytes: Uint8Array; format: StaticTrainingPackFormatType }> {
+  const editable = Boolean(options?.editable);
+  const format: StaticTrainingPackFormatType =
+    options?.formatOverride ?? (editable ? 'RCSPackE' : 'RCSPack');
+  const preserveCam = editable || format === 'RCSPackE' || format === 'RLRCSPack';
+
+  const normalizedItems = items.map((it, idx) => {
+    const cloned = cloneShotItem(it, idx);
+    if (!preserveCam && cloned.editorFreeCam) {
+      delete cloned.editorFreeCam;
+    }
+    return cloned;
+  });
+
+  const cleanMeta: StaticTrainingPackMetadata = {
+    ...metadata,
+    itemCount: normalizedItems.length,
+    sourcePackType: metadata.sourcePackType || format,
+  };
+  if (!preserveCam && format === 'RCSPack') {
+    // Strip heavy originalDescription when exporting compact standard .RCSPack
+    delete cleanMeta.originalDescription;
+  }
+
   const archive: RCSPackArchive = {
-    format: 'RCSPack',
-    version: 1,
+    format,
+    version: 2,
     category: 'static-training-pack',
-    metadata: {
-      ...metadata,
-      itemCount: items.length,
-    },
-    items: items.map((it, idx) => cloneShotItem(it, idx)),
+    metadata: cleanMeta,
+    items: normalizedItems,
   };
 
   const jsonStr = JSON.stringify(archive);
@@ -111,8 +158,22 @@ export async function exportStaticTrainingPackRCSPack(
   const compressedBytes = await compressGzipBytes(rawBytes);
 
   const safeTitle = sanitizeFileSegment(metadata.title);
-  const filename = `${safeTitle}_${metadata.uuid}.RCSPack`;
-  const blob = new Blob([compressedBytes as unknown as BlobPart], {
+  const ext = format === 'RCSPackE' ? 'RCSPackE' : format === 'RLRCSPack' ? 'RLRCSPack' : 'RCSPack';
+  const filename = `${safeTitle}_${metadata.uuid}.${ext}`;
+  return { filename, bytes: compressedBytes, format };
+}
+
+/**
+ * Exports a Static Training Pack as a compressed `<Title>_<UUID>.RCSPack` or `.RCSPackE` file
+ * containing embedded metadata and ordered items.
+ */
+export async function exportStaticTrainingPackRCSPack(
+  metadata: StaticTrainingPackMetadata,
+  items: StaticTrainingShotItem[],
+  options?: ExportRCSPackOptions
+): Promise<string> {
+  const { filename, bytes } = await encodeStaticTrainingPackBytes(metadata, items, options);
+  const blob = new Blob([bytes as unknown as BlobPart], {
     type: 'application/octet-stream',
   });
   triggerBrowserDownload(blob, filename);
@@ -120,16 +181,42 @@ export async function exportStaticTrainingPackRCSPack(
 }
 
 /**
- * Decodes a `.RCSPack` or `.Tem` file payload into normalized metadata and shot items.
+ * Exports a batch of Static Training Packs as a single `<Folder>_TrainingPacks.zip` archive.
  */
-export async function decodeRCSPackFilePayload(
-  file: File
-): Promise<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }> {
-  const buf = await file.arrayBuffer();
-  const bytes = new Uint8Array(buf);
+export async function exportBatchStaticTrainingPacksZip(
+  packs: Array<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }>,
+  bundleName = 'TrainingPacks',
+  options?: ExportRCSPackOptions
+): Promise<string> {
+  const zipEntries: ZipEntryFile[] = [];
+  for (const pack of packs) {
+    const { filename, bytes } = await encodeStaticTrainingPackBytes(
+      pack.metadata,
+      pack.items,
+      options
+    );
+    zipEntries.push({ name: filename, data: bytes });
+  }
+  const zipBytes = createZipArchiveBytes(zipEntries);
+  const safeName = sanitizeFileSegment(bundleName);
+  const extSuffix = options?.editable ? 'RCSPackE' : 'RCSPack';
+  const zipFilename = `${safeName}_${packs.length}_${extSuffix}.zip`;
+  const blob = new Blob([zipBytes as unknown as BlobPart], {
+    type: 'application/zip',
+  });
+  triggerBrowserDownload(blob, zipFilename);
+  return zipFilename;
+}
 
-  if (isTemBinaryPayload(bytes, file.name)) {
-    const parsedTem = parseTemBinaryBytes(bytes, file.name);
+/**
+ * Decodes raw bytes of a single `.RCSPack`, `.RCSPackE`, `.RLRCSPack`, or `.Tem` file.
+ */
+export async function decodeSinglePackBytes(
+  bytes: Uint8Array,
+  fileName = 'ImportedPack.RCSPack'
+): Promise<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }> {
+  if (isTemBinaryPayload(bytes, fileName)) {
+    const parsedTem = parseTemBinaryBytes(bytes, fileName);
     const converted = convertParsedTemToRCSPackBundle(parsedTem);
     return { metadata: converted.metadata, items: converted.items };
   }
@@ -141,6 +228,9 @@ export async function decodeRCSPackFilePayload(
     throw new Error('Invalid .RCSPack archive payload');
   }
 
+  const isExplicitNonEditableRCSPack =
+    /\.rcspack$/i.test(fileName) && parsed.format === 'RCSPack';
+
   const rawMeta = parsed.metadata || {};
   const rawItems = Array.isArray(parsed.items) ? parsed.items : [];
   const now = Date.now();
@@ -149,24 +239,118 @@ export async function decodeRCSPackFilePayload(
       ? rawMeta.uuid.trim()
       : generateUUID();
 
-  const items = rawItems.map((it: any, idx: number) => cloneShotItem(it, idx));
+  const items: StaticTrainingShotItem[] = rawItems.map((it: any, idx: number) => {
+    const cloned = cloneShotItem(it, idx);
+    if (isExplicitNonEditableRCSPack && cloned.editorFreeCam) {
+      delete cloned.editorFreeCam;
+    }
+    return cloned;
+  });
   if (items.length === 0) {
     items.push(createDefaultShotItem(0));
   }
 
+  const title =
+    typeof rawMeta.title === 'string' && rawMeta.title.trim()
+      ? rawMeta.title.trim()
+      : fileName.replace(/\.(rcspacke?|rlrcspack|tem|gz|json)$/i, '') || 'Imported Pack';
+
+  const code = typeof rawMeta.code === 'string' && rawMeta.code.trim() ? rawMeta.code.trim() : undefined;
+  const creator =
+    typeof rawMeta.creator === 'string' && rawMeta.creator.trim()
+      ? rawMeta.creator.trim()
+      : undefined;
+
+  const derived = derivePackTagsAndMetadata({ title, creator, code });
+  const mergedTags = Array.from(
+    new Set([...(Array.isArray(rawMeta.tags) ? rawMeta.tags : []), ...derived.tags])
+  );
+  const recommendedVariation = rawMeta.recommendedVariation
+    ? cloneVariationConfig(rawMeta.recommendedVariation)
+    : resolveRecommendedVariationForPack(code, title, creator);
+
+  const sourcePackType: StaticTrainingPackFormatType =
+    rawMeta.sourcePackType === 'RLRCSPack' || parsed.format === 'RLRCSPack'
+      ? 'RLRCSPack'
+      : rawMeta.sourcePackType === 'RCSPackE' ||
+        parsed.format === 'RCSPackE' ||
+        /\.rcspacke$/i.test(fileName)
+      ? 'RCSPackE'
+      : 'RCSPack';
+
   const metadata: StaticTrainingPackMetadata = {
     uuid,
-    title:
-      typeof rawMeta.title === 'string' && rawMeta.title.trim()
-        ? rawMeta.title.trim()
-        : 'Imported Pack',
+    title,
     description: typeof rawMeta.description === 'string' ? rawMeta.description : '',
+    ...(typeof rawMeta.originalDescription === 'string' && rawMeta.originalDescription
+      ? { originalDescription: rawMeta.originalDescription }
+      : {}),
+    ...(code ? { code } : {}),
+    ...(creator || derived.normalizedCreator
+      ? { creator: creator || derived.normalizedCreator }
+      : {}),
+    ...(mergedTags.length > 0 ? { tags: mergedTags } : {}),
+    ...(rawMeta.releaseYearMonth || derived.releaseYearMonth
+      ? { releaseYearMonth: rawMeta.releaseYearMonth || derived.releaseYearMonth }
+      : {}),
+    ...(rawMeta.rankTier || derived.rankTier
+      ? { rankTier: rawMeta.rankTier || derived.rankTier }
+      : {}),
+    sourcePackType,
+    ...(recommendedVariation ? { recommendedVariation } : {}),
     createdAt: Number(rawMeta.createdAt) || now,
-    updatedAt: now,
+    updatedAt: Number(rawMeta.updatedAt) || now,
     itemCount: items.length,
   };
 
   return { metadata, items };
+}
+
+/**
+ * Decodes a `.RCSPack`, `.RCSPackE`, `.RLRCSPack`, or `.Tem` file payload into normalized metadata and shot items.
+ */
+export async function decodeRCSPackFilePayload(
+  file: File
+): Promise<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }> {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  return decodeSinglePackBytes(bytes, file.name);
+}
+
+/**
+ * Decodes a single File or a `.zip` archive containing multiple `.Tem` / `.RCSPack` / `.RCSPackE` / `.RLRCSPack` files.
+ * Deduplicates by `metadata.uuid`.
+ */
+export async function decodeMultiOrZipPackFiles(
+  files: File[] | FileList
+): Promise<Array<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }>> {
+  const fileArray = Array.from(files);
+  const resultsMap = new Map<
+    string,
+    { metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }
+  >();
+
+  for (const file of fileArray) {
+    const buf = await file.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+
+    if (isZipBinaryPayload(bytes, file.name)) {
+      const entries = await extractFilesFromZipBytes(bytes);
+      for (const entry of entries) {
+        try {
+          const decoded = await decodeSinglePackBytes(entry.data, entry.name);
+          resultsMap.set(decoded.metadata.uuid, decoded);
+        } catch (err) {
+          console.warn(`[StaticTrainingPackCodec] Skipping invalid zip entry "${entry.name}":`, err);
+        }
+      }
+    } else {
+      const decoded = await decodeSinglePackBytes(bytes, file.name);
+      resultsMap.set(decoded.metadata.uuid, decoded);
+    }
+  }
+
+  return Array.from(resultsMap.values());
 }
 
 /**
@@ -178,7 +362,7 @@ export function exportSingleShotItemToJson(
 ): string {
   const payload = {
     format: 'RCStaticShotItem',
-    version: 1,
+    version: 2,
     exportedAt: Date.now(),
     shot: cloneShotItem(item, item.index),
   };

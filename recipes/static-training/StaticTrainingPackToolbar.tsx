@@ -37,7 +37,8 @@ export const StaticTrainingPackToolbar: React.FC<StaticTrainingPackToolbarProps>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".rcspack,.RCSPack,.Tem,.tem,.gz,.json"
+            multiple
+            accept=".rcspack,.RCSPack,.rcspacke,.RCSPackE,.rlrcspack,.RLRCSPack,.Tem,.tem,.zip,.ZIP,.gz,.json"
             onChange={onImportFileChange}
             className="hidden"
           />
@@ -46,7 +47,7 @@ export const StaticTrainingPackToolbar: React.FC<StaticTrainingPackToolbarProps>
             onClick={onImportClick}
             onMouseEnter={() =>
               onHoverDesc(
-                'Import a compressed .RCSPack training pack archive into IndexedDB VFS.'
+                'Import single or multiple .RCSPack / .RCSPackE / .RLRCSPack / .Tem files or a batch .zip archive.'
               )
             }
             onMouseLeave={() => onHoverDesc(null)}
@@ -57,7 +58,7 @@ export const StaticTrainingPackToolbar: React.FC<StaticTrainingPackToolbarProps>
             }`}
           >
             <Upload className="h-3.5 w-3.5" />
-            <span>Import .RCSPack</span>
+            <span>Import Pack / .ZIP</span>
           </button>
           <button
             type="button"

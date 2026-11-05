@@ -23,10 +23,17 @@ import {
 } from '../config/staticTrainingPackTypes';
 import {
   exportStaticTrainingPackRCSPack,
+  exportBatchStaticTrainingPacksZip,
   decodeRCSPackFilePayload,
+  decodeMultiOrZipPackFiles,
   exportSingleShotItemToJson,
   parseSingleShotItemFromJsonFile,
+  type ExportRCSPackOptions,
 } from '../config/staticTrainingPackCodec';
+import {
+  loadBuiltInDevPacksCatalog,
+  DEV_BUILTIN_RLRCSPACK_CATALOG_COUNT,
+} from '../config/devBuiltInPacksLoader';
 
 export {
   type EditSubMode,
@@ -35,14 +42,19 @@ export {
   type StaticTrainingShotItem,
   type StaticTrainingPackMetadata,
   type RCSPackArchive,
+  type ExportRCSPackOptions,
   EDIT_SUB_MODES_ORDER,
   MAX_SHOTS_PER_PACK,
+  DEV_BUILTIN_RLRCSPACK_CATALOG_COUNT,
   generateUUID,
   createDefaultShotItem,
   cloneShotItem,
   areShotItemsEqual,
   areShotListsEqual,
   exportStaticTrainingPackRCSPack,
+  exportBatchStaticTrainingPacksZip,
+  decodeMultiOrZipPackFiles,
+  loadBuiltInDevPacksCatalog,
   exportSingleShotItemToJson,
   parseSingleShotItemFromJsonFile,
 };
@@ -362,7 +374,7 @@ export async function deleteStaticTrainingPackByUuid(uuid: string): Promise<void
 }
 
 /**
- * Imports a `.RCSPack` file (compressed or uncompressed JSON) and persists it into the VFS.
+ * Imports a `.RCSPack`, `.RCSPackE`, `.RLRCSPack`, or `.Tem` file and persists it into the VFS.
  */
 export async function importStaticTrainingPackFromFile(
   file: File
@@ -372,3 +384,44 @@ export async function importStaticTrainingPackFromFile(
   await saveStaticTrainingPackFull(metadata, capped);
   return { metadata: { ...metadata, itemCount: capped.length }, items: capped };
 }
+
+/**
+ * Batch imports multiple `.Tem` / `.RCSPack` / `.RCSPackE` / `.RLRCSPack` files or `.zip` archives into the VFS.
+ */
+export async function importBatchStaticTrainingPacksFromFiles(
+  files: File[] | FileList
+): Promise<StaticTrainingPackMetadata[]> {
+  const decodedList = await decodeMultiOrZipPackFiles(files);
+  const importedMetas: StaticTrainingPackMetadata[] = [];
+  for (const entry of decodedList) {
+    const capped = entry.items.slice(0, MAX_SHOTS_PER_PACK);
+    await saveStaticTrainingPackFull(entry.metadata, capped);
+    importedMetas.push({ ...entry.metadata, itemCount: capped.length });
+  }
+  return importedMetas;
+}
+
+let devCatalogSeededInSession = false;
+
+/**
+ * Ensures the 73 built-in Developer Mode `.RLRCSPack` training packs from `Training.zip`
+ * are seeded into the IndexedDB VFS when Dev Mode is opened.
+ */
+export async function ensureBuiltInDevPacksSeeded(forceReseed = false): Promise<number> {
+  if (devCatalogSeededInSession && !forceReseed) return 0;
+  const existing = await listStaticTrainingPacks();
+  const existingUuidSet = new Set(existing.map((m) => m.uuid));
+
+  const catalog = await loadBuiltInDevPacksCatalog();
+  let seededCount = 0;
+  for (const entry of catalog) {
+    if (!forceReseed && existingUuidSet.has(entry.metadata.uuid)) {
+      continue;
+    }
+    await saveStaticTrainingPackFull(entry.metadata, entry.items);
+    seededCount++;
+  }
+  devCatalogSeededInSession = true;
+  return seededCount;
+}
+

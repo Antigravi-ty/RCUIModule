@@ -52,6 +52,26 @@ export interface StaticTrainingCarConfig {
   unlimitedBoost: boolean;
 }
 
+import {
+  type StaticTrainingVariationConfig,
+  cloneVariationConfig,
+} from './staticTrainingVariationTypes';
+
+export { type StaticTrainingVariationConfig, cloneVariationConfig };
+
+export interface StaticTrainingEditorFreeCam {
+  /** World position in RocketSim / Unreal UU: [x, y, z] */
+  location: [number, number, number];
+  /** Pitch in radians (-PI/2 .. +PI/2) */
+  pitch: number;
+  /** Yaw in radians (0 = +X, PI/2 = +Y toward Orange goal) */
+  yaw: number;
+  /** Roll in radians */
+  roll: number;
+  /** True when the camera matches Rocket League's unmoved default editor camera [-600, -700, 530] */
+  isDefaultOverview?: boolean;
+}
+
 export interface StaticTrainingBallConfig {
   /** World position in RocketSim UU: [x, y, z] */
   location: [number, number, number];
@@ -61,6 +81,10 @@ export interface StaticTrainingBallConfig {
   speedYaw: number;
   /** Initial linear velocity pitch in radians */
   speedPitch: number;
+  /**
+   * Initial cannon/ball roll angle in radians (maps `VelocityStartRotationR` from `.Tem`).
+   */
+  startRotationRoll?: number;
   /**
    * Kickoff State: when true (activated by pressing '[' again after speed reaches 0),
    * the ball remains completely suspended/stationary even in mid-air until touched by a car.
@@ -83,20 +107,47 @@ export interface StaticTrainingShotItem {
   timeoutSeconds: number;
   car: StaticTrainingCarConfig;
   ball: StaticTrainingBallConfig;
+  /**
+   * Optional per-shot Editor Free Camera pose (`EditorFreeCam` from `.Tem` or saved in `.RCSPackE`).
+   * Stripped when exporting standard `.RCSPack`, preserved when exporting `.RCSPackE`.
+   */
+  editorFreeCam?: StaticTrainingEditorFreeCam;
 }
+
+export type StaticTrainingPackFormatType = 'RCSPack' | 'RCSPackE' | 'RLRCSPack';
 
 export interface StaticTrainingPackMetadata {
   uuid: string;
   title: string;
   description: string;
+  /**
+   * Unmapped `.Tem` / `RLRCSPack` raw properties & round extras (visible in Developer Mode).
+   */
+  originalDescription?: string;
+  /** Rocket League 16-char custom training code (e.g. `DEC7-4CAD-1452-30D3`) */
+  code?: string;
+  /** Original pack creator name (e.g. `Kevpert`, `Psyonix`, `Poquito`) */
+  creator?: string;
+  /** Structured tags for folder filtering (e.g. `['Kevpert', 'Diamond', 'F7']`) */
+  tags?: string[];
+  /** Official release year-month for Psyonix / Spotlight packs (e.g. `'2022-09'`) */
+  releaseYearMonth?: string;
+  /** Competitive rank tier tag (`Bronze` .. `Supersonic Legend`) */
+  rankTier?: string;
+  /** Pack origin format (`RLRCSPack` for converted `.Tem`, `RCSPack` / `RCSPackE` for native) */
+  sourcePackType?: StaticTrainingPackFormatType;
+  /** Author/video-recommended BakkesMod training variation parameters */
+  recommendedVariation?: StaticTrainingVariationConfig;
+  /** True when seeded from the built-in Dev Mode pack catalog */
+  isBuiltInDevPack?: boolean;
   createdAt: number;
   updatedAt: number;
   itemCount: number;
 }
 
 export interface RCSPackArchive {
-  format: 'RCSPack';
-  version: 1;
+  format: 'RCSPack' | 'RCSPackE' | 'RLRCSPack';
+  version: 1 | 2;
   category: 'static-training-pack';
   metadata: StaticTrainingPackMetadata;
   items: StaticTrainingShotItem[];
@@ -138,6 +189,7 @@ export function createDefaultShotItem(index = 0): StaticTrainingShotItem {
       speed: 1150,
       speedYaw: Math.PI / 2,
       speedPitch: 0.32,
+      startRotationRoll: 0,
       kickoffState: false,
       randomAngularVelocity: true,
       angularVelocity: [0, 2.4, 0.8],
@@ -146,7 +198,7 @@ export function createDefaultShotItem(index = 0): StaticTrainingShotItem {
 }
 
 export function cloneShotItem(
-  item: Partial<StaticTrainingShotItem> & { car?: any; ball?: any },
+  item: Partial<StaticTrainingShotItem> & { car?: any; ball?: any; editorFreeCam?: any },
   newIndex?: number
 ): StaticTrainingShotItem {
   const idx = typeof newIndex === 'number' ? newIndex : (item?.index ?? 0);
@@ -168,6 +220,24 @@ export function cloneShotItem(
   const snapToGround = Boolean(rawCar.snapToGround ?? true);
   const speedFollowsHeading =
     rawCar.speedFollowsHeading !== undefined ? Boolean(rawCar.speedFollowsHeading) : true;
+
+  const rawCam = item?.editorFreeCam;
+  const editorFreeCam: StaticTrainingEditorFreeCam | undefined =
+    rawCam && typeof rawCam === 'object' && Array.isArray(rawCam.location)
+      ? {
+          location: [
+            Number(rawCam.location[0]) || 0,
+            Number(rawCam.location[1]) || 0,
+            Number(rawCam.location[2]) || 0,
+          ],
+          pitch: Number(rawCam.pitch) || 0,
+          yaw: Number(rawCam.yaw) || 0,
+          roll: Number(rawCam.roll) || 0,
+          ...(rawCam.isDefaultOverview !== undefined
+            ? { isDefaultOverview: Boolean(rawCam.isDefaultOverview) }
+            : {}),
+        }
+      : undefined;
 
   return {
     id: typeof item?.id === 'string' && item.id ? item.id : generateUUID(),
@@ -213,6 +283,9 @@ export function cloneShotItem(
       speed: Math.max(0, Math.min(4000, Number(rawBall.speed) || 0)),
       speedYaw: Number(rawBall.speedYaw ?? Math.PI / 2),
       speedPitch: Number(rawBall.speedPitch ?? 0),
+      ...(rawBall.startRotationRoll !== undefined && Number(rawBall.startRotationRoll) !== 0
+        ? { startRotationRoll: Number(rawBall.startRotationRoll) }
+        : {}),
       kickoffState: Boolean(rawBall.kickoffState ?? false),
       randomAngularVelocity: Boolean(rawBall.randomAngularVelocity ?? true),
       angularVelocity: [
@@ -221,6 +294,7 @@ export function cloneShotItem(
         Math.max(-6, Math.min(6, Number(rawBall.angularVelocity?.[2]) || 0)),
       ],
     },
+    ...(editorFreeCam ? { editorFreeCam } : {}),
   };
 }
 
@@ -264,6 +338,7 @@ export function areShotItemsEqual(
     !eqNum(ba.speed, bb.speed) ||
     !eqNum(ba.speedYaw, bb.speedYaw) ||
     !eqNum(ba.speedPitch, bb.speedPitch) ||
+    !eqNum(ba.startRotationRoll ?? 0, bb.startRotationRoll ?? 0) ||
     Boolean(ba.kickoffState) !== Boolean(bb.kickoffState) ||
     Boolean(ba.randomAngularVelocity) !== Boolean(bb.randomAngularVelocity) ||
     !eqNum(ba.angularVelocity[0], bb.angularVelocity[0]) ||
@@ -271,6 +346,22 @@ export function areShotItemsEqual(
     !eqNum(ba.angularVelocity[2], bb.angularVelocity[2])
   ) {
     return false;
+  }
+
+  const camA = a.editorFreeCam;
+  const camB = b.editorFreeCam;
+  if (Boolean(camA) !== Boolean(camB)) return false;
+  if (camA && camB) {
+    if (
+      !eqNum(camA.location[0], camB.location[0]) ||
+      !eqNum(camA.location[1], camB.location[1]) ||
+      !eqNum(camA.location[2], camB.location[2]) ||
+      !eqNum(camA.pitch, camB.pitch) ||
+      !eqNum(camA.yaw, camB.yaw) ||
+      !eqNum(camA.roll, camB.roll)
+    ) {
+      return false;
+    }
   }
 
   return true;

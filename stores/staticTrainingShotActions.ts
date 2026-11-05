@@ -2,6 +2,7 @@ import {
   type StaticTrainingPackMetadata,
   type StaticTrainingShotItem,
   type EditSubMode,
+  type ExportRCSPackOptions,
   MAX_SHOTS_PER_PACK,
   generateUUID,
   createDefaultShotItem,
@@ -13,7 +14,10 @@ import {
   saveEditWorkspacePackFull,
   saveSingleEditWorkspaceShotItem,
   exportStaticTrainingPackRCSPack,
+  exportBatchStaticTrainingPacksZip,
   importStaticTrainingPackFromFile,
+  importBatchStaticTrainingPacksFromFiles,
+  ensureBuiltInDevPacksSeeded,
   exportSingleShotItemToJson,
   parseSingleShotItemFromJsonFile,
 } from './staticTrainingPackStorage';
@@ -93,6 +97,8 @@ export function createStaticTrainingShotActions<
       uuid,
       title: (title || 'New Static Pack').trim() || 'New Static Pack',
       description: (description || '').trim(),
+      tags: ['Local'],
+      sourcePackType: 'RCSPackE',
       createdAt: now,
       updatedAt: now,
       itemCount: 1,
@@ -159,30 +165,103 @@ export function createStaticTrainingShotActions<
     });
   },
 
-  exportPackRCS: async (uuid?: string) => {
+  exportPackRCS: async (uuid?: string, options?: ExportRCSPackOptions) => {
     const targetUuid = uuid || get().activePack?.uuid || get().selectedPackUuid;
     if (!targetUuid) return null;
     const loaded = await loadStaticTrainingPackByUuid(targetUuid);
     if (!loaded.metadata) return null;
-    return await exportStaticTrainingPackRCSPack(loaded.metadata, loaded.items);
+    return await exportStaticTrainingPackRCSPack(loaded.metadata, loaded.items, options);
+  },
+
+  exportBatchPacksZip: async (
+    uuids: string[],
+    bundleName = 'TrainingPacks',
+    options?: ExportRCSPackOptions
+  ) => {
+    const loadedList: Array<{
+      metadata: StaticTrainingPackMetadata;
+      items: StaticTrainingShotItem[];
+    }> = [];
+    for (const uuid of uuids) {
+      const loaded = await loadStaticTrainingPackByUuid(uuid);
+      if (loaded.metadata) {
+        loadedList.push({ metadata: loaded.metadata, items: loaded.items });
+      }
+    }
+    if (loadedList.length === 0) return null;
+    return await exportBatchStaticTrainingPacksZip(loadedList, bundleName, options);
   },
 
   importPackRCS: async (file: File) => {
-    const { metadata, items } = await importStaticTrainingPackFromFile(file);
+    const metas = await importBatchStaticTrainingPacksFromFiles([file]);
+    if (metas.length === 0) {
+      const single = await importStaticTrainingPackFromFile(file);
+      metas.push(single.metadata);
+    }
+    const targetMeta = metas[0];
+    const loaded = await loadStaticTrainingPackByUuid(targetMeta.uuid);
     const packs = await listStaticTrainingPacks();
-    const bundle = buildActivePackBundle(metadata, items);
+    const bundle = buildActivePackBundle(loaded.metadata || targetMeta, loaded.items);
     setActiveEditItemVariable(null);
     set({
       packs,
-      selectedPackUuid: metadata.uuid,
+      selectedPackUuid: targetMeta.uuid,
       activePack: bundle,
-      activeItems: items,
-      committedSessionItems: items.map((item, idx) => cloneShotItem(item, idx)),
+      activeItems: loaded.items,
+      committedSessionItems: loaded.items.map((item, idx) => cloneShotItem(item, idx)),
       currentShotIndex: 0,
       isEditingItem: false,
       activeEditItemDraft: null,
     });
-    return metadata;
+    return targetMeta;
+  },
+
+  importBatchPacks: async (files: File[] | FileList) => {
+    const metas = await importBatchStaticTrainingPacksFromFiles(files);
+    if (metas.length === 0) return [];
+    const targetMeta = metas[0];
+    const loaded = await loadStaticTrainingPackByUuid(targetMeta.uuid);
+    const packs = await listStaticTrainingPacks();
+    const bundle = buildActivePackBundle(loaded.metadata || targetMeta, loaded.items);
+    setActiveEditItemVariable(null);
+    set({
+      packs,
+      selectedPackUuid: targetMeta.uuid,
+      activePack: bundle,
+      activeItems: loaded.items,
+      committedSessionItems: loaded.items.map((item, idx) => cloneShotItem(item, idx)),
+      currentShotIndex: 0,
+      isEditingItem: false,
+      activeEditItemDraft: null,
+    });
+    return metas;
+  },
+
+  seedDevBuiltInPacks: async (forceReseed = false) => {
+    const seededCount = await ensureBuiltInDevPacksSeeded(forceReseed);
+    if (seededCount > 0 || forceReseed) {
+      const packs = await listStaticTrainingPacks();
+      const currentSelected = get().selectedPackUuid;
+      const validSelected =
+        currentSelected && packs.some((p) => p.uuid === currentSelected)
+          ? currentSelected
+          : packs[0]?.uuid ?? null;
+      let activePack = get().activePack;
+      let activeItems = get().activeItems;
+      if (validSelected && (!activePack || activePack.uuid !== validSelected)) {
+        const loaded = await loadStaticTrainingPackByUuid(validSelected);
+        activeItems = loaded.items;
+        activePack = buildActivePackBundle(loaded.metadata, loaded.items);
+      }
+      set({
+        packs,
+        selectedPackUuid: validSelected,
+        activePack,
+        activeItems,
+        committedSessionItems: activeItems.map((it, idx) => cloneShotItem(it, idx)),
+      });
+    }
+    return seededCount;
   },
 
   importConvertedTemBundle: async (
