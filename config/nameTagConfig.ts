@@ -40,7 +40,7 @@ export {
   resolveNameTagCornerRadiusPx,
 } from './nameTagCalibrationMath';
 
-export const NAME_TAG_STORAGE_KEY = 'rc_name_tag_config_v8';
+export const NAME_TAG_STORAGE_KEY = 'rc_name_tag_config_v9';
 
 export function sanitizeHexColor(raw: unknown, fallbackHex: string): string {
   return typeof raw === 'string' && raw.startsWith('#') && raw.length >= 4
@@ -191,7 +191,9 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
     : DEFAULT_NAME_TAG_CONFIG.cardRenderScale;
 
   const boostBorderColorMode: NameTagBoostBorderColorMode =
-    source.boostBorderColorMode === 'shared' ? 'shared' : 'team';
+    source.boostBorderColorMode === 'shared' || source.boostBorderColorMode === 'team'
+      ? source.boostBorderColorMode
+      : DEFAULT_NAME_TAG_CONFIG.boostBorderColorMode;
 
   return {
     enabled:

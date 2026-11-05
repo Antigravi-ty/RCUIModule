@@ -53,12 +53,12 @@ const COLOR_MODE_OPTIONS: Array<{
   label: string;
 }> = [
   { id: 'team', label: 'Team Specific' },
-  { id: 'shared', label: 'Shared White / Unified' },
+  { id: 'shared', label: 'Shared / Unified' },
 ];
 
 const BALL_OPACITY_PRESETS: Array<{ label: string; value: number }> = [
   { label: '100% Solid', value: 1.0 },
-  { label: '70% Dev Default', value: 0.7 },
+  { label: '70% Translucent', value: 0.7 },
   { label: '40% Ghost', value: 0.4 },
   { label: '0% Off', value: 0.0 },
 ];
@@ -294,6 +294,17 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
           <div className="flex items-center gap-1.5">
             <button
               type="button"
+              onClick={() => updateConfig({ sharedBoostBorderColor: '#000000' })}
+              className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
+                isLight
+                  ? 'border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                  : 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+              }`}
+            >
+              Pure Black (#000000)
+            </button>
+            <button
+              type="button"
               onClick={() => updateConfig({ sharedBoostBorderColor: '#ffffff' })}
               className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
                 isLight
@@ -328,7 +339,7 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
         <div className="flex items-center justify-between text-[10px]">
           <span className="font-semibold flex items-center gap-1">
             <CircleDot className="h-3 w-3 text-amber-500" />
-            <span>Kickoff Ball Entity Occlusion (R=95 UU · Default OFF)</span>
+            <span>Kickoff Ball Entity Occlusion (R=95 UU · Default 100% Solid)</span>
           </span>
           <div className="flex items-center gap-1.5">
             <span className={`font-mono text-[9px] ${mutedText}`}>
