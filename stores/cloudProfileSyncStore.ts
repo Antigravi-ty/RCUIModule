@@ -16,12 +16,8 @@ import {
   normalizeCloudUsername,
 } from '../config/cloudProfileMergePipeline';
 import {
-  type CloudDevSlotRecord,
-  type CloudFetchedUserCompleteRecord,
   type CloudProfileSyncBridgeCallbacks,
   type CloudProfileSyncState,
-  type CloudSyncStatus,
-  type CloudUserSlotRecord,
   type LoggedInCloudUser,
   type ProfileFlatSnapshot,
 } from '../config/cloudProfileSyncTypes';
@@ -49,22 +45,12 @@ import {
   saveCloudUser,
   saveStoredDevAckState,
   shouldApplyIncomingDevSlot,
-} from './cloudProfileSyncHelpers';
+} from './cloudProfileSyncPipeline';
 import { floatingStore } from './floatingStore';
 import { useKickoffTrainingStore } from './kickoffTrainingStore';
 import { useSpatialAudioStore } from './spatialAudioStore';
 import { useStaticTrainingBallCamTunerStore } from './staticTrainingBallCamTunerStore';
 import { viewportStore } from './viewportStore';
-
-export type {
-  CloudDevSlotRecord,
-  CloudFetchedUserCompleteRecord,
-  CloudProfileSyncBridgeCallbacks,
-  CloudProfileSyncState,
-  CloudSyncStatus,
-  CloudUserSlotRecord,
-  LoggedInCloudUser,
-};
 
 const initialSavedUser = loadSavedCloudUser();
 const initialDevAck = initialSavedUser ? loadStoredDevAckState(initialSavedUser.userId) : null;

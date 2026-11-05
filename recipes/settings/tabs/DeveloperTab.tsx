@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   Scan,
   Bot,
+  Radio,
   UserCog,
 } from 'lucide-react';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
@@ -16,6 +17,10 @@ import { SettingSegmentedRow } from '../../../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../../../compounds/SettingToggleRow';
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import { useAppStore } from '../../../stores/appStore';
+import {
+  useSignalingProfileStore,
+  type SignalingRelayMatchPolicyMode,
+} from '../../../stores/signalingProfileStore';
 import { useViewportStore, viewportStore } from '../../../stores/viewportStore';
 import {
   getBallVisualConfig,
@@ -70,6 +75,8 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   const navigate = useAppStore((s) => s.navigate);
   const { showSafeAreaHud } = useViewportStore();
   const setShowSafeAreaHud = viewportStore.setShowSafeAreaHud;
+  const relayMatchPolicy = useSignalingProfileStore((s) => s.relayMatchPolicy);
+  const setRelayMatchPolicy = useSignalingProfileStore((s) => s.setRelayMatchPolicy);
 
   const [ballOpacityMode, setBallOpacityMode] = useState<BallOpacityMode>(() => {
     const op = getBallVisualConfig()?.opacity ?? 1.0;
@@ -239,6 +246,24 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         checked={showSafeAreaHud}
         onChange={handleObserveSafeAreaChange}
         hoverDescription="Observe Safe Area Boundary: Displays boundary guides and bottom telemetry pill to observe and calibrate UI scaling and bezel margins in real-time."
+        onHover={(desc) => desc && onHover?.(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      {/* 5a. Signaling Match Relay Policy */}
+      <SettingSegmentedRow
+        icon={Radio}
+        iconName="radio"
+        title="Signaling Match Relay Policy"
+        description="Smart Prune keeps active player relays + probed EMQX · Keep All keeps all probed relays open"
+        value={relayMatchPolicy}
+        onChange={(v) => setRelayMatchPolicy(v as SignalingRelayMatchPolicyMode)}
+        options={[
+          { value: 'smart-prune', label: 'Smart Prune' },
+          { value: 'keep-all-probed', label: 'Keep All' },
+        ]}
+        hoverDescription="Signaling Match Relay Policy: Controls whether Host pauses unused non-EMQX relays during an active Match (Smart Prune, default) or keeps all probed relays open."
         onHover={(desc) => desc && onHover?.(desc)}
         onLeave={onLeave}
         isLight={isLight}

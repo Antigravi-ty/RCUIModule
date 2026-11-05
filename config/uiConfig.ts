@@ -164,6 +164,7 @@ export interface GameplayConfig {
   goalRestart: boolean;
   unlimitedBoost: boolean;
   showCarHitbox: boolean;
+  showAllCarHitboxes?: boolean;
   ballCamIndicator: boolean;
 }
 

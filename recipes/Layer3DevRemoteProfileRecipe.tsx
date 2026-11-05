@@ -112,7 +112,7 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
         {!available || !canManageAccounts ? (
           <UnderConstructionPlaceholder
             title="Developer Cloud Profile Credentials Required"
-            description="Remote Profile Management requires the developer private profile (CNRCConfigDevV1) to inspect and push user dev slots."
+            description="Remote Profile Management requires developer private profile credentials to inspect and push user dev slots."
             badge="DEV CREDENTIALS REQUIRED"
             isLight={isLight}
           />

@@ -1,6 +1,6 @@
 /**
- * cloudProfileSyncHelpers.ts
- * Persistence, identity resolution, and snapshot merge helpers for `cloudProfileSyncStore`.
+ * cloudProfileSyncPipeline.ts
+ * Persistence, identity resolution, and snapshot merge pipelines for `cloudProfileSyncStore`.
  */
 
 import {

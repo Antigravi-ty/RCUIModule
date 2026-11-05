@@ -39,7 +39,7 @@ export interface Layer4StaticTrainingPackBrowseRecipeProps {
   className?: string;
 }
 
-export interface Layer5StaticTrainingPackEditRecipeProps {
+export interface StaticTrainingShotInspectorDrawerProps {
   isLight?: boolean;
   transparent?: boolean;
   packTitle?: string;
@@ -152,9 +152,9 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
   };
 }
 
-export function useLayer5StaticTrainingPackEditStoreBinding(
-  rawProps: Layer5StaticTrainingPackEditRecipeProps
-): Layer5StaticTrainingPackEditRecipeProps {
+export function useStaticTrainingShotInspectorDrawerStoreBinding(
+  rawProps: StaticTrainingShotInspectorDrawerProps
+): StaticTrainingShotInspectorDrawerProps {
   const activePack = useStaticTrainingPackStore((s) => s.activePack);
   const storeShotIndex = useStaticTrainingPackStore((s) => s.currentShotIndex);
   const storeIsEditingItem = useStaticTrainingPackStore((s) => s.isEditingItem);

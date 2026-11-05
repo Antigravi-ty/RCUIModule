@@ -205,19 +205,19 @@ export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   orangeTextColor: '#ffffff',
   boostBorderEnabled: true,
   boostIndicatorMode: 'bottom-up-fill',
-  boostFillOpacity: 0.84,
-  boostUnfilledBgOpacity: 0.34,
+  boostFillOpacity: 1.0,
+  boostUnfilledBgOpacity: 0.3,
   boostShowHorizonLine: true,
-  boostBorderColorMode: 'team',
-  blueBoostBorderColor: '#a5f3fc',
-  orangeBoostBorderColor: '#fde047',
-  sharedBoostBorderColor: '#ffffff',
+  boostBorderColorMode: 'shared',
+  blueBoostBorderColor: '#000000',
+  orangeBoostBorderColor: '#000000',
+  sharedBoostBorderColor: '#000000',
   showBoostBorderInMatchPlaying: true,
   boostBorderMatchAudience: 'teammates',
   showBoostBorderInGoalReplay: true,
   boostBorderReplayAudience: 'all',
-  ballOcclusionEnabled: false,
-  ballOcclusionOpacity: 0.7,
+  ballOcclusionEnabled: true,
+  ballOcclusionOpacity: 1.0,
   previewBoostAmounts: [100, 66, 33, 85, 50, 18],
   showOnLocalCar: false,
   previewNames: [
@@ -472,6 +472,69 @@ export function computeFittedParametersFromSamples(
     farScaleMultiplier: 1.0,
     verticalOffsetUu: fittedWorldOffsetUu,
     screenVerticalOffsetPx: fittedScreenOffsetPx,
+  };
+}
+
+export function buildNameTagCalibrationExportPayload(
+  config: NameTagConfig,
+  snapshot: NameTagTelemetrySnapshot,
+  kickoffPermutationIndex: number
+) {
+  const fitted = computeFittedParametersFromSamples(config, snapshot);
+  const {
+    previewNames: _pn,
+    previewBoostAmounts: _pb,
+    carOverrides: _co,
+    enabled: _en,
+    ...globalConfig
+  } = config;
+  return {
+    schema: 'rc_name_tag_calibration_v1',
+    exportedAt: new Date().toISOString(),
+    viewport: {
+      widthPx: snapshot.viewportWidthPx,
+      heightPx: snapshot.viewportHeightPx,
+      aspectRatio: Number(snapshot.aspectRatio.toFixed(4)),
+      devicePixelRatio: snapshot.devicePixelRatio,
+    },
+    camera: {
+      mode: snapshot.cameraMode,
+      focusedCarIndex: snapshot.focusedCarIndex,
+      kickoffPermutationIndex,
+      fovDeg: snapshot.cameraFovDeg,
+      position: snapshot.cameraPosition,
+      forward: snapshot.cameraForward,
+      up: snapshot.cameraUp,
+    },
+    globalConfig,
+    fittedRecommendation: fitted,
+    cars: snapshot.cars.map((car) => ({
+      carIndex: car.carIndex,
+      slotCode: car.slotCode,
+      name: car.name,
+      team: car.team,
+      visible: car.visible,
+      boostAmount: car.boostAmount,
+      boostBorderVisible: car.boostBorderVisible,
+      override: config.carOverrides[car.carIndex] || null,
+      telemetry: {
+        carWorldPos: car.carWorldPos,
+        anchorWorldPos: car.anchorWorldPos,
+        spriteWorldPos: car.spriteWorldPos,
+        euclideanDistanceUu: car.euclideanDistanceUu,
+        viewZDepthUu: car.viewZDepthUu,
+        activeDepthUu: car.activeDepthUu,
+        offAxisAngleDeg: car.offAxisAngleDeg,
+        worldScaleWidthUu: car.worldScaleWidthUu,
+        worldScaleHeightUu: car.worldScaleHeightUu,
+        screenPillWidthPx: car.screenPillWidthPx,
+        screenPillHeightPx: car.screenPillHeightPx,
+        effectiveScaleMultiplier: car.effectiveScaleMultiplier,
+        effectiveWorldOffsetUu: car.effectiveWorldOffsetUu,
+        effectiveScreenOffsetPx: car.effectiveScreenOffsetPx,
+        totalWorldVerticalOffsetUu: car.totalWorldVerticalOffsetUu,
+      },
+    })),
   };
 }
 

@@ -19,6 +19,7 @@ export interface SyncBridgeAdapter {
 
 let activeAdapter: SyncBridgeAdapter | null = null;
 const earlyDefaults = new Map<string, unknown>();
+const earlySeeds = new Map<string, unknown>();
 const earlyKeyListeners = new Map<string, Set<(value: any) => void>>();
 const earlyResetListeners = new Set<(scopePrefix?: string) => void>();
 
@@ -35,15 +36,33 @@ export function attachSyncBridge(adapter: SyncBridgeAdapter): void {
   for (const listener of earlyResetListeners) {
     adapter.onReset(listener);
   }
+  for (const [key, seedValue] of earlySeeds.entries()) {
+    const resolved = adapter.get(key, seedValue);
+    if (!Object.is(resolved, seedValue)) {
+      const listeners = earlyKeyListeners.get(key);
+      if (listeners) {
+        for (const listener of listeners) {
+          listener(resolved);
+        }
+      }
+    }
+  }
 }
 
 export const syncBridge: SyncBridgeAdapter = {
-  has: (key: string): boolean => (activeAdapter ? activeAdapter.has(key) : false),
+  has: (key: string): boolean =>
+    activeAdapter ? activeAdapter.has(key) : earlySeeds.has(key),
 
-  get: <T>(key: string, fallback: T): T =>
-    activeAdapter ? activeAdapter.get(key, fallback) : fallback,
+  get: <T>(key: string, fallback: T): T => {
+    if (activeAdapter) {
+      return activeAdapter.get(key, fallback);
+    }
+    earlySeeds.set(key, fallback);
+    return fallback;
+  },
 
   set: <T>(key: string, value: T): void => {
+    earlySeeds.set(key, value);
     if (activeAdapter) {
       activeAdapter.set(key, value);
     }

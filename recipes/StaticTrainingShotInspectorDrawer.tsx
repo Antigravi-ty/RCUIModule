@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
-  useLayer5StaticTrainingPackEditStoreBinding,
-  type Layer5StaticTrainingPackEditRecipeProps,
+  useStaticTrainingShotInspectorDrawerStoreBinding,
+  type StaticTrainingShotInspectorDrawerProps,
 } from './hooks/useStaticTrainingStoreBindings';
 import { Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
@@ -19,7 +19,7 @@ import {
 } from './static-training/staticTrainingTypes';
 import { StaticTrainingShotInspectorView } from './static-training/StaticTrainingShotInspectorView';
 
-export type { Layer5StaticTrainingPackEditRecipeProps };
+export type { StaticTrainingShotInspectorDrawerProps };
 
 /**
  * Standalone helper to spawn the Exit Edit Mode confirmation dialogue (`Save / Ignore / Cancel`).
@@ -59,9 +59,9 @@ export function openStaticTrainingExitConfirmDialogue(
 }
 
 /**
- * [L6 Recipe] Layer5StaticTrainingPackEditRecipe
+ * [L6 Recipe] StaticTrainingShotInspectorDrawer
  *
- * Specialized inner content recipe for Static Training Pack Edit Mode (Six Echo / 6E):
+ * Specialized inner content drawer for Static Training Pack Edit Mode (Six Echo / 6E):
  * - Header Left: Clean title (no Back button — clicking the active `#number` in the rail toggles between Full Shot List and Detail Rail).
  * - Header Right: Only `Collapse [TAB]` button (`Exit Edit Mode` lives inside the decoupled `[ESC]` Main Menu).
  * - Body: `CollapsibleNumberedRailList` — clicking a shot compresses the list from right to left into a narrow `#01..#99` rail,
@@ -69,7 +69,7 @@ export function openStaticTrainingExitConfirmDialogue(
  *   Clicking the currently active `#number` in the rail expands back to the full Shot List.
  * - Footer: Displays live hover descriptions from any option or control in the list or detail inspector.
  */
-export const Layer5StaticTrainingPackEditRecipe: React.FC<Layer5StaticTrainingPackEditRecipeProps> = (rawProps) => {
+export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspectorDrawerProps> = (rawProps) => {
   const {
   isLight = false,
   transparent = true,
@@ -93,7 +93,7 @@ export const Layer5StaticTrainingPackEditRecipe: React.FC<Layer5StaticTrainingPa
   onExportSingleShot,
   onImportSingleShot,
   onCollapseDrawer,
-} = useLayer5StaticTrainingPackEditStoreBinding(rawProps);
+} = useStaticTrainingShotInspectorDrawerStoreBinding(rawProps);
   const [internalShots, setInternalShots] = useState<StaticTrainingShotItem[]>(
     INITIAL_TRAINING_SHOTS
   );
@@ -276,7 +276,7 @@ export const Layer5StaticTrainingPackEditRecipe: React.FC<Layer5StaticTrainingPa
       }
       setHoveredDesc(`Imported shot configuration from ${file.name}.`);
     } catch (err: any) {
-      console.error('[StaticTrainingPackEditRecipe] Failed to import shot JSON:', err);
+      console.error('[StaticTrainingShotInspectorDrawer] Failed to import shot JSON:', err);
       setHoveredDesc(`Failed to import shot JSON: ${err?.message || 'Invalid JSON'}`);
     } finally {
       e.target.value = '';

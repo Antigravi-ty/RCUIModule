@@ -14,7 +14,7 @@ import {
   evaluateRemoteTuningSessionFromRecord,
   performLocalUserBackupExport,
   performRemoteAccountBackupExport,
-} from './cloudProfileSyncHelpers';
+} from './cloudProfileSyncPipeline';
 
 type StoreSet = (
   partial:
