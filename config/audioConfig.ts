@@ -14,6 +14,7 @@ import {
   DEFAULT_AUDIO_CONFIG,
   DEFAULT_AUDIO_SETTINGS,
   type AudioConfigSettings,
+  type DynamicRangeProfileId,
 } from './audioConstants';
 
 export {
@@ -31,6 +32,7 @@ export {
   DEFAULT_AUDIO_CONFIG,
   DEFAULT_AUDIO_SETTINGS,
   type AudioConfigSettings,
+  type DynamicRangeProfileId,
 };
 
 export type AudioConfigSubscriber = (config: AudioConfigSettings) => void;

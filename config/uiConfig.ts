@@ -150,6 +150,12 @@ export interface AudioConfig {
   midGain: number;
   trebleGain: number;
   hrtfEnabled: boolean;
+  dynamicRangeProfile?: 'compressed' | 'dynamic' | 'monitor';
+  spatialPanningModel?: 'equalpower' | 'HRTF';
+  distanceModel?: 'smoothstep' | 'inverse' | 'linear' | 'exponential';
+  audibilityFloor?: number;
+  arenaAcousticScale?: number;
+  farFieldHighShelfDb?: number;
 }
 
 export interface GameplayConfig {

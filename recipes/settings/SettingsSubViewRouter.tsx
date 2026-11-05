@@ -7,8 +7,15 @@ import { Layer3TrainingConfigRecipe } from '../Layer3TrainingConfigRecipe';
 import { Layer3CameraRecipe } from '../Layer3CameraRecipe';
 import type { CameraConfig } from '../camera/cameraConfigSpecs';
 import { Layer3KeybindingsRecipe } from '../Layer3KeybindingsRecipe';
+import { Layer3AudioEqRecipe } from '../Layer3AudioEqRecipe';
 
-export type SettingsInternalSubView = 'trajectory' | 'training-config' | 'camera' | 'keybindings' | null;
+export type SettingsInternalSubView =
+  | 'trajectory'
+  | 'training-config'
+  | 'camera'
+  | 'keybindings'
+  | 'audio-eq'
+  | null;
 
 export interface SettingsSubViewRouterProps {
   subView: Exclude<SettingsInternalSubView, null>;
@@ -72,6 +79,15 @@ export const SettingsSubViewRouter: React.FC<SettingsSubViewRouterProps> = ({
     );
   }
 
+  if (subView === 'audio-eq') {
+    return (
+      <Layer3AudioEqRecipe
+        isLight={isLight}
+        onBack={() => onChangeSubView(null)}
+      />
+    );
+  }
+
   return (
     <Layer3KeybindingsRecipe
       standalone
@@ -80,3 +96,4 @@ export const SettingsSubViewRouter: React.FC<SettingsSubViewRouterProps> = ({
     />
   );
 };
+

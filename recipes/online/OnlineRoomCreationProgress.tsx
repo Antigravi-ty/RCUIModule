@@ -8,7 +8,7 @@ import { dialogue } from '../../compounds/dialogue/dialogueStore';
 
 export function dispatchOnlineRoomErrorNotification(
   summary = 'Could not bind or connect to signaling room within 10s.',
-  details = 'WebSocket Signaling Handshake Failed (ERR_CONNECTION_TIMED_OUT).\nEndpoint: wss://relay.carsoccer.dev/signaling\nAttempted Room: #4829 (120Hz Sub-Tick WebRTC)'
+  details = 'WebSocket Signaling Handshake Failed (ERR_CONNECTION_TIMED_OUT).\nEndpoint: wss://relay.carball.dev/signaling\nAttempted Room: #4829 (120Hz Sub-Tick WebRTC)'
 ): void {
   const store = useQuickNotificationStore.getState();
   const existing =
@@ -69,9 +69,9 @@ export const DEFAULT_HOST_CREATION_STEPS: CreationStepSpec[] = [
   {
     step: 2,
     stageTitle: 'Connecting Signaling Relay',
-    description: 'Establishing WebSocket handshake with signaling server (wss://relay.carsoccer.dev)...',
+    description: 'Establishing WebSocket handshake with signaling server (wss://relay.carball.dev)...',
     errorTitle: 'Signaling Handshake Timed Out',
-    errorDescription: 'Could not reach wss://relay.carsoccer.dev/signaling within 10s (ERR_CONNECTION_TIMED_OUT).',
+    errorDescription: 'Could not reach wss://relay.carball.dev/signaling within 10s (ERR_CONNECTION_TIMED_OUT).',
   },
   {
     step: 3,

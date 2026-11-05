@@ -92,6 +92,9 @@ export const createDevTunersSlice: StateCreator<
 
   developerMode: getInitialDeveloperMode(),
   setDeveloperMode: (mode) => {
+    if (mode && !getInitialDeveloperMode()) {
+      return;
+    }
     set({ developerMode: mode });
     if (mode) {
       const existing = floatingStore

@@ -1,5 +1,5 @@
 /**
- * kickoffDuelConfig.js
+ * kickoffDuelConfig.ts
  * Pure data configuration and precomputed baseline matrix results for the 4-Model Kickoff Duel Lab.
  */
 
