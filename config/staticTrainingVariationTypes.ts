@@ -4,9 +4,20 @@
  * Static Training Packs (`RLRCSPack` / `RCSPack` / `RCSPackE`).
  */
 
+import {
+  KEVPERT_LATEST_PRESETS,
+  KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE,
+  isVariationMatchingLatestPreset,
+  resolveEffectiveRecommendedVariation,
+} from './kevpertVariationPresets';
+
 export type KevpertPresetKey =
+  | 'F1'
+  | 'F2'
   | 'F3'
+  | 'F4'
   | 'F5'
+  | 'F6'
   | 'F7'
   | 'F8'
   | 'F9'
@@ -15,8 +26,12 @@ export type KevpertPresetKey =
   | 'F12';
 
 export const KEVPERT_PRESET_KEYS: KevpertPresetKey[] = [
+  'F1',
+  'F2',
   'F3',
+  'F4',
   'F5',
+  'F6',
   'F7',
   'F8',
   'F9',
@@ -26,58 +41,68 @@ export const KEVPERT_PRESET_KEYS: KevpertPresetKey[] = [
 ];
 
 export interface StaticTrainingVariationConfig {
-  /** Optional preset key label (e.g. 'F7') */
-  presetKey?: KevpertPresetKey | 'CUSTOM';
-  /** Human-readable preset or source description (e.g. 'Kevpert 2023 F7 (Dodge Control / Redirects)') */
+  /** Preset identifier if derived from Kevpert F1-F12 or custom */
+  presetKey?: KevpertPresetKey | 'CUSTOM' | 'custom';
+  /** Human-readable preset or source description */
   label?: string;
+  /** Human-readable label alias */
+  presetLabel?: string;
   /** Source YouTube video ID if matched from Kevpert video description */
   sourceVideoId?: string;
-  /** Ball speed modifier percentage range [minPct, maxPct] (`sv_training_var_speed`, e.g. [-1.9, 3.5]) */
+  /** Ball speed modifier percentage [minPct, maxPct] (e.g., [-1.9, 3.5]) */
   ballSpeedModifierPct: [number, number];
-  /** Ball XY horizontal location offset range in UU [minUU, maxUU] (`sv_training_var_loc`, e.g. [-100, 100]) */
+  /** Ball horizontal XY location modifier in Unreal Units [minUU, maxUU] */
   ballLocationModifierXY: [number, number];
-  /** Ball Z vertical height offset range in UU [minUU, maxUU] (`sv_training_var_loc_z`, e.g. [-100, 100]) */
+  /** Ball vertical Z height modifier in Unreal Units [minUU, maxUU] */
   ballHeightModifierZ: [number, number];
-  /** Ball launch trajectory rotation modifier in degrees [minDeg, maxDeg] (`sv_training_var_rot`, e.g. [-5, 5]) */
+  /** Ball velocity direction rotation modifier in degrees [minDeg, maxDeg] */
   ballRotationModifierDeg: [number, number];
-  /** Ball spin modifier in rad/s [minSpin, maxSpin] (`sv_training_var_spin`, e.g. [-0.3, 0.3]) */
+  /** Ball angular velocity spin modifier in rad/s [minSpin, maxSpin] */
   ballSpinModifier: [number, number];
-  /** Vehicle starting speed range in UU/s [minSpeed, maxSpeed] (`sv_training_player_velocity`, null = keep shot's car speed) */
+  /** Vehicle launch speed override range in UU/s [minSpeed, maxSpeed] (null = keep pack default) */
   vehicleSpeedRange: [number, number] | null;
-  /** Vehicle XY location offset range in UU [minUU, maxUU] (`sv_training_var_car_loc`, e.g. [-315, 335]) */
+  /** Vehicle XY location modifier in Unreal Units [minUU, maxUU] */
   vehicleLocationModifier: [number, number];
-  /** Vehicle yaw rotation offset range in degrees [minDeg, maxDeg] (`sv_training_var_car_rot`, e.g. [-6, 6]) */
+  /** Vehicle yaw rotation modifier in degrees [minDeg, maxDeg] */
   vehicleRotationModifierDeg: [number, number];
-  /** Boost limit override (`sv_training_limitboost`, 0..100, null = keep shot's initialBoost) */
+  /** Boost limit override [0..100] (null = keep pack default) */
   boostLimitOverride: number | null;
-  /** Force spawn vehicle on ground (settles suspension at Z=17.05) */
+  /** Force vehicle to spawn snapped on the ground */
   forceSpawnVehicleOnGround: boolean;
-  /** Force unlimited boost regardless of shot or preset boost limit */
+  /** Force unlimited boost */
   forceUnlimitedBoost: boolean;
 }
 
 export interface StaticTrainingQuickVariationToggles {
-  /** User global override: when true, uses customVariation instead of pack's recommendedVariation */
+  /** Master switch to override pack's recommended variation with custom/preset variation */
   enableCustomVariationOverride: boolean;
-  /** Additional boost added to boost limit (0 .. 100, clamped to max 100 in arena) */
+  /**
+   * When false (default / OFF = "Apply Old"), Kevpert packs use the exact BakkesMod
+   * variation parameters from their original YouTube video description.
+   * When true (ON = "Apply New"), Kevpert packs use the latest F1-F12 keybinding parameters.
+   */
+  applyNewKevpertBind?: boolean;
+  /** Additional boost added on top of active boost limit (0 - 100), capped at 100 */
   moreBoostAmount: number;
-  /** Disables all ball variance (speed, location, height, trajectory rotation, spin) */
+  /** Disable all ball position/speed/rotation/spin variance */
   disableBallVariance: boolean;
-  /** Disables all vehicle variance (starting velocity override, location, rotation) */
+  /** Disable all vehicle position/speed/rotation variance */
   disableVehicleVariance: boolean;
-  /** Globally disables random initial ball angular velocity for all packs */
+  /** Disable all random angular velocity across all training packs */
   disableAllRandomAngularVelocity: boolean;
-  /** Disables random initial ball angular velocity specifically for RLRCSPack (.Tem) packs (Default: true) */
+  /** Specifically disable deterministic/random angular velocity imported from .RLRCSPack (.Tem) */
   disableRLRCSPackAngularVelocity: boolean;
   /**
-   * When true (default), shots with unlimitedBoost enabled will still display INF in the top pack HUD
-   * while overriding actual boost consumption to start at 100 in the arena & bottom-right boost gauge.
+   * Override Unlimited Boost as 100 (default: true).
+   * When enabled, packs/shots with Unlimited Boost keep the top HUD badge as INF,
+   * while actual arena physics and the bottom-right boost gauge start at 100 and consume boost.
    */
-  overrideUnlimitedBoostAs100: boolean;
+  overrideUnlimitedBoostAs100?: boolean;
 }
 
 export const DEFAULT_QUICK_VARIATION_TOGGLES: StaticTrainingQuickVariationToggles = {
   enableCustomVariationOverride: false,
+  applyNewKevpertBind: false,
   moreBoostAmount: 0,
   disableBallVariance: false,
   disableVehicleVariance: false,
@@ -86,455 +111,28 @@ export const DEFAULT_QUICK_VARIATION_TOGGLES: StaticTrainingQuickVariationToggle
   overrideUnlimitedBoostAs100: true,
 };
 
-/**
- * Latest Kevpert BakkesMod F-key presets (June–August 2023 standard + F5 from Defense series).
- */
-export const KEVPERT_LATEST_PRESETS: Record<KevpertPresetKey, StaticTrainingVariationConfig> = {
-  F3: {
-    presetKey: 'F3',
-    label: 'F3 • Fast Aerial / Dodge Control 2 (Vel 1600–1800, Boost 90)',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100, 100],
-    ballHeightModifierZ: [-100, 100],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1600, 1800],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 90,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  F5: {
-    presetKey: 'F5',
-    label: 'F5 • Backwall Def / Turn & Clear (Vel 600–800, Boost 40)',
-    ballSpeedModifierPct: [-1.0, 0.5],
-    ballLocationModifierXY: [0, 0],
-    ballHeightModifierZ: [0, 0],
-    ballRotationModifierDeg: [-0.3, 0.3],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [600, 800],
-    vehicleLocationModifier: [0, 0],
-    vehicleRotationModifierDeg: [0, 0],
-    boostLimitOverride: 40,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  F7: {
-    presetKey: 'F7',
-    label: 'F7 • Adv Double Taps / Striking / Redirects (Vel 1500–1700, Boost 64)',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100, 100],
-    ballHeightModifierZ: [-100, 100],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1500, 1700],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 64,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  F8: {
-    presetKey: 'F8',
-    label: 'F8 • 1s Shots / Mid-Speed Setups (Vel 450–650, Boost 35)',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100, 100],
-    ballHeightModifierZ: [-100, 100],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [450, 650],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 35,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  F9: {
-    presetKey: 'F9',
-    label: 'F9 • Low-Boost / Boost Pickups (Vel 250–450, Boost 16)',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100, 100],
-    ballHeightModifierZ: [-100, 100],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [250, 450],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 16,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  F10: {
-    presetKey: 'F10',
-    label: 'F10 • High-Speed Double Taps (Vel 1700–1900, Boost 70)',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100, 100],
-    ballHeightModifierZ: [-100, 100],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1700, 1900],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 70,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  F11: {
-    presetKey: 'F11',
-    label: 'F11 • Wall Powerclears / Aerial Setups (Vel 750–900, Boost 85)',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100, 100],
-    ballHeightModifierZ: [-100, 100],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [750, 900],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 85,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  F12: {
-    presetKey: 'F12',
-    label: 'F12 • Mid-Fast Aerials / Reads (Vel 1200–1350, Boost 65)',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100, 100],
-    ballHeightModifierZ: [-100, 100],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1200, 1350],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 65,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
+export const ZERO_VARIATION_CONFIG: StaticTrainingVariationConfig = {
+  presetKey: 'F1',
+  label: 'Reset / No Variance (F1)',
+  presetLabel: 'Reset / No Variance (F1)',
+  ballSpeedModifierPct: [0, 0],
+  ballLocationModifierXY: [0, 0],
+  ballHeightModifierZ: [0, 0],
+  ballRotationModifierDeg: [0, 0],
+  ballSpinModifier: [0, 0],
+  vehicleSpeedRange: null,
+  vehicleLocationModifier: [0, 0],
+  vehicleRotationModifierDeg: [0, 0],
+  boostLimitOverride: null,
+  forceSpawnVehicleOnGround: false,
+  forceUnlimitedBoost: false,
 };
 
-/**
- * Historical video-exact Kevpert variations by Rocket League Training Pack Code.
- * Extracted directly from Kevpert's YouTube video descriptions where each pack was published.
- */
-export const KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE: Record<string, StaticTrainingVariationConfig> = {
-  // 2019-04-15: Long & Air Roll Shots (FffJoKWnOps)
-  'FC42-A3E1-A202-884A': {
-    presetKey: 'F8',
-    label: 'Kevpert: Striking 1s Shots F8 (2019 Video Spec)',
-    sourceVideoId: 'FffJoKWnOps',
-    ballSpeedModifierPct: [-1.0, 0.5],
-    ballLocationModifierXY: [0, 0],
-    ballHeightModifierZ: [0, 0],
-    ballRotationModifierDeg: [-0.3, 0.3],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [450, 650],
-    vehicleLocationModifier: [0, 0],
-    vehicleRotationModifierDeg: [0, 0],
-    boostLimitOverride: 35,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2019-05-10: Ultimate Defense: Backwall Defense, Turn & Clears, Wall Powerclears (MlBlhnHe0Ns)
-  'DDC9-8CBF-5E2C-C3BE': {
-    presetKey: 'F5',
-    label: 'Kevpert: Backwall Def 1 F5 (2019 Video Spec)',
-    sourceVideoId: 'MlBlhnHe0Ns',
-    ballSpeedModifierPct: [-1.0, 0.5],
-    ballLocationModifierXY: [0, 0],
-    ballHeightModifierZ: [0, 0],
-    ballRotationModifierDeg: [-0.3, 0.3],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [600, 800],
-    vehicleLocationModifier: [0, 0],
-    vehicleRotationModifierDeg: [0, 0],
-    boostLimitOverride: 40,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  '0C52-B1DD-39BC-EF97': {
-    presetKey: 'F5',
-    label: 'Kevpert: Turn & Clear 1 F5 (2019 Video Spec)',
-    sourceVideoId: 'MlBlhnHe0Ns',
-    ballSpeedModifierPct: [-1.0, 0.5],
-    ballLocationModifierXY: [0, 0],
-    ballHeightModifierZ: [0, 0],
-    ballRotationModifierDeg: [-0.3, 0.3],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [600, 800],
-    vehicleLocationModifier: [0, 0],
-    vehicleRotationModifierDeg: [0, 0],
-    boostLimitOverride: 40,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  '89F5-2C75-3B79-BA52': {
-    presetKey: 'F11',
-    label: 'Kevpert: Wall Powerclears F11 (2019 Video Spec)',
-    sourceVideoId: 'MlBlhnHe0Ns',
-    ballSpeedModifierPct: [-1.0, 0.5],
-    ballLocationModifierXY: [0, 0],
-    ballHeightModifierZ: [0, 0],
-    ballRotationModifierDeg: [-0.3, 0.3],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [750, 900],
-    vehicleLocationModifier: [0, 0],
-    vehicleRotationModifierDeg: [0, 0],
-    boostLimitOverride: 85,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-05-14: Double Taps Training (1aIWlWXOQZk)
-  '3115-DC26-525D-F409': {
-    presetKey: 'F10',
-    label: 'Kevpert: Adv Double Taps 1 F10 (May 2023 Video Spec)',
-    sourceVideoId: '1aIWlWXOQZk',
-    ballSpeedModifierPct: [-1.0, 0.5],
-    ballLocationModifierXY: [0, 0],
-    ballHeightModifierZ: [0, 0],
-    ballRotationModifierDeg: [-0.3, 0.3],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1700, 1900],
-    vehicleLocationModifier: [0, 0],
-    vehicleRotationModifierDeg: [0, 0],
-    boostLimitOverride: 70,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  'DEC7-4CAD-1452-30D3': {
-    presetKey: 'F7',
-    label: 'Kevpert: Adv Double Taps 2 F7 (May 2023 Video Spec)',
-    sourceVideoId: '1aIWlWXOQZk',
-    ballSpeedModifierPct: [-1.0, 0.5],
-    ballLocationModifierXY: [0, 0],
-    ballHeightModifierZ: [0, 0],
-    ballRotationModifierDeg: [-0.3, 0.3],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1500, 1700],
-    vehicleLocationModifier: [0, 0],
-    vehicleRotationModifierDeg: [0, 0],
-    boostLimitOverride: 64,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-05-22: Redirects (5STk3c4X2mw)
-  '5E3A-FC4A-3AD7-0BBD': {
-    presetKey: 'F7',
-    label: 'Kevpert: Redirects 1 F7 (May 2023 Video Spec)',
-    sourceVideoId: '5STk3c4X2mw',
-    ballSpeedModifierPct: [-1.9, 2.5],
-    ballLocationModifierXY: [-5.0, 5.0],
-    ballHeightModifierZ: [-5.0, 5.0],
-    ballRotationModifierDeg: [-1.5, 1.5],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1500, 1700],
-    vehicleLocationModifier: [-75, 75],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 64,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-05-28: Striking 1 & 2 (Pst1mRFWqjM)
-  '1711-49F1-66CB-FC65': {
-    presetKey: 'F7',
-    label: 'Kevpert: Striking 1 F7 (May 2023 Video Spec)',
-    sourceVideoId: 'Pst1mRFWqjM',
-    ballSpeedModifierPct: [-1.9, 2.5],
-    ballLocationModifierXY: [-5.0, 5.0],
-    ballHeightModifierZ: [-5.0, 5.0],
-    ballRotationModifierDeg: [-1.5, 1.5],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1500, 1700],
-    vehicleLocationModifier: [-75, 75],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 64,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  '097C-9818-637B-7B55': {
-    presetKey: 'F7',
-    label: 'Kevpert: Striking 2 F7 (May 2023 Video Spec)',
-    sourceVideoId: 'Pst1mRFWqjM',
-    ballSpeedModifierPct: [-1.9, 2.5],
-    ballLocationModifierXY: [-5.0, 5.0],
-    ballHeightModifierZ: [-5.0, 5.0],
-    ballRotationModifierDeg: [-1.5, 1.5],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1500, 1700],
-    vehicleLocationModifier: [-75, 75],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 64,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-06-04: Dodge Control 1 (IjaWcvSgSc0)
-  '2C44-12C9-F864-CF3B': {
-    presetKey: 'F7',
-    label: 'Kevpert: Dodge Control 1 F7 (June 2023 Video Spec)',
-    sourceVideoId: 'IjaWcvSgSc0',
-    ballSpeedModifierPct: [-1.9, 2.5],
-    ballLocationModifierXY: [-5.0, 5.0],
-    ballHeightModifierZ: [-5.0, 5.0],
-    ballRotationModifierDeg: [-1.5, 1.5],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1500, 1700],
-    vehicleLocationModifier: [-75, 75],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 64,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-06-18: Catches Ground 1 (ztRZ46ZyUq8)
-  '8FA1-DC94-C18D-D82B': {
-    presetKey: 'F7',
-    label: 'Kevpert: Catches Ground 1 F7 (June 2023 Video Spec)',
-    sourceVideoId: 'ztRZ46ZyUq8',
-    ballSpeedModifierPct: [-1.9, 2.5],
-    ballLocationModifierXY: [-5.0, 5.0],
-    ballHeightModifierZ: [-5.0, 5.0],
-    ballRotationModifierDeg: [-1.5, 1.5],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1500, 1700],
-    vehicleLocationModifier: [-75, 75],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 64,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-06-25: Boost Pickups (edWi_ATGh9A)
-  'E9CC-EFC9-AE09-B500': {
-    presetKey: 'F8',
-    label: 'Kevpert: Boost Pickups F8 (June 2023 Video Spec)',
-    sourceVideoId: 'edWi_ATGh9A',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100.0, 100.0],
-    ballHeightModifierZ: [-100.0, 100.0],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [450, 650],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 35,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-07-02: Wall Stops 1 (fOA9lOjpbNE)
-  '5FEA-4927-9052-664F': {
-    presetKey: 'F11',
-    label: 'Kevpert: Wall Stops 1 F11 (July 2023 Video Spec)',
-    sourceVideoId: 'fOA9lOjpbNE',
-    ballSpeedModifierPct: [-1.9, 2.5],
-    ballLocationModifierXY: [-5.0, 5.0],
-    ballHeightModifierZ: [-5.0, 5.0],
-    ballRotationModifierDeg: [-1.2, 1.2],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [750, 900],
-    vehicleLocationModifier: [-75, 75],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 85,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-07-09: Rebounds Low 1 & Rebounds 1 (6cV5N31jYag)
-  '950B-490B-649A-FBDE': {
-    presetKey: 'F11',
-    label: 'Kevpert: Rebounds Low 1 F11 (July 2023 Video Spec)',
-    sourceVideoId: '6cV5N31jYag',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100.0, 100.0],
-    ballHeightModifierZ: [-100.0, 100.0],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [750, 900],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 85,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  '9379-E2D6-673B-FFF3': {
-    presetKey: 'F12',
-    label: 'Kevpert: Rebounds 1 F12 (July 2023 Video Spec)',
-    sourceVideoId: '6cV5N31jYag',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100.0, 100.0],
-    ballHeightModifierZ: [-100.0, 100.0],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1200, 1350],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 65,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-06-11: Powerslide 1 (rA8fccIIMVs)
-  'ADEB-B89D-7EC3-E7FA': {
-    presetKey: 'F11',
-    label: 'Kevpert: Powerslide 1 F11 (June 2023 Video Spec)',
-    sourceVideoId: 'rA8fccIIMVs',
-    ballSpeedModifierPct: [-1.9, 2.5],
-    ballLocationModifierXY: [-5.0, 5.0],
-    ballHeightModifierZ: [-5.0, 5.0],
-    ballRotationModifierDeg: [-1.2, 1.2],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [750, 900],
-    vehicleLocationModifier: [-75, 75],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 85,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2019-06-21: How to Flip Reset... Like a Pro! (i0YfQLqjgBU)
-  '555F-7503-BBB9-E1E3': {
-    presetKey: 'F11',
-    label: 'Kevpert: GroundFlipReset 2 F11 (2019 Video Spec)',
-    sourceVideoId: 'i0YfQLqjgBU',
-    ballSpeedModifierPct: [-1.0, 0.5],
-    ballLocationModifierXY: [0, 0],
-    ballHeightModifierZ: [0, 0],
-    ballRotationModifierDeg: [-0.3, 0.3],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [750, 900],
-    vehicleLocationModifier: [0, 0],
-    vehicleRotationModifierDeg: [0, 0],
-    boostLimitOverride: 85,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2019-07-08: Car Control | Air Dribbles & Flip Resets #1 (0abbKpEMnWA)
-  'AFE5-53FD-EC5B-9352': {
-    presetKey: 'F11',
-    label: 'Kevpert: Air Dribbles & Flip Resets 1 (2019 Video Spec)',
-    sourceVideoId: '0abbKpEMnWA',
-    ballSpeedModifierPct: [-1.0, 0.5],
-    ballLocationModifierXY: [0, 0],
-    ballHeightModifierZ: [0, 0],
-    ballRotationModifierDeg: [-0.3, 0.3],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [750, 900],
-    vehicleLocationModifier: [0, 0],
-    vehicleRotationModifierDeg: [0, 0],
-    boostLimitOverride: 85,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
-  // 2023-08-06: Dodge Control 2 (l1qDJypL6sE)
-  '0624-600D-000E-F2A7': {
-    presetKey: 'F3',
-    label: 'Kevpert: Dodge Control 2 F3 (Aug 2023 Video Spec)',
-    sourceVideoId: 'l1qDJypL6sE',
-    ballSpeedModifierPct: [-1.9, 3.5],
-    ballLocationModifierXY: [-100.0, 100.0],
-    ballHeightModifierZ: [-100.0, 100.0],
-    ballRotationModifierDeg: [-5.0, 5.0],
-    ballSpinModifier: [-0.3, 0.3],
-    vehicleSpeedRange: [1600, 1800],
-    vehicleLocationModifier: [-315, 335],
-    vehicleRotationModifierDeg: [-6.0, 6.0],
-    boostLimitOverride: 90,
-    forceSpawnVehicleOnGround: false,
-    forceUnlimitedBoost: false,
-  },
+export {
+  KEVPERT_LATEST_PRESETS,
+  KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE,
+  isVariationMatchingLatestPreset,
+  resolveEffectiveRecommendedVariation,
 };
 
 export function cloneVariationConfig(
@@ -544,6 +142,8 @@ export function cloneVariationConfig(
   if (!cfg) {
     return {
       ...fallback,
+      label: fallback.label ?? fallback.presetLabel ?? 'Kevpert F7',
+      presetLabel: fallback.presetLabel ?? fallback.label ?? 'Kevpert F7',
       ballSpeedModifierPct: [...fallback.ballSpeedModifierPct],
       ballLocationModifierXY: [...fallback.ballLocationModifierXY],
       ballHeightModifierZ: [...fallback.ballHeightModifierZ],
@@ -554,9 +154,11 @@ export function cloneVariationConfig(
       vehicleRotationModifierDeg: [...fallback.vehicleRotationModifierDeg],
     };
   }
+  const resolvedLabel = cfg.label ?? cfg.presetLabel ?? 'Custom Training Variation';
   return {
     presetKey: cfg.presetKey ?? 'CUSTOM',
-    label: cfg.label ?? 'Custom Training Variation',
+    label: resolvedLabel,
+    presetLabel: resolvedLabel,
     ...(cfg.sourceVideoId ? { sourceVideoId: cfg.sourceVideoId } : {}),
     ballSpeedModifierPct: Array.isArray(cfg.ballSpeedModifierPct)
       ? [Number(cfg.ballSpeedModifierPct[0]) || 0, Number(cfg.ballSpeedModifierPct[1]) || 0]
@@ -596,23 +198,30 @@ export function cloneVariationConfig(
 }
 
 /**
- * Resolves the recommended variation for a training pack given its code and title.
+ * Resolves the recommended BakkesMod / Kevpert variation for a pack based on its code or title.
  */
 export function resolveRecommendedVariationForPack(
   code?: string | null,
   title?: string | null,
-  _creator?: string | null
+  creatorName?: string | null
 ): StaticTrainingVariationConfig | undefined {
-  const normCode = (code || '').trim().toUpperCase();
-  if (normCode && KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE[normCode]) {
-    return cloneVariationConfig(KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE[normCode]);
+  const normalizedCode = (code || '').trim().toUpperCase();
+  if (normalizedCode && KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE[normalizedCode]) {
+    return cloneVariationConfig(KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE[normalizedCode]);
   }
-  const fKeyMatch = (title || '').match(/\b(F3|F5|F7|F8|F9|F10|F11|F12)\b/i);
+
+  const combined = `${title || ''} ${creatorName || ''}`;
+  if (!/kevpert/i.test(combined)) {
+    return undefined;
+  }
+
+  const fKeyMatch = (title || '').match(/\b(F1[0-2]|F[1-9])\b/i);
   if (fKeyMatch) {
     const key = fKeyMatch[1].toUpperCase() as KevpertPresetKey;
     if (KEVPERT_LATEST_PRESETS[key]) {
       return cloneVariationConfig(KEVPERT_LATEST_PRESETS[key]);
     }
   }
+
   return undefined;
 }

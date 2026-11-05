@@ -167,31 +167,15 @@ export function derivePackTagsAndMetadata(params: {
   } else if (creatorLower === 'psyonix' || titleLower.includes('psyonix')) {
     tagSet.add('Psyonix');
     normalizedCreator = 'Psyonix';
-  } else if (creatorLower.includes('poquito')) {
-    tagSet.add('Poquito');
-  } else if (creatorLower.includes('wayprotein')) {
-    tagSet.add('Wayprotein');
-  } else if (creatorLower.includes('biddles')) {
-    tagSet.add('Biddles');
-  } else if (creatorLower.includes('virge')) {
-    tagSet.add('Virge');
-  } else if (creatorLower.includes('coco')) {
-    tagSet.add('Coco');
-  } else if (code && code.trim().toUpperCase() === '0FB6-C16F-D26D-0A6F') {
-    if (!normalizedCreator) normalizedCreator = 'Iowa';
-    tagSet.add('Iowa');
-  } else if (creatorLower.includes('mark_maboco') || titleLower.startsWith('boo ')) {
-    tagSet.add('Mark_MaBoCo');
-  }
-
-  if (!code || !code.trim()) {
-    tagSet.add('Local');
-  } else if (normalizedCreator && !tagSet.has('Kevpert') && !tagSet.has('Psyonix')) {
-    tagSet.add('Community');
+  } else {
+    if (code && code.trim().toUpperCase() === '0FB6-C16F-D26D-0A6F' && !normalizedCreator) {
+      normalizedCreator = 'Iowa';
+    }
+    tagSet.add('Others');
   }
 
   // Extract Kevpert F-key tag if present
-  const fKeyMatch = title.match(/\b(F3|F5|F7|F8|F9|F10|F11|F12)\b/i);
+  const fKeyMatch = title.match(/\b(F1[0-2]|F[1-9])\b/i);
   if (fKeyMatch) {
     tagSet.add(fKeyMatch[1].toUpperCase());
   }
@@ -206,21 +190,18 @@ export function derivePackTagsAndMetadata(params: {
     const yr = dateMatch[2];
     const mNum = MONTH_NAME_TO_NUM[mKey] || '01';
     releaseYearMonth = `${yr}-${mNum}`;
+    tagSet.add(yr);
     tagSet.add(releaseYearMonth);
-    if (tagSet.has('Psyonix')) {
-      tagSet.add(`Psyonix ${yr}`);
-    }
   }
 
   // Detect Rank Tier or Progression
   let rankTier: string | undefined;
   if (/\bprogression\b/i.test(title)) {
     rankTier = 'Progression';
-    tagSet.add('Progression');
   } else if (/\b(ssl|supersonic legend)\b/i.test(title)) {
-    rankTier = 'Supersonic Legend';
+    rankTier = 'SSL';
   } else if (/\b(gc|grand champion)\b/i.test(title)) {
-    rankTier = 'Grand Champion';
+    rankTier = 'GC';
   } else if (/\bchampion\b/i.test(title)) {
     rankTier = 'Champion';
   } else if (/\bdiamond\b/i.test(title)) {

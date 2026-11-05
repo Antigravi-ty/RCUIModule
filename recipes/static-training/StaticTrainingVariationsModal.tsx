@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Compass, Lock, RotateCcw, Sliders, Sparkles, X, Zap } from 'lucide-react';
-import { ToggleSwitch } from '../../primitives/ToggleSwitch';
+import { Compass, Lock, RotateCcw, Sliders, Sparkles, X } from 'lucide-react';
 import {
   type StaticTrainingVariationConfig,
   type StaticTrainingQuickVariationToggles,
@@ -8,8 +7,10 @@ import {
   KEVPERT_PRESET_KEYS,
   KEVPERT_LATEST_PRESETS,
   DEFAULT_QUICK_VARIATION_TOGGLES,
+  resolveEffectiveRecommendedVariation,
 } from '../../config/staticTrainingVariationTypes';
 import { DualThumbRangeSliderRow } from './DualThumbRangeSliderRow';
+import { StaticTrainingQuickTogglesSection } from './StaticTrainingQuickTogglesSection';
 import { floatingStore } from '../../stores/floatingStore';
 import { STATIC_TRAINING_BALL_CAM_TUNER_PRESET } from '../../stores/devFloatingPresets';
 
@@ -40,9 +41,13 @@ export const StaticTrainingVariationsModal: React.FC<StaticTrainingVariationsMod
       packRecommendedVariation,
       packTitle,
     }) => {
+      const effectivePackRecommended = resolveEffectiveRecommendedVariation(
+        packRecommendedVariation,
+        Boolean(toggles.applyNewKevpertBind)
+      );
       const activeDisplayVar = toggles.enableCustomVariationOverride
         ? customVariation
-        : packRecommendedVariation || customVariation;
+        : effectivePackRecommended || customVariation;
 
       const isUsingCustom = toggles.enableCustomVariationOverride;
       const isCustomEditable = isUsingCustom && customVariation.presetKey === 'CUSTOM';
@@ -163,212 +168,15 @@ export const StaticTrainingVariationsModal: React.FC<StaticTrainingVariationsMod
 
             {/* Scrollable Body */}
             <div className="p-4 overflow-y-auto flex flex-col gap-3.5 text-xs">
-              {/* 1. Master Override Toggle */}
-              <div
-                className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${
-                  isUsingCustom
-                    ? isLight
-                      ? 'bg-cyan-50/70 border-cyan-300'
-                      : 'bg-cyan-950/30 border-cyan-500/40'
-                    : isLight
-                    ? 'bg-neutral-50 border-neutral-200'
-                    : 'bg-neutral-850/80 border-neutral-800'
-                }`}
-              >
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-bold">
-                    Enable Custom Static Training Variance (User Global Override)
-                  </span>
-                  <span className="text-[10px] opacity-75">
-                    {isUsingCustom
-                      ? isCustomEditable
-                        ? 'ON (Custom Mode): Adjust dual-grabber sliders or type values directly and press Enter.'
-                        : `ON (Kevpert Preset ${customVariation.presetKey}): Using read-only Kevpert preset. Click "Custom" below to edit sliders.`
-                      : packRecommendedVariation
-                      ? `OFF (Default): Uses pack author's recommended variance (${
-                          packRecommendedVariation.presetKey || 'Embedded'
-                        }).`
-                      : 'OFF (Default): Uses pack metadata variance if present, or zero variance if none.'}
-                  </span>
-                </div>
-                <ToggleSwitch
-                  checked={isUsingCustom}
-                  onCheckedChange={(checked) =>
-                    onUpdateToggles({ enableCustomVariationOverride: checked })
-                  }
-                  isLight={isLight}
-                />
-              </div>
-
-              {/* 2. Quick Toggle Switches & Boost / Angular Velocity Controls */}
-              <div
-                className={`p-3 rounded-xl border flex flex-col gap-2.5 ${
-                  isLight
-                    ? 'bg-neutral-50/80 border-neutral-200'
-                    : 'bg-neutral-850/60 border-neutral-800'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 flex items-center gap-1">
-                    <Zap className="h-3 w-3 text-amber-400" />
-                    Quick Difficulty, Boost & Spin Toggles
-                  </span>
-                  <span className="text-[10px] font-mono opacity-60">
-                    Applies to both Recommended & Custom Variance
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {/* Override Unlimited Boost as 100 (Default ON) */}
-                  <div
-                    className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 ${
-                      isLight
-                        ? 'bg-white border-neutral-200'
-                        : 'bg-neutral-900/80 border-neutral-800'
-                    }`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-semibold">
-                        Override Unlimited Boost as 100
-                      </span>
-                      <span className="text-[9px] opacity-65">
-                        Default ON: Top HUD shows INF while arena & bottom-right gauge consume from 100
-                      </span>
-                    </div>
-                    <ToggleSwitch
-                      checked={toggles.overrideUnlimitedBoostAs100 !== false}
-                      onCheckedChange={(v) =>
-                        onUpdateToggles({ overrideUnlimitedBoostAs100: v })
-                      }
-                      isLight={isLight}
-                      variant="neutral"
-                    />
-                  </div>
-
-                  {/* More Boost (0..100, clamped to 100 in arena) */}
-                  <div
-                    className={`p-2.5 rounded-lg border flex flex-col gap-1 ${
-                      isLight
-                        ? 'bg-white border-neutral-200'
-                        : 'bg-neutral-900/80 border-neutral-800'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold">More Boost (+0..100)</span>
-                      <span className="text-[11px] font-mono font-bold text-amber-400">
-                        +{toggles.moreBoostAmount} (Max 100)
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={toggles.moreBoostAmount}
-                      onChange={(e) =>
-                        onUpdateToggles({ moreBoostAmount: Number(e.target.value) || 0 })
-                      }
-                      className="w-full accent-amber-400 cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Disable Ball Variance */}
-                  <div
-                    className={`p-2.5 rounded-lg border flex items-center justify-between ${
-                      isLight
-                        ? 'bg-white border-neutral-200'
-                        : 'bg-neutral-900/80 border-neutral-800'
-                    }`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-semibold">Disable Ball Variance</span>
-                      <span className="text-[9px] opacity-65">
-                        Keep ball trajectory fixed while car varies
-                      </span>
-                    </div>
-                    <ToggleSwitch
-                      checked={toggles.disableBallVariance}
-                      onCheckedChange={(v) => onUpdateToggles({ disableBallVariance: v })}
-                      isLight={isLight}
-                      variant="neutral"
-                    />
-                  </div>
-
-                  {/* Disable Vehicle Variance */}
-                  <div
-                    className={`p-2.5 rounded-lg border flex items-center justify-between ${
-                      isLight
-                        ? 'bg-white border-neutral-200'
-                        : 'bg-neutral-900/80 border-neutral-800'
-                    }`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-semibold">Disable Vehicle Variance</span>
-                      <span className="text-[9px] opacity-65">
-                        Keep car spawn & speed fixed while ball varies
-                      </span>
-                    </div>
-                    <ToggleSwitch
-                      checked={toggles.disableVehicleVariance}
-                      onCheckedChange={(v) => onUpdateToggles({ disableVehicleVariance: v })}
-                      isLight={isLight}
-                      variant="neutral"
-                    />
-                  </div>
-
-                  {/* Only Disable RLRCSPack Angular Velocity (Default ON) */}
-                  <div
-                    className={`p-2.5 rounded-lg border flex items-center justify-between ${
-                      isLight
-                        ? 'bg-white border-neutral-200'
-                        : 'bg-neutral-900/80 border-neutral-800'
-                    }`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-semibold">
-                        Disable RLRCSPack Angular Velocity
-                      </span>
-                      <span className="text-[9px] opacity-65">
-                        Default ON: .Tem shots launch with 0 spin (authentic RL rebound)
-                      </span>
-                    </div>
-                    <ToggleSwitch
-                      checked={toggles.disableRLRCSPackAngularVelocity}
-                      onCheckedChange={(v) =>
-                        onUpdateToggles({ disableRLRCSPackAngularVelocity: v })
-                      }
-                      isLight={isLight}
-                      variant="neutral"
-                    />
-                  </div>
-
-                  {/* Global Disable Random Angular Velocity */}
-                  <div
-                    className={`p-2.5 rounded-lg border flex items-center justify-between ${
-                      isLight
-                        ? 'bg-white border-neutral-200'
-                        : 'bg-neutral-900/80 border-neutral-800'
-                    }`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-semibold">
-                        Global Disable Random Angular Velocity
-                      </span>
-                      <span className="text-[9px] opacity-65">
-                        Forces 0 initial ball spin across all native & .Tem packs
-                      </span>
-                    </div>
-                    <ToggleSwitch
-                      checked={toggles.disableAllRandomAngularVelocity}
-                      onCheckedChange={(v) =>
-                        onUpdateToggles({ disableAllRandomAngularVelocity: v })
-                      }
-                      isLight={isLight}
-                      variant="neutral"
-                    />
-                  </div>
-                </div>
-              </div>
+              <StaticTrainingQuickTogglesSection
+                isLight={isLight}
+                toggles={toggles}
+                isUsingCustom={isUsingCustom}
+                isCustomEditable={isCustomEditable}
+                customVariation={customVariation}
+                packRecommendedVariation={packRecommendedVariation}
+                onUpdateToggles={onUpdateToggles}
+              />
 
               {/* 3. Kevpert BakkesMod F-Key Presets (Read-Only) + Custom Button */}
               <div
@@ -381,7 +189,7 @@ export const StaticTrainingVariationsModal: React.FC<StaticTrainingVariationsMod
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 flex items-center gap-1">
                     <Sparkles className="h-3 w-3 text-cyan-400" />
-                    Kevpert BakkesMod Presets (Read-Only) & Custom Mode
+                    Kevpert BakkesMod Latest Presets (F1–F12) & Custom Mode
                   </span>
                   <span className="text-[10px] font-mono opacity-65 flex items-center gap-1">
                     {isCustomEditable ? (
@@ -397,7 +205,7 @@ export const StaticTrainingVariationsModal: React.FC<StaticTrainingVariationsMod
                   </span>
                 </div>
 
-                <div className="grid grid-cols-5 sm:grid-cols-9 gap-1.5">
+                <div className="grid grid-cols-5 sm:grid-cols-7 lg:grid-cols-13 gap-1.5">
                   {KEVPERT_PRESET_KEYS.map((k) => {
                     const preset = KEVPERT_LATEST_PRESETS[k];
                     const isSelected =
@@ -407,8 +215,8 @@ export const StaticTrainingVariationsModal: React.FC<StaticTrainingVariationsMod
                         key={k}
                         type="button"
                         onClick={() => onSelectKevpertPreset(k)}
-                        title={`${preset.label} (Read-Only Preset)`}
-                        className={`py-1.5 px-2 rounded-lg border text-center font-mono text-xs font-bold transition-all cursor-pointer active:scale-95 ${
+                        title={`${preset.label || preset.presetLabel} (Read-Only Preset)`}
+                        className={`py-1.5 px-1.5 rounded-lg border text-center font-mono text-xs font-bold transition-all cursor-pointer active:scale-95 ${
                           isSelected
                             ? isLight
                               ? 'bg-neutral-900 border-neutral-900 text-white shadow-xs'

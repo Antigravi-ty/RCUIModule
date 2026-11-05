@@ -1,26 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  ChevronDown,
-  ChevronUp,
-  Code2,
-  Download,
-  Pencil,
-  Play,
-  Save,
-  Sparkles,
-  Target,
-  Trash2,
-} from 'lucide-react';
-import { ToggleSwitch } from '../../primitives/ToggleSwitch';
-import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
-import type {
-  StaticPackDownCounterOption,
-  StaticTrainingPackSummary,
-} from './StaticTrainingPackFolderList';
+  isVariationMatchingLatestPreset,
+  resolveEffectiveRecommendedVariation,
+} from '../../config/staticTrainingVariationTypes';
+import type { StaticTrainingPackSummary } from './StaticTrainingPackFolderList';
 
 export interface StaticTrainingPackMetadataInspectorProps {
   isLight: boolean;
-  isDevMode?: boolean;
+  isDevMode: boolean;
   selectedMeta: StaticTrainingPackSummary | null;
   editTitle: string;
   setEditTitle: (val: string) => void;
@@ -28,11 +15,13 @@ export interface StaticTrainingPackMetadataInspectorProps {
   setEditDescription: (val: string) => void;
   isMetadataDirty: boolean;
   downCounterEnabled: boolean;
-  setDownCounterEnabled: (val: boolean) => void;
-  downCounterValue: StaticPackDownCounterOption;
-  setDownCounterValue: (val: StaticPackDownCounterOption) => void;
+  setDownCounterEnabled: (val: boolean | ((prev: boolean) => boolean)) => void;
+  downCounterValue: 1 | 2 | 3;
+  setDownCounterValue: (val: 1 | 2 | 3) => void;
   confirmDeleteUuid: string | null;
-  setConfirmDeleteUuid: (uuid: string | null) => void;
+  setConfirmDeleteUuid: (val: string | null) => void;
+  applyNewKevpertBind?: boolean;
+  onToggleApplyNewKevpertBind?: (val: boolean) => void;
   onSaveMetadata: () => void;
   onPlayPack: (meta: StaticTrainingPackSummary) => void;
   onEditPack: (meta: StaticTrainingPackSummary) => void;
@@ -43,405 +32,403 @@ export interface StaticTrainingPackMetadataInspectorProps {
 
 export const StaticTrainingPackMetadataInspector: React.FC<
   StaticTrainingPackMetadataInspectorProps
-> = React.memo(
-  ({
-    isLight,
-    isDevMode = false,
-    selectedMeta,
-    editTitle,
-    setEditTitle,
-    editDescription,
-    setEditDescription,
-    isMetadataDirty,
-    downCounterEnabled,
-    setDownCounterEnabled,
-    downCounterValue,
-    setDownCounterValue,
-    confirmDeleteUuid,
-    setConfirmDeleteUuid,
-    onSaveMetadata,
-    onPlayPack,
-    onEditPack,
-    onExportPack,
-    onDeletePack,
-    onHoverDesc,
-  }) => {
-    const [showOriginalDescription, setShowOriginalDescription] = useState(false);
+> = ({
+  isLight,
+  isDevMode,
+  selectedMeta,
+  editTitle,
+  setEditTitle,
+  editDescription,
+  setEditDescription,
+  isMetadataDirty,
+  downCounterEnabled,
+  setDownCounterEnabled,
+  downCounterValue,
+  setDownCounterValue,
+  confirmDeleteUuid,
+  setConfirmDeleteUuid,
+  applyNewKevpertBind = false,
+  onToggleApplyNewKevpertBind,
+  onSaveMetadata,
+  onPlayPack,
+  onEditPack,
+  onExportPack,
+  onDeletePack,
+  onHoverDesc,
+}) => {
+  const rawRec = selectedMeta?.recommendedVariation ?? null;
+  const effectiveRec = resolveEffectiveRecommendedVariation(rawRec, applyNewKevpertBind);
+  const rawMatchesLatest = isVariationMatchingLatestPreset(rawRec);
+  const effectiveMatchesLatest = isVariationMatchingLatestPreset(effectiveRec);
 
-    return (
-      <div
-        className={`flex-1 min-h-0 flex flex-col justify-between rounded-xl border p-3.5 overflow-y-auto ${
-          isLight
-            ? 'bg-white border-neutral-200/90 text-neutral-900'
-            : 'bg-neutral-900/70 border-neutral-800 text-neutral-100'
-        }`}
-      >
-        {selectedMeta ? (
-          <>
-            <div className="flex flex-col gap-2.5">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-2">
+  return (
+    <div
+      className={`flex-1 min-h-0 flex flex-col justify-between rounded-xl border p-3.5 overflow-y-auto ${
+        isLight ? 'bg-slate-900/[0.02] border-slate-900/10' : 'bg-white/[0.02] border-white/10'
+      }`}
+    >
+      {selectedMeta ? (
+        <>
+          <div className="space-y-2.5">
+            {/* Pack Metadata Header & Badges */}
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {selectedMeta.code && (
                   <span
-                    className={`text-[10px] font-mono uppercase tracking-wider ${
-                      isLight ? 'text-neutral-500' : 'text-neutral-400'
-                    }`}
-                  >
-                    {selectedMeta.sourcePackType || 'RCSPACK'} • {selectedMeta.itemCount}{' '}
-                    {selectedMeta.itemCount === 1 ? 'SCENARIO' : 'SCENARIOS'}
-                  </span>
-                  <span
-                    className={`text-[10px] font-mono truncate max-w-[190px] ${
-                      isLight ? 'text-neutral-400' : 'text-neutral-500'
-                    }`}
-                    title={`/static-training-pack/${selectedMeta.uuid}`}
-                  >
-                    {selectedMeta.code ? `Code: ${selectedMeta.code}` : `ID: ${selectedMeta.uuid.slice(0, 8)}`}
-                  </span>
-                </div>
-
-                {/* Tags & Recommended Variance Badge Row */}
-                {((selectedMeta.tags && selectedMeta.tags.length > 0) ||
-                  selectedMeta.recommendedVariation) && (
-                  <div className="flex flex-wrap items-center gap-1">
-                    {selectedMeta.recommendedVariation && (
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold ${
-                          isLight
-                            ? 'bg-cyan-100 text-cyan-800 border border-cyan-300'
-                            : 'bg-cyan-950/70 text-cyan-300 border border-cyan-500/40'
-                        }`}
-                      >
-                        <Sparkles className="h-2.5 w-2.5" />
-                        <span>
-                          Variance: {selectedMeta.recommendedVariation.presetKey || 'Recommended'} (B:
-                          {selectedMeta.recommendedVariation.boostLimitOverride ?? 100})
-                        </span>
-                      </span>
-                    )}
-                    {selectedMeta.tags?.map((tag) => (
-                      <span
-                        key={tag}
-                        className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
-                          isLight
-                            ? 'bg-neutral-100 text-neutral-700 border border-neutral-200'
-                            : 'bg-neutral-800 text-neutral-300 border border-neutral-700'
-                        }`}
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-semibold opacity-70">Pack Name</label>
-                    <button
-                      type="button"
-                      disabled={!isMetadataDirty}
-                      onClick={onSaveMetadata}
-                      onMouseEnter={() =>
-                        onHoverDesc(
-                          isMetadataDirty
-                            ? 'Save updated Pack Name & Description to global metadata.'
-                            : 'No unsaved metadata changes.'
-                        )
-                      }
-                      onMouseLeave={() => onHoverDesc(null)}
-                      className={`flex items-center gap-1 px-2.5 py-0.5 rounded-md border text-[10px] font-bold transition-all ${
-                        isMetadataDirty
-                          ? isLight
-                            ? 'bg-neutral-900 hover:bg-neutral-800 border-neutral-900 text-white cursor-pointer active:scale-95'
-                            : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-400 text-neutral-950 cursor-pointer active:scale-95'
-                          : isLight
-                          ? 'bg-neutral-100 border-neutral-200 text-neutral-400 opacity-50 cursor-not-allowed'
-                          : 'bg-neutral-850 border-neutral-800 text-neutral-500 opacity-50 cursor-not-allowed'
-                      }`}
-                    >
-                      <Save className="h-3 w-3" />
-                      <span>Save</span>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold outline-none transition-colors ${
+                    className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold tracking-wider border ${
                       isLight
-                        ? 'bg-neutral-50 focus:bg-white border-neutral-300 text-neutral-900'
-                        : 'bg-neutral-850 focus:bg-neutral-800 border-neutral-700 text-neutral-100'
+                        ? 'bg-sky-500/10 border-sky-500/30 text-sky-700'
+                        : 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
                     }`}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-semibold opacity-70">
-                    Description (Default: $Code by $CreatorName)
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder={
-                      selectedMeta.code && selectedMeta.creator
-                        ? `${selectedMeta.code} by ${selectedMeta.creator}`
-                        : 'Optional pack description...'
+                  >
+                    CODE: {selectedMeta.code}
+                  </span>
+                )}
+                {effectiveRec && (
+                  <span
+                    onMouseEnter={() =>
+                      onHoverDesc(
+                        effectiveMatchesLatest
+                          ? `Recommended Kevpert Keybinding (${effectiveRec.presetKey}): Speed [${effectiveRec.ballSpeedModifierPct[0]}%, ${effectiveRec.ballSpeedModifierPct[1]}%], Ball XY [${effectiveRec.ballLocationModifierXY[0]}, ${effectiveRec.ballLocationModifierXY[1]}], Car Vel ${
+                              effectiveRec.vehicleSpeedRange
+                                ? `[${effectiveRec.vehicleSpeedRange[0]}, ${effectiveRec.vehicleSpeedRange[1]}]`
+                                : 'Default'
+                            }, Boost Limit ${effectiveRec.boostLimitOverride ?? 'Default'}`
+                          : `Historical Video Description Variance (${rawRec?.presetKey || 'Custom'}): Speed [${effectiveRec.ballSpeedModifierPct[0]}%, ${effectiveRec.ballSpeedModifierPct[1]}%], Ball XY [${effectiveRec.ballLocationModifierXY[0]}, ${effectiveRec.ballLocationModifierXY[1]}], Car Vel ${
+                              effectiveRec.vehicleSpeedRange
+                                ? `[${effectiveRec.vehicleSpeedRange[0]}, ${effectiveRec.vehicleSpeedRange[1]}]`
+                                : 'Default'
+                            }, Boost Limit ${effectiveRec.boostLimitOverride ?? 'Default'}`
+                      )
                     }
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    className={`px-2.5 py-1.5 rounded-lg border text-xs outline-none resize-none transition-colors ${
-                      isLight
-                        ? 'bg-neutral-50 focus:bg-white border-neutral-300 text-neutral-800'
-                        : 'bg-neutral-850 focus:bg-neutral-800 border-neutral-700 text-neutral-200'
-                    }`}
-                  />
-                </div>
-
-                {/* Dev Mode Original Description (.Tem / RLRCSPack unmapped properties) */}
-                {isDevMode && selectedMeta.originalDescription && (
-                  <div
-                    className={`rounded-lg border overflow-hidden ${
-                      isLight
-                        ? 'bg-neutral-50 border-neutral-200'
-                        : 'bg-neutral-950/60 border-neutral-800'
+                    onMouseLeave={() => onHoverDesc(null)}
+                    className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold tracking-wider border ${
+                      effectiveMatchesLatest
+                        ? isLight
+                          ? 'bg-sky-500/15 border-sky-500/40 text-sky-700'
+                          : 'bg-cyan-500/20 border-cyan-400/45 text-cyan-200'
+                        : isLight
+                          ? 'bg-violet-500/15 border-violet-500/40 text-violet-700'
+                          : 'bg-violet-500/20 border-violet-400/40 text-violet-200'
                     }`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setShowOriginalDescription((v) => !v)}
-                      onMouseEnter={() =>
-                        onHoverDesc(
-                          'Developer Mode: Inspect unmapped .Tem / RLRCSPack metadata and round extras.'
-                        )
-                      }
-                      onMouseLeave={() => onHoverDesc(null)}
-                      className="w-full px-2.5 py-1.5 flex items-center justify-between text-[10px] font-mono font-bold cursor-pointer hover:bg-neutral-500/10"
-                    >
-                      <span className="flex items-center gap-1.5 text-cyan-400">
-                        <Code2 className="h-3.5 w-3.5" />
-                        <span>
-                          Original Description (RLRCSPack .Tem Extras •{' '}
-                          {(selectedMeta.originalDescription.length / 1024).toFixed(2)} KB)
-                        </span>
-                      </span>
-                      {showOriginalDescription ? (
-                        <ChevronUp className="h-3.5 w-3.5 opacity-70" />
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5 opacity-70" />
-                      )}
-                    </button>
-                    {showOriginalDescription && (
-                      <pre
-                        className={`p-2.5 text-[10px] font-mono overflow-x-auto max-h-36 border-t select-text ${
-                          isLight
-                            ? 'bg-white border-neutral-200 text-neutral-700'
-                            : 'bg-neutral-950 border-neutral-800 text-neutral-300'
-                        }`}
-                      >
-                        {selectedMeta.originalDescription}
-                      </pre>
-                    )}
-                  </div>
+                    {effectiveMatchesLatest
+                      ? `Variance: ${effectiveRec.presetKey} (Boost ${effectiveRec.boostLimitOverride ?? 100})`
+                      : `Variance Ready (Boost ${effectiveRec.boostLimitOverride ?? 100})`}
+                  </span>
                 )}
+                <span
+                  className={`px-2 py-0.5 rounded text-[9px] font-mono ${
+                    isLight ? 'bg-slate-900/5 text-slate-600' : 'bg-white/10 text-white/60'
+                  }`}
+                >
+                  {selectedMeta.itemCount} Shots
+                </span>
               </div>
 
-              <div
-                className={`p-2.5 rounded-lg border flex flex-col gap-2 ${
-                  isLight
-                    ? 'bg-neutral-50 border-neutral-200'
-                    : 'bg-neutral-850/70 border-neutral-800'
-                }`}
-              >
+              {/* Apply Old vs Apply New Switch when pack has a Kevpert F-key preset */}
+              {rawRec && rawRec.presetKey && rawRec.presetKey !== 'CUSTOM' && rawRec.presetKey !== 'custom' && onToggleApplyNewKevpertBind && (
                 <div
-                  className="flex items-center justify-between cursor-pointer select-none"
-                  onClick={() => setDownCounterEnabled(!downCounterEnabled)}
                   onMouseEnter={() =>
                     onHoverDesc(
-                      'When OFF (default), shot starts on first driving input. When ON, holds stationary with 3/2/1 countdown beep + Go cue.'
+                      rawMatchesLatest
+                        ? `This pack's video description variance already matches Kevpert's latest ${rawRec.presetKey} keybinding.`
+                        : `OFF (Apply Old): Uses the exact BakkesMod variance parameters from this pack's original YouTube video description. ON (Apply New): Overrides with Kevpert's latest ${rawRec.presetKey} keybinding parameters.`
                     )
                   }
                   onMouseLeave={() => onHoverDesc(null)}
+                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[8.5px] font-bold tracking-wider uppercase ${
+                    isLight
+                      ? 'bg-slate-900/[0.03] border-slate-900/10 text-slate-600'
+                      : 'bg-white/[0.03] border-white/10 text-white/65'
+                  }`}
                 >
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold">Pre-Launch Down Counter</span>
+                  <span
+                    className={
+                      !applyNewKevpertBind
+                        ? isLight
+                          ? 'text-violet-700 font-extrabold'
+                          : 'text-violet-300 font-extrabold'
+                        : 'opacity-45'
+                    }
+                  >
+                    Apply Old
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onToggleApplyNewKevpertBind(!applyNewKevpertBind)}
+                    className={`relative w-7 h-3.5 rounded-full transition-colors border ${
+                      applyNewKevpertBind
+                        ? isLight
+                          ? 'bg-sky-500 border-sky-600'
+                          : 'bg-cyan-500/50 border-cyan-400'
+                        : isLight
+                          ? 'bg-slate-300 border-slate-400'
+                          : 'bg-white/15 border-white/25'
+                    }`}
+                  >
                     <span
-                      className={`text-[10px] ${
-                        isLight ? 'text-neutral-500' : 'text-neutral-400'
+                      className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-transform ${
+                        applyNewKevpertBind ? 'translate-x-3.5 left-0.5' : 'translate-x-0 left-0.5'
                       }`}
-                    >
-                      {downCounterEnabled
-                        ? `Hold ${downCounterValue + 1}s (${downCounterValue}s beep -> GO, pre-input buffered)`
-                        : 'Disabled (Instant launch on first driving input)'}
-                    </span>
-                  </div>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <ToggleSwitch
-                      checked={downCounterEnabled}
-                      onCheckedChange={(checked) => setDownCounterEnabled(checked)}
-                      isLight={isLight}
-                      variant="neutral"
                     />
-                  </div>
+                  </button>
+                  <span
+                    className={
+                      applyNewKevpertBind
+                        ? isLight
+                          ? 'text-sky-700 font-extrabold'
+                          : 'text-cyan-300 font-extrabold'
+                        : 'opacity-45'
+                    }
+                  >
+                    Apply New
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label
+                className={`block text-[10px] font-bold tracking-wider uppercase mb-1 ${
+                  isLight ? 'text-slate-500' : 'text-white/50'
+                }`}
+              >
+                PACK TITLE
+              </label>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                maxLength={80}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold border outline-none transition-all ${
+                  isLight
+                    ? 'bg-white border-slate-900/15 text-slate-900 focus:border-sky-500'
+                    : 'bg-black/30 border-white/15 text-white focus:border-cyan-400'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label
+                className={`block text-[10px] font-bold tracking-wider uppercase mb-1 ${
+                  isLight ? 'text-slate-500' : 'text-white/50'
+                }`}
+              >
+                DESCRIPTION & NOTES
+              </label>
+              <textarea
+                rows={2}
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                maxLength={400}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs border outline-none resize-none transition-all ${
+                  isLight
+                    ? 'bg-white border-slate-900/15 text-slate-800 focus:border-sky-500'
+                    : 'bg-black/30 border-white/15 text-white/90 focus:border-cyan-400'
+                }`}
+              />
+            </div>
+
+            {isMetadataDirty && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={onSaveMetadata}
+                  className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border transition-all ${
+                    isLight
+                      ? 'bg-sky-500 text-white border-sky-600 hover:bg-sky-600'
+                      : 'bg-cyan-500/25 text-cyan-200 border-cyan-400/50 hover:bg-cyan-500/35'
+                  }`}
+                >
+                  Save Title & Description
+                </button>
+              </div>
+            )}
+
+            {/* DownCounter Configuration */}
+            <div
+              className={`rounded-lg border p-2.5 ${
+                isLight
+                  ? 'bg-slate-900/[0.03] border-slate-900/10'
+                  : 'bg-white/[0.03] border-white/10'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDownCounterEnabled((prev) => !prev)}
+                    onMouseEnter={() =>
+                      onHoverDesc(
+                        'Enable or disable the pre-shot countdown timer before ball & vehicle release.'
+                      )
+                    }
+                    onMouseLeave={() => onHoverDesc(null)}
+                    className={`w-8 h-4.5 rounded-full transition-colors relative border ${
+                      downCounterEnabled
+                        ? isLight
+                          ? 'bg-sky-500 border-sky-600'
+                          : 'bg-cyan-500/40 border-cyan-400'
+                        : isLight
+                          ? 'bg-slate-300 border-slate-400'
+                          : 'bg-white/10 border-white/20'
+                    }`}
+                  >
+                    <span
+                      className={`block w-3 h-3 rounded-full bg-white shadow transition-transform ${
+                        downCounterEnabled ? 'translate-x-4' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                  <span
+                    className={`text-[11px] font-bold tracking-wider uppercase ${
+                      isLight ? 'text-slate-700' : 'text-white/80'
+                    }`}
+                  >
+                    DownCounter
+                  </span>
                 </div>
 
                 {downCounterEnabled && (
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <span className="text-[11px] font-medium opacity-80">
-                      Countdown Seconds
-                    </span>
-                    <SegmentedSwitch
-                      options={[
-                        { value: '3', label: '3s' },
-                        { value: '2', label: '2s' },
-                        { value: '1', label: '1s (Default)' },
-                      ]}
-                      value={String(downCounterValue)}
-                      onValueChange={(val) =>
-                        setDownCounterValue(Number(val) as StaticPackDownCounterOption)
-                      }
-                      isLight={isLight}
-                      size="sm"
-                    />
+                  <div className="flex items-center gap-1">
+                    {([1, 2, 3] as const).map((sec) => (
+                      <button
+                        key={sec}
+                        type="button"
+                        onClick={() => setDownCounterValue(sec)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${
+                          downCounterValue === sec
+                            ? isLight
+                              ? 'bg-sky-500 text-white border-sky-600'
+                              : 'bg-cyan-400/25 text-cyan-200 border-cyan-400/60'
+                            : isLight
+                              ? 'bg-white text-slate-600 border-slate-900/15 hover:bg-slate-100'
+                              : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
+                        }`}
+                      >
+                        {sec}s
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
             </div>
+          </div>
 
-            <div className="flex flex-col gap-2 pt-3 border-t border-neutral-500/15 mt-2">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => onPlayPack(selectedMeta)}
-                  onMouseEnter={() =>
-                    onHoverDesc(
-                      'Start playing this training pack. Hotkeys: [R] Reset Shot, [[] Prev Shot, []] Next Shot.'
-                    )
-                  }
-                  onMouseLeave={() => onHoverDesc(null)}
-                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border text-xs font-bold transition-all cursor-pointer active:scale-98 ${
-                    isLight
-                      ? 'bg-neutral-900 hover:bg-neutral-800 border-neutral-900 text-white shadow-xs'
-                      : 'bg-white hover:bg-neutral-200 border-white text-neutral-900 shadow-xs'
-                  }`}
-                >
-                  <Play className="h-4 w-4 fill-current" />
-                  <span>PLAY PACK</span>
-                </button>
+          {/* Action Buttons */}
+          <div className="pt-2.5 border-t border-white/10 flex flex-col gap-2">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => onPlayPack(selectedMeta)}
+                onMouseEnter={() =>
+                  onHoverDesc(
+                    'Enter Play Mode for this training pack. All menus will collapse and the Shot 1 countdown will begin.'
+                  )
+                }
+                onMouseLeave={() => onHoverDesc(null)}
+                className={`py-2 px-3 rounded-lg text-xs font-bold tracking-wider uppercase border transition-all flex items-center justify-center gap-1.5 ${
+                  isLight
+                    ? 'bg-sky-500 text-white border-sky-600 hover:bg-sky-600 shadow-sm'
+                    : 'bg-cyan-500/25 text-cyan-200 border-cyan-400/55 hover:bg-cyan-500/35 shadow-[0_0_16px_rgba(34,211,238,0.18)]'
+                }`}
+              >
+                <span>▶</span>
+                <span>PLAY PACK</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => onEditPack(selectedMeta)}
-                  onMouseEnter={() =>
-                    onHoverDesc(
-                      'Enter Edit Mode with Live Preview [TAB], 3D Car/Ball trajectory aiming, and Free Camera pose editing.'
-                    )
-                  }
-                  onMouseLeave={() => onHoverDesc(null)}
-                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border text-xs font-bold transition-all cursor-pointer active:scale-98 ${
-                    isLight
-                      ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-900'
-                      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-100'
-                  }`}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  <span>EDIT PACK</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => onEditPack(selectedMeta)}
+                onMouseEnter={() =>
+                  onHoverDesc(
+                    isDevMode
+                      ? 'Open 6-Sub-Mode Item Edit Workspace for this pack (Dev Mode allows editing up to 50 shots).'
+                      : 'Open 6-Sub-Mode Item Edit Workspace to customize ball & vehicle trajectories.'
+                  )
+                }
+                onMouseLeave={() => onHoverDesc(null)}
+                className={`py-2 px-3 rounded-lg text-xs font-bold tracking-wider uppercase border transition-all flex items-center justify-center gap-1.5 ${
+                  isLight
+                    ? 'bg-amber-500/15 text-amber-800 border-amber-500/40 hover:bg-amber-500/25'
+                    : 'bg-amber-400/15 text-amber-200 border-amber-400/40 hover:bg-amber-400/25'
+                }`}
+              >
+                <span>✎</span>
+                <span>EDIT ITEMS</span>
+              </button>
+            </div>
 
-              <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => onExportPack(selectedMeta, true)}
+                onMouseEnter={() =>
+                  onHoverDesc(
+                    'Export this training pack as a native .RCSPack JSON file (or encrypted .RCSPackE in Dev Mode).'
+                  )
+                }
+                onMouseLeave={() => onHoverDesc(null)}
+                className={`flex-1 py-1.5 px-2.5 rounded-lg text-[10px] font-bold tracking-wider uppercase border transition-all ${
+                  isLight
+                    ? 'bg-slate-900/5 border-slate-900/15 text-slate-700 hover:bg-slate-900/10'
+                    : 'bg-white/5 border-white/15 text-white/75 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                Export .RCSPack
+              </button>
+
+              {confirmDeleteUuid === selectedMeta.uuid ? (
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => onExportPack(selectedMeta, false)}
-                    onMouseEnter={() =>
-                      onHoverDesc(
-                        'Export compact .RCSPack (strips editorFreeCam camera data for smaller play-only distribution).'
-                      )
-                    }
-                    onMouseLeave={() => onHoverDesc(null)}
-                    className={`flex items-center justify-center gap-1 py-1.5 px-2.5 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer ${
-                      isLight
-                        ? 'bg-neutral-50 hover:bg-neutral-100 border-neutral-300 text-neutral-700'
-                        : 'bg-neutral-850 hover:bg-neutral-800 border-neutral-700 text-neutral-300'
-                    }`}
+                    onClick={() => onDeletePack(selectedMeta.uuid)}
+                    className="py-1.5 px-2.5 rounded-lg text-[10px] font-bold uppercase bg-rose-500 text-white border border-rose-600 hover:bg-rose-600 transition-all"
                   >
-                    <Download className="h-3 w-3" />
-                    <span>.RCSPack</span>
+                    Confirm Delete
                   </button>
-
                   <button
                     type="button"
-                    onClick={() => onExportPack(selectedMeta, true)}
-                    onMouseEnter={() =>
-                      onHoverDesc(
-                        'Export editable .RCSPackE (preserves per-shot EditorFreeCam camera coordinates for creators).'
-                      )
-                    }
-                    onMouseLeave={() => onHoverDesc(null)}
-                    className={`flex items-center justify-center gap-1 py-1.5 px-2.5 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer ${
+                    onClick={() => setConfirmDeleteUuid(null)}
+                    className={`py-1.5 px-2 rounded-lg text-[10px] font-bold uppercase border ${
                       isLight
-                        ? 'bg-cyan-50 hover:bg-cyan-100 border-cyan-300 text-cyan-800'
-                        : 'bg-cyan-950/40 hover:bg-cyan-900/50 border-cyan-700/60 text-cyan-300'
+                        ? 'bg-slate-200 text-slate-700 border-slate-300'
+                        : 'bg-white/10 text-white/70 border-white/15'
                     }`}
                   >
-                    <Download className="h-3 w-3" />
-                    <span>.RCSPackE</span>
+                    Cancel
                   </button>
                 </div>
-
-                {confirmDeleteUuid === selectedMeta.uuid ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-red-500">
-                      Confirm Delete?
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onDeletePack(selectedMeta.uuid)}
-                      className="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold cursor-pointer"
-                    >
-                      Yes, Delete
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDeleteUuid(null)}
-                      className={`px-2 py-1 rounded-lg border text-[11px] font-medium cursor-pointer ${
-                        isLight
-                          ? 'bg-neutral-100 border-neutral-300 text-neutral-700'
-                          : 'bg-neutral-800 border-neutral-700 text-neutral-300'
-                      }`}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDeleteUuid(selectedMeta.uuid)}
-                    onMouseEnter={() =>
-                      onHoverDesc(
-                        'Delete this training pack (requires double-check confirmation).'
-                      )
-                    }
-                    onMouseLeave={() => onHoverDesc(null)}
-                    className={`flex items-center gap-1 py-1.5 px-2.5 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer ${
-                      isLight
-                        ? 'bg-red-50/70 hover:bg-red-100 border-red-200 text-red-700'
-                        : 'bg-red-950/30 hover:bg-red-900/40 border-red-900/60 text-red-300'
-                    }`}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    <span>Delete</span>
-                  </button>
-                )}
-              </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteUuid(selectedMeta.uuid)}
+                  onMouseEnter={() =>
+                    onHoverDesc('Delete this training pack from local browser storage.')
+                  }
+                  onMouseLeave={() => onHoverDesc(null)}
+                  className={`py-1.5 px-2.5 rounded-lg text-[10px] font-bold tracking-wider uppercase border transition-all ${
+                    isLight
+                      ? 'bg-rose-500/10 border-rose-500/25 text-rose-700 hover:bg-rose-500/20'
+                      : 'bg-rose-500/10 border-rose-400/25 text-rose-300 hover:bg-rose-500/20'
+                  }`}
+                >
+                  Delete
+                </button>
+              )}
             </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center opacity-60">
-            <Target className="h-8 w-8 mb-2" />
-            <span className="text-xs font-semibold">Select or Create a Training Pack</span>
           </div>
-        )}
-      </div>
-    );
-  }
-);
-StaticTrainingPackMetadataInspector.displayName = 'StaticTrainingPackMetadataInspector';
+        </>
+      ) : (
+        <div
+          className={`flex-1 flex items-center justify-center text-xs ${
+            isLight ? 'text-slate-400' : 'text-white/40'
+          }`}
+        >
+          Select or create a training pack to inspect.
+        </div>
+      )}
+    </div>
+  );
+};

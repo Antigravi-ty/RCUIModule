@@ -67,7 +67,7 @@ const DEFAULT_PACKS: StaticTrainingPackSummary[] = [
     description:
       'Starter static training pack featuring a midfield volley, a suspended kickoff-state aerial, and a backboard read.',
     itemCount: 3,
-    tags: ['Local'],
+    tags: ['Native'],
     createdAt: 1740000000000,
     updatedAt: 1740000000000,
   },
@@ -77,7 +77,7 @@ const DEFAULT_PACKS: StaticTrainingPackSummary[] = [
     description:
       '12 progressive mid-field wall setups with top-corner goal mouth barrier masks.',
     itemCount: 12,
-    tags: ['Local'],
+    tags: ['Native'],
     createdAt: 1739836800000,
     updatedAt: 1739836800000,
   },
@@ -87,7 +87,7 @@ const DEFAULT_PACKS: StaticTrainingPackSummary[] = [
     description:
       'High-speed backboard clears and offensive double-tap angles with randomized initial impulse.',
     itemCount: 8,
-    tags: ['Local'],
+    tags: ['Native'],
     createdAt: 1740009600000,
     updatedAt: 1740009600000,
   },
@@ -422,7 +422,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
             }
           />
 
-          <div className="col-span-7 flex flex-col gap-2.5 min-h-0 overflow-hidden">
+          <div className="col-span-6 flex flex-col gap-2.5 min-h-0 overflow-hidden">
             <StaticTrainingPackToolbar
               isLight={isLight}
               fileInputRef={fileInputRef}
@@ -456,6 +456,10 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
               setDownCounterValue={setDownCounterValue}
               confirmDeleteUuid={confirmDeleteUuid}
               setConfirmDeleteUuid={setConfirmDeleteUuid}
+              applyNewKevpertBind={Boolean(variationToggles.applyNewKevpertBind)}
+              onToggleApplyNewKevpertBind={(val) =>
+                onUpdateVariationToggles({ applyNewKevpertBind: val })
+              }
               onSaveMetadata={() => void handleSaveMetadata()}
               onPlayPack={(meta) => {
                 onStartPlaySession?.(meta.uuid);
@@ -492,7 +496,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
         isLight={isLight}
         defaultDescription={
           isDevMode
-            ? 'Dev Mode: 134 built-in .RLRCSPack packs loaded • Click the top-right Gear icon for Training Variations (F3–F12 / Custom).'
+            ? 'Dev Mode: 139 built-in .RLRCSPack packs loaded • Click the top-right Gear icon for Training Variations (F1–F12 / Custom).'
             : 'Select a Static Training Pack on the left to Play, Edit, Export (.RCSPack / .RCSPackE), or Delete.'
         }
         hoveredDescription={hoveredDesc}

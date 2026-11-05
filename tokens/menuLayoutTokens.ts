@@ -379,8 +379,8 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
   },
   'layer4-static-training-pack': {
     mode: 'auto',
-    width: 680,
-    targetHeight: 540,
+    width: 820,
+    targetHeight: 560,
     minHeight: 260,
     maxHeight: 1120,
   },

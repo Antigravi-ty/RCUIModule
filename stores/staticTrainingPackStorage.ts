@@ -251,6 +251,8 @@ export async function seedDefaultStarterPack(): Promise<StaticTrainingPackMetada
     createdAt: now,
     updatedAt: now,
     itemCount: shots.length,
+    sourcePackType: 'RCSPack',
+    tags: ['Native'],
   };
 
   await saveStaticTrainingPackFull(meta, shots);
