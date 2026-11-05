@@ -238,18 +238,20 @@ export function useLayer3DevSandboxesStoreBinding(
 
   const handleEnterBench = (tab: LayerDevTestLabTab) => {
     if (tab === 'exp-multi-bots') {
-      if (rawProps.onNavigateExpMultiBots) {
-        rawProps.onNavigateExpMultiBots();
+      const expStore = useExperimentalMultiBotsStore.getState();
+      expStore.activateMultiBotsSubMode(true);
+      if (matchMode === 'exp-multi-bots') {
+        expStore.startOrApplyMatch();
+        closeMenu();
       } else {
-        navigate('exp-multi-bots');
+        bridge.onStartExpMultiBots?.();
       }
       return;
     }
 
     if (tab === 'exp-botpack-9700488') {
       const expStore = useExperimentalMultiBotsStore.getState();
-      const targetModel = expStore.activeBotpackShowcaseModel || 'ripple_v1_1';
-      expStore.applyBotpack9700488Showcase(targetModel, true);
+      expStore.activateBotpackSubMode(undefined, true);
       if (matchMode === 'exp-multi-bots') {
         expStore.startOrApplyMatch();
         closeMenu();
@@ -281,21 +283,25 @@ export function useLayer3DevSandboxesStoreBinding(
         ? rawProps.activeBenchId
         : isInDevLab
         ? activeTab
-        : matchMode === 'exp-multi-bots' &&
-          useExperimentalMultiBotsStore.getState().activeBotpackShowcaseModel
-        ? 'exp-botpack-9700488'
+        : matchMode === 'exp-multi-bots'
+        ? useExperimentalMultiBotsStore.getState().activeSubMode === 'botpack'
+          ? 'exp-botpack-9700488'
+          : 'exp-multi-bots'
         : null,
     onEnterBench: rawProps.onEnterBench ?? handleEnterBench,
     onNavigateExpMultiBots:
       rawProps.onNavigateExpMultiBots ??
-      (() => navigate('exp-multi-bots')),
+      (() => {
+        const expStore = useExperimentalMultiBotsStore.getState();
+        expStore.activateMultiBotsSubMode(false);
+        navigate('exp-multi-bots');
+      }),
     onNavigateExpBotpack9700488:
       rawProps.onNavigateExpBotpack9700488 ??
       (() => {
         const expStore = useExperimentalMultiBotsStore.getState();
-        const targetModel = expStore.activeBotpackShowcaseModel || 'ripple_v1_1';
-        expStore.applyBotpack9700488Showcase(targetModel, false);
-        navigate('exp-multi-bots');
+        expStore.activateBotpackSubMode(undefined, false);
+        navigate('exp-botpack-9700488');
       }),
   };
 }

@@ -167,7 +167,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
     tab: DevTestLabTab,
     sourceEl?: HTMLElement | null
   ) => {
-    if (tab === 'exp-multi-bots' && onNavigateExpMultiBots) {
+    if (tab === 'exp-multi-bots' && !sourceEl && onNavigateExpMultiBots) {
       onNavigateExpMultiBots();
       return;
     }

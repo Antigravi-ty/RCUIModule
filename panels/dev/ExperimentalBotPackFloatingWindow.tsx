@@ -215,6 +215,7 @@ export const ExperimentalBotPackFloatingWindow: React.FC<
         globalOffset={0}
         activeCameraCarIndex={activeCameraCarIndex}
         totalCars={totalCars}
+        allowBotpackPolicies={true}
         isLight={isLight}
         cardBg={cardBg}
         subPanelBg={subPanelBg}
@@ -233,6 +234,7 @@ export const ExperimentalBotPackFloatingWindow: React.FC<
         globalOffset={blueSlots.length}
         activeCameraCarIndex={activeCameraCarIndex}
         totalCars={totalCars}
+        allowBotpackPolicies={true}
         isLight={isLight}
         cardBg={cardBg}
         subPanelBg={subPanelBg}

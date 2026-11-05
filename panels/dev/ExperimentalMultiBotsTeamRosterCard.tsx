@@ -22,6 +22,7 @@ export interface ExperimentalMultiBotsSlotRowProps {
   globalCarIdx: number;
   activeCameraCarIndex: number;
   totalCars: number;
+  allowBotpackPolicies?: boolean;
   isLight: boolean;
   subPanelBg: string;
   mutedText: string;
@@ -38,6 +39,7 @@ export const ExperimentalMultiBotsSlotRow: React.FC<ExperimentalMultiBotsSlotRow
   globalCarIdx,
   activeCameraCarIndex,
   totalCars,
+  allowBotpackPolicies = false,
   isLight,
   subPanelBg,
   mutedText,
@@ -102,20 +104,30 @@ export const ExperimentalMultiBotsSlotRow: React.FC<ExperimentalMultiBotsSlotRow
                     : 'bg-orange-500/20 border-orange-400/70 text-orange-300'
                 }`}
               >
-                <optgroup label="Botpack #9700488 (8 New)">
-                  {BOTPACK_9700488_POLICY_METAS.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.label} ({m.formatBadge})
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Core Policies">
-                  {LEGACY_POLICY_METAS.map((m) => (
+                {allowBotpackPolicies ? (
+                  <>
+                    <optgroup label="Botpack #9700488 (8 New)">
+                      {BOTPACK_9700488_POLICY_METAS.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label} ({m.formatBadge})
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Core Policies">
+                      {LEGACY_POLICY_METAS.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </>
+                ) : (
+                  LEGACY_POLICY_METAS.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.label}
                     </option>
-                  ))}
-                </optgroup>
+                  ))
+                )}
               </select>
               <span
                 className={`px-1 py-0.5 rounded text-[9px] font-mono border shrink-0 ${
@@ -205,6 +217,7 @@ export interface ExperimentalMultiBotsTeamRosterCardProps {
   globalOffset: number;
   activeCameraCarIndex: number;
   totalCars: number;
+  allowBotpackPolicies?: boolean;
   isLight: boolean;
   cardBg: string;
   subPanelBg: string;
@@ -223,6 +236,7 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
   globalOffset,
   activeCameraCarIndex,
   totalCars,
+  allowBotpackPolicies = false,
   isLight,
   cardBg,
   subPanelBg,
@@ -286,6 +300,7 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
               globalCarIdx={globalOffset + idx}
               activeCameraCarIndex={activeCameraCarIndex}
               totalCars={totalCars}
+              allowBotpackPolicies={allowBotpackPolicies}
               isLight={isLight}
               subPanelBg={subPanelBg}
               mutedText={mutedText}

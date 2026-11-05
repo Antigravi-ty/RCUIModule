@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
   EXP_CAR_COLOR_PALETTE,
   EXP_BOT_POLICY_METAS,
+  LEGACY_EXP_BOT_POLICY_METAS,
   BOTPACK_9700488_POLICY_METAS,
   getExpBotPolicyMeta,
   getExpColorSwatch,
@@ -9,10 +10,13 @@ import {
   ORANGE_DEFAULT_COLORS,
   resolveGarageColorPrefs,
   buildTeamSlotsFromColorPrefs,
+  buildAsymmetricTeamSlotsFromColorPrefs,
   pickUnusedColorSlot,
   normalizeTeamPlayerFlags,
   type ExpBotPolicyId,
   type ExpBotPolicyMeta,
+  type ExpSubMode,
+  type ExpRosterSnapshot,
   type ExpPlayerParticipation,
   type ExpSpeedMultiplier,
   type ExpColorSwatch,
@@ -23,11 +27,14 @@ import {
 export {
   EXP_CAR_COLOR_PALETTE,
   EXP_BOT_POLICY_METAS,
+  LEGACY_EXP_BOT_POLICY_METAS,
   BOTPACK_9700488_POLICY_METAS,
   getExpBotPolicyMeta,
   getExpColorSwatch,
   type ExpBotPolicyId,
   type ExpBotPolicyMeta,
+  type ExpSubMode,
+  type ExpRosterSnapshot,
   type ExpPlayerParticipation,
   type ExpSpeedMultiplier,
   type ExpColorSwatch,
@@ -37,6 +44,9 @@ export {
 
 export interface ExperimentalMultiBotsState {
   // Roster & Player Configuration
+  activeSubMode: ExpSubMode;
+  savedMultiBotsRoster: ExpRosterSnapshot;
+  savedBotpackModel: ExpBotPolicyId;
   playerParticipation: ExpPlayerParticipation; // 'none' (Spectate Bots), 'blue', or 'orange'
   blueSlots: ExperimentalMultiBotsSlotConfig[]; // Up to 5 slots on Team Blue (0)
   orangeSlots: ExperimentalMultiBotsSlotConfig[]; // Up to 5 slots on Team Orange (1)
@@ -67,6 +77,8 @@ export interface ExperimentalMultiBotsState {
 
   // Actions
   setIsExhibitionMode: (isExhibition: boolean) => void;
+  activateMultiBotsSubMode: (restartIfActive?: boolean) => void;
+  activateBotpackSubMode: (botType?: ExpBotPolicyId, restartIfActive?: boolean) => void;
   configureExhibitionMatch: (
     botId: ExpBotPolicyId,
     durationSec?: number,
@@ -80,6 +92,11 @@ export interface ExperimentalMultiBotsState {
   setSlotColor: (team: 0 | 1, slotIndex: number, colorSlot: number) => void;
   applyPresetRoster: (
     preset: '1v1-player' | '2v2-player' | '3v3-player' | '1v1-bots' | '2v2-bots' | '3v3-bots'
+  ) => void;
+  applyAsymmetricPresetRoster: (
+    blueCount: number,
+    orangeCount: number,
+    participationOverride?: ExpPlayerParticipation
   ) => void;
   applyBotpack9700488Showcase: (botType: ExpBotPolicyId, restartIfActive?: boolean) => void;
   setMatchDurationSec: (sec: number) => void;
@@ -110,9 +127,12 @@ export interface ExperimentalMultiBotsState {
   setRuntimeHandlers: (handlers: Partial<ExperimentalMultiBotsState['runtimeHandlers']>) => void;
 }
 
-const initialRoster = buildTeamSlotsFromColorPrefs(3, 'necto');
+const initialRoster = buildTeamSlotsFromColorPrefs(3, ['nexto', 'necto', 'nexto']);
 
 export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>((set, get) => ({
+  activeSubMode: 'multi-bots',
+  savedMultiBotsRoster: initialRoster,
+  savedBotpackModel: 'chronos',
   playerParticipation: initialRoster.playerParticipation,
   blueSlots: initialRoster.blueSlots,
   orangeSlots: initialRoster.orangeSlots,
@@ -178,15 +198,69 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
       };
     }),
 
-  setIsExhibitionMode: (isExhibitionMode) => set({ isExhibitionMode }),
+  setIsExhibitionMode: (isExhibitionMode) =>
+    set((s) => ({
+      isExhibitionMode,
+      activeSubMode: isExhibitionMode
+        ? 'exhibition'
+        : s.activeSubMode === 'exhibition'
+        ? 'multi-bots'
+        : s.activeSubMode,
+    })),
+
+  activateMultiBotsSubMode: (restartIfActive = false) => {
+    const state = get();
+    const restored =
+      state.activeSubMode === 'multi-bots'
+        ? {
+            playerParticipation: state.playerParticipation,
+            blueSlots: state.blueSlots,
+            orangeSlots: state.orangeSlots,
+            activeCameraCarIndex: state.activeCameraCarIndex,
+          }
+        : state.savedMultiBotsRoster;
+
+    set({
+      activeSubMode: 'multi-bots',
+      isExhibitionMode: false,
+      activeBotpackShowcaseModel: null,
+      playerParticipation: restored.playerParticipation,
+      blueSlots: restored.blueSlots,
+      orangeSlots: restored.orangeSlots,
+      activeCameraCarIndex: restored.activeCameraCarIndex,
+    });
+
+    get().runtimeHandlers.onPreloadEngines?.();
+    if (restartIfActive && get().matchActive) {
+      get().runtimeHandlers.onApplyRosterAndStart?.();
+    }
+  },
+
+  activateBotpackSubMode: (botType, restartIfActive = false) => {
+    const state = get();
+    const targetBot = botType ?? state.activeBotpackShowcaseModel ?? state.savedBotpackModel ?? 'chronos';
+    get().applyBotpack9700488Showcase(targetBot, restartIfActive);
+  },
 
   configureExhibitionMatch: (botId = 'necto', durationSec = 90, teamSize = 'standard') => {
+    const state = get();
+    const savedMultiBotsRoster =
+      state.activeSubMode === 'multi-bots'
+        ? {
+            playerParticipation: state.playerParticipation,
+            blueSlots: state.blueSlots,
+            orangeSlots: state.orangeSlots,
+            activeCameraCarIndex: state.activeCameraCarIndex,
+          }
+        : state.savedMultiBotsRoster;
     const resolvedBotId: ExpBotPolicyId = botId === 'nexto' ? 'nexto' : 'necto';
     const resolvedDuration = Math.max(30, Math.min(900, Math.round(Number(durationSec) || 90)));
     const countPerTeam = teamSize === 'standard' ? 3 : teamSize === 'double' ? 2 : 1;
     const roster = buildTeamSlotsFromColorPrefs(countPerTeam, resolvedBotId);
 
     set({
+      activeSubMode: 'exhibition',
+      savedMultiBotsRoster,
       isExhibitionMode: true,
       exhibitionTeamSize: teamSize,
       exhibitionBotId: resolvedBotId,
@@ -230,11 +304,17 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
         ? 0
         : state.activeCameraCarIndex;
 
-    set({
+    const nextRoster: ExpRosterSnapshot = {
       playerParticipation: nextParticipation,
       blueSlots: nextBlue,
       orangeSlots: nextOrange,
       activeCameraCarIndex: nextCamIdx,
+    };
+
+    set({
+      ...nextRoster,
+      savedMultiBotsRoster:
+        state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
     });
 
     if (triggerRuntime && state.matchActive) {
@@ -281,11 +361,17 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
     const defaultCameraIdx =
       playerParticipation === 'orange' ? normalized.blueSlots.length : 0;
 
-    set({
+    const nextRoster: ExpRosterSnapshot = {
       playerParticipation,
       blueSlots: normalized.blueSlots,
       orangeSlots: normalized.orangeSlots,
       activeCameraCarIndex: defaultCameraIdx,
+    };
+
+    set({
+      ...nextRoster,
+      savedMultiBotsRoster:
+        state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
     });
     if (get().matchActive) {
       get().runtimeHandlers.onApplyRosterAndStart?.();
@@ -315,9 +401,18 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
       state.playerParticipation
     );
 
+    const nextRoster: ExpRosterSnapshot = {
+      playerParticipation: state.playerParticipation,
+      blueSlots: normalized.blueSlots,
+      orangeSlots: normalized.orangeSlots,
+      activeCameraCarIndex: state.activeCameraCarIndex,
+    };
+
     set({
       blueSlots: normalized.blueSlots,
       orangeSlots: normalized.orangeSlots,
+      savedMultiBotsRoster:
+        state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
     });
     get().runtimeHandlers.onPreloadEngines?.();
     if (get().matchActive) {
@@ -345,12 +440,19 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
     const nextOrange = team === 1 ? updatedTarget : [...state.orangeSlots];
     const normalized = normalizeTeamPlayerFlags(nextBlue, nextOrange, nextParticipation);
     const totalCars = normalized.blueSlots.length + normalized.orangeSlots.length;
+    const nextCamIdx = Math.min(state.activeCameraCarIndex, Math.max(0, totalCars - 1));
 
-    set({
+    const nextRoster: ExpRosterSnapshot = {
       playerParticipation: nextParticipation,
       blueSlots: normalized.blueSlots,
       orangeSlots: normalized.orangeSlots,
-      activeCameraCarIndex: Math.min(state.activeCameraCarIndex, Math.max(0, totalCars - 1)),
+      activeCameraCarIndex: nextCamIdx,
+    };
+
+    set({
+      ...nextRoster,
+      savedMultiBotsRoster:
+        state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
     });
     if (get().matchActive) {
       get().runtimeHandlers.onApplyRosterAndStart?.();
@@ -375,10 +477,20 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
     }
 
     const totalCars = nextBlue.length + nextOrange.length;
+    const nextCamIdx = Math.min(state.activeCameraCarIndex, Math.max(0, totalCars - 1));
+    const nextRoster: ExpRosterSnapshot = {
+      playerParticipation: state.playerParticipation,
+      blueSlots: nextBlue,
+      orangeSlots: nextOrange,
+      activeCameraCarIndex: nextCamIdx,
+    };
+
     set({
       blueSlots: nextBlue,
       orangeSlots: nextOrange,
-      activeCameraCarIndex: Math.min(state.activeCameraCarIndex, Math.max(0, totalCars - 1)),
+      activeCameraCarIndex: nextCamIdx,
+      savedMultiBotsRoster:
+        state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
     });
 
     get().runtimeHandlers.onPreloadEngines?.();
@@ -404,7 +516,19 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
       team === 1 && idx === slotIndex ? { ...slot, colorSlot } : swapIfMatching(slot)
     );
 
-    set({ blueSlots: nextBlue, orangeSlots: nextOrange });
+    const nextRoster: ExpRosterSnapshot = {
+      playerParticipation: state.playerParticipation,
+      blueSlots: nextBlue,
+      orangeSlots: nextOrange,
+      activeCameraCarIndex: state.activeCameraCarIndex,
+    };
+
+    set({
+      blueSlots: nextBlue,
+      orangeSlots: nextOrange,
+      savedMultiBotsRoster:
+        state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
+    });
     get().runtimeHandlers.onHotSwapSlotColor?.(team, slotIndex, colorSlot);
   },
 
@@ -429,6 +553,8 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
     );
 
     set({
+      activeSubMode: 'multi-bots',
+      savedMultiBotsRoster: roster,
       isExhibitionMode: false,
       activeBotpackShowcaseModel: null,
       playerParticipation: roster.playerParticipation,
@@ -441,12 +567,52 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
     }
   },
 
+  applyAsymmetricPresetRoster: (blueCount, orangeCount, participationOverride) => {
+    const state = get();
+    const botPattern: ExpBotPolicyId[] = ['nexto', 'necto', 'nexto'];
+    const roster = buildAsymmetricTeamSlotsFromColorPrefs(
+      blueCount,
+      orangeCount,
+      botPattern,
+      participationOverride !== undefined ? participationOverride : state.playerParticipation
+    );
+
+    set({
+      activeSubMode: 'multi-bots',
+      savedMultiBotsRoster: roster,
+      isExhibitionMode: false,
+      activeBotpackShowcaseModel: null,
+      playerParticipation: roster.playerParticipation,
+      blueSlots: roster.blueSlots,
+      orangeSlots: roster.orangeSlots,
+      activeCameraCarIndex: roster.activeCameraCarIndex,
+    });
+    get().runtimeHandlers.onPreloadEngines?.();
+    if (get().matchActive) {
+      get().runtimeHandlers.onApplyRosterAndStart?.();
+    }
+  },
+
   applyBotpack9700488Showcase: (botType, restartIfActive = true) => {
+    const state = get();
+    const savedMultiBotsRoster =
+      state.activeSubMode === 'multi-bots'
+        ? {
+            playerParticipation: state.playerParticipation,
+            blueSlots: state.blueSlots,
+            orangeSlots: state.orangeSlots,
+            activeCameraCarIndex: state.activeCameraCarIndex,
+          }
+        : state.savedMultiBotsRoster;
+
     const meta = getExpBotPolicyMeta(botType);
     const countPerTeam = meta.maxPlayersPerTeam;
     const roster = buildTeamSlotsFromColorPrefs(countPerTeam, meta.id, 'none');
 
     set({
+      activeSubMode: 'botpack',
+      savedMultiBotsRoster,
+      savedBotpackModel: meta.id,
       isExhibitionMode: false,
       activeBotpackShowcaseModel: meta.id,
       playerParticipation: 'none',

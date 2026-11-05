@@ -37,6 +37,7 @@ export type ActiveMenuRoute =
   | 'advanced-audio'
   | 'event-trigger-rules'
   | 'exp-multi-bots'
+  | 'exp-botpack-9700488'
   | 'dev-sandboxes'
   | 'dev-active-tuners'
   | 'dev-calibrated-presets'
@@ -67,6 +68,7 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'advanced-audio': 'dev-active-tuners',
   'event-trigger-rules': 'dev-active-tuners',
   'exp-multi-bots': 'dev-sandboxes',
+  'exp-botpack-9700488': 'dev-sandboxes',
   'dev-sandboxes': 'settings',
   'dev-active-tuners': 'settings',
   'dev-calibrated-presets': 'settings',

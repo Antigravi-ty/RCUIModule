@@ -20,6 +20,7 @@ export type CanonicalMenuPanelId =
   | 'layer3-camera'
   | 'layer3-keybindings'
   | 'layer3-exp-multi-bots'
+  | 'layer3-exp-botpack'
   | 'layer3-dev-sandboxes'
   | 'layer3-dev-active-tuners'
   | 'layer3-dev-calibrated-presets'
@@ -320,6 +321,13 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     maxHeight: 1120,
   },
   'layer3-exp-multi-bots': {
+    mode: 'auto',
+    width: 580,
+    targetHeight: 580,
+    minHeight: 240,
+    maxHeight: 1120,
+  },
+  'layer3-exp-botpack': {
     mode: 'auto',
     width: 580,
     targetHeight: 580,
