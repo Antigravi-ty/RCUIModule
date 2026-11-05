@@ -33,6 +33,7 @@ import { DriftwoodsTunerFloatingWindow } from './dev/DriftwoodsTunerFloatingWind
 import { SpatialAudioTunerFloatingWindow } from './dev/SpatialAudioTunerFloatingWindow';
 import { EngineAudioTunerFloatingWindow } from './dev/EngineAudioTunerFloatingWindow';
 import { BotsLoadoutFloatingWindow } from './dev/BotsLoadoutFloatingWindow';
+import { ReplayToRcsImporterFloatingWindow } from './dev/ReplayToRcsImporterFloatingWindow';
 
 export interface RenderFloatingWindowPanelOptions {
   isLight?: boolean;
@@ -247,6 +248,11 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     id: 'bots-loadout',
     category: 'developer',
     render: ({ isLight = false }) => <BotsLoadoutFloatingWindow isLight={isLight} />,
+  },
+  'replay-to-rcs-importer': {
+    id: 'replay-to-rcs-importer',
+    category: 'developer',
+    render: ({ isLight = false }) => <ReplayToRcsImporterFloatingWindow isLight={isLight} />,
   },
 };
 

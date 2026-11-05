@@ -5,6 +5,7 @@ import { useTelemetryData } from '../stores/perfTelemetryStore';
 import { useNetworkDiagnosticsData } from '../stores/networkDiagnosticsStore';
 import { useKickoffTrainingStore } from '../stores/kickoffTrainingStore';
 import { useReplayViewerStore } from '../stores/replayViewerStore';
+import { useReplayToRcsImporterStore } from '../stores/replayToRcsImporterStore';
 import { useRewinderStore } from '../stores/rewinderStore';
 import {
   HudAnchorStage,
@@ -233,12 +234,28 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   ]);
 
   // 4. 4-Stage Choreography Signal State Machine + Layer 5G Takeover Preroll State:
-  const replayViewerState = useReplayViewerStore((s) => s.viewerState);
-  const replayViewerTotalFrames = useReplayViewerStore((s) => s.totalFrames);
-  const replayViewerFileName = useReplayViewerStore((s) => s.loadedFileName);
-  const replayPrerollSec = useReplayViewerStore((s) => s.prerollRemainingSec);
-  const replayDownCounterSec = useReplayViewerStore((s) => s.downCounterSec);
-  const activePovTeam = useReplayViewerStore((s) => s.activePovTeam);
+  const rawRvState = useReplayViewerStore((s) => s.viewerState);
+  const rawRvTotalFrames = useReplayViewerStore((s) => s.totalFrames);
+  const rawRvFileName = useReplayViewerStore((s) => s.loadedFileName);
+  const rawRvPrerollSec = useReplayViewerStore((s) => s.prerollRemainingSec);
+  const rawRvDownCounterSec = useReplayViewerStore((s) => s.downCounterSec);
+  const rawRvPovTeam = useReplayViewerStore((s) => s.activePovTeam);
+
+  const rawImpState = useReplayToRcsImporterStore((s) => s.viewerState);
+  const rawImpTotalFrames = useReplayToRcsImporterStore((s) => s.totalFrames);
+  const rawImpFileName = useReplayToRcsImporterStore((s) => s.loadedFileName);
+  const rawImpPrerollSec = useReplayToRcsImporterStore((s) => s.prerollRemainingSec);
+  const rawImpDownCounterSec = useReplayToRcsImporterStore((s) => s.downCounterSec);
+  const rawImpPovTeam = useReplayToRcsImporterStore((s) => s.activePovTeam);
+
+  const useImporterForHud =
+    rawImpState !== 'idle' && rawImpTotalFrames > 0 && Boolean(rawImpFileName);
+  const replayViewerState = useImporterForHud ? rawImpState : rawRvState;
+  const replayViewerTotalFrames = useImporterForHud ? rawImpTotalFrames : rawRvTotalFrames;
+  const replayViewerFileName = useImporterForHud ? rawImpFileName : rawRvFileName;
+  const replayPrerollSec = useImporterForHud ? rawImpPrerollSec : rawRvPrerollSec;
+  const replayDownCounterSec = useImporterForHud ? rawImpDownCounterSec : rawRvDownCounterSec;
+  const activePovTeam = useImporterForHud ? rawImpPovTeam : rawRvPovTeam;
 
   const rewinderState = useRewinderStore((s) => s.rewinderState);
   const rewinderPrerollSec = useRewinderStore((s) => s.rewinderPrerollRemainingSec);

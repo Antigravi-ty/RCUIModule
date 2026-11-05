@@ -12,6 +12,7 @@ import {
   type TakeoverTeamSide,
 } from './TakeoverCountdownHUD';
 import { useReplayViewerStore } from '../stores/replayViewerStore';
+import { useReplayToRcsImporterStore } from '../stores/replayToRcsImporterStore';
 import { useHudStore } from '../stores/hudStore';
 import { useExperimentalMultiBotsStore } from '../stores/experimentalMultiBotsStore';
 import type { HudTransientChannel } from '../stores/hudTransientTypes';

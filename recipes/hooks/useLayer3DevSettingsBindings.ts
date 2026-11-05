@@ -52,7 +52,8 @@ export interface Layer3DevActiveTunersRecipeProps {
 export type DevTestLabTab =
   | IsolationDevTestLabTab
   | 'exp-multi-bots'
-  | 'exp-botpack-9700488';
+  | 'exp-botpack-9700488'
+  | 'replay-to-rcs-importer';
 
 export type LayerDevTestLabTab = DevTestLabTab;
 
@@ -257,6 +258,15 @@ export function useLayer3DevSandboxesStoreBinding(
         closeMenu();
       } else {
         bridge.onStartExpMultiBots?.();
+      }
+      return;
+    }
+
+    if (tab === 'replay-to-rcs-importer') {
+      if (bridge.onStartReplayToRcsImporter) {
+        bridge.onStartReplayToRcsImporter();
+      } else {
+        closeMenu();
       }
       return;
     }

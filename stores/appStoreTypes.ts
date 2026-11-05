@@ -177,6 +177,7 @@ export interface AppState {
     onStartMatch?: (botId: string, durationSeconds?: number, teamSize?: 'standard' | 'double' | 'solo') => void;
     onStartKickoffTraining?: () => void;
     onStartReplayViewer?: () => void;
+    onStartReplayToRcsImporter?: () => void;
     onStartStaticTrainingPack?: (sessionMode?: 'play' | 'edit') => void;
     onStartDevTestLab?: () => void;
     onStartExpMultiBots?: () => void;

@@ -426,6 +426,22 @@ export const BOTS_LOADOUT_PRESET: PresetConfig = {
   sourcePath: 'panels/dev/BotsLoadoutFloatingWindow.tsx',
 };
 
+export const REPLAY_TO_RCS_IMPORTER_PRESET: PresetConfig = {
+  id: 'replay-to-rcs-importer',
+  title: 'Replay to RCS Replay Importer',
+  category: 'ReplayImporter',
+  width: 495,
+  height: 660,
+  minHeight: 220,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'Import raw Rocket League .replay files, upsample 30Hz -> 120Hz via SLERP/Hermite, intervene with Disappear/Trajectory/Nexto/Necto, and export .rcreplay.gz.',
+  menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  component: 'ReplayToRcsImporterFloatingWindow',
+  sourcePath: 'panels/dev/ReplayToRcsImporterFloatingWindow.tsx',
+};
+
 export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   DIAGNOSTIC_DUMP_PRESET,
   STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
@@ -451,6 +467,7 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   SPATIAL_AUDIO_TUNER_PRESET,
   ENGINE_AUDIO_TUNER_PRESET,
   BOTS_LOADOUT_PRESET,
+  REPLAY_TO_RCS_IMPORTER_PRESET,
 ];
 
 export const PRESET_WINDOWS: PresetConfig[] = [
