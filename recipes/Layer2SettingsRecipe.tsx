@@ -20,9 +20,6 @@ import { DisplayTab, type GraphicsConfig } from './settings/tabs/DisplayTab';
 import { AdvancedTab, type TelemetryOverlayConfig } from './settings/tabs/AdvancedTab';
 import type { AudioDebugTelemetryProps } from './settings/components/AudioDebugSection';
 import { DeveloperTab } from './settings/tabs/DeveloperTab';
-import type { TrajectoryConfig } from './Layer3BallTrajectoryRecipe';
-import type { CameraConfig } from './camera/cameraConfigSpecs';
-import { SettingsSubViewRouter } from './settings/SettingsSubViewRouter';
 
 export type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'advanced' | 'developer';
 
@@ -67,10 +64,6 @@ export interface Layer2SettingsRecipeProps {
   graphicsConfig?: Partial<GraphicsConfig>;
   telemetryConfig?: Partial<TelemetryOverlayConfig>;
   audioDebug?: AudioDebugTelemetryProps;
-  cameraConfig?: Partial<CameraConfig>;
-  onCameraConfigChange?: (next: CameraConfig, patch: Partial<CameraConfig>) => void;
-  trajectoryConfig?: Partial<TrajectoryConfig>;
-  onTrajectoryConfigChange?: (next: TrajectoryConfig, patch: Partial<TrajectoryConfig>) => void;
 
   sizing?: PanelSizingConfig;
 }
@@ -123,10 +116,6 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   graphicsConfig,
   telemetryConfig,
   audioDebug,
-  cameraConfig,
-  onCameraConfigChange,
-  trajectoryConfig,
-  onTrajectoryConfigChange,
   sizing: propSizing,
 }) => {
   const storeGoBack = useAppStore((s) => s.goBack);
@@ -135,10 +124,6 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
 
   const onBack = propOnBack ?? storeGoBack;
   const resolvedPropDevMode = propDevMode ?? developerModeEnabled;
-
-  const [internalSubView, setInternalSubView] = useState<
-    null | 'trajectory' | 'training-config' | 'camera' | 'keybindings' | 'audio-eq'
-  >(null);
 
   const normalizeTab = (t?: string): SettingsTabId => {
     if (t === 'video') return 'display';
@@ -194,60 +179,25 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
 
   const handleNavigateTrajectory = () => {
     const externalHandler = onNavigateTrajectoryDetail ?? onNavigateTrajectory;
-    if (externalHandler) {
-      externalHandler();
-    } else {
-      setInternalSubView('trajectory');
-    }
+    externalHandler?.();
   };
 
   const handleNavigateTraining = () => {
-    if (onNavigateTrainingDetail) {
-      onNavigateTrainingDetail();
-    } else {
-      setInternalSubView('training-config');
-    }
+    onNavigateTrainingDetail?.();
   };
 
   const handleNavigateCamera = () => {
     const externalHandler = onNavigateCameraDetail ?? onNavigateCameraSettings;
-    if (externalHandler) {
-      externalHandler();
-    } else {
-      setInternalSubView('camera');
-    }
+    externalHandler?.();
   };
 
   const handleNavigateKeybindings = () => {
-    if (onNavigateKeybindingsDetail) {
-      onNavigateKeybindingsDetail();
-    } else {
-      setInternalSubView('keybindings');
-    }
+    onNavigateKeybindingsDetail?.();
   };
 
   const handleNavigateAudioDetail = () => {
-    if (onNavigateAudioDetail) {
-      onNavigateAudioDetail();
-    } else {
-      setInternalSubView('audio-eq');
-    }
+    onNavigateAudioDetail?.();
   };
-
-  if (internalSubView) {
-    return (
-      <SettingsSubViewRouter
-        subView={internalSubView}
-        isLight={isLight}
-        developerMode={developerMode}
-        trajectoryConfig={trajectoryConfig}
-        onTrajectoryConfigChange={onTrajectoryConfigChange}
-        cameraConfig={cameraConfig}
-        onCameraConfigChange={onCameraConfigChange}
-        onChangeSubView={setInternalSubView}
-      />
-    );
-  }
 
   const tabs: TabItem[] = [
     { id: 'gameplay', label: 'Gameplay', icon: <Gamepad2 className="h-3.5 w-3.5" /> },
