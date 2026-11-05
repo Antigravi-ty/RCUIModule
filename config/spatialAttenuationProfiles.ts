@@ -121,14 +121,14 @@ const DEFAULT_BEZIER_POINTS: AttenuationBezierPoints = Object.freeze({
 export const DEFAULT_SPATIAL_ATTENUATION_PROFILES: Readonly<
   Record<AudioAttenuationCategory, SpatialAttenuationProfile>
 > = Object.freeze({
-  // 1. Tactical Global (High-priority global impacts: R_min 800 UU, R_max 12000 UU, convex slow rolloff)
+  // 1. Tactical Global (High-priority global impacts: R_min 800 UU, R_max 12000-12500 UU, convex slow rolloff)
   demolish: Object.freeze({
     id: 'demolish',
     label: 'Demolish Explosion',
     archetype: 'tactical_global',
     minDistanceUU: 800,
     maxDistanceUU: 12000,
-    minGainFloor: 0.2,
+    minGainFloor: 0.4,
     curveType: 'power',
     curveExponent: 0.65,
     bezierPoints: { ...DEFAULT_BEZIER_POINTS },
@@ -154,22 +154,22 @@ export const DEFAULT_SPATIAL_ATTENUATION_PROFILES: Readonly<
     archetype: 'tactical_global',
     minDistanceUU: 800,
     maxDistanceUU: 12000,
-    minGainFloor: 0.18,
+    minGainFloor: 0.6,
     curveType: 'power',
-    curveExponent: 0.65,
+    curveExponent: 0.4,
     bezierPoints: { ...DEFAULT_BEZIER_POINTS },
     cullBeyondMax: false,
     innerSpread: 0.35,
   }),
 
-  // 2. Primary Gameplay (Core match interactions: R_min 500 UU, R_max 9000 UU, smoothstep)
+  // 2. Primary Gameplay (Core match interactions: R_min 500 UU, R_max 7000-12000 UU, smoothstep)
   car_ball_hit: Object.freeze({
     id: 'car_ball_hit',
     label: 'Car-Ball Hit',
     archetype: 'primary_gameplay',
     minDistanceUU: 500,
-    maxDistanceUU: 9000,
-    minGainFloor: 0.05,
+    maxDistanceUU: 10000,
+    minGainFloor: 0.4,
     curveType: 'smoothstep',
     curveExponent: 1.0,
     bezierPoints: { ...DEFAULT_BEZIER_POINTS },
@@ -181,8 +181,8 @@ export const DEFAULT_SPATIAL_ATTENUATION_PROFILES: Readonly<
     label: 'Car-Car Bump',
     archetype: 'primary_gameplay',
     minDistanceUU: 500,
-    maxDistanceUU: 9000,
-    minGainFloor: 0.05,
+    maxDistanceUU: 7000,
+    minGainFloor: 0.0,
     curveType: 'smoothstep',
     curveExponent: 1.0,
     bezierPoints: { ...DEFAULT_BEZIER_POINTS },
@@ -194,8 +194,8 @@ export const DEFAULT_SPATIAL_ATTENUATION_PROFILES: Readonly<
     label: 'Crossbar / Post Small Ping',
     archetype: 'primary_gameplay',
     minDistanceUU: 500,
-    maxDistanceUU: 9000,
-    minGainFloor: 0.05,
+    maxDistanceUU: 12000,
+    minGainFloor: 0.6,
     curveType: 'smoothstep',
     curveExponent: 1.0,
     bezierPoints: { ...DEFAULT_BEZIER_POINTS },
@@ -203,16 +203,16 @@ export const DEFAULT_SPATIAL_ATTENUATION_PROFILES: Readonly<
     innerSpread: 0.25,
   }),
 
-  // 3. Opponent Boost & Action (Tactical awareness within midfield, hard-culled beyond 3800-4500 UU)
+  // 3. Opponent Boost & Action (Tactical awareness across arena)
   boost_other: Object.freeze({
     id: 'boost_other',
     label: 'Opponent Boost (Start/Loop/Stop)',
     archetype: 'opponent_action',
-    minDistanceUU: 300,
-    maxDistanceUU: 4200,
+    minDistanceUU: 0,
+    maxDistanceUU: 7000,
     minGainFloor: 0.0,
     curveType: 'power',
-    curveExponent: 1.9,
+    curveExponent: 2.3,
     bezierPoints: { ...DEFAULT_BEZIER_POINTS },
     cullBeyondMax: true,
     innerSpread: 0.2,
@@ -222,12 +222,12 @@ export const DEFAULT_SPATIAL_ATTENUATION_PROFILES: Readonly<
     label: 'Opponent Jump / Double Jump / Dodge',
     archetype: 'opponent_action',
     minDistanceUU: 300,
-    maxDistanceUU: 3800,
+    maxDistanceUU: 10000,
     minGainFloor: 0.0,
     curveType: 'power',
     curveExponent: 2.0,
     bezierPoints: { ...DEFAULT_BEZIER_POINTS },
-    cullBeyondMax: true,
+    cullBeyondMax: false,
     innerSpread: 0.2,
   }),
   supersonic_other: Object.freeze({
@@ -248,13 +248,13 @@ export const DEFAULT_SPATIAL_ATTENUATION_PROFILES: Readonly<
     label: 'Opponent Flip Reset',
     archetype: 'opponent_action',
     minDistanceUU: 350,
-    maxDistanceUU: 4500,
-    minGainFloor: 0.0,
+    maxDistanceUU: 9000,
+    minGainFloor: 0.1,
     curveType: 'power',
-    curveExponent: 1.8,
+    curveExponent: 1.0,
     bezierPoints: { ...DEFAULT_BEZIER_POINTS },
     cullBeyondMax: true,
-    innerSpread: 0.2,
+    innerSpread: 0.3,
   }),
 
   // 4. Opponent Engine (Close proximity challenge awareness, hard-culled beyond 3200 UU)
@@ -272,13 +272,13 @@ export const DEFAULT_SPATIAL_ATTENUATION_PROFILES: Readonly<
     innerSpread: 0.15,
   }),
 
-  // 5. World Surface & Pads (Local arena surface & pad interactions, hard-culled beyond 4000 UU)
+  // 5. World Surface & Pads (Local arena surface & pad interactions)
   world_surface: Object.freeze({
     id: 'world_surface',
     label: 'Ball Floor / Wall / Ramp Hit',
     archetype: 'world_surface_pads',
     minDistanceUU: 250,
-    maxDistanceUU: 4000,
+    maxDistanceUU: 10000,
     minGainFloor: 0.0,
     curveType: 'power',
     curveExponent: 1.5,
