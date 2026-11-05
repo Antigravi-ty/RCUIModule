@@ -1,9 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MorphContainerContext } from '../layout/Panel';
 import { type ContainerTransitionMode, type FluidMorphConfig, type SequencedStepConfig } from '../tokens/easing';
 import { type TransitionPhase } from './transitions';
-import { LivePreviewDock } from './LivePreviewDock';
+import { MorphingStageShell } from './MorphingStageShell';
 import { measureMenuPanelIntrinsicDimensions } from './menuPanelAdaptive';
 import { type PanelSizingConfig } from '../tokens/menuLayoutTokens';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
@@ -250,83 +249,38 @@ export const MorphingShell: React.FC<MorphingShellProps> = ({
         />
       )}
 
-      <motion.div
-        key="decoupled-menu-stage-wrapper"
-        animate={isShaking ? { x: [0, -10, 10, -7, 7, -3, 3, 0] } : { x: 0 }}
-        transition={{ duration: 0.35, ease: 'easeInOut' }}
-        style={{ transform: isShaking ? undefined : 'none' }}
-        className="absolute inset-0 pointer-events-none z-50"
+      <MorphingStageShell
+        shellRef={shellRef}
+        contentWrapperRef={contentWrapperRef}
+        isLight={isLight}
+        targetX={targetX}
+        targetY={targetY}
+        targetW={targetW}
+        targetH={targetH}
+        targetRadius={targetRadius}
+        isShaking={isShaking}
+        isDockState={isDockState}
+        isPillHovered={isPillHovered}
+        onPillHoverChange={setIsPillHovered}
+        isPillContentVisible={isPillContentVisible}
+        isContentVisible={isContentVisible}
+        onExpandFromDock={onExpandDock}
+        dataUiElement="menu-shell"
+        dataComponent={sizing?.component || currentKey}
+        dataSourcePath={sizing?.sourcePath || ''}
+        zIndexClassName="z-50"
+        className={className}
       >
-        <MorphContainerContext.Provider value={true}>
-          <motion.div
-            ref={shellRef}
-            data-ui-element="menu-shell"
-            data-morph-container="true"
-            data-panel="container"
-            data-component={sizing?.component || currentKey}
-            data-source-path={sizing?.sourcePath || ''}
-            initial={false}
-            animate={{
-              left: targetX,
-              top: targetY,
-              width: targetW,
-              height: targetH,
-              borderRadius: targetRadius,
-              opacity: 1,
-            }}
-            transition={{
-              left: { duration: 0.28, ease: [0.2, 0.8, 0.25, 1] },
-              top: { duration: 0.28, ease: [0.2, 0.8, 0.25, 1] },
-              width: { duration: 0.28, ease: [0.2, 0.8, 0.25, 1] },
-              height: { duration: 0.28, ease: [0.2, 0.8, 0.25, 1] },
-              borderRadius: { duration: 0.28, ease: [0.2, 0.8, 0.25, 1] },
-            }}
-            style={{
-              position: 'absolute',
-              transform: 'none',
-            }}
-            className={`pointer-events-auto select-none transition-shadow overflow-hidden flex flex-col ${
-              isDockState
-                ? isLight
-                  ? 'border border-neutral-300 bg-white hover:bg-neutral-50 text-neutral-900 shadow-[0_0_0_1px_rgba(0,0,0,0.1),0_0_16px_rgba(0,0,0,0.15)] cursor-pointer'
-                  : 'border border-neutral-700 bg-neutral-900 hover:bg-neutral-850 text-neutral-100 shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_0_18px_rgba(255,255,255,0.08)] cursor-pointer'
-                : isLight
-                ? 'border border-neutral-300/80 bg-neutral-50/98 text-neutral-900 shadow-[0_0_0_1px_rgba(0,0,0,0.12),0_0_24px_rgba(0,0,0,0.16),0_0_48px_rgba(0,0,0,0.10)]'
-                : 'border border-neutral-700/60 bg-neutral-900/98 text-neutral-100 shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_0_25px_rgba(0,0,0,0.85),0_0_35px_rgba(255,255,255,0.08)]'
-            } ${className}`}
-            onClick={isDockState ? onExpandDock : undefined}
-            onMouseEnter={() => isDockState && setIsPillHovered(true)}
-            onMouseLeave={() => setIsPillHovered(false)}
-          >
-            {isDockState ? (
-              <LivePreviewDock
-                isLight={isLight}
-                isHovered={isPillHovered}
-                isVisible={isPillContentVisible}
-              />
-            ) : (
-              <div
-                ref={contentWrapperRef}
-                className={`w-full h-full flex flex-col transition-opacity ${
-                  isContentVisible
-                    ? 'opacity-100 pointer-events-auto duration-150'
-                    : 'opacity-0 pointer-events-none duration-100'
-                }`}
-              >
-                <motion.div
-                  key={currentKey}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.18, ease: [0.2, 0.8, 0.25, 1] }}
-                  className="w-full h-full flex flex-col min-h-0"
-                >
-                  {children}
-                </motion.div>
-              </div>
-            )}
-          </motion.div>
-        </MorphContainerContext.Provider>
-      </motion.div>
+        <motion.div
+          key={currentKey}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: [0.2, 0.8, 0.25, 1] }}
+          className="w-full h-full flex flex-col min-h-0"
+        >
+          {children}
+        </motion.div>
+      </MorphingStageShell>
 
       {!isDockState && inspectorSlot}
     </>

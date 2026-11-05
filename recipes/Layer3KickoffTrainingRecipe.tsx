@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  useLayer3KickoffTrainingStoreBinding,
-  type KickoffSubMode,
-  type KickoffAISpawnSide,
-  type KickoffTrainingConfig,
-  type Layer3KickoffTrainingRecipeProps,
-} from './hooks/useLayer3PlayTrainingBindings';
+import { useLayer3KickoffTrainingStoreBinding } from './hooks/useLayer3PlayTrainingBindings';
 import { Check, Clock, Compass, Crosshair, Ghost, GraduationCap, Play, Zap } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -16,12 +10,15 @@ import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 
-export type {
-  KickoffSubMode,
-  KickoffAISpawnSide,
-  KickoffTrainingConfig,
-  Layer3KickoffTrainingRecipeProps,
-};
+export type KickoffSubMode = 'instant' | 'easy-learning' | 'realistic';
+export type KickoffAISpawnSide = 'same-position' | 'opposite-side';
+
+export interface KickoffTrainingConfig {
+  subMode: KickoffSubMode;
+  aiSpawnSide: KickoffAISpawnSide;
+  ghostMode: boolean;
+  showRhythmHighway?: boolean;
+}
 
 export const DEFAULT_KICKOFF_TRAINING_CONFIG: KickoffTrainingConfig = {
   subMode: 'instant',
@@ -29,6 +26,29 @@ export const DEFAULT_KICKOFF_TRAINING_CONFIG: KickoffTrainingConfig = {
   ghostMode: false,
   showRhythmHighway: true,
 };
+
+export interface Layer3KickoffTrainingRecipeProps {
+  isLight?: boolean;
+  /** Controlled kickoff training config */
+  config?: Partial<KickoffTrainingConfig>;
+  /** Alias for controlled config */
+  settings?: Partial<KickoffTrainingConfig>;
+  /** Initial kickoff training config for uncontrolled mode */
+  defaultConfig?: Partial<KickoffTrainingConfig>;
+  /** Callback fired when any kickoff training setting changes */
+  onChange?: (
+    next: KickoffTrainingConfig,
+    patch: Partial<KickoffTrainingConfig>
+  ) => void;
+  /** Alias for onChange */
+  onConfigChange?: (
+    next: KickoffTrainingConfig,
+    patch: Partial<KickoffTrainingConfig>
+  ) => void;
+  onStartTraining?: (config: KickoffTrainingConfig) => void;
+  onBack?: () => void;
+  className?: string;
+}
 
 const SUB_MODE_DESCRIPTIONS: Record<KickoffSubMode, string> = {
   instant:

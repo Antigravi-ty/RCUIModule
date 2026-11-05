@@ -416,11 +416,11 @@ export type SpatialAttenuationProfilesSubscriber = (profiles: SpatialAttenuation
 
 class SpatialAttenuationProfileRegistry {
   profiles: SpatialAttenuationProfileMap;
-  subscribers: Set<SpatialAttenuationProfilesSubscriber>;
+  subscribers: SpatialAttenuationProfilesSubscriber[];
 
   constructor() {
     this.profiles = cloneDefaultSpatialAttenuationProfiles();
-    this.subscribers = new Set();
+    this.subscribers = [];
     this.load();
   }
 
@@ -495,8 +495,17 @@ class SpatialAttenuationProfileRegistry {
   }
 
   subscribe(cb: SpatialAttenuationProfilesSubscriber): () => boolean {
-    this.subscribers.add(cb);
-    return () => this.subscribers.delete(cb);
+    if (!this.subscribers.includes(cb)) {
+      this.subscribers.push(cb);
+    }
+    return () => {
+      const idx = this.subscribers.indexOf(cb);
+      if (idx >= 0) {
+        this.subscribers.splice(idx, 1);
+        return true;
+      }
+      return false;
+    };
   }
 
   notify(): void {

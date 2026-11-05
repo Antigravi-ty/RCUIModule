@@ -25,7 +25,7 @@ import {
   loadStoredPlayerName,
   saveStoredPlayerName,
 } from '../config/vehiclePresets';
-import { useSettingsPacingStore } from '../recipes/settings/settingsPacingStore';
+import { useSettingsPacingStore } from './settingsPacingStore';
 import { useAppStore } from './appStore';
 import { useBotsLoadoutStore } from './botsLoadoutStore';
 import { PRESET_WINDOWS } from './devFloatingPresets';
@@ -303,4 +303,23 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
       });
     }
   }
+}
+
+const SYNCABLE_EXTRA_STORAGE_KEY_SET = new Set<string>(SYNCABLE_EXTRA_STORAGE_KEYS);
+
+export function attachUnifiedProfileChangeSubscription(listener: () => void): void {
+  useAppStore.subscribe(listener);
+  floatingStore.subscribe(listener);
+  useSpatialAudioStore.subscribe(listener);
+  viewportStore.subscribe(listener);
+  useSettingsPacingStore.subscribe(listener);
+  useBotsLoadoutStore.subscribe(listener);
+  useKickoffTrainingStore.subscribe(listener);
+  useStaticTrainingBallCamTunerStore.subscribe(listener);
+  spatialAttenuationProfiles.subscribe(listener);
+  safeStorage.subscribe((key) => {
+    if (SYNCABLE_EXTRA_STORAGE_KEY_SET.has(key)) {
+      listener();
+    }
+  });
 }

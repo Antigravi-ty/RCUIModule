@@ -327,13 +327,16 @@ export const anodizedPaintTuning: AnodizedPaintTuning = {
 };
 
 type AnodizedPaintListener = (patch: Partial<AnodizedPaintTuning>, state: AnodizedPaintTuning) => void;
-const anodizedPaintListeners = new Set<AnodizedPaintListener>();
+const anodizedPaintCallbacks: AnodizedPaintListener[] = [];
 
 export function subscribeAnodizedPaintTuning(listener: AnodizedPaintListener): () => void {
   if (typeof listener !== 'function') return () => {};
-  anodizedPaintListeners.add(listener);
+  if (!anodizedPaintCallbacks.includes(listener)) {
+    anodizedPaintCallbacks.push(listener);
+  }
   return () => {
-    anodizedPaintListeners.delete(listener);
+    const idx = anodizedPaintCallbacks.indexOf(listener);
+    if (idx !== -1) anodizedPaintCallbacks.splice(idx, 1);
   };
 }
 
@@ -346,7 +349,7 @@ export function updateAnodizedPaintTuning(
 ): AnodizedPaintTuning {
   if (!patch) return anodizedPaintTuning;
   Object.assign(anodizedPaintTuning, patch);
-  for (const listener of anodizedPaintListeners) {
+  for (const listener of anodizedPaintCallbacks) {
     try {
       listener(patch, anodizedPaintTuning);
     } catch (err) {
@@ -415,16 +418,23 @@ export function setBoostParticleRuntimeConfig(
 }
 
 type VehicleTunerListener = (payload: Record<string, any>) => void;
-const vehicleTunerListeners = new Set<VehicleTunerListener>();
+const vehicleTunerCallbacks: VehicleTunerListener[] = [];
 
 export function subscribeVehicleTunerConfig(listener: VehicleTunerListener): () => boolean {
   if (typeof listener !== 'function') return () => false;
-  vehicleTunerListeners.add(listener);
-  return () => vehicleTunerListeners.delete(listener);
+  if (!vehicleTunerCallbacks.includes(listener)) {
+    vehicleTunerCallbacks.push(listener);
+  }
+  return () => {
+    const idx = vehicleTunerCallbacks.indexOf(listener);
+    if (idx === -1) return false;
+    vehicleTunerCallbacks.splice(idx, 1);
+    return true;
+  };
 }
 
 export function notifyVehicleTunerConfigChange(payload: Record<string, any> = {}): void {
-  for (const fn of vehicleTunerListeners) {
+  for (const fn of vehicleTunerCallbacks) {
     try {
       fn(payload);
     } catch (err) {

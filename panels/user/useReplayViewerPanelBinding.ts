@@ -8,74 +8,13 @@ import {
   type ReplayDownCounterOption,
 } from '../../stores/replayViewerStore';
 import { triggerReplayFilePicker } from './replayFilePicker';
-import type {
-  PlaybackSpeedPreset,
-  ReplayViewerState,
-} from './ReplayViewerTransportBar';
 
 export type DownCounterOption = '0' | '1' | '2' | '3';
 
-export interface ReplayViewerFloatingWindowProps {
-  isLight?: boolean;
-  active?: boolean;
-  /** Controlled whether a replay file is currently being parsed/loaded */
-  isLoadingReplay?: boolean;
-  /** Controlled whether a valid replay is loaded */
-  hasLoadedReplay?: boolean;
-  /** Controlled whether a retained recent match replay exists in memory */
-  hasRetainedMatch?: boolean;
-  /** Controlled replay file name */
-  fileName?: string;
-  /** Controlled current frame cursor */
-  cursorFrame?: number;
-  defaultCursorFrame?: number;
-  /** Controlled total frame count */
-  totalFrames?: number;
-  /** Controlled play/pause state */
-  isPlaying?: boolean;
-  defaultIsPlaying?: boolean;
-  /** Controlled intervention state */
-  isIntervening?: boolean;
-  defaultIsIntervening?: boolean;
-  /** Controlled playback speed preset */
-  playbackPreset?: PlaybackSpeedPreset;
-  defaultPlaybackPreset?: PlaybackSpeedPreset;
-  /** Controlled custom playback speed percentage (1..100) */
-  customSpeedPct?: number;
-  defaultCustomSpeedPct?: number;
-  /** Controlled down counter ('3' | '2' | '1' | '0') */
-  downCounter?: DownCounterOption;
-  defaultDownCounter?: DownCounterOption;
-  /** Custom incident markers */
-  incidentMarkers?: ChartIncidentMarker[];
-  /** Custom signal markers */
-  signalMarkers?: ChartSignalMarker[];
-  // Action callbacks
-  onLoadReplayFile?: (file?: File) => void;
-  onLoadRecentReplay?: () => void;
-  onPlay?: () => void;
-  onPause?: () => void;
-  onPlayingChange?: (isPlaying: boolean) => void;
-  onSeekFrame?: (frame: number) => void;
-  onStepFrame?: (deltaFrames: number, nextFrame: number) => void;
-  onRewindPressStart?: () => void;
-  onRewindPressEnd?: () => void;
-  onForwardPressStart?: () => void;
-  onForwardPressEnd?: () => void;
-  onPlaybackSpeedChange?: (
-    effectiveSpeedPct: number,
-    preset: PlaybackSpeedPreset,
-    customSpeedPct: number
-  ) => void;
-  onInterveneFromHere?: (frame: number, downCounterSec: number) => void;
-  onBackToReplay?: () => void;
-  onDownCounterChange?: (downCounter: DownCounterOption) => void;
-  onChange?: (state: ReplayViewerState) => void;
-}
-
-export function useReplayViewerPanelBinding(
-  rawProps: ReplayViewerFloatingWindowProps
-): ReplayViewerFloatingWindowProps {
+export function useReplayViewerPanelBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const {
     loadedFileName,
     totalFrames,
@@ -135,59 +74,59 @@ export function useReplayViewerPanelBinding(
 
   return {
     ...rawProps,
-    isLoadingReplay: rawProps.isLoadingReplay ?? isLoadingReplay,
-    hasLoadedReplay: rawProps.hasLoadedReplay ?? hasLoadedReplay,
-    hasRetainedMatch: rawProps.hasRetainedMatch ?? hasRetainedMatch,
+    isLoadingReplay: props.isLoadingReplay ?? isLoadingReplay,
+    hasLoadedReplay: props.hasLoadedReplay ?? hasLoadedReplay,
+    hasRetainedMatch: props.hasRetainedMatch ?? hasRetainedMatch,
     fileName:
-      rawProps.fileName ?? (hasLoadedReplay && loadedFileName ? loadedFileName : 'No replay loaded'),
-    totalFrames: rawProps.totalFrames ?? (hasLoadedReplay ? totalFrames : 0),
-    cursorFrame: rawProps.cursorFrame ?? (hasLoadedReplay ? cursorFrame : 0),
+      props.fileName ?? (hasLoadedReplay && loadedFileName ? loadedFileName : 'No replay loaded'),
+    totalFrames: props.totalFrames ?? (hasLoadedReplay ? totalFrames : 0),
+    cursorFrame: props.cursorFrame ?? (hasLoadedReplay ? cursorFrame : 0),
     onSeekFrame:
-      rawProps.onSeekFrame ?? ((frame: number) => runtimeHandlers.onSeekFrame?.(frame)),
+      props.onSeekFrame ?? ((frame: number) => runtimeHandlers.onSeekFrame?.(frame)),
     onStepFrame:
-      rawProps.onStepFrame ??
+      props.onStepFrame ??
       ((_delta: number, nextFrame: number) => runtimeHandlers.onSeekFrame?.(nextFrame)),
-    isPlaying: rawProps.isPlaying ?? viewerState === 'playing',
-    onPlay: rawProps.onPlay ?? (() => runtimeHandlers.onStartPlaying?.()),
-    onPause: rawProps.onPause ?? (() => runtimeHandlers.onPausePlaying?.()),
+    isPlaying: props.isPlaying ?? viewerState === 'playing',
+    onPlay: props.onPlay ?? (() => runtimeHandlers.onStartPlaying?.()),
+    onPause: props.onPause ?? (() => runtimeHandlers.onPausePlaying?.()),
     onPlayingChange:
-      rawProps.onPlayingChange ??
+      props.onPlayingChange ??
       ((playing: boolean) => {
         if (playing) runtimeHandlers.onStartPlaying?.();
         else runtimeHandlers.onPausePlaying?.();
       }),
     onRewindPressStart:
-      rawProps.onRewindPressStart ?? (() => runtimeHandlers.onPushBackwardStart?.()),
-    onRewindPressEnd: rawProps.onRewindPressEnd ?? (() => runtimeHandlers.onPushBackwardStop?.()),
+      props.onRewindPressStart ?? (() => runtimeHandlers.onPushBackwardStart?.()),
+    onRewindPressEnd: props.onRewindPressEnd ?? (() => runtimeHandlers.onPushBackwardStop?.()),
     onForwardPressStart:
-      rawProps.onForwardPressStart ?? (() => runtimeHandlers.onPushForwardStart?.()),
+      props.onForwardPressStart ?? (() => runtimeHandlers.onPushForwardStart?.()),
     onForwardPressEnd:
-      rawProps.onForwardPressEnd ?? (() => runtimeHandlers.onPushForwardStop?.()),
-    playbackPreset: rawProps.playbackPreset ?? flowPreset,
-    customSpeedPct: rawProps.customSpeedPct ?? customFlowPct,
+      props.onForwardPressEnd ?? (() => runtimeHandlers.onPushForwardStop?.()),
+    playbackPreset: props.playbackPreset ?? flowPreset,
+    customSpeedPct: props.customSpeedPct ?? customFlowPct,
     onPlaybackSpeedChange:
-      rawProps.onPlaybackSpeedChange ??
-      ((_eff: number, preset: PlaybackSpeedPreset, customPct: number) => {
+      props.onPlaybackSpeedChange ??
+      ((_eff: number, preset: any, customPct: number) => {
         setFlowPreset(preset);
         setCustomFlowPct(customPct);
       }),
-    downCounter: rawProps.downCounter ?? (String(downCounterSec) as DownCounterOption),
+    downCounter: props.downCounter ?? (String(downCounterSec) as DownCounterOption),
     onDownCounterChange:
-      rawProps.onDownCounterChange ??
+      props.onDownCounterChange ??
       ((dc: DownCounterOption) =>
         setDownCounterSec((Number(dc) || 0) as ReplayDownCounterOption)),
     isIntervening:
-      rawProps.isIntervening ??
+      props.isIntervening ??
       (viewerState === 'preroll-countdown' || viewerState === 'intervening'),
     onInterveneFromHere:
-      rawProps.onInterveneFromHere ?? (() => runtimeHandlers.onResumeFromHere?.()),
+      props.onInterveneFromHere ?? (() => runtimeHandlers.onResumeFromHere?.()),
     onBackToReplay:
-      rawProps.onBackToReplay ??
+      props.onBackToReplay ??
       (() => (runtimeHandlers.onReturnToReplay ?? runtimeHandlers.onPausePlaying)?.()),
     onLoadReplayFile:
-      rawProps.onLoadReplayFile ??
+      props.onLoadReplayFile ??
       ((directFile?: File) => {
-        if (directFile && typeof directFile.arrayBuffer === 'function') {
+        if (directFile && typeof (directFile as any).arrayBuffer === 'function') {
           runtimeHandlers.onUploadReplayFile?.(directFile);
           return;
         }
@@ -196,11 +135,11 @@ export function useReplayViewerPanelBinding(
         });
       }),
     onLoadRecentReplay:
-      rawProps.onLoadRecentReplay ?? (() => runtimeHandlers.onLoadRetainedMatchReplay?.()),
+      props.onLoadRecentReplay ?? (() => runtimeHandlers.onLoadRetainedMatchReplay?.()),
     incidentMarkers:
-      rawProps.incidentMarkers ?? (hasLoadedReplay ? mappedIncidentMarkers : []),
+      props.incidentMarkers ?? (hasLoadedReplay ? mappedIncidentMarkers : []),
     signalMarkers:
-      rawProps.signalMarkers ?? (hasLoadedReplay ? mappedSignalMarkers : []),
-  };
+      props.signalMarkers ?? (hasLoadedReplay ? mappedSignalMarkers : []),
+  } as TProps;
 }
 

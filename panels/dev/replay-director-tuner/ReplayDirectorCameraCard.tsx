@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Camera, Clock, Eye, Sliders } from 'lucide-react';
 import {
-  REPLAY_DIRECTOR_CONFIG,
+  type ReplayDirectorConfigState,
   DEFAULT_REPLAY_DIRECTOR_CONFIG,
   DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
 } from '../../../config/replayDirectorConfig';
@@ -11,8 +11,8 @@ import { UnderlineTabs } from '../../../primitives/UnderlineTabs';
 type DirectorTabId = 'framing' | 'lookahead' | 'slowmo';
 
 export interface ReplayDirectorCameraCardProps {
-  cfg: typeof REPLAY_DIRECTOR_CONFIG;
-  onParamChange: (key: keyof typeof REPLAY_DIRECTOR_CONFIG, val: number) => void;
+  cfg: ReplayDirectorConfigState;
+  onParamChange: (key: keyof ReplayDirectorConfigState, val: number) => void;
   isLight?: boolean;
 }
 

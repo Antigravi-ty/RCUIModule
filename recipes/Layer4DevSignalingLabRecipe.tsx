@@ -17,6 +17,7 @@ import {
   DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
   type CanonicalLabRelayId,
   type Layer4DevSignalingLabRecipeProps,
+  type Layer4DevSignalingLabStateOverride,
   type SignalingLabScenarioId,
 } from './dev/signalingLabTypes';
 import { SignalingLabStatusAndScenariosSection } from './dev/SignalingLabStatusAndScenariosSection';
@@ -26,6 +27,7 @@ export type {
   CanonicalLabEdgeNodeId,
   CanonicalLabRelayId,
   Layer4DevSignalingLabRecipeProps,
+  Layer4DevSignalingLabStateOverride,
   SignalingLabCloudAuditLogItem,
   SignalingLabCloudStatsView,
   SignalingLabEndpointViewConfig,
@@ -42,30 +44,31 @@ export type {
  * Dual Edge Function (JP + SG) 1-to-3 fanout, and 5-layer anti-loop guards.
  */
 export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipeProps> = React.memo(
-  ({
-    isLight = false,
-    onBack,
-    sizing: propSizing,
-    endpointConfig = DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
-    probeSummary = null,
-    traces = [],
-    roomCode: controlledRoomCode,
-    onRoomCodeChange,
-    roomPassword: controlledRoomPassword,
-    onRoomPasswordChange,
-    customSourceRelay: controlledSource,
-    onCustomSourceRelayChange,
-    customTargetRelay: controlledTarget,
-    onCustomTargetRelayChange,
-    isBusy = false,
-    activeActionLabel = null,
-    lastResultBanner = null,
-    onProbeAll,
-    onCloudSelfTest,
-    onOneClickFullDiagnostic,
-    onRunScenario,
-    onClearTraces,
-  }) => {
+  (rawProps) => {
+    const {
+      isLight = false,
+      onBack,
+      sizing: propSizing,
+      endpointConfig = DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
+      probeSummary = null,
+      traces = [],
+      roomCode: controlledRoomCode,
+      onRoomCodeChange,
+      roomPassword: controlledRoomPassword,
+      onRoomPasswordChange,
+      customSourceRelay: controlledSource,
+      onCustomSourceRelayChange,
+      customTargetRelay: controlledTarget,
+      onCustomTargetRelayChange,
+      isBusy = false,
+      activeActionLabel = null,
+      lastResultBanner = null,
+      onProbeAll,
+      onCloudSelfTest,
+      onOneClickFullDiagnostic,
+      onRunScenario,
+      onClearTraces,
+    } = { ...rawProps.stateOverride, ...rawProps };
     const [localRoomCode, setLocalRoomCode] = useState('rocket-f');
     const [localRoomPassword, setLocalRoomPassword] = useState('test1234');
     const [localSource, setLocalSource] = useState<CanonicalLabRelayId>('emqx_cn');

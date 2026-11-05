@@ -240,3 +240,228 @@ export function normalizeTeamPlayerFlags(
   }));
   return { blueSlots: nextBlue, orangeSlots: nextOrange };
 }
+
+export function computeExhibitionColorPrefsSync(params: {
+  playerParticipation: ExpPlayerParticipation;
+  isExhibitionMode: boolean;
+  blueSlots: ExperimentalMultiBotsSlotConfig[];
+  orangeSlots: ExperimentalMultiBotsSlotConfig[];
+  activeCameraCarIndex: number;
+}): {
+  nextRoster: ExpRosterSnapshot;
+  participationChanged: boolean;
+} {
+  const { primaryTeam, blueColors, orangeColors } = resolveGarageColorPrefs();
+  const nextParticipation: ExpPlayerParticipation =
+    params.playerParticipation === 'none' && !params.isExhibitionMode
+      ? 'none'
+      : primaryTeam;
+  const nextBlue = params.blueSlots.map((slot, i) => ({
+    ...slot,
+    team: 0 as const,
+    isPlayer: nextParticipation === 'blue' && i === 0,
+    colorSlot: blueColors[i] ?? slot.colorSlot,
+  }));
+  const nextOrange = params.orangeSlots.map((slot, i) => ({
+    ...slot,
+    team: 1 as const,
+    isPlayer: nextParticipation === 'orange' && i === 0,
+    colorSlot: orangeColors[i] ?? slot.colorSlot,
+  }));
+  const nextCamIdx =
+    nextParticipation === 'orange'
+      ? nextBlue.length
+      : nextParticipation === 'blue'
+      ? 0
+      : params.activeCameraCarIndex;
+
+  return {
+    nextRoster: {
+      playerParticipation: nextParticipation,
+      blueSlots: nextBlue,
+      orangeSlots: nextOrange,
+      activeCameraCarIndex: nextCamIdx,
+    },
+    participationChanged: params.playerParticipation !== nextParticipation,
+  };
+}
+
+export function computeUpdatedParticipationRoster(
+  blueSlots: ExperimentalMultiBotsSlotConfig[],
+  orangeSlots: ExperimentalMultiBotsSlotConfig[],
+  playerParticipation: ExpPlayerParticipation
+): ExpRosterSnapshot {
+  let blue = [...blueSlots];
+  let orange = [...orangeSlots];
+
+  if (playerParticipation === 'blue' && blue.length === 0) {
+    blue = [
+      {
+        id: `blue-${Date.now()}`,
+        team: 0,
+        isPlayer: true,
+        botType: 'nexto',
+        colorSlot: pickUnusedColorSlot(blue, orange, 0),
+      },
+    ];
+  } else if (playerParticipation === 'orange' && orange.length === 0) {
+    orange = [
+      {
+        id: `orange-${Date.now()}`,
+        team: 1,
+        isPlayer: true,
+        botType: 'nexto',
+        colorSlot: pickUnusedColorSlot(blue, orange, 1),
+      },
+    ];
+  }
+
+  const normalized = normalizeTeamPlayerFlags(blue, orange, playerParticipation);
+  const defaultCameraIdx =
+    playerParticipation === 'orange' ? normalized.blueSlots.length : 0;
+
+  return {
+    playerParticipation,
+    blueSlots: normalized.blueSlots,
+    orangeSlots: normalized.orangeSlots,
+    activeCameraCarIndex: defaultCameraIdx,
+  };
+}
+
+export function computeAddedBotRoster(params: {
+  blueSlots: ExperimentalMultiBotsSlotConfig[];
+  orangeSlots: ExperimentalMultiBotsSlotConfig[];
+  playerParticipation: ExpPlayerParticipation;
+  activeCameraCarIndex: number;
+  team: 0 | 1;
+  botType: ExpBotPolicyId;
+}): ExpRosterSnapshot | null {
+  const targetList = params.team === 0 ? params.blueSlots : params.orangeSlots;
+  const totalCars = params.blueSlots.length + params.orangeSlots.length;
+  if (targetList.length >= 5 || totalCars >= 6) return null;
+
+  const newColor = pickUnusedColorSlot(params.blueSlots, params.orangeSlots, params.team);
+  const newSlot: ExperimentalMultiBotsSlotConfig = {
+    id: `${params.team === 0 ? 'blue' : 'orange'}-${Date.now()}-${targetList.length}`,
+    team: params.team,
+    isPlayer: false,
+    botType: params.botType,
+    colorSlot: newColor,
+  };
+
+  const nextBlue = params.team === 0 ? [...params.blueSlots, newSlot] : [...params.blueSlots];
+  const nextOrange = params.team === 1 ? [...params.orangeSlots, newSlot] : [...params.orangeSlots];
+  const normalized = normalizeTeamPlayerFlags(
+    nextBlue,
+    nextOrange,
+    params.playerParticipation
+  );
+
+  return {
+    playerParticipation: params.playerParticipation,
+    blueSlots: normalized.blueSlots,
+    orangeSlots: normalized.orangeSlots,
+    activeCameraCarIndex: params.activeCameraCarIndex,
+  };
+}
+
+export function computeRemovedSlotRoster(params: {
+  blueSlots: ExperimentalMultiBotsSlotConfig[];
+  orangeSlots: ExperimentalMultiBotsSlotConfig[];
+  playerParticipation: ExpPlayerParticipation;
+  activeCameraCarIndex: number;
+  team: 0 | 1;
+  slotIndex: number;
+}): ExpRosterSnapshot | null {
+  const targetList = params.team === 0 ? params.blueSlots : params.orangeSlots;
+  const otherList = params.team === 0 ? params.orangeSlots : params.blueSlots;
+
+  if (targetList.length + otherList.length <= 1) return null;
+  if (params.slotIndex < 0 || params.slotIndex >= targetList.length) return null;
+
+  const removedSlot = targetList[params.slotIndex];
+  const nextParticipation = removedSlot.isPlayer ? 'none' : params.playerParticipation;
+
+  const updatedTarget = targetList.filter((_, idx) => idx !== params.slotIndex);
+  const nextBlue = params.team === 0 ? updatedTarget : [...params.blueSlots];
+  const nextOrange = params.team === 1 ? updatedTarget : [...params.orangeSlots];
+  const normalized = normalizeTeamPlayerFlags(nextBlue, nextOrange, nextParticipation);
+  const totalCars = normalized.blueSlots.length + normalized.orangeSlots.length;
+  const nextCamIdx = Math.min(params.activeCameraCarIndex, Math.max(0, totalCars - 1));
+
+  return {
+    playerParticipation: nextParticipation,
+    blueSlots: normalized.blueSlots,
+    orangeSlots: normalized.orangeSlots,
+    activeCameraCarIndex: nextCamIdx,
+  };
+}
+
+export function computeUpdatedSlotBotTypeRoster(params: {
+  blueSlots: ExperimentalMultiBotsSlotConfig[];
+  orangeSlots: ExperimentalMultiBotsSlotConfig[];
+  playerParticipation: ExpPlayerParticipation;
+  activeCameraCarIndex: number;
+  team: 0 | 1;
+  slotIndex: number;
+  botType: ExpBotPolicyId;
+}): ExpRosterSnapshot {
+  const meta = getExpBotPolicyMeta(params.botType);
+  const maxCap = meta.maxPlayersPerTeam;
+
+  const updateFn = (list: ExperimentalMultiBotsSlotConfig[]) =>
+    list.map((slot, idx) => (idx === params.slotIndex ? { ...slot, botType: params.botType } : slot));
+
+  let nextBlue = params.team === 0 ? updateFn(params.blueSlots) : [...params.blueSlots];
+  let nextOrange = params.team === 1 ? updateFn(params.orangeSlots) : [...params.orangeSlots];
+
+  if (maxCap < 3) {
+    if (nextBlue.length > maxCap) nextBlue = nextBlue.slice(0, maxCap);
+    if (nextOrange.length > maxCap) nextOrange = nextOrange.slice(0, maxCap);
+  }
+
+  const totalCars = nextBlue.length + nextOrange.length;
+  const nextCamIdx = Math.min(params.activeCameraCarIndex, Math.max(0, totalCars - 1));
+
+  return {
+    playerParticipation: params.playerParticipation,
+    blueSlots: nextBlue,
+    orangeSlots: nextOrange,
+    activeCameraCarIndex: nextCamIdx,
+  };
+}
+
+export function computeSwappedSlotColorRoster(params: {
+  blueSlots: ExperimentalMultiBotsSlotConfig[];
+  orangeSlots: ExperimentalMultiBotsSlotConfig[];
+  playerParticipation: ExpPlayerParticipation;
+  activeCameraCarIndex: number;
+  team: 0 | 1;
+  slotIndex: number;
+  colorSlot: number;
+}): ExpRosterSnapshot | null {
+  const currentList = params.team === 0 ? params.blueSlots : params.orangeSlots;
+  const prevColor = currentList[params.slotIndex]?.colorSlot ?? 0;
+  if (prevColor === params.colorSlot) return null;
+
+  const swapIfMatching = (slot: ExperimentalMultiBotsSlotConfig) =>
+    slot.colorSlot === params.colorSlot ? { ...slot, colorSlot: prevColor } : slot;
+
+  const nextBlue = params.blueSlots.map((slot, idx) =>
+    params.team === 0 && idx === params.slotIndex
+      ? { ...slot, colorSlot: params.colorSlot }
+      : swapIfMatching(slot)
+  );
+  const nextOrange = params.orangeSlots.map((slot, idx) =>
+    params.team === 1 && idx === params.slotIndex
+      ? { ...slot, colorSlot: params.colorSlot }
+      : swapIfMatching(slot)
+  );
+
+  return {
+    playerParticipation: params.playerParticipation,
+    blueSlots: nextBlue,
+    orangeSlots: nextOrange,
+    activeCameraCarIndex: params.activeCameraCarIndex,
+  };
+}

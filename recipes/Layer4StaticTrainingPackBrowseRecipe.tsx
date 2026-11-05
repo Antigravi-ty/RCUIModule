@@ -1,8 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  useLayer4StaticTrainingPackBrowseStoreBinding,
-  type Layer4StaticTrainingPackBrowseRecipeProps,
-} from './hooks/useStaticTrainingStoreBindings';
+import { useLayer4StaticTrainingPackBrowseStoreBinding } from './hooks/useStaticTrainingStoreBindings';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
@@ -15,7 +12,34 @@ import {
 import { StaticTrainingPackToolbar } from './static-training/StaticTrainingPackToolbar';
 import { StaticTrainingPackMetadataInspector } from './static-training/StaticTrainingPackMetadataInspector';
 
-export type { Layer4StaticTrainingPackBrowseRecipeProps };
+export interface Layer4StaticTrainingPackBrowseStateOverride {
+  packs?: StaticTrainingPackSummary[];
+  selectedPackUuid?: string | null;
+  onSelectPack?: (uuid: string) => void;
+  defaultSelectedId?: string;
+  defaultUseDownCounter?: boolean;
+  downCounterEnabled?: boolean;
+  onDownCounterEnabledChange?: (enabled: boolean) => void;
+  downCounterValue?: StaticPackDownCounterOption;
+  onDownCounterValueChange?: (val: StaticPackDownCounterOption) => void;
+  onCreatePack?: (title: string, description: string) => Promise<void> | void;
+  onSavePackMetadata?: (uuid: string, title: string, description: string) => Promise<void> | void;
+  onDeletePack?: (uuid: string) => Promise<void> | void;
+  onImportPackFile?: (file: File) => Promise<void> | void;
+  onExportPack?: (pack: StaticTrainingPackSummary) => Promise<void> | void;
+}
+
+export interface Layer4StaticTrainingPackBrowseRecipeProps {
+  isLight?: boolean;
+  onBack?: () => void;
+  onStartPlaySession?: (uuid: string) => void;
+  onStartEditSession?: (uuid: string) => void;
+  onPlayPack?: (pack: StaticTrainingPackSummary, useDownCounter: boolean) => void;
+  onEditPack?: (pack: StaticTrainingPackSummary) => void;
+  onImportPack?: () => void;
+  stateOverride?: Layer4StaticTrainingPackBrowseStateOverride;
+  className?: string;
+}
 
 function generateUUID(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -127,7 +151,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
   onImportPack,
   onExportPack,
   className = '',
-} = useLayer4StaticTrainingPackBrowseStoreBinding(rawProps);
+} = useLayer4StaticTrainingPackBrowseStoreBinding({ ...rawProps.stateOverride, ...rawProps });
   const sizing = useMenuLayoutStore(
     (s) => s.panels?.['layer4-static-training-pack'] ?? DEFAULT_PANEL_SIZING['layer4-static-training-pack']
   );
@@ -376,18 +400,22 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<Layer4StaticTraining
             <StaticTrainingPackMetadataInspector
               isLight={isLight}
               selectedMeta={selectedMeta}
-              editTitle={editTitle}
-              setEditTitle={setEditTitle}
-              editDescription={editDescription}
-              setEditDescription={setEditDescription}
-              isMetadataDirty={isMetadataDirty}
-              downCounterEnabled={downCounterEnabled}
-              setDownCounterEnabled={setDownCounterEnabled}
-              downCounterValue={downCounterValue}
-              setDownCounterValue={setDownCounterValue}
+              draft={{
+                editTitle,
+                setEditTitle,
+                editDescription,
+                setEditDescription,
+                isMetadataDirty,
+                onSaveMetadata: () => void handleSaveMetadata(),
+              }}
+              downCounter={{
+                downCounterEnabled,
+                setDownCounterEnabled,
+                downCounterValue,
+                setDownCounterValue,
+              }}
               confirmDeleteUuid={confirmDeleteUuid}
               setConfirmDeleteUuid={setConfirmDeleteUuid}
-              onSaveMetadata={() => void handleSaveMetadata()}
               onPlayPack={(meta) => {
                 onStartPlaySession?.(meta.uuid);
                 onPlayPack?.(meta, downCounterEnabled);

@@ -6,10 +6,11 @@ import {
   Crosshair,
   Upload,
 } from 'lucide-react';
-import { REPLAY_DIRECTOR_CONFIG } from '../../../config/replayDirectorConfig';
 import {
+  getReplayDirectorConfig,
   getActiveReplayTimelineController,
   subscribeActiveReplayTimelineController,
+  subscribeReplayDirectorConfig,
   exportActiveReplayDirectorDiagnosticPattern,
   importActiveReplayDirectorDiagnosticPattern,
   buildActiveReplayDirectorWindowDiagnostic,
@@ -71,18 +72,16 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
   const devRuntimeHandlers = useSubsystemIsolationLabStore((s) => s.runtimeHandlers);
 
   useEffect(() => {
-    const unsubCtrl = subscribeActiveReplayTimelineController(() => {
+    const bumpRevision = () => {
       setTickRevision((r) => r + 1);
-    });
-    const interval = setInterval(() => {
-      const ctrl = getActiveReplayTimelineController();
-      if ((ctrl && ctrl.isActive) || useAppStore.getState().isFreeCam) {
-        setTickRevision((r) => r + 1);
-      }
-    }, 100);
+    };
+    const unsubCtrl = subscribeActiveReplayTimelineController(bumpRevision);
+    const unsubConfig = subscribeReplayDirectorConfig(bumpRevision);
+    const unsubApp = useAppStore.subscribe(bumpRevision);
     return () => {
       unsubCtrl();
-      clearInterval(interval);
+      unsubConfig();
+      unsubApp();
     };
   }, []);
 
@@ -234,7 +233,7 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
     const windowDiag = buildActiveReplayDirectorWindowDiagnostic(15) || {
       schema: 'RocketCompanion.ReplayDirectorFrameWindowDiagnostic.v1',
       exportedAt: new Date().toISOString(),
-      directorConfig: { ...REPLAY_DIRECTOR_CONFIG },
+      directorConfig: { ...getReplayDirectorConfig() },
       selectedFrameDiagnostic: liveSnapshot,
     };
     const json = JSON.stringify(windowDiag, null, 2);

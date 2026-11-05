@@ -21,6 +21,7 @@ import { formatSyncValuePreview } from '../../config/cloudProfileSyncTypes';
 import { loadStoredPlayerName } from '../../config/vehiclePresets';
 import { useAppStore } from '../../stores/appStore';
 import { useCloudProfileSyncStore } from '../../stores/cloudProfileSyncStore';
+import { attachCloudProfileConflictDialogueAutoSync } from './CloudProfileConflictDialogue';
 
 export interface GarageSyncTabProps {
   isLight?: boolean;
@@ -31,6 +32,9 @@ export const GarageSyncTab: React.FC<GarageSyncTabProps> = ({
   isLight = false,
   onHoverDesc,
 }) => {
+  useEffect(() => {
+    attachCloudProfileConflictDialogueAutoSync();
+  }, []);
   const available = useCloudProfileSyncStore((s) => s.available);
   const loggedInUser = useCloudProfileSyncStore((s) => s.loggedInUser);
   const syncStatus = useCloudProfileSyncStore((s) => s.syncStatus);

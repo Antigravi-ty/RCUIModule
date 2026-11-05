@@ -21,7 +21,7 @@ export const themeSettingsStore = createLocalStorageStore<{ theme: GameThemeId }
 
 let activeGameTheme: GameThemeId = themeSettingsStore.load().theme;
 type GameThemeListener = (theme: GameThemeId) => void;
-const gameThemeListeners = new Set<GameThemeListener>();
+const gameThemeCallbacks: GameThemeListener[] = [];
 
 export function applyThemeToDocument(): void {
   if (typeof document !== 'undefined' && document.documentElement?.dataset) {
@@ -43,7 +43,7 @@ export function setTheme(theme: GameThemeId | string, options: { persist?: boole
     themeSettingsStore.save({ theme: nextTheme });
   }
   if (changed) {
-    for (const listener of gameThemeListeners) {
+    for (const listener of gameThemeCallbacks) {
       try {
         listener(nextTheme);
       } catch (err) {
@@ -54,14 +54,17 @@ export function setTheme(theme: GameThemeId | string, options: { persist?: boole
 }
 
 export function onThemeChange(callback: GameThemeListener): () => void {
-  gameThemeListeners.add(callback);
+  if (!gameThemeCallbacks.includes(callback)) {
+    gameThemeCallbacks.push(callback);
+  }
   try {
     callback(activeGameTheme);
   } catch (err) {
     console.error('[ThemeConfig] callback threw error:', err);
   }
   return () => {
-    gameThemeListeners.delete(callback);
+    const idx = gameThemeCallbacks.indexOf(callback);
+    if (idx !== -1) gameThemeCallbacks.splice(idx, 1);
   };
 }
 

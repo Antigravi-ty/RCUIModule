@@ -23,16 +23,9 @@ import {
 } from './MatchLobbyTeamRosterSection';
 
 
-export interface MatchLobbyRoomRecipeProps {
-  role: 'host' | 'client';
+export interface MatchLobbyRoomConfigState {
   roomCode?: string;
   pairId?: string;
-  signalingState?: SignalingHealthState;
-  onRefreshSignaling?: () => void | Promise<void>;
-  localTeam?: LobbyTeamAssignment;
-  onSwitchTeam?: (team: LobbyTeamAssignment) => void;
-  peers?: LobbyPlayerSlot[];
-  onKickPeer?: (peerId: string) => void;
   defaultTeamFormat?: HostMatchTeamFormat;
   defaultBotPolicy?: HostMatchBotPolicy;
   defaultDurationPreset?: HostMatchDurationPreset;
@@ -45,14 +38,29 @@ export interface MatchLobbyRoomRecipeProps {
   onChangeDurationPreset?: (preset: HostMatchDurationPreset) => void;
   customDurationSeconds?: number;
   onChangeCustomDurationSeconds?: (seconds: number) => void;
+}
+
+export interface MatchLobbyUtilitiesState {
   zeroGProbes?: boolean;
   onToggleZeroGProbes?: () => void;
   testSfx?: boolean;
   onToggleTestSfx?: () => void;
   onResetBall?: () => void;
+  onOpenNetHud?: () => void;
+}
+
+export interface MatchLobbyRoomRecipeProps {
+  role: 'host' | 'client';
+  signalingState?: SignalingHealthState;
+  onRefreshSignaling?: () => void | Promise<void>;
+  localTeam?: LobbyTeamAssignment;
+  onSwitchTeam?: (team: LobbyTeamAssignment) => void;
+  peers?: LobbyPlayerSlot[];
+  onKickPeer?: (peerId: string) => void;
+  roomConfig?: MatchLobbyRoomConfigState;
+  utilities?: MatchLobbyUtilitiesState;
   onStartMatch?: () => void;
   onEnterMatch?: () => void;
-  onOpenNetHud?: () => void;
   onNavigateAdvancedSettings?: () => void;
   onStopOrLeave?: () => void;
   onHoverDesc?: (desc: string | null) => void;
@@ -75,39 +83,45 @@ const TEAM_SLOTS_PER_SIDE: Record<HostMatchTeamFormat, number> = {
  */
 export const MatchLobbyRoomRecipe: React.FC<MatchLobbyRoomRecipeProps> = React.memo(({
   role,
-  roomCode = 'RL-8924',
-  pairId = '7F3A',
   signalingState: controlledSignaling,
   onRefreshSignaling,
   localTeam: controlledLocalTeam,
   onSwitchTeam,
   peers: controlledPeers,
   onKickPeer,
-  defaultTeamFormat = 'doubles',
-  defaultBotPolicy = 'auto-fill',
-  defaultDurationPreset = '300',
-  defaultCustomDurationSeconds = 180,
-  teamFormat: controlledTeamFormat,
-  onChangeTeamFormat,
-  botPolicy: controlledBotPolicy,
-  onChangeBotPolicy,
-  durationPreset: controlledDurationPreset,
-  onChangeDurationPreset,
-  customDurationSeconds: controlledCustomDurationSeconds,
-  onChangeCustomDurationSeconds,
-  zeroGProbes: controlledZeroGProbes,
-  onToggleZeroGProbes,
-  testSfx: controlledTestSfx,
-  onToggleTestSfx,
-  onResetBall,
+  roomConfig,
+  utilities,
   onStartMatch,
   onEnterMatch,
-  onOpenNetHud,
   onNavigateAdvancedSettings,
   onStopOrLeave,
   onHoverDesc,
   isLight = false,
 }) => {
+  const {
+    roomCode = 'RL-8924',
+    pairId = '7F3A',
+    defaultTeamFormat = 'doubles',
+    defaultBotPolicy = 'auto-fill',
+    defaultDurationPreset = '300',
+    defaultCustomDurationSeconds = 180,
+    teamFormat: controlledTeamFormat,
+    onChangeTeamFormat,
+    botPolicy: controlledBotPolicy,
+    onChangeBotPolicy,
+    durationPreset: controlledDurationPreset,
+    onChangeDurationPreset,
+    customDurationSeconds: controlledCustomDurationSeconds,
+    onChangeCustomDurationSeconds,
+  } = roomConfig ?? {};
+  const {
+    zeroGProbes: controlledZeroGProbes,
+    onToggleZeroGProbes,
+    testSfx: controlledTestSfx,
+    onToggleTestSfx,
+    onResetBall,
+    onOpenNetHud,
+  } = utilities ?? {};
   const isHost = role === 'host';
   const [internalSignaling, setInternalSignaling] = useState<SignalingHealthState>('green');
   const [internalLocalTeam, setInternalLocalTeam] = useState<LobbyTeamAssignment>('neutral');
@@ -257,11 +271,9 @@ export const MatchLobbyRoomRecipe: React.FC<MatchLobbyRoomRecipeProps> = React.m
         localTeam={localTeam}
         setLocalTeam={setLocalTeam}
         rosterLayout={rosterLayout}
-        setRosterLayout={setRosterLayout}
         slotsPerSide={slotsPerSide}
         maxPlayers={maxPlayers}
         humanCount={allHumans.length}
-        botCount={blueBotSlots.length + orangeBotSlots.length}
         blueRoster={blueRoster}
         neutralRoster={neutralRoster}
         orangeRoster={orangeRoster}

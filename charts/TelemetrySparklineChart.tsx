@@ -8,8 +8,12 @@ import React, {
 } from 'react';
 import { Activity, Pause, Play, Cpu, RotateCcw } from 'lucide-react';
 import { TelemetryRingBuffer, TelemetryComputedStats } from './telemetryRingBuffer';
-import { CanvasRenderCache, drawTelemetryCanvas, syncTelemetryDomReadouts, type TelemetryDomDirtyState } from './telemetrySparklinePainter';
-import { TelemetrySparklineFooter, type TelemetryPhaseItem } from './TelemetrySparklineFooter';
+import { CanvasRenderCache, drawTelemetryCanvas } from './telemetrySparklinePainter';
+import {
+  TelemetrySparklineFooter,
+  type TelemetryPhaseItem,
+  type TelemetrySparklineFooterHandle,
+} from './TelemetrySparklineFooter';
 
 export type { TelemetryPhaseItem };
 
@@ -39,10 +43,6 @@ export interface TelemetrySparklineChartProps {
   phases?: TelemetryPhaseItem[];
   title?: string;
   height?: number;
-  compact?: boolean;
-  showHeader?: boolean;
-  showQuantiles?: boolean;
-  showFreezeControl?: boolean;
   /** Controlled freeze state */
   isFrozen?: boolean;
   onFreezeToggle?: (isFrozen: boolean) => void;
@@ -81,10 +81,6 @@ export const TelemetrySparklineChart = React.memo(
         phases,
         title = 'Frame Time Telemetry',
         height = 112,
-        compact = false,
-        showHeader = true,
-        showQuantiles = true,
-        showFreezeControl = true,
         isFrozen: controlledIsFrozen,
         onFreezeToggle,
         onReset,
@@ -94,6 +90,10 @@ export const TelemetrySparklineChart = React.memo(
       },
       ref
     ) => {
+      const compact = variant === 'embedded';
+      const showHeader = true;
+      const showQuantiles = true;
+      const showFreezeControl = true;
       const canvasRef = useRef<HTMLCanvasElement | null>(null);
       const containerRef = useRef<HTMLDivElement | null>(null);
       const renderCacheRef = useRef<CanvasRenderCache>({
@@ -137,17 +137,8 @@ export const TelemetrySparklineChart = React.memo(
       // Transient DOM readout refs (updated without React re-renders, dirty-checked to avoid Recalc Style)
       const currentValRef = useRef<HTMLSpanElement | null>(null);
       const fpsValRef = useRef<HTMLSpanElement | null>(null);
-      const p50ValRef = useRef<HTMLSpanElement | null>(null);
-      const p95ValRef = useRef<HTMLSpanElement | null>(null);
-      const p99ValRef = useRef<HTMLSpanElement | null>(null);
-      const peakValRef = useRef<HTMLSpanElement | null>(null);
-      const budgetBoxRef = useRef<HTMLDivElement | null>(null);
-      const budgetTextRef = useRef<HTMLSpanElement | null>(null);
-
-      const domDirtyStateRef = useRef<TelemetryDomDirtyState>({
-        currentStr: '', fpsStr: '', p50Str: '', p95Str: '', p99Str: '', peakStr: '', budgetStr: '',
-        isPeakOver: null, isBudgetOver: null,
-      });
+      const footerRef = useRef<TelemetrySparklineFooterHandle | null>(null);
+      const headerDirtyRef = useRef({ currentStr: '', fpsStr: '' });
 
       useImperativeHandle(
         ref,
@@ -188,17 +179,23 @@ export const TelemetrySparklineChart = React.memo(
       }, []);
 
       const syncDomReadouts = useCallback(
-        (s: TelemetryComputedStats) =>
-          syncTelemetryDomReadouts(
-            s, domDirtyStateRef.current,
-            {
-              currentVal: currentValRef.current, fpsVal: fpsValRef.current,
-              p50Val: p50ValRef.current, p95Val: p95ValRef.current, p99Val: p99ValRef.current,
-              peakVal: peakValRef.current, budgetBox: budgetBoxRef.current, budgetText: budgetTextRef.current,
-            },
-            budgetMs, showFpsReadout, unit
-          ),
-        [budgetMs, showFpsReadout, unit]
+        (s: TelemetryComputedStats) => {
+          const d = headerDirtyRef.current;
+          const curStr = s.currentMs.toFixed(2);
+          if (d.currentStr !== curStr && currentValRef.current) {
+            d.currentStr = curStr;
+            currentValRef.current.textContent = curStr;
+          }
+          if (showFpsReadout && fpsValRef.current) {
+            const fStr = `(${s.fps} fps)`;
+            if (d.fpsStr !== fStr) {
+              d.fpsStr = fStr;
+              fpsValRef.current.textContent = fStr;
+            }
+          }
+          footerRef.current?.syncStats(s);
+        },
+        [showFpsReadout]
       );
 
       const getSampleCount = useCallback(() => {
@@ -491,6 +488,7 @@ export const TelemetrySparklineChart = React.memo(
           )}
 
           <TelemetrySparklineFooter
+            ref={footerRef}
             showQuantiles={showQuantiles}
             compact={compact}
             isEmbedded={isEmbedded}
@@ -499,12 +497,6 @@ export const TelemetrySparklineChart = React.memo(
             budgetMs={budgetMs}
             initialStats={initialStats}
             phases={phases}
-            p50ValRef={p50ValRef}
-            p95ValRef={p95ValRef}
-            p99ValRef={p99ValRef}
-            peakValRef={peakValRef}
-            budgetBoxRef={budgetBoxRef}
-            budgetTextRef={budgetTextRef}
           />
         </div>
       );

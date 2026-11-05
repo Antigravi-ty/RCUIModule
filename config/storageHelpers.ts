@@ -51,7 +51,7 @@ export const STORAGE_KEYS = Object.freeze({
 export const UI_THEME_STORAGE_KEY = STORAGE_KEYS.UI_THEME;
 
 type SafeStorageChangeListener = (key: string) => void;
-const storageListeners = new Set<SafeStorageChangeListener>();
+const storageListeners: SafeStorageChangeListener[] = [];
 
 export const safeStorage = {
   get: (k: string, fallback: string | null = null): string | null => {
@@ -72,7 +72,7 @@ export const safeStorage = {
         const prevStr = localStorage.getItem(k);
         localStorage.setItem(k, nextStr);
         if (prevStr !== nextStr) {
-          storageListeners.forEach((fn) => fn(k));
+          for (let i = 0; i < storageListeners.length; i++) storageListeners[i](k);
         }
       }
     } catch (err) {
@@ -88,7 +88,7 @@ export const safeStorage = {
         const hadPrev = localStorage.getItem(k) !== null;
         localStorage.removeItem(k);
         if (hadPrev) {
-          storageListeners.forEach((fn) => fn(k));
+          for (let i = 0; i < storageListeners.length; i++) storageListeners[i](k);
         }
       }
     } catch (err) {
@@ -99,9 +99,12 @@ export const safeStorage = {
     safeStorage.remove(k);
   },
   subscribe: (listener: SafeStorageChangeListener): (() => void) => {
-    storageListeners.add(listener);
+    if (!storageListeners.includes(listener)) {
+      storageListeners.push(listener);
+    }
     return () => {
-      storageListeners.delete(listener);
+      const idx = storageListeners.indexOf(listener);
+      if (idx >= 0) storageListeners.splice(idx, 1);
     };
   },
 };

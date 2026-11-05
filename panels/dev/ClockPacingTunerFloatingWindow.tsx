@@ -50,13 +50,12 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
   const [importStatusMsg, setImportStatusMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Periodically refresh live trace What-If evaluation at 2Hz when inspecting live telemetry
+  // Refresh live trace What-If evaluation via recorder subscription when inspecting live telemetry
   useEffect(() => {
     if (!active || useImportedSource) return;
-    const id = window.setInterval(() => {
+    return globalPacingTelemetryRecorder.subscribe(() => {
       setSimRefreshTick((v) => (v + 1) % 10000);
-    }, 500);
-    return () => window.clearInterval(id);
+    });
   }, [active, useImportedSource]);
 
   const recordedSummary = useMemo(() => {

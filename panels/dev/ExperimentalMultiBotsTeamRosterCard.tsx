@@ -227,7 +227,6 @@ export interface ExperimentalMultiBotsTeamRosterCardProps {
   onSetSlotBotType: (team: 0 | 1, slotIndex: number, botType: ExpBotPolicyId) => void;
   onRemoveSlot: (team: 0 | 1, slotIndex: number) => void;
   onSetSlotColor: (team: 0 | 1, slotIndex: number, colorSlot: number) => void;
-  onHoverDesc?: (desc: string | null) => void;
 }
 
 export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBotsTeamRosterCardProps> = ({
@@ -246,7 +245,6 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
   onSetSlotBotType,
   onRemoveSlot,
   onSetSlotColor,
-  onHoverDesc,
 }) => {
   const isBlue = team === 0;
   const teamLabel = isBlue ? 'BLUE TEAM' : 'ORANGE TEAM';
@@ -271,10 +269,6 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
           type="button"
           disabled={!canAddBot}
           onClick={() => onAddBot(team, 'nexto')}
-          onMouseEnter={() =>
-            onHoverDesc?.(`Add a bot slot to ${teamShort} Team (up to 5 per team, 6 cars total).`)
-          }
-          onMouseLeave={() => onHoverDesc?.(null)}
           className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border flex items-center gap-1 transition-colors ${
             !canAddBot
               ? 'opacity-40 cursor-not-allowed border-neutral-700 text-neutral-500'
@@ -308,7 +302,6 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
               onSetSlotBotType={onSetSlotBotType}
               onRemoveSlot={onRemoveSlot}
               onSetSlotColor={onSetSlotColor}
-              onHoverDesc={onHoverDesc}
             />
           ))
         )}

@@ -2,8 +2,6 @@ import { useCallback, useMemo } from 'react';
 import {
   BARRIER_GRID_COLS,
   BARRIER_GRID_ROWS,
-  type GoalBarrierPresetId,
-  type GoalBarrierSelectionMode,
   type NormalizedBarrierRect,
 } from '../../charts/goalBarrierMath';
 import { useGoalBarrierStore } from '../../stores/goalBarrierStore';
@@ -12,42 +10,8 @@ import {
   saveGoalBarrierConfig,
   type NormalizedRect,
 } from '../../config/goalBarrierConfig';
+
 export type GoalBarrierPlacement = 'none' | 'blue' | 'orange' | 'both';
-
-export interface GoalBarrierConfigState {
-  placement: GoalBarrierPlacement;
-  selectionMode: GoalBarrierSelectionMode;
-  opacityPct: number;
-  grid: Uint8Array;
-  mergedRects?: NormalizedBarrierRect[];
-}
-
-export interface GoalBarrierConfiguratorFloatingWindowProps {
-  isLight?: boolean;
-  active?: boolean;
-  /** Controlled placement ('none' | 'both' | 'orange' | 'blue') */
-  placement?: GoalBarrierPlacement;
-  defaultPlacement?: GoalBarrierPlacement;
-  onPlacementChange?: (placement: GoalBarrierPlacement) => void;
-  /** Controlled selection mode ('new' | 'add' | 'subtract') */
-  selectionMode?: GoalBarrierSelectionMode;
-  defaultSelectionMode?: GoalBarrierSelectionMode;
-  onSelectionModeChange?: (mode: GoalBarrierSelectionMode) => void;
-  /** Controlled opacity percentage (1..100) */
-  opacityPct?: number;
-  defaultOpacityPct?: number;
-  onOpacityPctChange?: (opacityPct: number) => void;
-  /** Controlled 32x16 barrier grid */
-  grid?: Uint8Array;
-  defaultGrid?: Uint8Array;
-  onGridChange?: (grid: Uint8Array, mergedRects: NormalizedBarrierRect[]) => void;
-  /** Callback when a preset is clicked */
-  onApplyPreset?: (presetId: GoalBarrierPresetId, grid: Uint8Array) => void;
-  /** Callback when Clear is clicked */
-  onClear?: () => void;
-  /** Aggregated state change callback */
-  onChange?: (state: GoalBarrierConfigState) => void;
-}
 
 function rectsToGrid(rects: NormalizedRect[]): Uint8Array {
   const grid = new Uint8Array(BARRIER_GRID_COLS * BARRIER_GRID_ROWS);
@@ -65,9 +29,10 @@ function rectsToGrid(rects: NormalizedRect[]): Uint8Array {
   return grid;
 }
 
-export function useGoalBarrierPanelBinding(
-  rawProps: GoalBarrierConfiguratorFloatingWindowProps
-): GoalBarrierConfiguratorFloatingWindowProps {
+export function useGoalBarrierPanelBinding<TProps extends object>(
+  rawProps: TProps
+): TProps {
+  const props = rawProps as Record<string, any>;
   const {
     enabled,
     targetGoal,
@@ -97,17 +62,17 @@ export function useGoalBarrierPanelBinding(
         setTargetGoal(next);
         setEnabled(true);
       }
-      rawProps.onPlacementChange?.(next);
+      props.onPlacementChange?.(next);
     },
-    [setEnabled, setTargetGoal, rawProps.onPlacementChange]
+    [setEnabled, setTargetGoal, props.onPlacementChange]
   );
 
   const handleOpacityPctChange = useCallback(
     (pct: number) => {
       setOpacity(pct / 100);
-      rawProps.onOpacityPctChange?.(pct);
+      props.onOpacityPctChange?.(pct);
     },
-    [setOpacity, rawProps.onOpacityPctChange]
+    [setOpacity, props.onOpacityPctChange]
   );
 
   const handleGridChange = useCallback(
@@ -132,32 +97,32 @@ export function useGoalBarrierPanelBinding(
         decomposition: nextDecomp,
         revision: state.revision + 1,
       });
-      rawProps.onGridChange?.(grid, mergedRects);
+      props.onGridChange?.(grid, mergedRects);
     },
-    [rawProps.onGridChange]
+    [props.onGridChange]
   );
 
   return {
     ...rawProps,
-    placement: rawProps.placement ?? storePlacement,
+    placement: props.placement ?? storePlacement,
     onPlacementChange: handlePlacementChange,
-    selectionMode: rawProps.selectionMode ?? selectionMode,
-    onSelectionModeChange: (mode: GoalBarrierSelectionMode) => {
+    selectionMode: props.selectionMode ?? selectionMode,
+    onSelectionModeChange: (mode: any) => {
       setSelectionMode(mode);
-      rawProps.onSelectionModeChange?.(mode);
+      props.onSelectionModeChange?.(mode);
     },
-    opacityPct: rawProps.opacityPct ?? storeOpacityPct,
+    opacityPct: props.opacityPct ?? storeOpacityPct,
     onOpacityPctChange: handleOpacityPctChange,
-    grid: rawProps.grid ?? storeGrid,
+    grid: props.grid ?? storeGrid,
     onGridChange: handleGridChange,
-    onApplyPreset: (presetId: GoalBarrierPresetId, grid: Uint8Array) => {
+    onApplyPreset: (presetId: any, grid: Uint8Array) => {
       applyPreset(presetId);
-      rawProps.onApplyPreset?.(presetId, grid);
+      props.onApplyPreset?.(presetId, grid);
     },
     onClear: () => {
       clearBarrier();
-      rawProps.onClear?.();
+      props.onClear?.();
     },
-  };
+  } as TProps;
 }
 

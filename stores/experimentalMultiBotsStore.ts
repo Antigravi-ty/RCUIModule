@@ -13,6 +13,12 @@ import {
   buildAsymmetricTeamSlotsFromColorPrefs,
   pickUnusedColorSlot,
   normalizeTeamPlayerFlags,
+  computeExhibitionColorPrefsSync,
+  computeUpdatedParticipationRoster,
+  computeAddedBotRoster,
+  computeRemovedSlotRoster,
+  computeUpdatedSlotBotTypeRoster,
+  computeSwappedSlotColorRoster,
   type ExpBotPolicyId,
   type ExpBotPolicyMeta,
   type ExpSubMode,
@@ -278,53 +284,24 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
 
   syncExhibitionFromColorPrefs: (triggerRuntime = true) => {
     const state = get();
-    const { primaryTeam, blueColors, orangeColors } = resolveGarageColorPrefs();
-    const nextParticipation: ExpPlayerParticipation =
-      state.playerParticipation === 'none' && !state.isExhibitionMode
-        ? 'none'
-        : primaryTeam;
-    const prevParticipation = state.playerParticipation;
-
-    const nextBlue = state.blueSlots.map((slot, i) => ({
-      ...slot,
-      team: 0 as const,
-      isPlayer: nextParticipation === 'blue' && i === 0,
-      colorSlot: blueColors[i] ?? slot.colorSlot,
-    }));
-    const nextOrange = state.orangeSlots.map((slot, i) => ({
-      ...slot,
-      team: 1 as const,
-      isPlayer: nextParticipation === 'orange' && i === 0,
-      colorSlot: orangeColors[i] ?? slot.colorSlot,
-    }));
-    const nextCamIdx =
-      nextParticipation === 'orange'
-        ? nextBlue.length
-        : nextParticipation === 'blue'
-        ? 0
-        : state.activeCameraCarIndex;
-
-    const nextRoster: ExpRosterSnapshot = {
-      playerParticipation: nextParticipation,
-      blueSlots: nextBlue,
-      orangeSlots: nextOrange,
-      activeCameraCarIndex: nextCamIdx,
-    };
-
+    const { nextRoster, participationChanged } = computeExhibitionColorPrefsSync(state);
     set({
       ...nextRoster,
       savedMultiBotsRoster:
         state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
     });
-
     if (triggerRuntime && state.matchActive) {
-      if (prevParticipation !== nextParticipation) {
+      if (participationChanged) {
         get().runtimeHandlers.onApplyRosterAndStart?.();
       } else {
+        const nextParticipation = nextRoster.playerParticipation;
         get().runtimeHandlers.onHotSwapSlotColor?.(
           nextParticipation === 'orange' ? 1 : 0,
           0,
-          (nextParticipation === 'orange' ? nextOrange[0] : nextBlue[0])?.colorSlot ?? 3
+          (nextParticipation === 'orange'
+            ? nextRoster.orangeSlots[0]
+            : nextRoster.blueSlots[0]
+          )?.colorSlot ?? 3
         );
       }
     }
@@ -332,42 +309,11 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
 
   setPlayerParticipation: (playerParticipation) => {
     const state = get();
-    let blue = [...state.blueSlots];
-    let orange = [...state.orangeSlots];
-
-    if (playerParticipation === 'blue' && blue.length === 0) {
-      blue = [
-        {
-          id: `blue-${Date.now()}`,
-          team: 0,
-          isPlayer: true,
-          botType: 'nexto',
-          colorSlot: pickUnusedColorSlot(blue, orange, 0),
-        },
-      ];
-    } else if (playerParticipation === 'orange' && orange.length === 0) {
-      orange = [
-        {
-          id: `orange-${Date.now()}`,
-          team: 1,
-          isPlayer: true,
-          botType: 'nexto',
-          colorSlot: pickUnusedColorSlot(blue, orange, 1),
-        },
-      ];
-    }
-
-    const normalized = normalizeTeamPlayerFlags(blue, orange, playerParticipation);
-    const defaultCameraIdx =
-      playerParticipation === 'orange' ? normalized.blueSlots.length : 0;
-
-    const nextRoster: ExpRosterSnapshot = {
-      playerParticipation,
-      blueSlots: normalized.blueSlots,
-      orangeSlots: normalized.orangeSlots,
-      activeCameraCarIndex: defaultCameraIdx,
-    };
-
+    const nextRoster = computeUpdatedParticipationRoster(
+      state.blueSlots,
+      state.orangeSlots,
+      playerParticipation
+    );
     set({
       ...nextRoster,
       savedMultiBotsRoster:
@@ -378,39 +324,20 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
     }
   },
 
-  addBotToTeam: (team, botType = 'nexto') => {
+  addBotToTeam: (team, botType: ExpBotPolicyId = 'nexto') => {
     const state = get();
-    const targetList = team === 0 ? state.blueSlots : state.orangeSlots;
-    const totalCars = state.blueSlots.length + state.orangeSlots.length;
-    if (targetList.length >= 5 || totalCars >= 6) return;
-
-    const newColor = pickUnusedColorSlot(state.blueSlots, state.orangeSlots, team);
-    const newSlot: ExperimentalMultiBotsSlotConfig = {
-      id: `${team === 0 ? 'blue' : 'orange'}-${Date.now()}-${targetList.length}`,
-      team,
-      isPlayer: false,
-      botType,
-      colorSlot: newColor,
-    };
-
-    const nextBlue = team === 0 ? [...state.blueSlots, newSlot] : [...state.blueSlots];
-    const nextOrange = team === 1 ? [...state.orangeSlots, newSlot] : [...state.orangeSlots];
-    const normalized = normalizeTeamPlayerFlags(
-      nextBlue,
-      nextOrange,
-      state.playerParticipation
-    );
-
-    const nextRoster: ExpRosterSnapshot = {
+    const nextRoster = computeAddedBotRoster({
+      blueSlots: state.blueSlots,
+      orangeSlots: state.orangeSlots,
       playerParticipation: state.playerParticipation,
-      blueSlots: normalized.blueSlots,
-      orangeSlots: normalized.orangeSlots,
       activeCameraCarIndex: state.activeCameraCarIndex,
-    };
-
+      team,
+      botType,
+    });
+    if (!nextRoster) return;
     set({
-      blueSlots: normalized.blueSlots,
-      orangeSlots: normalized.orangeSlots,
+      blueSlots: nextRoster.blueSlots,
+      orangeSlots: nextRoster.orangeSlots,
       savedMultiBotsRoster:
         state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
     });
@@ -422,33 +349,15 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
 
   removeSlotFromTeam: (team, slotIndex) => {
     const state = get();
-    const targetList = team === 0 ? state.blueSlots : state.orangeSlots;
-    const otherList = team === 0 ? state.orangeSlots : state.blueSlots;
-
-    // Keep at least 1 car in the arena
-    if (targetList.length + otherList.length <= 1) return;
-    if (slotIndex < 0 || slotIndex >= targetList.length) return;
-
-    const removedSlot = targetList[slotIndex];
-    let nextParticipation = state.playerParticipation;
-    if (removedSlot.isPlayer) {
-      nextParticipation = 'none';
-    }
-
-    const updatedTarget = targetList.filter((_, idx) => idx !== slotIndex);
-    const nextBlue = team === 0 ? updatedTarget : [...state.blueSlots];
-    const nextOrange = team === 1 ? updatedTarget : [...state.orangeSlots];
-    const normalized = normalizeTeamPlayerFlags(nextBlue, nextOrange, nextParticipation);
-    const totalCars = normalized.blueSlots.length + normalized.orangeSlots.length;
-    const nextCamIdx = Math.min(state.activeCameraCarIndex, Math.max(0, totalCars - 1));
-
-    const nextRoster: ExpRosterSnapshot = {
-      playerParticipation: nextParticipation,
-      blueSlots: normalized.blueSlots,
-      orangeSlots: normalized.orangeSlots,
-      activeCameraCarIndex: nextCamIdx,
-    };
-
+    const nextRoster = computeRemovedSlotRoster({
+      blueSlots: state.blueSlots,
+      orangeSlots: state.orangeSlots,
+      playerParticipation: state.playerParticipation,
+      activeCameraCarIndex: state.activeCameraCarIndex,
+      team,
+      slotIndex,
+    });
+    if (!nextRoster) return;
     set({
       ...nextRoster,
       savedMultiBotsRoster:
@@ -461,38 +370,22 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
 
   setSlotBotType: (team, slotIndex, botType) => {
     const state = get();
-    const meta = getExpBotPolicyMeta(botType);
-    const maxCap = meta.maxPlayersPerTeam;
-
-    const updateFn = (list: ExperimentalMultiBotsSlotConfig[]) =>
-      list.map((slot, idx) => (idx === slotIndex ? { ...slot, botType } : slot));
-
-    let nextBlue = team === 0 ? updateFn(state.blueSlots) : [...state.blueSlots];
-    let nextOrange = team === 1 ? updateFn(state.orangeSlots) : [...state.orangeSlots];
-
-    // Enforce maxPlayersPerTeam when selecting format-constrained models (e.g., Kira 1v1, Dice 2v2)
-    if (maxCap < 3) {
-      if (nextBlue.length > maxCap) nextBlue = nextBlue.slice(0, maxCap);
-      if (nextOrange.length > maxCap) nextOrange = nextOrange.slice(0, maxCap);
-    }
-
-    const totalCars = nextBlue.length + nextOrange.length;
-    const nextCamIdx = Math.min(state.activeCameraCarIndex, Math.max(0, totalCars - 1));
-    const nextRoster: ExpRosterSnapshot = {
+    const nextRoster = computeUpdatedSlotBotTypeRoster({
+      blueSlots: state.blueSlots,
+      orangeSlots: state.orangeSlots,
       playerParticipation: state.playerParticipation,
-      blueSlots: nextBlue,
-      orangeSlots: nextOrange,
-      activeCameraCarIndex: nextCamIdx,
-    };
-
+      activeCameraCarIndex: state.activeCameraCarIndex,
+      team,
+      slotIndex,
+      botType,
+    });
     set({
-      blueSlots: nextBlue,
-      orangeSlots: nextOrange,
-      activeCameraCarIndex: nextCamIdx,
+      blueSlots: nextRoster.blueSlots,
+      orangeSlots: nextRoster.orangeSlots,
+      activeCameraCarIndex: nextRoster.activeCameraCarIndex,
       savedMultiBotsRoster:
         state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
     });
-
     get().runtimeHandlers.onPreloadEngines?.();
     if (get().matchActive) {
       get().runtimeHandlers.onApplyRosterAndStart?.();
@@ -501,31 +394,19 @@ export const useExperimentalMultiBotsStore = create<ExperimentalMultiBotsState>(
 
   setSlotColor: (team, slotIndex, colorSlot) => {
     const state = get();
-    const currentList = team === 0 ? state.blueSlots : state.orangeSlots;
-    const prevColor = currentList[slotIndex]?.colorSlot ?? 0;
-    if (prevColor === colorSlot) return;
-
-    // Swap color with any other slot currently using colorSlot so all 6 slots remain unique
-    const swapIfMatching = (slot: ExperimentalMultiBotsSlotConfig) =>
-      slot.colorSlot === colorSlot ? { ...slot, colorSlot: prevColor } : slot;
-
-    const nextBlue = state.blueSlots.map((slot, idx) =>
-      team === 0 && idx === slotIndex ? { ...slot, colorSlot } : swapIfMatching(slot)
-    );
-    const nextOrange = state.orangeSlots.map((slot, idx) =>
-      team === 1 && idx === slotIndex ? { ...slot, colorSlot } : swapIfMatching(slot)
-    );
-
-    const nextRoster: ExpRosterSnapshot = {
+    const nextRoster = computeSwappedSlotColorRoster({
+      blueSlots: state.blueSlots,
+      orangeSlots: state.orangeSlots,
       playerParticipation: state.playerParticipation,
-      blueSlots: nextBlue,
-      orangeSlots: nextOrange,
       activeCameraCarIndex: state.activeCameraCarIndex,
-    };
-
+      team,
+      slotIndex,
+      colorSlot,
+    });
+    if (!nextRoster) return;
     set({
-      blueSlots: nextBlue,
-      orangeSlots: nextOrange,
+      blueSlots: nextRoster.blueSlots,
+      orangeSlots: nextRoster.orangeSlots,
       savedMultiBotsRoster:
         state.activeSubMode === 'multi-bots' ? nextRoster : state.savedMultiBotsRoster,
     });

@@ -1,19 +1,32 @@
 /**
  * replayDirectorStore.ts
- * Active session subscription and diagnostic service locator for the Goal Replay Director Camera & Slow-Motion.
+ * Zustand store, active session subscription, and diagnostic service locator
+ * for the Goal Replay Director Camera & Slow-Motion.
  */
+import { create } from 'zustand';
 import {
+  DEFAULT_REPLAY_DIRECTOR_CONFIG,
+  DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
   REPLAY_DIRECTOR_CONFIG,
-  updateReplayDirectorConfig,
+  type ReplayDirectorConfigListener,
+  type ReplayDirectorConfigState,
+  getReplayDirectorConfig,
   resetReplayDirectorConfig,
-  subscribeReplayDirectorConfig,
   setReplayDirectorActiveControllerHooks,
+  subscribeReplayDirectorConfig,
+  updateReplayDirectorConfig,
 } from '../config/replayDirectorConfig';
 
 export {
-  updateReplayDirectorConfig,
+  DEFAULT_REPLAY_DIRECTOR_CONFIG,
+  DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
+  REPLAY_DIRECTOR_CONFIG,
+  type ReplayDirectorConfigListener,
+  type ReplayDirectorConfigState,
+  getReplayDirectorConfig,
   resetReplayDirectorConfig,
   subscribeReplayDirectorConfig,
+  updateReplayDirectorConfig,
 };
 
 let _activeReplayController: any = null;
@@ -23,6 +36,22 @@ let _diagnosticExporter: ((ctrl: any, format: string, options: any) => any) | nu
 let _diagnosticParser: ((fileOrInput: any, fileName: string) => Promise<any>) | null = null;
 let _windowDiagnosticBuilder: ((ctrl: any, windowRadius: number) => any) | null = null;
 let _referenceKeyframeExporter: ((ctrl: any, options: any) => any) | null = null;
+
+export interface ReplayDirectorStoreState {
+  config: ReplayDirectorConfigState;
+  updateConfig: (patch?: Partial<ReplayDirectorConfigState>) => ReplayDirectorConfigState;
+  resetConfig: () => ReplayDirectorConfigState;
+}
+
+export const useReplayDirectorStore = create<ReplayDirectorStoreState>(() => ({
+  config: getReplayDirectorConfig(),
+  updateConfig: (patch = {}) => updateReplayDirectorConfig(patch),
+  resetConfig: () => resetReplayDirectorConfig(),
+}));
+
+subscribeReplayDirectorConfig((snapshot) => {
+  useReplayDirectorStore.setState({ config: snapshot });
+});
 
 export interface ReplayDirectorPreviewHandlers {
   onImportPattern?: ((parsed: any, options: any) => any) | null;
@@ -225,7 +254,7 @@ export async function importActiveReplayDirectorDiagnosticPattern(
   if (parsed.directorConfig && options.applyImportedConfig === true) {
     const patch: Record<string, number> = {};
     for (const [key, val] of Object.entries(parsed.directorConfig)) {
-      if (key in REPLAY_DIRECTOR_CONFIG && typeof val === 'number' && Number.isFinite(val)) {
+      if (key in DEFAULT_REPLAY_DIRECTOR_CONFIG && typeof val === 'number' && Number.isFinite(val)) {
         patch[key] = val;
       }
     }

@@ -39,6 +39,7 @@ export interface Layer3HostMatchStateOverride {
 
 export interface Layer3HostMatchRecipeProps {
   isLight?: boolean;
+  developerMode?: boolean;
   /** Room type context ('match' | 'warmup') used to derive default panel header title */
   roomType?: 'match' | 'warmup';
   /** Optional explicit panel header title override */
@@ -302,12 +303,12 @@ export function useLayer3JoinRoomStoreBinding(
     const cleanName = nextConfig.playerName.trim() || generateDefaultPlayerName();
     saveStoredPlayerName(cleanName);
     const parsed = parseRoomCode(nextConfig.roomCode);
-    if (!parsed) {
+    const cleanRoom = parsed?.canonicalRoomCode || nextConfig.roomCode.trim().toLowerCase();
+    if (!cleanRoom) {
       setCurrentStep(1);
       setProgressStatus('error');
       return;
     }
-    const cleanRoom = parsed.canonicalRoomCode;
 
     setOnlineSession({
       playerName: cleanName,

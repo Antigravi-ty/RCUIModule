@@ -1,10 +1,8 @@
 import { type StateCreator } from 'zustand';
 import { STORAGE_KEYS, safeStorage } from '../../config/storageHelpers';
 import { DEFAULT_CAMERA_SETTINGS, getInitialCamera } from '../../config/cameraDefaults';
-import {
-  DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
-  updateReplayDirectorConfig,
-} from '../../config/replayDirectorConfig';
+import { DEFAULT_REPLAY_DIRECTOR_FOV_DEG } from '../../config/replayDirectorConfig';
+import { updateReplayDirectorConfig } from '../replayDirectorStore';
 import { setMaterialsConfig, getInitialMaterials } from '../../config/materialsConfig';
 import { getInitialGraphics } from '../../config/trainingDefaults';
 import { getInitialTelemetry } from '../../config/uiConfig';

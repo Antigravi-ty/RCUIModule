@@ -5,9 +5,18 @@ import { SettingSliderRow } from '../../compounds/SettingSliderRow';
 import { ControllerDeadzoneVisualizer } from './ControllerDeadzoneVisualizer';
 import type { DeadzoneAntiAliasing, StickAxisOption } from './deadzoneCanvasRenderer';
 
-export interface ControllerVisualizerOptionsSectionProps {
+export interface ControllerVisualizerInputState {
   stickDeadzone: number;
   dodgeDeadzone: number;
+  steerAxisRole: StickAxisOption;
+  invertSteerAxis: boolean;
+  pitchAxisRole: StickAxisOption;
+  invertPitchAxis: boolean;
+  selectedGamepadIndex: number | null;
+}
+
+export interface ControllerVisualizerOptionsSectionProps {
+  controllerState: ControllerVisualizerInputState;
   showCircularOverlay: boolean;
   onShowCircularOverlayChange: (val: boolean) => void;
   maxDiagonal: number;
@@ -16,11 +25,6 @@ export interface ControllerVisualizerOptionsSectionProps {
   onAltArrowChange: (val: boolean) => void;
   antiAliasing: DeadzoneAntiAliasing;
   onAntiAliasingChange: (val: DeadzoneAntiAliasing) => void;
-  steerAxisRole: StickAxisOption;
-  invertSteerAxis: boolean;
-  pitchAxisRole: StickAxisOption;
-  invertPitchAxis: boolean;
-  selectedGamepadIndex: number | null;
   developerMode?: boolean;
   isLight?: boolean;
   onHoverDesc: (desc: string | null) => void;
@@ -30,8 +34,15 @@ export interface ControllerVisualizerOptionsSectionProps {
 export const ControllerVisualizerOptionsSection: React.FC<
   ControllerVisualizerOptionsSectionProps
 > = ({
-  stickDeadzone,
-  dodgeDeadzone,
+  controllerState: {
+    stickDeadzone,
+    dodgeDeadzone,
+    steerAxisRole,
+    invertSteerAxis,
+    pitchAxisRole,
+    invertPitchAxis,
+    selectedGamepadIndex,
+  },
   showCircularOverlay,
   onShowCircularOverlayChange,
   maxDiagonal,
@@ -40,11 +51,6 @@ export const ControllerVisualizerOptionsSection: React.FC<
   onAltArrowChange,
   antiAliasing,
   onAntiAliasingChange,
-  steerAxisRole,
-  invertSteerAxis,
-  pitchAxisRole,
-  invertPitchAxis,
-  selectedGamepadIndex,
   developerMode = false,
   isLight = false,
   onHoverDesc,

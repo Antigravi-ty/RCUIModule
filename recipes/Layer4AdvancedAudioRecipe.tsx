@@ -1,8 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  useLayer4AdvancedAudioStoreBinding,
-  type Layer4AdvancedAudioRecipeProps,
-} from './hooks/useLayer4AudioAndEventBindings';
+import { useLayer4AdvancedAudioStoreBinding } from './hooks/useLayer4AudioAndEventBindings';
 import {
   ADVANCED_AUDIO_CATEGORIES,
   ADVANCED_AUDIO_DETAIL_CATALOG,
@@ -14,8 +11,6 @@ import { SettingSliderRow } from '../compounds/SettingSliderRow';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 
-export type { Layer4AdvancedAudioRecipeProps };
-
 export interface AudioDetailCatalogEntry {
   key: string;
   title: string;
@@ -23,6 +18,20 @@ export interface AudioDetailCatalogEntry {
   categoryLabel: string;
   assetHint: string;
   description: string;
+}
+
+export interface Layer4AdvancedAudioRecipeProps {
+  isLight?: boolean;
+  detailVolumes?: Record<string, number>;
+  defaultDetailVolumes?: Record<string, number>;
+  onDetailVolumeChange?: (key: string, volumePct: number) => void;
+  onResetDetailVolumes?: () => void;
+  onPreviewDetail?: (key: string) => void;
+  onStopPreview?: () => void;
+  onCopyJson?: () => { ok: boolean; bytes: number; count: number } | void;
+  onExportJson?: () => { ok: boolean; bytes: number; count: number } | void;
+  onBack?: () => void;
+  className?: string;
 }
 
 function buildDefaultDetailVolumes(): Record<string, number> {
