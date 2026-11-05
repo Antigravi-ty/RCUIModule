@@ -2,7 +2,17 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { FloatingWindowItem } from '../stores/floatingStore';
 import { PRESET_WINDOWS } from '../stores/devFloatingPresets';
 import {
+  CONTAINER_MARGIN,
+  DEFAULT_MIN_WINDOW_HEIGHT,
+  DEFAULT_MIN_WINDOW_WIDTH,
+  MIN_NON_RESIZABLE_HEIGHT,
+  OUTER_RADIUS,
+  computeInitialDesiredAnchor,
+  resolveAutoFittedDesiredAnchor,
   resolveClampedWindowGeometry,
+  resolveResizedWindowAnchor,
+  resolveSyncedDesiredSize,
+  resolveWindowSizeLimits,
   type ContainerBounds,
   type WindowRect,
 } from './floatingWindowGeometry';
@@ -11,11 +21,13 @@ import {
   SCROLLBAR_GUTTER_RESERVE_PX,
 } from './floatingWindowMinWidth';
 
-export const DEFAULT_MIN_WINDOW_WIDTH = 340;
-export const DEFAULT_MIN_WINDOW_HEIGHT = 200;
-export const MIN_NON_RESIZABLE_HEIGHT = 92;
-export const OUTER_RADIUS = 16;
-export const CONTAINER_MARGIN = 8;
+export {
+  CONTAINER_MARGIN,
+  DEFAULT_MIN_WINDOW_HEIGHT,
+  DEFAULT_MIN_WINDOW_WIDTH,
+  MIN_NON_RESIZABLE_HEIGHT,
+  OUTER_RADIUS,
+};
 
 export interface UseFloatingWindowDragResizeOptions {
   item: FloatingWindowItem;
@@ -54,70 +66,42 @@ export function useFloatingWindowDragResize({
     [item.id]
   );
 
-  const isResizable = (item.resizable ?? matchedPreset?.resizable ?? true) !== false;
-  const shouldAutoFitHeight =
-    item.autoFitHeight ??
-    matchedPreset?.autoFitHeight ??
-    (!isResizable || matchedPreset?.tier === 'user');
-
-  const presetMinWidth = Math.round(
+  const initialPresetMinWidth = Math.round(
     item.minWidth ?? matchedPreset?.minWidth ?? DEFAULT_MIN_WINDOW_WIDTH
   );
-  const presetMinHeight = Math.round(
-    item.minHeight ??
-      matchedPreset?.minHeight ??
-      (isResizable ? DEFAULT_MIN_WINDOW_HEIGHT : MIN_NON_RESIZABLE_HEIGHT)
-  );
-  const presetMaxWidth = item.maxWidth ?? matchedPreset?.maxWidth ?? Infinity;
-  const presetMaxHeight = item.maxHeight ?? matchedPreset?.maxHeight;
+  const initialResizable = (item.resizable ?? matchedPreset?.resizable ?? true) !== false;
 
   const headerElRef = useRef<HTMLDivElement | null>(null);
   const contentInnerElRef = useRef<HTMLDivElement | null>(null);
   const footerElRef = useRef<HTMLDivElement | null>(null);
 
   const [intrinsicMaxHeight, setIntrinsicMaxHeight] = useState<number | null>(null);
-  const [intrinsicMinWidth, setIntrinsicMinWidth] = useState<number>(presetMinWidth);
+  const [intrinsicMinWidth, setIntrinsicMinWidth] = useState<number>(initialPresetMinWidth);
   const [scrollbarReservePx, setScrollbarReservePx] = useState<number>(
-    isResizable ? SCROLLBAR_GUTTER_RESERVE_PX : 0
+    initialResizable ? SCROLLBAR_GUTTER_RESERVE_PX : 0
   );
 
-  const autoMinWidth = Math.max(presetMinWidth, intrinsicMinWidth);
-  const effectiveMinWidth =
-    item.manualMinWidth !== undefined && Number.isFinite(item.manualMinWidth)
-      ? Math.max(240, Math.round(item.manualMinWidth))
-      : autoMinWidth;
+  const sizeLimits = resolveWindowSizeLimits(
+    item,
+    matchedPreset,
+    intrinsicMinWidth,
+    intrinsicMaxHeight
+  );
+  const {
+    isResizable,
+    shouldAutoFitHeight,
+    presetMinWidth,
+    presetMinHeight,
+    presetMaxWidth,
+    autoMinWidth,
+    effectiveMinWidth,
+    effectiveMinHeight,
+    effectiveMaxHeight,
+  } = sizeLimits;
 
-  const rawMinHeight =
-    item.manualMinHeight !== undefined && Number.isFinite(item.manualMinHeight)
-      ? Math.max(72, Math.round(item.manualMinHeight))
-      : presetMinHeight;
-
-  const effectiveMinHeight =
-    !isResizable && item.manualMinHeight === undefined && intrinsicMaxHeight !== null
-      ? intrinsicMaxHeight
-      : intrinsicMaxHeight !== null
-      ? Math.min(rawMinHeight, intrinsicMaxHeight)
-      : rawMinHeight;
-
-  const effectiveMaxHeight =
-    presetMaxHeight !== undefined
-      ? presetMaxHeight
-      : intrinsicMaxHeight !== null
-      ? Math.max(effectiveMinHeight, Math.min(5000, intrinsicMaxHeight))
-      : 5000;
-
-  const [desiredAnchor, setDesiredAnchor] = useState<WindowRect>(() => ({
-    x: Math.round(item.position?.x ?? 40),
-    y: Math.round(item.position?.y ?? 40),
-    width: Math.round(
-      shouldAutoFitHeight && !item.userAdjustedSize
-        ? effectiveMinWidth
-        : Math.max(effectiveMinWidth, item.width ?? matchedPreset?.width ?? 440)
-    ),
-    height: Math.round(
-      Math.max(rawMinHeight, item.height ?? matchedPreset?.height ?? 360)
-    ),
-  }));
+  const [desiredAnchor, setDesiredAnchor] = useState<WindowRect>(() =>
+    computeInitialDesiredAnchor(item, matchedPreset, sizeLimits)
+  );
   const desiredAnchorRef = useRef<WindowRect>(desiredAnchor);
   desiredAnchorRef.current = desiredAnchor;
 
@@ -163,35 +147,16 @@ export function useFloatingWindowDragResize({
         });
       }
 
-      if (!isResizable) {
-        lastMeasuredIntrinsicHRef.current = totalIntrinsicH;
-        updateDesiredAnchor((prev) =>
-          Math.abs(prev.height - totalIntrinsicH) <= 1
-            ? prev
-            : { ...prev, height: totalIntrinsicH }
-        );
-      } else if (shouldAutoFitHeight) {
-        const prevIntrinsic = lastMeasuredIntrinsicHRef.current;
-        lastMeasuredIntrinsicHRef.current = totalIntrinsicH;
-
-        updateDesiredAnchor((prev) => {
-          if (!userHasResizedRef.current) {
-            if (Math.abs(prev.height - totalIntrinsicH) <= 1) return prev;
-            return { ...prev, height: totalIntrinsicH };
-          }
-          if (
-            prevIntrinsic !== null &&
-            Math.abs(prev.height - prevIntrinsic) <= 4 &&
-            Math.abs(totalIntrinsicH - prevIntrinsic) > 2
-          ) {
-            return { ...prev, height: totalIntrinsicH };
-          }
-          if (prev.height > totalIntrinsicH) {
-            return { ...prev, height: totalIntrinsicH };
-          }
-          return prev;
-        });
-      }
+      const prevIntrinsicH = lastMeasuredIntrinsicHRef.current;
+      lastMeasuredIntrinsicHRef.current = totalIntrinsicH;
+      updateDesiredAnchor((prev) =>
+        resolveAutoFittedDesiredAnchor(prev, totalIntrinsicH, {
+          isResizable,
+          shouldAutoFitHeight,
+          userHasResized: userHasResizedRef.current,
+          prevIntrinsicH,
+        })
+      );
     }
 
     if (!isDraggingRef.current && !isResizingRef.current && innerEl.clientWidth > 0) {
@@ -254,6 +219,7 @@ export function useFloatingWindowDragResize({
   >('idle');
   const [isInteracting, setIsInteracting] = useState(false);
   const [isDraggingNow, setIsDraggingNow] = useState(false);
+  const [isParkedInSqueezeZone, setIsParkedInSqueezeZone] = useState(false);
   const [isResizingNow, setIsResizingNow] = useState(false);
 
   useEffect(() => {
@@ -274,31 +240,23 @@ export function useFloatingWindowDragResize({
   useEffect(() => {
     if (isDraggingRef.current || isResizingRef.current) return;
     if (item.width && item.height) {
-      updateDesiredAnchor((prev) => {
-        const nextW =
-          shouldAutoFitHeight && !item.userAdjustedSize
-            ? effectiveMinWidth
-            : Math.max(effectiveMinWidth, Math.round(item.width!));
-        const nextH =
-          !isResizable && item.manualMinHeight === undefined && intrinsicMaxHeight !== null
-            ? intrinsicMaxHeight
-            : shouldAutoFitHeight &&
-              !item.userAdjustedSize &&
-              intrinsicMaxHeight !== null
-            ? intrinsicMaxHeight
-            : Math.max(
-                effectiveMinHeight,
-                Math.min(effectiveMaxHeight, Math.round(item.height!))
-              );
-        if (prev.width === nextW && prev.height === nextH) return prev;
-        return { ...prev, width: nextW, height: nextH };
-      });
+      updateDesiredAnchor((prev) =>
+        resolveSyncedDesiredSize(
+          prev,
+          item,
+          {
+            isResizable,
+            shouldAutoFitHeight,
+            effectiveMinWidth,
+            effectiveMinHeight,
+            effectiveMaxHeight,
+          },
+          intrinsicMaxHeight
+        )
+      );
     }
   }, [
-    item.width,
-    item.height,
-    item.userAdjustedSize,
-    item.manualMinHeight,
+    item,
     effectiveMinWidth,
     effectiveMinHeight,
     effectiveMaxHeight,
@@ -320,7 +278,7 @@ export function useFloatingWindowDragResize({
     },
     {
       margin: CONTAINER_MARGIN,
-      prioritizePositionSqueeze: isDraggingNow,
+      prioritizePositionSqueeze: isDraggingNow || isParkedInSqueezeZone,
     }
   );
 
@@ -415,8 +373,17 @@ export function useFloatingWindowDragResize({
             maxHeight: c.effectiveMaxHeight,
             resizable: c.isResizable,
           },
-          { margin: CONTAINER_MARGIN, prioritizePositionSqueeze: false }
+          { margin: CONTAINER_MARGIN, prioritizePositionSqueeze: true }
         );
+        const targetW = Math.max(
+          c.effectiveMinWidth,
+          Math.min(c.presetMaxWidth, Math.round(preservedDesiredW))
+        );
+        const targetH = Math.max(
+          c.effectiveMinHeight,
+          Math.min(c.effectiveMaxHeight, Math.round(preservedDesiredH))
+        );
+        setIsParkedInSqueezeZone(settled.width < targetW || settled.height < targetH);
         updateDesiredAnchor({
           x: settled.x,
           y: settled.y,
@@ -440,50 +407,28 @@ export function useFloatingWindowDragResize({
     onFocus();
     isResizingRef.current = true;
     userHasResizedRef.current = true;
+    setIsParkedInSqueezeZone(false);
     setIsInteracting(true);
     setIsResizingNow(true);
 
     const startMouseX = e.clientX;
     const startMouseY = e.clientY;
-    const startX = latestClampedRef.current.x;
-    const startY = latestClampedRef.current.y;
-    const startWidth = latestClampedRef.current.width;
-    const startHeight = latestClampedRef.current.height;
+    const startRect: WindowRect = {
+      x: latestClampedRef.current.x,
+      y: latestClampedRef.current.y,
+      width: latestClampedRef.current.width,
+      height: latestClampedRef.current.height,
+    };
 
     const handleResizeMove = (ev: MouseEvent) => {
       if (!isResizingRef.current) return;
       const deltaW = ev.clientX - startMouseX;
       const deltaH = ev.clientY - startMouseY;
-
       const c = latestConstraintsRef.current;
-      const maxWInContainer = c.containerBounds
-        ? Math.max(c.effectiveMinWidth, c.containerBounds.width - CONTAINER_MARGIN - startX)
-        : c.presetMaxWidth;
-      const maxHInContainer = c.containerBounds
-        ? Math.max(
-            c.effectiveMinHeight,
-            Math.min(
-              c.effectiveMaxHeight,
-              c.containerBounds.height - CONTAINER_MARGIN - startY
-            )
-          )
-        : c.effectiveMaxHeight;
 
-      const nextWidth = Math.max(
-        c.effectiveMinWidth,
-        Math.min(maxWInContainer, Math.round(startWidth + deltaW))
+      updateDesiredAnchor(
+        resolveResizedWindowAnchor(startRect, deltaW, deltaH, c.containerBounds, c)
       );
-      const nextHeight = Math.max(
-        c.effectiveMinHeight,
-        Math.min(maxHInContainer, Math.round(startHeight + deltaH))
-      );
-
-      updateDesiredAnchor({
-        x: startX,
-        y: startY,
-        width: nextWidth,
-        height: nextHeight,
-      });
     };
 
     const handleResizeUp = () => {

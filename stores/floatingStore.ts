@@ -400,11 +400,17 @@ export function createFloatingStore(syncKey: string) {
     spawnWithFlight: (preset: PresetConfig, sourceEl: HTMLElement, containerEl: HTMLElement) => {
       const srcRect = sourceEl.getBoundingClientRect();
       const contRect = containerEl.getBoundingClientRect();
-      const startX = Math.round(srcRect.left - contRect.left);
-      const startY = Math.round(srcRect.top - contRect.top);
-      const startW = Math.round(srcRect.width);
-      const startH = Math.round(srcRect.height);
-      const destX = Math.max(16, Math.round(contRect.width - 56));
+      const localW =
+        containerEl.clientWidth > 0 ? Math.floor(containerEl.clientWidth) : Math.floor(contRect.width);
+      const localH =
+        containerEl.clientHeight > 0 ? Math.floor(containerEl.clientHeight) : Math.floor(contRect.height);
+      const scaleX = localW > 0 && contRect.width > 0 ? contRect.width / localW : 1;
+      const scaleY = localH > 0 && contRect.height > 0 ? contRect.height / localH : 1;
+      const startX = Math.round((srcRect.left - contRect.left) / scaleX);
+      const startY = Math.round((srcRect.top - contRect.top) / scaleY);
+      const startW = Math.round(srcRect.width / scaleX);
+      const startH = Math.round(srcRect.height / scaleY);
+      const destX = Math.max(16, Math.round(localW - 56));
       const destY = 16;
       const minimizedCount = state.windows.filter((w) => w.isMinimized).length;
       const hasStack = !(state.isStackDismissed && minimizedCount === 0);

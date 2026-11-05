@@ -44,7 +44,6 @@ export const NAME_TAG_TUNER_PRESET: PresetConfig = {
   height: 620,
   minWidth: 460,
   minHeight: 200,
-  autoFitHeight: true,
   resizable: true,
   singleton: true,
   tier: 'developer',
