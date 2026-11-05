@@ -30,7 +30,7 @@ export interface SignalingProfileSectionProps {
  *   - `imported-bundle`: Locks out Public & Custom broker fields; hides all plaintext URLs/credentials;
  *     requires clicking [Delete Imported Bundle] before custom server parameters can be modified.
  *   - `custom`: User-configured self-hosted relay override (replaces default Public EMQX broker).
- *   - `public`: Default best-effort fallback (`wss://broker.emqx.io:8084/mqtt`, No SLA).
+ *   - `public`: Default best-effort fallback (`wss://relay.carsoccer.dev/mqtt`, No SLA).
  */
 export const SignalingProfileSection: React.FC<SignalingProfileSectionProps> = React.memo(
   ({ bordered = false, onHover, onLeave, isLight = false }) => {
@@ -155,7 +155,7 @@ export const SignalingProfileSection: React.FC<SignalingProfileSectionProps> = R
         ? `Active dev-private profile [Hash #${shortHash}] (${relayLabels.join(', ')})`
         : source === 'custom'
         ? `Using custom self-hosted relay [Hash #${shortHash}] (${customUrl}). Public broker bypassed.`
-        : `Default fallback: Public EMQX Broker (wss://broker.emqx.io:8084/mqtt, Best-Effort / No SLA).${
+        : `Default fallback: Public EMQX Broker (wss://relay.carsoccer.dev/mqtt, Best-Effort / No SLA).${
             noKeySimulationActive ? ' [?nokey=1 simulation active]' : ''
           }`;
 
@@ -348,7 +348,7 @@ export const SignalingProfileSection: React.FC<SignalingProfileSectionProps> = R
                 <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="text"
-                    placeholder="wss://broker.emqx.io:8084/mqtt (Default Public)"
+                    placeholder="wss://relay.carsoccer.dev/mqtt (Default Public)"
                     value={draftCustomUrl}
                     onChange={(e) => setDraftCustomUrl(e.target.value)}
                     className={`flex-1 min-w-[220px] px-2.5 py-1.5 rounded-lg text-xs font-mono border outline-none transition-colors ${
