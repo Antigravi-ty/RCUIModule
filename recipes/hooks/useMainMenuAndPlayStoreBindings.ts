@@ -316,18 +316,11 @@ export function useLayer2GarageStoreBinding(
   const selectedAnthem = useSpatialAudioStore((s) => s.selectedAnthem);
   const setSelectedAnthem = useSpatialAudioStore((s) => s.setSelectedAnthem);
   const stopPreviewAnthem = useSpatialAudioStore((s) => s.stopPreviewAnthem);
-  const [colorPrefs, setColorPrefs] = useState<StoredColorPrefs>(loadStoredColorPrefs);
+  const colorPrefs = useAppStore((s) => s.colorPrefs);
+  const setColorPrefs = useAppStore((s) => s.setColorPrefs);
 
   const saveAndBroadcastColors = (nextPrefs: StoredColorPrefs) => {
     setColorPrefs(nextPrefs);
-    const activeSlotId = saveStoredColorPrefs(nextPrefs);
-    useExperimentalMultiBotsStore.getState().syncExhibitionFromColorPrefs?.();
-    const allColors = [...BLUE_TEAM_COLORS, ...ORANGE_TEAM_COLORS];
-    const found = allColors.find((c) => c.id === activeSlotId);
-    if (found) {
-      const bridge = useAppStore.getState().bridge;
-      bridge?.onColorChange?.(found.hex, found.id);
-    }
   };
 
   const handleSelectCar = (carId: string) => {

@@ -1,100 +1,53 @@
 /**
  * cloudProfileSyncStore.ts
  * Zustand store orchestrating:
- *   1. User Cloud Profile Sync (Garage -> Sync tab) with Unified Flat Key-Value snapshots
- *      and Git-style 3-Way Merge conflict detection & resolution.
- *   2. Developer Account Directory Management (Manage Accounts: username / password / alias).
- *   3. Developer Live Remote Profile Tuning ("Set Others Profile" -> `SETTINGS # <alias>`
- *      with automatic stashing/restoration of developer local state and live MQTT `dev` slot push).
+ *   1. User Cloud Profile Sync (Garage -> Sync tab) with Unified Flat Key-Value snapshots,
+ *      immutable `userId` + mutable `username` / `password` / `alias` / `displayName`,
+ *      commit-style hash IDs (`revHash`), and Git-style 3-Way Merge conflict resolution.
+ *   2. Persistent live remote profile subscription controlled by `allowRemoteProfileDeployment`.
+ *   3. Developer Account Directory Management & Live Remote Profile Tuning (`SETTINGS # <alias>`).
+ *   4. JSON Profile Backup Export for both local user and remote accounts.
  */
 
 import { create } from 'zustand';
 import {
   computeProfileThreeWayMerge,
+  formatCloudCommitHash,
   isDeepEqualJsonValue,
+  normalizeCloudUsername,
 } from '../config/cloudProfileMergePipeline';
 import {
-  type ActiveRemoteTuningSession,
   type CloudDevSlotRecord,
   type CloudFetchedUserCompleteRecord,
-  type CloudManagedAccountItem,
   type CloudProfileSyncBridgeCallbacks,
+  type CloudProfileSyncState,
   type CloudSyncStatus,
   type CloudUserSlotRecord,
   type LoggedInCloudUser,
   type ProfileFlatSnapshot,
-  type ProfileMergeConflictItem,
 } from '../config/cloudProfileSyncTypes';
-import { safeStorage } from '../config/storageHelpers';
-import { saveStoredPlayerName } from '../config/vehiclePresets';
+import { loadStoredPlayerName, saveStoredPlayerName } from '../config/vehiclePresets';
+import { useSettingsPacingStore } from '../recipes/settings/settingsPacingStore';
 import { useAppStore } from './appStore';
-import { type SignalingProfileSource } from './signalingProfileStore';
+import { applyUnifiedProfileSnapshot, collectUnifiedProfileSnapshot } from './cloudProfileSnapshotCollector';
 import {
-  applyUnifiedProfileSnapshot,
-  collectUnifiedProfileSnapshot,
-} from './cloudProfileSnapshotCollector';
+  buildResolvedConflictsSnapshot,
+  buildUpdatedIndexAfterRemotePush,
+  evaluateRecordMergeOnLogin,
+  evaluateRemoteTuningSessionFromRecord,
+  loadAllowRemoteProfileDeployment,
+  loadSavedCloudUser,
+  performLocalUserBackupExport,
+  performRemoteAccountBackupExport,
+  saveAllowRemoteProfileDeployment,
+  saveCloudUser,
+  shouldApplyIncomingDevSlot,
+} from './cloudProfileSyncHelpers';
 import { floatingStore } from './floatingStore';
 import { useSpatialAudioStore } from './spatialAudioStore';
 import { viewportStore } from './viewportStore';
 
-export type {
-  CloudDevSlotRecord,
-  CloudFetchedUserCompleteRecord,
-  CloudProfileSyncBridgeCallbacks,
-  CloudSyncStatus,
-  CloudUserSlotRecord,
-  LoggedInCloudUser,
-};
-
-const CLOUD_AUTH_STORAGE_KEY = 'rc_cloud_profile_auth_v1';
-
-export interface CloudProfileSyncState {
-  available: boolean;
-  canManageAccounts: boolean;
-  source: SignalingProfileSource;
-  loggedInUser: LoggedInCloudUser | null;
-  syncStatus: CloudSyncStatus;
-  statusMessage: string | null;
-  errorMessage: string | null;
-  lastSyncedAt: number | null;
-  userRev: number;
-  devRev: number;
-  autoSyncEnabled: boolean;
-  mergedBaseSnapshot: ProfileFlatSnapshot | null;
-  conflicts: ProfileMergeConflictItem[];
-  accounts: CloudManagedAccountItem[];
-  isLoadingAccounts: boolean;
-  activeRemoteSession: ActiveRemoteTuningSession | null;
-  isApplyingSnapshotInternally: boolean;
-
-  setCapabilityState: (params: {
-    available: boolean;
-    canManageAccounts: boolean;
-    source: SignalingProfileSource;
-  }) => void;
-  setBridgeCallbacks: (callbacks: CloudProfileSyncBridgeCallbacks | null) => void;
-  setAutoSyncEnabled: (enabled: boolean) => void;
-
-  loginAndSyncUser: (username: string, password: string) => Promise<boolean>;
-  logoutUser: () => void;
-  pullUserCloudProfile: () => Promise<boolean>;
-  pushUserCloudProfile: () => Promise<boolean>;
-
-  selectConflictSource: (key: string, source: 'local' | 'dev') => void;
-  resolveConflicts: (mode: 'selected' | 'all-local' | 'all-dev') => Promise<void>;
-
-  refreshAccounts: () => Promise<void>;
-  upsertAccount: (username: string, password: string, alias: string) => Promise<boolean>;
-  deleteAccount: (userId: string) => Promise<boolean>;
-
-  startRemoteTuningSession: (account: {
-    userId: string;
-    alias?: string;
-    password?: string;
-  }) => Promise<boolean>;
-  pushActiveRemoteSessionNow: () => Promise<boolean>;
-  exitRemoteTuningSession: () => Promise<void>;
-}
+export type { CloudDevSlotRecord, CloudFetchedUserCompleteRecord, CloudProfileSyncBridgeCallbacks, CloudProfileSyncState, CloudSyncStatus, CloudUserSlotRecord, LoggedInCloudUser };
 
 let bridgeCallbacks: CloudProfileSyncBridgeCallbacks | null = null;
 let activeDevWatchUnsubscribe: (() => void) | null = null;
@@ -103,33 +56,71 @@ let remotePushDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let userAutoPushDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let lastPushedSnapshotJson = '';
 
-const sanitizeUserId = (raw: string): string =>
-  raw.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
-
-function loadSavedCloudUser(): LoggedInCloudUser | null {
+function applySnapshotSafely(snapshot: ProfileFlatSnapshot): void {
+  useCloudProfileSyncStore.setState({ isApplyingSnapshotInternally: true });
   try {
-    const raw = safeStorage.get(CLOUD_AUTH_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed.userId === 'string' && typeof parsed.password === 'string') {
-      return {
-        userId: parsed.userId,
-        alias: typeof parsed.alias === 'string' && parsed.alias ? parsed.alias : parsed.userId,
-        password: parsed.password,
-      };
-    }
-  } catch {
-    // Ignore malformed saved auth
+    applyUnifiedProfileSnapshot(snapshot);
+  } finally {
+    useCloudProfileSyncStore.setState({ isApplyingSnapshotInternally: false });
   }
-  return null;
 }
 
-function saveCloudUser(user: LoggedInCloudUser | null): void {
-  if (!user) {
-    safeStorage.remove(CLOUD_AUTH_STORAGE_KEY);
-  } else {
-    safeStorage.set(CLOUD_AUTH_STORAGE_KEY, JSON.stringify(user));
+function stopActiveDevSlotWatch(): void {
+  if (activeDevWatchUnsubscribe) {
+    activeDevWatchUnsubscribe();
+    activeDevWatchUnsubscribe = null;
   }
+}
+
+function attachDevSlotWatchIfAllowed(userId: string): void {
+  stopActiveDevSlotWatch();
+  const state = useCloudProfileSyncStore.getState();
+  if (!bridgeCallbacks || !state.allowRemoteProfileDeployment) return;
+
+  activeDevWatchUnsubscribe = bridgeCallbacks.watchUserDevSlot(
+    userId,
+    (devPayload, indexPayload) => {
+      const cur = useCloudProfileSyncStore.getState();
+      if (!cur.loggedInUser || cur.loggedInUser.userId !== userId) return;
+      if (!cur.allowRemoteProfileDeployment || cur.activeRemoteSession) return;
+      if (!shouldApplyIncomingDevSlot(devPayload, cur.devRev, cur.devRevHash)) return;
+
+      const mergeRes = computeProfileThreeWayMerge(
+        devPayload.baseSnapshot,
+        collectUnifiedProfileSnapshot(),
+        devPayload.snapshot
+      );
+      applySnapshotSafely(mergeRes.mergedSnapshot);
+      lastPushedSnapshotJson = JSON.stringify(mergeRes.mergedSnapshot);
+
+      const incomingHash = formatCloudCommitHash(devPayload.revHash, devPayload.rev);
+      const snapName = mergeRes.mergedSnapshot['garage.displayName'];
+      const nextUser: LoggedInCloudUser = {
+        ...cur.loggedInUser,
+        username: indexPayload?.username || cur.loggedInUser.username,
+        alias: indexPayload?.alias || cur.loggedInUser.alias,
+        displayName:
+          typeof snapName === 'string' && snapName.trim()
+            ? snapName.trim()
+            : indexPayload?.displayName || cur.loggedInUser.displayName,
+      };
+      saveCloudUser(nextUser);
+
+      useCloudProfileSyncStore.setState({
+        loggedInUser: nextUser,
+        devRev: devPayload.rev,
+        devRevHash: incomingHash,
+        mergedBaseSnapshot: mergeRes.mergedSnapshot,
+        conflicts: mergeRes.conflicts,
+        syncStatus: mergeRes.conflicts.length > 0 ? 'conflict' : 'synced',
+        lastSyncedAt: Date.now(),
+        statusMessage:
+          mergeRes.conflicts.length > 0
+            ? `${mergeRes.conflicts.length} conflict(s) detected from developer commit #${incomingHash}.`
+            : `Applied live developer commit #${incomingHash} (${mergeRes.autoAppliedDevKeys.length} field(s)).`,
+      });
+    }
+  );
 }
 
 export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get) => ({
@@ -142,8 +133,11 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
   errorMessage: null,
   lastSyncedAt: null,
   userRev: 0,
+  userRevHash: 'none',
   devRev: 0,
+  devRevHash: 'none',
   autoSyncEnabled: true,
+  allowRemoteProfileDeployment: loadAllowRemoteProfileDeployment(),
   mergedBaseSnapshot: null,
   conflicts: [],
   accounts: [],
@@ -161,10 +155,43 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
 
   setAutoSyncEnabled: (enabled) => set({ autoSyncEnabled: enabled }),
 
-  loginAndSyncUser: async (username, password) => {
-    const userId = sanitizeUserId(username);
+  setAllowRemoteProfileDeployment: (enabled) => {
+    const next = Boolean(enabled);
+    saveAllowRemoteProfileDeployment(next);
+    set({ allowRemoteProfileDeployment: next });
+    const user = get().loggedInUser;
+    if (!next) {
+      stopActiveDevSlotWatch();
+      set({ statusMessage: 'Live remote profile deployment paused (manual sync only).' });
+    } else if (user && get().available && bridgeCallbacks) {
+      attachDevSlotWatchIfAllowed(user.userId);
+      void get().pullUserCloudProfile(true);
+    }
+  },
+
+  updateUserDisplayName: async (displayName) => {
+    const clean = String(displayName || '').trim().slice(0, 24) || loadStoredPlayerName();
+    saveStoredPlayerName(clean);
+    useAppStore.getState().setOnlineSession({ playerName: clean });
+
+    const currentUser = get().loggedInUser;
+    if (currentUser) {
+      const updatedUser: LoggedInCloudUser = { ...currentUser, displayName: clean };
+      saveCloudUser(updatedUser);
+      set({
+        loggedInUser: updatedUser,
+        statusMessage: `Updated Multiplayer Display Name to "${clean}".`,
+      });
+      if (get().available && bridgeCallbacks) {
+        await get().pushUserCloudProfile();
+      }
+    }
+  },
+
+  loginAndSyncUser: async (usernameInput, password, forceIncludeDevSlot = false) => {
+    const normalizedInput = normalizeCloudUsername(usernameInput);
     const trimmedPassword = password.trim();
-    if (!userId || !trimmedPassword) {
+    if (!normalizedInput || !trimmedPassword) {
       set({ syncStatus: 'error', errorMessage: 'Enter a valid username and password.' });
       return false;
     }
@@ -176,134 +203,81 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
     set({
       syncStatus: 'syncing',
       errorMessage: null,
-      statusMessage: `Connecting to cloud profile "${userId}"...`,
+      statusMessage: `Connecting to cloud profile "@${normalizedInput}"...`,
     });
 
     try {
-      const [record, computedHash] = await Promise.all([
-        bridgeCallbacks.fetchUserCompleteRecord(userId, 'client'),
-        bridgeCallbacks.computePassphraseHash(userId, trimmedPassword),
+      const record = await bridgeCallbacks.fetchUserCompleteRecord(normalizedInput, 'client');
+      const resolvedUserId = record.index?.userId || normalizedInput;
+      const [hashByUserId, hashByUsername] = await Promise.all([
+        bridgeCallbacks.computePassphraseHash(resolvedUserId, trimmedPassword),
+        bridgeCallbacks.computePassphraseHash(normalizedInput, trimmedPassword),
       ]);
 
       const expectedHash = record.index?.passphraseHash || record.userSlot?.passphraseHash || '';
       const expectedPlainPassword = record.index?.password || '';
       if (
         expectedHash &&
-        expectedHash !== computedHash &&
+        expectedHash !== hashByUserId &&
+        expectedHash !== hashByUsername &&
         (!expectedPlainPassword || expectedPlainPassword !== trimmedPassword)
       ) {
         set({
           syncStatus: 'error',
-          errorMessage: 'Incorrect password for this cloud username.',
+          errorMessage: 'Incorrect password for this cloud account.',
           statusMessage: null,
         });
         return false;
       }
 
-      const resolvedAlias = record.index?.alias?.trim() || username.trim();
-      const userObj: LoggedInCloudUser = { userId, alias: resolvedAlias, password: trimmedPassword };
-      saveCloudUser(userObj);
-      saveStoredPlayerName(resolvedAlias);
-      useAppStore.getState().setOnlineSession({ playerName: resolvedAlias });
+      const evaluated = evaluateRecordMergeOnLogin({
+        usernameInput: normalizedInput,
+        trimmedPassword,
+        record,
+        currentLocalSnapshot: collectUnifiedProfileSnapshot(),
+        allowRemoteDeployment: get().allowRemoteProfileDeployment || forceIncludeDevSlot,
+      });
 
-      const currentLocal = collectUnifiedProfileSnapshot();
-      const baselineUserSnap = record.userSlot?.snapshot ?? currentLocal;
-      let targetSnap = baselineUserSnap;
-      let conflicts: ProfileMergeConflictItem[] = [];
-      let autoAppliedCount = 0;
+      saveCloudUser(evaluated.userObj);
+      applySnapshotSafely(evaluated.targetSnap);
 
-      if (record.devSlot?.snapshot && Object.keys(record.devSlot.snapshot).length > 0) {
-        const mergeResult = computeProfileThreeWayMerge(
-          record.devSlot.baseSnapshot,
-          baselineUserSnap,
-          record.devSlot.snapshot
-        );
-        targetSnap = mergeResult.mergedSnapshot;
-        conflicts = mergeResult.conflicts;
-        autoAppliedCount = mergeResult.autoAppliedDevKeys.length;
-      }
+      let nextUserRev = evaluated.userRev;
+      let nextUserRevHash = evaluated.userRevHash;
 
-      set({ isApplyingSnapshotInternally: true });
-      try {
-        applyUnifiedProfileSnapshot(targetSnap);
-      } finally {
-        set({ isApplyingSnapshotInternally: false });
-      }
-
-      let nextUserRev = record.userSlot?.rev ?? record.index?.userRev ?? 0;
-      const nextDevRev = record.devSlot?.rev ?? record.index?.devRev ?? 0;
-
-      if (!record.userSlot || autoAppliedCount > 0) {
+      if (!record.userSlot || evaluated.autoAppliedCount > 0) {
         const pub = await bridgeCallbacks.publishUserProfileSlot({
-          userId,
-          alias: resolvedAlias,
+          userId: evaluated.userObj.userId,
+          username: evaluated.userObj.username,
+          alias: evaluated.userObj.alias,
+          displayName: evaluated.userObj.displayName,
           password: trimmedPassword,
-          snapshot: targetSnap,
+          snapshot: evaluated.targetSnap,
           prevIndex: record.index,
         });
         nextUserRev = pub.rev;
+        nextUserRevHash = pub.revHash;
       }
 
-      lastPushedSnapshotJson = JSON.stringify(targetSnap);
-
-      if (activeDevWatchUnsubscribe) {
-        activeDevWatchUnsubscribe();
-      }
-      activeDevWatchUnsubscribe = bridgeCallbacks.watchUserDevSlot(
-        userId,
-        (devPayload, indexPayload) => {
-          const state = get();
-          if (!state.loggedInUser || state.loggedInUser.userId !== userId) return;
-          if (state.activeRemoteSession || devPayload.rev <= state.devRev) return;
-
-          const mergeRes = computeProfileThreeWayMerge(
-            devPayload.baseSnapshot,
-            collectUnifiedProfileSnapshot(),
-            devPayload.snapshot
-          );
-
-          set({ isApplyingSnapshotInternally: true });
-          try {
-            applyUnifiedProfileSnapshot(mergeRes.mergedSnapshot);
-          } finally {
-            set({ isApplyingSnapshotInternally: false });
-          }
-          lastPushedSnapshotJson = JSON.stringify(mergeRes.mergedSnapshot);
-
-          set({
-            devRev: devPayload.rev,
-            mergedBaseSnapshot: mergeRes.mergedSnapshot,
-            conflicts: mergeRes.conflicts,
-            syncStatus: mergeRes.conflicts.length > 0 ? 'conflict' : 'synced',
-            lastSyncedAt: Date.now(),
-            statusMessage:
-              mergeRes.conflicts.length > 0
-                ? `${mergeRes.conflicts.length} conflict(s) detected from developer update.`
-                : `Applied live developer update (v${devPayload.rev}, ${mergeRes.autoAppliedDevKeys.length} field(s)).`,
-          });
-
-          if (indexPayload?.alias && indexPayload.alias !== state.loggedInUser.alias) {
-            saveStoredPlayerName(indexPayload.alias);
-            useAppStore.getState().setOnlineSession({ playerName: indexPayload.alias });
-          }
-        }
-      );
+      lastPushedSnapshotJson = JSON.stringify(evaluated.targetSnap);
+      attachDevSlotWatchIfAllowed(evaluated.userObj.userId);
 
       set({
-        loggedInUser: userObj,
+        loggedInUser: evaluated.userObj,
         userRev: nextUserRev,
-        devRev: nextDevRev,
-        mergedBaseSnapshot: targetSnap,
-        conflicts,
-        syncStatus: conflicts.length > 0 ? 'conflict' : 'synced',
+        userRevHash: nextUserRevHash,
+        devRev: evaluated.devRev,
+        devRevHash: evaluated.devRevHash,
+        mergedBaseSnapshot: evaluated.targetSnap,
+        conflicts: evaluated.conflicts,
+        syncStatus: evaluated.conflicts.length > 0 ? 'conflict' : 'synced',
         lastSyncedAt: Date.now(),
         errorMessage: null,
         statusMessage:
-          conflicts.length > 0
-            ? `Synced with ${conflicts.length} conflict(s) requiring resolution.`
-            : autoAppliedCount > 0
-              ? `Synced & merged ${autoAppliedCount} developer-tuned setting(s).`
-              : `Synced profile "${resolvedAlias}" (rev #${nextUserRev}).`,
+          evaluated.conflicts.length > 0
+            ? `Synced with ${evaluated.conflicts.length} conflict(s) requiring resolution.`
+            : evaluated.autoAppliedCount > 0
+              ? `Merged ${evaluated.autoAppliedCount} developer setting(s) (commit #${nextUserRevHash}).`
+              : `Synced @${evaluated.userObj.username} (commit #${nextUserRevHash}).`,
       });
       return true;
     } catch (err) {
@@ -317,10 +291,7 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
   },
 
   logoutUser: () => {
-    if (activeDevWatchUnsubscribe) {
-      activeDevWatchUnsubscribe();
-      activeDevWatchUnsubscribe = null;
-    }
+    stopActiveDevSlotWatch();
     saveCloudUser(null);
     set({
       loggedInUser: null,
@@ -331,9 +302,14 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
     });
   },
 
-  pullUserCloudProfile: async () => {
+  pullUserCloudProfile: async (forceIncludeDevSlot = true) => {
     const user = get().loggedInUser;
-    return user ? get().loginAndSyncUser(user.userId, user.password) : false;
+    if (!user) return false;
+    return get().loginAndSyncUser(
+      user.username || user.userId,
+      user.password,
+      forceIncludeDevSlot
+    );
   },
 
   pushUserCloudProfile: async () => {
@@ -342,21 +318,36 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
     set({ syncStatus: 'syncing', errorMessage: null });
     try {
       const snapshot = collectUnifiedProfileSnapshot();
+      const snapName = snapshot['garage.displayName'];
+      const liveDisplayName =
+        typeof snapName === 'string' && snapName.trim()
+          ? snapName.trim()
+          : loggedInUser.displayName;
       const record = await bridgeCallbacks.fetchUserCompleteRecord(loggedInUser.userId, 'client');
       const pub = await bridgeCallbacks.publishUserProfileSlot({
         userId: loggedInUser.userId,
-        alias: loggedInUser.alias,
+        username: loggedInUser.username,
+        alias: record.index?.alias || loggedInUser.alias,
+        displayName: liveDisplayName,
         password: loggedInUser.password,
         snapshot,
         prevIndex: record.index,
       });
       lastPushedSnapshotJson = JSON.stringify(snapshot);
+      const updatedUser: LoggedInCloudUser = {
+        ...loggedInUser,
+        displayName: liveDisplayName,
+        alias: record.index?.alias || loggedInUser.alias,
+      };
+      saveCloudUser(updatedUser);
       set({
+        loggedInUser: updatedUser,
         userRev: pub.rev,
+        userRevHash: pub.revHash,
         mergedBaseSnapshot: snapshot,
         syncStatus: 'synced',
         lastSyncedAt: Date.now(),
-        statusMessage: `Pushed local settings to cloud (rev #${pub.rev}).`,
+        statusMessage: `Pushed local settings to cloud (commit #${pub.revHash}).`,
       });
       return true;
     } catch (err) {
@@ -378,33 +369,18 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
   resolveConflicts: async (mode) => {
     const { conflicts, loggedInUser } = get();
     if (conflicts.length === 0) return;
-
-    const resolvedSnap: ProfileFlatSnapshot = { ...collectUnifiedProfileSnapshot() };
-    for (const conflict of conflicts) {
-      const pick =
-        mode === 'all-local' ? 'local' : mode === 'all-dev' ? 'dev' : conflict.selectedSource;
-      const chosenValue = pick === 'local' ? conflict.localValue : conflict.devValue;
-      if (chosenValue === undefined) {
-        delete resolvedSnap[conflict.key];
-      } else {
-        resolvedSnap[conflict.key] = chosenValue;
-      }
-    }
-
-    set({ isApplyingSnapshotInternally: true });
-    try {
-      applyUnifiedProfileSnapshot(resolvedSnap);
-    } finally {
-      set({ isApplyingSnapshotInternally: false });
-    }
-
+    const resolvedSnap = buildResolvedConflictsSnapshot(
+      collectUnifiedProfileSnapshot(),
+      conflicts,
+      mode
+    );
+    applySnapshotSafely(resolvedSnap);
     set({
       conflicts: [],
       mergedBaseSnapshot: resolvedSnap,
       syncStatus: 'synced',
       statusMessage: 'Resolved all profile conflicts and synced to cloud.',
     });
-
     if (loggedInUser && bridgeCallbacks) {
       await get().pushUserCloudProfile();
     }
@@ -424,25 +400,32 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
     }
   },
 
-  upsertAccount: async (username, password, alias) => {
-    const userId = sanitizeUserId(username);
+  upsertAccount: async (username, password, alias, displayName, explicitUserId) => {
+    const cleanUsername = normalizeCloudUsername(username);
     const trimmedPassword = password.trim();
-    const trimmedAlias = alias.trim() || userId;
-    if (!userId || !trimmedPassword || !bridgeCallbacks) return false;
+    const trimmedAlias = alias.trim() || cleanUsername;
+    if (!cleanUsername || !trimmedPassword || !bridgeCallbacks) return false;
 
     try {
-      const existing = get().accounts.find((a) => a.userId === userId) ?? null;
+      const existing =
+        (explicitUserId
+          ? get().accounts.find((a) => a.userId === explicitUserId)
+          : get().accounts.find(
+              (a) => a.username === cleanUsername || a.userId === cleanUsername
+            )) ?? null;
       const item = await bridgeCallbacks.upsertAccountDirectoryEntry({
-        userId,
+        userId: explicitUserId || existing?.userId,
+        username: cleanUsername,
         alias: trimmedAlias,
+        displayName: displayName?.trim() || existing?.displayName || trimmedAlias,
         password: trimmedPassword,
         existingIndex: existing,
       });
       set((state) => ({
-        accounts: [...state.accounts.filter((a) => a.userId !== userId), item].sort((a, b) =>
-          a.userId.localeCompare(b.userId)
+        accounts: [...state.accounts.filter((a) => a.userId !== item.userId), item].sort((a, b) =>
+          a.username.localeCompare(b.username)
         ),
-        statusMessage: `Saved account "${userId}" (#${trimmedAlias}).`,
+        statusMessage: `Saved account @${item.username} (#${item.alias}, ID: ${item.userId}).`,
         errorMessage: null,
       }));
       return true;
@@ -453,13 +436,13 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
   },
 
   deleteAccount: async (userId) => {
-    const cleanId = sanitizeUserId(userId);
+    const cleanId = String(userId || '').trim();
     if (!cleanId || !bridgeCallbacks) return false;
     try {
       await bridgeCallbacks.deleteAccountDirectoryEntry(cleanId);
       set((state) => ({
         accounts: state.accounts.filter((a) => a.userId !== cleanId),
-        statusMessage: `Removed account "${cleanId}" from cloud directory.`,
+        statusMessage: `Removed account (${cleanId}) from cloud directory.`,
       }));
       return true;
     } catch (err) {
@@ -469,8 +452,8 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
   },
 
   startRemoteTuningSession: async (account) => {
-    const userId = sanitizeUserId(account.userId);
-    if (!userId || !bridgeCallbacks || !get().available) return false;
+    const targetId = String(account.userId || account.username || '').trim();
+    if (!targetId || !bridgeCallbacks || !get().available) return false;
 
     const existingSession = get().activeRemoteSession;
     const stashedLocalSnapshot = existingSession
@@ -480,47 +463,27 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
     set({
       syncStatus: 'syncing',
       errorMessage: null,
-      statusMessage: `Loading remote profile for #${account.alias || userId}...`,
+      statusMessage: `Syncing latest user data for #${account.alias || targetId}...`,
     });
 
     try {
-      const record = await bridgeCallbacks.fetchUserCompleteRecord(userId, 'dev');
-      const resolvedAlias = account.alias?.trim() || record.index?.alias?.trim() || userId;
-      const resolvedPassword = account.password?.trim() || record.index?.password?.trim() || '';
-      const userSnap = record.userSlot?.snapshot ?? collectUnifiedProfileSnapshot();
-      const effectiveTargetSnap =
-        record.devSlot?.snapshot && Object.keys(record.devSlot.snapshot).length > 0
-          ? computeProfileThreeWayMerge(
-              record.devSlot.baseSnapshot,
-              userSnap,
-              record.devSlot.snapshot
-            ).mergedSnapshot
-          : userSnap;
+      const record = await bridgeCallbacks.fetchUserCompleteRecord(targetId, 'dev');
+      const { session, effectiveTargetSnap, initialHash } = evaluateRemoteTuningSessionFromRecord({
+        account,
+        targetId,
+        record,
+        fallbackSnapshot: collectUnifiedProfileSnapshot(),
+        stashedLocalSnapshot,
+      });
 
-      set({ isApplyingSnapshotInternally: true });
-      try {
-        applyUnifiedProfileSnapshot(effectiveTargetSnap);
-      } finally {
-        set({ isApplyingSnapshotInternally: false });
-      }
+      applySnapshotSafely(effectiveTargetSnap);
       lastPushedSnapshotJson = JSON.stringify(effectiveTargetSnap);
 
       set({
-        activeRemoteSession: {
-          userId,
-          alias: resolvedAlias,
-          password: resolvedPassword,
-          stashedLocalSnapshot,
-          baseTargetSnapshot: userSnap,
-          existingIndex: record.index,
-          startedAt: Date.now(),
-          lastPushedAt: null,
-          pushCount: 0,
-        },
+        activeRemoteSession: session,
         syncStatus: 'synced',
-        statusMessage: `Remote tuning active for #${resolvedAlias} (${userId}).`,
+        statusMessage: `Remote tuning active for #${session.alias} (@${session.username}, base commit #${initialHash}).`,
       });
-
       useAppStore.getState().navigate('settings');
       return true;
     } catch (err) {
@@ -545,7 +508,9 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
     try {
       const pub = await bridgeCallbacks.publishDevProfileSlot({
         userId: session.userId,
+        username: session.username,
         alias: session.alias,
+        displayName: session.displayName,
         password: session.password,
         snapshot: currentSnap,
         baseSnapshot: session.baseTargetSnapshot,
@@ -556,23 +521,28 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
         if (!state.activeRemoteSession || state.activeRemoteSession.userId !== session.userId) {
           return state;
         }
+        const nextIndex = buildUpdatedIndexAfterRemotePush({
+          userId: session.userId,
+          username: session.username,
+          alias: session.alias,
+          displayName: session.displayName,
+          password: session.password,
+          existingIndex: state.activeRemoteSession.existingIndex,
+          devRev: pub.rev,
+          devRevHash: pub.revHash,
+          snapshot: currentSnap,
+        });
         return {
           devRev: pub.rev,
+          devRevHash: pub.revHash,
           lastSyncedAt: Date.now(),
-          statusMessage: `Pushed live update to #${session.alias} (dev rev #${pub.rev}).`,
+          statusMessage: `Deployed live commit #${pub.revHash} to #${session.alias}.`,
           activeRemoteSession: {
             ...state.activeRemoteSession,
-            existingIndex: {
-              userId: session.userId,
-              alias: session.alias,
-              password: session.password,
-              passphraseHash: state.activeRemoteSession.existingIndex?.passphraseHash ?? '',
-              updatedAt: Date.now(),
-              userRev: state.activeRemoteSession.existingIndex?.userRev ?? 0,
-              devRev: pub.rev,
-            },
+            existingIndex: nextIndex,
             lastPushedAt: Date.now(),
             pushCount: state.activeRemoteSession.pushCount + 1,
+            lastCommitHash: pub.revHash,
           },
         };
       });
@@ -604,7 +574,9 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
       try {
         await bridgeCallbacks.publishDevProfileSlot({
           userId: session.userId,
+          username: session.username,
           alias: session.alias,
+          displayName: session.displayName,
           password: session.password,
           snapshot: finalSnap,
           baseSnapshot: session.baseTargetSnapshot,
@@ -615,21 +587,54 @@ export const useCloudProfileSyncStore = create<CloudProfileSyncState>((set, get)
       }
     }
 
-    set({ isApplyingSnapshotInternally: true, activeRemoteSession: null });
-    try {
-      applyUnifiedProfileSnapshot(session.stashedLocalSnapshot);
-    } finally {
-      set({ isApplyingSnapshotInternally: false });
-    }
+    set({ activeRemoteSession: null });
+    applySnapshotSafely(session.stashedLocalSnapshot);
     lastPushedSnapshotJson = JSON.stringify(session.stashedLocalSnapshot);
 
     set({
       syncStatus: 'idle',
       statusMessage: `Exited remote profile #${session.alias} and restored local configuration.`,
     });
-
     useAppStore.getState().navigate('dev-remote-profile');
     void get().refreshAccounts();
+  },
+
+  exportLocalUserProfileBackup: () => {
+    const state = get();
+    const filename = performLocalUserBackupExport({
+      snapshot: collectUnifiedProfileSnapshot(),
+      loggedInUser: state.loggedInUser,
+      userRev: state.userRev,
+      userRevHash: state.userRevHash,
+      devRev: state.devRev,
+      devRevHash: state.devRevHash,
+    });
+    set({ statusMessage: `Exported profile backup "${filename}".`, errorMessage: null });
+    return filename;
+  },
+
+  exportRemoteAccountProfileBackup: async (account) => {
+    if (!bridgeCallbacks || !get().available) {
+      set({ errorMessage: 'Cloud profile transport is not available.' });
+      return false;
+    }
+    try {
+      const filename = await performRemoteAccountBackupExport(
+        bridgeCallbacks,
+        account,
+        collectUnifiedProfileSnapshot()
+      );
+      set({
+        statusMessage: `Exported backup "${filename}" for #${account.alias} (@${account.username}).`,
+        errorMessage: null,
+      });
+      return true;
+    } catch (err) {
+      set({
+        errorMessage: err instanceof Error ? err.message : 'Failed to export remote profile backup.',
+      });
+      return false;
+    }
   },
 }));
 
@@ -642,7 +647,7 @@ function scheduleLiveSyncFromStoreChange(): void {
     remotePushDebounceTimer = setTimeout(() => {
       remotePushDebounceTimer = null;
       void useCloudProfileSyncStore.getState().pushActiveRemoteSessionNow();
-    }, 220);
+    }, 180);
     return;
   }
 
@@ -655,7 +660,7 @@ function scheduleLiveSyncFromStoreChange(): void {
       const snap = collectUnifiedProfileSnapshot();
       if (JSON.stringify(snap) === lastPushedSnapshotJson) return;
       void curState.pushUserCloudProfile();
-    }, 900);
+    }, 650);
   }
 }
 
@@ -666,4 +671,5 @@ function ensureLiveStoreSubscriptions(): void {
   floatingStore.subscribe(scheduleLiveSyncFromStoreChange);
   useSpatialAudioStore.subscribe(scheduleLiveSyncFromStoreChange);
   viewportStore.subscribe(scheduleLiveSyncFromStoreChange);
+  useSettingsPacingStore.subscribe(scheduleLiveSyncFromStoreChange);
 }

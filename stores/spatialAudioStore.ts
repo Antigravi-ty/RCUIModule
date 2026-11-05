@@ -119,6 +119,7 @@ export interface SpatialAudioStoreState {
   // Actions — Spatial Audio Tuner
   updateTunerConfig: (patch: Partial<SpatialAudioTunerConfig>) => void;
   resetTunerConfig: () => void;
+  hydrateFromStorage: () => void;
 
   // Actions — Runtime Registration
   registerRuntimeCallbacks: (callbacks: SpatialAudioRuntimeCallbacks) => void;
@@ -486,6 +487,28 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
     }
     set({ tunerConfig: nextConfig });
     get().runtimeCallbacks.onTunerConfigChanged?.(nextConfig);
+  },
+
+  hydrateFromStorage: () => {
+    const bgmPrefs = loadStoredBgmPrefs();
+    const randomPrefs = loadStoredRandomAnthemPrefs();
+    const selectedAnthem = loadStoredPlayerAnthem() || DEFAULT_ANTHEM_ID;
+    const tunerConfig = loadStoredSpatialAudioTunerConfig();
+    set({
+      selectedAnthem,
+      randomAnthemScope: randomPrefs.scope || DEFAULT_RANDOM_ANTHEM_SCOPE,
+      randomAnthemCategory: randomPrefs.category || DEFAULT_RANDOM_ANTHEM_CATEGORY,
+      bgmVolume: bgmPrefs.bgmVolume,
+      bgmScenes: bgmPrefs.bgmScenes,
+      realisticBgmEnabled: bgmPrefs.realisticBgmEnabled,
+      bgmCategorizedMode: bgmPrefs.categorizedMode,
+      bgmDeselectedVolumes: bgmPrefs.deselectedVolumes,
+      bgmDeselectedTrackNames: bgmPrefs.deselectedTrackNames,
+      tunerConfig,
+    });
+    const cb = get().runtimeCallbacks;
+    cb.onBgmPrefsChanged?.();
+    cb.onTunerConfigChanged?.(tunerConfig);
   },
 
   registerRuntimeCallbacks: (callbacks) => {

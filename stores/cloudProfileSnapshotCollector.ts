@@ -14,15 +14,24 @@ import {
   unflattenConfigPrefix,
 } from '../config/cloudProfileMergePipeline';
 import { type ProfileFlatSnapshot } from '../config/cloudProfileSyncTypes';
+import { ALLOWED_CLOCK_PACING_PRIORITIES, type ClockPacingPriority } from '../config/clockPacingConfig';
+import { loadStoredBotsLoadoutConfig } from '../config/botsLoadoutConfig';
+import { spatialAttenuationProfiles } from '../config/spatialAttenuationProfiles';
 import { STORAGE_KEYS, safeStorage } from '../config/storageHelpers';
+import { getInitialKickoffWsOffset } from '../config/trainingDefaults';
 import {
   loadStoredColorPrefs,
-  saveStoredColorPrefs,
+  loadStoredPlayerName,
+  saveStoredPlayerName,
 } from '../config/vehiclePresets';
+import { useSettingsPacingStore } from '../recipes/settings/settingsPacingStore';
 import { useAppStore } from './appStore';
+import { useBotsLoadoutStore } from './botsLoadoutStore';
 import { PRESET_WINDOWS } from './devFloatingPresets';
 import { floatingStore } from './floatingStore';
+import { useKickoffTrainingStore } from './kickoffTrainingStore';
 import { useSpatialAudioStore } from './spatialAudioStore';
+import { useStaticTrainingBallCamTunerStore } from './staticTrainingBallCamTunerStore';
 import { viewportStore } from './viewportStore';
 
 const SYNCABLE_EXTRA_STORAGE_KEYS: ReadonlyArray<string> = [
@@ -50,9 +59,10 @@ export function collectUnifiedProfileSnapshot(): ProfileFlatSnapshot {
   const snapshot: ProfileFlatSnapshot = {};
   const app = useAppStore.getState();
   const spatial = useSpatialAudioStore.getState();
-  const colorPrefs = loadStoredColorPrefs();
+  const colorPrefs = app.colorPrefs ?? loadStoredColorPrefs();
 
-  // 1. Garage Loadout
+  // 1. Garage Loadout & User Multiplayer Display Name
+  snapshot['garage.displayName'] = app.onlineSession?.playerName || loadStoredPlayerName();
   snapshot['garage.selectedCar'] = app.activeCar;
   snapshot['garage.primaryTeam'] = colorPrefs.primaryTeam;
   snapshot['garage.blueOrder'] = [...colorPrefs.blueOrder];
@@ -111,6 +121,30 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
     }
   }
 
+  // Hydrate stores backed by SYNCABLE_EXTRA_STORAGE_KEYS so UI & runtime update immediately
+  useSpatialAudioStore.getState().hydrateFromStorage();
+  if (typeof snapshot[`storage.${STORAGE_KEYS.SPATIAL_ATTENUATION_PROFILES}`] === 'string') {
+    spatialAttenuationProfiles.load();
+    spatialAttenuationProfiles.notify();
+  }
+  if (typeof snapshot[`storage.${STORAGE_KEYS.BOTS_LOADOUT_CONFIG}`] === 'string') {
+    useBotsLoadoutStore.getState().updateConfig(loadStoredBotsLoadoutConfig());
+  }
+  const rawBallCamTuner = snapshot[`storage.${STORAGE_KEYS.STATIC_TRAINING_BALL_CAM_TUNER}`];
+  if (typeof rawBallCamTuner === 'string') {
+    try {
+      const parsedTuner = JSON.parse(rawBallCamTuner);
+      if (parsedTuner && typeof parsedTuner === 'object') {
+        useStaticTrainingBallCamTunerStore.getState().updateConfig(parsedTuner);
+      }
+    } catch {
+      // ignore malformed JSON
+    }
+  }
+  if (typeof snapshot[`storage.${STORAGE_KEYS.KICKOFF_WS_OFFSET_PCT}`] === 'string') {
+    useKickoffTrainingStore.getState().setWsVerticalOffsetPct(getInitialKickoffWsOffset());
+  }
+
   // Update viewport scale/margin if present
   const rawUiScale = snapshot[`storage.${STORAGE_KEYS.UI_SCALE}`];
   if (typeof rawUiScale === 'string') {
@@ -131,12 +165,18 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
     viewportStore.setShowSafeAreaHud?.(rawSafeVisible === 'true');
   }
 
-  // 2. Apply Garage Loadout
+  // 2. Apply Garage Loadout & User Multiplayer Display Name
+  if (typeof snapshot['garage.displayName'] === 'string' && snapshot['garage.displayName'].trim()) {
+    const cleanDisplayName = snapshot['garage.displayName'].trim().slice(0, 24);
+    saveStoredPlayerName(cleanDisplayName);
+    app.setOnlineSession({ playerName: cleanDisplayName });
+  }
+
   if (typeof snapshot['garage.selectedCar'] === 'string' && snapshot['garage.selectedCar']) {
     app.setActiveCar(snapshot['garage.selectedCar']);
   }
 
-  const currentColors = loadStoredColorPrefs();
+  const currentColors = app.colorPrefs ?? loadStoredColorPrefs();
   const nextPrimaryTeam =
     snapshot['garage.primaryTeam'] === 'orange' || snapshot['garage.primaryTeam'] === 'blue'
       ? snapshot['garage.primaryTeam']
@@ -147,7 +187,7 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
   const nextOrangeOrder = Array.isArray(snapshot['garage.orangeOrder'])
     ? (snapshot['garage.orangeOrder'] as number[])
     : currentColors.orangeOrder;
-  saveStoredColorPrefs({
+  app.setColorPrefs({
     primaryTeam: nextPrimaryTeam,
     blueOrder: nextBlueOrder,
     orangeOrder: nextOrangeOrder,
@@ -183,6 +223,13 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
   const nextTelemetry = unflattenConfigPrefix(snapshot, 'telemetry', app.telemetry);
   app.updateTelemetry(nextTelemetry);
 
+  const rawPacingPriority = snapshot['pacing.priority'];
+  if (
+    typeof rawPacingPriority === 'string' &&
+    (ALLOWED_CLOCK_PACING_PRIORITIES as readonly string[]).includes(rawPacingPriority)
+  ) {
+    app.setClockPacingPriority(rawPacingPriority as ClockPacingPriority);
+  }
   if (typeof snapshot['pacing.inputBufferTarget'] === 'number') {
     app.setInputBufferTarget(snapshot['pacing.inputBufferTarget']);
   }
@@ -192,14 +239,6 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
   ) {
     const pair = snapshot['pacing.inputBufferThreshold'] as [number, number];
     app.setInputBufferThreshold([Number(pair[0]) || -2, Number(pair[1]) || 2]);
-  }
-  if (
-    snapshot['pacing.priority'] === 'low_latency_5050' ||
-    snapshot['pacing.priority'] === 'balanced' ||
-    snapshot['pacing.priority'] === 'anti_starvation' ||
-    snapshot['pacing.priority'] === 'rate_stability'
-  ) {
-    app.setClockPacingPriority(snapshot['pacing.priority']);
   }
   const nextCustomPacing = unflattenConfigPrefix(
     snapshot,
@@ -215,6 +254,7 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
   ) {
     app.setClockPacingMode(snapshot['pacing.mode']);
   }
+  useSettingsPacingStore.getState().hydrateFromAppStore();
 
   const nextBoostPad = unflattenConfigPrefix(snapshot, 'boostPad', app.boostPadTuner);
   app.updateBoostPadTuner(nextBoostPad);

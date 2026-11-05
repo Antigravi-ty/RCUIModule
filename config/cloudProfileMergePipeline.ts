@@ -146,3 +146,93 @@ export function computeProfileThreeWayMerge(
     conflicts,
   };
 }
+
+export function normalizeCloudUsername(raw: string): string {
+  return String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '');
+}
+
+export function generateCloudUserId(seedHint?: string): string {
+  const bytes = new Uint8Array(4);
+  if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.getRandomValues === 'function') {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    const now = Date.now() ^ Math.floor(Math.random() * 0xffffffff);
+    bytes[0] = (now >>> 24) & 0xff;
+    bytes[1] = (now >>> 16) & 0xff;
+    bytes[2] = (now >>> 8) & 0xff;
+    bytes[3] = now & 0xff;
+  }
+  let hex = '';
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i].toString(16).padStart(2, '0');
+  }
+  if (seedHint) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < seedHint.length; i++) {
+      h ^= seedHint.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+    const prefix = ((h >>> 0) & 0xffff).toString(16).padStart(4, '0');
+    return `u_${prefix}${hex.slice(0, 4)}`;
+  }
+  return `u_${hex}`;
+}
+
+/**
+ * Computes a deterministic 7-character Git-style short commit hash (`[0-9a-f]{7}`)
+ * from a profile snapshot and revision metadata.
+ */
+export function computeCommitHashSync(
+  snapshot: ProfileFlatSnapshot | null | undefined,
+  rev: number = 1,
+  salt: string = ''
+): string {
+  let h1 = 0x811c9dc5;
+  let h2 = 0x9e3779b9;
+  const feed = (str: string) => {
+    for (let i = 0; i < str.length; i++) {
+      const ch = str.charCodeAt(i);
+      h1 ^= ch;
+      h1 = Math.imul(h1, 0x01000193);
+      h2 ^= ch + 0x9e3779b9 + (h2 << 6) + (h2 >>> 2);
+      h2 = Math.imul(h2, 0x85ebca6b);
+    }
+  };
+
+  feed(`rev:${rev}|salt:${salt}|`);
+  if (snapshot && typeof snapshot === 'object') {
+    const keys = Object.keys(snapshot).sort();
+    for (const k of keys) {
+      let serialized = '';
+      try {
+        serialized = JSON.stringify(snapshot[k]);
+      } catch {
+        serialized = String(snapshot[k]);
+      }
+      feed(`${k}=${serialized};`);
+    }
+  }
+
+  const hex1 = (h1 >>> 0).toString(16).padStart(8, '0');
+  const hex2 = (h2 >>> 0).toString(16).padStart(8, '0');
+  return `${hex1}${hex2}`.slice(0, 7);
+}
+
+export function formatCloudCommitHash(
+  revHash?: string | null,
+  rev?: number | null
+): string {
+  const clean = typeof revHash === 'string' ? revHash.trim().toLowerCase() : '';
+  if (/^[0-9a-f]{6,12}$/.test(clean)) {
+    return clean.slice(0, 7);
+  }
+  const numRev = Number(rev) || 0;
+  if (numRev <= 0) {
+    return 'none';
+  }
+  return computeCommitHashSync(null, numRev, `legacy-rev-${numRev}`);
+}
+
