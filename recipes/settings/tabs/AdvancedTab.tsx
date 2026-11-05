@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import {
+  Activity,
   Code2,
+  Download,
   Router,
   Sliders,
-  Activity,
   CirclePile,
   ChartNoAxesGantt,
   Settings2,
   ChevronsLeftRightEllipsis,
 } from 'lucide-react';
+import { SettingActionRow } from '../../../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../../../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../../../compounds/SettingToggleRow';
 import { SettingDeveloperStatusRow } from '../../../compounds/SettingDeveloperStatusRow';
@@ -33,6 +35,7 @@ import {
 import { useFloatingStore } from '../../../stores/floatingStore';
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import { useAppStore } from '../../../stores/appStore';
+import { useCloudProfileSyncStore } from '../../../stores/cloudProfileSyncStore';
 import {
   useSettingsPacingStore,
   type ClockPacingMode,
@@ -59,17 +62,17 @@ export interface AdvancedTabProps {
 /**
  * [Layer 2 Settings -> Advanced Tab]
  * Decoupled Advanced Settings layout:
- * 1. First Row: `Developer Settings` (`SettingDeveloperStatusRow`) — displays a gray `Disabled` badge by default,
- *    or a customizable `Active` badge (defaults to Amber orange) + colored icon when `developerMode` is enabled.
- * 2. Second Row: `Allow Remote Profile Deployment` (icon: `chevrons-left-right-ellipsis` / `ChevronsLeftRightEllipsis`, default: enabled)
- * 3. `Input Buffer` (renamed from `Input Buffer Pacing`, icon: `circle-pile` / `CirclePile`)
- * 4. `Input Buffer Target (α)` (icon: `chart-no-axes-gantt` / `ChartNoAxesGantt`) — shown only when `Input Buffer` is `'custom'`
- * 5. `Threshold Tolerance Deadband` (icon: `settings-2` / `Settings2`) — shown only when `Input Buffer` is `'custom'`
- * 6. `Performance Monitor` (renamed from `Live System Telemetry`)
- * 7. `Show Telemetry Summary` (`TelemetryConfigCard` with underlined `Show v` disclosure & framing variations)
- * 8. `Network Monitor` (renamed from `Network Diagnostics`)
- * 9. `Audio Debug Mode` & `Audio Pipeline Diagnostics & Recovery` (`AudioDebugSection` relocated from AudioTab)
- * 10. Last Row: `Floating Window Opacity` (controlled by `floatingOpacityOrder` token, defaults to `'last'`)
+ * 1. First Row: `Developer Settings` (`SettingDeveloperStatusRow`)
+ * 2. Second Row: `Allow Remote Profile Deployment` (live persistent WebSocket subscription for instant developer updates)
+ * 2a. `Export Profile Backup` (downloads unified JSON backup for LLM-assisted migration & local archiving)
+ * 3. `Input Buffer` (`CirclePile`)
+ * 4. `Input Buffer Target (α)` (`ChartNoAxesGantt`) — shown only when `Input Buffer` is `'custom'`
+ * 5. `Threshold Tolerance Deadband` (`Settings2`) — shown only when `Input Buffer` is `'custom'`
+ * 6. `Performance Monitor`
+ * 7. `Show Telemetry Summary` (`TelemetryConfigCard`)
+ * 8. `Network Monitor`
+ * 9. `Audio Debug Mode` & `Audio Pipeline Diagnostics & Recovery` (`AudioDebugSection`)
+ * 10. Last Row: `Floating Window Opacity`
  */
 export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   isLight = false,
@@ -91,7 +94,21 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
 
   const developerMode = propDevMode ?? storeDevMode ?? false;
 
-  const [allowRemoteProfileDeployment, setAllowRemoteProfileDeployment] = useState(true);
+  const allowRemoteProfileDeployment = useCloudProfileSyncStore(
+    (s) => s.allowRemoteProfileDeployment
+  );
+  const setAllowRemoteProfileDeployment = useCloudProfileSyncStore(
+    (s) => s.setAllowRemoteProfileDeployment
+  );
+  const exportLocalUserProfileBackup = useCloudProfileSyncStore(
+    (s) => s.exportLocalUserProfileBackup
+  );
+  const [lastExportedFilename, setLastExportedFilename] = useState<string | null>(null);
+
+  const handleExportBackup = () => {
+    const filename = exportLocalUserProfileBackup();
+    setLastExportedFilename(filename);
+  };
 
   const {
     clockPacingMode,
@@ -189,17 +206,40 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 2. Second Position: Allow Remote Profile Deployment */}
+      {/* 2. Second Position: Allow Remote Profile Deployment (Live Persistent Subscription) */}
       <SettingToggleRow
         icon={ChevronsLeftRightEllipsis}
         iconName="chevrons-left-right-ellipsis"
         title="Allow Remote Profile Deployment"
-        description="Allow remote profile deployment and live configuration synchronization across sessions"
-        hoverDescription="Allow Remote Profile Deployment: Permit remote profile deployment and live configuration synchronization from connected sessions."
+        description={
+          allowRemoteProfileDeployment
+            ? 'Maintains a persistent live connection so developer profile updates apply instantaneously'
+            : 'Paused live developer push subscription (updates apply only when you manually click Sync)'
+        }
+        hoverDescription="Allow Remote Profile Deployment: Keep a persistent subscription active so any developer remote profile tuning change is applied in real time without manual syncing."
         checked={allowRemoteProfileDeployment}
         onChange={setAllowRemoteProfileDeployment}
         bordered={resolvedBordered}
         onHover={(desc) => desc && onHover(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      {/* 2-Export. Profile Backup JSON Export */}
+      <SettingActionRow
+        icon={Download}
+        title="Export Profile Backup"
+        description={
+          lastExportedFilename
+            ? `Exported ${lastExportedFilename}`
+            : 'Download a structured JSON backup of all Garage, Settings, Audio & Keybinding parameters'
+        }
+        hoverDescription="Export Profile Backup: Save a complete, LLM-readable JSON backup of your current profile so your settings can be restored or migrated across major UI/schema updates."
+        actionLabel="Export JSON"
+        showButtonArrow={false}
+        bordered={resolvedBordered}
+        onAction={handleExportBackup}
+        onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
       />

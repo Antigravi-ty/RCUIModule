@@ -1,6 +1,7 @@
 import React from 'react';
 import { Info } from 'lucide-react';
 import { KeycapBadge } from '../primitives/KeycapBadge';
+import { useCloudProfileSyncStore } from '../stores/cloudProfileSyncStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 
 export interface PanelFooterProps {
@@ -50,6 +51,7 @@ export const PanelFooter: React.FC<PanelFooterProps> = ({
   const footerSplitRight = useMenuLayoutStore((s) => s.panelFooterSplitRight);
   const footerRightDivider = useMenuLayoutStore((s) => s.panelFooterRightDivider);
   const footerRightPadX = useMenuLayoutStore((s) => s.panelFooterRightPaddingX);
+  const activeRemoteSession = useCloudProfileSyncStore((s) => s.activeRemoteSession);
 
   const hasUnifiedDesc =
     defaultDescription !== undefined || hoveredDescription !== undefined;
@@ -57,7 +59,9 @@ export const PanelFooter: React.FC<PanelFooterProps> = ({
   const isHoveredActive = Boolean(hoveredDescription);
 
   const hasRightCompartment =
-    footerSplitRight && Boolean(rightSlot || rightLabel || rightShortcut);
+    !activeRemoteSession &&
+    footerSplitRight &&
+    Boolean(rightSlot || rightLabel || rightShortcut);
 
   return (
     <div

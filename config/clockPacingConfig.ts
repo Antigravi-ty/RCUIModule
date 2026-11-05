@@ -19,7 +19,11 @@ export type ClockPacingPriority =
   | 'low_latency_5050'
   | 'balanced'
   | 'anti_starvation'
-  | 'rate_stability';
+  | 'rate_stability'
+  | 'competitive'
+  | 'motion'
+  | 'input_consistency'
+  | 'custom';
 
 export type ClockRateStepMode = 'discrete_2tier' | 'continuous_pd' | 'hybrid';
 
@@ -71,6 +75,10 @@ export const ALLOWED_CLOCK_PACING_PRIORITIES: readonly ClockPacingPriority[] = O
   'balanced',
   'anti_starvation',
   'rate_stability',
+  'competitive',
+  'motion',
+  'input_consistency',
+  'custom',
 ]);
 
 export const ALLOWED_RATE_STEP_MODES: readonly ClockRateStepMode[] = Object.freeze([
@@ -224,6 +232,102 @@ export const CLOCK_PACING_PRIORITY_PRESETS: Record<
       maxAdaptiveBoostTicks: 3.5,
       hardResyncThresholdTicks: 12,
     },
+  },
+  competitive: {
+    id: 'competitive',
+    label: 'Competitive',
+    shortLabel: 'Competitive',
+    description:
+      'Minimizes forward prediction ticks for sharper 50/50 challenges.',
+    targetBufferTicks: 2,
+    deadband: [-1, 1],
+    paramsPatch: {
+      targetBufferTicks: 2,
+      deadbandCatchupOffset: -1,
+      deadbandSkipOffset: 1,
+      tier1Hz: 1.5,
+      tier2Hz: 4.0,
+      tier1EnterError: 0.8,
+      tier1ExitError: 0.3,
+      tier2EnterError: 2.0,
+      tier2ExitError: 1.0,
+      minDwellTicks: 12,
+      kpHzPerTick: 1.15,
+      kdHzPerTickVel: 0.35,
+      maxAdjustHz: 6.0,
+      inFlightCompGain: 0.9,
+      bufferEwmaAlpha: 0.32,
+      adaptiveJitterGain: 0.65,
+      maxAdaptiveBoostTicks: 2.5,
+      hardResyncThresholdTicks: 8,
+    },
+  },
+  motion: {
+    id: 'motion',
+    label: 'Motion',
+    shortLabel: 'Motion',
+    description:
+      'Minimizes clock frequency adjustments and state transitions for smooth visual motion.',
+    targetBufferTicks: 3,
+    deadband: [-2, 2],
+    paramsPatch: {
+      targetBufferTicks: 3,
+      deadbandCatchupOffset: -2,
+      deadbandSkipOffset: 2,
+      tier1Hz: 0.5,
+      tier2Hz: 1.5,
+      tier1EnterError: 1.5,
+      tier1ExitError: 0.6,
+      tier2EnterError: 3.2,
+      tier2ExitError: 1.8,
+      minDwellTicks: 36,
+      kpHzPerTick: 0.45,
+      kdHzPerTickVel: 0.55,
+      maxAdjustHz: 3.0,
+      inFlightCompGain: 0.9,
+      bufferEwmaAlpha: 0.15,
+      adaptiveJitterGain: 1.0,
+      maxAdaptiveBoostTicks: 3.5,
+      hardResyncThresholdTicks: 12,
+    },
+  },
+  input_consistency: {
+    id: 'input_consistency',
+    label: 'Input Consistency',
+    shortLabel: 'Input Consistency',
+    description:
+      'Prioritizes zero input starvation on unstable connections by maintaining a deeper buffer.',
+    targetBufferTicks: 4,
+    deadband: [-1, 3],
+    paramsPatch: {
+      targetBufferTicks: 4,
+      deadbandCatchupOffset: -1,
+      deadbandSkipOffset: 3,
+      tier1Hz: 1.25,
+      tier2Hz: 3.5,
+      tier1EnterError: 0.85,
+      tier1ExitError: 0.35,
+      tier2EnterError: 2.1,
+      tier2ExitError: 1.1,
+      minDwellTicks: 16,
+      kpHzPerTick: 1.0,
+      kdHzPerTickVel: 0.4,
+      maxAdjustHz: 6.0,
+      inFlightCompGain: 0.85,
+      bufferEwmaAlpha: 0.28,
+      adaptiveJitterGain: 2.0,
+      maxAdaptiveBoostTicks: 5.5,
+      hardResyncThresholdTicks: 12,
+    },
+  },
+  custom: {
+    id: 'custom',
+    label: 'Custom',
+    shortLabel: 'Custom',
+    description: 'Manual input buffer and deadband override.',
+    targetBufferTicks: 3,
+    deadband: [-1, 1],
+    paramsPatch: {},
   },
 });
 

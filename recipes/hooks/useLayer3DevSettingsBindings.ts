@@ -33,6 +33,8 @@ export interface Layer3DevActiveTunersRecipeProps {
   onNavigateEventTriggerRules?: () => void;
   onNavigateEventAndTriggerer?: () => void;
   onNavigateEventTriggerer?: () => void;
+  showAllCarHitboxes?: boolean;
+  onShowAllCarHitboxesChange?: (visible: boolean) => void;
   wsVerticalOffsetPct?: number;
   onWsVerticalOffsetPctChange?: (val: number) => void;
   carBallMode?: string;
@@ -94,6 +96,8 @@ export function useLayer3DevActiveTunersStoreBinding(
 ): Layer3DevActiveTunersRecipeProps {
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
+  const showAllCarHitboxes = useAppStore((s) => Boolean(s.gameplay?.showAllCarHitboxes));
+  const updateGameplay = useAppStore((s) => s.updateGameplay);
   const wsVerticalOffsetPct = useKickoffTrainingStore((s) => s.wsVerticalOffsetPct);
   const setWsVerticalOffsetPct = useKickoffTrainingStore(
     (s) => s.setWsVerticalOffsetPct
@@ -204,6 +208,10 @@ export function useLayer3DevActiveTunersStoreBinding(
   return {
     ...rawProps,
     onBack: rawProps.onBack ?? goBack,
+    showAllCarHitboxes: rawProps.showAllCarHitboxes ?? showAllCarHitboxes,
+    onShowAllCarHitboxesChange:
+      rawProps.onShowAllCarHitboxesChange ??
+      ((visible: boolean) => updateGameplay({ showAllCarHitboxes: visible })),
     wsVerticalOffsetPct: rawProps.wsVerticalOffsetPct ?? wsVerticalOffsetPct,
     onWsVerticalOffsetPctChange:
       rawProps.onWsVerticalOffsetPctChange ?? setWsVerticalOffsetPct,

@@ -30,11 +30,57 @@ export const ballVisualRuntimeConfig: BallVisualConfig = {
   ...DEFAULT_BALL_VISUAL_CONFIG,
 };
 
-type BallVisualListener = (snapshot: BallVisualConfig) => void;
-type BallVisualApplier = (config: BallVisualConfig, ballRoot: any, indicatorRings: any[]) => void;
+export type BallVisualListener = (snapshot: BallVisualConfig) => void;
+export type BallVisualApplier = (config: BallVisualConfig, ballRoot: any, indicatorRings: any[]) => void;
 
-const ballVisualListeners = new Set<BallVisualListener>();
-const ballVisualObjectAppliers = new Set<BallVisualApplier>();
+const ballVisualCallbacks: BallVisualListener[] = [];
+const ballVisualObjectCallbacks: BallVisualApplier[] = [];
+
+export function normalizeTemporaryBallOpacityOverride(
+  opacityOrNull: number | null | undefined
+): number | null {
+  return typeof opacityOrNull === 'number' && Number.isFinite(opacityOrNull)
+    ? Math.max(0.05, Math.min(1.0, opacityOrNull))
+    : null;
+}
+
+export function sanitizeBallVisualConfig(
+  raw: Partial<BallVisualConfig> | null | undefined,
+  base: BallVisualConfig = DEFAULT_BALL_VISUAL_CONFIG
+): BallVisualConfig {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  return {
+    ...base,
+    ...source,
+    visible: typeof source.visible === 'boolean' ? source.visible : base.visible,
+    opacity:
+      typeof source.opacity === 'number' && Number.isFinite(source.opacity)
+        ? Math.max(0.0, Math.min(1.0, source.opacity))
+        : base.opacity,
+    temporaryOpacityOverride:
+      source.temporaryOpacityOverride !== undefined
+        ? normalizeTemporaryBallOpacityOverride(source.temporaryOpacityOverride)
+        : base.temporaryOpacityOverride,
+    depthWriteWhenTransparent:
+      typeof source.depthWriteWhenTransparent === 'boolean'
+        ? source.depthWriteWhenTransparent
+        : base.depthWriteWhenTransparent,
+    doubleSideWhenTransparent:
+      typeof source.doubleSideWhenTransparent === 'boolean'
+        ? source.doubleSideWhenTransparent
+        : base.doubleSideWhenTransparent,
+    wireframe: typeof source.wireframe === 'boolean' ? source.wireframe : base.wireframe,
+    indicatorRingOpacity:
+      typeof source.indicatorRingOpacity === 'number' &&
+      Number.isFinite(source.indicatorRingOpacity)
+        ? Math.max(0.0, Math.min(1.0, source.indicatorRingOpacity))
+        : base.indicatorRingOpacity,
+    goalDarkenJitterEnabled:
+      typeof source.goalDarkenJitterEnabled === 'boolean'
+        ? source.goalDarkenJitterEnabled
+        : base.goalDarkenJitterEnabled,
+  };
+}
 
 export function getBallVisualConfig(): BallVisualConfig {
   return { ...ballVisualRuntimeConfig };
@@ -42,17 +88,23 @@ export function getBallVisualConfig(): BallVisualConfig {
 
 export function subscribeBallVisualConfig(listener: BallVisualListener): () => void {
   if (typeof listener !== 'function') return () => {};
-  ballVisualListeners.add(listener);
+  if (!ballVisualCallbacks.includes(listener)) {
+    ballVisualCallbacks.push(listener);
+  }
   return () => {
-    ballVisualListeners.delete(listener);
+    const idx = ballVisualCallbacks.indexOf(listener);
+    if (idx !== -1) ballVisualCallbacks.splice(idx, 1);
   };
 }
 
 export function registerBallVisualApplier(applier: BallVisualApplier): () => void {
   if (typeof applier !== 'function') return () => {};
-  ballVisualObjectAppliers.add(applier);
+  if (!ballVisualObjectCallbacks.includes(applier)) {
+    ballVisualObjectCallbacks.push(applier);
+  }
   return () => {
-    ballVisualObjectAppliers.delete(applier);
+    const idx = ballVisualObjectCallbacks.indexOf(applier);
+    if (idx !== -1) ballVisualObjectCallbacks.splice(idx, 1);
   };
 }
 
@@ -62,9 +114,9 @@ export function updateBallVisualConfig(
   indicatorRings: any[] = []
 ): BallVisualConfig {
   if (patch) {
-    Object.assign(ballVisualRuntimeConfig, patch);
+    Object.assign(ballVisualRuntimeConfig, sanitizeBallVisualConfig(patch, ballVisualRuntimeConfig));
   }
-  for (const applier of ballVisualObjectAppliers) {
+  for (const applier of ballVisualObjectCallbacks) {
     try {
       applier(ballVisualRuntimeConfig, ballRoot, indicatorRings);
     } catch (err) {
@@ -72,7 +124,7 @@ export function updateBallVisualConfig(
     }
   }
   const snapshot = { ...ballVisualRuntimeConfig };
-  for (const listener of ballVisualListeners) {
+  for (const listener of ballVisualCallbacks) {
     try {
       listener(snapshot);
     } catch (err) {
@@ -87,10 +139,7 @@ export function setTemporaryBallOpacityOverride(
   ballRoot: any = null,
   indicatorRings: any[] = []
 ): BallVisualConfig {
-  const normalized =
-    typeof opacityOrNull === 'number' && Number.isFinite(opacityOrNull)
-      ? Math.max(0.05, Math.min(1.0, opacityOrNull))
-      : null;
+  const normalized = normalizeTemporaryBallOpacityOverride(opacityOrNull);
   if (ballVisualRuntimeConfig.temporaryOpacityOverride === normalized && !ballRoot) {
     return { ...ballVisualRuntimeConfig };
   }

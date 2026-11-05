@@ -20,6 +20,7 @@ import {
   type DriftwoodsTunerConfig,
   type DriftwoodsPreset
 } from '../config/driftwoodsConfig';
+import { type StoredColorPrefs } from '../config/vehiclePresets';
 
 export interface PerCarBoostDevConfig {
   unlimitedBoost: boolean;
@@ -42,6 +43,7 @@ export interface AppState {
   activeRoute: ActiveMenuRoute;
   transitionMode: ContainerTransitionMode;
   activeCar: string;
+  colorPrefs: StoredColorPrefs;
   theme: 'dark' | 'light';
   renderScale: number; // 25 to 100
   setRenderScale: (scale: number) => void;
@@ -73,6 +75,7 @@ export interface AppState {
   goBack: () => void;
   setTransitionMode: (mode: ContainerTransitionMode) => void;
   setActiveCar: (carId: string) => void;
+  setColorPrefs: (prefs: StoredColorPrefs) => void;
   setTheme: (theme: 'dark' | 'light') => void;
 
   // Subsystem setters
@@ -136,6 +139,8 @@ export interface AppState {
     password?: string;
     playerName: string;
     signalingConnected: boolean;
+    signalingHealthLevel?: 'healthy' | 'degraded' | 'offline';
+    hostMask?: number;
     activeRelayLabel?: string;
     pairingCode?: string;
     roomType?: 'warmup' | 'match';

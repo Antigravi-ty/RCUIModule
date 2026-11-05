@@ -310,7 +310,9 @@ export function renderNameTagOverlayPass2D(
   if (visibleCards2D.length === 0) return;
 
   visibleCards2D.sort(
-    (a, b) => (a.cameraDistanceSq || 0) - (b.cameraDistanceSq || 0)
+    (a, b) =>
+      (a.cameraDistanceSq || 0) - (b.cameraDistanceSq || 0) ||
+      (a.carIndex ?? 0) - (b.carIndex ?? 0)
   );
 
   const drawSingleRankWithCloserClips = (rank: number) => {

@@ -1,31 +1,14 @@
-import { safeLocalStorageGet, safeLocalStorageSet } from './storageHelpers';
 import {
-  type NameTagDepthMetric,
-  type NameTagFontFamily,
-  type NameTagFontWeight,
-  type NameTagBoostIndicatorMode,
-  type NameTagBoostBorderColorMode,
   type NameTagBoostBorderAudience,
-  type NameTagBoostBorderSceneFlags,
+  type NameTagBoostBorderColorMode,
   type NameTagBoostBorderOverride,
+  type NameTagBoostIndicatorMode,
+  type NameTagCameraMode,
   type NameTagCarOverride,
   type NameTagConfig,
-  type NameTagCarEntry,
-  type NameTagCameraMode,
-  type NameTagCarTelemetry,
-  type NameTagTelemetrySnapshot,
-  type NameTagRuntimeState,
-  type NameTagFittedParameters,
-  NAME_TAG_REFERENCE_DEPTH_UU,
-  NAME_TAG_NEAR_CALIBRATION_DEPTH_UU,
-  NAME_TAG_FAR_CALIBRATION_DEPTH_UU,
+  type NameTagFontFamily,
+  type NameTagFontWeight,
   DEFAULT_NAME_TAG_CONFIG,
-  resolveNameTagFontFamilyCss,
-  createDefaultCarOverride,
-  formatNameTagDisplayText,
-  estimateNameTagTextWidthPx,
-  computeAdaptiveNameTagWidthPx,
-  resolveNameTagCornerRadiusPx,
 } from './nameTagCalibrationMath';
 
 export {
@@ -55,17 +38,17 @@ export {
   estimateNameTagTextWidthPx,
   computeAdaptiveNameTagWidthPx,
   resolveNameTagCornerRadiusPx,
-};
+} from './nameTagCalibrationMath';
 
-const STORAGE_KEY = 'rc_name_tag_config_v8';
+export const NAME_TAG_STORAGE_KEY = 'rc_name_tag_config_v9';
 
-function sanitizeHexColor(raw: unknown, fallbackHex: string): string {
+export function sanitizeHexColor(raw: unknown, fallbackHex: string): string {
   return typeof raw === 'string' && raw.startsWith('#') && raw.length >= 4
     ? raw
     : fallbackHex;
 }
 
-function sanitizeBoostBorderAudience(
+export function sanitizeBoostBorderAudience(
   raw: unknown,
   fallbackAudience: NameTagBoostBorderAudience
 ): NameTagBoostBorderAudience {
@@ -75,7 +58,7 @@ function sanitizeBoostBorderAudience(
   return fallbackAudience;
 }
 
-function sanitizeBoostIndicatorMode(
+export function sanitizeBoostIndicatorMode(
   raw: unknown,
   fallbackMode: NameTagBoostIndicatorMode
 ): NameTagBoostIndicatorMode {
@@ -90,7 +73,7 @@ function sanitizeBoostIndicatorMode(
   return fallbackMode;
 }
 
-function sanitizeCarOverride(
+export function sanitizeCarOverride(
   raw: Partial<NameTagCarOverride> | null | undefined,
   fallbackWorldOffsetUu: number,
   fallbackScreenOffsetPx: number
@@ -128,7 +111,7 @@ function sanitizeCarOverride(
   };
 }
 
-function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): NameTagConfig {
+export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): NameTagConfig {
   const source = raw && typeof raw === 'object' ? raw : {};
   const previewNames =
     Array.isArray(source.previewNames) && source.previewNames.length === 6
@@ -208,7 +191,9 @@ function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): NameTag
     : DEFAULT_NAME_TAG_CONFIG.cardRenderScale;
 
   const boostBorderColorMode: NameTagBoostBorderColorMode =
-    source.boostBorderColorMode === 'shared' ? 'shared' : 'team';
+    source.boostBorderColorMode === 'shared' || source.boostBorderColorMode === 'team'
+      ? source.boostBorderColorMode
+      : DEFAULT_NAME_TAG_CONFIG.boostBorderColorMode;
 
   return {
     enabled:
@@ -428,36 +413,12 @@ function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): NameTag
   };
 }
 
-let currentConfig: NameTagConfig = (() => {
-  try {
-    const raw = safeLocalStorageGet(STORAGE_KEY);
-    if (!raw) {
-      return sanitizeConfig(DEFAULT_NAME_TAG_CONFIG);
-    }
-    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    return sanitizeConfig(parsed);
-  } catch {
-    return sanitizeConfig(DEFAULT_NAME_TAG_CONFIG);
-  }
-})();
+export const sanitizeNameTagConfig = sanitizeConfig;
 
-const listeners = new Set<() => void>();
-
-export function notifyNameTagListeners(): void {
-  for (const listener of listeners) {
-    try {
-      listener();
-    } catch {
-      // Ignore listener errors
-    }
-  }
-}
-
-export function getNameTagConfig(): NameTagConfig {
-  return currentConfig;
-}
-
-export function updateNameTagConfig(patch: Partial<NameTagConfig>): NameTagConfig {
+export function mergeNameTagConfigPatch(
+  currentConfig: NameTagConfig,
+  patch: Partial<NameTagConfig>
+): NameTagConfig {
   const merged: Partial<NameTagConfig> = { ...currentConfig, ...patch };
   if (
     typeof patch.pillMinWidth === 'number' &&
@@ -472,68 +433,105 @@ export function updateNameTagConfig(patch: Partial<NameTagConfig>): NameTagConfi
   ) {
     merged.pillMinWidth = patch.pillMaxWidth;
   }
-  currentConfig = sanitizeConfig(merged);
-  try {
-    safeLocalStorageSet(STORAGE_KEY, JSON.stringify(currentConfig));
-  } catch {
-    // Ignore storage errors
+  return sanitizeConfig(merged);
+}
+
+export function resolveNameTagBoostBorderVisible(
+  config: NameTagConfig,
+  boostBorderOverride: NameTagBoostBorderOverride,
+  carTeam: 0 | 1,
+  povCarTeam: 0 | 1 | null
+): boolean {
+  if (!config.boostBorderEnabled) {
+    return false;
   }
-  notifyNameTagListeners();
-  return currentConfig;
-}
-
-export function updateNameTagCarOverride(
-  carIndex: number,
-  patch: Partial<NameTagCarOverride>
-): NameTagConfig {
-  const nextOverrides = currentConfig.carOverrides.map((entry, idx) =>
-    idx === carIndex
-      ? sanitizeCarOverride(
-          { ...entry, ...patch },
-          currentConfig.verticalOffsetUu,
-          currentConfig.screenVerticalOffsetPx
-        )
-      : entry
-  );
-  return updateNameTagConfig({ carOverrides: nextOverrides });
-}
-
-export function resetNameTagCarOverride(carIndex: number): NameTagConfig {
-  const nextOverrides = currentConfig.carOverrides.map((entry, idx) =>
-    idx === carIndex
-      ? createDefaultCarOverride(
-          currentConfig.verticalOffsetUu,
-          currentConfig.screenVerticalOffsetPx
-        )
-      : entry
-  );
-  return updateNameTagConfig({ carOverrides: nextOverrides });
-}
-
-export function resetAllNameTagCarOverrides(): NameTagConfig {
-  const nextOverrides = Array.from({ length: 6 }, () =>
-    createDefaultCarOverride(
-      currentConfig.verticalOffsetUu,
-      currentConfig.screenVerticalOffsetPx
-    )
-  );
-  return updateNameTagConfig({ carOverrides: nextOverrides });
-}
-
-export function resetNameTagConfig(): NameTagConfig {
-  currentConfig = sanitizeConfig(DEFAULT_NAME_TAG_CONFIG);
-  try {
-    safeLocalStorageSet(STORAGE_KEY, JSON.stringify(currentConfig));
-  } catch {
-    // Ignore storage errors
+  if (boostBorderOverride === false || boostBorderOverride === 'none') {
+    return false;
   }
-  notifyNameTagListeners();
-  return currentConfig;
+  if (boostBorderOverride === true || boostBorderOverride === 'all') {
+    return true;
+  }
+  if (boostBorderOverride === 'teammates') {
+    return carTeam === (povCarTeam ?? 0);
+  }
+  if (!config.showBoostBorderInMatchPlaying || config.boostBorderMatchAudience === 'none') {
+    return false;
+  }
+  return true;
 }
 
-export function subscribeNameTagConfig(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
+export const KICKOFF_PERMUTATION_COUNT = 5;
+
+export interface NameTagRuntimeSyncSnapshot {
+  isTunerArenaActive: boolean;
+  kickoffPermutationIndex: number;
+  activeCameraMode: NameTagCameraMode;
+  focusedCarIndex: number;
+  selectedCalibrationCarIndex: number;
+  boostBorderOverride: NameTagBoostBorderOverride;
+}
+
+export const DEFAULT_RUNTIME_SYNC_SNAPSHOT: NameTagRuntimeSyncSnapshot = {
+  isTunerArenaActive: false,
+  kickoffPermutationIndex: 0,
+  activeCameraMode: 'pov',
+  focusedCarIndex: 0,
+  selectedCalibrationCarIndex: 0,
+  boostBorderOverride: null,
+};
+
+export function sanitizeRuntimeSyncSnapshot(
+  raw: Partial<NameTagRuntimeSyncSnapshot> | null | undefined
+): NameTagRuntimeSyncSnapshot {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const validModes: NameTagCameraMode[] = [
+    'pov',
+    'wasmPov',
+    'rearView',
+    'free',
+    'director',
+    'podium',
+  ];
+  const activeCameraMode: NameTagCameraMode = validModes.includes(
+    source.activeCameraMode as NameTagCameraMode
+  )
+    ? (source.activeCameraMode as NameTagCameraMode)
+    : DEFAULT_RUNTIME_SYNC_SNAPSHOT.activeCameraMode;
+
+  const kickoffIndex = Number.isFinite(Number(source.kickoffPermutationIndex))
+    ? Math.max(0, Math.round(Number(source.kickoffPermutationIndex))) %
+      KICKOFF_PERMUTATION_COUNT
+    : DEFAULT_RUNTIME_SYNC_SNAPSHOT.kickoffPermutationIndex;
+
+  const focusedCarIndex = Number.isFinite(Number(source.focusedCarIndex))
+    ? Math.max(0, Math.min(5, Math.round(Number(source.focusedCarIndex))))
+    : DEFAULT_RUNTIME_SYNC_SNAPSHOT.focusedCarIndex;
+
+  const selectedCalibrationCarIndex = Number.isFinite(
+    Number(source.selectedCalibrationCarIndex)
+  )
+    ? Math.max(0, Math.min(5, Math.round(Number(source.selectedCalibrationCarIndex))))
+    : DEFAULT_RUNTIME_SYNC_SNAPSHOT.selectedCalibrationCarIndex;
+
+  let boostBorderOverride: NameTagBoostBorderOverride = null;
+  if (
+    source.boostBorderOverride === 'teammates' ||
+    source.boostBorderOverride === 'all' ||
+    source.boostBorderOverride === 'none' ||
+    typeof source.boostBorderOverride === 'boolean'
+  ) {
+    boostBorderOverride = source.boostBorderOverride;
+  }
+
+  return {
+    isTunerArenaActive:
+      typeof source.isTunerArenaActive === 'boolean'
+        ? source.isTunerArenaActive
+        : DEFAULT_RUNTIME_SYNC_SNAPSHOT.isTunerArenaActive,
+    kickoffPermutationIndex: kickoffIndex,
+    activeCameraMode,
+    focusedCarIndex,
+    selectedCalibrationCarIndex,
+    boostBorderOverride,
   };
 }

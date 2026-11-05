@@ -80,6 +80,7 @@ export const createAudioAndGameplaySlice: StateCreator<
     goalRestart: true,
     unlimitedBoost: true,
     showCarHitbox: true,
+    showAllCarHitboxes: false,
     ballCamIndicator: true,
   },
   trajectory: getInitialTrajectory(),
@@ -89,6 +90,7 @@ export const createAudioAndGameplaySlice: StateCreator<
       goalRestart: true,
       unlimitedBoost: true,
       showCarHitbox: true,
+      showAllCarHitboxes: false,
       ballCamIndicator: true,
     };
     get().bridge.onGameplayChange?.(next);
