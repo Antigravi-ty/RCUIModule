@@ -25,11 +25,8 @@ export const NameTagTunerFloatingWindow: React.FC<NameTagTunerFloatingWindowProp
     isTunerArenaActive,
     activeCameraMode,
     focusedCarIndex,
-    boostBorderOverride,
     updateConfig,
     updatePreviewName,
-    updatePreviewBoostAmount,
-    setBoostBorderOverride,
     selectPovCar,
   } = useNameTagTunerStore();
 
@@ -60,15 +57,7 @@ export const NameTagTunerFloatingWindow: React.FC<NameTagTunerFloatingWindowProp
     <div className={containerClassName}>
       <NameTagCalibrationSection isLight={isLight} />
       <NameTagPillGeometryAndPreviewSection isLight={isLight} />
-
-      <NameTagBoostBorderSection
-        config={config}
-        boostBorderOverride={boostBorderOverride}
-        isLight={isLight}
-        updateConfig={updateConfig}
-        updatePreviewBoostAmount={updatePreviewBoostAmount}
-        setBoostBorderOverride={setBoostBorderOverride}
-      />
+      <NameTagBoostBorderSection isLight={isLight} />
 
       <NameTagColorsAndNamesSection
         config={config}
