@@ -29,8 +29,8 @@ export interface SignalingProfileSectionProps {
  * Enforces strict 3-tier UI state mutex:
  *   - `imported-bundle`: Locks out Public & Custom broker fields; hides all plaintext URLs/credentials;
  *     requires clicking [Delete Imported Bundle] before custom server parameters can be modified.
- *   - `custom`: User-configured self-hosted relay override (replaces default Public EMQX broker).
- *   - `public`: Default best-effort fallback (`wss://relay.carsoccer.dev/mqtt`, No SLA).
+ *   - `custom`: User-configured self-hosted or public relay override (unverified, No SLA).
+ *   - `public`: Parameter-supplied public fallback (`?publicBroker=` / `VITE_PUBLIC_FALLBACK_BROKER_URL`, default empty, No SLA).
  */
 export const SignalingProfileSection: React.FC<SignalingProfileSectionProps> = React.memo(
   ({ bordered = false, onHover, onLeave, isLight = false }) => {
@@ -155,7 +155,7 @@ export const SignalingProfileSection: React.FC<SignalingProfileSectionProps> = R
         ? `Active dev-private profile [Hash #${shortHash}] (${relayLabels.join(', ')})`
         : source === 'custom'
         ? `Using custom self-hosted relay [Hash #${shortHash}] (${customUrl}). Public broker bypassed.`
-        : `Default fallback: Public EMQX Broker (wss://relay.carsoccer.dev/mqtt, Best-Effort / No SLA).${
+        : `Default fallback: Unverified Public Broker (pass via ?publicBroker= or configure below; Best-Effort / No SLA).${
             noKeySimulationActive ? ' [?nokey=1 simulation active]' : ''
           }`;
 
@@ -338,7 +338,7 @@ export const SignalingProfileSection: React.FC<SignalingProfileSectionProps> = R
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <div className="inline-flex items-center gap-1.5 font-semibold">
                     <Server className="h-3.5 w-3.5 text-sky-400" />
-                    <span>Custom Self-Hosted Relay Override (Replaces Public EMQX)</span>
+                    <span>Custom / Public Relay Override (Unverified / No SLA)</span>
                   </div>
                   <span className="font-mono text-[11px] text-neutral-400">
                     Active Hash: #{shortHash}
@@ -348,7 +348,7 @@ export const SignalingProfileSection: React.FC<SignalingProfileSectionProps> = R
                 <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="text"
-                    placeholder="wss://relay.carsoccer.dev/mqtt (Default Public)"
+                    placeholder="wss://relay.carball.dev:8084/mqtt (Custom or Public Broker URL)"
                     value={draftCustomUrl}
                     onChange={(e) => setDraftCustomUrl(e.target.value)}
                     className={`flex-1 min-w-[220px] px-2.5 py-1.5 rounded-lg text-xs font-mono border outline-none transition-colors ${
