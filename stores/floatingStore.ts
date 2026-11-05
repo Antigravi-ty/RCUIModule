@@ -400,11 +400,17 @@ export function createFloatingStore(syncKey: string) {
     spawnWithFlight: (preset: PresetConfig, sourceEl: HTMLElement, containerEl: HTMLElement) => {
       const srcRect = sourceEl.getBoundingClientRect();
       const contRect = containerEl.getBoundingClientRect();
-      const startX = Math.round(srcRect.left - contRect.left);
-      const startY = Math.round(srcRect.top - contRect.top);
-      const startW = Math.round(srcRect.width);
-      const startH = Math.round(srcRect.height);
-      const destX = Math.max(16, Math.round(contRect.width - 56));
+      const localW =
+        containerEl.clientWidth > 0 ? Math.floor(containerEl.clientWidth) : Math.floor(contRect.width);
+      const localH =
+        containerEl.clientHeight > 0 ? Math.floor(containerEl.clientHeight) : Math.floor(contRect.height);
+      const scaleX = localW > 0 && contRect.width > 0 ? contRect.width / localW : 1;
+      const scaleY = localH > 0 && contRect.height > 0 ? contRect.height / localH : 1;
+      const startX = Math.round((srcRect.left - contRect.left) / scaleX);
+      const startY = Math.round((srcRect.top - contRect.top) / scaleY);
+      const startW = Math.round(srcRect.width / scaleX);
+      const startH = Math.round(srcRect.height / scaleY);
+      const destX = Math.max(16, Math.round(localW - 56));
       const destY = 16;
       const minimizedCount = state.windows.filter((w) => w.isMinimized).length;
       const hasStack = !(state.isStackDismissed && minimizedCount === 0);
@@ -444,37 +450,34 @@ export function createFloatingStore(syncKey: string) {
       };
       notify();
     },
-    /** Complete flying animation and commit minimized window into store */
     completeFlight: () => {
       if (!state.activeFlight) return;
       const { preset } = state.activeFlight;
       const isSingleton = preset.singleton ?? false;
       const winId = isSingleton ? preset.id : `${preset.id}-${Date.now().toString().slice(-4)}`;
       const existingIndex = state.windows.findIndex((w) => w.id === winId);
-      let nextWindows = state.windows;
-
-      if (existingIndex >= 0) {
-        nextWindows = state.windows.map((w, idx) => (idx === existingIndex ? { ...w, isMinimized: true } : w));
-      } else {
-        const newItem: FloatingWindowItem = {
-          id: winId,
-          title: preset.title,
-          subtitle: preset.summary,
-          category: preset.category,
-          width: preset.width,
-          height: preset.height,
-          minWidth: preset.minWidth,
-          minHeight: preset.minHeight,
-          maxWidth: preset.maxWidth,
-          maxHeight: preset.maxHeight,
-          autoFitHeight: preset.autoFitHeight,
-          isMinimized: true,
-          resizable: preset.resizable,
-          position: { x: 40 + (state.windows.length % 5) * 32, y: 40 + (state.windows.length % 5) * 32 },
-        };
-        nextWindows = [...state.windows, newItem];
-      }
-
+      const nextWindows =
+        existingIndex >= 0
+          ? state.windows.map((w, idx) => (idx === existingIndex ? { ...w, isMinimized: true } : w))
+          : [
+              ...state.windows,
+              {
+                id: winId,
+                title: preset.title,
+                subtitle: preset.summary,
+                category: preset.category,
+                width: preset.width,
+                height: preset.height,
+                minWidth: preset.minWidth,
+                minHeight: preset.minHeight,
+                maxWidth: preset.maxWidth,
+                maxHeight: preset.maxHeight,
+                autoFitHeight: preset.autoFitHeight,
+                isMinimized: true,
+                resizable: preset.resizable,
+                position: { x: 40 + (state.windows.length % 5) * 32, y: 40 + (state.windows.length % 5) * 32 },
+              },
+            ];
       state = { ...state, windows: nextWindows, isStackDismissed: false, activeFlight: null };
       notify();
     },
@@ -484,7 +487,6 @@ export function createFloatingStore(syncKey: string) {
       notify();
     },
   };
-
   return store;
 }
 

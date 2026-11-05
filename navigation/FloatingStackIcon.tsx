@@ -3,8 +3,13 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layers, X } from 'lucide-react';
 import { useFloatingStore, FloatingWindowItem, FlyingGhostState, type FloatingStoreInstance } from '../stores/floatingStore';
+import { PRESET_WINDOWS } from '../stores/devFloatingPresets';
 import { UI_EASING } from '../tokens/easing';
 import { getFloatingWindowIcon } from './FloatingWindowIcon';
+import {
+  resolveClampedWindowGeometry,
+  resolveWindowSizeLimits,
+} from './floatingWindowGeometry';
 
 export interface FloatingStackIconProps {
   isLight?: boolean;
@@ -34,71 +39,32 @@ interface FlyingGhostElementProps {
   onComplete: () => void;
 }
 
-/**
- * FlyingGhostElement
- * Unified component for fly-to-stack transition:
- * - Mode A (Target already had Stack): Flies & absorbs smoothly into center, triggering Stack reception bounce.
- * - Mode B (Target did NOT have Stack): Standard 3-stage morphing transition:
- *   Stage 1: Fly with opacity 1 (never disappears!) -> Stage 2: Settle at dest 40x40 -> Stage 3: Smooth morph to Stack Icon (Layers + badge 1).
- */
 const FlyingGhostElement: React.FC<FlyingGhostElementProps> = ({ flight, isLight, onComplete }) => {
   const [isLanded, setIsLanded] = useState(false);
 
   useEffect(() => {
     if (flight.targetHadStack) {
-      const timer = setTimeout(() => {
-        onComplete();
-      }, 260);
+      const timer = setTimeout(() => onComplete(), 260);
       return () => clearTimeout(timer);
-    } else {
-      const landTimer = setTimeout(() => {
-        setIsLanded(true);
-        const finishTimer = setTimeout(() => {
-          onComplete();
-        }, 120);
-        return () => clearTimeout(finishTimer);
-      }, 260);
-      return () => clearTimeout(landTimer);
     }
+    const landTimer = setTimeout(() => {
+      setIsLanded(true);
+      const finishTimer = setTimeout(() => onComplete(), 120);
+      return () => clearTimeout(finishTimer);
+    }, 260);
+    return () => clearTimeout(landTimer);
   }, [flight.targetHadStack, onComplete]);
 
   if (flight.targetHadStack) {
     return (
       <motion.div
         key={`flying-absorb-${flight.id}`}
-        initial={{
-          x: flight.startX,
-          y: flight.startY,
-          width: flight.startW,
-          height: flight.startH,
-          borderRadius: 8,
-          opacity: 1,
-          scale: 1,
-        }}
-        animate={{
-          x: flight.destX,
-          y: flight.destY,
-          width: 40,
-          height: 40,
-          borderRadius: 12,
-          opacity: [1, 1, 0.8, 0],
-          scale: [1, 1.05, 0.95, 0.85],
-        }}
-        transition={{
-          duration: 0.26,
-          ease: [0.2, 0.8, 0.25, 1],
-        }}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          zIndex: 45,
-          pointerEvents: 'none',
-        }}
+        initial={{ x: flight.startX, y: flight.startY, width: flight.startW, height: flight.startH, borderRadius: 8, opacity: 1, scale: 1 }}
+        animate={{ x: flight.destX, y: flight.destY, width: 40, height: 40, borderRadius: 12, opacity: [1, 1, 0.8, 0], scale: [1, 1.05, 0.95, 0.85] }}
+        transition={{ duration: 0.26, ease: [0.2, 0.8, 0.25, 1] }}
+        style={{ position: 'absolute', top: 0, left: 0, zIndex: 45, pointerEvents: 'none' }}
         className={`border overflow-hidden select-none flex items-center justify-center shadow-lg ${
-          isLight
-            ? 'bg-white/98 border-neutral-300 text-neutral-900'
-            : 'bg-neutral-850/98 border-neutral-700 text-neutral-100'
+          isLight ? 'bg-white/98 border-neutral-300 text-neutral-900' : 'bg-neutral-850/98 border-neutral-700 text-neutral-100'
         }`}
       >
         {getFloatingWindowIcon(flight.preset?.category, flight.preset?.id, 'h-3.5 w-3.5 shrink-0')}
@@ -109,62 +75,23 @@ const FlyingGhostElement: React.FC<FlyingGhostElementProps> = ({ flight, isLight
   return (
     <motion.div
       key={`flying-morph-${flight.id}`}
-      initial={{
-        x: flight.startX,
-        y: flight.startY,
-        width: flight.startW,
-        height: flight.startH,
-        borderRadius: 8,
-        opacity: 1,
-        scale: 1,
-      }}
-      animate={{
-        x: flight.destX,
-        y: flight.destY,
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        opacity: 1,
-        scale: 1,
-      }}
-      transition={{
-        duration: 0.26,
-        ease: [0.2, 0.8, 0.25, 1],
-      }}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        zIndex: 45,
-        pointerEvents: 'none',
-      }}
+      initial={{ x: flight.startX, y: flight.startY, width: flight.startW, height: flight.startH, borderRadius: 8, opacity: 1, scale: 1 }}
+      animate={{ x: flight.destX, y: flight.destY, width: 40, height: 40, borderRadius: 12, opacity: 1, scale: 1 }}
+      transition={{ duration: 0.26, ease: [0.2, 0.8, 0.25, 1] }}
+      style={{ position: 'absolute', top: 0, left: 0, zIndex: 45, pointerEvents: 'none' }}
       className={`border overflow-hidden select-none flex items-center justify-center shadow-md ${
-        isLight
-          ? 'bg-white border-neutral-300 text-neutral-900'
-          : 'bg-neutral-900 border-neutral-700 text-neutral-100'
+        isLight ? 'bg-white border-neutral-300 text-neutral-900' : 'bg-neutral-900 border-neutral-700 text-neutral-100'
       }`}
     >
       {!isLanded ? (
-        <motion.div
-          key="ghost-flight-icon"
-          initial={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          className="flex items-center justify-center"
-        >
+        <motion.div key="ghost-flight-icon" initial={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center justify-center">
           {getFloatingWindowIcon(flight.preset?.category, flight.preset?.id, 'h-3.5 w-3.5 shrink-0')}
         </motion.div>
       ) : (
-        <motion.div
-          key="ghost-landed-icon"
-          initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.12, ease: 'easeOut' }}
-          className="flex items-center justify-center"
-        >
+        <motion.div key="ghost-landed-icon" initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.12, ease: 'easeOut' }} className="flex items-center justify-center">
           <Layers className="h-5 w-5 text-neutral-900 dark:text-neutral-100" />
         </motion.div>
       )}
-
       {isLanded && (
         <motion.div
           key="ghost-landed-bubble"
@@ -172,9 +99,7 @@ const FlyingGhostElement: React.FC<FlyingGhostElementProps> = ({ flight, isLight
           animate={{ scale: [0, 1.25, 1], opacity: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 22 }}
           className={`absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full border flex items-center justify-center font-mono font-bold text-[11px] pointer-events-none select-none ${
-            isLight
-              ? 'bg-white text-black border-black shadow-xs'
-              : 'bg-black text-white border-white shadow-xs'
+            isLight ? 'bg-white text-black border-black shadow-xs' : 'bg-black text-white border-white shadow-xs'
           }`}
         >
           1
@@ -262,22 +187,51 @@ export const FloatingStackIcon: React.FC<FloatingStackIconProps> = ({
 
     const bRect = btnEl.getBoundingClientRect();
     const cRect = containerEl.getBoundingClientRect();
+    const localW =
+      containerEl.clientWidth > 0 ? Math.floor(containerEl.clientWidth) : Math.floor(cRect.width);
+    const localH =
+      containerEl.clientHeight > 0 ? Math.floor(containerEl.clientHeight) : Math.floor(cRect.height);
+    const scaleX = localW > 0 && cRect.width > 0 ? cRect.width / localW : 1;
+    const scaleY = localH > 0 && cRect.height > 0 ? cRect.height / localH : 1;
 
-    const startX = Math.round(bRect.left - cRect.left);
-    const startY = Math.round(bRect.top - cRect.top);
-    const startW = Math.round(bRect.width);
-    const startH = Math.round(bRect.height);
+    const startX = Math.round((bRect.left - cRect.left) / scaleX);
+    const startY = Math.round((bRect.top - cRect.top) / scaleY);
+    const startW = Math.round(bRect.width / scaleX);
+    const startH = Math.round(bRect.height / scaleY);
 
-    const targetX = win.position?.x ?? 40;
-    const targetY = win.position?.y ?? 40;
-    const targetW = win.width ?? 440;
-    const targetH = win.height ?? 300;
+    const matchedPreset = PRESET_WINDOWS.find(
+      (p) => p.id === win.id || win.id.startsWith(p.id)
+    );
+    const rawAnchor = {
+      x: win.position?.x ?? 40,
+      y: win.position?.y ?? 40,
+      width: win.width ?? matchedPreset?.width ?? 440,
+      height: win.height ?? matchedPreset?.height ?? 300,
+    };
+    const limits = resolveWindowSizeLimits(
+      win,
+      matchedPreset,
+      win.autoMinWidth ?? 240,
+      win.intrinsicMaxHeight ?? null
+    );
+    const clampedTarget = resolveClampedWindowGeometry(
+      rawAnchor,
+      localW > 0 && localH > 0 ? { width: localW, height: localH } : null,
+      {
+        minWidth: limits.effectiveMinWidth,
+        maxWidth: limits.presetMaxWidth,
+        minHeight: limits.effectiveMinHeight,
+        maxHeight: limits.effectiveMaxHeight,
+        resizable: limits.isResizable,
+      },
+      { prioritizePositionSqueeze: false }
+    );
 
     // Step 1: Set restoring state - all other items immediately disappear, this item's content disappears
     setRestoringWindow({
       id: win.id,
       startRect: { x: startX, y: startY, width: startW, height: startH },
-      targetRect: { x: targetX, y: targetY, width: targetW, height: targetH },
+      targetRect: clampedTarget,
     });
 
     // Step 2 & 3: After 240ms 4-corner resize completes, restore window and close tray

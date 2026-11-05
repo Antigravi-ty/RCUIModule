@@ -64,7 +64,12 @@ export const FloatingWindowCard: React.FC<FloatingWindowCardProps> = ({
     const handleSpawn = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
       const containerEl =
-        document.getElementById('game-ui-viewport-host') || document.body;
+        (e.currentTarget.closest(
+          '#rc-ui-tuner-preview-stage, #game-ui-scale-root, #game-ui-viewport-host'
+        ) as HTMLElement | null) ||
+        document.getElementById('game-ui-scale-root') ||
+        document.getElementById('game-ui-viewport-host') ||
+        document.body;
       floatingStore.spawnWithFlight(preset, e.currentTarget, containerEl);
       onSpawnDiagnosticWindow?.({
         id: preset.id,

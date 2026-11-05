@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
 import { useReplayViewerStore } from '../../stores/replayViewerStore';
@@ -7,15 +6,7 @@ import { useRewinderStore } from '../../stores/rewinderStore';
 import { useNetworkDiagnosticsData } from '../../stores/networkDiagnosticsStore';
 import { useSpatialAudioStore } from '../../stores/spatialAudioStore';
 import { getActiveReplayTimelineController } from '../../stores/replayDirectorStore';
-import {
-  garageSettingsStore,
-  loadStoredColorPrefs,
-  saveStoredColorPrefs,
-} from '../../config/vehiclePresets';
-import {
-  BLUE_TEAM_COLORS,
-  ORANGE_TEAM_COLORS,
-} from '../garage/garageConstants';
+import { garageSettingsStore } from '../../config/vehiclePresets';
 import type { VisualMaterialsConfig } from '../garage/GarageLoadoutTab';
 import { type StoredColorPrefs } from '../../config/uiConfig';
 import type {
@@ -223,18 +214,11 @@ export function useLayer2GarageStoreBinding<TProps extends object>(
   const selectedAnthem = useSpatialAudioStore((s) => s.selectedAnthem);
   const setSelectedAnthem = useSpatialAudioStore((s) => s.setSelectedAnthem);
   const stopPreviewAnthem = useSpatialAudioStore((s) => s.stopPreviewAnthem);
-  const [colorPrefs, setColorPrefs] = useState<StoredColorPrefs>(loadStoredColorPrefs);
+  const colorPrefs = useAppStore((s) => s.colorPrefs);
+  const setColorPrefs = useAppStore((s) => s.setColorPrefs);
 
   const saveAndBroadcastColors = (nextPrefs: StoredColorPrefs) => {
     setColorPrefs(nextPrefs);
-    const activeSlotId = saveStoredColorPrefs(nextPrefs);
-    useExperimentalMultiBotsStore.getState().syncExhibitionFromColorPrefs?.();
-    const allColors = [...BLUE_TEAM_COLORS, ...ORANGE_TEAM_COLORS];
-    const found = allColors.find((c) => c.id === activeSlotId);
-    if (found) {
-      const bridge = useAppStore.getState().bridge;
-      bridge?.onColorChange?.(found.hex, found.id);
-    }
   };
 
   const handleSelectCar = (carId: string) => {

@@ -19,7 +19,11 @@ export type ClockPacingPriority =
   | 'low_latency_5050'
   | 'balanced'
   | 'anti_starvation'
-  | 'rate_stability';
+  | 'rate_stability'
+  | 'competitive'
+  | 'motion'
+  | 'input_consistency'
+  | 'custom';
 
 export type ClockRateStepMode = 'discrete_2tier' | 'continuous_pd' | 'hybrid';
 
@@ -71,6 +75,10 @@ export const ALLOWED_CLOCK_PACING_PRIORITIES: readonly ClockPacingPriority[] = O
   'balanced',
   'anti_starvation',
   'rate_stability',
+  'competitive',
+  'motion',
+  'input_consistency',
+  'custom',
 ]);
 
 export const ALLOWED_RATE_STEP_MODES: readonly ClockRateStepMode[] = Object.freeze([
@@ -225,6 +233,102 @@ export const CLOCK_PACING_PRIORITY_PRESETS: Record<
       hardResyncThresholdTicks: 12,
     },
   },
+  competitive: {
+    id: 'competitive',
+    label: 'Competitive',
+    shortLabel: 'Competitive',
+    description:
+      'Minimizes forward prediction ticks for sharper 50/50 challenges.',
+    targetBufferTicks: 2,
+    deadband: [-1, 1],
+    paramsPatch: {
+      targetBufferTicks: 2,
+      deadbandCatchupOffset: -1,
+      deadbandSkipOffset: 1,
+      tier1Hz: 1.5,
+      tier2Hz: 4.0,
+      tier1EnterError: 0.8,
+      tier1ExitError: 0.3,
+      tier2EnterError: 2.0,
+      tier2ExitError: 1.0,
+      minDwellTicks: 12,
+      kpHzPerTick: 1.15,
+      kdHzPerTickVel: 0.35,
+      maxAdjustHz: 6.0,
+      inFlightCompGain: 0.9,
+      bufferEwmaAlpha: 0.32,
+      adaptiveJitterGain: 0.65,
+      maxAdaptiveBoostTicks: 2.5,
+      hardResyncThresholdTicks: 8,
+    },
+  },
+  motion: {
+    id: 'motion',
+    label: 'Motion',
+    shortLabel: 'Motion',
+    description:
+      'Minimizes clock frequency adjustments and state transitions for smooth visual motion.',
+    targetBufferTicks: 3,
+    deadband: [-2, 2],
+    paramsPatch: {
+      targetBufferTicks: 3,
+      deadbandCatchupOffset: -2,
+      deadbandSkipOffset: 2,
+      tier1Hz: 0.5,
+      tier2Hz: 1.5,
+      tier1EnterError: 1.5,
+      tier1ExitError: 0.6,
+      tier2EnterError: 3.2,
+      tier2ExitError: 1.8,
+      minDwellTicks: 36,
+      kpHzPerTick: 0.45,
+      kdHzPerTickVel: 0.55,
+      maxAdjustHz: 3.0,
+      inFlightCompGain: 0.9,
+      bufferEwmaAlpha: 0.15,
+      adaptiveJitterGain: 1.0,
+      maxAdaptiveBoostTicks: 3.5,
+      hardResyncThresholdTicks: 12,
+    },
+  },
+  input_consistency: {
+    id: 'input_consistency',
+    label: 'Input Consistency',
+    shortLabel: 'Input Consistency',
+    description:
+      'Prioritizes zero input starvation on unstable connections by maintaining a deeper buffer.',
+    targetBufferTicks: 4,
+    deadband: [-1, 3],
+    paramsPatch: {
+      targetBufferTicks: 4,
+      deadbandCatchupOffset: -1,
+      deadbandSkipOffset: 3,
+      tier1Hz: 1.25,
+      tier2Hz: 3.5,
+      tier1EnterError: 0.85,
+      tier1ExitError: 0.35,
+      tier2EnterError: 2.1,
+      tier2ExitError: 1.1,
+      minDwellTicks: 16,
+      kpHzPerTick: 1.0,
+      kdHzPerTickVel: 0.4,
+      maxAdjustHz: 6.0,
+      inFlightCompGain: 0.85,
+      bufferEwmaAlpha: 0.28,
+      adaptiveJitterGain: 2.0,
+      maxAdaptiveBoostTicks: 5.5,
+      hardResyncThresholdTicks: 12,
+    },
+  },
+  custom: {
+    id: 'custom',
+    label: 'Custom',
+    shortLabel: 'Custom',
+    description: 'Manual input buffer and deadband override.',
+    targetBufferTicks: 3,
+    deadband: [-1, 1],
+    paramsPatch: {},
+  },
 });
 
 export function sanitizeClockPacingParams(
@@ -235,129 +339,37 @@ export function sanitizeClockPacingParams(
     return { ...fallback };
   }
 
-  const targetBufferTicks = clampNumberOrDefault(raw.targetBufferTicks, fallback.targetBufferTicks, {
-    min: 1,
-    max: 12,
-    integer: true,
-  });
-  const deadbandCatchupOffset = clampNumberOrDefault(
-    raw.deadbandCatchupOffset,
-    fallback.deadbandCatchupOffset,
-    { min: -12, max: 0, integer: true }
-  );
-  const deadbandSkipOffset = clampNumberOrDefault(
-    raw.deadbandSkipOffset,
-    fallback.deadbandSkipOffset,
-    { min: 0, max: 12, integer: true }
-  );
-  const rateStepMode = stringOrDefault(
-    raw.rateStepMode,
-    ALLOWED_RATE_STEP_MODES,
-    fallback.rateStepMode
-  ) as ClockRateStepMode;
-
   const tier1Hz = clampNumberOrDefault(raw.tier1Hz, fallback.tier1Hz, { min: 0.1, max: 6.0 });
-  const tier2Hz = clampNumberOrDefault(raw.tier2Hz, fallback.tier2Hz, {
-    min: Math.max(0.2, tier1Hz),
-    max: 12.0,
-  });
-
-  const tier1EnterError = clampNumberOrDefault(raw.tier1EnterError, fallback.tier1EnterError, {
-    min: 0.2,
-    max: 8.0,
-  });
-  const tier1ExitError = clampNumberOrDefault(raw.tier1ExitError, fallback.tier1ExitError, {
-    min: 0.0,
-    max: Math.max(0.1, tier1EnterError - 0.1),
-  });
-  const tier2EnterError = clampNumberOrDefault(raw.tier2EnterError, fallback.tier2EnterError, {
-    min: Math.max(0.5, tier1EnterError + 0.2),
-    max: 12.0,
-  });
-  const tier2ExitError = clampNumberOrDefault(raw.tier2ExitError, fallback.tier2ExitError, {
-    min: Math.max(0.1, tier1ExitError),
-    max: Math.max(0.2, tier2EnterError - 0.1),
-  });
-
-  const minDwellTicks = clampNumberOrDefault(raw.minDwellTicks, fallback.minDwellTicks, {
-    min: 0,
-    max: 240,
-    integer: true,
-  });
-  const kpHzPerTick = clampNumberOrDefault(raw.kpHzPerTick, fallback.kpHzPerTick, {
-    min: 0.05,
-    max: 4.0,
-  });
-  const kdHzPerTickVel = clampNumberOrDefault(raw.kdHzPerTickVel, fallback.kdHzPerTickVel, {
-    min: 0.0,
-    max: 3.0,
-  });
-  const maxAdjustHz = clampNumberOrDefault(raw.maxAdjustHz, fallback.maxAdjustHz, {
-    min: 0.5,
-    max: 12.0,
-  });
-  const inFlightCompGain = clampNumberOrDefault(raw.inFlightCompGain, fallback.inFlightCompGain, {
-    min: 0.0,
-    max: 1.2,
-  });
-  const rttEwmaAlpha = clampNumberOrDefault(raw.rttEwmaAlpha, fallback.rttEwmaAlpha, {
-    min: 0.01,
-    max: 0.8,
-  });
-  const bufferEwmaAlpha = clampNumberOrDefault(raw.bufferEwmaAlpha, fallback.bufferEwmaAlpha, {
-    min: 0.02,
-    max: 1.0,
-  });
-  const enableAdaptiveJitterBoost = booleanOrDefault(
-    raw.enableAdaptiveJitterBoost,
-    fallback.enableAdaptiveJitterBoost
-  );
-  const adaptiveJitterGain = clampNumberOrDefault(
-    raw.adaptiveJitterGain,
-    fallback.adaptiveJitterGain,
-    { min: 0.0, max: 4.0 }
-  );
-  const maxAdaptiveBoostTicks = clampNumberOrDefault(
-    raw.maxAdaptiveBoostTicks,
-    fallback.maxAdaptiveBoostTicks,
-    { min: 0.0, max: 10.0 }
-  );
-  const enableHardResync = booleanOrDefault(raw.enableHardResync, fallback.enableHardResync);
-  const hardResyncThresholdTicks = clampNumberOrDefault(
-    raw.hardResyncThresholdTicks,
-    fallback.hardResyncThresholdTicks,
-    { min: 4, max: 40, integer: true }
-  );
-  const hardResyncCooldownMs = clampNumberOrDefault(
-    raw.hardResyncCooldownMs,
-    fallback.hardResyncCooldownMs,
-    { min: 100, max: 10000, integer: true }
-  );
+  const tier2Hz = clampNumberOrDefault(raw.tier2Hz, fallback.tier2Hz, { min: Math.max(0.2, tier1Hz), max: 12.0 });
+  const tier1EnterError = clampNumberOrDefault(raw.tier1EnterError, fallback.tier1EnterError, { min: 0.2, max: 8.0 });
+  const tier1ExitError = clampNumberOrDefault(raw.tier1ExitError, fallback.tier1ExitError, { min: 0.0, max: Math.max(0.1, tier1EnterError - 0.1) });
+  const tier2EnterError = clampNumberOrDefault(raw.tier2EnterError, fallback.tier2EnterError, { min: Math.max(0.5, tier1EnterError + 0.2), max: 12.0 });
+  const tier2ExitError = clampNumberOrDefault(raw.tier2ExitError, fallback.tier2ExitError, { min: Math.max(0.1, tier1ExitError), max: Math.max(0.2, tier2EnterError - 0.1) });
 
   return {
-    targetBufferTicks,
-    deadbandCatchupOffset,
-    deadbandSkipOffset,
-    rateStepMode,
+    targetBufferTicks: clampNumberOrDefault(raw.targetBufferTicks, fallback.targetBufferTicks, { min: 1, max: 12, integer: true }),
+    deadbandCatchupOffset: clampNumberOrDefault(raw.deadbandCatchupOffset, fallback.deadbandCatchupOffset, { min: -12, max: 0, integer: true }),
+    deadbandSkipOffset: clampNumberOrDefault(raw.deadbandSkipOffset, fallback.deadbandSkipOffset, { min: 0, max: 12, integer: true }),
+    rateStepMode: stringOrDefault(raw.rateStepMode, ALLOWED_RATE_STEP_MODES, fallback.rateStepMode) as ClockRateStepMode,
     tier1Hz,
     tier2Hz,
     tier1EnterError,
     tier1ExitError,
     tier2EnterError,
     tier2ExitError,
-    minDwellTicks,
-    kpHzPerTick,
-    kdHzPerTickVel,
-    maxAdjustHz,
-    inFlightCompGain,
-    rttEwmaAlpha,
-    bufferEwmaAlpha,
-    enableAdaptiveJitterBoost,
-    adaptiveJitterGain,
-    maxAdaptiveBoostTicks,
-    enableHardResync,
-    hardResyncThresholdTicks,
-    hardResyncCooldownMs,
+    minDwellTicks: clampNumberOrDefault(raw.minDwellTicks, fallback.minDwellTicks, { min: 0, max: 240, integer: true }),
+    kpHzPerTick: clampNumberOrDefault(raw.kpHzPerTick, fallback.kpHzPerTick, { min: 0.05, max: 4.0 }),
+    kdHzPerTickVel: clampNumberOrDefault(raw.kdHzPerTickVel, fallback.kdHzPerTickVel, { min: 0.0, max: 3.0 }),
+    maxAdjustHz: clampNumberOrDefault(raw.maxAdjustHz, fallback.maxAdjustHz, { min: 0.5, max: 12.0 }),
+    inFlightCompGain: clampNumberOrDefault(raw.inFlightCompGain, fallback.inFlightCompGain, { min: 0.0, max: 1.2 }),
+    rttEwmaAlpha: clampNumberOrDefault(raw.rttEwmaAlpha, fallback.rttEwmaAlpha, { min: 0.01, max: 0.8 }),
+    bufferEwmaAlpha: clampNumberOrDefault(raw.bufferEwmaAlpha, fallback.bufferEwmaAlpha, { min: 0.02, max: 1.0 }),
+    enableAdaptiveJitterBoost: booleanOrDefault(raw.enableAdaptiveJitterBoost, fallback.enableAdaptiveJitterBoost),
+    adaptiveJitterGain: clampNumberOrDefault(raw.adaptiveJitterGain, fallback.adaptiveJitterGain, { min: 0.0, max: 4.0 }),
+    maxAdaptiveBoostTicks: clampNumberOrDefault(raw.maxAdaptiveBoostTicks, fallback.maxAdaptiveBoostTicks, { min: 0.0, max: 10.0 }),
+    enableHardResync: booleanOrDefault(raw.enableHardResync, fallback.enableHardResync),
+    hardResyncThresholdTicks: clampNumberOrDefault(raw.hardResyncThresholdTicks, fallback.hardResyncThresholdTicks, { min: 4, max: 40, integer: true }),
+    hardResyncCooldownMs: clampNumberOrDefault(raw.hardResyncCooldownMs, fallback.hardResyncCooldownMs, { min: 100, max: 10000, integer: true }),
   };
 }
 

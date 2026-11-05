@@ -7,6 +7,14 @@
  *   Bit 2 (0b0100 = 4): emqx_gb      (EMQX Global Asia-SE1)
  *   Bit 1 (0b0010 = 2): supabase_jp  (Supabase Tokyo RTJP)
  *   Bit 0 (0b0001 = 1): supabase_sg  (Supabase Singapore RTSG)
+ *
+ * Room Code Checksum & Identity Separation:
+ * - Random 4-digit codes restrict `seed` to [0, 199] (`MAX_RANDOM_SEED = 199`) and `mask` to [1, 15].
+ *   This produces 200 * 15 = 3,000 valid 4-digit codes and rejects 70% of random 4-digit typos
+ *   (`mask === 0` or `seed > 199`) in 0ms locally before any network connection is opened.
+ * - `identityKey` decouples the immutable room identity (`seed:<n>` or `custom:<prefix>`) from
+ *   the mutable 4-bit `hostMask`, ensuring the encrypted channel `topicHash` never changes
+ *   even if a Host re-probes and updates the room code's embedded connectivity mask.
  */
 
 export type CanonicalRelayId = 'emqx_cn' | 'emqx_gb' | 'supabase_jp' | 'supabase_sg';
@@ -66,11 +74,13 @@ export function computeConnectivityMaskFromRelayIds(relayIds: Iterable<string>):
 export interface DecodedRandomRoomCode {
   mask: number;
   seed: number;
+  valid: boolean;
 }
 
 export interface ParsedRoomCodeResult {
   mode: 'random' | 'custom';
   canonicalRoomCode: string;
+  identityKey: string;
   customPrefix: string;
   hostMask: number;
   seed: number | null;
@@ -88,7 +98,7 @@ const AFFINE_MUL = 3333;
 const AFFINE_ADD = 4821;
 const AFFINE_INV = 9997;
 const AFFINE_MOD = 10000;
-const MAX_RANDOM_SEED = 624;
+export const MAX_RANDOM_SEED = 199;
 
 export function clampConnectivityMask(mask: number): number {
   if (!Number.isFinite(mask)) return 0;
@@ -97,10 +107,10 @@ export function clampConnectivityMask(mask: number): number {
 
 /**
  * Scheme A: Bijective affine obfuscation for 4-digit numeric room codes ("0000".."9999").
- * Embeds a 4-bit connectivity mask (0..15) and a random seed (0..624).
+ * Embeds a 4-bit connectivity mask (1..15) and a random seed (0..199).
  */
 export function generateRandomRoomCode(mask = 0x0f, explicitSeed?: number): string {
-  const cleanMask = clampConnectivityMask(mask);
+  const cleanMask = clampConnectivityMask(mask) || 0x0f;
   const seed =
     typeof explicitSeed === 'number' && Number.isFinite(explicitSeed)
       ? Math.max(0, Math.min(MAX_RANDOM_SEED, Math.floor(explicitSeed)))
@@ -119,9 +129,12 @@ export function decodeRandomRoomCode(code4: string): DecodedRandomRoomCode | nul
   const numeric = Number(trimmed);
   const shifted = (((numeric - AFFINE_ADD) % AFFINE_MOD) + AFFINE_MOD) % AFFINE_MOD;
   const x = (shifted * AFFINE_INV) % AFFINE_MOD;
+  const mask = x & 0x0f;
+  const seed = x >> 4;
   return {
-    mask: x & 0x0f,
-    seed: x >> 4,
+    mask,
+    seed,
+    valid: mask > 0 && seed >= 0 && seed <= MAX_RANDOM_SEED,
   };
 }
 
@@ -140,7 +153,7 @@ export function sanitizeCustomRoomPrefix(rawInput: string): string {
 export function formatCustomRoomCode(customInput: string, mask: number): string {
   const cleanPrefix = sanitizeCustomRoomPrefix(customInput).toLowerCase();
   if (!cleanPrefix) return '';
-  const hexMask = clampConnectivityMask(mask).toString(16);
+  const hexMask = (clampConnectivityMask(mask) || 0x0f).toString(16);
   return `${cleanPrefix}-${hexMask}`;
 }
 
@@ -150,10 +163,10 @@ export function formatCustomRoomCode(customInput: string, mask: number): string 
  */
 export function applyConnectivityMaskToRoomCode(rawRoomCode: string, mask: number): string {
   const trimmed = String(rawRoomCode || '').trim();
-  const cleanMask = clampConnectivityMask(mask);
+  const cleanMask = clampConnectivityMask(mask) || 0x0f;
 
   const decodedRandom = decodeRandomRoomCode(trimmed);
-  if (decodedRandom) {
+  if (decodedRandom && decodedRandom.seed <= MAX_RANDOM_SEED) {
     return generateRandomRoomCode(cleanMask, decodedRandom.seed);
   }
 
@@ -170,12 +183,6 @@ export function applyConnectivityMaskToRoomCode(rawRoomCode: string, mask: numbe
   return generateRandomRoomCode(cleanMask);
 }
 
-/**
- * Sanitizes user input on the Room Code text box:
- * - For Host: if user types pure digits (up to 4), keeps digits; if user types custom alphanumeric,
- *   strips spaces/hyphens/special chars and appends `-<hex>` suffix on blur or commit.
- * - For Client Join: allows alphanumeric + single hyphen `-` for `<prefix>-<hex>`, normalized to lowercase on submit.
- */
 export function sanitizeHostRoomCodeDraft(rawInput: string): string {
   const trimmed = String(rawInput || '');
   const withSingleSuffix = /^([a-zA-Z0-9]+)-([0-9a-fA-F]?)$/.exec(trimmed);
@@ -193,12 +200,16 @@ export function sanitizeJoinRoomCodeDraft(rawInput: string): string {
 
 export function finalizeHostRoomCode(rawInput: string, mask: number): string {
   const trimmed = String(rawInput || '').trim();
-  const cleanMask = clampConnectivityMask(mask);
+  const cleanMask = clampConnectivityMask(mask) || 0x0f;
   if (!trimmed) {
     return generateRandomRoomCode(cleanMask);
   }
   if (/^\d{4}$/.test(trimmed)) {
-    return trimmed;
+    const decoded = decodeRandomRoomCode(trimmed);
+    if (decoded && decoded.valid) {
+      return trimmed;
+    }
+    return generateRandomRoomCode(cleanMask, Number(trimmed) % (MAX_RANDOM_SEED + 1));
   }
   const matchSuffix = /^([a-zA-Z0-9]+)(?:-[0-9a-fA-F])?$/.exec(trimmed);
   if (matchSuffix) {
@@ -216,8 +227,9 @@ export function finalizeHostRoomCode(rawInput: string, mask: number): string {
 }
 
 /**
- * Unified parser for both 4-digit random codes and `<custom>-<hex>` room codes.
- * Normalizes `canonicalRoomCode` to lowercase.
+ * Unified parser & 0ms local checksum validator for both 4-digit random codes
+ * and `<custom>-<hex>` room codes. Returns `null` if the code fails checksum validation
+ * (e.g., `mask === 0` or `seed > 199` for 4-digit codes).
  */
 export function parseRoomCode(rawInput: string): ParsedRoomCodeResult | null {
   const clean = String(rawInput || '')
@@ -227,10 +239,11 @@ export function parseRoomCode(rawInput: string): ParsedRoomCodeResult | null {
 
   if (/^\d{4}$/.test(clean)) {
     const decoded = decodeRandomRoomCode(clean);
-    if (!decoded) return null;
+    if (!decoded || !decoded.valid) return null;
     return {
       mode: 'random',
       canonicalRoomCode: clean,
+      identityKey: `seed:${decoded.seed}`,
       customPrefix: '',
       hostMask: decoded.mask,
       seed: decoded.seed,
@@ -240,10 +253,13 @@ export function parseRoomCode(rawInput: string): ParsedRoomCodeResult | null {
   const customWithSuffix = /^([a-z0-9]+)-([0-9a-f])$/.exec(clean);
   if (customWithSuffix) {
     const prefix = customWithSuffix[1];
+    if (/^\d+$/.test(prefix)) return null;
     const hostMask = parseInt(customWithSuffix[2], 16) & 0x0f;
+    if (hostMask === 0) return null;
     return {
       mode: 'custom',
       canonicalRoomCode: `${prefix}-${hostMask.toString(16)}`,
+      identityKey: `custom:${prefix}`,
       customPrefix: prefix,
       hostMask,
       seed: null,
@@ -251,10 +267,11 @@ export function parseRoomCode(rawInput: string): ParsedRoomCodeResult | null {
   }
 
   const bareAlphanumeric = sanitizeCustomRoomPrefix(clean);
-  if (bareAlphanumeric) {
+  if (bareAlphanumeric && !/^\d+$/.test(bareAlphanumeric)) {
     return {
       mode: 'custom',
-      canonicalRoomCode: bareAlphanumeric,
+      canonicalRoomCode: `${bareAlphanumeric}-f`,
+      identityKey: `custom:${bareAlphanumeric}`,
       customPrefix: bareAlphanumeric,
       hostMask: 0x0f,
       seed: null,
@@ -262,6 +279,10 @@ export function parseRoomCode(rawInput: string): ParsedRoomCodeResult | null {
   }
 
   return null;
+}
+
+export function isValidRoomCode(rawInput: string): boolean {
+  return parseRoomCode(rawInput) !== null;
 }
 
 export function extractSlotsFromMask(mask: number): CanonicalRelayId[] {

@@ -219,6 +219,7 @@ export function useFloatingWindowDragResize({
   >('idle');
   const [isInteracting, setIsInteracting] = useState(false);
   const [isDraggingNow, setIsDraggingNow] = useState(false);
+  const [isParkedInSqueezeZone, setIsParkedInSqueezeZone] = useState(false);
   const [isResizingNow, setIsResizingNow] = useState(false);
 
   useEffect(() => {
@@ -277,7 +278,7 @@ export function useFloatingWindowDragResize({
     },
     {
       margin: CONTAINER_MARGIN,
-      prioritizePositionSqueeze: isDraggingNow,
+      prioritizePositionSqueeze: isDraggingNow || isParkedInSqueezeZone,
     }
   );
 
@@ -372,8 +373,17 @@ export function useFloatingWindowDragResize({
             maxHeight: c.effectiveMaxHeight,
             resizable: c.isResizable,
           },
-          { margin: CONTAINER_MARGIN, prioritizePositionSqueeze: false }
+          { margin: CONTAINER_MARGIN, prioritizePositionSqueeze: true }
         );
+        const targetW = Math.max(
+          c.effectiveMinWidth,
+          Math.min(c.presetMaxWidth, Math.round(preservedDesiredW))
+        );
+        const targetH = Math.max(
+          c.effectiveMinHeight,
+          Math.min(c.effectiveMaxHeight, Math.round(preservedDesiredH))
+        );
+        setIsParkedInSqueezeZone(settled.width < targetW || settled.height < targetH);
         updateDesiredAnchor({
           x: settled.x,
           y: settled.y,
@@ -397,6 +407,7 @@ export function useFloatingWindowDragResize({
     onFocus();
     isResizingRef.current = true;
     userHasResizedRef.current = true;
+    setIsParkedInSqueezeZone(false);
     setIsInteracting(true);
     setIsResizingNow(true);
 

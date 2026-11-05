@@ -143,6 +143,20 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
     return 144;
   });
 
+  useEffect(() => {
+    if (propGraphicsConfig) return;
+    if (storeGraphics.limitFps === false) {
+      setInternalFpsSelection('unlimited');
+    } else if (storeGraphics.maxFps !== undefined) {
+      if (FPS_PRESET_VALUES.has(storeGraphics.maxFps)) {
+        setInternalFpsSelection(String(storeGraphics.maxFps));
+      } else {
+        setInternalFpsSelection('custom');
+        setInternalCustomFps(storeGraphics.maxFps);
+      }
+    }
+  }, [propGraphicsConfig, storeGraphics.limitFps, storeGraphics.maxFps]);
+
   const resolvedLimitFps =
     propGraphicsConfig?.limitFps ?? storeGraphics.limitFps ?? internalGraphics.limitFps;
   const resolvedMaxFps =
@@ -156,6 +170,8 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
   const customFps =
     propGraphicsConfig?.maxFps !== undefined && !FPS_PRESET_VALUES.has(propGraphicsConfig.maxFps)
       ? propGraphicsConfig.maxFps
+      : storeGraphics.maxFps !== undefined && !FPS_PRESET_VALUES.has(storeGraphics.maxFps)
+      ? storeGraphics.maxFps
       : internalCustomFps;
 
   const fpsSelection = (() => {

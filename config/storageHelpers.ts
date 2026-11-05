@@ -36,6 +36,7 @@ export const STORAGE_KEYS = Object.freeze({
   PLAYER_ANTHEM_RANDOM_PREFS: 'player-anthem-random-prefs',
   BGM_PREFS: 'bgm-preferences',
   SPATIAL_AUDIO_TUNER: 'spatial-audio-tuner',
+  SPATIAL_ATTENUATION_PROFILES: 'spatial-attenuation-profiles-v1',
   BOTS_LOADOUT_CONFIG: 'bots-loadout-config',
   ACCENT_THEME: 'rc-accent-theme-v2',
   BOOST_GAUGE_TOKENS: 'rc-boost-gauge-tokens-v2',
@@ -48,6 +49,9 @@ export const STORAGE_KEYS = Object.freeze({
 });
 
 export const UI_THEME_STORAGE_KEY = STORAGE_KEYS.UI_THEME;
+
+type SafeStorageChangeListener = (key: string) => void;
+let storageListeners: SafeStorageChangeListener[] = [];
 
 export const safeStorage = {
   get: (k: string, fallback: string | null = null): string | null => {
@@ -63,7 +67,14 @@ export const safeStorage = {
   },
   set: (k: string, v: unknown): void => {
     try {
-      if (typeof localStorage !== 'undefined') localStorage.setItem(k, String(v));
+      if (typeof localStorage !== 'undefined') {
+        const nextStr = String(v);
+        const prevStr = localStorage.getItem(k);
+        localStorage.setItem(k, nextStr);
+        if (prevStr !== nextStr) {
+          storageListeners.forEach((fn) => fn(k));
+        }
+      }
     } catch (err) {
       console.warn(`[safeStorage] Error writing key "${k}" to localStorage:`, err);
     }
@@ -73,13 +84,27 @@ export const safeStorage = {
   },
   remove: (k: string): void => {
     try {
-      if (typeof localStorage !== 'undefined') localStorage.removeItem(k);
+      if (typeof localStorage !== 'undefined') {
+        const hadPrev = localStorage.getItem(k) !== null;
+        localStorage.removeItem(k);
+        if (hadPrev) {
+          storageListeners.forEach((fn) => fn(k));
+        }
+      }
     } catch (err) {
       console.warn(`[safeStorage] Error removing key "${k}" from localStorage:`, err);
     }
   },
   removeItem: (k: string): void => {
     safeStorage.remove(k);
+  },
+  subscribe: (listener: SafeStorageChangeListener): (() => void) => {
+    if (!storageListeners.includes(listener)) {
+      storageListeners = [...storageListeners, listener];
+    }
+    return () => {
+      storageListeners = storageListeners.filter((fn) => fn !== listener);
+    };
   },
 };
 

@@ -22,16 +22,16 @@ export const DIAGNOSTIC_DUMP_PRESET: PresetConfig = {
 
 export const STATIC_TRAINING_BALL_CAM_TUNER_PRESET: PresetConfig = {
   id: 'static-training-ball-cam-tuner',
-  title: 'Static Training Ball Camera & Opacity Tuner',
+  title: 'Static Training Visuals, 3D Arrow & Ball Cam Tuner',
   category: 'TrainingBallCam',
-  width: 460,
-  height: 580,
-  minHeight: 200,
+  width: 480,
+  height: 620,
+  minHeight: 220,
   resizable: true,
   singleton: true,
   tier: 'developer',
-  summary: 'Relative ball camera (Distance, Height, Angle, Lateral Offset) and Edit-Mode 70% Ball Opacity override.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  summary: '3D Direction Arrow (Cone/Shaft/Tip/Shadow/Halo/Opacity), 0s Expired Ball Opacity (70%), and Relative Ball Camera tuner.',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics (or Training Variations Modal -> 3D Arrow & Visuals Tuner)',
   component: 'StaticTrainingBallCamTunerFloatingWindow',
   sourcePath: 'panels/dev/StaticTrainingBallCamTunerFloatingWindow.tsx',
 };
@@ -426,9 +426,43 @@ export const BOTS_LOADOUT_PRESET: PresetConfig = {
   sourcePath: 'panels/dev/BotsLoadoutFloatingWindow.tsx',
 };
 
+export const SUPERSONIC_TRAIL_TUNER_PRESET: PresetConfig = {
+  id: 'supersonic-trail-tuner',
+  title: 'Supersonic Wheel Trail Active Tuner',
+  category: 'SupersonicTrail',
+  width: 470,
+  height: 580,
+  minHeight: 220,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'Real-time 2200 uu/s supersonic wheel ribbon trail tuner: 3-stop colors, opacity, width, ground clearance, and Preview Always-On.',
+  menuEntryPath: 'Settings -> Developer -> Active Tuners & Diagnostics',
+  component: 'SupersonicTrailTunerFloatingWindow',
+  sourcePath: 'panels/dev/SupersonicTrailTunerFloatingWindow.tsx',
+};
+
+export const REPLAY_TO_RCS_IMPORTER_PRESET: PresetConfig = {
+  id: 'replay-to-rcs-importer',
+  title: '.replay -> .rcs Match Replay Importer',
+  category: 'ReplayImporter',
+  width: 560,
+  height: 640,
+  minHeight: 260,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'Batch convert Rocket League .replay files into .rcs archives with 3D trajectory preview and player loadout inspection.',
+  menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  component: 'ReplayToRcsImporterFloatingWindow',
+  sourcePath: 'panels/dev/ReplayToRcsImporterFloatingWindow.tsx',
+};
+
 export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   DIAGNOSTIC_DUMP_PRESET,
   STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
+  SUPERSONIC_TRAIL_TUNER_PRESET,
+  REPLAY_TO_RCS_IMPORTER_PRESET,
   NAME_TAG_TUNER_PRESET,
   GOAL_VOLUME_TUNER_PRESET,
   REPLAY_DIRECTOR_TUNER_PRESET,

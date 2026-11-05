@@ -195,7 +195,7 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
                 <SliderControl
                   label="Unfilled Base Background Opacity"
                   value={config.boostUnfilledBgOpacity}
-                  min={0.05}
+                  min={0.0}
                   max={0.9}
                   step={0.02}
                   onChange={(nextValue) =>
@@ -294,25 +294,33 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => updateConfig({ sharedBoostBorderColor: '#000000' })}
-              className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                isLight
-                  ? 'border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                  : 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-              }`}
-            >
-              Pure Black (#000000)
-            </button>
-            <button
-              type="button"
               onClick={() => updateConfig({ sharedBoostBorderColor: '#ffffff' })}
               className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                isLight
-                  ? 'border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                  : 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+                config.sharedBoostBorderColor.toLowerCase() === '#ffffff'
+                  ? isLight
+                    ? 'border-cyan-500 bg-cyan-500/15 text-cyan-800 font-bold'
+                    : 'border-cyan-400 bg-cyan-500/20 text-cyan-300 font-bold'
+                  : isLight
+                    ? 'border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    : 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
               }`}
             >
               Pure White (#FFFFFF)
+            </button>
+            <button
+              type="button"
+              onClick={() => updateConfig({ sharedBoostBorderColor: '#000000' })}
+              className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
+                config.sharedBoostBorderColor.toLowerCase() === '#000000'
+                  ? isLight
+                    ? 'border-cyan-500 bg-cyan-500/15 text-cyan-800 font-bold'
+                    : 'border-cyan-400 bg-cyan-500/20 text-cyan-300 font-bold'
+                  : isLight
+                    ? 'border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    : 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+              }`}
+            >
+              Pure Black (#000000)
             </button>
             <span className="font-mono text-[9px] uppercase opacity-75">
               {config.sharedBoostBorderColor}

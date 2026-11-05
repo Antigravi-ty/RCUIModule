@@ -22,7 +22,6 @@ import type { AudioDebugTelemetryProps } from './settings/components/AudioDebugS
 import { DeveloperTab } from './settings/tabs/DeveloperTab';
 import type { TrajectoryConfig } from './Layer3BallTrajectoryRecipe';
 import type { CameraConfig } from './camera/cameraConfigSpecs';
-import { SettingsSubViewRouter } from './settings/SettingsSubViewRouter';
 
 export type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'advanced' | 'developer';
 
@@ -45,20 +44,26 @@ export interface Layer2SettingsStateOverride {
   onTrajectoryConfigChange?: (next: TrajectoryConfig, patch: Partial<TrajectoryConfig>) => void;
 }
 
-export interface Layer2SettingsRecipeProps {
-  isLight?: boolean;
+export interface Layer2SettingsNavigationCallbacks {
   onBack?: () => void;
   onNavigateAudioDetail?: () => void;
   onNavigateTrajectoryDetail?: () => void;
   onNavigateCameraDetail?: () => void;
   onNavigateKeybindingsDetail?: () => void;
   onNavigateTrainingDetail?: () => void;
+  onNavigateAdvancedAudio?: () => void;
+  onNavigateEventTriggerRules?: () => void;
   onNavigateExpMultiBots?: () => void;
   onNavigateDevSandboxes?: () => void;
   onNavigateDevActiveTuners?: () => void;
   onNavigateDevCalibratedPresets?: () => void;
   onNavigateDevSelfTest?: () => void;
   onNavigateDevUnderDevelopment?: () => void;
+  onNavigateDevRemoteProfile?: () => void;
+}
+
+export interface Layer2SettingsRecipeProps extends Layer2SettingsNavigationCallbacks {
+  isLight?: boolean;
   activeTab?: string;
   onTabChange?: (tab: SettingsTabId) => void;
   /** Whether Developer Mode is unlocked (controls visibility of 5th 'Developer' tab) */
@@ -89,12 +94,15 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   onNavigateCameraDetail,
   onNavigateKeybindingsDetail,
   onNavigateTrainingDetail,
+  onNavigateAdvancedAudio: propOnNavigateAdvancedAudio,
+  onNavigateEventTriggerRules: propOnNavigateEventTriggerRules,
   onNavigateExpMultiBots,
   onNavigateDevSandboxes,
   onNavigateDevActiveTuners,
   onNavigateDevCalibratedPresets,
   onNavigateDevSelfTest,
   onNavigateDevUnderDevelopment,
+  onNavigateDevRemoteProfile,
   activeTab: controlledTab,
   onTabChange,
   developerMode: propDevMode,
@@ -107,21 +115,23 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
     onDeveloperModeChange,
     onSpawnDiagnosticWindow,
     onNavigateRoute,
-    onNavigateAdvancedAudio,
-    onNavigateEventTriggerRules,
+    onNavigateAdvancedAudio: overrideOnNavigateAdvancedAudio,
+    onNavigateEventTriggerRules: overrideOnNavigateEventTriggerRules,
     sizing: propSizing,
   } = stateOverride ?? {};
+  const onNavigateAdvancedAudio =
+    propOnNavigateAdvancedAudio ?? overrideOnNavigateAdvancedAudio;
+  const onNavigateEventTriggerRules =
+    propOnNavigateEventTriggerRules ?? overrideOnNavigateEventTriggerRules;
   const storeGoBack = useAppStore((s) => s.goBack);
+  const storeNavigate = useAppStore((s) => s.navigate);
   const storeDevMode = useAppStore((s) => s.developerMode);
   const setStoreDevMode = useAppStore((s) => s.setDeveloperMode);
 
   const onBack = propOnBack ?? storeGoBack;
 
-  const [internalSubView, setInternalSubView] = useState<
-    null | 'trajectory' | 'training-config' | 'camera' | 'keybindings'
-  >(null);
-
   const normalizeTab = (t?: string): SettingsTabId => {
+    if (t === 'video') return 'display';
     if (
       t === 'gameplay' ||
       t === 'audio' ||
@@ -187,6 +197,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
       'dev-calibrated-presets': onNavigateDevCalibratedPresets,
       'dev-self-test': onNavigateDevSelfTest,
       'dev-under-development': onNavigateDevUnderDevelopment,
+      'dev-remote-profile': onNavigateDevRemoteProfile,
     };
     const specificHandler = specificHandlers[normalizedRoute];
     if (specificHandler) {
@@ -197,30 +208,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
       onNavigateRoute(route);
       return;
     }
-    if (
-      normalizedRoute === 'trajectory' ||
-      normalizedRoute === 'training-config' ||
-      normalizedRoute === 'camera' ||
-      normalizedRoute === 'keybindings'
-    ) {
-      setInternalSubView(normalizedRoute);
-    }
+    storeNavigate(normalizedRoute as Parameters<typeof storeNavigate>[0]);
   };
-
-  if (internalSubView) {
-    return (
-      <SettingsSubViewRouter
-        subView={internalSubView}
-        isLight={isLight}
-        developerMode={developerMode}
-        trajectoryConfig={stateOverride?.trajectory}
-        onTrajectoryConfigChange={stateOverride?.onTrajectoryConfigChange}
-        cameraConfig={stateOverride?.camera}
-        onCameraConfigChange={stateOverride?.onCameraConfigChange}
-        onChangeSubView={setInternalSubView}
-      />
-    );
-  }
 
   const tabs: TabItem[] = [
     { id: 'gameplay', label: 'Gameplay', icon: <Gamepad2 className="h-3.5 w-3.5" /> },
@@ -310,6 +299,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
               isLight={isLight}
               developerMode={developerMode}
               audioConfig={stateOverride?.audio}
+              onNavigateAudioDetail={() => handleNavigateSubViewOrRoute('audio-eq')}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />

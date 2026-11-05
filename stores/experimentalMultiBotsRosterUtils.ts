@@ -36,6 +36,10 @@ export const EXP_BOT_POLICY_METAS: readonly ExpBotPolicyMeta[] = Object.freeze([
   { id: 'ripple_v1_1', label: 'Ripple v1.1', shortLabel: 'Ripple 1.1', maxPlayersPerTeam: 3, formatBadge: '3v3', category: 'botpack_9700488' },
 ]);
 
+export const LEGACY_EXP_BOT_POLICY_METAS: readonly ExpBotPolicyMeta[] = Object.freeze(
+  EXP_BOT_POLICY_METAS.filter((m) => m.category === 'legacy')
+);
+
 export const BOTPACK_9700488_POLICY_METAS: readonly ExpBotPolicyMeta[] = Object.freeze(
   EXP_BOT_POLICY_METAS.filter((m) => m.category === 'botpack_9700488')
 );
@@ -49,6 +53,7 @@ export function getExpBotPolicyMeta(botType: string): ExpBotPolicyMeta {
 
 export type ExpPlayerParticipation = 'none' | 'blue' | 'orange';
 export type ExpSpeedMultiplier = 100 | 200 | 300 | 400;
+export type ExpSubMode = 'multi-bots' | 'botpack' | 'exhibition';
 
 export interface ExpColorSwatch {
   id: number;
@@ -125,24 +130,34 @@ export function resolveGarageColorPrefs(): {
   return { primaryTeam, blueColors, orangeColors };
 }
 
-export function buildTeamSlotsFromColorPrefs(
-  countPerTeam: number,
-  botType: ExpBotPolicyId | ExpBotPolicyId[],
-  participationOverride?: ExpPlayerParticipation
-): {
+export interface ExpRosterSnapshot {
   playerParticipation: ExpPlayerParticipation;
   blueSlots: ExperimentalMultiBotsSlotConfig[];
   orangeSlots: ExperimentalMultiBotsSlotConfig[];
   activeCameraCarIndex: number;
-} {
+}
+
+export function buildAsymmetricTeamSlotsFromColorPrefs(
+  blueCount: number,
+  orangeCount: number,
+  botType: ExpBotPolicyId | ExpBotPolicyId[],
+  participationOverride?: ExpPlayerParticipation
+): ExpRosterSnapshot {
   const { primaryTeam, blueColors, orangeColors } = resolveGarageColorPrefs();
-  const playerParticipation: ExpPlayerParticipation =
+  const clampedBlue = Math.max(0, Math.min(5, blueCount));
+  const clampedOrange = Math.max(0, Math.min(6 - clampedBlue, Math.min(5, orangeCount)));
+  let playerParticipation: ExpPlayerParticipation =
     participationOverride !== undefined ? participationOverride : primaryTeam;
+  if (playerParticipation === 'blue' && clampedBlue === 0) {
+    playerParticipation = clampedOrange > 0 ? 'orange' : 'none';
+  } else if (playerParticipation === 'orange' && clampedOrange === 0) {
+    playerParticipation = clampedBlue > 0 ? 'blue' : 'none';
+  }
   const resolveBot = (i: number): ExpBotPolicyId =>
     Array.isArray(botType) ? botType[i % botType.length] : botType;
 
   const blueSlots: ExperimentalMultiBotsSlotConfig[] = Array.from(
-    { length: countPerTeam },
+    { length: clampedBlue },
     (_, i) => ({
       id: `blue-${i}`,
       team: 0 as const,
@@ -153,7 +168,7 @@ export function buildTeamSlotsFromColorPrefs(
   );
 
   const orangeSlots: ExperimentalMultiBotsSlotConfig[] = Array.from(
-    { length: countPerTeam },
+    { length: clampedOrange },
     (_, i) => ({
       id: `orange-${i}`,
       team: 1 as const,
@@ -164,7 +179,7 @@ export function buildTeamSlotsFromColorPrefs(
   );
 
   const activeCameraCarIndex =
-    playerParticipation === 'orange' ? countPerTeam : 0;
+    playerParticipation === 'orange' ? clampedBlue : 0;
 
   return {
     playerParticipation,
@@ -172,6 +187,19 @@ export function buildTeamSlotsFromColorPrefs(
     orangeSlots,
     activeCameraCarIndex,
   };
+}
+
+export function buildTeamSlotsFromColorPrefs(
+  countPerTeam: number,
+  botType: ExpBotPolicyId | ExpBotPolicyId[],
+  participationOverride?: ExpPlayerParticipation
+): ExpRosterSnapshot {
+  return buildAsymmetricTeamSlotsFromColorPrefs(
+    countPerTeam,
+    countPerTeam,
+    botType,
+    participationOverride
+  );
 }
 
 export function pickUnusedColorSlot(
@@ -211,4 +239,50 @@ export function normalizeTeamPlayerFlags(
     isPlayer: participation === 'orange' && idx === 0,
   }));
   return { blueSlots: nextBlue, orangeSlots: nextOrange };
+}
+
+export function extractExpRosterSnapshot(state: {
+  playerParticipation: ExpPlayerParticipation;
+  blueSlots: ExperimentalMultiBotsSlotConfig[];
+  orangeSlots: ExperimentalMultiBotsSlotConfig[];
+  activeCameraCarIndex: number;
+}): ExpRosterSnapshot {
+  return {
+    playerParticipation: state.playerParticipation,
+    blueSlots: state.blueSlots,
+    orangeSlots: state.orangeSlots,
+    activeCameraCarIndex: state.activeCameraCarIndex,
+  };
+}
+
+export function buildRosterMutationPatch(
+  activeSubMode: ExpSubMode,
+  prevSavedMultiBotsRoster: ExpRosterSnapshot,
+  nextRoster: ExpRosterSnapshot
+): ExpRosterSnapshot & { savedMultiBotsRoster: ExpRosterSnapshot } {
+  return {
+    ...nextRoster,
+    savedMultiBotsRoster:
+      activeSubMode === 'multi-bots' ? nextRoster : prevSavedMultiBotsRoster,
+  };
+}
+
+export function createGuardedExpRuntimeHandlers<T extends object>(
+  rawHandlers: T,
+  warnMessage: (prop: string) => string
+): T {
+  return new Proxy(rawHandlers, {
+    get(target, prop, receiver) {
+      const val = Reflect.get(target, prop, receiver);
+      if (typeof val === 'function') {
+        return val;
+      }
+      if (typeof prop === 'string' && prop.startsWith('on')) {
+        return (..._args: unknown[]) => {
+          console.warn(warnMessage(prop));
+        };
+      }
+      return val;
+    },
+  });
 }

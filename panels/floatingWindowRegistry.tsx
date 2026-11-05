@@ -48,6 +48,8 @@ import {
 import { SpatialAudioTunerFloatingWindow } from './dev/SpatialAudioTunerFloatingWindow';
 import { EngineAudioTunerFloatingWindow } from './dev/EngineAudioTunerFloatingWindow';
 import { BotsLoadoutFloatingWindow } from './dev/BotsLoadoutFloatingWindow';
+import { SupersonicTrailTunerFloatingWindow } from './dev/SupersonicTrailTunerFloatingWindow';
+import { ReplayToRcsImporterFloatingWindow } from './dev/ReplayToRcsImporterFloatingWindow';
 
 export type FloatingWindowHeaderTab =
   | VehicleTunerTab
@@ -305,6 +307,16 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     id: 'bots-loadout',
     category: 'developer',
     render: ({ isLight = false }) => <BotsLoadoutFloatingWindow isLight={isLight} />,
+  },
+  'supersonic-trail-tuner': {
+    id: 'supersonic-trail-tuner',
+    category: 'developer',
+    render: ({ isLight = false }) => <SupersonicTrailTunerFloatingWindow isLight={isLight} />,
+  },
+  'replay-to-rcs-importer': {
+    id: 'replay-to-rcs-importer',
+    category: 'developer',
+    render: ({ isLight = false }) => <ReplayToRcsImporterFloatingWindow isLight={isLight} />,
   },
 };
 

@@ -46,6 +46,7 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
     setSlotBotType,
     setSlotColor,
     applyPresetRoster,
+    applyAsymmetricPresetRoster,
     setActiveCameraCarIndex,
     setMatchDurationSec,
     setSpeedMultiplier,
@@ -94,7 +95,7 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
             </span>
           </div>
           <span className={`text-[10px] font-mono truncate mt-0.5 ${mutedText}`}>
-            Native SafeTensors EARL Perceiver + SIMD128 · Zero ONNX · Up to 3v3
+            Native SafeTensors EARL Perceiver + SIMD128 · Asymmetric &amp; Up to 6 Cars
           </span>
         </div>
 
@@ -157,7 +158,7 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
         <div className="flex items-center justify-between">
           <span className="font-bold text-[11px] flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5 text-sky-400" />
-            <span>Player Participation</span>
+            <span>Player Participation &amp; Matchup Presets</span>
           </span>
           <span className={`text-[10px] font-mono ${mutedText}`}>
             {playerParticipation === 'none'
@@ -178,7 +179,7 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
           isLight={isLight}
         />
 
-        {/* Quick Format Presets */}
+        {/* Quick Symmetric Format Presets */}
         <div className="grid grid-cols-6 gap-1 pt-0.5">
           {[
             { id: '1v1-player', label: '1v1 +P' },
@@ -212,6 +213,36 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
             </button>
           ))}
         </div>
+
+        {/* Quick Asymmetric Format Presets */}
+        <div className="grid grid-cols-6 gap-1">
+          {[
+            { blue: 3, orange: 2, label: '3v2 Asym' },
+            { blue: 2, orange: 3, label: '2v3 Asym' },
+            { blue: 3, orange: 1, label: '3v1 Asym' },
+            { blue: 2, orange: 1, label: '2v1 Asym' },
+            { blue: 4, orange: 2, label: '4v2 Asym' },
+            { blue: 4, orange: 1, label: '4v1 Asym' },
+          ].map((a) => {
+            const isCurrent = blueSlots.length === a.blue && orangeSlots.length === a.orange;
+            return (
+              <button
+                key={a.label}
+                type="button"
+                onClick={() => applyAsymmetricPresetRoster(a.blue, a.orange)}
+                className={`py-1 px-1 rounded-lg text-[10px] font-semibold border transition-colors cursor-pointer text-center ${
+                  isCurrent
+                    ? 'bg-sky-500/25 border-sky-400 text-sky-300 font-bold'
+                    : isLight
+                      ? 'bg-white hover:bg-sky-500/10 border-neutral-300 text-neutral-700'
+                      : 'bg-neutral-900/80 hover:bg-sky-500/15 border-neutral-700/80 text-neutral-300'
+                }`}
+              >
+                {a.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* 4. Bot Camera POV Hotkey Bar (1 - 6) */}
@@ -227,7 +258,7 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
         onSelectCameraCar={setActiveCameraCarIndex}
       />
 
-      {/* 5. Blue Team (Team 0) Roster Builder (Max 3) */}
+      {/* 5. Blue Team (Team 0) Roster Builder (Max 5) */}
       <ExperimentalMultiBotsTeamRosterCard
         team={0}
         slots={blueSlots}
@@ -235,9 +266,6 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
         activeCameraCarIndex={activeCameraCarIndex}
         totalCars={totalCars}
         isLight={isLight}
-        cardBg={cardBg}
-        subPanelBg={subPanelBg}
-        mutedText={mutedText}
         onAddBot={addBotToTeam}
         onSelectCameraCar={setActiveCameraCarIndex}
         onSetSlotBotType={setSlotBotType}
@@ -245,7 +273,7 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
         onSetSlotColor={setSlotColor}
       />
 
-      {/* 6. Orange Team (Team 1) Roster Builder (Max 3) */}
+      {/* 6. Orange Team (Team 1) Roster Builder (Max 5) */}
       <ExperimentalMultiBotsTeamRosterCard
         team={1}
         slots={orangeSlots}
@@ -253,9 +281,6 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
         activeCameraCarIndex={activeCameraCarIndex}
         totalCars={totalCars}
         isLight={isLight}
-        cardBg={cardBg}
-        subPanelBg={subPanelBg}
-        mutedText={mutedText}
         onAddBot={addBotToTeam}
         onSelectCameraCar={setActiveCameraCarIndex}
         onSetSlotBotType={setSlotBotType}

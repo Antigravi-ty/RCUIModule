@@ -65,9 +65,11 @@ export function resolveWindowSizeLimits(
 ): ResolvedWindowSizeLimits {
   const isResizable = (item.resizable ?? matchedPreset?.resizable ?? true) !== false;
   const shouldAutoFitHeight =
-    item.autoFitHeight ??
-    matchedPreset?.autoFitHeight ??
-    (!isResizable || matchedPreset?.tier === 'user');
+    matchedPreset?.tier === 'developer'
+      ? Boolean(matchedPreset.autoFitHeight)
+      : item.autoFitHeight ??
+        matchedPreset?.autoFitHeight ??
+        (!isResizable || matchedPreset?.tier === 'user');
 
   const presetMinWidth = Math.round(
     item.minWidth ?? matchedPreset?.minWidth ?? DEFAULT_MIN_WINDOW_WIDTH
@@ -131,6 +133,11 @@ export function computeInitialDesiredAnchor(
     'shouldAutoFitHeight' | 'effectiveMinWidth' | 'rawMinHeight'
   >
 ): WindowRect {
+  const baseHeight =
+    !item.userAdjustedSize && !limits.shouldAutoFitHeight && matchedPreset?.height !== undefined
+      ? matchedPreset.height
+      : item.height ?? matchedPreset?.height ?? 360;
+
   return {
     x: Math.round(item.position?.x ?? 40),
     y: Math.round(item.position?.y ?? 40),
@@ -142,9 +149,7 @@ export function computeInitialDesiredAnchor(
             item.width ?? matchedPreset?.width ?? 440
           )
     ),
-    height: Math.round(
-      Math.max(limits.rawMinHeight, item.height ?? matchedPreset?.height ?? 360)
-    ),
+    height: Math.round(Math.max(limits.rawMinHeight, baseHeight)),
   };
 }
 

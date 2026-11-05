@@ -52,6 +52,8 @@ export interface TeamRosterCardProps {
   activeCameraCarIndex?: number;
   totalCars?: number;
   maxTeamSlots?: number;
+  maxTotalCars?: number;
+  allowBotpackPolicies?: boolean;
   colorPalette?: CarColorSwatch[];
   onAddBot?: (team: 0 | 1, botType: BotPolicyId) => void;
   onSelectCameraCar?: (carIdx: number) => void;
@@ -76,7 +78,9 @@ export const TeamRosterCard: React.FC<TeamRosterCardProps> = React.memo(
     globalOffset = 0,
     activeCameraCarIndex = 0,
     totalCars = 6,
-    maxTeamSlots = 3,
+    maxTeamSlots = 5,
+    maxTotalCars = 6,
+    allowBotpackPolicies = false,
     colorPalette = DEFAULT_CAR_COLOR_PALETTE,
     onAddBot,
     onSelectCameraCar,
@@ -96,6 +100,7 @@ export const TeamRosterCard: React.FC<TeamRosterCardProps> = React.memo(
     const teamShort = isBlue ? 'Blue' : 'Orange';
     const dotClass = isBlue ? 'bg-sky-400' : 'bg-amber-500';
     const titleColor = isBlue ? 'text-sky-500' : 'text-amber-500';
+    const canAddBot = slots.length < maxTeamSlots && (controlledSlots ? totalCars < maxTotalCars : slots.length < maxTeamSlots);
 
     const handleAddBot = () => {
       if (onAddBot) {
@@ -163,10 +168,10 @@ export const TeamRosterCard: React.FC<TeamRosterCardProps> = React.memo(
           </div>
           <button
             type="button"
-            disabled={slots.length >= maxTeamSlots}
+            disabled={!canAddBot}
             onClick={handleAddBot}
             className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border flex items-center gap-1 transition-colors ${
-              slots.length >= maxTeamSlots
+              !canAddBot
                 ? 'opacity-40 cursor-not-allowed border-neutral-700 text-neutral-500'
                 : isBlue
                 ? isLight
@@ -248,20 +253,30 @@ export const TeamRosterCard: React.FC<TeamRosterCardProps> = React.memo(
                                 : 'bg-amber-500/20 border-amber-500/70 text-amber-300'
                             }`}
                           >
-                            <optgroup label="Botpack #9700488 (8 New)">
-                              {BOTPACK_9700488_POLICY_METAS.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                  {m.label} ({m.formatBadge})
-                                </option>
-                              ))}
-                            </optgroup>
-                            <optgroup label="Core Policies">
-                              {LEGACY_BOT_POLICIES.map((m) => (
+                            {allowBotpackPolicies ? (
+                              <>
+                                <optgroup label="Botpack #9700488 (8 New)">
+                                  {BOTPACK_9700488_POLICY_METAS.map((m) => (
+                                    <option key={m.id} value={m.id}>
+                                      {m.label} ({m.formatBadge})
+                                    </option>
+                                  ))}
+                                </optgroup>
+                                <optgroup label="Core Policies">
+                                  {LEGACY_BOT_POLICIES.map((m) => (
+                                    <option key={m.id} value={m.id}>
+                                      {m.label}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              </>
+                            ) : (
+                              LEGACY_BOT_POLICIES.map((m) => (
                                 <option key={m.id} value={m.id}>
                                   {m.label}
                                 </option>
-                              ))}
-                            </optgroup>
+                              ))
+                            )}
                           </select>
                           <span
                             className={`px-1 py-0.5 rounded text-[9px] font-mono border shrink-0 ${

@@ -221,11 +221,13 @@ export function useLayer2ManageRoomBinding<TProps extends object>(
 
   return {
     ...rawProps,
-    roomCode: props.roomCode ?? (onlineSession?.roomId || '8924'),
+    roomCode: props.roomCode ?? (onlineSession?.roomId || '7468'),
     sessionContext: props.sessionContext ?? sessionContext,
     signalingState:
       props.signalingState ??
-      (onlineSession?.signalingConnected ? 'green' : 'yellow'),
+      (onlineSession?.signalingConnected && onlineSession?.signalingHealthLevel !== 'degraded'
+        ? 'green'
+        : 'yellow'),
     onRefreshSignaling:
       props.onRefreshSignaling ?? (() => bridge.onReconnectSignaling?.()),
     localTeam: props.localTeam ?? localTeam,

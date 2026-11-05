@@ -1,3 +1,10 @@
+/**
+ * StaticTrainingPackStorage.ts
+ * Path-keyed IndexedDB Virtual Filesystem (VFS) for Static Training Packs,
+ * plus a dedicated Edit-Mode IndexedDB (`rc-static-pack-edit-db`) for isolated
+ * Edit Session staging before committing or ignoring changes.
+ */
+
 import {
   type EditSubMode,
   type StaticTrainingCarConfig,
@@ -16,10 +23,17 @@ import {
 } from '../config/staticTrainingPackTypes';
 import {
   exportStaticTrainingPackRCSPack,
+  exportBatchStaticTrainingPacksZip,
   decodeRCSPackFilePayload,
+  decodeMultiOrZipPackFiles,
   exportSingleShotItemToJson,
   parseSingleShotItemFromJsonFile,
+  type ExportRCSPackOptions,
 } from '../config/staticTrainingPackCodec';
+import {
+  loadBuiltInDevPacksCatalog,
+  DEV_BUILTIN_RLRCSPACK_CATALOG_COUNT,
+} from '../config/devBuiltInPacksLoader';
 
 export {
   type EditSubMode,
@@ -28,14 +42,19 @@ export {
   type StaticTrainingShotItem,
   type StaticTrainingPackMetadata,
   type RCSPackArchive,
+  type ExportRCSPackOptions,
   EDIT_SUB_MODES_ORDER,
   MAX_SHOTS_PER_PACK,
+  DEV_BUILTIN_RLRCSPACK_CATALOG_COUNT,
   generateUUID,
   createDefaultShotItem,
   cloneShotItem,
   areShotItemsEqual,
   areShotListsEqual,
   exportStaticTrainingPackRCSPack,
+  exportBatchStaticTrainingPacksZip,
+  decodeMultiOrZipPackFiles,
+  loadBuiltInDevPacksCatalog,
   exportSingleShotItemToJson,
   parseSingleShotItemFromJsonFile,
 };
@@ -63,143 +82,6 @@ export {
   buildEditMetaPath,
   buildEditItemPath,
 };
-
-export interface ActiveStaticTrainingPackBundle {
-  uuid: string;
-  title: string;
-  description: string;
-  itemCount: number;
-  metadata: StaticTrainingPackMetadata;
-  items: StaticTrainingShotItem[];
-}
-
-export function buildActivePackBundle(
-  metadata: StaticTrainingPackMetadata | null,
-  items: StaticTrainingShotItem[]
-): ActiveStaticTrainingPackBundle | null {
-  if (!metadata) return null;
-  return {
-    uuid: metadata.uuid,
-    title: metadata.title,
-    description: metadata.description,
-    itemCount: items.length,
-    metadata: { ...metadata, itemCount: items.length },
-    items,
-  };
-}
-
-export function computeEffectiveWorkspaceItems(
-  activeItems: StaticTrainingShotItem[],
-  isEditingItem: boolean,
-  draft: StaticTrainingShotItem | null,
-  currentShotIndex: number
-): StaticTrainingShotItem[] {
-  return isEditingItem && draft
-    ? activeItems.map((it, i) => (i === currentShotIndex ? cloneShotItem(draft, i) : it))
-    : activeItems;
-}
-
-export function computeNextEditSubMode(
-  currentSubMode: EditSubMode,
-  currentItem: StaticTrainingShotItem | null | undefined,
-  delta: 1 | -1
-): EditSubMode {
-  const alignsSpeedWithNose = currentItem?.car?.speedFollowsHeading !== false;
-  const order: EditSubMode[] = alignsSpeedWithNose
-    ? ['car-heading', 'ball-speed', 'free-cam']
-    : EDIT_SUB_MODES_ORDER;
-  const currentIndex = order.indexOf(currentSubMode);
-  const baseIdx = currentIndex >= 0 ? currentIndex : 0;
-  const nextIdx = ((baseIdx + delta) % order.length + order.length) % order.length;
-  return order[nextIdx];
-}
-
-export async function persistWorkspaceShotListMutation(
-  metadata: StaticTrainingPackMetadata,
-  nextItems: StaticTrainingShotItem[]
-): Promise<{
-  updatedMeta: StaticTrainingPackMetadata;
-  bundle: ActiveStaticTrainingPackBundle | null;
-  nextItems: StaticTrainingShotItem[];
-}> {
-  const normalized = nextItems.slice(0, MAX_SHOTS_PER_PACK).map((item, idx) => ({
-    ...item,
-    index: idx,
-  }));
-  const updatedMeta: StaticTrainingPackMetadata = {
-    ...metadata,
-    itemCount: normalized.length,
-    updatedAt: Date.now(),
-  };
-  await saveEditWorkspacePackFull(updatedMeta, normalized);
-  return {
-    updatedMeta,
-    bundle: buildActivePackBundle(updatedMeta, normalized),
-    nextItems: normalized,
-  };
-}
-
-export async function duplicateWorkspaceShotAt(
-  metadata: StaticTrainingPackMetadata,
-  activeItems: StaticTrainingShotItem[],
-  index: number
-) {
-  const source = activeItems[index];
-  const duplicated = cloneShotItem(source, index + 1);
-  duplicated.id = generateUUID();
-  duplicated.name = `${source.name || `Shot ${index + 1}`} (Copy)`;
-  return persistWorkspaceShotListMutation(metadata, [
-    ...activeItems.slice(0, index + 1),
-    duplicated,
-    ...activeItems.slice(index + 1),
-  ]);
-}
-
-export async function reorderWorkspaceShotAt(
-  metadata: StaticTrainingPackMetadata,
-  activeItems: StaticTrainingShotItem[],
-  fromIndex: number,
-  toIndex: number
-) {
-  const copy = [...activeItems];
-  const [moved] = copy.splice(fromIndex, 1);
-  copy.splice(toIndex, 0, moved);
-  return persistWorkspaceShotListMutation(metadata, copy);
-}
-
-export async function commitWorkspaceShotsToMainVfs(
-  metadata: StaticTrainingPackMetadata,
-  activeItems: StaticTrainingShotItem[],
-  isEditingItem: boolean,
-  draft: StaticTrainingShotItem | null,
-  currentShotIndex: number
-): Promise<{
-  packs: StaticTrainingPackMetadata[];
-  bundle: ActiveStaticTrainingPackBundle | null;
-  finalItems: StaticTrainingShotItem[];
-}> {
-  const finalItems = computeEffectiveWorkspaceItems(
-    activeItems,
-    isEditingItem,
-    draft,
-    currentShotIndex
-  )
-    .slice(0, MAX_SHOTS_PER_PACK)
-    .map((it, idx) => cloneShotItem(it, idx));
-  const updatedMeta: StaticTrainingPackMetadata = {
-    ...metadata,
-    itemCount: finalItems.length,
-    updatedAt: Date.now(),
-  };
-  await saveStaticTrainingPackFull(updatedMeta, finalItems);
-  await clearEditWorkspaceByUuid(metadata.uuid);
-  const packs = await listStaticTrainingPacks();
-  return {
-    packs,
-    bundle: buildActivePackBundle(updatedMeta, finalItems),
-    finalItems,
-  };
-}
 
 export async function clearEditWorkspaceByUuid(uuid: string): Promise<void> {
   for (const [k, v] of memoryEditVfsFallback.entries()) {
@@ -236,7 +118,8 @@ export async function saveEditWorkspacePackFull(
 ): Promise<void> {
   await clearEditWorkspaceByUuid(metadata.uuid);
   const now = Date.now();
-  const normalizedItems = items.slice(0, MAX_SHOTS_PER_PACK).map((item, idx) => {
+  const cappedItems = items.slice(0, MAX_SHOTS_PER_PACK);
+  const normalizedItems = cappedItems.map((item, idx) => {
     const cloned = cloneShotItem(item, idx);
     cloned.index = idx;
     return cloned;
@@ -292,13 +175,17 @@ export async function saveSingleEditWorkspaceShotItem(
   ];
 
   if (metadata) {
+    const updatedMeta: StaticTrainingPackMetadata = {
+      ...metadata,
+      updatedAt: now,
+    };
     nodes.push({
       path: buildEditMetaPath(uuid),
       category: 'static-training-pack',
       uuid,
       nodeType: 'metadata',
       updatedAt: now,
-      data: { ...metadata, updatedAt: now },
+      data: updatedMeta,
     });
   }
 
@@ -329,6 +216,14 @@ export async function loadEditWorkspacePackByUuid(uuid: string): Promise<{
   return { metadata, items: items.slice(0, MAX_SHOTS_PER_PACK) };
 }
 
+/* ============================================================================
+ * Main Committed VFS Operations (`rc-virtual-fs-db`)
+ * ========================================================================== */
+
+/**
+ * Lists all Static Training Pack metadata records sorted by updatedAt descending.
+ * Seeds a default starter pack if the VFS is completely empty on first launch.
+ */
 export async function listStaticTrainingPacks(): Promise<StaticTrainingPackMetadata[]> {
   const records = await vfsGetAllByCategory('static-training-pack');
   const metas = records
@@ -336,7 +231,10 @@ export async function listStaticTrainingPacks(): Promise<StaticTrainingPackMetad
     .map((r) => r.data as StaticTrainingPackMetadata)
     .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
-  if (metas.length > 0) return metas;
+  if (metas.length > 0) {
+    return metas;
+  }
+
   const starter = await seedDefaultStarterPack();
   return [starter];
 }
@@ -384,13 +282,17 @@ export async function loadStaticTrainingPackByUuid(uuid: string): Promise<{
   return { metadata, items: capped };
 }
 
+/**
+ * Saves an entire Static Training Pack (metadata + all items, capped at 99) into the IndexedDB VFS.
+ */
 export async function saveStaticTrainingPackFull(
   metadata: StaticTrainingPackMetadata,
   items: StaticTrainingShotItem[]
 ): Promise<void> {
   await vfsDeleteByUuid(metadata.uuid);
   const now = Date.now();
-  const normalizedItems = items.slice(0, MAX_SHOTS_PER_PACK).map((item, idx) => {
+  const cappedItems = items.slice(0, MAX_SHOTS_PER_PACK);
+  const normalizedItems = cappedItems.map((item, idx) => {
     const cloned = cloneShotItem(item, idx);
     cloned.index = idx;
     return cloned;
@@ -425,6 +327,9 @@ export async function saveStaticTrainingPackFull(
   await vfsPutNodes(nodes);
 }
 
+/**
+ * Commits a single edited shot item to the main IndexedDB VFS.
+ */
 export async function saveSingleStaticTrainingShotItem(
   uuid: string,
   index: number,
@@ -446,13 +351,17 @@ export async function saveSingleStaticTrainingShotItem(
   ];
 
   if (metadata) {
+    const updatedMeta: StaticTrainingPackMetadata = {
+      ...metadata,
+      updatedAt: now,
+    };
     nodes.push({
       path: buildMetaPath(uuid),
       category: 'static-training-pack',
       uuid,
       nodeType: 'metadata',
       updatedAt: now,
-      data: { ...metadata, updatedAt: now },
+      data: updatedMeta,
     });
   }
 
@@ -464,6 +373,9 @@ export async function deleteStaticTrainingPackByUuid(uuid: string): Promise<void
   await vfsDeleteByUuid(uuid);
 }
 
+/**
+ * Imports a `.RCSPack`, `.RCSPackE`, `.RLRCSPack`, or `.Tem` file and persists it into the VFS.
+ */
 export async function importStaticTrainingPackFromFile(
   file: File
 ): Promise<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }> {
@@ -472,3 +384,76 @@ export async function importStaticTrainingPackFromFile(
   await saveStaticTrainingPackFull(metadata, capped);
   return { metadata: { ...metadata, itemCount: capped.length }, items: capped };
 }
+
+/**
+ * Batch imports multiple `.Tem` / `.RCSPack` / `.RCSPackE` / `.RLRCSPack` files or `.zip` archives into the VFS.
+ */
+export async function importBatchStaticTrainingPacksFromFiles(
+  files: File[] | FileList
+): Promise<StaticTrainingPackMetadata[]> {
+  const decodedList = await decodeMultiOrZipPackFiles(files);
+  const importedMetas: StaticTrainingPackMetadata[] = [];
+  for (const entry of decodedList) {
+    const capped = entry.items.slice(0, MAX_SHOTS_PER_PACK);
+    await saveStaticTrainingPackFull(entry.metadata, capped);
+    importedMetas.push({ ...entry.metadata, itemCount: capped.length });
+  }
+  return importedMetas;
+}
+
+let devCatalogSeededInSession = false;
+
+/**
+ * Ensures the 134 built-in Developer Mode `.RLRCSPack` training packs from `Training.zip` + `TrainingA.zip`
+ * are seeded into the IndexedDB VFS when Dev Mode is opened, and refreshes metadata on existing built-in packs.
+ */
+export async function ensureBuiltInDevPacksSeeded(forceReseed = false): Promise<number> {
+  if (devCatalogSeededInSession && !forceReseed) return 0;
+  const existing = await listStaticTrainingPacks();
+  const existingByUuid = new Map(existing.map((m) => [m.uuid, m]));
+
+  const catalog = await loadBuiltInDevPacksCatalog();
+  let seededCount = 0;
+  for (const entry of catalog) {
+    const prevMeta = existingByUuid.get(entry.metadata.uuid);
+    if (!forceReseed && prevMeta) {
+      // Refresh built-in metadata if tags, rankTier, or recommendedVariation were updated in catalog
+      const prevTagsJson = JSON.stringify(prevMeta.tags || []);
+      const nextTagsJson = JSON.stringify(entry.metadata.tags || []);
+      const prevVarJson = JSON.stringify(prevMeta.recommendedVariation || null);
+      const nextVarJson = JSON.stringify(entry.metadata.recommendedVariation || null);
+      if (
+        prevMeta.rankTier !== entry.metadata.rankTier ||
+        prevTagsJson !== nextTagsJson ||
+        prevVarJson !== nextVarJson ||
+        prevMeta.creator !== entry.metadata.creator
+      ) {
+        const now = Date.now();
+        await vfsPutNodes([
+          {
+            path: buildMetaPath(entry.metadata.uuid),
+            category: 'static-training-pack',
+            uuid: entry.metadata.uuid,
+            nodeType: 'metadata',
+            updatedAt: prevMeta.updatedAt || now,
+            data: {
+              ...prevMeta,
+              creator: entry.metadata.creator,
+              tags: entry.metadata.tags,
+              rankTier: entry.metadata.rankTier,
+              releaseYearMonth: entry.metadata.releaseYearMonth,
+              recommendedVariation: entry.metadata.recommendedVariation,
+              isBuiltInDevPack: true,
+            },
+          },
+        ]);
+      }
+      continue;
+    }
+    await saveStaticTrainingPackFull(entry.metadata, entry.items);
+    seededCount++;
+  }
+  devCatalogSeededInSession = true;
+  return seededCount;
+}
+

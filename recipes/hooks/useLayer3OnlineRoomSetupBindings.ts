@@ -303,12 +303,12 @@ export function useLayer3JoinRoomStoreBinding(
     const cleanName = nextConfig.playerName.trim() || generateDefaultPlayerName();
     saveStoredPlayerName(cleanName);
     const parsed = parseRoomCode(nextConfig.roomCode);
-    const cleanRoom = parsed?.canonicalRoomCode || nextConfig.roomCode.trim().toLowerCase();
-    if (!cleanRoom) {
+    if (!parsed) {
       setCurrentStep(1);
       setProgressStatus('error');
       return;
     }
+    const cleanRoom = parsed.canonicalRoomCode;
 
     setOnlineSession({
       playerName: cleanName,

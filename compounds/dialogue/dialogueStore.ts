@@ -15,6 +15,21 @@ export const dialogue = {
    */
   show: (options: StackedDialogueOptions): string => {
     const id = options.id || `dialogue-${Date.now()}-${stackCounter++}`;
+    const existingIdx = activeDialogueStack.findIndex((item) => item.id === id);
+    if (existingIdx !== -1) {
+      const updatedItem: DialogueStackItem = {
+        ...activeDialogueStack[existingIdx],
+        ...options,
+        id,
+      };
+      activeDialogueStack = [
+        ...activeDialogueStack.slice(0, existingIdx),
+        updatedItem,
+        ...activeDialogueStack.slice(existingIdx + 1),
+      ];
+      stackListeners.forEach((fn) => fn(activeDialogueStack));
+      return id;
+    }
     const baseZIndex = 800 + activeDialogueStack.length * 10;
     const newItem: DialogueStackItem = {
       ...options,

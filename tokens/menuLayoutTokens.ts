@@ -20,11 +20,13 @@ export type CanonicalMenuPanelId =
   | 'layer3-camera'
   | 'layer3-keybindings'
   | 'layer3-exp-multi-bots'
+  | 'layer3-exp-botpack'
   | 'layer3-dev-sandboxes'
   | 'layer3-dev-active-tuners'
   | 'layer3-dev-calibrated-presets'
   | 'layer3-dev-self-test'
   | 'layer3-dev-under-development'
+  | 'layer3-dev-remote-profile'
   | 'layer4-static-training-pack'
   | 'layer4-advanced-audio'
   | 'layer4-controller-settings'
@@ -326,6 +328,13 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     minHeight: 240,
     maxHeight: 1120,
   },
+  'layer3-exp-botpack': {
+    mode: 'auto',
+    width: 580,
+    targetHeight: 580,
+    minHeight: 240,
+    maxHeight: 1120,
+  },
   'layer3-dev-sandboxes': {
     mode: 'auto',
     width: 560,
@@ -358,6 +367,13 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     mode: 'auto',
     width: 600,
     targetHeight: 580,
+    minHeight: 240,
+    maxHeight: 1120,
+  },
+  'layer3-dev-remote-profile': {
+    mode: 'auto',
+    width: 620,
+    targetHeight: 540,
     minHeight: 240,
     maxHeight: 1120,
   },

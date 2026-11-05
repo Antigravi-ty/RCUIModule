@@ -7,6 +7,7 @@ import {
 import {
   Bot,
   Sparkles,
+  FileArchive,
   Radio,
   Layers,
   History,
@@ -25,13 +26,14 @@ import {
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingActionRow } from '../compounds/SettingActionRow';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { floatingStore } from '../stores/floatingStore';
 import {
   SUBSYSTEM_ISOLATION_LAB_PRESET,
   EXPERIMENTAL_MULTI_BOTS_PRESET,
   EXPERIMENTAL_BOT_PACK_PRESET,
+  REPLAY_TO_RCS_IMPORTER_PRESET,
 } from '../stores/devFloatingPresets';
 
 export type { DevTestLabTab, Layer3DevSandboxesRecipeProps };
@@ -129,6 +131,26 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
     icon: Sparkles,
     iconColor: 'text-teal-400',
   },
+  {
+    id: 'tem-pack-converter',
+    title: 'Static Training Packs (Dev Mode)',
+    summary:
+      'Browse 73 built-in .RLRCSPack packs, batch import/export .Tem / .RCSPack / .RCSPackE / .zip, and configure Training Variations (F3–F12).',
+    details:
+      'Static Training Packs (Dev Mode): Unified pack browser with 73 built-in .Tem -> .RLRCSPack packs, Original Description inspector, EditorFreeCam (.RCSPackE) support, Folder/Rank filtering, and Kevpert BakkesMod Training Variations.',
+    icon: FileArchive,
+    iconColor: 'text-cyan-400',
+  },
+  {
+    id: 'replay-to-rcs-importer',
+    title: 'Replay to RCS Replay Importer',
+    summary:
+      'Import raw Rocket League .replay files, upsample 30Hz to 120Hz, intervene (Disappear/Trajectory/Nexto/Necto), and save as .rcreplay.gz.',
+    details:
+      'Replay to RCS Replay Importer (UE3 Bitstream Decoder · 30Hz->120Hz SLERP/Hermite · Track Delta): Parses raw .replay files into 120Hz RocketCompanion tracks, preserves native UE3 telemetry in Track Delta, and exports RCS Replay Packs.',
+    icon: FileArchive,
+    iconColor: 'text-cyan-400',
+  },
 ];
 
 /**
@@ -137,15 +159,16 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
  */
 export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> = (rawProps) => {
   const {
-  isLight = false,
-  onBack,
-  activeBenchId = null,
-  onEnterBench,
-  onLaunchIsolationTab,
-  onNavigateExpMultiBots,
-  onNavigateExpBotpack9700488,
-  sizing: propSizing,
-} = useLayer3DevSandboxesStoreBinding(rawProps);
+    isLight = false,
+    onBack,
+    activeBenchId = null,
+    onEnterBench,
+    onLaunchIsolationTab,
+    onNavigateExpMultiBots,
+    onNavigateExpBotpack9700488,
+    onNavigateTemPackConverter,
+    sizing: propSizing,
+  } = useLayer3DevSandboxesStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const storeSizing = useMenuLayoutStore(
@@ -167,7 +190,15 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
     tab: DevTestLabTab,
     sourceEl?: HTMLElement | null
   ) => {
-    if (tab === 'exp-multi-bots' && onNavigateExpMultiBots) {
+    if (tab === 'tem-pack-converter') {
+      if (onNavigateTemPackConverter) {
+        onNavigateTemPackConverter();
+      } else if (onEnterBench) {
+        onEnterBench(tab);
+      }
+      return;
+    }
+    if (tab === 'exp-multi-bots' && !sourceEl && onNavigateExpMultiBots) {
       onNavigateExpMultiBots();
       return;
     }
@@ -187,7 +218,9 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
         ? EXPERIMENTAL_BOT_PACK_PRESET
         : tab === 'exp-multi-bots'
           ? EXPERIMENTAL_MULTI_BOTS_PRESET
-          : SUBSYSTEM_ISOLATION_LAB_PRESET;
+          : tab === 'replay-to-rcs-importer'
+            ? REPLAY_TO_RCS_IMPORTER_PRESET
+            : SUBSYSTEM_ISOLATION_LAB_PRESET;
 
     floatingStore.setOpacity(70);
     const snap = floatingStore.getSnapshot();

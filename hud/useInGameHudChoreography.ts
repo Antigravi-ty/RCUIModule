@@ -12,6 +12,7 @@ import {
   type TakeoverTeamSide,
 } from './TakeoverCountdownHUD';
 import { useReplayViewerStore } from '../stores/replayViewerStore';
+import { useReplayToRcsImporterStore } from '../stores/replayToRcsImporterStore';
 import { useHudStore } from '../stores/hudStore';
 import { useExperimentalMultiBotsStore } from '../stores/experimentalMultiBotsStore';
 import type { HudTransientChannel } from '../stores/hudTransientTypes';
@@ -285,10 +286,20 @@ export function useReplayPovSlotHotkeys(params: {
 
   const handleSelectPovSlot = useCallback(
     (slotKey: 1 | 2 | 3 | 4 | 5 | 6 | null) => {
+      const impState = useReplayToRcsImporterStore.getState();
+      const isImpActive =
+        impState.viewerState !== 'idle' &&
+        impState.totalFrames > 0 &&
+        Boolean(impState.loadedFileName);
+
       if (slotKey === null) {
         hudChannel.setRoster({ focusedSlotKey: null });
         if (isReplayViewerActive) {
-          useReplayViewerStore.getState().runtimeHandlers.onSelectPovSlot?.(null);
+          if (isImpActive) {
+            impState.runtimeHandlers.onSelectPovSlot?.(null);
+          } else {
+            useReplayViewerStore.getState().runtimeHandlers.onSelectPovSlot?.(null);
+          }
         }
         const curHud = useHudStore.getState();
         if (curHud.onReplaySelectPovCar) {
@@ -314,7 +325,11 @@ export function useReplayPovSlotHotkeys(params: {
 
       if (isReplayViewerActive) {
         hudChannel.setRoster({ focusedSlotKey: slotKey });
-        useReplayViewerStore.getState().runtimeHandlers.onSelectPovSlot?.(slotKey);
+        if (isImpActive) {
+          impState.runtimeHandlers.onSelectPovSlot?.(slotKey);
+        } else {
+          useReplayViewerStore.getState().runtimeHandlers.onSelectPovSlot?.(slotKey);
+        }
         return;
       }
 

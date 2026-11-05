@@ -328,8 +328,10 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
             <div className="flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
               <span className="text-[10px] font-medium">Hitbox Wire</span>
               <ToggleSwitch
-                checked={gameplay.showCarHitbox}
-                onChange={(checked) => updateGameplay({ showCarHitbox: checked })}
+                checked={Boolean(gameplay.showAllCarHitboxes || gameplay.showCarHitbox)}
+                onChange={(checked) =>
+                  updateGameplay({ showCarHitbox: checked, showAllCarHitboxes: checked })
+                }
                 isLight={isLight}
               />
             </div>

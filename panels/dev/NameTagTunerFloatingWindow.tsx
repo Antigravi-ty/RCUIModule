@@ -8,6 +8,7 @@ import {
 } from './name-tag-tuner/NameTagCalibrationSection';
 import { NameTagPillGeometryAndPreviewSection } from './name-tag-tuner/NameTagPillGeometryAndPreviewSection';
 import { NameTagBoostBorderSection } from './name-tag-tuner/NameTagBoostBorderSection';
+import { NameTagOffscreenAndAerialAlertSection } from './name-tag-tuner/NameTagOffscreenAndAerialAlertSection';
 import { NameTagColorsAndNamesSection } from './name-tag-tuner/NameTagColorsAndNamesSection';
 
 export interface NameTagTunerFloatingWindowProps {
@@ -58,6 +59,7 @@ export const NameTagTunerFloatingWindow: React.FC<NameTagTunerFloatingWindowProp
       <NameTagCalibrationSection isLight={isLight} />
       <NameTagPillGeometryAndPreviewSection isLight={isLight} />
       <NameTagBoostBorderSection isLight={isLight} />
+      <NameTagOffscreenAndAerialAlertSection isLight={isLight} />
 
       <NameTagColorsAndNamesSection
         config={config}

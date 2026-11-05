@@ -7,7 +7,6 @@ import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
 import { SliderControl } from '../primitives/SliderControl';
 import { ToggleSwitch } from '../primitives/ToggleSwitch';
 import { TeamRosterCard, TeamRosterSlotConfig, BotPolicyId, CarColorSwatch, DEFAULT_BLUE_TEAM_SLOTS, DEFAULT_ORANGE_TEAM_SLOTS } from '../compounds/TeamRosterCard';
-import { BOTPACK_9700488_POLICY_METAS } from '../stores/experimentalMultiBotsRosterUtils';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 
 export interface Layer3ExpMultiBotsStateOverride {
@@ -67,7 +66,6 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
   orangeSlots: controlledOrangeSlots,
   colorPalette,
   activeCameraCarIndex: controlledActiveCameraCarIndex,
-  activeBotpackShowcaseModel = null,
   playerParticipation: controlledPlayerParticipation,
   matchDurationSec: controlledMatchDurationSec,
   simSpeedValue: controlledSimSpeedValue,
@@ -77,7 +75,6 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
   nectoLoaded = true,
   lastTotalInferenceMs = 0,
   isInExpMode = false,
-  onSelectBotpackShowcaseModel,
   onSetPlayerParticipation,
   onApplyFormatPreset,
   onAddBot,
@@ -95,7 +92,7 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
   onEnterGame,
   onBack = () => {},
   className = '',
-} = useLayer3ExpMultiBotsStoreBinding({ ...rawProps.stateOverride, ...rawProps });
+} = useLayer3ExpMultiBotsStoreBinding({ ...rawProps.stateOverride, ...rawProps }, 'multi-bots');
   const [internalBlueSlots, setInternalBlueSlots] = useState<TeamRosterSlotConfig[]>(defaultBlueSlots);
   const [internalOrangeSlots, setInternalOrangeSlots] = useState<TeamRosterSlotConfig[]>(defaultOrangeSlots);
   const [internalActiveCameraCarIndex, setInternalActiveCameraCarIndex] = useState<number>(0);
@@ -132,6 +129,15 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
       onApplyFormatPreset(preset);
       return;
     }
+    const asymMatch = preset.match(/^(\d)v(\d)\s+Asym$/);
+    if (asymMatch) {
+      const bCount = Number(asymMatch[1]);
+      const oCount = Number(asymMatch[2]);
+      setInternalBlueSlots(makeSlots(0, bCount, playerParticipation === 'blue'));
+      setInternalOrangeSlots(makeSlots(1, oCount, playerParticipation === 'orange'));
+      setInternalActiveCameraCarIndex(0);
+      return;
+    }
     const hasPlayer = preset.includes('+P');
     const size = preset.startsWith('1v1') ? 1 : preset.startsWith('2v2') ? 2 : 3;
     const nextParticipation = hasPlayer
@@ -164,6 +170,7 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
       onAddBot(team, botType);
       return;
     }
+    if (totalCars >= 6) return;
     const newSlot: TeamRosterSlotConfig = {
       id: `slot-${team}-${Date.now()}`,
       team,
@@ -172,9 +179,9 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
       colorSlot: team === 0 ? 'sky' : 'amber',
     };
     if (team === 0) {
-      setInternalBlueSlots((prev) => (prev.length < 3 ? [...prev, newSlot] : prev));
+      setInternalBlueSlots((prev) => (prev.length < 5 ? [...prev, newSlot] : prev));
     } else {
-      setInternalOrangeSlots((prev) => (prev.length < 3 ? [...prev, newSlot] : prev));
+      setInternalOrangeSlots((prev) => (prev.length < 5 ? [...prev, newSlot] : prev));
     }
   };
 
@@ -227,7 +234,7 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
     >
       <PanelHeader
         isLight={isLight}
-        title="EXPERIMENTAL MULTI-BOTS (UP TO 3V3)"
+        title="EXPERIMENTAL MULTIPLE BOTS (ASYMMETRIC & UP TO 6 CARS)"
         onBack={onBack}
         onRightAction={handleEnterOrRestart}
         rightActionLabel={isInExpMode ? 'Apply & Restart ↗' : 'Enter Game ↗'}
@@ -245,55 +252,15 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
           <span className={isLight ? 'text-neutral-600' : 'text-neutral-400'}>
             {isInExpMode
               ? `Active (${blueSlots.length}v${orangeSlots.length}) · Infer: ${lastTotalInferenceMs.toFixed(2)} ms`
-              : `Active Cars: ${totalCars}/6`}
+              : `Active Format: ${blueSlots.length}v${orangeSlots.length} (${totalCars}/6 Cars)`}
           </span>
         </div>
 
-        {/* experimental bot pack #9700488 — 8 New Models Max-Format Spectate Showcase */}
+        {/* Player Participation & Symmetric / Asymmetric Format Presets */}
         <Card isLight={isLight} variant="outlined" className="p-3 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold tracking-wider text-emerald-500">
-              Experimental Bot Pack #9700488 — 8 Models Spectate Showcase
-            </span>
-            <span className={`text-[10px] font-mono ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
-              Select any model to configure max-format all-bots spectate (3v3 / 2v2 / 1v1)
-            </span>
-          </div>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-            {BOTPACK_9700488_POLICY_METAS.map((m) => {
-              const isSelected = activeBotpackShowcaseModel === m.id;
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => onSelectBotpackShowcaseModel?.(m.id)}
-                  onMouseEnter={() =>
-                    setHoveredDesc(
-                      `Configure ${m.label} (${m.formatBadge}) all-bots spectate match where every car runs ${m.label}.`
-                    )
-                  }
-                  onMouseLeave={() => setHoveredDesc(null)}
-                  className={`py-1.5 px-2 rounded-lg border text-[10px] font-mono font-bold flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400 shadow-xs'
-                      : isLight
-                        ? 'bg-white hover:bg-emerald-500/10 border-neutral-200 text-neutral-700'
-                        : 'bg-neutral-900 hover:bg-emerald-500/15 border-neutral-800 text-neutral-300'
-                  }`}
-                >
-                  <span className="truncate max-w-full">{m.shortLabel}</span>
-                  <span className="text-[9px] opacity-75">{m.formatBadge}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Card>
-
-        {/* Player Participation & Format Presets */}
-        <Card isLight={isLight} variant="outlined" className="p-3 flex flex-col gap-2.5">
-          <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-bold uppercase tracking-wider">
-              Player Participation & Format Presets
+              Player Participation &amp; Symmetric / Asymmetric Presets
             </span>
             <SegmentedSwitch
               size="sm"
@@ -313,7 +280,7 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
                 key={preset}
                 type="button"
                 onClick={() => applyFormatPreset(preset)}
-                onMouseEnter={() => setHoveredDesc(`Quickly configure ${preset} roster layout.`)}
+                onMouseEnter={() => setHoveredDesc(`Quickly configure ${preset} symmetric roster layout.`)}
                 onMouseLeave={() => setHoveredDesc(null)}
                 className={`py-1.5 px-2 rounded-lg border text-[10px] font-mono font-bold transition-colors cursor-pointer ${
                   isLight
@@ -325,13 +292,49 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
               </button>
             ))}
           </div>
+          <div className="grid grid-cols-6 gap-1.5">
+            {(
+              [
+                { preset: '3v2 Asym', blue: 3, orange: 2 },
+                { preset: '2v3 Asym', blue: 2, orange: 3 },
+                { preset: '3v1 Asym', blue: 3, orange: 1 },
+                { preset: '2v1 Asym', blue: 2, orange: 1 },
+                { preset: '4v2 Asym', blue: 4, orange: 2 },
+                { preset: '4v1 Asym', blue: 4, orange: 1 },
+              ] as const
+            ).map((item) => {
+              const isSelected = blueSlots.length === item.blue && orangeSlots.length === item.orange;
+              return (
+                <button
+                  key={item.preset}
+                  type="button"
+                  onClick={() => applyFormatPreset(item.preset)}
+                  onMouseEnter={() =>
+                    setHoveredDesc(
+                      `Configure ${item.blue}v${item.orange} asymmetric matchup (keeps current Player Participation: ${playerParticipation}).`
+                    )
+                  }
+                  onMouseLeave={() => setHoveredDesc(null)}
+                  className={`py-1.5 px-2 rounded-lg border text-[10px] font-mono font-bold transition-colors cursor-pointer ${
+                    isSelected
+                      ? 'bg-sky-500/20 border-sky-400 text-sky-400'
+                      : isLight
+                        ? 'bg-white hover:bg-sky-500/10 border-neutral-200 text-neutral-700'
+                        : 'bg-neutral-900 hover:bg-sky-500/15 border-neutral-800 text-neutral-300'
+                  }`}
+                >
+                  {item.preset}
+                </button>
+              );
+            })}
+          </div>
         </Card>
 
         {/* Blue & Orange Team Roster Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
           <div
             onMouseEnter={() =>
-              setHoveredDesc('Blue Team Roster: Add up to 3 slots, switch Nexto/Necto/Heuristic policies, or select active POV.')
+              setHoveredDesc('Blue Team Roster: Add up to 5 slots (6 cars total across both teams), switch Nexto/Necto/Heuristic policies, or select active POV.')
             }
             onMouseLeave={() => setHoveredDesc(null)}
           >
@@ -341,6 +344,9 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
               globalOffset={0}
               activeCameraCarIndex={activeCameraCarIndex}
               totalCars={totalCars}
+              maxTeamSlots={5}
+              maxTotalCars={6}
+              allowBotpackPolicies={false}
               colorPalette={colorPalette}
               onAddBot={handleAddBot}
               onSelectCameraCar={onSelectCameraCar ?? setInternalActiveCameraCarIndex}
@@ -353,7 +359,7 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
 
           <div
             onMouseEnter={() =>
-              setHoveredDesc('Orange Team Roster: Add up to 3 slots, switch Nexto/Necto/Heuristic policies, or select active POV.')
+              setHoveredDesc('Orange Team Roster: Add up to 5 slots (6 cars total across both teams), switch Nexto/Necto/Heuristic policies, or select active POV.')
             }
             onMouseLeave={() => setHoveredDesc(null)}
           >
@@ -363,6 +369,9 @@ export const Layer3ExpMultiBotsRecipe: React.FC<Layer3ExpMultiBotsRecipeProps> =
               globalOffset={blueSlots.length}
               activeCameraCarIndex={activeCameraCarIndex}
               totalCars={totalCars}
+              maxTeamSlots={5}
+              maxTotalCars={6}
+              allowBotpackPolicies={false}
               colorPalette={colorPalette}
               onAddBot={handleAddBot}
               onSelectCameraCar={onSelectCameraCar ?? setInternalActiveCameraCarIndex}

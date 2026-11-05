@@ -58,7 +58,9 @@ export const SettingDeveloperStatusRow: React.FC<SettingDeveloperStatusRowProps>
 }) => {
   const store = useSettingActionRowStore();
   const resolvedAccent: DevStatusAccentColor = propAccentColor ?? store.devStatusAccentColor;
-  const resolvedInteractive = propInteractive ?? store.devStatusInteractiveToggle;
+  const resolvedInteractive = Boolean(
+    developerMode && (propInteractive ?? store.devStatusInteractiveToggle) && onDeveloperModeChange
+  );
   const resolvedBordered = bordered ?? (store.bordered || store.advancedBordered);
 
   const activeIconColorClass =
@@ -93,14 +95,14 @@ export const SettingDeveloperStatusRow: React.FC<SettingDeveloperStatusRowProps>
   const resolvedDesc =
     description ??
     (developerMode
-      ? 'Developer mode is active. Developer Settings tab and override tools are unlocked.'
-      : 'Developer mode is disabled.');
+      ? 'Developer mode is active via URL query parameter. Developer Settings tab and override tools are unlocked.'
+      : 'Developer mode is disabled. Use the ?dev=1 URL query parameter to activate.');
 
   const resolvedHover =
     hoverDescription ??
     (developerMode
       ? 'Developer Settings is Active. The Developer tab in Settings and low-level parameter overrides are unlocked.'
-      : 'Developer Settings is currently Disabled.');
+      : 'Developer Settings is Disabled and locked in standard sessions. Append ?dev=1 to the URL query to activate.');
 
   const handleTrigger = () => {
     if (resolvedInteractive && onDeveloperModeChange) {
@@ -117,7 +119,7 @@ export const SettingDeveloperStatusRow: React.FC<SettingDeveloperStatusRowProps>
       description={resolvedDesc}
       bordered={resolvedBordered}
       showDescription={showDescription}
-      onAction={resolvedInteractive && onDeveloperModeChange ? handleTrigger : undefined}
+      onAction={resolvedInteractive ? handleTrigger : undefined}
       hoverDescription={resolvedHover}
       onHover={onHover}
       onLeave={onLeave}
@@ -125,10 +127,11 @@ export const SettingDeveloperStatusRow: React.FC<SettingDeveloperStatusRowProps>
       className={className}
       rightSlot={
         <span
-          role={resolvedInteractive && onDeveloperModeChange ? 'button' : undefined}
-          tabIndex={resolvedInteractive && onDeveloperModeChange ? 0 : undefined}
+          role={resolvedInteractive ? 'button' : 'status'}
+          aria-disabled={!developerMode ? true : undefined}
+          tabIndex={resolvedInteractive ? 0 : undefined}
           onClick={(e) => {
-            if (resolvedInteractive && onDeveloperModeChange) {
+            if (resolvedInteractive) {
               e.stopPropagation();
               handleTrigger();
             }
@@ -136,7 +139,6 @@ export const SettingDeveloperStatusRow: React.FC<SettingDeveloperStatusRowProps>
           onKeyDown={(e) => {
             if (
               resolvedInteractive &&
-              onDeveloperModeChange &&
               (e.key === 'Enter' || e.key === ' ')
             ) {
               e.preventDefault();
@@ -153,12 +155,12 @@ export const SettingDeveloperStatusRow: React.FC<SettingDeveloperStatusRowProps>
             fontSize: `${Math.max(10, store.buttonFontSize - 1)}px`,
           }}
           className={`inline-flex items-center gap-1.5 font-mono font-semibold border tracking-wide transition-colors select-none shrink-0 ${
-            resolvedInteractive && onDeveloperModeChange ? 'cursor-pointer active:scale-95' : ''
+            resolvedInteractive ? 'cursor-pointer active:scale-95' : 'cursor-default'
           } ${badgeClass}`}
           title={
-            resolvedInteractive
-              ? 'Click to toggle Developer Mode state (Active / Disabled)'
-              : undefined
+            developerMode
+              ? 'Developer Mode is Active'
+              : 'Developer Mode is Disabled (requires ?dev=1 URL query parameter)'
           }
         >
           <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dotClass}`} />

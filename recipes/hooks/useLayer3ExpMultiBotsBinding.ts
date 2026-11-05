@@ -24,7 +24,8 @@ const EXP_SWATCH_PALETTE: CarColorSwatch[] = EXP_CAR_COLOR_PALETTE.map((c) => ({
 }));
 
 export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
-  rawProps: TProps
+  rawProps: TProps,
+  targetSubMode: 'multi-bots' | 'botpack' = 'multi-bots'
 ): TProps {
   const props = rawProps as Record<string, any>;
   const {
@@ -32,6 +33,7 @@ export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
     blueSlots: storeBlueSlots,
     orangeSlots: storeOrangeSlots,
     activeBotpackShowcaseModel,
+    savedBotpackModel,
     activeCameraCarIndex,
     matchDurationSec,
     speedMultiplier,
@@ -40,12 +42,15 @@ export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
     nextoLoaded,
     nectoLoaded,
     lastTotalInferenceMs,
+    activateMultiBotsSubMode,
+    activateBotpackSubMode,
     setPlayerParticipation,
     addBotToTeam,
     removeSlotFromTeam,
     setSlotBotType,
     setSlotColor,
     applyPresetRoster,
+    applyAsymmetricPresetRoster,
     applyBotpack9700488Showcase,
     setActiveCameraCarIndex,
     setMatchDurationSec,
@@ -58,8 +63,14 @@ export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
   } = useExperimentalMultiBotsStore();
 
   useEffect(() => {
+    const st = useExperimentalMultiBotsStore.getState();
+    if (targetSubMode === 'multi-bots' && st.activeSubMode !== 'multi-bots') {
+      st.activateMultiBotsSubMode(false);
+    } else if (targetSubMode === 'botpack' && st.activeSubMode !== 'botpack') {
+      st.activateBotpackSubMode(undefined, false);
+    }
     preloadEngines?.();
-  }, [preloadEngines]);
+  }, [targetSubMode, preloadEngines]);
 
   const goBack = useAppStore((s) => s.goBack);
   const matchMode = useAppStore((s) => s.matchMode);
@@ -99,7 +110,7 @@ export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
   };
 
   const handleApplyFormatPreset = (preset: string) => {
-    const map: Record<
+    const symMap: Record<
       string,
       | '1v1-player'
       | '2v2-player'
@@ -115,9 +126,22 @@ export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
       '3v3 +P': '3v3-player',
       '3v3 Bot': '3v3-bots',
     };
-    const key = map[preset];
-    if (key) {
-      applyPresetRoster(key);
+    const symKey = symMap[preset];
+    if (symKey) {
+      applyPresetRoster(symKey);
+      return;
+    }
+    const asymMap: Record<string, [number, number]> = {
+      '3v2 Asym': [3, 2],
+      '2v3 Asym': [2, 3],
+      '3v1 Asym': [3, 1],
+      '2v1 Asym': [2, 1],
+      '4v2 Asym': [4, 2],
+      '4v1 Asym': [4, 1],
+    };
+    const asym = asymMap[preset];
+    if (asym) {
+      applyAsymmetricPresetRoster(asym[0], asym[1]);
     }
   };
 
@@ -126,10 +150,13 @@ export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
       props.onEnterGame();
       return;
     }
+    if (targetSubMode === 'botpack') {
+      activateBotpackSubMode(undefined, false);
+    } else {
+      activateMultiBotsSubMode(false);
+    }
     floatingStore.setOpacity(70);
-    const isBotpackShowcase = Boolean(
-      useExperimentalMultiBotsStore.getState().activeBotpackShowcaseModel
-    );
+    const isBotpackShowcase = targetSubMode === 'botpack';
     const targetPreset = isBotpackShowcase
       ? EXPERIMENTAL_BOT_PACK_PRESET
       : EXPERIMENTAL_MULTI_BOTS_PRESET;
@@ -174,7 +201,9 @@ export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
       props.lastTotalInferenceMs ?? lastTotalInferenceMs,
     isInExpMode: props.isInExpMode ?? isInExpMode,
     activeBotpackShowcaseModel:
-      props.activeBotpackShowcaseModel ?? activeBotpackShowcaseModel,
+      props.activeBotpackShowcaseModel ??
+      activeBotpackShowcaseModel ??
+      (targetSubMode === 'botpack' ? savedBotpackModel : null),
     onSelectBotpackShowcaseModel:
       props.onSelectBotpackShowcaseModel ??
       ((botType: BotPolicyId) => applyBotpack9700488Showcase(botType, true)),

@@ -6,6 +6,7 @@ import {
   Sliders,
   ArrowRight,
   Crosshair,
+  Box,
   SmilePlus,
 } from 'lucide-react';
 import { BounceSolidSvg } from '../../../primitives/packagedSvgIcons';
@@ -17,7 +18,7 @@ import { useAppStore } from '../../../stores/appStore';
 import {
   useSettingsPacingStore,
   type ExperiencePriorityOption,
-} from '../settingsPacingStore';
+} from '../../../stores/settingsPacingStore';
 
 export type ClockPacingPriority = ExperiencePriorityOption;
 export type BallOpacityMode = '70' | '100' | 'custom' | 'solid' | 'ghost' | 'hidden';
@@ -26,6 +27,7 @@ export interface GameplayConfig {
   goalRestart: boolean;
   unlimitedBoost: boolean;
   showCarHitbox: boolean;
+  showAllCarHitboxes?: boolean;
   ballCamIndicator: boolean;
 }
 
@@ -33,6 +35,7 @@ export const DEFAULT_GAMEPLAY_CONFIG: GameplayConfig = {
   goalRestart: true,
   unlimitedBoost: true,
   showCarHitbox: false,
+  showAllCarHitboxes: false,
   ballCamIndicator: true,
 };
 
@@ -71,9 +74,17 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
   };
 
   const ballCamIndicator = resolvedGameplayConfig.ballCamIndicator;
+  const showCarHitbox = Boolean(resolvedGameplayConfig.showCarHitbox);
 
   const handleBallCamIndicatorChange = (next: boolean) => {
     const patch: Partial<GameplayConfig> = { ballCamIndicator: next };
+    const nextConfig: GameplayConfig = { ...resolvedGameplayConfig, ...patch };
+    setInternalConfig(nextConfig);
+    updateStoreGameplay(patch);
+  };
+
+  const handleShowCarHitboxChange = (next: boolean) => {
+    const patch: Partial<GameplayConfig> = { showCarHitbox: next };
     const nextConfig: GameplayConfig = { ...resolvedGameplayConfig, ...patch };
     setInternalConfig(nextConfig);
     updateStoreGameplay(patch);
@@ -225,6 +236,20 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
         onChange={handleTrajectoryEnabledChange}
         extraRightSlot={trajectoryRowLayout !== 'stacked' ? configureTrajectoryButton : undefined}
         bottomSlot={trajectoryRowLayout === 'stacked' ? configureTrajectoryButton : undefined}
+        onHover={(desc) => desc && onHover(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      {/* 5b. Show POV Hitbox */}
+      <SettingToggleRow
+        icon={Box}
+        iconName="box"
+        title="Show POV Hitbox"
+        description="Render 3D OBB collision wireframe around the active POV vehicle"
+        hoverDescription="Draws accurate 3D oriented bounding box (OBB) collision wireframe around the active POV vehicle in real time."
+        checked={showCarHitbox}
+        onChange={handleShowCarHitboxChange}
         onHover={(desc) => desc && onHover(desc)}
         onLeave={onLeave}
         isLight={isLight}

@@ -22,9 +22,8 @@ export interface ExperimentalMultiBotsSlotRowProps {
   globalCarIdx: number;
   activeCameraCarIndex: number;
   totalCars: number;
+  allowBotpackPolicies?: boolean;
   isLight: boolean;
-  subPanelBg: string;
-  mutedText: string;
   onSelectCameraCar: (carIdx: number) => void;
   onSetSlotBotType: (team: 0 | 1, slotIndex: number, botType: ExpBotPolicyId) => void;
   onRemoveSlot: (team: 0 | 1, slotIndex: number) => void;
@@ -38,9 +37,8 @@ export const ExperimentalMultiBotsSlotRow: React.FC<ExperimentalMultiBotsSlotRow
   globalCarIdx,
   activeCameraCarIndex,
   totalCars,
+  allowBotpackPolicies = false,
   isLight,
-  subPanelBg,
-  mutedText,
   onSelectCameraCar,
   onSetSlotBotType,
   onRemoveSlot,
@@ -51,6 +49,10 @@ export const ExperimentalMultiBotsSlotRow: React.FC<ExperimentalMultiBotsSlotRow
   const swatch = getExpColorSwatch(slot.colorSlot);
   const isCamActive = activeCameraCarIndex === globalCarIdx;
   const policyMeta = getExpBotPolicyMeta(slot.botType);
+  const subPanelBg = isLight
+    ? 'bg-white border-neutral-200'
+    : 'bg-neutral-950/60 border-neutral-800/80';
+  const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
   return (
     <div
@@ -102,20 +104,30 @@ export const ExperimentalMultiBotsSlotRow: React.FC<ExperimentalMultiBotsSlotRow
                     : 'bg-orange-500/20 border-orange-400/70 text-orange-300'
                 }`}
               >
-                <optgroup label="Botpack #9700488 (8 New)">
-                  {BOTPACK_9700488_POLICY_METAS.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.label} ({m.formatBadge})
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Core Policies">
-                  {LEGACY_POLICY_METAS.map((m) => (
+                {allowBotpackPolicies ? (
+                  <>
+                    <optgroup label="Botpack #9700488 (8 New)">
+                      {BOTPACK_9700488_POLICY_METAS.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label} ({m.formatBadge})
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Core Policies">
+                      {LEGACY_POLICY_METAS.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </>
+                ) : (
+                  LEGACY_POLICY_METAS.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.label}
                     </option>
-                  ))}
-                </optgroup>
+                  ))
+                )}
               </select>
               <span
                 className={`px-1 py-0.5 rounded text-[9px] font-mono border shrink-0 ${
@@ -205,10 +217,8 @@ export interface ExperimentalMultiBotsTeamRosterCardProps {
   globalOffset: number;
   activeCameraCarIndex: number;
   totalCars: number;
+  allowBotpackPolicies?: boolean;
   isLight: boolean;
-  cardBg: string;
-  subPanelBg: string;
-  mutedText: string;
   onAddBot: (team: 0 | 1, botType: ExpBotPolicyId) => void;
   onSelectCameraCar: (carIdx: number) => void;
   onSetSlotBotType: (team: 0 | 1, slotIndex: number, botType: ExpBotPolicyId) => void;
@@ -223,10 +233,8 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
   globalOffset,
   activeCameraCarIndex,
   totalCars,
+  allowBotpackPolicies = false,
   isLight,
-  cardBg,
-  subPanelBg,
-  mutedText,
   onAddBot,
   onSelectCameraCar,
   onSetSlotBotType,
@@ -239,6 +247,13 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
   const teamShort = isBlue ? 'Blue' : 'Orange';
   const dotClass = isBlue ? 'bg-sky-400' : 'bg-orange-400';
   const titleColor = isBlue ? 'text-sky-400' : 'text-orange-400';
+  const cardBg = isLight
+    ? 'bg-neutral-100/90 border-neutral-200 text-neutral-900'
+    : 'bg-neutral-900/75 border-neutral-800 text-neutral-100';
+  const subPanelBg = isLight
+    ? 'bg-white border-neutral-200'
+    : 'bg-neutral-950/60 border-neutral-800/80';
+  const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
   const addBtnActiveClass = isBlue
     ? 'bg-sky-500/20 hover:bg-sky-500/30 border-sky-500/40 text-sky-300 cursor-pointer'
     : 'bg-orange-500/20 hover:bg-orange-500/30 border-orange-500/40 text-orange-300 cursor-pointer';
@@ -286,9 +301,8 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
               globalCarIdx={globalOffset + idx}
               activeCameraCarIndex={activeCameraCarIndex}
               totalCars={totalCars}
+              allowBotpackPolicies={allowBotpackPolicies}
               isLight={isLight}
-              subPanelBg={subPanelBg}
-              mutedText={mutedText}
               onSelectCameraCar={onSelectCameraCar}
               onSetSlotBotType={onSetSlotBotType}
               onRemoveSlot={onRemoveSlot}

@@ -37,12 +37,15 @@ export type ActiveMenuRoute =
   | 'advanced-audio'
   | 'event-trigger-rules'
   | 'exp-multi-bots'
+  | 'exp-botpack-9700488'
   | 'dev-sandboxes'
   | 'dev-active-tuners'
   | 'dev-calibrated-presets'
   | 'dev-self-test'
   | 'dev-under-development'
-  | 'dev-signaling-lab';
+  | 'dev-signaling-lab'
+  | 'dev-remote-profile'
+  | 'dev-tem-pack-converter';
 
 export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> = {
   'main-menu': null,
@@ -67,12 +70,15 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'advanced-audio': 'dev-active-tuners',
   'event-trigger-rules': 'dev-active-tuners',
   'exp-multi-bots': 'dev-sandboxes',
+  'exp-botpack-9700488': 'dev-sandboxes',
+  'dev-tem-pack-converter': 'dev-sandboxes',
   'dev-sandboxes': 'settings',
   'dev-active-tuners': 'settings',
   'dev-calibrated-presets': 'settings',
   'dev-self-test': 'settings',
   'dev-under-development': 'settings',
   'dev-signaling-lab': 'dev-self-test',
+  'dev-remote-profile': 'settings',
 };
 
 export type ContainerTransitionMode = 'fluid-morph' | 'sequenced-step';
@@ -148,12 +154,19 @@ export interface AudioConfig {
   midGain: number;
   trebleGain: number;
   hrtfEnabled: boolean;
+  dynamicRangeProfile?: 'compressed' | 'dynamic' | 'monitor';
+  spatialPanningModel?: 'equalpower' | 'HRTF';
+  distanceModel?: 'smoothstep' | 'inverse' | 'linear' | 'exponential';
+  audibilityFloor?: number;
+  arenaAcousticScale?: number;
+  farFieldHighShelfDb?: number;
 }
 
 export interface GameplayConfig {
   goalRestart: boolean;
   unlimitedBoost: boolean;
   showCarHitbox: boolean;
+  showAllCarHitboxes?: boolean;
   ballCamIndicator: boolean;
 }
 

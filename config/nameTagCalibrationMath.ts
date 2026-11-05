@@ -4,6 +4,7 @@ export type NameTagFontFamily = 'jetbrains-mono' | 'sf-mono' | 'archivo';
 export type NameTagFontWeight = 400 | 500 | 600 | 700;
 export type NameTagBoostBorderColorMode = 'team' | 'shared';
 export type NameTagBoostBorderAudience = 'teammates' | 'all' | 'none';
+export type NameTagOffscreenAudience = NameTagBoostBorderAudience;
 export type NameTagBoostIndicatorMode =
   | 'bottom-up-fill'
   | 'left-right-fill'
@@ -71,7 +72,26 @@ export interface NameTagConfig {
   boostBorderReplayAudience: NameTagBoostBorderAudience;
   ballOcclusionEnabled: boolean;
   ballOcclusionOpacity: number;
+  offscreenIndicatorEnabled: boolean;
+  offscreenAudience: NameTagBoostBorderAudience;
+  offscreenShowBoostCircle: boolean;
+  offscreenShowArrow: boolean;
+  offscreenCircleRadiusPx: number;
+  offscreenArrowLengthPx: number;
+  offscreenArrowBaseWidthPx: number;
+  offscreenArrowGapPx: number;
+  offscreenRoiAvoidHud: boolean;
+  offscreenRoiTopInsetPx: number;
+  offscreenRoiBottomInsetPx: number;
+  offscreenRoiSideInsetPx: number;
+  aerialClimbAlertEnabled: boolean;
+  aerialClimbAlertAudience: NameTagBoostBorderAudience;
+  aerialClimbMinVelZUu: number;
+  aerialClimbGlowColor: string;
+  aerialClimbGlowRadiusPx: number;
+  aerialClimbGlowOpacity: number;
   previewBoostAmounts: number[];
+  previewAerialClimbingFlags: boolean[];
   showOnLocalCar: boolean;
   previewNames: string[];
   carOverrides: NameTagCarOverride[];
@@ -83,6 +103,7 @@ export interface NameTagCarEntry {
   team: 0 | 1 | number;
   boostAmount?: number;
   showBoostBorder?: boolean | null;
+  isDoubleJumpedAndClimbing?: boolean | null;
 }
 
 export type NameTagCameraMode =
@@ -101,6 +122,8 @@ export interface NameTagCarTelemetry {
   visible: boolean;
   boostAmount?: number;
   boostBorderVisible?: boolean;
+  isOffscreen?: boolean;
+  isDoubleJumpedAndClimbing?: boolean;
   carWorldPos: [number, number, number];
   anchorWorldPos: [number, number, number];
   spriteWorldPos: [number, number, number];
@@ -206,28 +229,40 @@ export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   boostBorderEnabled: true,
   boostIndicatorMode: 'bottom-up-fill',
   boostFillOpacity: 1.0,
-  boostUnfilledBgOpacity: 0.3,
+  boostUnfilledBgOpacity: 0.1,
   boostShowHorizonLine: true,
   boostBorderColorMode: 'shared',
-  blueBoostBorderColor: '#000000',
-  orangeBoostBorderColor: '#000000',
-  sharedBoostBorderColor: '#000000',
+  blueBoostBorderColor: '#ffffff',
+  orangeBoostBorderColor: '#ffffff',
+  sharedBoostBorderColor: '#ffffff',
   showBoostBorderInMatchPlaying: true,
   boostBorderMatchAudience: 'teammates',
   showBoostBorderInGoalReplay: true,
   boostBorderReplayAudience: 'all',
   ballOcclusionEnabled: true,
   ballOcclusionOpacity: 1.0,
+  offscreenIndicatorEnabled: true,
+  offscreenAudience: 'teammates',
+  offscreenShowBoostCircle: true,
+  offscreenShowArrow: true,
+  offscreenCircleRadiusPx: 18,
+  offscreenArrowLengthPx: 12,
+  offscreenArrowBaseWidthPx: 14,
+  offscreenArrowGapPx: 4,
+  offscreenRoiAvoidHud: true,
+  offscreenRoiTopInsetPx: 72,
+  offscreenRoiBottomInsetPx: 88,
+  offscreenRoiSideInsetPx: 56,
+  aerialClimbAlertEnabled: true,
+  aerialClimbAlertAudience: 'all',
+  aerialClimbMinVelZUu: 120,
+  aerialClimbGlowColor: '#facc15',
+  aerialClimbGlowRadiusPx: 16,
+  aerialClimbGlowOpacity: 0.9,
   previewBoostAmounts: [100, 66, 33, 85, 50, 18],
+  previewAerialClimbingFlags: [false, true, false, true, false, false],
   showOnLocalCar: false,
-  previewNames: [
-    'AlphaStriker',
-    'Captain Ping',
-    'Necto',
-    'K',
-    'Necto(2)',
-    'LinLaoGay',
-  ],
+  previewNames: ['AlphaStriker', 'Captain Ping', 'Necto', 'K', 'Necto(2)', 'LinLaoGay'],
   carOverrides: Array.from({ length: 6 }, () => createDefaultCarOverride(50, 6)),
 };
 
@@ -236,14 +271,9 @@ export function formatNameTagDisplayText(
   maxChars = DEFAULT_NAME_TAG_CONFIG.maxChars
 ): string {
   const trimmedName = String(rawName || 'Player').trim() || 'Player';
-  const charLimit = Math.max(
-    4,
-    Math.min(32, Math.round(Number(maxChars) || DEFAULT_NAME_TAG_CONFIG.maxChars))
-  );
+  const charLimit = Math.max(4, Math.min(32, Math.round(Number(maxChars) || DEFAULT_NAME_TAG_CONFIG.maxChars)));
   const glyphs = Array.from(trimmedName);
-  if (glyphs.length <= charLimit) {
-    return trimmedName;
-  }
+  if (glyphs.length <= charLimit) return trimmedName;
   const suffixLength = Math.max(1, charLimit - 1);
   return `…${glyphs.slice(-suffixLength).join('')}`;
 }
@@ -264,43 +294,15 @@ export function estimateNameTagTextWidthPx(
 
 export function computeAdaptiveNameTagWidthPx(
   displayText: string,
-  config: Pick<
-    NameTagConfig,
-    'pillMinWidth' | 'pillMaxWidth' | 'fontSize' | 'fontFamily' | 'borderWidth' | 'maxChars'
-  >,
+  config: Pick<NameTagConfig, 'pillMinWidth' | 'pillMaxWidth' | 'fontSize' | 'fontFamily' | 'borderWidth' | 'maxChars'>,
   measuredTextWidthPx?: number,
   measuredMaxRefTextWidthPx?: number
 ): number {
-  const minWidth = Math.max(
-    40,
-    Math.min(
-      460,
-      Number.isFinite(Number(config.pillMinWidth))
-        ? Number(config.pillMinWidth)
-        : DEFAULT_NAME_TAG_CONFIG.pillMinWidth
-    )
-  );
-  const maxWidth = Math.max(
-    minWidth,
-    Math.min(
-      480,
-      Number.isFinite(Number(config.pillMaxWidth))
-        ? Number(config.pillMaxWidth)
-        : DEFAULT_NAME_TAG_CONFIG.pillMaxWidth
-    )
-  );
-  const fontSize = Math.max(
-    12,
-    Math.min(48, Number(config.fontSize) || DEFAULT_NAME_TAG_CONFIG.fontSize)
-  );
-  const borderWidth = Math.max(
-    0,
-    Math.min(12, Number(config.borderWidth) ?? DEFAULT_NAME_TAG_CONFIG.borderWidth)
-  );
-  const maxChars = Math.max(
-    4,
-    Math.min(32, Math.round(Number(config.maxChars) || DEFAULT_NAME_TAG_CONFIG.maxChars))
-  );
+  const minWidth = Math.max(40, Math.min(460, Number.isFinite(Number(config.pillMinWidth)) ? Number(config.pillMinWidth) : DEFAULT_NAME_TAG_CONFIG.pillMinWidth));
+  const maxWidth = Math.max(minWidth, Math.min(480, Number.isFinite(Number(config.pillMaxWidth)) ? Number(config.pillMaxWidth) : DEFAULT_NAME_TAG_CONFIG.pillMaxWidth));
+  const fontSize = Math.max(12, Math.min(48, Number(config.fontSize) || DEFAULT_NAME_TAG_CONFIG.fontSize));
+  const borderWidth = Math.max(0, Math.min(12, Number(config.borderWidth) ?? DEFAULT_NAME_TAG_CONFIG.borderWidth));
+  const maxChars = Math.max(4, Math.min(32, Math.round(Number(config.maxChars) || DEFAULT_NAME_TAG_CONFIG.maxChars)));
   const fontFamily = config.fontFamily || DEFAULT_NAME_TAG_CONFIG.fontFamily;
 
   const textWidth =
@@ -327,15 +329,7 @@ export function resolveNameTagCornerRadiusPx(
   pillHeightPx: number,
   cornerRadius: number
 ): number {
-  const rawRadius = Math.max(
-    0,
-    Math.min(
-      60,
-      Number.isFinite(Number(cornerRadius))
-        ? Number(cornerRadius)
-        : DEFAULT_NAME_TAG_CONFIG.cornerRadius
-    )
-  );
+  const rawRadius = Math.max(0, Math.min(60, Number.isFinite(Number(cornerRadius)) ? Number(cornerRadius) : DEFAULT_NAME_TAG_CONFIG.cornerRadius));
   return Math.max(0, Math.min(rawRadius, pillWidthPx * 0.5, pillHeightPx * 0.5));
 }
 
@@ -484,6 +478,7 @@ export function buildNameTagCalibrationExportPayload(
   const {
     previewNames: _pn,
     previewBoostAmounts: _pb,
+    previewAerialClimbingFlags: _pa,
     carOverrides: _co,
     enabled: _en,
     ...globalConfig
@@ -516,6 +511,8 @@ export function buildNameTagCalibrationExportPayload(
       visible: car.visible,
       boostAmount: car.boostAmount,
       boostBorderVisible: car.boostBorderVisible,
+      isOffscreen: car.isOffscreen ?? false,
+      isDoubleJumpedAndClimbing: car.isDoubleJumpedAndClimbing ?? false,
       override: config.carOverrides[car.carIndex] || null,
       telemetry: {
         carWorldPos: car.carWorldPos,
