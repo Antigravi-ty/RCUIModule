@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
 import { Minus, Plus } from 'lucide-react';
-import { SliderControl, type SliderColorScheme } from '../primitives/SliderControl';
+import { type SliderColorScheme } from '../primitives/SliderControl';
 import { SettingActionRow } from './SettingActionRow';
 import { useSettingActionRowStore, type SliderRowLayout } from '../stores/settingRowStore';
 import { getDecimalPlaces } from '../primitives/PrecisionDigitPicker';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:SettingSliderRow' as const;
 
 export interface SettingSliderRowProps {
-  /** Primary row title (alias: title) */
   label?: string;
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
@@ -22,22 +25,16 @@ export interface SettingSliderRowProps {
   step?: number;
   unit?: string;
   disabled?: boolean;
-  /** Override whether numeric input is editable (defaults to store's User vs Developer mode setting) */
   editable?: boolean;
-  /** Whether the surrounding panel is in Developer Mode (enables numeric input when sliderEditableInDevMode is true) */
   developerMode?: boolean;
-  /** Override layout ('inline' | 'stacked', defaults to useSettingActionRowStore.sliderLayout) */
   layout?: SliderRowLayout;
-  /** Override track width in px or CSS string (e.g. '100%') for 'inline' layout (defaults to useSettingActionRowStore.sliderTrackWidth) */
   trackWidth?: number | string;
-  /** Override whether - / + steppers are shown (defaults to useSettingActionRowStore.sliderShowStepper) */
   showStepper?: boolean;
   colorScheme?: SliderColorScheme;
   bordered?: boolean;
   showDescription?: boolean;
   paddingX?: number;
   paddingY?: number;
-  /** Optional inline action slot rendered before the slider track (e.g. Preview button) */
   actionSlot?: React.ReactNode;
   onChange: (val: number) => void;
   hoverDescription?: string;
@@ -49,15 +46,6 @@ export interface SettingSliderRowProps {
   className?: string;
 }
 
-/**
- * [L1/L3 Decoupled Primitive] SettingSliderRow
- * Unified Settings slider row sharing `useSettingActionRowStore` typography, padding, and hover highlight:
- * - Supports `layout="inline"` (Title + Progress Track + Value Readout/Input on a single row)
- *   and `layout="stacked"` (2-row layout).
- * - Mode-aware text input: in User Mode (`developerMode={false}`), defaults to read-only numeric display
- *   so users adjust via the slider track; in Developer Mode (`developerMode={true}`), allows direct text input.
- *   Both modes can also be toggled live in `SettingActionRowTuner`.
- */
 export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
   label,
   title,
@@ -185,16 +173,16 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
               }
             }}
             style={{ fontSize: `${valueFontSize}px` }}
-            className={`w-14 px-1.5 py-0.5 text-right font-mono rounded border outline-none transition-colors ${
+            className={`w-14 px-1.5 py-0.5 text-right font-mono ${UI_RADIUS.badge} border outline-none transition-colors ${
               isLight
-                ? 'bg-white text-neutral-800 border-neutral-300 focus:border-amber-500'
-                : 'bg-neutral-900 text-neutral-200 border-neutral-700 focus:border-amber-500'
+                ? `${UI_THEME.light.bgSurface} ${UI_THEME.light.textPrimary} ${UI_THEME.light.borderStrong} focus:border-amber-500`
+                : `${UI_THEME.dark.bgSurface} ${UI_THEME.dark.textPrimary} ${UI_THEME.dark.borderStrong} focus:border-amber-500`
             }`}
           />
           {unit && (
             <span
               style={{ fontSize: `${Math.max(10, valueFontSize - 1)}px` }}
-              className={`font-mono ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}
+              className={`font-mono ${isLight ? UI_THEME.light.textMuted : UI_THEME.dark.textSecondary}`}
             >
               {unit}
             </span>
@@ -206,7 +194,7 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
     return (
       <span
         style={{ fontSize: `${valueFontSize}px` }}
-        className={`font-mono font-semibold px-2 py-0.5 rounded border text-right shrink-0 min-w-[54px] transition-colors ${
+        className={`font-mono font-semibold px-2 py-0.5 ${UI_RADIUS.badge} border text-right shrink-0 min-w-[54px] transition-colors ${
           isLight
             ? 'bg-neutral-100/90 text-neutral-800 border-neutral-300/80'
             : 'bg-white/[0.06] text-neutral-200 border-white/[0.10]'
@@ -219,13 +207,17 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
   };
 
   const renderTrackControl = (widthStyle?: React.CSSProperties) => (
-    <div className="flex items-center gap-2" style={widthStyle}>
+    <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
+      className="flex items-center gap-2"
+      style={widthStyle}
+    >
       {resolvedShowStepper && (
         <button
           type="button"
           aria-label="Decrement"
           onClick={() => stepByDelta(-step)}
-          className={`inline-flex items-center justify-center h-6 w-6 rounded-md border transition-all active:scale-95 cursor-pointer shrink-0 ${
+          className={`inline-flex items-center justify-center h-6 w-6 ${UI_RADIUS.button} border transition-all active:scale-95 cursor-pointer shrink-0 ${
             isLight
               ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
               : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
@@ -254,16 +246,16 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
         className="relative flex items-center select-none touch-none w-full h-5 cursor-pointer"
       >
         <SliderPrimitive.Track
-          className={`relative grow rounded-full h-1.5 overflow-hidden transition-colors ${
+          className={`relative grow ${UI_RADIUS.full} h-1.5 overflow-hidden transition-colors ${
             isLight ? 'bg-neutral-200/90' : 'bg-neutral-800'
           }`}
         >
           <SliderPrimitive.Range
-            className={`absolute h-full rounded-full transition-colors ${resolveRangeColorClass()}`}
+            className={`absolute h-full ${UI_RADIUS.full} transition-colors ${resolveRangeColorClass()}`}
           />
         </SliderPrimitive.Track>
         <SliderPrimitive.Thumb
-          className={`block h-3.5 w-3.5 rounded-full border shadow-xs transition-transform hover:scale-110 focus:outline-none ${
+          className={`block h-3.5 w-3.5 ${UI_RADIUS.full} border shadow-xs transition-transform hover:scale-110 focus:outline-none ${
             isLight
               ? 'bg-white border-neutral-400'
               : 'bg-neutral-100 border-neutral-300'
@@ -276,7 +268,7 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
           type="button"
           aria-label="Increment"
           onClick={() => stepByDelta(step)}
-          className={`inline-flex items-center justify-center h-6 w-6 rounded-md border transition-all active:scale-95 cursor-pointer shrink-0 ${
+          className={`inline-flex items-center justify-center h-6 w-6 ${UI_RADIUS.button} border transition-all active:scale-95 cursor-pointer shrink-0 ${
             isLight
               ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
               : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'

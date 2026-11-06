@@ -6,6 +6,10 @@ import {
   type KickoffDuelModelId,
 } from '../stores/subsystemIsolationLabStore';
 import { PRECOMPUTED_MATRIX_RESULTS } from '../config/kickoffDuelConfig';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:KickoffDuelMatrixCard' as const;
 
 export interface KickoffDuelSlotCell {
   slotIndex: number;
@@ -79,6 +83,7 @@ export const KickoffDuelMatrixCard: React.FC<KickoffDuelMatrixCardProps> = React
       setKickoffDuelSlotIndex,
       runKickoffDuelBenchmark,
     } = useSubsystemIsolationLabStore();
+    const theme = isLight ? UI_THEME.light : UI_THEME.dark;
 
     const rows =
       controlledRows ??
@@ -108,21 +113,22 @@ export const KickoffDuelMatrixCard: React.FC<KickoffDuelMatrixCardProps> = React
     };
 
     const containerClass = cardBg
-      ? `p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`
-      : `p-3 rounded-xl border flex flex-col gap-2.5 select-none ${
+      ? `p-2.5 ${UI_RADIUS.lg} border flex flex-col gap-2 ${cardBg}`
+      : `p-3 ${UI_RADIUS.lg} border flex flex-col gap-2.5 select-none ${
           isLight
-            ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
-            : 'bg-neutral-900/70 border-neutral-800 text-neutral-200'
+            ? `bg-neutral-50 border-neutral-200 ${theme.textPrimary}`
+            : `bg-neutral-900/70 border-neutral-800 ${theme.textPrimary}`
         } ${className}`;
 
     const tableWrapClass = subPanelBg
-      ? `rounded-lg border overflow-x-auto max-h-52 overflow-y-auto ${subPanelBg}`
-      : `rounded-lg border overflow-x-auto max-h-52 overflow-y-auto ${
+      ? `${UI_RADIUS.md} border overflow-x-auto max-h-52 overflow-y-auto ${subPanelBg}`
+      : `${UI_RADIUS.md} border overflow-x-auto max-h-52 overflow-y-auto ${
           isLight ? 'bg-white border-neutral-200' : 'bg-neutral-950/70 border-neutral-800'
         }`;
 
     return (
       <div
+        data-alpha-id={ALPHA_COMPONENT_ID}
         data-ui-element="compound-kickoff-duel-matrix-card"
         className={containerClass}
       >

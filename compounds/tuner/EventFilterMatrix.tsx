@@ -1,5 +1,9 @@
 import React from 'react';
 import { CheckSquare, Square } from 'lucide-react';
+import { UI_RADIUS } from '../../tokens/radius';
+import { UI_THEME } from '../../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:EventFilterMatrix' as const;
 
 export interface EventCatalogEntry {
   hex: string;
@@ -36,11 +40,12 @@ export const EventFilterMatrix: React.FC<EventFilterMatrixProps> = React.memo(({
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="event-filter-matrix"
-      className={`p-3.5 rounded-xl border flex flex-col gap-2.5 select-none transition-colors ${
+      className={`p-3.5 ${UI_RADIUS.card} border flex flex-col gap-2.5 select-none transition-colors ${
         isLight
-          ? 'bg-neutral-50/90 border-neutral-200 text-neutral-800'
-          : 'bg-neutral-900/60 border-neutral-800 text-neutral-200'
+          ? `${UI_THEME.light.bgSurface} ${UI_THEME.light.border} ${UI_THEME.light.textPrimary}`
+          : `bg-neutral-900/60 ${UI_THEME.dark.border} ${UI_THEME.dark.textPrimary}`
       } ${className}`}
     >
       <div className="flex items-center justify-between gap-2">

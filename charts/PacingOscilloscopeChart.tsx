@@ -1,11 +1,16 @@
 import React, { useRef, useState, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Activity, Pause, Play, Zap, RotateCcw } from 'lucide-react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
 import { PACING_EVENT_FLAGS, type PacingSampleInput, PacingRingBuffer } from './pacingRingBuffer';
 
 import {
   drawPacingOscilloscopeCanvas,
   type OscilloscopeRenderCache,
 } from './pacingOscilloscopePainter';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:PacingOscilloscopeChart' as const;
+
 export interface PacingOscilloscopeHandle {
   /** Push a single 120Hz pacing frame into the pre-allocated ring buffer with zero React re-renders */
   pushSample: (sample: PacingSampleInput) => void;
@@ -303,16 +308,17 @@ export const PacingOscilloscopeChart = React.memo(
 
       return (
         <div
+          data-alpha-id={ALPHA_COMPONENT_ID}
           data-ui-element="chart-pacing-oscilloscope"
           className={`flex flex-col ${
             isEmbedded
-              ? `gap-2 p-2.5 rounded-xl border ${
-                  isLight ? 'bg-white border-neutral-200' : 'bg-neutral-900/75 border-neutral-800'
+              ? `gap-2 p-2.5 ${UI_RADIUS.card} border ${
+                  isLight ? `bg-white ${UI_THEME.light.border}` : `bg-neutral-900/75 ${UI_THEME.dark.border}`
                 }`
-              : `gap-2.5 p-4 rounded-2xl border ${
+              : `gap-2.5 p-4 ${UI_RADIUS.panel} border ${
                   isLight
-                    ? 'bg-white border-neutral-200 text-neutral-900 shadow-xs'
-                    : 'bg-neutral-900/90 border-neutral-800 text-neutral-100 shadow-lg'
+                    ? `bg-white ${UI_THEME.light.border} ${UI_THEME.light.textPrimary} shadow-xs`
+                    : `bg-neutral-900/90 ${UI_THEME.dark.border} ${UI_THEME.dark.textPrimary} shadow-lg`
                 }`
           } select-none ${className}`}
         >

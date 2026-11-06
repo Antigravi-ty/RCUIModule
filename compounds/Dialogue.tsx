@@ -1,6 +1,7 @@
 import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
 import {
   DialogueButtonVariant,
   DialogueButtonConfig,
@@ -15,6 +16,8 @@ import {
   MONO_FONT_STACK,
   DEFAULT_TITLES
 } from './dialogue/dialogueStyles';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:Dialogue' as const;
 
 export const Dialogue: React.FC<DialogueProps> = ({
   tone = 'error',
@@ -52,6 +55,7 @@ export const Dialogue: React.FC<DialogueProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [equalButtonWidth, setEqualButtonWidth] = useState<number | null>(null);
+  const theme = isLight ? UI_THEME.light : UI_THEME.dark;
 
   const resolvedTitle = title || DEFAULT_TITLES[tone] || 'ALERT';
 
@@ -77,9 +81,10 @@ export const Dialogue: React.FC<DialogueProps> = ({
       resolvedIconNode = <FallbackIcon size={effectiveIconSize} className="shrink-0 transition-all" />;
     }
   } else if (React.isValidElement(icon)) {
-    resolvedIconNode = React.cloneElement(icon as React.ReactElement<any>, {
+    const iconElement = icon as React.ReactElement<{ size?: number; className?: string }>;
+    resolvedIconNode = React.cloneElement(iconElement, {
       size: effectiveIconSize,
-      className: `${(icon.props as any).className || ''} shrink-0 transition-all`,
+      className: `${iconElement.props.className || ''} shrink-0 transition-all`,
     });
   } else if (icon) {
     resolvedIconNode = icon;
@@ -92,17 +97,17 @@ export const Dialogue: React.FC<DialogueProps> = ({
     if (titleColor) return '';
     switch (titleColorMode) {
       case 'muted':
-        return isLight ? 'text-neutral-500' : 'text-neutral-400';
+        return theme.textMuted;
       case 'primary':
-        return isLight ? 'text-neutral-900' : 'text-neutral-100';
+        return theme.textPrimary;
       case 'tone':
         if (tone === 'error') return isLight ? 'text-red-600' : 'text-red-400';
         if (tone === 'orange') return isLight ? 'text-orange-600' : 'text-orange-400';
         if (tone === 'warning') return isLight ? 'text-yellow-600' : 'text-yellow-400';
-        return isLight ? 'text-neutral-600' : 'text-neutral-300';
+        return theme.textSecondary;
       case 'content':
       default:
-        return isLight ? 'text-neutral-600' : 'text-neutral-300';
+        return theme.textSecondary;
     }
   };
 
@@ -194,7 +199,14 @@ export const Dialogue: React.FC<DialogueProps> = ({
           width: equalButtonWidth ? `${equalButtonWidth}px` : undefined,
           fontFamily: MONO_FONT_STACK,
         }}
-        className={`inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg border select-none transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 active:scale-[0.98] cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:active:scale-100 truncate text-center ${variantClasses}`}
+        className={[
+          'inline-flex items-center justify-center px-4 py-2 text-xs font-semibold border select-none',
+          'transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-neutral-400',
+          'active:scale-[0.98] cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed',
+          'disabled:active:scale-100 truncate text-center',
+          UI_RADIUS.md,
+          variantClasses,
+        ].join(' ')}
       >
         {btn.label}
       </button>
@@ -204,6 +216,7 @@ export const Dialogue: React.FC<DialogueProps> = ({
   return (
     <div
       ref={containerRef}
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="dialogue"
       data-tone={tone}
       style={{
@@ -218,8 +231,8 @@ export const Dialogue: React.FC<DialogueProps> = ({
       }}
       className={`relative w-full flex flex-col justify-between ${UI_RADIUS.xl} border transition-all duration-150 select-none ${
         isLight
-          ? `bg-white text-neutral-900 ${toneConfig.cardBorderClass}`
-          : `bg-neutral-900 text-neutral-100 ${toneConfig.cardBorderClass}`
+          ? `bg-white ${theme.textPrimary} ${toneConfig.cardBorderClass}`
+          : `bg-neutral-900 ${theme.textPrimary} ${toneConfig.cardBorderClass}`
       } ${className}`}
     >
       {showCloseButton && onClose && (

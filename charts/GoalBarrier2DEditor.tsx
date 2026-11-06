@@ -5,16 +5,14 @@ import {
   MinusSquare,
   Trash2,
   Shield,
-  Crosshair,
-  Layers,
 } from 'lucide-react';
 import { ToggleSwitch } from '../primitives/ToggleSwitch';
 import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
 import { SliderControl } from '../primitives/SliderControl';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
 
 import {
-  GOAL_BARRIER_WIDTH_UU,
-  GOAL_BARRIER_HEIGHT_UU,
   BARRIER_GRID_COLS,
   BARRIER_GRID_ROWS,
   clamp01,
@@ -28,6 +26,8 @@ import {
   type GoalBarrierDecomposition,
 } from './goalBarrierMath';
 import { GoalBarrierCanvasStage } from './GoalBarrierCanvasStage';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:GoalBarrier2DEditor' as const;
 
 const GRID_U = BARRIER_GRID_COLS;
 const GRID_V = BARRIER_GRID_ROWS;
@@ -245,14 +245,15 @@ export const GoalBarrier2DEditor: React.FC<GoalBarrier2DEditorProps> = React.mem
 
     return (
       <div
+        data-alpha-id={ALPHA_COMPONENT_ID}
         data-ui-element="chart-goal-barrier-2d-editor"
         className={`flex flex-col gap-3 select-none ${
           isEmbedded
             ? ''
-            : `p-4 rounded-2xl border ${
+            : `p-4 ${UI_RADIUS.panel} border ${
                 isLight
-                  ? 'bg-white border-neutral-200 text-neutral-900 shadow-xs'
-                  : 'bg-neutral-900/90 border-neutral-800 text-neutral-100 shadow-lg'
+                  ? `bg-white ${UI_THEME.light.border} ${UI_THEME.light.textPrimary} shadow-xs`
+                  : `bg-neutral-900/90 ${UI_THEME.dark.border} ${UI_THEME.dark.textPrimary} shadow-lg`
               }`
         } ${className}`}
       >

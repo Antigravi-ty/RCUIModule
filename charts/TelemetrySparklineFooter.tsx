@@ -1,6 +1,11 @@
 import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Cpu } from 'lucide-react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
 import type { TelemetryComputedStats } from './telemetryRingBuffer';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:TelemetrySparklineFooter' as const;
+
 export interface TelemetryPhaseItem {
   phase: string;
   avgMs: number;
@@ -100,7 +105,7 @@ export const TelemetrySparklineFooter = forwardRef<
           const hasOver = s.overBudgetCount > 0;
           if (d.isBudgetOver !== hasOver && budgetBoxRef.current) {
             d.isBudgetOver = hasOver;
-            budgetBoxRef.current.className = `p-1.5 rounded-lg border ${
+            budgetBoxRef.current.className = `p-1.5 ${UI_RADIUS.button} border ${
               hasOver
                 ? 'bg-rose-500/10 border-rose-500/30 text-rose-500'
                 : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
@@ -119,7 +124,10 @@ export const TelemetrySparklineFooter = forwardRef<
     return (
       <>
       {showQuantiles && !compact && !isEmbedded && (
-        <div className="grid grid-cols-5 gap-1.5 text-center font-mono">
+        <div
+          data-alpha-id={ALPHA_COMPONENT_ID}
+          className="grid grid-cols-5 gap-1.5 text-center font-mono"
+        >
           {[
             { label: 'p50', ref: p50ValRef, val: initialStats.p50.toFixed(2) + unit, cls: '' },
             { label: 'p95', ref: p95ValRef, val: initialStats.p95.toFixed(2) + unit, cls: '' },
@@ -138,8 +146,10 @@ export const TelemetrySparklineFooter = forwardRef<
           ].map((q) => (
             <div
               key={q.label}
-              className={`p-1.5 rounded-lg border ${
-                isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950/60 border-neutral-800'
+              className={`p-1.5 ${UI_RADIUS.button} border ${
+                isLight
+                  ? `bg-neutral-50 ${UI_THEME.light.border}`
+                  : `bg-neutral-950/60 ${UI_THEME.dark.border}`
               }`}
             >
               <span className="text-[9px] text-neutral-400 block">{q.label}</span>
@@ -150,7 +160,7 @@ export const TelemetrySparklineFooter = forwardRef<
           ))}
           <div
             ref={budgetBoxRef}
-            className={`p-1.5 rounded-lg border ${
+            className={`p-1.5 ${UI_RADIUS.button} border ${
               initialStats.overBudgetCount > 0
                 ? 'bg-rose-500/10 border-rose-500/30 text-rose-500'
                 : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
@@ -171,8 +181,9 @@ export const TelemetrySparklineFooter = forwardRef<
 
       {phases && phases.length > 0 && !compact && (
         <div
+          data-alpha-id={ALPHA_COMPONENT_ID}
           className={`pt-2 border-t flex flex-col gap-1.5 font-mono text-[10px] ${
-            isLight ? 'border-neutral-200' : 'border-neutral-800'
+            isLight ? UI_THEME.light.border : UI_THEME.dark.border
           }`}
         >
           <div className="flex items-center justify-between text-neutral-400">

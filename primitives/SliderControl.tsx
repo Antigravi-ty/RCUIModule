@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
 import { Minus, Plus, RotateCcw } from 'lucide-react';
 import { TunerPrecisionContext, getDecimalPlaces } from './PrecisionDigitPicker';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:SliderControl' as const;
 
 export type SliderColorScheme = 'neutral' | 'amber' | 'orange' | 'sky' | 'emerald' | 'rose';
 export type SliderVariation = 'default' | 'centered' | 'bipolar';
@@ -123,6 +127,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
       : typeof document !== 'undefined'
       ? document.documentElement.classList.contains('light') || document.documentElement.dataset.theme === 'light'
       : false;
+  const theme = resolvedIsLight ? UI_THEME.light : UI_THEME.dark;
 
   // Resolve effective variation mode and reference origin
   const rawVariation = variation ?? variant ?? (origin !== undefined ? 'centered' : 'default');
@@ -153,6 +158,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
 
   const [inputText, setInputText] = useState<string>(() => formatInputValue(value));
   const [isFocused, setIsFocused] = useState<boolean>(false);
+  const skipNextBlurCommitRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!isFocused) {
@@ -188,9 +194,13 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
+      skipNextBlurCommitRef.current = true;
       commitInputText();
       e.currentTarget.blur();
     } else if (e.key === 'Escape') {
+      e.preventDefault();
+      skipNextBlurCommitRef.current = true;
       setInputText(formatInputValue(value));
       setIsFocused(false);
       e.currentTarget.blur();
@@ -229,9 +239,19 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
   };
 
   const isOffOrigin = Math.abs(value - clampedOrigin) > 1e-6;
+  const stepperBtnClasses = [
+    'inline-flex items-center justify-center h-7 w-7 border transition-all active:scale-95',
+    'cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-neutral-400',
+    'dark:focus-visible:ring-neutral-500 shrink-0',
+    UI_RADIUS.md,
+    resolvedIsLight
+      ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
+      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200',
+  ].join(' ');
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="slider-control"
       data-variation={isCentered ? 'centered' : 'default'}
       data-tuner-label={label}
@@ -243,7 +263,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
         <div className="flex items-center gap-1.5 min-w-0">
           <span
             title={label}
-            className={`font-semibold truncate ${resolvedIsLight ? 'text-neutral-800' : 'text-neutral-200'}`}
+            className={`font-semibold truncate ${theme.textPrimary}`}
           >
             {label}
           </span>
@@ -255,7 +275,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
                 setInputText(String(clampedOrigin));
               }}
               title={`Reset to origin (${clampedOrigin}${unit})`}
-              className={`inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-mono border transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-0.5 px-1.5 py-0.2 ${UI_RADIUS.sm} text-[10px] font-mono border transition-colors cursor-pointer ${
                 resolvedIsLight
                   ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-600 border-neutral-300'
                   : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-400 border-neutral-700'
@@ -266,7 +286,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
             </button>
           )}
           {usePrecisionContext && precisionCtx && isFocused && (
-            <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-500 font-mono">
+            <span className={`text-[9px] px-1 py-0.2 ${UI_RADIUS.sm} bg-emerald-500/20 text-emerald-500 font-mono`}>
               ±{activeStep}
             </span>
           )}
@@ -278,32 +298,33 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
               type="text"
               value={inputText}
               onFocus={() => setIsFocused(true)}
-              onBlur={commitInputText}
-              onChange={(e) => {
-                const raw = e.target.value;
-                setInputText(raw);
-                const parsed = parseFloat(raw);
-                if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
-                  onChange(allowOutOfBoundsInput ? parsed : Math.max(min, Math.min(max, parsed)));
+              onBlur={() => {
+                if (skipNextBlurCommitRef.current) {
+                  skipNextBlurCommitRef.current = false;
+                  return;
                 }
+                commitInputText();
+              }}
+              onChange={(e) => {
+                setInputText(e.target.value);
               }}
               onKeyDown={handleInputKeyDown}
               title={`Step: ±${activeStep}. Press Up/Down arrows to step or Enter to commit.`}
-              className={`w-16 px-1.5 py-0.5 text-right font-mono text-[11px] rounded border outline-none transition-colors ${
+              className={`w-16 px-1.5 py-0.5 text-right font-mono text-[11px] ${UI_RADIUS.sm} border outline-none transition-colors ${
                 resolvedIsLight
                   ? 'bg-white text-neutral-800 border-neutral-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40'
                   : 'bg-neutral-900 text-neutral-200 border-neutral-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40'
               }`}
             />
             {unit && (
-              <span className={`font-mono text-[10px] ${resolvedIsLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+              <span className={`font-mono text-[10px] ${theme.textMuted}`}>
                 {unit}
               </span>
             )}
           </div>
         ) : (
           <span
-            className={`font-mono text-[11px] px-2 py-0.5 rounded border transition-colors shrink-0 ${
+            className={`font-mono text-[11px] px-2 py-0.5 ${UI_RADIUS.sm} border transition-colors shrink-0 ${
               resolvedIsLight
                 ? 'bg-neutral-100 text-neutral-800 border-neutral-300 shadow-2xs'
                 : 'bg-neutral-900 text-neutral-300 border-neutral-700'
@@ -316,7 +337,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
       </div>
 
       {description && (
-        <span className={`text-[11px] leading-snug ${resolvedIsLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+        <span className={`text-[11px] leading-snug ${theme.textMuted}`}>
           {description}
         </span>
       )}
@@ -327,11 +348,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
             type="button"
             aria-label="Decrement"
             onClick={handleDecrement}
-            className={`inline-flex items-center justify-center h-7 w-7 rounded-lg border transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 shrink-0 ${
-              resolvedIsLight
-                ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
-                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-            }`}
+            className={stepperBtnClasses}
           >
             <Minus className="h-3.5 w-3.5" />
           </button>
@@ -361,7 +378,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
           className="relative flex items-center select-none touch-none w-full h-5 cursor-pointer"
         >
           <SliderPrimitive.Track
-            className={`relative grow rounded-full h-2 overflow-hidden transition-colors ${
+            className={`relative grow ${UI_RADIUS.full} h-2 overflow-hidden transition-colors ${
               resolvedIsLight ? 'bg-neutral-200' : 'bg-neutral-800'
             }`}
           >
@@ -376,7 +393,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
                   />
                 )}
                 <div
-                  className={`absolute h-full rounded-full transition-colors ${getRangeColorClass()}`}
+                  className={`absolute h-full ${UI_RADIUS.full} transition-colors ${getRangeColorClass()}`}
                   style={{
                     left: `${fillLeft}%`,
                     width: `${fillWidth}%`,
@@ -384,13 +401,16 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
                 />
               </>
             ) : (
-              <SliderPrimitive.Range className={`absolute h-full rounded-full transition-colors ${getRangeColorClass()}`} />
+              <SliderPrimitive.Range className={`absolute h-full ${UI_RADIUS.full} transition-colors ${getRangeColorClass()}`} />
             )}
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb
-            className={`block h-4 w-4 rounded-full border shadow-sm transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 ${
-              resolvedIsLight ? 'bg-white border-neutral-400 shadow-xs' : 'bg-neutral-100 border-neutral-300'
-            }`}
+            className={[
+              'block h-4 w-4 border shadow-sm transition-transform hover:scale-110',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500',
+              UI_RADIUS.full,
+              resolvedIsLight ? 'bg-white border-neutral-400 shadow-xs' : 'bg-neutral-100 border-neutral-300',
+            ].join(' ')}
           />
         </SliderPrimitive.Root>
 
@@ -399,11 +419,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
             type="button"
             aria-label="Increment"
             onClick={handleIncrement}
-            className={`inline-flex items-center justify-center h-7 w-7 rounded-lg border transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 shrink-0 ${
-              resolvedIsLight
-                ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
-                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-            }`}
+            className={stepperBtnClasses}
           >
             <Plus className="h-3.5 w-3.5" />
           </button>

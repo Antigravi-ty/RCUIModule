@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { Flame, RotateCcw } from 'lucide-react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:PhaseVariationMatrix' as const;
 
 export type VariationPhaseId = 'start' | 'loop' | 'end';
 
@@ -62,6 +66,7 @@ export const PhaseVariationMatrix: React.FC<PhaseVariationMatrixProps> = React.m
     loop: defaultVariationId,
     end: defaultVariationId,
   });
+  const theme = isLight ? UI_THEME.light : UI_THEME.dark;
 
   const activeSelection = controlledSelection ?? internalSelection;
 
@@ -86,8 +91,9 @@ export const PhaseVariationMatrix: React.FC<PhaseVariationMatrixProps> = React.m
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-ui-element="compound-phase-variation-matrix"
-      className={`w-full p-3 rounded-xl border select-none flex flex-col gap-2.5 ${
+      className={`w-full p-3 ${UI_RADIUS.lg} border select-none flex flex-col gap-2.5 ${
         isLight
           ? 'bg-neutral-50/90 border-neutral-200'
           : 'bg-neutral-850/80 border-neutral-700/80'
@@ -109,16 +115,12 @@ export const PhaseVariationMatrix: React.FC<PhaseVariationMatrixProps> = React.m
           <Flame className="h-4 w-4 text-amber-500 shrink-0" />
           <div className="flex flex-col text-left leading-snug min-w-0">
             <div className="flex items-center gap-1.5">
-              <span
-                className={`text-xs font-bold truncate ${
-                  isLight ? 'text-neutral-900' : 'text-neutral-100'
-                }`}
-              >
+              <span className={`text-xs font-bold truncate ${theme.textPrimary}`}>
                 {title}
               </span>
               {badgeText && (
                 <span
-                  className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                  className={`text-[9px] font-mono px-1.5 py-0.5 ${UI_RADIUS.sm} border ${
                     isLight
                       ? 'bg-amber-500/10 border-amber-500/30 text-amber-700'
                       : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
@@ -128,11 +130,7 @@ export const PhaseVariationMatrix: React.FC<PhaseVariationMatrixProps> = React.m
                 </span>
               )}
             </div>
-            <span
-              className={`text-[10px] mt-0.5 truncate ${
-                isLight ? 'text-neutral-500' : 'text-neutral-400'
-              }`}
-            >
+            <span className={`text-[10px] mt-0.5 truncate ${theme.textMuted}`}>
               {subtitle}
             </span>
           </div>
@@ -142,7 +140,7 @@ export const PhaseVariationMatrix: React.FC<PhaseVariationMatrixProps> = React.m
           <button
             type="button"
             onClick={() => handleSelectAllPhases(defaultVariationId)}
-            className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+            className={`px-2 py-1 ${UI_RADIUS.md} text-[10px] font-semibold border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
               isLight
                 ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
                 : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
@@ -156,7 +154,7 @@ export const PhaseVariationMatrix: React.FC<PhaseVariationMatrixProps> = React.m
 
       {/* Matrix Table */}
       <div
-        className={`w-full rounded-lg border overflow-hidden ${
+        className={`w-full ${UI_RADIUS.md} border overflow-hidden ${
           isLight ? 'border-neutral-200 bg-white' : 'border-neutral-800 bg-neutral-900/60'
         }`}
       >

@@ -7,6 +7,9 @@ import {
   type PresetCustomVariation,
 } from '../stores/settingRowStore';
 import { getDecimalPlaces } from '../primitives/PrecisionDigitPicker';
+import { UI_RADIUS } from '../tokens/radius';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:SettingPresetCustomRow' as const;
 
 export interface PresetNumberOption {
   value: number;
@@ -168,18 +171,18 @@ export const SettingPresetCustomRow: React.FC<SettingPresetCustomRowProps> = Rea
         className="relative flex items-center select-none touch-none grow h-5 cursor-pointer"
       >
         <SliderPrimitive.Track
-          className={`relative grow rounded-full h-1.5 overflow-hidden transition-colors ${
+          className={`relative grow ${UI_RADIUS.full} h-1.5 overflow-hidden transition-colors ${
             isLight ? 'bg-neutral-300/90' : 'bg-neutral-800'
           }`}
         >
           <SliderPrimitive.Range
-            className={`absolute h-full rounded-full transition-colors ${
+            className={`absolute h-full ${UI_RADIUS.full} transition-colors ${
               isLight ? 'bg-neutral-900' : 'bg-white'
             }`}
           />
         </SliderPrimitive.Track>
         <SliderPrimitive.Thumb
-          className={`block h-3.5 w-3.5 rounded-full border shadow-xs transition-transform hover:scale-110 focus:outline-none ${
+          className={`block h-3.5 w-3.5 ${UI_RADIUS.full} border shadow-xs transition-transform hover:scale-110 focus:outline-none ${
             isLight
               ? 'bg-white border-neutral-400'
               : 'bg-neutral-100 border-neutral-300'
@@ -189,7 +192,7 @@ export const SettingPresetCustomRow: React.FC<SettingPresetCustomRowProps> = Rea
 
       <span
         style={{ fontSize: `${Math.max(10, valueFontSize - 1)}px` }}
-        className={`font-mono font-semibold px-1.5 py-0.5 rounded border text-right shrink-0 min-w-[44px] ${
+        className={`font-mono font-semibold px-1.5 py-0.5 ${UI_RADIUS.sm} border text-right shrink-0 min-w-[44px] ${
           isLight
             ? 'bg-neutral-300/65 text-neutral-700 border-neutral-300/90'
             : 'bg-neutral-800/85 text-neutral-200 border-neutral-700/80'
@@ -230,9 +233,10 @@ export const SettingPresetCustomRow: React.FC<SettingPresetCustomRowProps> = Rea
       className={className}
       rightSlot={
         <div
+          data-alpha-id={ALPHA_COMPONENT_ID}
           data-variation="slide-reveal"
           style={{ transitionDuration: `${animDurationMs}ms` }}
-          className={`relative inline-flex items-center rounded-lg border transition-all overflow-hidden ${unifiedTroughClass}`}
+          className={`relative inline-flex items-center ${UI_RADIUS.md} border transition-all overflow-hidden ${unifiedTroughClass}`}
         >
           {/* Left-shifting SegmentedSwitch: keeps its own background while sliding, then dissolves into the shared trough */}
           <div

@@ -1,6 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { UI_EASING } from '../tokens/easing';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:ToggleSwitch' as const;
 
 export type ToggleVariant = 'green' | 'black' | 'neutral' | 'orange' | 'amber' | 'emerald' | 'sky' | 'cyan' | 'default';
 
@@ -54,6 +58,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = React.memo(({
       : typeof document !== 'undefined'
       ? document.documentElement.classList.contains('light') || document.documentElement.dataset.theme === 'light'
       : false;
+  const theme = resolvedIsLight ? UI_THEME.light : UI_THEME.dark;
 
   // Compute background and thumb styles based on variant & light mode
   const getCheckedStyles = () => {
@@ -92,6 +97,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = React.memo(({
 
   return (
     <label
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="toggle-switch"
       data-tuner-label={label || undefined}
       data-tuner-value={String(checked)}
@@ -102,12 +108,12 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = React.memo(({
       {(label || description) && (
         <div className="flex flex-col text-left leading-snug min-w-0">
           {label && (
-            <span className={`text-sm font-semibold truncate ${resolvedIsLight ? 'text-neutral-800' : 'text-neutral-200'}`}>
+            <span className={`text-sm font-semibold truncate ${theme.textPrimary}`}>
               {label}
             </span>
           )}
           {description && (
-            <span className={`text-xs mt-0.5 truncate ${resolvedIsLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+            <span className={`text-xs mt-0.5 truncate ${theme.textMuted}`}>
               {description}
             </span>
           )}
@@ -120,16 +126,19 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = React.memo(({
         aria-checked={checked}
         disabled={disabled}
         onClick={() => handleToggle(!checked)}
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 cursor-pointer ${
+        className={[
+          'relative inline-flex h-6 w-11 shrink-0 items-center border transition-colors duration-200',
+          'outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 cursor-pointer',
+          UI_RADIUS.full,
           checked
             ? checkedTrack
             : resolvedIsLight
             ? 'bg-neutral-300 border-neutral-300'
-            : 'bg-neutral-800 border-neutral-700'
-        }`}
+            : 'bg-neutral-800 border-neutral-700',
+        ].join(' ')}
       >
         <motion.span
-          className={`inline-block h-4 w-4 rounded-full pointer-events-none transition-colors ${
+          className={`inline-block h-4 w-4 ${UI_RADIUS.full} pointer-events-none transition-colors ${
             checked ? checkedThumb : 'bg-white shadow-md'
           }`}
           initial={false}

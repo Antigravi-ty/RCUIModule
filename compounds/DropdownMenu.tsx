@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:DropdownMenu' as const;
 
 export interface DropdownOption<T extends string | number = string> {
   value: T;
@@ -92,6 +96,7 @@ export const DropdownMenu = <T extends string | number = string>({
 }: DropdownMenuProps<T>) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = !disabled && (controlledOpen !== undefined ? controlledOpen : internalOpen);
+  const theme = isLight ? UI_THEME.light : UI_THEME.dark;
 
   const setOpen = (next: boolean) => {
     if (disabled && next) return;
@@ -134,11 +139,12 @@ export const DropdownMenu = <T extends string | number = string>({
   const triggerSizeClass =
     size === 'sm'
       ? 'px-2.5 py-1 rounded-md text-[11px] gap-1.5'
-      : 'px-3 py-1.5 rounded-lg text-xs gap-2';
+      : `px-3 py-1.5 ${UI_RADIUS.md} text-xs gap-2`;
 
   return (
     <div
       ref={containerRef}
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="dropdown-menu"
       className={`relative inline-block text-left select-none ${className}`}
     >
@@ -161,11 +167,15 @@ export const DropdownMenu = <T extends string | number = string>({
             e.stopPropagation();
             setOpen(!isOpen);
           }}
-          className={`w-full inline-flex items-center justify-between ${triggerSizeClass} border font-medium transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none ${
+          className={[
+            'w-full inline-flex items-center justify-between border font-medium transition-all cursor-pointer',
+            'outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-[0.99]',
+            'disabled:opacity-40 disabled:pointer-events-none',
+            triggerSizeClass,
             isLight
               ? 'bg-white hover:bg-neutral-50 border-neutral-300 text-neutral-800 shadow-2xs'
-              : 'bg-neutral-800/90 hover:bg-neutral-800 border-neutral-700 text-neutral-100 shadow-2xs'
-          }`}
+              : 'bg-neutral-800/90 hover:bg-neutral-800 border-neutral-700 text-neutral-100 shadow-2xs',
+          ].join(' ')}
         >
           <div className="flex items-center gap-2 min-w-0">
             {(icon || selectedOption?.icon) && (
@@ -191,7 +201,7 @@ export const DropdownMenu = <T extends string | number = string>({
           }}
           className={`absolute ${
             align === 'right' ? 'right-0' : 'left-0'
-          } mt-1.5 ${menuWidthClass} rounded-xl border p-1.5 z-50 flex flex-col gap-1 transition-colors shadow-lg ${
+          } mt-1.5 ${menuWidthClass} ${UI_RADIUS.lg} border p-1.5 z-50 flex flex-col gap-1 transition-colors shadow-lg ${
             isLight
               ? 'bg-white/98 border-neutral-200 text-neutral-900'
               : 'bg-neutral-900/98 border-neutral-700/90 text-neutral-100'
@@ -212,7 +222,7 @@ export const DropdownMenu = <T extends string | number = string>({
                       onChange?.(opt.value, opt);
                       setOpen(false);
                     }}
-                    className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors flex items-center justify-between gap-2 cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${
+                    className={`w-full px-2.5 py-1.5 ${UI_RADIUS.md} text-left text-xs transition-colors flex items-center justify-between gap-2 cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${
                       isSelected
                         ? isLight
                           ? 'bg-amber-500/15 text-amber-900 font-semibold'
@@ -230,11 +240,7 @@ export const DropdownMenu = <T extends string | number = string>({
                           {opt.badge && <span className="shrink-0">{opt.badge}</span>}
                         </div>
                         {opt.description && (
-                          <span
-                            className={`text-[10px] truncate mt-0.5 ${
-                              isLight ? 'text-neutral-500' : 'text-neutral-400'
-                            }`}
-                          >
+                          <span className={`text-[10px] truncate mt-0.5 ${theme.textMuted}`}>
                             {opt.description}
                           </span>
                         )}

@@ -2,6 +2,9 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { lookupLucideIcon } from '../primitives/iconLookup';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:SettingActionRow' as const;
 
 export interface SettingActionRowProps {
   /** Leading icon component (e.g. NotebookPen, Video, Keyboard) or ReactNode */
@@ -209,8 +212,11 @@ export const SettingActionRow: React.FC<SettingActionRowProps> = React.memo(({
           marginBottom: `${padY}px`,
         };
 
+  const theme = isLight ? UI_THEME.light : UI_THEME.dark;
+
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-ui-element="setting-action-row"
       style={{
         paddingLeft: `${Math.max(0, padX)}px`,
@@ -266,9 +272,7 @@ export const SettingActionRow: React.FC<SettingActionRowProps> = React.memo(({
               <span
                 data-allow-truncate="true"
                 style={{ fontSize: `${resolvedDescFontSize}px` }}
-                className={`mt-0.5 truncate ${
-                  isLight ? 'text-neutral-500' : 'text-neutral-400'
-                }`}
+                className={`mt-0.5 truncate ${theme.textMuted}`}
               >
                 {resolvedDesc}
               </span>

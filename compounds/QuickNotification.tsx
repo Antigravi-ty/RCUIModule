@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CircleSlash, Bell, Check, ThumbsDown, RotateCcw } from 'lucide-react';
+import { CircleSlash, Bell } from 'lucide-react';
 import { lookupLucideIcon } from '../primitives/iconLookup';
+import { UI_RADIUS } from '../tokens/radius';
 import type {
   QuickNotificationGlowLevel,
   QuickNotificationType,
@@ -9,6 +10,8 @@ import type {
   QuickNotificationButtonFormat,
   QuickNotificationButtonConfig,
 } from '../stores/notificationTypes';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:QuickNotificationDrawer' as const;
 
 export type {
   QuickNotificationGlowLevel,
@@ -222,8 +225,9 @@ export const QuickNotificationDrawer: React.FC<QuickNotificationProps> = React.m
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       style={{ fontFamily: MONO_FONT_STACK }}
-      className={`relative h-10 px-3 rounded-xl border flex items-center gap-2.5 select-none font-mono text-xs whitespace-nowrap overflow-hidden transition-colors ${
+      className={`relative h-10 px-3 ${UI_RADIUS.card} border flex items-center gap-2.5 select-none font-mono text-xs whitespace-nowrap overflow-hidden transition-colors ${
         styles.containerClass
       } ${className}`}
     >

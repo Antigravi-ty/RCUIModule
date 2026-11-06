@@ -6,6 +6,10 @@ import {
   useReferenceOverlayStore,
   type CameraLookOverridePreset,
 } from '../stores/referenceOverlayStore';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:CameraSwivelSimulatorCard' as const;
 
 export type { CameraLookOverridePreset };
 
@@ -55,17 +59,19 @@ export const CameraSwivelSimulatorCard: React.FC<CameraSwivelSimulatorCardProps>
     const handlePresetChange = onChangePreset ?? setCameraLookPreset;
     const handleStrengthChange = onChangeStrength ?? setCameraLookStrength;
     const handleAxesChange = onChangeAxes ?? setCameraLookAxes;
+    const theme = isLight ? UI_THEME.light : UI_THEME.dark;
 
     const containerClass =
       cardClass ??
-      `p-3 rounded-xl border flex flex-col gap-2.5 select-none ${
+      `p-3 ${UI_RADIUS.lg} border flex flex-col gap-2.5 select-none ${
         isLight
-          ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
-          : 'bg-neutral-900/70 border-neutral-800 text-neutral-200'
+          ? `bg-neutral-50 border-neutral-200 ${theme.textPrimary}`
+          : `bg-neutral-900/70 border-neutral-800 ${theme.textPrimary}`
       } ${className}`;
 
     return (
       <div
+        data-alpha-id={ALPHA_COMPONENT_ID}
         data-ui-element="compound-camera-swivel-simulator-card"
         className={containerClass}
       >

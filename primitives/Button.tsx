@@ -2,6 +2,8 @@ import React from 'react';
 import { UI_RADIUS } from '../tokens/radius';
 import { KeycapBadge } from './KeycapBadge';
 
+export const ALPHA_COMPONENT_ID = 'Alpha:Button' as const;
+
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'auto';
 
@@ -81,7 +83,7 @@ export const Button: React.FC<ButtonProps> = React.memo(({
   const innerContent = (
     <>
       {loading ? (
-        <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin shrink-0" />
+        <span className={`h-4 w-4 ${UI_RADIUS.full} border-2 border-current border-t-transparent animate-spin shrink-0`} />
       ) : (
         icon && <span className="shrink-0">{icon}</span>
       )}
@@ -124,6 +126,7 @@ export const Button: React.FC<ButtonProps> = React.memo(({
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled || loading}
+        data-alpha-id={ALPHA_COMPONENT_ID}
         data-component="button"
         data-variant={variant}
         data-composable="true"
@@ -148,6 +151,7 @@ export const Button: React.FC<ButtonProps> = React.memo(({
   return (
     <button
       type="button"
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="button"
       data-variant={variant}
       disabled={disabled || loading}

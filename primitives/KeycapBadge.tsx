@@ -2,6 +2,8 @@ import React from 'react';
 import { UI_SPACING } from '../tokens/spacing';
 import { UI_RADIUS } from '../tokens/radius';
 
+export const ALPHA_COMPONENT_ID = 'Alpha:KeycapBadge' as const;
+
 export type KeycapSize = 'sm' | 'md' | 'lg';
 export type KeycapKind = 'keyboard' | 'gamepad';
 export type KeycapShape = 'rounded' | 'pill';
@@ -68,6 +70,7 @@ export const KeycapBadge: React.FC<KeycapBadgeProps> = React.memo(({
 
   return (
     <kbd
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="keycap-badge"
       data-kind={kind}
       data-shape={shape}

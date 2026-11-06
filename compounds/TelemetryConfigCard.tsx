@@ -4,10 +4,13 @@ import { SettingSegmentedRow } from './SettingSegmentedRow';
 import { SettingToggleRow } from './SettingToggleRow';
 import { ToggleSwitch } from '../primitives/ToggleSwitch';
 import { SettingActionRow } from './SettingActionRow';
+import { UI_THEME } from '../tokens/colors';
 import {
   useSettingActionRowStore,
   type TelemetryNestedVariation,
 } from '../stores/settingRowStore';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:TelemetryConfigCard' as const;
 
 export type TelemetryDisplayMode = 'off' | 'on_demand' | 'always';
 export type TelemetryLatencyDetailMode = 'simple' | 'advanced';
@@ -232,6 +235,7 @@ export const TelemetryConfigCard: React.FC<TelemetryConfigCardProps> = React.mem
 
     return (
       <div
+        data-alpha-id={ALPHA_COMPONENT_ID}
         data-ui-element="compound-telemetry-config-card"
         data-variation="underline-disclosure"
         style={{
@@ -241,8 +245,8 @@ export const TelemetryConfigCard: React.FC<TelemetryConfigCardProps> = React.mem
         className={`flex flex-col w-full transition-colors ${
           isBordered
             ? isLight
-              ? 'p-2 border bg-neutral-50/90 border-neutral-200 shadow-2xs'
-              : 'p-2 border bg-neutral-850/80 border-neutral-700/80'
+              ? `p-2 border ${UI_THEME.light.bgSurface} ${UI_THEME.light.border} shadow-2xs`
+              : `p-2 border ${UI_THEME.dark.bgSubtle} ${UI_THEME.dark.border}`
             : ''
         } ${className}`}
       >
