@@ -113,6 +113,15 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
     updateStoreTrajectory({ enabled: next });
   };
 
+  const handleShowCarHitboxChange = (checked: boolean) => {
+    const patch: Partial<GameplayConfig> = { showCarHitbox: checked };
+    const nextConfig: GameplayConfig = { ...resolvedGameplayConfig, ...patch };
+    setInternalConfig(nextConfig);
+    updateStoreGameplay(patch);
+    onGameplayConfigChange?.(nextConfig, patch);
+    onChange?.(nextConfig, patch);
+  };
+
   const storeExperiencePriority = useSettingsPacingStore((s) => s.experiencePriority);
   const setStoreExperiencePriority = useSettingsPacingStore((s) => s.setExperiencePriority);
 
@@ -199,8 +208,8 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
       <SettingActionRow
         icon={NotebookPen}
         title="Training Mode Configuration"
-        description="Boost mode, goal barrier & car hitbox collision overlay"
-        hoverDescription="Configure training rules, boost mode (standard vs unlimited), goal barrier designer, and car hitbox collision visualization."
+        description="Free Play boost mode, goal reset & Training goal barrier designer"
+        hoverDescription="Configure Free Play boost mode (standard vs unlimited), goal reset rules, and the Training goal barrier designer."
         onAction={onNavigateTrainingDetail ?? (() => navigate('training-config'))}
         onHover={onHover}
         onLeave={onLeave}
@@ -257,6 +266,19 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
         onChange={handleTrajectoryEnabledChange}
         extraRightSlot={trajectoryRowLayout !== 'stacked' ? configureTrajectoryButton : undefined}
         bottomSlot={trajectoryRowLayout === 'stacked' ? configureTrajectoryButton : undefined}
+        onHover={(desc) => desc && onHover(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      {/* 5b. Show POV Hitbox (directly below Ball Trajectory Predictor, above Experience Priority) */}
+      <SettingToggleRow
+        icon={Box}
+        title="Show POV Hitbox"
+        description="Render wireframe physics collision box on the active POV vehicle"
+        hoverDescription="Toggles the 3D wireframe physics collision box on your active POV vehicle."
+        checked={resolvedGameplayConfig.showCarHitbox ?? false}
+        onChange={handleShowCarHitboxChange}
         onHover={(desc) => desc && onHover(desc)}
         onLeave={onLeave}
         isLight={isLight}

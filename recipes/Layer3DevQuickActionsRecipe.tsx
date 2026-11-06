@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Compass, Flame, Info, Tag, Users, Zap } from 'lucide-react';
+import { Box, CircleDot, Compass, Flame, Info, Tag, Users, Zap } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
@@ -35,6 +35,8 @@ export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipePr
 }) => {
   const goBack = useAppStore((s) => s.goBack);
   const developerMode = useAppStore((s) => s.developerMode);
+  const showAllCarHitboxes = useAppStore((s) => s.gameplay.showAllCarHitboxes ?? false);
+  const updateGameplay = useAppStore((s) => s.updateGameplay);
   const { config, updateConfig } = useNameTagTunerStore();
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
@@ -63,7 +65,35 @@ export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipePr
           className="flex flex-col w-full"
           style={{ gap: `${rowGap}px` }}
         >
-          {/* 1. Off-Screen Indicator (Auto-activated in Developer Mode; deployable via Cloud Profile) */}
+          {/* 1. Show All Car Hitboxes */}
+          <SettingToggleRow
+            icon={Box}
+            title="Show All Car Hitboxes"
+            description="Render wireframe physics collision boxes on all vehicles in the arena"
+            checked={showAllCarHitboxes}
+            onChange={(checked) => updateGameplay({ showAllCarHitboxes: checked })}
+            hoverDescription="Show All Car Hitboxes: Override POV-only hitbox visibility and display physics collision boxes on every vehicle in the arena."
+            onHover={(desc) => desc && setHoveredDesc(desc)}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 2. On-Screen Circle Name Tag Mode (X/W/E · A/M/Z) */}
+          <SettingToggleRow
+            icon={CircleDot}
+            title="On-Screen Circle Name Tag Mode (X/W/E · A/M/Z)"
+            description="Replace horizontal name tag pills with fixed-size boost circles & 1-letter match slot codes"
+            checked={config.cardDisplayMode === 'circle'}
+            onChange={(checked) =>
+              updateConfig({ cardDisplayMode: checked ? 'circle' : 'pill' })
+            }
+            hoverDescription="On-Screen Circle Name Tag Mode: Replaces all on-screen name cards with circular boost indicators and fixed match slot codes (Team 1: X, W, E · Team 2: A, M, Z)."
+            onHover={(desc) => desc && setHoveredDesc(desc)}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 3. Off-Screen Indicator (Auto-activated in Developer Mode; deployable via Cloud Profile) */}
           <SettingToggleRow
             icon={Compass}
             iconName="compass"
@@ -77,7 +107,7 @@ export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipePr
             isLight={isLight}
           />
 
-          {/* 2. Off-Screen Target Audience */}
+          {/* 4. Off-Screen Target Audience */}
           <SettingSegmentedRow
             icon={Users}
             iconName="users"
@@ -98,7 +128,7 @@ export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipePr
             isLight={isLight}
           />
 
-          {/* 3. Off-Screen Aerial Climb Alert */}
+          {/* 5. Off-Screen Aerial Climb Alert */}
           <SettingToggleRow
             icon={Flame}
             iconName="flame"
@@ -112,7 +142,7 @@ export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipePr
             isLight={isLight}
           />
 
-          {/* 4. Quick Spawner for Multiplayer Name Tag Tuner */}
+          {/* 6. Quick Spawner for Multiplayer Name Tag Tuner */}
           <FloatingWindowCard
             preset={NAME_TAG_TUNER_PRESET}
             icon={Tag}

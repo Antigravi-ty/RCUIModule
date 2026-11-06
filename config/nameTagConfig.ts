@@ -10,6 +10,10 @@ export type NameTagBoostIndicatorMode =
   | 'sunset-circle'
   | 'border-only';
 
+export type NameTagCardDisplayMode = 'pill' | 'circle';
+export type NameTagCircleLabelMode = 'slot-code' | 'none' | 'name';
+export type NameTagCircleColorMode = 'team' | 'car-primary';
+
 export type NameTagAerialClimbTriggerMode =
   | 'double-jump'
   | 'hold-jump-pitch'
@@ -44,6 +48,13 @@ export interface NameTagCarOverride {
 
 export interface NameTagConfig {
   enabled: boolean;
+  cardDisplayMode: NameTagCardDisplayMode;
+  circleLabelMode: NameTagCircleLabelMode;
+  circleColorMode: NameTagCircleColorMode;
+  onscreenCircleFixedSize: boolean;
+  onscreenCircleRadiusPx: number;
+  slotCodes: string[];
+  distinctCarColors: string[];
   pillMinWidth: number;
   pillMaxWidth: number;
   pillHeight: number;
@@ -88,10 +99,19 @@ export interface NameTagConfig {
   offscreenAudience: NameTagBoostBorderAudience;
   offscreenShowBoostCircle: boolean;
   offscreenShowArrow: boolean;
+  offscreenShowSlotCode: boolean;
   offscreenCircleRadiusPx: number;
   offscreenArrowLengthPx: number;
   offscreenArrowBaseWidthPx: number;
   offscreenArrowGapPx: number;
+  offscreenDistanceScaleEnabled: boolean;
+  offscreenDistanceMinScale: number;
+  offscreenDistanceNearUu: number;
+  offscreenDistanceFarUu: number;
+  offscreenDistanceCurveExponent: number;
+  offscreenDistanceSimEnabled: boolean;
+  offscreenDistanceSimDistanceUu: number;
+  offscreenDistanceSimAngleDeg: number;
   offscreenRoiAvoidHud: boolean;
   offscreenRoiTopInsetPx: number;
   offscreenRoiBottomInsetPx: number;
@@ -233,8 +253,26 @@ export function createDefaultCarOverride(
   };
 }
 
+export const DEFAULT_NAME_TAG_SLOT_CODES: string[] = ['X', 'W', 'E', 'A', 'M', 'Z'];
+
+export const DEFAULT_NAME_TAG_DISTINCT_COLORS: string[] = [
+  '#0284c7',
+  '#0d9488',
+  '#4f46e5',
+  '#ea580c',
+  '#e11d48',
+  '#d97706',
+];
+
 export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   enabled: true,
+  cardDisplayMode: 'pill',
+  circleLabelMode: 'slot-code',
+  circleColorMode: 'team',
+  onscreenCircleFixedSize: true,
+  onscreenCircleRadiusPx: 30,
+  slotCodes: [...DEFAULT_NAME_TAG_SLOT_CODES],
+  distinctCarColors: [...DEFAULT_NAME_TAG_DISTINCT_COLORS],
   pillMinWidth: 80,
   pillMaxWidth: 380,
   pillHeight: 54,
@@ -279,10 +317,19 @@ export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   offscreenAudience: 'teammates',
   offscreenShowBoostCircle: true,
   offscreenShowArrow: true,
+  offscreenShowSlotCode: false,
   offscreenCircleRadiusPx: 24,
   offscreenArrowLengthPx: 12,
   offscreenArrowBaseWidthPx: 12,
   offscreenArrowGapPx: 10,
+  offscreenDistanceScaleEnabled: true,
+  offscreenDistanceMinScale: 0.45,
+  offscreenDistanceNearUu: 700,
+  offscreenDistanceFarUu: 6500,
+  offscreenDistanceCurveExponent: 0.75,
+  offscreenDistanceSimEnabled: false,
+  offscreenDistanceSimDistanceUu: 2600,
+  offscreenDistanceSimAngleDeg: 0,
   offscreenRoiAvoidHud: true,
   offscreenRoiTopInsetPx: 72,
   offscreenRoiBottomInsetPx: 132,
@@ -311,6 +358,42 @@ export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   ],
   carOverrides: Array.from({ length: 6 }, () => createDefaultCarOverride(50, 6)),
 };
+
+export function resolveCarSlotCode(
+  carIndex: number,
+  team: 0 | 1,
+  slotCodes: string[] = DEFAULT_NAME_TAG_SLOT_CODES
+): string {
+  const safeCodes =
+    Array.isArray(slotCodes) && slotCodes.length >= 6
+      ? slotCodes
+      : DEFAULT_NAME_TAG_SLOT_CODES;
+  const normalizedIdx = Math.max(0, Math.floor(Number(carIndex) || 0));
+  const idx = normalizedIdx < 6 ? normalizedIdx : (team === 1 ? 3 : 0) + (normalizedIdx % 3);
+  return String(safeCodes[idx] || DEFAULT_NAME_TAG_SLOT_CODES[idx] || 'X').trim().slice(0, 3);
+}
+
+export function computeOffscreenDistanceScale(
+  distanceUu: number,
+  config: Pick<
+    NameTagConfig,
+    | 'offscreenDistanceScaleEnabled'
+    | 'offscreenDistanceMinScale'
+    | 'offscreenDistanceNearUu'
+    | 'offscreenDistanceFarUu'
+    | 'offscreenDistanceCurveExponent'
+  >
+): number {
+  if (!config.offscreenDistanceScaleEnabled) return 1.0;
+  const D = DEFAULT_NAME_TAG_CONFIG;
+  const minScale = Math.max(0.15, Math.min(1.0, Number(config.offscreenDistanceMinScale) || D.offscreenDistanceMinScale));
+  const nearUu = Math.max(50, Number(config.offscreenDistanceNearUu) || D.offscreenDistanceNearUu);
+  const farUu = Math.max(nearUu + 100, Number(config.offscreenDistanceFarUu) || D.offscreenDistanceFarUu);
+  const exponent = Math.max(0.15, Math.min(3.5, Number(config.offscreenDistanceCurveExponent) || D.offscreenDistanceCurveExponent));
+  const clampedDist = Math.max(nearUu, Math.min(farUu, Number(distanceUu) || nearUu));
+  const normalizedT = (clampedDist - nearUu) / Math.max(1, farUu - nearUu);
+  return Math.max(minScale, Math.min(1.0, 1.0 - (1.0 - minScale) * Math.pow(normalizedT, exponent)));
+}
 
 export function formatNameTagDisplayText(
   rawName: string,

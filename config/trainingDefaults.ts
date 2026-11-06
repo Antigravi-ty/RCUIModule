@@ -8,7 +8,7 @@ import { safeStorage, createLocalStorageStore, stringOrDefault, STORAGE_KEYS } f
 export const DEFAULT_TRAINING_SETTINGS = Object.freeze({
   disableGoalReset: false,
   boostOption: 'unlimited',
-  showCarHitbox: true,
+  showCarHitbox: false,
   showAllCarHitboxes: false,
 });
 
@@ -84,7 +84,7 @@ export interface TrajectoryConfig {
   // Developer vs User menu exposure locks
   allowUserThicknessEdit?: boolean;
   allowUserDashEdit?: boolean;
-  [key: string]: any;
+  calculationMode?: string;
 }
 
 export const DEFAULT_TRAJECTORY_CONFIG: TrajectoryConfig = {

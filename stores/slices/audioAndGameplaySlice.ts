@@ -79,7 +79,7 @@ export const createAudioAndGameplaySlice: StateCreator<
   gameplay: {
     goalRestart: true,
     unlimitedBoost: true,
-    showCarHitbox: true,
+    showCarHitbox: false,
     showAllCarHitboxes: false,
     ballCamIndicator: true,
     enableFToMirror: true,
@@ -90,7 +90,7 @@ export const createAudioAndGameplaySlice: StateCreator<
     const next = {
       goalRestart: true,
       unlimitedBoost: true,
-      showCarHitbox: true,
+      showCarHitbox: false,
       showAllCarHitboxes: false,
       ballCamIndicator: true,
       enableFToMirror: true,
