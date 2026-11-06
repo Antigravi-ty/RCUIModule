@@ -1,5 +1,9 @@
 import React from 'react';
 import { Play, RotateCcw, Sparkles } from 'lucide-react';
+import type {
+  StandardSurfaceProps,
+  SurfaceMeta,
+} from '../../manifest/surfaceMetaTypes';
 import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
 import {
   BOTPACK_9700488_POLICY_METAS,
@@ -14,45 +18,46 @@ import {
   ExperimentalBotsMatchControlsCard,
 } from './ExperimentalBotsSharedCards';
 
-export interface ExperimentalBotPackFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'experimental-bot-pack',
+  title: 'Experimental Bot Pack #9700488',
+  subtitle: '8 Native SafeTensors Policies (Chronos, Dice, Ducky, Fury, Galactus, Kira, Rain, Ripple v1.1)',
+  description:
+    'Live floating controller for Experimental Bot Pack #9700488 (8 native models: Chronos, Dice, Ducky, Fury, Galactus, Kira, Rain, Ripple v1.1).',
+  icon: 'Sparkles',
+  layer: 'floating-dev',
+  menuGroup: 'sandboxes',
+  defaultSizing: {
+    width: 490,
+    height: 620,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface ExperimentalBotPackFloatingWindowProps
+  extends StandardSurfaceProps {
   active?: boolean;
 }
 
 export const ExperimentalBotPackFloatingWindow: React.FC<
   ExperimentalBotPackFloatingWindowProps
-> = ({ isLight = false }) => {
-  const {
-    playerParticipation,
-    blueSlots,
-    orangeSlots,
-    activeBotpackShowcaseModel,
-    activeCameraCarIndex,
-    matchDurationSec,
-    speedMultiplier,
-    unlimitedBoost,
-    disableGoalReplay,
-    matchPhase,
-    blueScore,
-    orangeScore,
-    remainingSec,
-    isOvertime,
-    lastTotalInferenceMs,
-    spawnedCars,
-    addBotToTeam,
-    removeSlotFromTeam,
-    setSlotBotType,
-    setSlotColor,
-    applyBotpack9700488Showcase,
-    setActiveCameraCarIndex,
-    setMatchDurationSec,
-    setSpeedMultiplier,
-    setUnlimitedBoost,
-    setDisableGoalReplay,
-    startOrApplyMatch,
-    triggerSandboxAction,
-    preloadEngines,
-  } = useExperimentalMultiBotsStore();
+> = ({ isLight = false, active = true }) => {
+  const blueSlots = useExperimentalMultiBotsStore((s) => s.blueSlots);
+  const orangeSlots = useExperimentalMultiBotsStore((s) => s.orangeSlots);
+  const activeBotpackShowcaseModel = useExperimentalMultiBotsStore(
+    (s) => s.activeBotpackShowcaseModel
+  );
+  const lastTotalInferenceMs = useExperimentalMultiBotsStore(
+    (s) => s.lastTotalInferenceMs
+  );
+  const applyBotpack9700488Showcase = useExperimentalMultiBotsStore(
+    (s) => s.applyBotpack9700488Showcase
+  );
+  const startOrApplyMatch = useExperimentalMultiBotsStore(
+    (s) => s.startOrApplyMatch
+  );
+  const preloadEngines = useExperimentalMultiBotsStore((s) => s.preloadEngines);
 
   React.useEffect(() => {
     preloadEngines?.();
@@ -61,6 +66,8 @@ export const ExperimentalBotPackFloatingWindow: React.FC<
   const matchMode = useAppStore((s) => s.matchMode);
   const bridge = useAppStore((s) => s.bridge);
   const isInExpMode = matchMode === 'exp-multi-bots';
+
+  if (!active) return null;
 
   const cardBg = isLight
     ? 'bg-neutral-50/90 border-neutral-200 text-neutral-800'
@@ -72,7 +79,6 @@ export const ExperimentalBotPackFloatingWindow: React.FC<
 
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
-  const totalCars = blueSlots.length + orangeSlots.length;
   const activeMeta = getExpBotPolicyMeta(
     activeBotpackShowcaseModel ?? blueSlots[0]?.botType ?? 'chronos'
   );
@@ -200,50 +206,26 @@ export const ExperimentalBotPackFloatingWindow: React.FC<
         isLight={isLight}
         cardBg={cardBg}
         mutedText={mutedText}
-        playerParticipation={playerParticipation}
-        blueSlots={blueSlots}
-        orangeSlots={orangeSlots}
-        spawnedCars={spawnedCars}
-        activeCameraCarIndex={activeCameraCarIndex}
-        onSelectCameraCar={setActiveCameraCarIndex}
       />
 
       {/* 5. Blue Team (Team 0) Roster Builder */}
       <ExperimentalMultiBotsTeamRosterCard
         team={0}
-        slots={blueSlots}
-        globalOffset={0}
-        activeCameraCarIndex={activeCameraCarIndex}
-        totalCars={totalCars}
         allowBotpackPolicies={true}
         isLight={isLight}
         cardBg={cardBg}
         subPanelBg={subPanelBg}
         mutedText={mutedText}
-        onAddBot={addBotToTeam}
-        onSelectCameraCar={setActiveCameraCarIndex}
-        onSetSlotBotType={setSlotBotType}
-        onRemoveSlot={removeSlotFromTeam}
-        onSetSlotColor={setSlotColor}
       />
 
       {/* 6. Orange Team (Team 1) Roster Builder */}
       <ExperimentalMultiBotsTeamRosterCard
         team={1}
-        slots={orangeSlots}
-        globalOffset={blueSlots.length}
-        activeCameraCarIndex={activeCameraCarIndex}
-        totalCars={totalCars}
         allowBotpackPolicies={true}
         isLight={isLight}
         cardBg={cardBg}
         subPanelBg={subPanelBg}
         mutedText={mutedText}
-        onAddBot={addBotToTeam}
-        onSelectCameraCar={setActiveCameraCarIndex}
-        onSetSlotBotType={setSlotBotType}
-        onRemoveSlot={removeSlotFromTeam}
-        onSetSlotColor={setSlotColor}
       />
 
       {/* 7. Live Match Scoreboard, Speed Multiplier & Sandbox Triggers */}

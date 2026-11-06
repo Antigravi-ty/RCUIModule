@@ -1,36 +1,62 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { SliderControl } from '../../primitives/SliderControl';
-import type { SpatialAudioTunerConfig } from '../../config/spatialAudioConfig';
+import { useSpatialAudioStore } from '../../stores/spatialAudioStore';
+import {
+  solveCubicBezier,
+  type SpatialAudioTunerConfig,
+} from '../../config/spatialAudioConfig';
 
 export interface SpatialAudioCurveCardProps {
   isLight: boolean;
-  tunerConfig: SpatialAudioTunerConfig;
-  curveSvgPath: string;
-  anthemLinearPhase: number;
-  anthemBlend: number;
-  bgmLinearPhase: number;
-  bgmBlend: number;
-  bgmIsPlaying: boolean;
-  activeGoalAnthemId: string | null;
-  previewingAnthemId: string | null;
-  overrideModes: { id: SpatialAudioTunerConfig['overrideMode']; label: string }[];
-  updateTunerConfig: (patch: Partial<SpatialAudioTunerConfig>) => void;
 }
+
+const OVERRIDE_MODES: {
+  id: SpatialAudioTunerConfig['overrideMode'];
+  label: string;
+}[] = [
+  { id: 'auto', label: 'Auto (Game State)' },
+  { id: 'normal', label: 'Normal (0.0)' },
+  { id: 'spatial', label: 'Spatial (1.0)' },
+  { id: 'manual', label: 'Manual Scrub' },
+];
 
 export const SpatialAudioCurveCard: React.FC<SpatialAudioCurveCardProps> = ({
   isLight,
-  tunerConfig,
-  curveSvgPath,
-  anthemLinearPhase,
-  anthemBlend,
-  bgmLinearPhase,
-  bgmBlend,
-  bgmIsPlaying,
-  activeGoalAnthemId,
-  previewingAnthemId,
-  overrideModes,
-  updateTunerConfig,
 }) => {
+  const tunerConfig = useSpatialAudioStore((s) => s.tunerConfig);
+  const updateTunerConfig = useSpatialAudioStore((s) => s.updateTunerConfig);
+  const activeGoalAnthemId = useSpatialAudioStore((s) => s.activeGoalAnthemId);
+  const previewingAnthemId = useSpatialAudioStore((s) => s.previewingAnthemId);
+  const anthemLinearPhase = useSpatialAudioStore((s) => s.anthemLinearPhase);
+  const anthemBlend = useSpatialAudioStore((s) => s.anthemBlend);
+  const bgmLinearPhase = useSpatialAudioStore((s) => s.bgmLinearPhase);
+  const bgmBlend = useSpatialAudioStore((s) => s.bgmBlend);
+  const bgmIsPlaying = useSpatialAudioStore((s) => s.bgmIsPlaying);
+
+  const curveSvgPath = useMemo(() => {
+    const pts: string[] = [];
+    const steps = 40;
+    for (let i = 0; i <= steps; i++) {
+      const u = i / steps;
+      const b = solveCubicBezier(
+        u,
+        tunerConfig.bzX1,
+        tunerConfig.bzY1,
+        tunerConfig.bzX2,
+        tunerConfig.bzY2
+      );
+      const x = (u * 100).toFixed(2);
+      const y = ((1 - b) * 100).toFixed(2);
+      pts.push(`${i === 0 ? 'M' : 'L'} ${x} ${y}`);
+    }
+    return pts.join(' ');
+  }, [
+    tunerConfig.bzX1,
+    tunerConfig.bzY1,
+    tunerConfig.bzX2,
+    tunerConfig.bzY2,
+  ]);
+
   return (
     <div
       className={`flex flex-col gap-2 p-2.5 rounded-xl border ${
@@ -138,7 +164,7 @@ export const SpatialAudioCurveCard: React.FC<SpatialAudioCurveCardProps> = ({
 
           {/* Override Mode Selector */}
           <div className="grid grid-cols-2 gap-1 mt-1">
-            {overrideModes.map((mode) => {
+            {OVERRIDE_MODES.map((mode) => {
               const isSelected = tunerConfig.overrideMode === mode.id;
               return (
                 <button

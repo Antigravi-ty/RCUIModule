@@ -7,6 +7,10 @@ import {
   Sparkles,
   Play,
 } from 'lucide-react';
+import type {
+  StandardSurfaceProps,
+  SurfaceMeta,
+} from '../../manifest/surfaceMetaTypes';
 import {
   useKickoffTrainingStore,
   KICKOFF_SPAWNS,
@@ -21,14 +25,31 @@ import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 
-export interface KickoffTrainingTunerFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'kickoff-training-tuner',
+  title: 'Kickoff Training Tuner (PPO)',
+  subtitle: 'Kickoff Sub-Modes, 0.25s Realistic Wait Steps, N/120 Speed & AI Ghost/Solid Opponent',
+  description:
+    'Kickoff sub-modes, realistic wait (0.25s steps), N/120 speed & W/S rhythm overlay offset.',
+  icon: 'Gauge',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 460,
+    height: 595,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface KickoffTrainingTunerFloatingWindowProps
+  extends StandardSurfaceProps {
   active?: boolean;
 }
 
-export const KickoffTrainingTunerFloatingWindow: React.FC<KickoffTrainingTunerFloatingWindowProps> = ({
-  isLight = false,
-}) => {
+export const KickoffTrainingTunerFloatingWindow: React.FC<
+  KickoffTrainingTunerFloatingWindowProps
+> = ({ isLight = false, active = true }) => {
   const {
     subMode,
     spawnIndex,
@@ -67,6 +88,8 @@ export const KickoffTrainingTunerFloatingWindow: React.FC<KickoffTrainingTunerFl
   const bridge = useAppStore((s) => s.bridge);
   const isInKickoffTraining = matchMode === 'kickoff-training';
   const isSameSideSolid = !ghostModeEnabled && ghostPlacement === 'same';
+
+  if (!active) return null;
 
   const cardBg = isLight
     ? 'bg-neutral-50/90 border-neutral-200 text-neutral-800'

@@ -7,6 +7,10 @@ import {
   Download,
   Cpu,
 } from 'lucide-react';
+import type {
+  StandardSurfaceProps,
+  SurfaceMeta,
+} from '../../manifest/surfaceMetaTypes';
 import { useEngineAudioStore } from '../../stores/engineAudioStore';
 import { listEngineAudioPacks } from '../../config/engineAudioConfig';
 import { Badge } from '../../primitives/Badge';
@@ -16,8 +20,25 @@ import { EngineAudioDrivetrainCard } from './engine-audio-tuner/EngineAudioDrive
 import { EngineAudioEqualizerCard } from './engine-audio-tuner/EngineAudioEqualizerCard';
 import { EngineAudioSynthesisSfxCard } from './engine-audio-tuner/EngineAudioSynthesisSfxCard';
 
-export interface EngineAudioTunerFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'engine-audio-tuner',
+  title: 'Engine Audio Tuner (Turtle Modem)',
+  subtitle: '40-Slice Granular REV Powertrain Synthesizer & 5-Band Loudness EQ',
+  description:
+    'Turtle Modem 40-slice granular REV powertrain synthesizer, RPM/gear/reverse physics, backfire pops & Entity Spawn SFX.',
+  icon: 'Volume2',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 500,
+    height: 640,
+    minHeight: 220,
+    mode: 'adaptive',
+  },
+};
+
+export interface EngineAudioTunerFloatingWindowProps
+  extends StandardSurfaceProps {
   active?: boolean;
 }
 
