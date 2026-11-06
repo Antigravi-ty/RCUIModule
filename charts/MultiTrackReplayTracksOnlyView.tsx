@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 export interface ReplayIncidentMarker {
   frameIndex: number;
   type: 'goal' | 'demo' | 'touch' | 'save';
@@ -33,7 +33,7 @@ export interface MultiTrackReplayTracksOnlyViewProps {
   onSeekFrame?: (frameIndex: number) => void;
 }
 
-export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnlyViewProps> = ({
+export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnlyViewProps> = React.memo(({
   fileName,
   totalFrames,
   denomFrames,
@@ -60,6 +60,60 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
   const trackInteractiveCls = isTrackDisabled
     ? 'cursor-not-allowed pointer-events-none opacity-50'
     : 'cursor-pointer';
+
+  const renderedIncidentMarkers = useMemo(() => {
+    if (isTrackDisabled) return null;
+    return incidentMarkers.map((m, idx) => {
+      const leftPct = (m.frameIndex / denomFrames) * 100;
+      const colorCls =
+        m.type === 'goal'
+          ? 'bg-emerald-500 w-1.5 z-10'
+          : m.type === 'demo'
+          ? 'bg-rose-500 w-1'
+          : m.type === 'save'
+          ? 'bg-sky-500 w-1'
+          : 'bg-amber-500 w-0.5';
+      return (
+        <div
+          key={`${m.frameIndex}-${idx}`}
+          style={{ left: `${leftPct}%` }}
+          onClick={(e) => {
+            e.stopPropagation();
+            applyCursorToDom(m.frameIndex);
+            onSeekFrame?.(m.frameIndex);
+          }}
+          className={`absolute top-0 bottom-0 ${colorCls}`}
+          title={`${m.label} @ #${m.frameIndex}`}
+        />
+      );
+    });
+  }, [isTrackDisabled, incidentMarkers, denomFrames, applyCursorToDom, onSeekFrame]);
+
+  const renderedSignalMarkers = useMemo(() => {
+    if (isTrackDisabled) return null;
+    return signalMarkers.map((s, idx) => {
+      const leftPct = (s.frameIndex / denomFrames) * 100;
+      const colorCls =
+        s.type === 'score'
+          ? 'bg-emerald-500 w-1.5'
+          : s.type === 'end'
+          ? 'bg-violet-500 w-1'
+          : 'bg-sky-500 w-1';
+      return (
+        <div
+          key={`${s.frameIndex}-${idx}`}
+          style={{ left: `${leftPct}%` }}
+          onClick={(e) => {
+            e.stopPropagation();
+            applyCursorToDom(s.frameIndex);
+            onSeekFrame?.(s.frameIndex);
+          }}
+          className={`absolute top-0 bottom-0 ${colorCls}`}
+          title={`${s.label} @ #${s.frameIndex}`}
+        />
+      );
+    });
+  }, [isTrackDisabled, signalMarkers, denomFrames, applyCursorToDom, onSeekFrame]);
 
   return (
     <div
@@ -95,7 +149,7 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
         >
           <div
             ref={trackAFillRef}
-            className="h-full bg-amber-500 transition-all duration-75"
+            className="h-full bg-amber-500"
             style={{ width: `${cursorPct}%` }}
           />
         </div>
@@ -105,31 +159,7 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
           title="Track 2 · Arena Incidents (Touch / Demo / Save / Goal)"
           className={`w-full h-3 rounded-full overflow-hidden relative ${trackInteractiveCls} ${trackBgClass}`}
         >
-          {!isTrackDisabled &&
-            incidentMarkers.map((m, idx) => {
-              const leftPct = (m.frameIndex / denomFrames) * 100;
-              const colorCls =
-                m.type === 'goal'
-                  ? 'bg-emerald-500 w-1.5 z-10'
-                  : m.type === 'demo'
-                  ? 'bg-rose-500 w-1'
-                  : m.type === 'save'
-                  ? 'bg-sky-500 w-1'
-                  : 'bg-amber-500 w-0.5';
-              return (
-                <div
-                  key={`${m.frameIndex}-${idx}`}
-                  style={{ left: `${leftPct}%` }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    applyCursorToDom(m.frameIndex);
-                    onSeekFrame?.(m.frameIndex);
-                  }}
-                  className={`absolute top-0 bottom-0 ${colorCls}`}
-                  title={`${m.label} @ #${m.frameIndex}`}
-                />
-              );
-            })}
+          {renderedIncidentMarkers}
           {!isTrackDisabled && (
             <div
               ref={trackBCursorRef}
@@ -144,29 +174,7 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
           title="Track 3 · Match Signals (Kickoff / Score / Boundary)"
           className={`w-full h-3 rounded-full overflow-hidden relative ${trackInteractiveCls} ${trackBgClass}`}
         >
-          {!isTrackDisabled &&
-            signalMarkers.map((s, idx) => {
-              const leftPct = (s.frameIndex / denomFrames) * 100;
-              const colorCls =
-                s.type === 'score'
-                  ? 'bg-emerald-500 w-1.5'
-                  : s.type === 'end'
-                  ? 'bg-violet-500 w-1'
-                  : 'bg-sky-500 w-1';
-              return (
-                <div
-                  key={`${s.frameIndex}-${idx}`}
-                  style={{ left: `${leftPct}%` }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    applyCursorToDom(s.frameIndex);
-                    onSeekFrame?.(s.frameIndex);
-                  }}
-                  className={`absolute top-0 bottom-0 ${colorCls}`}
-                  title={`${s.label} @ #${s.frameIndex}`}
-                />
-              );
-            })}
+          {renderedSignalMarkers}
           {!isTrackDisabled && (
             <div
               ref={trackCCursorRef}
@@ -178,4 +186,5 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
       </div>
     </div>
   );
-};
+});
+

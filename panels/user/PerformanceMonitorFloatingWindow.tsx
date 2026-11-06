@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { Cpu, HardDrive } from 'lucide-react';
+import { Cpu, HardDrive, ClipboardCopy } from 'lucide-react';
 import { TelemetrySparklineChart, TelemetryPhaseItem } from '../../charts/TelemetrySparklineChart';
 import { TelemetryRingBuffer } from '../../charts/telemetryRingBuffer';
 import { quickNotification } from '../../stores/quickNotificationStore';
@@ -12,6 +12,16 @@ function usePerformanceMonitorPanelBinding(
 
   const telemetrySnapshot = useMemo((): LiveSystemTelemetrySnapshot | undefined => {
     if (!snap) return undefined;
+    const palette = ['#f59e0b', '#0ea5e9', '#d946ef', '#10b981', '#6366f1', '#f43f5e'];
+    const liveCpuPhases: TelemetryPhaseItem[] | undefined =
+      Array.isArray(snap.phases) && snap.phases.length > 0
+        ? snap.phases.map((item, idx) => ({
+            phase: item.phase,
+            avgMs: Math.max(0, Number(item.avgMs) || 0),
+            share: Math.max(0, Number(item.share) || 0),
+            color: palette[idx % palette.length],
+          }))
+        : undefined;
     return {
       frameTimeMs: snap.frameMs || 8.33,
       budgetMs: snap.budgetMs || 8.33,
@@ -21,11 +31,13 @@ function usePerformanceMonitorPanelBinding(
       p99Ms: snap.p99 || 9.0,
       peakMs: snap.worstMs || 9.5,
       overBudgetPct: snap.overBudgetPct || 0,
+      cpuPhases: liveCpuPhases,
       physicsStepHz: snap.sim?.physicsRateHz || 120,
       substepsPerTick: snap.sim?.ticksPerFrame || 1,
       drawCalls: snap.renderer?.drawCalls || 0,
       trianglesLabel: String(snap.renderer?.triangles ?? '0'),
       geometries: snap.renderer?.geometries || 0,
+      shaderPrograms: snap.renderer?.textures || 29,
     };
   }, [snap]);
 
@@ -211,6 +223,48 @@ export const PerformanceMonitorFloatingWindow: React.FC<PerformanceMonitorFloati
       const cpuPhases = snapshot?.cpuPhases ?? DEFAULT_CPU_PHASES;
       const totalCpuMs = cpuPhases.reduce((acc, item) => acc + item.avgMs, 0);
 
+      const handleCopyDiagnosticReport = () => {
+        try {
+          const w = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
+          const customBuilder = w.exportRuntimeDiagnosticReport;
+          const payload =
+            typeof customBuilder === 'function'
+              ? (customBuilder as () => unknown)()
+              : {
+                  capturedAt: new Date().toISOString(),
+                  telemetry: {
+                    p50Ms: Number(displayP50.toFixed(3)),
+                    p95Ms: Number(displayP95.toFixed(3)),
+                    p99Ms: Number(displayP99.toFixed(3)),
+                    peakMs: Number(displayPeak.toFixed(3)),
+                    budgetMs,
+                    refreshHz,
+                    overBudgetPct: displayOverBudgetPct,
+                    totalCpuMs: Number(totalCpuMs.toFixed(3)),
+                    cpuPhases: cpuPhases.map((p) => ({
+                      phase: p.phase,
+                      avgMs: Number(p.avgMs.toFixed(3)),
+                      sharePct: Math.round(p.share * 100),
+                    })),
+                    webgl: {
+                      drawCalls: snapshot?.drawCalls ?? 0,
+                      triangles: snapshot?.trianglesLabel ?? '0',
+                      geometries: snapshot?.geometries ?? 0,
+                      shaderPrograms: snapshot?.shaderPrograms ?? 0,
+                    },
+                  },
+                };
+          const jsonText = JSON.stringify(payload, null, 2);
+          if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            void navigator.clipboard.writeText(jsonText);
+          }
+          rawProps.onExportLog?.();
+          quickNotification.success('Copied diagnostic performance report to clipboard.');
+        } catch {
+          quickNotification.error('Failed to copy diagnostic report.');
+        }
+      };
+
       const physicsStepLabel =
         snapshot?.physicsStepHz !== undefined
           ? typeof snapshot.physicsStepHz === 'number'
@@ -318,14 +372,29 @@ export const PerformanceMonitorFloatingWindow: React.FC<PerformanceMonitorFloati
           isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/60 border-neutral-800'
         }`}
       >
-        <div className="flex items-center justify-between font-mono">
+        <div className="flex items-center justify-between font-mono gap-2">
           <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
             <Cpu className="h-3.5 w-3.5 text-sky-500 shrink-0" />
             <span>CPU Breakdown</span>
           </span>
-          <span className="text-[11px] font-bold tabular-nums text-sky-400">
-            Total: {totalCpuMs.toFixed(2)} ms (100%)
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold tabular-nums text-sky-400">
+              Total: {totalCpuMs.toFixed(2)} ms
+            </span>
+            <button
+              type="button"
+              onClick={handleCopyDiagnosticReport}
+              title="Copy JSON diagnostic performance report to clipboard"
+              className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 border transition-colors ${
+                isLight
+                  ? 'bg-white border-neutral-300 hover:bg-neutral-100 text-neutral-700'
+                  : 'bg-neutral-800 border-neutral-700 hover:bg-neutral-700 text-neutral-200'
+              }`}
+            >
+              <ClipboardCopy className="h-3 w-3 text-amber-500" />
+              <span>Copy Report</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 font-mono text-[10px]">
