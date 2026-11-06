@@ -351,7 +351,7 @@ export function createStaticTrainingPackCollectionActions<TState extends StaticT
         uuid,
         title: (title || 'New Static Pack').trim() || 'New Static Pack',
         description: (description || '').trim(),
-        tags: ['Local'],
+        tags: ['Native'],
         sourcePackType: 'RCSPackE',
         createdAt: now,
         updatedAt: now,
@@ -387,6 +387,35 @@ export function createStaticTrainingPackCollectionActions<TState extends StaticT
         description,
         updatedAt: Date.now(),
       };
+      await saveStaticTrainingPackFull(updatedMeta, loaded.items, scope);
+      const packs = await listStaticTrainingPacks(scope);
+      const selectedUuid = scope === 'dev' ? get().devSelectedPackUuid : get().normalSelectedPackUuid;
+      set((state) => ({
+        ...buildScopePackStatePatch(scope, packs, selectedUuid, state.storageScope === scope),
+        activePack:
+          state.activePack?.uuid === uuid
+            ? buildActivePackBundle(updatedMeta, state.activeItems)
+            : state.activePack,
+      }));
+    },
+
+    updatePackTags: async (
+      uuid: string,
+      tags: string[],
+      scope: StaticTrainingPackStorageScope = get().storageScope
+    ) => {
+      const loaded = await loadStaticTrainingPackByUuid(uuid, scope);
+      if (!loaded.metadata) return;
+      const cleanTags = Array.from(new Set(tags.map((t) => t.trim()).filter(Boolean)));
+      const rankSet = new Set(['progression', 'ssl', 'gc', 'champion', 'diamond', 'platinum', 'gold', 'silver', 'bronze']);
+      const matchedRankTag = cleanTags.find((t) => rankSet.has(t.toLowerCase()));
+      const updatedMeta: StaticTrainingPackMetadata = {
+        ...loaded.metadata,
+        tags: cleanTags,
+        rankTier: matchedRankTag,
+        updatedAt: Date.now(),
+      };
+      if (!matchedRankTag) delete updatedMeta.rankTier;
       await saveStaticTrainingPackFull(updatedMeta, loaded.items, scope);
       const packs = await listStaticTrainingPacks(scope);
       const selectedUuid = scope === 'dev' ? get().devSelectedPackUuid : get().normalSelectedPackUuid;
@@ -444,9 +473,7 @@ export function createStaticTrainingPackCollectionActions<TState extends StaticT
       const loadedList: Array<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }> = [];
       for (const uuid of uuids) {
         const loaded = await loadStaticTrainingPackByUuid(uuid, scope);
-        if (loaded.metadata) {
-          loadedList.push({ metadata: loaded.metadata, items: loaded.items });
-        }
+        if (loaded.metadata) loadedList.push({ metadata: loaded.metadata, items: loaded.items });
       }
       if (loadedList.length === 0) return null;
       return await exportBatchStaticTrainingPacksZip(loadedList, bundleName, options);
@@ -502,9 +529,7 @@ export function createStaticTrainingPackCollectionActions<TState extends StaticT
         const packs = await listStaticTrainingPacks('dev');
         const currentSelected = get().devSelectedPackUuid;
         const validSelected =
-          currentSelected && packs.some((p) => p.uuid === currentSelected)
-            ? currentSelected
-            : packs[0]?.uuid ?? null;
+          currentSelected && packs.some((p) => p.uuid === currentSelected) ? currentSelected : packs[0]?.uuid ?? null;
         const isDevActive = get().storageScope === 'dev';
         let activePack = get().activePack;
         let activeItems = get().activeItems;
@@ -517,11 +542,7 @@ export function createStaticTrainingPackCollectionActions<TState extends StaticT
           devInitialized: true,
           ...buildScopePackStatePatch('dev', packs, validSelected, isDevActive),
           ...(isDevActive
-            ? {
-                activePack,
-                activeItems,
-                committedSessionItems: activeItems.map((it, idx) => cloneShotItem(it, idx)),
-              }
+            ? { activePack, activeItems, committedSessionItems: activeItems.map((it, idx) => cloneShotItem(it, idx)) }
             : {}),
         });
       }
@@ -536,11 +557,7 @@ export function createStaticTrainingPackCollectionActions<TState extends StaticT
       const normalizedItems = (items.length > 0 ? items : [createDefaultShotItem(0)])
         .slice(0, MAX_SHOTS_PER_PACK)
         .map((it, idx) => cloneShotItem(it, idx));
-      const finalMeta: StaticTrainingPackMetadata = {
-        ...metadata,
-        itemCount: normalizedItems.length,
-        updatedAt: Date.now(),
-      };
+      const finalMeta: StaticTrainingPackMetadata = { ...metadata, itemCount: normalizedItems.length, updatedAt: Date.now() };
       await saveStaticTrainingPackFull(finalMeta, normalizedItems, scope);
       const packs = await listStaticTrainingPacks(scope);
       setActiveEditItemVariable(null);

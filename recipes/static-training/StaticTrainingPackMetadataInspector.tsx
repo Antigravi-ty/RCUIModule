@@ -3,9 +3,11 @@ import {
   ChevronDown,
   ChevronUp,
   Code2,
+  Plus,
   Save,
   Sparkles,
   Target,
+  X,
 } from 'lucide-react';
 import {
   isVariationMatchingLatestPreset,
@@ -35,6 +37,7 @@ export interface StaticTrainingPackMetadataInspectorProps {
   applyNewKevpertBind?: boolean;
   onToggleApplyNewKevpertBind?: (val: boolean) => void;
   onSaveMetadata: () => void;
+  onUpdatePackTags?: (uuid: string, nextTags: string[]) => void;
   onPlayPack: (meta: StaticTrainingPackSummary) => void;
   onEditPack: (meta: StaticTrainingPackSummary) => void;
   onExportPack: (meta: StaticTrainingPackSummary, editable: boolean) => void;
@@ -63,6 +66,7 @@ export const StaticTrainingPackMetadataInspector: React.FC<
     applyNewKevpertBind = false,
     onToggleApplyNewKevpertBind,
     onSaveMetadata,
+    onUpdatePackTags,
     onPlayPack,
     onEditPack,
     onExportPack,
@@ -70,11 +74,35 @@ export const StaticTrainingPackMetadataInspector: React.FC<
     onHoverDesc,
   }) => {
     const [showOriginalDescription, setShowOriginalDescription] = useState(false);
+    const [newTagInput, setNewTagInput] = useState('');
 
     const rawRec = selectedMeta?.recommendedVariation ?? null;
     const effectiveRec = resolveEffectiveRecommendedVariation(rawRec, applyNewKevpertBind);
     const rawMatchesLatest = isVariationMatchingLatestPreset(rawRec);
     const effectiveMatchesLatest = isVariationMatchingLatestPreset(effectiveRec);
+
+    const currentTags = selectedMeta?.tags ?? [];
+
+    const handleAddTag = () => {
+      if (!selectedMeta || !onUpdatePackTags) return;
+      const cleaned = newTagInput.trim().replace(/^#+/, '').trim();
+      if (!cleaned) return;
+      if (currentTags.some((t) => t.toLowerCase() === cleaned.toLowerCase())) {
+        setNewTagInput('');
+        return;
+      }
+      const nextTags = [...currentTags, cleaned];
+      onUpdatePackTags(selectedMeta.uuid, nextTags);
+      setNewTagInput('');
+      onHoverDesc(`Added tag #${cleaned}`);
+    };
+
+    const handleRemoveTag = (tagToRemove: string) => {
+      if (!selectedMeta || !onUpdatePackTags) return;
+      const nextTags = currentTags.filter((t) => t !== tagToRemove);
+      onUpdatePackTags(selectedMeta.uuid, nextTags);
+      onHoverDesc(`Removed tag #${tagToRemove}`);
+    };
 
     return (
       <div
@@ -110,7 +138,7 @@ export const StaticTrainingPackMetadataInspector: React.FC<
                 </div>
 
                 {/* Tags & Recommended Variance Badge Row + Apply Old / Apply New Toggle */}
-                {((selectedMeta.tags && selectedMeta.tags.length > 0) || effectiveRec) && (
+                {(isDevMode || currentTags.length > 0 || effectiveRec) && (
                   <div className="flex flex-wrap items-center justify-between gap-1.5">
                     <div className="flex flex-wrap items-center gap-1">
                       {effectiveRec && (
@@ -149,18 +177,65 @@ export const StaticTrainingPackMetadataInspector: React.FC<
                           </span>
                         </span>
                       )}
-                      {selectedMeta.tags?.map((tag) => (
+                      {currentTags.map((tag) => (
                         <span
                           key={tag}
-                          className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium ${
                             isLight
                               ? 'bg-neutral-100 text-neutral-700 border border-neutral-200'
                               : 'bg-neutral-800 text-neutral-300 border border-neutral-700'
                           }`}
                         >
-                          #{tag}
+                          <span>#{tag}</span>
+                          {isDevMode && onUpdatePackTags && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTag(tag)}
+                              onMouseEnter={() => onHoverDesc(`Remove tag #${tag}`)}
+                              onMouseLeave={() => onHoverDesc(null)}
+                              className="opacity-60 hover:opacity-100 hover:text-rose-400 cursor-pointer"
+                              aria-label={`Remove tag ${tag}`}
+                            >
+                              <X className="h-2.5 w-2.5" />
+                            </button>
+                          )}
                         </span>
                       ))}
+                      {isDevMode && onUpdatePackTags && (
+                        <div
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] ${
+                            isLight
+                              ? 'bg-neutral-50 border-neutral-300 text-neutral-800'
+                              : 'bg-neutral-900 border-neutral-700 text-neutral-200'
+                          }`}
+                        >
+                          <input
+                            type="text"
+                            placeholder="+ tag"
+                            value={newTagInput}
+                            onChange={(e) => setNewTagInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddTag();
+                              }
+                            }}
+                            className="w-14 bg-transparent outline-none text-[9px] font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddTag}
+                            onMouseEnter={() =>
+                              onHoverDesc('Developer Mode: Add a custom folder/filter tag to this pack.')
+                            }
+                            onMouseLeave={() => onHoverDesc(null)}
+                            className="opacity-70 hover:opacity-100 hover:text-cyan-400 cursor-pointer"
+                            aria-label="Add tag"
+                          >
+                            <Plus className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {rawRec &&

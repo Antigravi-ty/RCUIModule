@@ -57,7 +57,10 @@ export const StaticTrainingPackInspectorActions: React.FC<
     onDeletePack,
     onHoverDesc,
   }) => {
-    const isEditable = selectedMeta.editable !== false;
+    const isEditable =
+      selectedMeta.editable !== undefined
+        ? selectedMeta.editable
+        : selectedMeta.sourcePackType !== 'RCSPack';
     return (
       <div className="flex flex-col gap-2.5 pt-2.5 border-t border-neutral-500/20">
         {/* Down Counter Pre-Shot Freeze Toggle */}

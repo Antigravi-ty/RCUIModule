@@ -40,13 +40,15 @@ export interface Layer4StaticTrainingPackBrowseRecipeProps {
   onSelectKevpertPreset?: (key: KevpertPresetKey) => void;
   onCreatePack?: (title: string, description: string) => Promise<void> | void;
   onSavePackMetadata?: (uuid: string, title: string, description: string) => Promise<void> | void;
+  onUpdatePackTags?: (uuid: string, tags: string[]) => Promise<void> | void;
   onDeletePack?: (uuid: string) => Promise<void> | void;
   onImportPackFile?: (file: File) => Promise<void> | void;
   onImportBatchPackFiles?: (files: File[] | FileList) => Promise<number> | void;
   onExportBatchPacksZip?: (
     uuids: string[],
     bundleName: string,
-    editable: boolean
+    editable: boolean,
+    formatOverride?: 'RCSPack' | 'RCSPackE' | 'RLRCSPack'
   ) => Promise<string | null> | void;
   onBack?: () => void;
   onStartPlaySession?: (uuid: string) => void;
@@ -113,6 +115,7 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
   const selectPack = useStaticTrainingPackStore((s) => s.selectPack);
   const createPack = useStaticTrainingPackStore((s) => s.createPack);
   const updatePackInfo = useStaticTrainingPackStore((s) => s.updatePackInfo);
+  const updatePackTags = useStaticTrainingPackStore((s) => s.updatePackTags);
   const deletePack = useStaticTrainingPackStore((s) => s.deletePack);
   const exportPackRCS = useStaticTrainingPackStore((s) => s.exportPackRCS);
   const exportBatchPacksZip = useStaticTrainingPackStore((s) => s.exportBatchPacksZip);
@@ -188,6 +191,11 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
       (async (uuid: string, title: string, desc: string) => {
         await updatePackInfo(uuid, title, desc, targetScope);
       }),
+    onUpdatePackTags:
+      rawProps.onUpdatePackTags ??
+      (async (uuid: string, tags: string[]) => {
+        await updatePackTags(uuid, tags, targetScope);
+      }),
     onDeletePack:
       rawProps.onDeletePack ??
       (async (uuid: string) => {
@@ -200,8 +208,18 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
       }),
     onExportBatchPacksZip:
       rawProps.onExportBatchPacksZip ??
-      (async (uuids: string[], bundleName: string, editable: boolean) => {
-        return await exportBatchPacksZip(uuids, bundleName, { editable }, targetScope);
+      (async (
+        uuids: string[],
+        bundleName: string,
+        editable: boolean,
+        formatOverride?: 'RCSPack' | 'RCSPackE' | 'RLRCSPack'
+      ) => {
+        return await exportBatchPacksZip(
+          uuids,
+          bundleName,
+          { editable, formatOverride },
+          targetScope
+        );
       }),
     onImportPackFile:
       rawProps.onImportPackFile ??

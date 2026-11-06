@@ -182,6 +182,11 @@ export interface StaticTrainingPackStoreState {
     description: string,
     scope?: StaticTrainingPackStorageScope
   ) => Promise<void>;
+  updatePackTags: (
+    uuid: string,
+    tags: string[],
+    scope?: StaticTrainingPackStorageScope
+  ) => Promise<void>;
   deletePack: (uuid: string, scope?: StaticTrainingPackStorageScope) => Promise<void>;
   exportPackRCS: (
     uuid?: string,

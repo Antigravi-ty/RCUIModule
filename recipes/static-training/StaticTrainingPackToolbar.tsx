@@ -3,6 +3,7 @@ import { Check, Plus, Upload, X } from 'lucide-react';
 
 export interface StaticTrainingPackToolbarProps {
   isLight: boolean;
+  isDevMode?: boolean;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   isCreatingPack: boolean;
   setIsCreatingPack: React.Dispatch<React.SetStateAction<boolean>>;
@@ -19,6 +20,7 @@ export interface StaticTrainingPackToolbarProps {
 export const StaticTrainingPackToolbar: React.FC<StaticTrainingPackToolbarProps> = React.memo(
   ({
     isLight,
+    isDevMode = false,
     fileInputRef,
     isCreatingPack,
     setIsCreatingPack,
@@ -31,6 +33,10 @@ export const StaticTrainingPackToolbar: React.FC<StaticTrainingPackToolbarProps>
     onCreateSubmit,
     onHoverDesc,
   }) => {
+    const acceptedFormats = isDevMode
+      ? '.rcspack,.RCSPack,.rcspacke,.RCSPackE,.rlrcspack,.RLRCSPack,.Tem,.tem,.zip,.ZIP,.gz,.json'
+      : '.rcspack,.RCSPack,.rcspacke,.RCSPackE,.zip,.ZIP';
+
     return (
       <div className="flex flex-col gap-2 shrink-0">
         <div className="grid grid-cols-2 gap-2">
@@ -38,7 +44,7 @@ export const StaticTrainingPackToolbar: React.FC<StaticTrainingPackToolbarProps>
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".rcspack,.RCSPack,.rcspacke,.RCSPackE,.rlrcspack,.RLRCSPack,.Tem,.tem,.zip,.ZIP,.gz,.json"
+            accept={acceptedFormats}
             onChange={onImportFileChange}
             className="hidden"
           />
@@ -47,7 +53,9 @@ export const StaticTrainingPackToolbar: React.FC<StaticTrainingPackToolbarProps>
             onClick={onImportClick}
             onMouseEnter={() =>
               onHoverDesc(
-                'Import single or multiple .RCSPack / .RCSPackE / .RLRCSPack / .Tem files or a batch .zip archive.'
+                isDevMode
+                  ? 'Import single or multiple .RCSPack / .RCSPackE / .RLRCSPack / .Tem files or a batch .zip archive.'
+                  : 'Import single or multiple .RCSPack / .RCSPackE files or a batch .zip archive.'
               )
             }
             onMouseLeave={() => onHoverDesc(null)}

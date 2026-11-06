@@ -43,7 +43,8 @@ export interface StaticTrainingPackFolderListProps {
   onBatchExportFiltered?: (
     packs: StaticTrainingPackSummary[],
     folderLabel: string,
-    editable: boolean
+    editable: boolean,
+    formatOverride?: 'RCSPack' | 'RCSPackE' | 'RLRCSPack'
   ) => void;
 }
 
@@ -266,30 +267,85 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
             </button>
 
             {onBatchExportFiltered && filteredAndSortedPacks.length > 0 && (
-              <button
-                type="button"
-                onClick={() =>
-                  onBatchExportFiltered(
-                    filteredAndSortedPacks,
-                    activeFilterSummaryLabel === 'All' ? 'AllPacks' : activeFilterSummaryLabel,
-                    true
-                  )
-                }
-                onMouseEnter={() =>
-                  onHoverDesc(
-                    `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" folder as a .zip archive.`
-                  )
-                }
-                onMouseLeave={() => onHoverDesc(null)}
-                className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                  isLight
-                    ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
-                    : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-                }`}
-              >
-                <Download className="h-2.5 w-2.5" />
-                <span>.ZIP</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onBatchExportFiltered(
+                      filteredAndSortedPacks,
+                      activeFilterSummaryLabel === 'All' ? 'AllPacks' : activeFilterSummaryLabel,
+                      false,
+                      'RCSPack'
+                    )
+                  }
+                  onMouseEnter={() =>
+                    onHoverDesc(
+                      `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" as read-only .RCSPack inside a .zip archive.`
+                    )
+                  }
+                  onMouseLeave={() => onHoverDesc(null)}
+                  className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
+                    isLight
+                      ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
+                      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
+                  }`}
+                >
+                  <Download className="h-2.5 w-2.5" />
+                  <span>.ZIP</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onBatchExportFiltered(
+                      filteredAndSortedPacks,
+                      activeFilterSummaryLabel === 'All' ? 'AllPacks' : activeFilterSummaryLabel,
+                      true,
+                      'RCSPackE'
+                    )
+                  }
+                  onMouseEnter={() =>
+                    onHoverDesc(
+                      `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" as editable .RCSPackE inside a .zip archive.`
+                    )
+                  }
+                  onMouseLeave={() => onHoverDesc(null)}
+                  className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
+                    isLight
+                      ? 'bg-cyan-50 hover:bg-cyan-100 border-cyan-300 text-cyan-800'
+                      : 'bg-cyan-950/50 hover:bg-cyan-900/60 border-cyan-500/40 text-cyan-300'
+                  }`}
+                >
+                  <Download className="h-2.5 w-2.5" />
+                  <span>.ZIP(E)</span>
+                </button>
+                {isDevMode && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onBatchExportFiltered(
+                        filteredAndSortedPacks,
+                        activeFilterSummaryLabel === 'All' ? 'AllPacks' : activeFilterSummaryLabel,
+                        true,
+                        'RLRCSPack'
+                      )
+                    }
+                    onMouseEnter={() =>
+                      onHoverDesc(
+                        `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" as developer .RLRCSPack (with originalDescription) inside a .zip archive.`
+                      )
+                    }
+                    onMouseLeave={() => onHoverDesc(null)}
+                    className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
+                      isLight
+                        ? 'bg-purple-50 hover:bg-purple-100 border-purple-300 text-purple-800'
+                        : 'bg-purple-950/50 hover:bg-purple-900/60 border-purple-500/40 text-purple-300'
+                    }`}
+                  >
+                    <Download className="h-2.5 w-2.5" />
+                    <span>.ZIP(RL)</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -421,8 +477,9 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
             );
             const hasRecommendedVariance = Boolean(effectiveRec);
             const matchesLatest = isVariationMatchingLatestPreset(effectiveRec);
-            const fKeyBadge = effectiveRec?.presetKey;
-            const displayRank = normalizeRankLabel(pack.rankTier) || pack.rankTier;
+            const displayRank = hasAnyRankTag(pack)
+              ? normalizeRankLabel(pack.rankTier) || pack.rankTier
+              : null;
 
             return (
               <button
@@ -449,39 +506,22 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
               >
                 <div className="flex items-center justify-between gap-1.5">
                   <span className="text-xs font-bold truncate">{pack.title}</span>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {fKeyBadge && fKeyBadge !== 'CUSTOM' && fKeyBadge !== 'custom' && (
-                      <span
-                        className={`px-1.5 py-0.2 rounded text-[8px] font-mono font-bold ${
-                          matchesLatest
-                            ? isLight
-                              ? 'bg-cyan-100 text-cyan-800'
-                              : 'bg-cyan-950/80 text-cyan-300 border border-cyan-500/30'
-                            : isLight
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-purple-950/80 text-purple-300 border border-purple-500/30'
-                        }`}
-                      >
-                        {matchesLatest ? fKeyBadge : 'Variants Ready'}
-                      </span>
-                    )}
-                    <Badge
-                      variant={
-                        hasRecommendedVariance
-                          ? matchesLatest
-                            ? 'info'
-                            : 'purple'
-                          : isSelected
-                            ? 'default'
-                            : 'neutral'
-                      }
-                      size="sm"
-                      isLight={isLight}
-                      className="text-[9px] shrink-0"
-                    >
-                      {pack.itemCount} {pack.itemCount === 1 ? 'Shot' : 'Shots'}
-                    </Badge>
-                  </div>
+                  <Badge
+                    variant={
+                      hasRecommendedVariance
+                        ? matchesLatest
+                          ? 'info'
+                          : 'purple'
+                        : isSelected
+                          ? 'default'
+                          : 'neutral'
+                    }
+                    size="sm"
+                    isLight={isLight}
+                    className="text-[9px] shrink-0"
+                  >
+                    {pack.itemCount} {pack.itemCount === 1 ? 'Shot' : 'Shots'}
+                  </Badge>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <span

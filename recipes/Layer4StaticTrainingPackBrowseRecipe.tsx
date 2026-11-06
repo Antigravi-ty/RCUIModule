@@ -134,6 +134,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
     onSelectKevpertPreset = () => {},
     onCreatePack,
     onSavePackMetadata,
+    onUpdatePackTags,
     onDeletePack,
     onImportPackFile,
     onImportBatchPackFiles,
@@ -248,7 +249,8 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
         title,
         description: desc,
         itemCount: 1,
-        tags: ['Local'],
+        tags: ['Native'],
+        sourcePackType: 'RCSPackE',
         createdAt: now,
         updatedAt: now,
       });
@@ -283,6 +285,24 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
       );
     }
     setHoveredDesc(`Saved global metadata for "${trimmedTitle}"`);
+  };
+
+  const handleUpdatePackTags = async (uuid: string, nextTags: string[]) => {
+    if (onUpdatePackTags) {
+      await onUpdatePackTags(uuid, nextTags);
+    } else {
+      setInternalPacks((prev) =>
+        prev.map((p) =>
+          p.uuid === uuid
+            ? normalizePackSummary({
+                ...p,
+                tags: nextTags,
+                updatedAt: Date.now(),
+              })
+            : p
+        )
+      );
+    }
   };
 
   const handleDeletePack = async (uuid: string) => {
@@ -320,12 +340,18 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
   const handleBatchExportFiltered = async (
     filteredPacks: StaticTrainingPackSummary[],
     folderLabel: string,
-    editable: boolean
+    editable: boolean,
+    formatOverride?: 'RCSPack' | 'RCSPackE' | 'RLRCSPack'
   ) => {
     const uuids = filteredPacks.map((p) => p.uuid);
     if (uuids.length === 0) return;
     if (onExportBatchPacksZip) {
-      const zipName = await onExportBatchPacksZip(uuids, folderLabel, editable);
+      const zipName = await onExportBatchPacksZip(
+        uuids,
+        folderLabel,
+        editable,
+        formatOverride
+      );
       setHoveredDesc(
         `Exported ${uuids.length} packs from "${folderLabel}" as ${zipName || '.zip'}`
       );
@@ -346,8 +372,14 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
         setHoveredDesc(`Imported pack from ${fileList[0].name}`);
       } else {
         const file = fileList[0];
+        if (!isDevMode && /\.(rlrcspack|tem)$/i.test(file.name)) {
+          throw new Error('.RLRCSPack and .Tem packs can only be imported in Developer Mode.');
+        }
         const text = await decodeRCSPackText(file);
         const parsed = JSON.parse(text);
+        if (!isDevMode && parsed?.format === 'RLRCSPack') {
+          throw new Error('.RLRCSPack packs can only be imported in Developer Mode.');
+        }
         const rawMeta = parsed?.metadata || parsed || {};
         const rawItems = Array.isArray(parsed?.items) ? parsed.items : [];
         const imported = normalizePackSummary({
@@ -367,6 +399,11 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
               : typeof rawMeta.itemCount === 'number'
               ? rawMeta.itemCount
               : 1,
+          sourcePackType: /\.rlrcspack$/i.test(file.name)
+            ? 'RLRCSPack'
+            : /\.rcspacke$/i.test(file.name)
+            ? 'RCSPackE'
+            : 'RCSPack',
           createdAt: Date.now(),
           updatedAt: Date.now(),
         });
@@ -420,14 +457,15 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
             selectedUuid={selectedMeta?.uuid}
             onSelectPack={handleSelectPack}
             onHoverDesc={setHoveredDesc}
-            onBatchExportFiltered={(filtered, folderLabel, editable) =>
-              void handleBatchExportFiltered(filtered, folderLabel, editable)
+            onBatchExportFiltered={(filtered, folderLabel, editable, formatOverride) =>
+              void handleBatchExportFiltered(filtered, folderLabel, editable, formatOverride)
             }
           />
 
           <div className="col-span-6 flex flex-col gap-2.5 min-h-0 overflow-hidden">
             <StaticTrainingPackToolbar
               isLight={isLight}
+              isDevMode={isDevMode}
               fileInputRef={fileInputRef}
               isCreatingPack={isCreatingPack}
               setIsCreatingPack={setIsCreatingPack}
@@ -464,6 +502,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
                 onUpdateVariationToggles({ applyNewKevpertBind: val })
               }
               onSaveMetadata={() => void handleSaveMetadata()}
+              onUpdatePackTags={(uuid, nextTags) => void handleUpdatePackTags(uuid, nextTags)}
               onPlayPack={(meta) => {
                 onStartPlaySession?.(meta.uuid);
                 onPlayPack?.(meta, downCounterEnabled);
