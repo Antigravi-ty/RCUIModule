@@ -1,7 +1,7 @@
 import {
   DEFAULT_NAME_TAG_CONFIG,
   type NameTagConfig,
-} from './nameTagCalibrationMath';
+} from './nameTagConfig';
 
 export function parseHexRgb(hexColor: string): [number, number, number] {
   const cleanHex = String(hexColor || '#075985').replace('#', '').trim();

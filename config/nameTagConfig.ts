@@ -3,6 +3,7 @@ export type NameTagFontFamily = 'jetbrains-mono' | 'sf-mono' | 'archivo';
 export type NameTagFontWeight = 400 | 500 | 600 | 700;
 export type NameTagBoostBorderColorMode = 'team' | 'shared';
 export type NameTagBoostBorderAudience = 'teammates' | 'all' | 'none';
+export type NameTagOffscreenAudience = NameTagBoostBorderAudience;
 export type NameTagBoostIndicatorMode =
   | 'bottom-up-fill'
   | 'left-right-fill'
@@ -12,7 +13,14 @@ export type NameTagBoostIndicatorMode =
 export type NameTagAerialClimbTriggerMode =
   | 'double-jump'
   | 'hold-jump-pitch'
-  | 'either';
+  | 'either'
+  | 'both';
+
+export type NameTagAerialClimbTriggerReason =
+  | 'none'
+  | 'double-jump'
+  | 'hold-jump-pitch'
+  | 'preview';
 
 export interface NameTagBoostBorderSceneFlags {
   matchPlaying?: boolean | NameTagBoostBorderAudience;

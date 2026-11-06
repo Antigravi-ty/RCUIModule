@@ -53,7 +53,12 @@ export function sanitizeAerialClimbTriggerMode(
   raw: unknown,
   fallbackMode: NameTagAerialClimbTriggerMode
 ): NameTagAerialClimbTriggerMode {
-  if (raw === 'double-jump' || raw === 'hold-jump-pitch' || raw === 'either') {
+  if (
+    raw === 'double-jump' ||
+    raw === 'hold-jump-pitch' ||
+    raw === 'either' ||
+    raw === 'both'
+  ) {
     return raw;
   }
   return fallbackMode;

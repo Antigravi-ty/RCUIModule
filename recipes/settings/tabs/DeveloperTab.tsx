@@ -170,8 +170,8 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         iconColor="text-emerald-400"
         title="Calibrated Presets"
         actionLabel="Browse"
-        description="Atmosphere & FX, Vehicle Global Surfaces, Driftwoods, Boost Pad & Name Tag"
-        hoverDescription="Calibrated Presets: Archive of completed tuners whose parameters have already been calibrated and solidified (Atmosphere & FX, Vehicle Global Surfaces, Driftwoods, Boost Pad & Name Tag)."
+        description="Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods, Boost Pad & Name Tag"
+        hoverDescription="Calibrated Presets: Archive of completed tuners whose parameters have already been calibrated and solidified (Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods, Boost Pad & Name Tag)."
         onAction={() =>
           (onNavigateDevCalibratedPresets ?? (() => navigate('dev-calibrated-presets')))()
         }
@@ -191,7 +191,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
-        customActionNode={
+        rightSlot={
           <div className="flex items-center gap-2.5 shrink-0">
             <div
               className="flex items-center gap-1.5"

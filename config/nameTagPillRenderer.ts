@@ -4,9 +4,11 @@ import {
   type NameTagConfig,
 } from './nameTagConfig';
 import {
+  drawOffscreenIndicatorCard2D,
   hexToRgba,
   resolveActiveBoostFillColor,
   resolveUnfilledBaseHexColor,
+  type NameTagOffscreenIndicatorCard2D,
 } from './nameTagOffscreenRenderer';
 
 export interface NameTagPillRenderCard2D {
@@ -270,83 +272,94 @@ export function renderNameTagOverlayPass2D(
   viewportWidthPx: number,
   viewportHeightPx: number,
   config: NameTagConfig,
-  ballOcclusion?: NameTagBallOcclusionProjection2D | null
+  ballOcclusion?: NameTagBallOcclusionProjection2D | null,
+  offscreenIndicators2D: NameTagOffscreenIndicatorCard2D[] = []
 ): void {
-  if (visibleCards2D.length === 0) return;
+  if (visibleCards2D.length === 0 && offscreenIndicators2D.length === 0) return;
 
-  visibleCards2D.sort(
-    (a, b) => (a.cameraDistanceSq || 0) - (b.cameraDistanceSq || 0)
-  );
-
-  const drawSingleRankWithCloserClips = (rank: number) => {
-    const card = visibleCards2D[rank];
-    ctx.save();
-    for (let closerIdx = 0; closerIdx < rank; closerIdx++) {
-      const closer = visibleCards2D[closerIdx];
-      if (
-        closer.outerRight <= card.outerLeft ||
-        closer.outerLeft >= card.outerRight ||
-        closer.outerBottom <= card.outerTop ||
-        closer.outerTop >= card.outerBottom
-      ) {
-        continue;
-      }
-      ctx.beginPath();
-      ctx.rect(0, 0, viewportWidthPx, viewportHeightPx);
-      ctx.roundRect(
-        closer.outerLeft,
-        closer.outerTop,
-        closer.outerWidth,
-        closer.outerHeight,
-        closer.outerRadius
-      );
-      ctx.clip('evenodd');
-    }
-
-    drawNameTagPillCard2D(ctx, card, config);
-    ctx.restore();
-  };
-
-  const applyBallOcclusion =
-    Boolean(config.ballOcclusionEnabled) &&
-    Boolean(ballOcclusion?.visible) &&
-    (ballOcclusion?.screenRadiusPx || 0) > 1 &&
-    (ballOcclusion?.opacity || 0) > 0.001;
-
-  if (!applyBallOcclusion || !ballOcclusion) {
-    for (let rank = 0; rank < visibleCards2D.length; rank++) {
-      drawSingleRankWithCloserClips(rank);
-    }
-    return;
-  }
-
-  let drewBehindBallCard = false;
-  for (let rank = 0; rank < visibleCards2D.length; rank++) {
-    if (visibleCards2D[rank].viewZDepthUu > ballOcclusion.viewZDepthUu) {
-      drawSingleRankWithCloserClips(rank);
-      drewBehindBallCard = true;
-    }
-  }
-
-  if (drewBehindBallCard) {
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.globalAlpha = Math.max(0, Math.min(1, ballOcclusion.opacity));
-    ctx.beginPath();
-    ctx.arc(
-      ballOcclusion.screenX,
-      ballOcclusion.screenY,
-      ballOcclusion.screenRadiusPx,
-      0,
-      Math.PI * 2
+  if (visibleCards2D.length > 0) {
+    visibleCards2D.sort(
+      (a, b) => (a.cameraDistanceSq || 0) - (b.cameraDistanceSq || 0)
     );
-    ctx.fill();
-    ctx.restore();
+
+    const drawSingleRankWithCloserClips = (rank: number) => {
+      const card = visibleCards2D[rank];
+      ctx.save();
+      for (let closerIdx = 0; closerIdx < rank; closerIdx++) {
+        const closer = visibleCards2D[closerIdx];
+        if (
+          closer.outerRight <= card.outerLeft ||
+          closer.outerLeft >= card.outerRight ||
+          closer.outerBottom <= card.outerTop ||
+          closer.outerTop >= card.outerBottom
+        ) {
+          continue;
+        }
+        ctx.beginPath();
+        ctx.rect(0, 0, viewportWidthPx, viewportHeightPx);
+        ctx.roundRect(
+          closer.outerLeft,
+          closer.outerTop,
+          closer.outerWidth,
+          closer.outerHeight,
+          closer.outerRadius
+        );
+        ctx.clip('evenodd');
+      }
+
+      drawNameTagPillCard2D(ctx, card, config);
+      ctx.restore();
+    };
+
+    const applyBallOcclusion =
+      Boolean(config.ballOcclusionEnabled) &&
+      Boolean(ballOcclusion?.visible) &&
+      (ballOcclusion?.screenRadiusPx || 0) > 1 &&
+      (ballOcclusion?.opacity || 0) > 0.001;
+
+    if (!applyBallOcclusion || !ballOcclusion) {
+      for (let rank = 0; rank < visibleCards2D.length; rank++) {
+        drawSingleRankWithCloserClips(rank);
+      }
+    } else {
+      let drewBehindBallCard = false;
+      for (let rank = 0; rank < visibleCards2D.length; rank++) {
+        if (visibleCards2D[rank].viewZDepthUu > ballOcclusion.viewZDepthUu) {
+          drawSingleRankWithCloserClips(rank);
+          drewBehindBallCard = true;
+        }
+      }
+
+      if (drewBehindBallCard) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.globalAlpha = Math.max(0, Math.min(1, ballOcclusion.opacity));
+        ctx.beginPath();
+        ctx.arc(
+          ballOcclusion.screenX,
+          ballOcclusion.screenY,
+          ballOcclusion.screenRadiusPx,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        ctx.restore();
+      }
+
+      for (let rank = 0; rank < visibleCards2D.length; rank++) {
+        if (visibleCards2D[rank].viewZDepthUu <= ballOcclusion.viewZDepthUu) {
+          drawSingleRankWithCloserClips(rank);
+        }
+      }
+    }
   }
 
-  for (let rank = 0; rank < visibleCards2D.length; rank++) {
-    if (visibleCards2D[rank].viewZDepthUu <= ballOcclusion.viewZDepthUu) {
-      drawSingleRankWithCloserClips(rank);
+  if (offscreenIndicators2D.length > 0) {
+    offscreenIndicators2D.sort(
+      (a, b) => (b.cameraDistanceSq || 0) - (a.cameraDistanceSq || 0)
+    );
+    for (let i = 0; i < offscreenIndicators2D.length; i++) {
+      drawOffscreenIndicatorCard2D(ctx, offscreenIndicators2D[i], config);
     }
   }
 }

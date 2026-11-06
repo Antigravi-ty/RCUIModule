@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../stores/appStore';
-import { Palette, Sparkles, Car, Tag, Info } from 'lucide-react';
+import { Palette, Sparkles, Car, Tag, Zap, Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
@@ -9,17 +9,18 @@ import { useSettingActionRowStore } from '../stores/settingRowStore';
 import {
   ATMOSPHERE_FX_TUNER_PRESET,
   VEHICLE_GLOBAL_FX_TUNER_PRESET,
+  SUPERSONIC_TRAIL_TUNER_PRESET,
   DRIFTWOODS_TUNER_PRESET,
   BOOST_PAD_TUNER_PRESET,
   NAME_TAG_TUNER_PRESET,
 } from '../stores/devFloatingPresets';
+import type { PresetConfig } from '../stores/floatingPresets';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 
 export interface Layer3DevCalibratedPresetsRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onAddPresetWindow?: (preset: any, e: React.MouseEvent<HTMLButtonElement>) => void;
+  onAddPresetWindow?: (preset: PresetConfig, e: React.MouseEvent<HTMLButtonElement>) => void;
   activeWindows?: unknown[];
   onClosePresetWindow?: (id: string) => void;
   sizing?: PanelSizingConfig;
@@ -27,12 +28,13 @@ export interface Layer3DevCalibratedPresetsRecipeProps {
 
 /**
  * [Recipe] Layer 3 Calibrated Presets (Developer Tier)
- * Compact borderless 5-row configuration panel matching Settings & Training Configuration:
+ * Compact borderless 6-row configuration panel matching Settings & Training Configuration:
  * 1. Atmosphere & FX Tuner
  * 2. Vehicle Global Surfaces & FX Tuner
- * 3. Driftwoods Stadium Tuner
- * 4. Boost Pad Visual Tuner
- * 5. Multiplayer Name Tag Tuner
+ * 3. Supersonic Wheel Trail Tuner
+ * 4. Driftwoods Stadium Tuner
+ * 5. Boost Pad Visual Tuner
+ * 6. Multiplayer Name Tag Tuner
  */
 export const Layer3DevCalibratedPresetsRecipe: React.FC<
   Layer3DevCalibratedPresetsRecipeProps
@@ -98,7 +100,27 @@ export const Layer3DevCalibratedPresetsRecipe: React.FC<
             isLight={isLight}
           />
 
-          {/* 3. Driftwoods Stadium Tuner */}
+          {/* 3. Supersonic Wheel Trail Tuner */}
+          <FloatingWindowCard
+            preset={SUPERSONIC_TRAIL_TUNER_PRESET}
+            icon={Zap}
+            iconColor="text-purple-400"
+            badge="Calibrated"
+            badgeClass={
+              isLight
+                ? 'bg-purple-500/15 border-purple-500/30 text-purple-700'
+                : 'bg-purple-500/15 border-purple-500/30 text-purple-400'
+            }
+            bordered={false}
+            showDescription={false}
+            description="Dual rear-wheel contact trail ribbons (-1t to -30t window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright tilt & POV preview)"
+            hoverTooltip="Supersonic Wheel Trail Tuner: Calibrated dual rear-wheel contact trail ribbons (-1t to -30t history window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright stand, dual-pass border occlusion & POV preview)."
+            onHover={setHoveredDesc}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 4. Driftwoods Stadium Tuner */}
           <FloatingWindowCard
             preset={DRIFTWOODS_TUNER_PRESET}
             icon={Palette}
@@ -118,7 +140,7 @@ export const Layer3DevCalibratedPresetsRecipe: React.FC<
             isLight={isLight}
           />
 
-          {/* 4. Boost Pad Visual Tuner */}
+          {/* 5. Boost Pad Visual Tuner */}
           <FloatingWindowCard
             preset={BOOST_PAD_TUNER_PRESET}
             icon={Sparkles}
@@ -138,7 +160,7 @@ export const Layer3DevCalibratedPresetsRecipe: React.FC<
             isLight={isLight}
           />
 
-          {/* 5. Multiplayer Name Tag Tuner */}
+          {/* 6. Multiplayer Name Tag Tuner */}
           <FloatingWindowCard
             preset={NAME_TAG_TUNER_PRESET}
             icon={Tag}
@@ -162,7 +184,7 @@ export const Layer3DevCalibratedPresetsRecipe: React.FC<
 
       <PanelFooter
         isLight={isLight}
-        defaultDescription="Calibrated visual presets (Atmosphere & FX, Vehicle Global Surfaces, Driftwoods Stadium, Boost Pad & Multiplayer Name Tag)."
+        defaultDescription="Calibrated visual presets (Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods Stadium, Boost Pad & Multiplayer Name Tag)."
         hoveredDescription={hoveredDesc}
         icon={<Info className="h-3.5 w-3.5 text-neutral-400 shrink-0" />}
       />
