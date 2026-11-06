@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
+  "updatedAt": "2026-11-06T16:21:05.459Z",
   "templateHash": "574097ceda64cb92",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -1084,8 +1084,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3AcousticsEqualizerRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "783e4d0f8b495700",
-      "visualAstHash": "453179e6bd494fcc",
+      "sizingAndConfigHash": "f0875d1d7a35615f",
+      "visualAstHash": "0f0b5f0d9c454f06",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1101,13 +1101,15 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3AcousticsEqualizerRecipe.tsx": "efd8e1612ffe6dc7"
+        "src/ui-core/recipes/Layer3AcousticsEqualizerRecipe.tsx": "6c02316f9ff43c4b"
       },
       "alphaDeps": [
         "src/ui-core/config/audioConfig.ts",
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.367Z"
@@ -1117,8 +1119,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3BallTrajectoryRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "7e525303f4ed36ef",
-      "visualAstHash": "3a113698c8c8c1e7",
+      "sizingAndConfigHash": "302cb29372a4497b",
+      "visualAstHash": "d0ae069fab9ce108",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1134,18 +1136,19 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3BallTrajectoryRecipe.tsx": "613f09a6b850a8a8",
+        "src/ui-core/recipes/Layer3BallTrajectoryRecipe.tsx": "dcbd872b3bd1f8f8",
         "src/ui-core/recipes/settings/components/FloatingWindowCard.tsx": "24594fbe7a613278"
       },
       "alphaDeps": [
         "src/ui-core/config/trainingDefaults.ts",
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
         "src/ui-core/stores/floatingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
       ],
@@ -1156,8 +1159,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3CameraRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "f129d123d0d8945e",
-      "visualAstHash": "0e3344585487895e",
+      "sizingAndConfigHash": "b35e3f71890de0ed",
+      "visualAstHash": "3d1d511481a8ab96",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
         "src/ui-core/compounds/dialogue/dialogueStore.ts": "b0987bc553ea677a",
@@ -1169,20 +1172,20 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3CameraRecipe.tsx": "96eb81dd9ce3f87b",
+        "src/ui-core/recipes/Layer3CameraRecipe.tsx": "53e46babcd25bb15",
         "src/ui-core/recipes/camera/CameraBooleanSection.tsx": "36e2cc9af1d3d6a9",
         "src/ui-core/recipes/camera/CameraResetSection.tsx": "6b7992f0623cffd2",
         "src/ui-core/recipes/camera/CameraSliderRow.tsx": "889598f4c0814f41",
-        "src/ui-core/recipes/camera/cameraConfigSpecs.ts": "868e3f79797092ec",
-        "src/ui-core/recipes/hooks/useLayer3SettingsDetailBindings.ts": "bc1fd23c82c229fa"
+        "src/ui-core/recipes/camera/cameraConfigSpecs.ts": "868e3f79797092ec"
       },
       "alphaDeps": [
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/cameraSettingsStyleStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
-        "src/ui-core/tokens/easing.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts"
+        "src/ui-core/stores/storeSnapshotScope.tsx",
+        "src/ui-core/tokens/easing.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.372Z"
     },
@@ -1650,8 +1653,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3KeybindingsRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "6dc18c4f3cd6c76b",
-      "visualAstHash": "7e0918e7f66e591c",
+      "sizingAndConfigHash": "f45242c2e8fe5c6e",
+      "visualAstHash": "0cefcdc1aae5f453",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
         "src/ui-core/primitives/KeycapBadge.tsx": "50693226896bfa19",
@@ -1659,16 +1662,18 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3KeybindingsRecipe.tsx": "46801d2111586169",
+        "src/ui-core/recipes/Layer3KeybindingsRecipe.tsx": "97c860f1ddb95e17",
         "src/ui-core/recipes/keybinding/KeybindingActionRow.tsx": "ba452f205795f3cb",
-        "src/ui-core/recipes/keybinding/useKeybindingCapture.ts": "befde2cafdf9f00b"
+        "src/ui-core/recipes/keybinding/keybindingEngineSync.ts": "3cd36b47c50dfe80",
+        "src/ui-core/recipes/keybinding/useKeybindingCapture.ts": "f2ca1baa775e0f2a"
       },
       "alphaDeps": [
         "src/ui-core/config/inputBindings.ts",
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
       ],
