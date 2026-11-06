@@ -33,7 +33,6 @@ export interface PacingControllerState {
   dwellTicks?: number;
   currentRateHz?: number;
   lastHardResyncMs?: number;
-  [key: string]: any;
 }
 
 export interface PacingControllerStepInput {
@@ -41,7 +40,6 @@ export interface PacingControllerStepInput {
   rawRttMs?: number;
   rawServerBuffer?: number;
   packetArrived?: boolean;
-  [key: string]: any;
 }
 
 export interface PacingControllerParams {
@@ -68,7 +66,20 @@ export interface PacingControllerParams {
   kpHzPerTick?: number;
   kdHzPerTickVel?: number;
   maxAdjustHz?: number;
-  [key: string]: any;
+}
+
+export interface PacingTraceColumnsLike {
+  timeMs?: ArrayLike<number> & { slice?: (start: number, end: number) => ArrayLike<number> };
+  rawRttMs?: ArrayLike<number> & { slice?: (start: number, end: number) => ArrayLike<number> };
+  serverBuffer?: ArrayLike<number>;
+  physicsRateHz?: ArrayLike<number>;
+  targetBuffer?: ArrayLike<number>;
+  eventFlags?: ArrayLike<number>;
+}
+
+export interface PacingTraceSourceLike extends PacingTraceColumnsLike {
+  count?: number;
+  columns?: PacingTraceColumnsLike;
 }
 
 export interface PacingControllerStepResult {
@@ -317,7 +328,7 @@ export function evaluatePacingControllerStep(
 }
 
 export function simulatePacingOnRecordedTrace(
-  traceSource: any,
+  traceSource: PacingTraceSourceLike | null | undefined,
   candidateModeOrParams?: string | PacingControllerParams,
   candidateParamsOrMode?: PacingControllerParams | string,
   maxPreviewSamples = 360
@@ -338,7 +349,7 @@ export function simulatePacingOnRecordedTrace(
   }
   const cols = traceSource?.columns || traceSource;
   const n = traceSource?.count ?? cols?.timeMs?.length ?? 0;
-  if (!cols || n <= 0) {
+  if (!cols || !cols.timeMs || !cols.rawRttMs || n <= 0) {
     return null;
   }
 

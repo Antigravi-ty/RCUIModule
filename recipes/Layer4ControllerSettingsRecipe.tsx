@@ -120,6 +120,8 @@ export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRe
       return loadInputBindings();
     } catch {
       return {
+        keyboard: {},
+        pad: {},
         axes: {
           steer: { axis: 0, invert: false },
           pitch: { axis: 1, invert: false },

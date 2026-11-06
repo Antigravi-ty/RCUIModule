@@ -1,4 +1,5 @@
 import { networkDiagnosticsStore } from '../../../stores/networkDiagnosticsStore';
+import type { NetworkMetrics } from '../../../stores/networkDiagnosticsTypes';
 import {
   globalPacingTelemetryRecorder,
   MAX_TELEMETRY_TICKS,
@@ -31,6 +32,17 @@ export function triggerZipDownload(bytes: Uint8Array, filename: string): boolean
   return true;
 }
 
+export interface DiagnosticSessionSnapshot {
+  localPlayerCarIndex?: number;
+  blueScore?: number;
+  orangeScore?: number;
+}
+
+export interface DiagnosticTelemetrySummarySnapshot {
+  starvationCount?: number;
+  hardResyncCount?: number;
+}
+
 export interface UnifiedDiagnosticDumpParams {
   includeClientReplay: boolean;
   includeReconcileTelemetry: boolean;
@@ -39,7 +51,7 @@ export interface UnifiedDiagnosticDumpParams {
   isHosting: boolean;
   isLobby: boolean;
   matchState: string;
-  diag: any;
+  diag: DiagnosticSessionSnapshot | null | undefined;
   activeSlots: number[];
   clientFrames: number;
   effectiveMaxFrames: number;
@@ -47,8 +59,17 @@ export interface UnifiedDiagnosticDumpParams {
   autoPauseOnOverflow: boolean;
   clientMb: string;
   telemetryTicks: number;
-  telemetrySummary: any;
-  metrics: any;
+  telemetrySummary: DiagnosticTelemetrySummarySnapshot;
+  metrics: Pick<
+    NetworkMetrics,
+    | 'corrections'
+    | 'mispredictions'
+    | 'lastErrorUu'
+    | 'maxErrorUu'
+    | 'rttMs'
+    | 'jitterMs'
+    | 'inputBufferDepth'
+  >;
   serverFrames: number;
 }
 
@@ -184,6 +205,6 @@ export function exportStandaloneTelemetryZip(isLobby: boolean, telemetryTicks: n
   if (!recorder || recorder.count <= 0) {
     return 'No reconcile/pacing telemetry ticks recorded yet.';
   }
-  (downloadNetworkTelemetryZip as any)(recorder, isLobby ? 'lobby-dump' : 'match-dump');
+  downloadNetworkTelemetryZip(recorder, isLobby ? 'lobby-dump' : 'match-dump');
   return `Exported Reconcile & Pacing Telemetry (${telemetryTicks} ticks).`;
 }

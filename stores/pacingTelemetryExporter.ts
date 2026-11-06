@@ -11,6 +11,7 @@ import {
   type PacingTelemetryColumns,
   type PacingTelemetryRecorder,
   type PacingTelemetrySerializableObject,
+  type PacingTelemetrySummaryStats,
 } from './pacingTelemetryRecorder';
 import {
   buildZipArchiveBytes,
@@ -127,7 +128,9 @@ export function parseCsvTelemetryColumns(csvText: string): PacingTelemetryColumn
 /**
  * Parses an imported telemetry file (.zip, .json, or .csv) into a normalized telemetry payload.
  */
-export async function parseImportedTelemetryFile(file: File): Promise<any> {
+export async function parseImportedTelemetryFile(
+  file: File
+): Promise<PacingTelemetrySerializableObject> {
   const name = (file?.name || '').toLowerCase();
   const buf = await file.arrayBuffer();
   const bytes = new Uint8Array(buf);
@@ -147,12 +150,12 @@ export async function parseImportedTelemetryFile(file: File): Promise<any> {
     const metaKey = entryNames.find((k) => k.endsWith('metadata.json') || k.endsWith('.json'));
     const csvKey = entryNames.find((k) => k.endsWith('.csv'));
 
-    let metaObj: Record<string, any> = {};
+    let metaObj: Partial<PacingTelemetrySerializableObject> = {};
     if (metaKey && entries[metaKey]) {
-      metaObj = JSON.parse(entries[metaKey]);
+      metaObj = JSON.parse(entries[metaKey]) as Partial<PacingTelemetrySerializableObject>;
     }
     if (metaObj.columns && Array.isArray(metaObj.columns.timeMs)) {
-      return metaObj;
+      return metaObj as PacingTelemetrySerializableObject;
     }
     if (csvKey && entries[csvKey]) {
       const columns = parseCsvTelemetryColumns(entries[csvKey]);
@@ -167,11 +170,13 @@ export async function parseImportedTelemetryFile(file: File): Promise<any> {
           clockPacingPriority: 'balanced',
           recordedTicks: columns.timeMs.length,
         },
-        summary: metaObj.summary || {
-          recordedTicks: columns.timeMs.length,
-          durationSeconds:
-            Math.round((columns.timeMs[columns.timeMs.length - 1] - columns.timeMs[0]) / 100) / 10,
-        },
+        summary:
+          metaObj.summary ||
+          ({
+            recordedTicks: columns.timeMs.length,
+            durationSeconds:
+              Math.round((columns.timeMs[columns.timeMs.length - 1] - columns.timeMs[0]) / 100) / 10,
+          } as PacingTelemetrySummaryStats),
         columns,
       };
     }
@@ -196,7 +201,7 @@ export async function parseImportedTelemetryFile(file: File): Promise<any> {
         recordedTicks: columns.timeMs.length,
         durationSeconds:
           Math.round((columns.timeMs[columns.timeMs.length - 1] - columns.timeMs[0]) / 100) / 10,
-      },
+      } as PacingTelemetrySummaryStats,
       columns,
     };
   }
@@ -207,8 +212,8 @@ export async function parseImportedTelemetryFile(file: File): Promise<any> {
     throw new Error('Invalid trace JSON: missing columns.timeMs array');
   }
   return parsed.columns
-    ? parsed
-    : {
+    ? (parsed as PacingTelemetrySerializableObject)
+    : ({
         ...parsed,
         columns: {
           timeMs: cols.elapsedMs,
@@ -224,7 +229,7 @@ export async function parseImportedTelemetryFile(file: File): Promise<any> {
           tierState: cols.tierState,
           eventFlags: cols.eventFlags,
         },
-      };
+      } as PacingTelemetrySerializableObject);
 }
 
 function notifyTraceListeners(): void {
@@ -314,21 +319,38 @@ function buildCsvFromColumns(c: Partial<PacingTelemetryColumns> | undefined): st
   return lines.join('\n');
 }
 
+export type PacingTelemetryExportSource =
+  | PacingTelemetryRecorder
+  | PacingTelemetrySerializableObject
+  | null
+  | undefined;
+
+function isTelemetryRecorder(
+  src: PacingTelemetryExportSource
+): src is PacingTelemetryRecorder {
+  return (
+    Boolean(src) &&
+    typeof (src as PacingTelemetryRecorder).toCsvString === 'function' &&
+    ((src as PacingTelemetryRecorder).count ?? 0) > 0
+  );
+}
+
 /**
  * Packages metadata.json + telemetry.csv into a single unified .zip archive and triggers browser download.
  */
 export function downloadNetworkTelemetryZip(
-  payloadOrRecorder: any = null,
+  payloadOrRecorder: PacingTelemetryExportSource = null,
   reasonTag: string = 'session'
 ): boolean {
-  let metadataObj: Record<string, any> | null = null;
+  let metadataObj: {
+    schemaVersion: string;
+    exportedAt: string;
+    metadata?: PacingTelemetrySerializableObject['metadata'];
+    summary?: PacingTelemetrySerializableObject['summary'];
+  } | null = null;
   let csvText = '';
 
-  if (
-    payloadOrRecorder &&
-    typeof payloadOrRecorder.toCsvString === 'function' &&
-    payloadOrRecorder.count > 0
-  ) {
+  if (isTelemetryRecorder(payloadOrRecorder)) {
     metadataObj =
       typeof payloadOrRecorder.toMetadataObject === 'function'
         ? payloadOrRecorder.toMetadataObject()
@@ -346,7 +368,7 @@ export function downloadNetworkTelemetryZip(
     csvText = payloadOrRecorder.toCsvString();
   } else {
     const payload =
-      payloadOrRecorder && payloadOrRecorder.columns
+      payloadOrRecorder && 'columns' in payloadOrRecorder && payloadOrRecorder.columns
         ? payloadOrRecorder
         : globalPacingTelemetryRecorder.count > 0
         ? globalPacingTelemetryRecorder.toSerializableObject()
@@ -378,14 +400,14 @@ export function downloadNetworkTelemetryZip(
 }
 
 export function downloadNetworkTelemetryJson(
-  payloadOrRecorder: any = null,
+  payloadOrRecorder: PacingTelemetryExportSource = null,
   reasonTag: string = 'session'
 ): boolean {
   return downloadNetworkTelemetryZip(payloadOrRecorder, reasonTag);
 }
 
 export function downloadNetworkTelemetryCsv(
-  recorder: any = globalPacingTelemetryRecorder,
+  recorder: PacingTelemetryExportSource = globalPacingTelemetryRecorder,
   reasonTag: string = 'session'
 ): boolean {
   return downloadNetworkTelemetryZip(recorder, reasonTag);

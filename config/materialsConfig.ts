@@ -18,7 +18,7 @@ export interface MaterialsConfigState {
   boostAudio: 'rush' | 'standard' | 'flamethrower' | 'plasma';
   boostFlameLuminance: 'balanced' | 'dynamic';
   boostPlumeLuminance: 'min' | 'balanced' | 'dynamic' | 'hdr';
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_MATERIALS_CONFIG: MaterialsConfigState = {

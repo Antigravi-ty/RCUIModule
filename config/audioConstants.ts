@@ -234,14 +234,17 @@ export const AUDIO_SETTINGS_CHANGED_EVENT = 'audio-settings-changed';
 
 export type DynamicRangeProfileId = 'compressed' | 'dynamic' | 'monitor';
 
-export type AudioConfigSettings = typeof staticAudioConfig & {
+export type AudioConfigSettings = Omit<
+  typeof staticAudioConfig,
+  'spatialPanningModel' | 'dynamicRangeProfile'
+> & {
   carBallSoundMode: string;
   carCarSoundMode: string;
   boostStartVariation: string;
   boostLoopVariation: string;
   boostEndVariation: string;
   spatialAudio: boolean;
-  spatialPanningModel: string;
+  spatialPanningModel: PanningModelType;
   dynamicRangeProfile: DynamicRangeProfileId;
   eqBass: number;
   eqMid: number;
@@ -256,7 +259,6 @@ export type AudioConfigSettings = typeof staticAudioConfig & {
   airAbsorptionDamping: number;
   muteSignalAudioInGoalReplay: boolean;
   logEventFilter: Record<string, boolean>;
-  [key: string]: any;
 };
 
 export const DEFAULT_AUDIO_CONFIG: Readonly<AudioConfigSettings> = Object.freeze({

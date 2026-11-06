@@ -123,7 +123,7 @@ export interface VehicleTunerRuntimeFlags {
   forceBrakeLightPreview: boolean;
   brakePreviewMode: string;
   showNozzleGizmos: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const vehicleTunerRuntimeFlags: VehicleTunerRuntimeFlags = {
@@ -173,7 +173,7 @@ export interface WheelModifierConfig {
   shaderMode: string;
   roughness: number;
   metalness: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_WHEEL_MODIFIER_CONFIG: WheelModifierConfig = {
@@ -311,7 +311,7 @@ export interface AnodizedPaintTuning {
   envMapIntensity: number;
   pearlFresnelPower: number;
   pearlBlendStrength: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const anodizedPaintTuning: AnodizedPaintTuning = {
@@ -372,7 +372,7 @@ export interface BoostParticleRuntimeConfig {
   drivePuffsEnabled: boolean;
   pointLightEnabled: boolean;
   bloomEnabled: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const boostParticleRuntimeConfig: BoostParticleRuntimeConfig = {
@@ -414,7 +414,7 @@ export function setBoostParticleRuntimeConfig(
   return boostParticleRuntimeConfig;
 }
 
-type VehicleTunerListener = (payload: Record<string, any>) => void;
+type VehicleTunerListener = (payload: Record<string, unknown>) => void;
 const vehicleTunerListeners = new Set<VehicleTunerListener>();
 
 export function subscribeVehicleTunerConfig(listener: VehicleTunerListener): () => boolean {
@@ -423,7 +423,7 @@ export function subscribeVehicleTunerConfig(listener: VehicleTunerListener): () 
   return () => vehicleTunerListeners.delete(listener);
 }
 
-export function notifyVehicleTunerConfigChange(payload: Record<string, any> = {}): void {
+export function notifyVehicleTunerConfigChange(payload: Record<string, unknown> = {}): void {
   for (const fn of vehicleTunerListeners) {
     try {
       fn(payload);

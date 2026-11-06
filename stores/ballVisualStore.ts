@@ -31,13 +31,13 @@ export interface BallVisualStoreState {
   config: BallVisualConfig;
   updateConfig: (
     patch?: Partial<BallVisualConfig>,
-    ballRoot?: any,
-    indicatorRings?: any[]
+    ballRoot?: unknown,
+    indicatorRings?: unknown[]
   ) => BallVisualConfig;
   setTemporaryOpacityOverride: (
     opacityOrNull?: number | null,
-    ballRoot?: any,
-    indicatorRings?: any[]
+    ballRoot?: unknown,
+    indicatorRings?: unknown[]
   ) => BallVisualConfig;
   resetConfig: () => BallVisualConfig;
 }

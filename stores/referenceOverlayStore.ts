@@ -35,6 +35,14 @@ export type CameraLookOverridePreset =
 export const DEFAULT_LOOK_HORIZONTAL_MAGNITUDE = 0.95;
 export const DEFAULT_LOOK_VERTICAL_MAGNITUDE = 0.81;
 
+export interface ReferenceOverlayProfilesExport {
+  version: string;
+  exportedAt: string;
+  activeResolutionKey: string;
+  activeProfile: ResolutionCalibrationProfile;
+  profiles: Record<string, ResolutionCalibrationProfile>;
+}
+
 export interface ReferenceOverlayState {
   enabled: boolean;
   folderName: string;
@@ -62,8 +70,8 @@ export interface ReferenceOverlayState {
   getProfile: (resKey?: string) => ResolutionCalibrationProfile;
   updateProfile: (patch: Partial<ResolutionCalibrationProfile>, resKey?: string) => void;
   resetProfile: (resKey?: string) => void;
-  importProfilesJson: (data: any) => boolean;
-  exportProfilesJson: () => Record<string, any>;
+  importProfilesJson: (data: unknown) => boolean;
+  exportProfilesJson: () => ReferenceOverlayProfilesExport;
 
   // Camera Look Override Actions
   setCameraLookPreset: (preset: CameraLookOverridePreset) => void;
@@ -348,7 +356,8 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
 
   importProfilesJson: (data) => {
     if (!data || typeof data !== 'object') return false;
-    const rawProfiles = data.referenceOverlayProfiles || data.profiles || data;
+    const obj = data as Record<string, unknown>;
+    const rawProfiles = obj.referenceOverlayProfiles || obj.profiles || obj;
     if (!rawProfiles || typeof rawProfiles !== 'object') return false;
     const nextProfiles = { ...get().profiles };
     let importedCount = 0;

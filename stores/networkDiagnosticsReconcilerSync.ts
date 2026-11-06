@@ -1,4 +1,11 @@
-import type { NetworkDiagnosticsState, NetworkMetrics } from './networkDiagnosticsTypes';
+import type {
+  NetworkDiagnosticsState,
+  NetworkMetrics,
+  ReconcilerDiagnosticsTarget,
+  ReconcilerRawMetricsPayload,
+  StressSimulatorTarget,
+  TransportChannelDiagnosticsTarget,
+} from './networkDiagnosticsTypes';
 
 function assertFiniteMetric(val: number, name: string) {
   if (val !== undefined && !Number.isFinite(val)) {
@@ -7,15 +14,15 @@ function assertFiniteMetric(val: number, name: string) {
 }
 
 export function bindReconcilerMetricsListener(
-  reconciler: any,
+  reconciler: ReconcilerDiagnosticsTarget | null | undefined,
   getState: () => NetworkDiagnosticsState,
-  resolveChannel: () => any,
-  stressSim: any,
+  resolveChannel: () => TransportChannelDiagnosticsTarget | null | undefined,
+  stressSim: StressSimulatorTarget,
   updateMetricsPatch: (patch: Partial<NetworkMetrics>) => void
-) {
+): void {
   if (!reconciler) return;
 
-  const updateFn = (m: any) => {
+  const updateFn = (m: ReconcilerRawMetricsPayload) => {
     const state = getState();
     const ch = resolveChannel();
     const nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -64,9 +71,9 @@ export function bindReconcilerMetricsListener(
       : Array.isArray(m.allUserRtt?.players)
       ? m.allUserRtt.players
       : [];
-    const peerRttEntry = rttPlayers.find((entry: any) =>
+    const peerRttEntry = rttPlayers.find((entry) =>
       typeof entry === 'object' && entry !== null
-        ? entry.carIndex !== localCarIdx && entry.rtt > 0
+        ? entry.carIndex !== localCarIdx && (entry.rtt ?? 0) > 0
         : false
     );
     const rawPeerRtt =
@@ -130,7 +137,7 @@ export function bindReconcilerMetricsListener(
     reconciler.addMetricsListener(updateFn);
   } else {
     const prev = reconciler.onMetricsUpdated;
-    reconciler.onMetricsUpdated = (m: any) => {
+    reconciler.onMetricsUpdated = (m: ReconcilerRawMetricsPayload) => {
       if (typeof prev === 'function') {
         try {
           prev(m);

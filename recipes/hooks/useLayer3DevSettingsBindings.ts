@@ -18,6 +18,7 @@ import {
   previewBoostAudioVariation,
 } from '../../config/audioConfig';
 import type { PanelSizingConfig } from '../../tokens/menuLayoutTokens';
+import type { PresetConfig } from '../../stores/floatingPresets';
 import type { PerCarBoostConfig } from '../dev/PerCarBoostConfigSection';
 
 export interface BoostPhaseSelectionState {
@@ -44,8 +45,7 @@ export interface Layer3DevActiveTunersRecipeProps {
   boostSelection?: BoostPhaseSelectionState;
   onSelectBoostPhase?: (variationId: string, phase: 'start' | 'loop' | 'end') => void;
   onSelectAllBoostPhases?: (variationId: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onAddPresetWindow?: (preset: any, e: React.MouseEvent<HTMLButtonElement>) => void;
+  onAddPresetWindow?: (preset: PresetConfig, e: React.MouseEvent<HTMLButtonElement>) => void;
   activeWindows?: unknown[];
   onClosePresetWindow?: (id: string) => void;
   sizing?: PanelSizingConfig;

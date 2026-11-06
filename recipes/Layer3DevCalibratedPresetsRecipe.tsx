@@ -13,13 +13,13 @@ import {
   BOOST_PAD_TUNER_PRESET,
   NAME_TAG_TUNER_PRESET,
 } from '../stores/devFloatingPresets';
+import type { PresetConfig } from '../stores/floatingPresets';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 
 export interface Layer3DevCalibratedPresetsRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onAddPresetWindow?: (preset: any, e: React.MouseEvent<HTMLButtonElement>) => void;
+  onAddPresetWindow?: (preset: PresetConfig, e: React.MouseEvent<HTMLButtonElement>) => void;
   activeWindows?: unknown[];
   onClosePresetWindow?: (id: string) => void;
   sizing?: PanelSizingConfig;

@@ -409,7 +409,7 @@ export interface SkyboxConfig {
   oobNormalStrength: number;
   oobNormalTileScale: number;
   oobNormalScrollSpeed: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_SKYBOX_CONFIG: SkyboxConfig = {

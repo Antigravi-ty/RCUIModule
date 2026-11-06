@@ -94,15 +94,18 @@ export class AudioConfigManager {
     this.notify();
   }
 
-  get(key: string): any {
-    return this.config[key];
+  get<K extends keyof AudioConfigSettings>(key: K): AudioConfigSettings[K];
+  get<T = number>(key: string): T;
+  get(key: string): unknown {
+    return (this.config as Record<string, unknown>)[key];
   }
 
-  set(key: string, value: any): void {
+  set(key: string, value: unknown): void {
+    const cfg = this.config as Record<string, unknown>;
     if (typeof value === 'number') {
-      this.config[key] = key.endsWith('Volume') ? clampVolume(value) : value;
+      cfg[key] = key.endsWith('Volume') ? clampVolume(value) : value;
     } else {
-      this.config[key] = value;
+      cfg[key] = value;
     }
     this.save();
   }
@@ -126,7 +129,7 @@ export class AudioConfigManager {
     return JSON.stringify(this.config, null, 2);
   }
 
-  importJson(jsonOrObj: string | Record<string, any>): boolean {
+  importJson(jsonOrObj: string | Record<string, unknown>): boolean {
     try {
       const parsed = typeof jsonOrObj === 'string' ? JSON.parse(jsonOrObj) : jsonOrObj;
       if (typeof parsed !== 'object' || !parsed) return false;
@@ -135,7 +138,7 @@ export class AudioConfigManager {
         ...parsed,
         logEventFilter: {
           ...createDefaultLogEventFilter(),
-          ...(parsed.logEventFilter || {}),
+          ...((parsed.logEventFilter as Record<string, boolean> | undefined) || {}),
         },
       };
       this.save();
@@ -159,8 +162,9 @@ export function getAudioSettings(): AudioConfigSettings {
 }
 
 export function resetAllAudioDetailVolumes(): void {
+  const cfg = audioConfig.config as Record<string, unknown>;
   for (const item of ADVANCED_AUDIO_DETAIL_CATALOG) {
-    audioConfig.config[item.key] = 1.0;
+    cfg[item.key] = 1.0;
   }
   audioConfig.config.boostStartStopVolume = 1.0;
   audioConfig.config.supersonicVolume = 1.0;
@@ -248,14 +252,48 @@ export function exportAudioSettingsJson(): string {
   return audioConfig.exportJson();
 }
 
+export interface AudioDiagnosticReport {
+  timestamp?: string;
+  rootCauses?: string[];
+  browser?: Record<string, unknown>;
+  context?: {
+    state: string;
+    sampleRate: number;
+    currentTime: number;
+    clockAdvancing: boolean;
+  };
+  master?: {
+    rms: number;
+    dbfs: number;
+  };
+  pool?: {
+    activeVoices: number;
+    maxSlots: number;
+  };
+  loops?: Record<string, unknown>;
+  emotor?: Record<string, unknown>;
+}
+
+export interface AudioDiagnosticToneResult {
+  ok: boolean;
+  reason?: string;
+}
+
+export interface AudioRecoveryResult {
+  ok: boolean;
+  reason?: string;
+  stateAfter?: string;
+  clockAdvancing?: boolean;
+}
+
 export interface AudioDiagnosticsHandlers {
-  collectReport?: (() => any) | null;
-  dumpToConsole?: ((label?: string) => any) | null;
-  playTestTone?: ((options?: Record<string, any>) => Promise<any>) | null;
-  forceRecovery?: (() => Promise<any>) | null;
-  previewBoostVariation?: ((variationId: string, phase?: string) => any) | null;
-  previewAudioDetail?: ((detailKey: string) => any) | null;
-  stopAudioDetailPreview?: (() => any) | null;
+  collectReport?: (() => AudioDiagnosticReport) | null;
+  dumpToConsole?: ((label?: string) => AudioDiagnosticReport) | null;
+  playTestTone?: ((options?: Record<string, unknown>) => Promise<AudioDiagnosticToneResult>) | null;
+  forceRecovery?: (() => Promise<AudioRecoveryResult>) | null;
+  previewBoostVariation?: ((variationId: string, phase?: string) => unknown) | null;
+  previewAudioDetail?: ((detailKey: string) => unknown) | null;
+  stopAudioDetailPreview?: (() => unknown) | null;
 }
 
 const audioDiagnosticsProvider: AudioDiagnosticsHandlers = {
@@ -272,7 +310,7 @@ export function registerAudioDiagnosticsProvider(handlers: AudioDiagnosticsHandl
   Object.assign(audioDiagnosticsProvider, handlers);
 }
 
-export function collectAudioDiagnosticReport(): any {
+export function collectAudioDiagnosticReport(): AudioDiagnosticReport {
   if (typeof audioDiagnosticsProvider.collectReport === 'function') {
     return audioDiagnosticsProvider.collectReport();
   }
@@ -287,40 +325,42 @@ export function collectAudioDiagnosticReport(): any {
   };
 }
 
-export function dumpAudioDiagnosticsToConsole(label?: string): any {
+export function dumpAudioDiagnosticsToConsole(label?: string): AudioDiagnosticReport {
   if (typeof audioDiagnosticsProvider.dumpToConsole === 'function') {
     return audioDiagnosticsProvider.dumpToConsole(label);
   }
   return collectAudioDiagnosticReport();
 }
 
-export async function playAudioDiagnosticTestTone(options: Record<string, any> = {}): Promise<any> {
+export async function playAudioDiagnosticTestTone(
+  options: Record<string, unknown> = {}
+): Promise<AudioDiagnosticToneResult> {
   if (typeof audioDiagnosticsProvider.playTestTone === 'function') {
     return audioDiagnosticsProvider.playTestTone(options);
   }
   return { ok: false, reason: 'Audio diagnostics provider not initialized' };
 }
 
-export async function forceAudioRecovery(): Promise<any> {
+export async function forceAudioRecovery(): Promise<AudioRecoveryResult> {
   if (typeof audioDiagnosticsProvider.forceRecovery === 'function') {
     return audioDiagnosticsProvider.forceRecovery();
   }
   return { ok: false, stateAfter: 'uninitialized', clockAdvancing: false };
 }
 
-export function previewBoostAudioVariation(variationId: string, phase = 'start'): any {
+export function previewBoostAudioVariation(variationId: string, phase = 'start'): unknown {
   if (typeof audioDiagnosticsProvider.previewBoostVariation === 'function') {
     return audioDiagnosticsProvider.previewBoostVariation(variationId, phase);
   }
 }
 
-export function previewAudioDetailItem(detailKey: string): any {
+export function previewAudioDetailItem(detailKey: string): unknown {
   if (typeof audioDiagnosticsProvider.previewAudioDetail === 'function') {
     return audioDiagnosticsProvider.previewAudioDetail(detailKey);
   }
 }
 
-export function stopAudioDetailPreview(): any {
+export function stopAudioDetailPreview(): unknown {
   if (typeof audioDiagnosticsProvider.stopAudioDetailPreview === 'function') {
     return audioDiagnosticsProvider.stopAudioDetailPreview();
   }

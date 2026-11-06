@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { formatBindingDisplayName, loadInputBindings } from '../config/inputBindings';
+import type { InputBindingsConfig } from '../config/inputBindingValidators';
 import { globalHudTransientChannel } from './hudTransientChannel';
 import type { MatchHudChoreographySignal } from './hudTransientTypes';
 
@@ -72,7 +73,7 @@ export interface HudStoreState {
   setBallCamActive: (active: boolean) => void;
   setBallCamShortcut: (shortcut: string | null) => void;
   setCameraFocusState: (cameraMode: HudCameraMode, focusedCarIndex: number) => void;
-  syncBindings: (bindings: any) => void;
+  syncBindings: (bindings: Partial<InputBindingsConfig> | null | undefined) => void;
   setOnToggleBallCam: (fn: (() => void) | null) => void;
   toggleBallCam: () => void;
   setBoost: (amount: number, isBoosting?: boolean, isUnlimited?: boolean) => void;
@@ -124,7 +125,9 @@ export interface HudStoreState {
  * Extracts the first bound key or button display name for ballCam action.
  * Returns null if no binding is present, or formatted uppercase name (e.g. 'SPACE', 'C', 'L SHIFT', 'Y').
  */
-export function extractFirstBallCamShortcut(bindings: any): string | null {
+export function extractFirstBallCamShortcut(
+  bindings: Partial<InputBindingsConfig> | null | undefined
+): string | null {
   if (!bindings) return 'SPACE';
   const kList = bindings.keyboard?.ballCam;
   if (Array.isArray(kList) && kList.length > 0 && kList[0]) {
@@ -226,7 +229,7 @@ export const useHudStore = create<HudStoreState>((set, get) => ({
     set({ cameraMode, focusedCarIndex });
   },
 
-  syncBindings: (bindings: any) => {
+  syncBindings: (bindings: Partial<InputBindingsConfig> | null | undefined) => {
     const shortcut = extractFirstBallCamShortcut(bindings);
     if (get().ballCamShortcut === shortcut) return;
     set({ ballCamShortcut: shortcut });
@@ -335,10 +338,10 @@ export const useHudStore = create<HudStoreState>((set, get) => ({
   },
 
   setReplayState: (partialReplay) => {
-    const cur = get();
+    const cur = get() as unknown as Record<string, unknown>;
     let hasChanges = false;
     for (const [k, v] of Object.entries(partialReplay)) {
-      if ((cur as any)[k] !== v) {
+      if (cur[k] !== v) {
         hasChanges = true;
         break;
       }
@@ -366,9 +369,10 @@ export const useHudStore = create<HudStoreState>((set, get) => ({
         nextPatch.choreographySignal = 'kickoff-will-start';
       }
     }
+    const curRecord = cur as unknown as Record<string, unknown>;
     let hasChanges = false;
     for (const [k, v] of Object.entries(nextPatch)) {
-      if ((cur as any)[k] !== v) {
+      if (curRecord[k] !== v) {
         hasChanges = true;
         break;
       }

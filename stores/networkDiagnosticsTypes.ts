@@ -100,10 +100,86 @@ export interface NetworkMetrics {
   diagnosticBuffers: DiagnosticBufferSnapshot;
 }
 
+export interface ReconcilerRawMetricsPayload extends Partial<NetworkMetrics> {
+  leadTicks?: number;
+  totalCorrections?: number;
+  inputBufferSize?: number;
+  lastCorrectionDelta?: number;
+  maxCorrectionDelta?: number;
+  enableSmoothing?: boolean;
+  allUserRtt?:
+    | Array<{ carIndex?: number; rtt?: number } | number>
+    | { players?: Array<{ carIndex?: number; rtt?: number } | number> };
+}
+
+export interface TransportChannelDiagnosticsTarget {
+  extraUplinkMs?: number;
+  extraDownlinkMs?: number;
+  rttMs?: number;
+  packetLossRate?: number;
+  simulatedPacketLossPct?: number;
+  jitterMs?: number;
+  measuredJitterMs?: number;
+  peerRttMs?: number;
+  triggerBurstDrop?: (count: number) => void;
+  forceDropNextInput?: (count: number) => void;
+  setBurstDropConfig?: (config: Record<string, unknown>) => void;
+  dumpNextPacket?: () => void;
+  dumpLatestPacket?: () => void;
+}
+
+export interface ReconcilerDiagnosticsTarget {
+  localCarIndex?: number;
+  leadTicks?: number;
+  enableSmoothing?: boolean;
+  history?: unknown[];
+  metrics?: ReconcilerRawMetricsPayload;
+  channel?: TransportChannelDiagnosticsTarget | null;
+  transport?: TransportChannelDiagnosticsTarget | null;
+  _resolveLatencyBreakdown?: () => { rttMs: number; uplinkMs: number; downlinkMs: number } | null;
+  _resolveEffectiveRtt?: () => number;
+  calculateLeadTicks?: (rttMs: number) => number;
+  notifyMetricsUpdated?: () => void;
+  setEnableSmoothing?: (enabled: boolean) => void;
+  addMetricsListener?: (cb: (m: ReconcilerRawMetricsPayload) => void) => void;
+  onMetricsUpdated?: ((m: ReconcilerRawMetricsPayload) => void) | null;
+  resetDiagnostics?: () => void;
+  resetMetrics?: () => void;
+  resetStats?: () => void;
+  dumpNextPacket?: () => void;
+  dumpLatestPacket?: () => void;
+  dumpPacketDiagnostics?: () => void;
+}
+
+export interface StressSimulatorHealthSnapshot {
+  presetId: string;
+  score: number;
+  grade: string;
+  healthState: string;
+  packetAgeMs: number;
+  neutralFallbackActive: boolean;
+  disconnectEvicted: boolean;
+}
+
+export interface StressSimulatorTarget {
+  extraUplinkMs: number;
+  extraDownlinkMs: number;
+  recordPacketReceived: (nowMs: number) => void;
+  getHealthSnapshot: (
+    sample: {
+      rttMs: number;
+      jitterMs: number;
+      packetLossPct: number;
+      lastErrorUu: number;
+    },
+    nowMs: number
+  ) => StressSimulatorHealthSnapshot;
+}
+
 export interface NetworkDiagnosticsState {
   metrics: NetworkMetrics;
-  reconcilerRef: any | null;
-  channelRef: any | null;
+  reconcilerRef: ReconcilerDiagnosticsTarget | null;
+  channelRef: TransportChannelDiagnosticsTarget | null;
   bridge: NetworkDiagnosticsBridge;
 }
 

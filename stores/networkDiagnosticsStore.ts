@@ -124,7 +124,7 @@ export const networkDiagnosticsStore = {
       nextRttMs = effectiveRtt;
       nextUplinkMs = breakdown ? breakdown.uplinkMs : Math.max(0, Math.round((effectiveRtt - extraRttMs) * 0.5) + upVal);
       nextDownlinkMs = breakdown ? breakdown.downlinkMs : Math.max(0, effectiveRtt - nextUplinkMs);
-      nextLeadTicks = reconciler.calculateLeadTicks(effectiveRtt);
+      nextLeadTicks = reconciler.calculateLeadTicks ? reconciler.calculateLeadTicks(effectiveRtt) : nextLeadTicks;
       reconciler.leadTicks = nextLeadTicks;
       if (reconciler.metrics) {
         reconciler.metrics.leadTicks = nextLeadTicks;

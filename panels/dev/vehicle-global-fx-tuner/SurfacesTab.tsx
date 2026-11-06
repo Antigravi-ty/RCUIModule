@@ -4,16 +4,21 @@ import { SegmentedSwitch } from '../../../primitives/SegmentedSwitch';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { TunerColorRow } from '../../../compounds/TunerControls';
+import type {
+  AnodizedPaintTuning,
+  VehicleDescriptor,
+  VehicleSurfaceMaterialSlot,
+} from '../../../config/vehicleTunerConfig';
 
 export interface SurfacesTabProps {
-  descriptor: any;
+  descriptor: Pick<VehicleDescriptor, 'surfaceMaterials'>;
   colorOverride: boolean;
   handleSetAllSurfacesMode: (mode: 'standard' | 'toon' | 'pbr') => void;
-  handleSurfaceSlotChange: (slotKey: string, patch: Record<string, any>) => void;
+  handleSurfaceSlotChange: (slotKey: string, patch: Partial<VehicleSurfaceMaterialSlot>) => void;
   carPaintMode: 'cartoon' | 'anodized';
   onCarPaintModeChange: (mode: 'cartoon' | 'anodized') => void;
-  paintConfig: any;
-  applyPaintPatch: (patch: Record<string, any>) => void;
+  paintConfig: AnodizedPaintTuning;
+  applyPaintPatch: (patch: Partial<AnodizedPaintTuning>) => void;
   isLight: boolean;
   cardClass: string;
 }
@@ -78,7 +83,7 @@ export const SurfacesTab: React.FC<SurfacesTabProps> = ({
       </div>
 
       {/* Per-Surface Bound Material Slots */}
-      {Object.entries(descriptor.surfaceMaterials || {}).map(([slotKey, slotCfg]: [string, any]) => {
+      {Object.entries(descriptor.surfaceMaterials || {}).map(([slotKey, slotCfg]) => {
         const activeMode =
           slotCfg.mode === 'toon' || slotCfg.mode === 'pbr' ? slotCfg.mode : 'standard';
         return (

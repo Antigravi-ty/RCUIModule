@@ -17,13 +17,27 @@ export interface DeterminismMetrics {
   isBitExact: boolean;
 }
 
+export interface DeterminismHarnessHandle {
+  periodicRollback?: boolean;
+  rollbackInterval?: number;
+  rollbackDepth?: number;
+  addMetricsListener?: (cb: (m: DeterminismMetrics) => void) => void;
+  onMetricsUpdated?: ((m: DeterminismMetrics) => void) | null;
+  triggerManualRollback?: (depth: number) => void;
+  executeRollback?: (depth: number) => void;
+  compareStates?: () => void;
+  setRollbackDepth?: (depth: number) => void;
+  setRollbackInterval?: (interval: number) => void;
+  resetMaxDeltas?: () => void;
+}
+
 export interface DeterminismState {
   metrics: DeterminismMetrics;
   periodicRollback: boolean;
   rollbackInterval: number;
   rollbackDepth: number;
   active: boolean;
-  harnessRef: any | null;
+  harnessRef: DeterminismHarnessHandle | null;
 }
 
 const core = createExternalStore<DeterminismState>({
@@ -53,7 +67,7 @@ export const determinismStore = {
   getSnapshot: core.getSnapshot,
   subscribe: core.subscribe,
 
-  setHarness: (harness: any) => {
+  setHarness: (harness: DeterminismHarnessHandle | null) => {
     core.setState(
       (state) => ({
         ...state,

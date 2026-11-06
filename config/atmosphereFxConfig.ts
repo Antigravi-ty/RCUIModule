@@ -69,7 +69,7 @@ export interface ExperimentalWallFxConfig {
   pulseApplyToWalls: boolean;
   teamApplyToHexes: boolean;
   teamApplyToWalls: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_EXPERIMENTAL_WALL_FX_CONFIG: ExperimentalWallFxConfig = {
@@ -203,7 +203,7 @@ export interface ShadowConfig {
   lightRayOrigin: string;
   showKeyLightGizmo: boolean;
   lightGizmoDepthTest: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_SHADOW_CONFIG: ShadowConfig = {

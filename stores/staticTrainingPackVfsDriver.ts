@@ -1,13 +1,13 @@
 export const EDIT_VFS_STORE_NAME = 'edit_vfs_nodes';
 export const memoryEditVfsFallback = new Map<string, VfsNodeRecord>();
-export interface VfsNodeRecord {
+export interface VfsNodeRecord<T = unknown> {
   path: string;
   category: 'static-training-pack' | 'replay' | 'dynamic-training-pack';
   uuid: string;
   nodeType: 'metadata' | 'item' | 'blob';
   index?: number;
   updatedAt: number;
-  data: any;
+  data: T;
 }
 
 const VFS_DB_NAME = 'rc-virtual-fs-db';

@@ -1,8 +1,9 @@
 import React from 'react';
 import { SliderControl } from '../../../primitives/SliderControl';
+import type { VehicleDescriptor } from '../../../config/vehicleTunerConfig';
 
 export interface WheelOffsetsTabProps {
-  descriptor: any;
+  descriptor: VehicleDescriptor | null | undefined;
   handleWheelPairChange?: (
     pair: 'front' | 'rear',
     field: 'x' | 'z' | 'radius' | 'restY',

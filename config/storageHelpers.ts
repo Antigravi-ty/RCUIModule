@@ -137,7 +137,7 @@ export function writeStorageJson<T>(key: string, value: T): void {
   }
 }
 
-export function isPlainObject(val: unknown): val is Record<string, any> {
+export function isPlainObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
 }
 
@@ -177,7 +177,17 @@ export function stringOrDefault(val: unknown, allowed: readonly string[] | Set<s
   return fallback;
 }
 
-export function filterArraySlice<T>(val: unknown, filterFn: (item: any) => boolean, maxLen: number): T[] | null {
+export function filterArraySlice<T>(
+  val: unknown,
+  filterFn: (item: unknown) => item is T,
+  maxLen: number
+): T[] | null;
+export function filterArraySlice<T>(
+  val: unknown,
+  filterFn: (item: unknown) => boolean,
+  maxLen: number
+): T[] | null;
+export function filterArraySlice<T>(val: unknown, filterFn: (item: unknown) => boolean, maxLen: number): T[] | null {
   return Array.isArray(val) ? (val.filter(filterFn).slice(0, maxLen) as T[]) : null;
 }
 
@@ -191,10 +201,10 @@ export interface LocalStorageStore<T> {
   clear: () => void;
 }
 
-export function createLocalStorageStore<T extends Record<string, any>>(
+export function createLocalStorageStore<T extends object>(
   key: string,
   defaultFactory: () => T,
-  migrateFn?: (target: T, loaded: any) => void
+  migrateFn?: (target: T, loaded: Record<string, unknown>) => void
 ): LocalStorageStore<T> {
   const load = (): T => {
     const defaults = defaultFactory();

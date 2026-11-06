@@ -16,7 +16,7 @@ export interface UnderlineTabsProps {
   tabs?: TabItem[];
   activeId?: string;
   activeTab?: string;
-  onChange?: (id: any) => void;
+  onChange?: (id: string) => void;
   onSelect?: (id: string) => void;
   id?: string;
   isLight?: boolean;

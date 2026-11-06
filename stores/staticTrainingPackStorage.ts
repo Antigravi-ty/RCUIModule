@@ -192,7 +192,8 @@ export async function loadEditWorkspacePackByUuid(uuid: string): Promise<{
     if (rec.nodeType === 'metadata' && rec.data) {
       metadata = rec.data as StaticTrainingPackMetadata;
     } else if (rec.nodeType === 'item' && rec.data) {
-      items.push(cloneShotItem(rec.data, rec.index ?? rec.data.index ?? 0));
+      const shotData = rec.data as Partial<StaticTrainingShotItem>;
+      items.push(cloneShotItem(shotData, rec.index ?? shotData.index ?? 0));
     }
   }
 
@@ -215,7 +216,7 @@ export async function loadEditWorkspacePackByUuid(uuid: string): Promise<{
 export async function listStaticTrainingPacks(): Promise<StaticTrainingPackMetadata[]> {
   const records = await vfsGetAllByCategory('static-training-pack');
   const metas = records
-    .filter((r) => r.nodeType === 'metadata' && r.data?.uuid)
+    .filter((r) => r.nodeType === 'metadata' && Boolean((r.data as Partial<StaticTrainingPackMetadata> | null)?.uuid))
     .map((r) => r.data as StaticTrainingPackMetadata)
     .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
@@ -257,7 +258,8 @@ export async function loadStaticTrainingPackByUuid(uuid: string): Promise<{
     if (rec.nodeType === 'metadata' && rec.data) {
       metadata = rec.data as StaticTrainingPackMetadata;
     } else if (rec.nodeType === 'item' && rec.data) {
-      items.push(cloneShotItem(rec.data, rec.index ?? rec.data.index ?? 0));
+      const shotData = rec.data as Partial<StaticTrainingShotItem>;
+      items.push(cloneShotItem(shotData, rec.index ?? shotData.index ?? 0));
     }
   }
 
