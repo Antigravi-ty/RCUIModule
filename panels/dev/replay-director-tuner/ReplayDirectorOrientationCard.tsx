@@ -90,25 +90,25 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
   const isDevLabReplaying = devGoalReplayPhase === 'replaying';
   const isHudGoalReplay = matchPhase === 'replay';
   const isGoalReplayActive = Boolean(
-    (activeCtrl && activeCtrl.isActive) || isHudGoalReplay || isDevLabReplaying
+    (activeCtrl && activeCtrl.sessionState?.isActive) || isHudGoalReplay || isDevLabReplaying
   );
   const hasRetainedReplay = Boolean(
-    activeCtrl && ((activeCtrl.ActiveWindowCount ?? 0) > 0 || activeCtrl.hasRetainedReplay)
+    activeCtrl && ((activeCtrl.ActiveWindowCount ?? 0) > 0 || activeCtrl.sessionState?.hasRetainedReplay)
   );
-  const isImportedPreview = Boolean(activeCtrl?.isImportedPreview);
+  const isImportedPreview = Boolean(activeCtrl?.sessionState?.isImportedPreview);
   const canExportReplay = Boolean(isGoalReplayActive || hasRetainedReplay);
   const isPausePlayScrubActive = Boolean(
     isGoalReplayActive &&
-      (activeCtrl?.isPersistent ||
-        activeCtrl?.isPaused ||
-        activeCtrl?.isScrubbing ||
+      (activeCtrl?.sessionState?.isPersistent ||
+        activeCtrl?.sessionState?.isPaused ||
+        activeCtrl?.sessionState?.isScrubbing ||
         replayPersistent ||
         replayPaused ||
         devGoalReplayPaused)
   );
 
   const liveSnapshot =
-    activeCtrl && (activeCtrl.isActive || hasRetainedReplay)
+    activeCtrl && (activeCtrl.sessionState?.isActive || hasRetainedReplay)
       ? activeCtrl.getCurrentFrameDiagnosticSnapshot()
       : null;
   const liveCameraState = canExportReplay ? getActiveReplayDirectorLiveCameraState() : null;
@@ -123,9 +123,9 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
     1;
   const effectiveFrameId = liveSnapshot?.frameId ?? effectiveFrameIdx;
   const effectivePaused =
-    activeCtrl?.isPaused ?? (isDevLabReplaying ? devGoalReplayPaused : replayPaused);
+    activeCtrl?.sessionState?.isPaused ?? (isDevLabReplaying ? devGoalReplayPaused : replayPaused);
   const effectiveSpeed =
-    activeCtrl?.playbackSpeed ?? (isDevLabReplaying ? devGoalReplaySpeed : replaySpeed) ?? 1.0;
+    activeCtrl?.sessionState?.playbackSpeed ?? (isDevLabReplaying ? devGoalReplaySpeed : replaySpeed) ?? 1.0;
   const effectiveProgress01 =
     effectiveTotalFrames > 1
       ? Math.max(0, Math.min(1, effectiveFrameIdx / (effectiveTotalFrames - 1)))
@@ -136,7 +136,7 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
       devRuntimeHandlers.onGoalReplayTogglePause();
     } else if (isGoalReplayActive && onReplayTogglePause) {
       onReplayTogglePause();
-    } else if (activeCtrl && activeCtrl.isActive) {
+    } else if (activeCtrl && activeCtrl.sessionState?.isActive) {
       activeCtrl.togglePause();
     }
     setTickRevision((r) => r + 1);
@@ -147,7 +147,7 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
       devRuntimeHandlers.onGoalReplayCycleSpeed();
     } else if (isGoalReplayActive && onReplayCycleSpeed) {
       onReplayCycleSpeed();
-    } else if (activeCtrl && activeCtrl.isActive) {
+    } else if (activeCtrl && activeCtrl.sessionState?.isActive) {
       activeCtrl.cyclePlaybackSpeed();
     }
     setTickRevision((r) => r + 1);
@@ -158,7 +158,7 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
       devRuntimeHandlers.onGoalReplaySeekNormalized(norm01);
     } else if (isGoalReplayActive && onReplaySeekNormalized) {
       onReplaySeekNormalized(norm01);
-    } else if (activeCtrl && (activeCtrl.isActive || hasRetainedReplay)) {
+    } else if (activeCtrl && (activeCtrl.sessionState?.isActive || hasRetainedReplay)) {
       activeCtrl.seekToNormalized(norm01);
     }
     setTickRevision((r) => r + 1);

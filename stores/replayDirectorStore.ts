@@ -81,7 +81,22 @@ export interface ReplayDirectorDiagnosticPattern {
   [key: string]: unknown;
 }
 
+export interface ReplayDirectorSessionStateSlice {
+  isActive?: boolean;
+  isPaused?: boolean;
+  isPersistent?: boolean;
+  isScrubbing?: boolean;
+  isImportedPreview?: boolean;
+  hasRetainedReplay?: boolean;
+  playbackSpeed?: number;
+  activeFrames?: unknown[];
+  retainedReplaySeq?: number;
+  useRecordedCsvCamera?: boolean;
+}
+
 export interface ReplayDirectorControllerHandle extends ReplayDirectorActiveControllerConfigTarget {
+  sessionState?: ReplayDirectorSessionStateSlice;
+  setRecordedCsvCameraMode?: (useRecordedCsv: boolean) => boolean;
   isActive?: boolean;
   isPaused?: boolean;
   isPersistent?: boolean;
@@ -167,11 +182,12 @@ setReplayDirectorActiveControllerHooks({
 export function markReplayTimelineControllerRetained(
   ctrl: ReplayDirectorControllerHandle | null | undefined
 ): number {
-  if (!ctrl || !Array.isArray(ctrl.activeFrames) || ctrl.activeFrames.length === 0) {
+  const s = ctrl?.sessionState;
+  if (!s || !Array.isArray(s.activeFrames) || s.activeFrames.length === 0) {
     return 0;
   }
   _retainedReplaySequence += 1;
-  ctrl.retainedReplaySeq = _retainedReplaySequence;
+  s.retainedReplaySeq = _retainedReplaySequence;
   _latestRetainedReplayController = ctrl;
   return _retainedReplaySequence;
 }
@@ -195,12 +211,12 @@ export function setActiveReplayTimelineController(
 ): void {
   if (
     ctrl &&
-    !ctrl.isActive &&
+    !ctrl.sessionState?.isActive &&
     _latestRetainedReplayController &&
     _latestRetainedReplayController !== ctrl &&
-    Array.isArray(_latestRetainedReplayController.activeFrames) &&
-    _latestRetainedReplayController.activeFrames.length > 0 &&
-    (_latestRetainedReplayController.retainedReplaySeq || 0) > (ctrl.retainedReplaySeq || 0) &&
+    Array.isArray(_latestRetainedReplayController.sessionState?.activeFrames) &&
+    _latestRetainedReplayController.sessionState.activeFrames.length > 0 &&
+    (_latestRetainedReplayController.sessionState?.retainedReplaySeq || 0) > (ctrl.sessionState?.retainedReplaySeq || 0) &&
     typeof ctrl.copyRetainedReplayFrom === 'function'
   ) {
     ctrl.copyRetainedReplayFrom(_latestRetainedReplayController);
@@ -402,7 +418,7 @@ export function exitActiveReplayDirectorPreview(): boolean {
   if (typeof _previewHandlers.onExitPreview === 'function') {
     return _previewHandlers.onExitPreview();
   }
-  if (_activeReplayController?.isActive) {
+  if (_activeReplayController?.sessionState?.isActive) {
     _activeReplayController.endReplaySession?.();
     return true;
   }
@@ -411,10 +427,5 @@ export function exitActiveReplayDirectorPreview(): boolean {
 
 export function setActiveReplayDirectorCsvCameraMode(useRecordedCsv: boolean): boolean {
   if (!_activeReplayController) return false;
-  _activeReplayController.useRecordedCsvCamera = Boolean(useRecordedCsv);
-  _activeReplayController._cachedSmoothnessSummary = null;
-  _activeReplayController._cachedAnomalyPeaks = null;
-  _activeReplayController.refreshCurrentFrameDirectorPose?.();
-  notifyActiveReplayTimelineController();
-  return _activeReplayController.useRecordedCsvCamera;
+  return Boolean(_activeReplayController.setRecordedCsvCameraMode?.(useRecordedCsv));
 }
