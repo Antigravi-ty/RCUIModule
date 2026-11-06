@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import {
-  useLayer2PlayStoreBinding,
-  type Layer2PlayRecipeProps,
-} from './hooks/useMainMenuAndPlayStoreBindings';
 import { Bot, Server, Wifi, PencilRuler, BookOpen, SlidersHorizontal } from 'lucide-react';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { PlayModeCard } from '../layout/PlayModeCard';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
   usePlayCardStyleStore,
@@ -14,8 +12,37 @@ import {
   type PlayCardStyleVariant,
 } from '../stores/playCardStyleStore';
 import { useSignalingProfileStore } from '../stores/signalingProfileStore';
+import {
+  useScopedStore,
+  useStoreSnapshotOverride,
+} from '../stores/storeSnapshotScope';
 
-export type { Layer2PlayRecipeProps };
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer2PlayRecipe',
+  title: 'Play Mode Selection',
+  subtitle: '2x3 grid of match, online lobby, and training disciplines',
+  icon: 'Gamepad2',
+  layer: 'layer2',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 680,
+    minHeight: 340,
+    maxHeight: 520,
+    mode: 'adaptive',
+  },
+};
+
+export interface Layer2PlayRecipeProps extends StandardSurfaceProps {
+  className?: string;
+}
+
+interface Layer2PlayScopedAppOverrides {
+  onSelectMode?: (modeId: string) => void;
+  onSelectExhibition?: () => void;
+  onSelectHostMatch?: () => void;
+  onSelectJoinRoom?: () => void;
+  onSelectSelfTraining?: () => void;
+}
 
 export interface PlayModeDef {
   id: string;
@@ -97,61 +124,96 @@ export const PLAY_MODES: PlayModeDef[] = [
 
 /**
  * [Recipe] Layer 2 Play / Mode Selection Menu
- * 2x3 Grid with unified Neutral + Warm Amber design language.
- * Row 1: Exhibition | Host Match | Join Room (Separate dedicated Layer 3 pages!)
- * Row 2: Self-Training | Host-Training | Advanced
+ * Store-First direct connection with `<StoreSnapshotScope>` support and 4-prop shell contract.
  */
-export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = (rawProps) => {
-  const {
+export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = ({
   isLight = false,
-  onBack = () => {},
-  onSelectMode,
-  onSelectExhibition,
-  onSelectHostMatch,
-  onSelectJoinRoom,
-  onSelectSelfTraining,
-  cardVariant,
-  cardStyleParams,
-} = useLayer2PlayStoreBinding(rawProps);
-  const { panels } = useMenuLayoutStore();
-  const sizing = panels['layer2-play'];
+  onTabChange,
+  onBack,
+  className = '',
+}) => {
+  const navigate = useScopedStore('appStore', useAppStore, (s) => s.navigate);
+  const goBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const appOverrides = useStoreSnapshotOverride<Layer2PlayScopedAppOverrides>('appStore');
+
+  const sizing = useScopedStore(
+    'menuLayoutStore',
+    useMenuLayoutStore,
+    (s) => s.panels['layer2-play']
+  );
   const storeCardStyle = usePlayCardStyleStore();
-  const signalingSource = useSignalingProfileStore((s) => s.source);
-  const signalingShortHash = useSignalingProfileStore((s) => s.shortHash);
+  const cardStyleOverrides = useStoreSnapshotOverride<PlayCardStyleParams>('playCardStyleStore');
+
+  const signalingSource = useScopedStore(
+    'signalingProfileStore',
+    useSignalingProfileStore,
+    (s) => s.source
+  );
+  const signalingShortHash = useScopedStore(
+    'signalingProfileStore',
+    useSignalingProfileStore,
+    (s) => s.shortHash
+  );
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const mergedCardParams: PlayCardStyleParams = {
     ...storeCardStyle,
-    ...(cardStyleParams || {}),
+    ...(cardStyleOverrides || {}),
+    cardIconColors: {
+      ...storeCardStyle.cardIconColors,
+      ...(cardStyleOverrides?.cardIconColors || {}),
+    },
   };
   const activeVariant: PlayCardStyleVariant =
-    cardVariant ?? cardStyleParams?.variant ?? storeCardStyle.variant;
+    cardStyleOverrides?.variant ?? storeCardStyle.variant;
 
   const handleCardClick = (modeId: string) => {
-    if (modeId === 'exhibition' && onSelectExhibition) {
-      onSelectExhibition();
+    if (modeId === 'exhibition' && appOverrides?.onSelectExhibition) {
+      appOverrides.onSelectExhibition();
       return;
     }
-    if (modeId === 'host-match' && onSelectHostMatch) {
-      onSelectHostMatch();
+    if (modeId === 'host-match' && appOverrides?.onSelectHostMatch) {
+      appOverrides.onSelectHostMatch();
       return;
     }
-    if (modeId === 'join-room' && onSelectJoinRoom) {
-      onSelectJoinRoom();
+    if (modeId === 'join-room' && appOverrides?.onSelectJoinRoom) {
+      appOverrides.onSelectJoinRoom();
       return;
     }
-    if (modeId === 'self-training' && onSelectSelfTraining) {
-      onSelectSelfTraining();
+    if (modeId === 'self-training' && appOverrides?.onSelectSelfTraining) {
+      appOverrides.onSelectSelfTraining();
       return;
     }
-    onSelectMode?.(modeId);
+    if (appOverrides?.onSelectMode) {
+      appOverrides.onSelectMode(modeId);
+      return;
+    }
+    if (onTabChange) {
+      onTabChange(modeId);
+      return;
+    }
+    if (modeId === 'exhibition') {
+      navigate('exhibition');
+    } else if (modeId === 'host-match') {
+      useAppStore.getState().setOnlineSession({ roomType: 'match', gameMode: '1v1' });
+      navigate('host-match');
+    } else if (modeId === 'join-room') {
+      useAppStore.getState().setOnlineSession({ roomType: 'match', gameMode: '1v1' });
+      navigate('join-room');
+    } else if (modeId === 'self-training') {
+      navigate('self-training');
+    } else if (modeId === 'online-training') {
+      navigate('host-training');
+    } else if (modeId === 'advanced') {
+      navigate('custom-play');
+    }
   };
 
   return (
-    <PanelContainer isLight={isLight} sizing={sizing} className="w-full">
+    <PanelContainer isLight={isLight} sizing={sizing} className={`w-full ${className}`.trim()}>
       <PanelHeader
         title="PLAY"
-        onBack={onBack}
+        onBack={onBack ?? goBack}
         isLight={isLight}
       />
 
@@ -197,4 +259,3 @@ export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = (rawProps) => {
     </PanelContainer>
   );
 };
-

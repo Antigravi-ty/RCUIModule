@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
+  "updatedAt": "2026-11-06T16:33:22.431Z",
   "templateHash": "574097ceda64cb92",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -863,17 +863,13 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer1MainMenuRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "248b11a858985ed2",
-      "visualAstHash": "86d2be67e8aad3b5",
+      "sizingAndConfigHash": "a06b2b4d369cb353",
+      "visualAstHash": "b51a889117ee5074",
       "fileVisualHashes": {
-        "src/ui-core/recipes/Layer1MainMenuRecipe.tsx": "590b800ccf347f9e",
-        "src/ui-core/recipes/garage/garageConstants.ts": "2cb065ac329ef45c",
-        "src/ui-core/recipes/hooks/useMainMenuAndPlayStoreBindings.ts": "55633d7c80f54b1d",
+        "src/ui-core/recipes/Layer1MainMenuRecipe.tsx": "5484c66a59f8b4da",
         "src/ui-core/recipes/layer1MenuContextSpecs.ts": "97fb5231729fca59"
       },
       "alphaDeps": [
-        "src/ui-core/config/uiConfig.ts",
-        "src/ui-core/config/vehiclePresets.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/experimentalMultiBotsStore.ts",
         "src/ui-core/stores/mainMenuStyleStore.ts",
@@ -883,7 +879,8 @@
         "src/ui-core/stores/replayDirectorStore.ts",
         "src/ui-core/stores/replayViewerStore.ts",
         "src/ui-core/stores/rewinderStore.ts",
-        "src/ui-core/stores/spatialAudioStore.ts",
+        "src/ui-core/stores/staticTrainingPackStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/menuLayoutTokens.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.348Z"
@@ -893,8 +890,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2GarageRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "a2ca9849a0327cf9",
-      "visualAstHash": "305845ce0792a47d",
+      "sizingAndConfigHash": "7e22fb22cc661d28",
+      "visualAstHash": "f9ae9cbf408bcc2f",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -910,32 +907,27 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer2GarageRecipe.tsx": "b1ad8425bb25b728",
+        "src/ui-core/recipes/Layer2GarageRecipe.tsx": "dc46a6c7bdf7d4e0",
         "src/ui-core/recipes/garage/CloudProfileConflictDialogue.tsx": "de76ce0e3b364564",
         "src/ui-core/recipes/garage/GarageAnthemTab.tsx": "cc9699b9e80e30e2",
         "src/ui-core/recipes/garage/GarageCarTab.tsx": "c06be88adfd634e6",
-        "src/ui-core/recipes/garage/GarageLoadoutTab.tsx": "fd991ccb936b2536",
-        "src/ui-core/recipes/garage/GaragePaintTab.tsx": "2dce51d6afc1bbce",
-        "src/ui-core/recipes/garage/GarageSyncTab.tsx": "701ca1bc29661ba4",
-        "src/ui-core/recipes/garage/garageConstants.ts": "2cb065ac329ef45c",
-        "src/ui-core/recipes/hooks/useMainMenuAndPlayStoreBindings.ts": "55633d7c80f54b1d"
+        "src/ui-core/recipes/garage/GarageCloudAccountSyncSection.tsx": "8f874afe1e3cc014",
+        "src/ui-core/recipes/garage/GarageLoadoutTab.tsx": "656b14c55c4248e3",
+        "src/ui-core/recipes/garage/GaragePaintTab.tsx": "81a4d88780c73e46",
+        "src/ui-core/recipes/garage/GarageSyncTab.tsx": "8d15d0866dd4bf1f",
+        "src/ui-core/recipes/garage/garageConstants.ts": "2cb065ac329ef45c"
       },
       "alphaDeps": [
         "src/ui-core/config/anthemCatalogConfig.ts",
         "src/ui-core/config/cloudProfileSyncTypes.ts",
-        "src/ui-core/config/uiConfig.ts",
         "src/ui-core/config/vehiclePresets.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/cloudProfileSyncStore.ts",
         "src/ui-core/stores/experimentalMultiBotsStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
-        "src/ui-core/stores/nameTagTunerStore.ts",
-        "src/ui-core/stores/networkDiagnosticsStore.ts",
-        "src/ui-core/stores/replayDirectorStore.ts",
-        "src/ui-core/stores/replayViewerStore.ts",
-        "src/ui-core/stores/rewinderStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
         "src/ui-core/stores/spatialAudioStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/stores/underlineTabsStore.ts",
         "src/ui-core/tokens/easing.ts",
         "src/ui-core/tokens/radius.ts",
@@ -992,27 +984,17 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2PlayRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "d0d6784aef9aebe7",
-      "visualAstHash": "5f4207e1e3d1a3f3",
+      "sizingAndConfigHash": "c7b8e7f97d2dad2d",
+      "visualAstHash": "002bdf23eee893f0",
       "fileVisualHashes": {
-        "src/ui-core/recipes/Layer2PlayRecipe.tsx": "5244a07f424bef35",
-        "src/ui-core/recipes/garage/garageConstants.ts": "2cb065ac329ef45c",
-        "src/ui-core/recipes/hooks/useMainMenuAndPlayStoreBindings.ts": "55633d7c80f54b1d"
+        "src/ui-core/recipes/Layer2PlayRecipe.tsx": "0f0b1315cfe2219d"
       },
       "alphaDeps": [
-        "src/ui-core/config/uiConfig.ts",
-        "src/ui-core/config/vehiclePresets.ts",
         "src/ui-core/stores/appStore.ts",
-        "src/ui-core/stores/experimentalMultiBotsStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
-        "src/ui-core/stores/nameTagTunerStore.ts",
-        "src/ui-core/stores/networkDiagnosticsStore.ts",
         "src/ui-core/stores/playCardStyleStore.ts",
-        "src/ui-core/stores/replayDirectorStore.ts",
-        "src/ui-core/stores/replayViewerStore.ts",
-        "src/ui-core/stores/rewinderStore.ts",
         "src/ui-core/stores/signalingProfileStore.ts",
-        "src/ui-core/stores/spatialAudioStore.ts"
+        "src/ui-core/stores/storeSnapshotScope.tsx"
       ],
       "approvedAt": "2026-11-06T12:15:46.358Z"
     },

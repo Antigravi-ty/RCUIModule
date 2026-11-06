@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLayer2GarageStoreBinding } from './hooks/useMainMenuAndPlayStoreBindings';
 import {
   Car,
   Palette,
@@ -7,16 +6,22 @@ import {
   Music,
   CloudSync,
 } from 'lucide-react';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { UnderlineTabs, TabItem } from '../primitives/UnderlineTabs';
-import { UnderConstructionPlaceholder } from '../primitives/UnderConstructionPlaceholder';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { GarageCarTab } from './garage/GarageCarTab';
-import { GaragePaintTab, DEFAULT_BLUE_ORDER, DEFAULT_ORANGE_ORDER } from './garage/GaragePaintTab';
-import { GarageLoadoutTab, type VisualMaterialsConfig } from './garage/GarageLoadoutTab';
-import { GarageAnthemTab } from './garage/GarageAnthemTab';
-import { GarageSyncTab } from './garage/GarageSyncTab';
+import { useSpatialAudioStore } from '../stores/spatialAudioStore';
+import {
+  useScopedStore,
+  useStoreSnapshotOverride,
+} from '../stores/storeSnapshotScope';
+import { GarageCarTab, SURFACE_VARIANT_META as GARAGE_CAR_VARIANT_META } from './garage/GarageCarTab';
+import { GaragePaintTab, SURFACE_VARIANT_META as GARAGE_PAINT_VARIANT_META } from './garage/GaragePaintTab';
+import { GarageLoadoutTab, SURFACE_VARIANT_META as GARAGE_LOADOUT_VARIANT_META } from './garage/GarageLoadoutTab';
+import { GarageAnthemTab, SURFACE_VARIANT_META as GARAGE_ANTHEM_VARIANT_META } from './garage/GarageAnthemTab';
+import { GarageSyncTab, SURFACE_VARIANT_META as GARAGE_SYNC_VARIANT_META } from './garage/GarageSyncTab';
 
 export type GarageTabId =
   | 'car'
@@ -25,122 +30,107 @@ export type GarageTabId =
   | 'anthem'
   | 'sync';
 
-export interface Layer2GarageStateOverride {
-  selectedCar?: string;
-  defaultSelectedCar?: string;
-  onSelectCar?: (carId: string) => void;
-  primaryTeam?: 'blue' | 'orange';
-  defaultPrimaryTeam?: 'blue' | 'orange';
-  onPrimaryTeamChange?: (team: 'blue' | 'orange') => void;
-  paintFinish?: 'matte' | 'metallic';
-  defaultPaintFinish?: 'matte' | 'metallic';
-  onPaintFinishChange?: (finish: 'matte' | 'metallic') => void;
-  blueOrder?: number[];
-  defaultBlueOrder?: number[];
-  onBlueOrderChange?: (next: number[]) => void;
-  orangeOrder?: number[];
-  defaultOrangeOrder?: number[];
-  onOrangeOrderChange?: (next: number[]) => void;
-  materials?: VisualMaterialsConfig;
-  onUpdateMaterials?: (partial: Partial<VisualMaterialsConfig>) => void;
-  selectedAnthem?: string;
-  defaultSelectedAnthem?: string;
-  onSelectAnthem?: (anthemId: string) => void;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer2GarageRecipe',
+  title: 'Garage Loadout',
+  subtitle: 'Vehicle chassis, team paint priority, visual FX loadout, goal anthem & cloud sync',
+  icon: 'Wrench',
+  layer: 'layer2',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 640,
+    height: 520,
+    minHeight: 480,
+    maxHeight: 560,
+    mode: 'fixed',
+  },
+  variants: [
+    GARAGE_CAR_VARIANT_META,
+    GARAGE_PAINT_VARIANT_META,
+    GARAGE_LOADOUT_VARIANT_META,
+    GARAGE_ANTHEM_VARIANT_META,
+    GARAGE_SYNC_VARIANT_META,
+  ],
+};
+
+export interface Layer2GarageRecipeProps extends StandardSurfaceProps {
+  className?: string;
 }
 
-export interface Layer2GarageRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  initialTab?: string;
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
-  /** Whether Anthem audio assets are available (default false -> renders Under Development placeholder) */
-  anthemAvailable?: boolean;
-  stateOverride?: Layer2GarageStateOverride;
-}
+const normalizeGarageTab = (t?: string): GarageTabId => {
+  if (t === 'player-name' || t === 'sync') return 'sync';
+  if (t === 'colour' || t === 'paint') return 'paint';
+  if (t === 'materials' || t === 'loadout') return 'loadout';
+  if (t === 'anthem') return 'anthem';
+  return 'car';
+};
 
 /**
  * [Recipe] Layer 2 Garage Loadout Menu (Width: 640px, Height: 520px)
- * Modular nested architecture maintaining low coupling:
- * 1. Car (`GarageCarTab`): 8 cards with name & hitbox badge (4x2 grid, no scroll)
- * 2. Paint (`GaragePaintTab`): Blue & Orange team fallback preference order (2x3 = 6 presets)
- * 3. Loadout (`GarageLoadoutTab`): Ball style, demolition FX, boost trail, boost audio & luminance
- * 4. Anthem (`GarageAnthemTab`): Anthem selection or Under Development placeholder
- * 5. Sync (`cloud-sync`): Server-bound customization sync & profile synchronization
+ * Store-First zero-prop-drilling shell across 5 decoupled tabs:
+ * 1. Car (`GarageCarTab`)
+ * 2. Paint (`GaragePaintTab`)
+ * 3. Loadout (`GarageLoadoutTab`)
+ * 4. Anthem (`GarageAnthemTab`)
+ * 5. Sync (`GarageSyncTab`)
  */
-export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) => {
-  const {
+export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = ({
   isLight = false,
-  onBack = () => {},
-  initialTab = 'car',
   activeTab: controlledTab,
   onTabChange,
-  selectedCar: controlledSelectedCar,
-  defaultSelectedCar = 'fennec',
-  onSelectCar,
-  primaryTeam,
-  defaultPrimaryTeam,
-  onPrimaryTeamChange,
-  paintFinish,
-  defaultPaintFinish,
-  onPaintFinishChange,
-  blueOrder,
-  defaultBlueOrder = DEFAULT_BLUE_ORDER,
-  onBlueOrderChange,
-  orangeOrder,
-  defaultOrangeOrder = DEFAULT_ORANGE_ORDER,
-  onOrangeOrderChange,
-  materials,
-  onUpdateMaterials,
-  selectedAnthem: controlledSelectedAnthem,
-  defaultSelectedAnthem = 'none',
-  onSelectAnthem,
-  anthemAvailable = true,
-} = useLayer2GarageStoreBinding({ ...rawProps.stateOverride, ...rawProps });
-  const { panels, panelBodyPaddingX } = useMenuLayoutStore();
-  const sizing = panels['layer2-garage'];
-  const normalizeTab = (t?: string) => {
-    if (t === 'player-name') return 'sync';
-    if (t === 'colour') return 'paint';
-    if (t === 'materials') return 'loadout';
-    return t || 'car';
-  };
-  const [internalTab, setInternalTab] = useState(() => normalizeTab(initialTab));
-  const activeTab = normalizeTab(controlledTab ?? internalTab);
+  onBack,
+  className = '',
+}) => {
+  const goBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const stopPreviewAnthem = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.stopPreviewAnthem
+  );
+  const scopedOverrides = useStoreSnapshotOverride<{ activeTab?: string }>('appStore');
+
+  const sizing = useScopedStore(
+    'menuLayoutStore',
+    useMenuLayoutStore,
+    (s) => s.panels['layer2-garage']
+  );
+  const panelBodyPaddingX = useScopedStore(
+    'menuLayoutStore',
+    useMenuLayoutStore,
+    (s) => s.panelBodyPaddingX
+  );
+
+  const externalTab = controlledTab ?? scopedOverrides?.activeTab;
+  const [internalTab, setInternalTab] = useState<GarageTabId>(() =>
+    normalizeGarageTab(externalTab)
+  );
+  const activeTab = normalizeGarageTab(externalTab ?? internalTab);
 
   useEffect(() => {
-    if (initialTab && !controlledTab) {
-      setInternalTab(normalizeTab(initialTab));
+    if (externalTab) {
+      setInternalTab(normalizeGarageTab(externalTab));
     }
-  }, [initialTab, controlledTab]);
+  }, [externalTab]);
 
   const handleTabChange = (tab: string) => {
-    const normalized = normalizeTab(tab);
+    const normalized = normalizeGarageTab(tab);
+    if (normalized !== 'anthem') {
+      stopPreviewAnthem();
+    }
     setInternalTab(normalized);
     onTabChange?.(normalized);
   };
 
+  const handleBack = () => {
+    stopPreviewAnthem();
+    if (onBack) {
+      onBack();
+    } else {
+      goBack();
+    }
+  };
+
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
-
-  // Car State
-  const [internalSelectedCar, setInternalSelectedCar] = useState(defaultSelectedCar);
-  const selectedCar = controlledSelectedCar ?? internalSelectedCar;
-  const handleSelectCar = (carId: string) => {
-    if (controlledSelectedCar === undefined) {
-      setInternalSelectedCar(carId);
-    }
-    onSelectCar?.(carId);
-  };
-
-  // Anthem State
-  const [internalSelectedAnthem, setInternalSelectedAnthem] = useState(defaultSelectedAnthem);
-  const selectedAnthem = controlledSelectedAnthem ?? internalSelectedAnthem;
-  const handleSelectAnthem = (anthemId: string) => {
-    if (controlledSelectedAnthem === undefined) {
-      setInternalSelectedAnthem(anthemId);
-    }
-    onSelectAnthem?.(anthemId);
-  };
 
   const tabs: TabItem[] = [
     { id: 'car', label: 'Car', icon: <Car className="h-3.5 w-3.5" /> },
@@ -151,14 +141,13 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
   ];
 
   return (
-    <PanelContainer isLight={isLight} sizing={sizing} className="w-full">
+    <PanelContainer isLight={isLight} sizing={sizing} className={`w-full ${className}`.trim()}>
       <PanelHeader
         title="GARAGE LOADOUT"
-        onBack={onBack}
+        onBack={handleBack}
         isLight={isLight}
       />
 
-      {/* Underline Tabs */}
       <div
         style={{ paddingLeft: `${panelBodyPaddingX}px`, paddingRight: `${panelBodyPaddingX}px` }}
         className="pt-1 shrink-0"
@@ -188,12 +177,7 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
                 : 'invisible opacity-0 pointer-events-none select-none z-0'
             }`}
           >
-            <GarageCarTab
-              selectedCar={selectedCar}
-              onSelectCar={handleSelectCar}
-              onHoverDesc={setHoveredDesc}
-              isLight={isLight}
-            />
+            <GarageCarTab onHoverDesc={setHoveredDesc} isLight={isLight} />
           </div>
 
           <div
@@ -206,22 +190,7 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
                 : 'invisible opacity-0 pointer-events-none select-none z-0'
             }`}
           >
-            <GaragePaintTab
-              primaryTeam={primaryTeam}
-              defaultPrimaryTeam={defaultPrimaryTeam}
-              onPrimaryTeamChange={onPrimaryTeamChange}
-              paintFinish={paintFinish}
-              defaultPaintFinish={defaultPaintFinish}
-              onPaintFinishChange={onPaintFinishChange}
-              blueOrder={blueOrder}
-              defaultBlueOrder={defaultBlueOrder}
-              onBlueOrderChange={onBlueOrderChange}
-              orangeOrder={orangeOrder}
-              defaultOrangeOrder={defaultOrangeOrder}
-              onOrangeOrderChange={onOrangeOrderChange}
-              onHoverDesc={setHoveredDesc}
-              isLight={isLight}
-            />
+            <GaragePaintTab onHoverDesc={setHoveredDesc} isLight={isLight} />
           </div>
 
           <div
@@ -234,12 +203,7 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
                 : 'invisible opacity-0 pointer-events-none select-none z-0'
             }`}
           >
-            <GarageLoadoutTab
-              materials={materials}
-              onUpdateMaterials={onUpdateMaterials}
-              onHoverDesc={setHoveredDesc}
-              isLight={isLight}
-            />
+            <GarageLoadoutTab onHoverDesc={setHoveredDesc} isLight={isLight} />
           </div>
 
           <div
@@ -254,9 +218,6 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
             }`}
           >
             <GarageAnthemTab
-              selectedAnthem={selectedAnthem}
-              onSelectAnthem={handleSelectAnthem}
-              anthemAvailable={anthemAvailable}
               isActive={activeTab === 'anthem'}
               onHoverDesc={setHoveredDesc}
               isLight={isLight}
@@ -274,10 +235,7 @@ export const Layer2GarageRecipe: React.FC<Layer2GarageRecipeProps> = (rawProps) 
                 : 'invisible opacity-0 pointer-events-none select-none z-0'
             }`}
           >
-            <GarageSyncTab
-              onHoverDesc={setHoveredDesc}
-              isLight={isLight}
-            />
+            <GarageSyncTab onHoverDesc={setHoveredDesc} isLight={isLight} />
           </div>
         </div>
       </PanelContent>
