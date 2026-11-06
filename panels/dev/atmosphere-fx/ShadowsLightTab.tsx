@@ -63,7 +63,7 @@ export const ShadowsLightTab: React.FC<ShadowsLightTabProps> = ({
             <span className="font-semibold text-[11px]">Light Ray Start Anchor (Origin)</span>
             <SegmentedSwitch
               value={shadowConfig.lightRayOrigin || 'car'}
-              onChange={(val) => applyShadowPatch({ lightRayOrigin: val as any })}
+              onChange={(val) => applyShadowPatch({ lightRayOrigin: val })}
               options={[
                 { value: 'car', label: 'Player Car' },
                 { value: 'camera', label: 'Camera Eye' },
@@ -205,7 +205,7 @@ export const ShadowsLightTab: React.FC<ShadowsLightTabProps> = ({
           <span className="font-semibold text-[11px]">Shadow Rig Mode</span>
           <SegmentedSwitch
             value={shadowConfig.mode}
-            onChange={(val) => applyShadowPatch({ mode: val as any })}
+            onChange={(val) => applyShadowPatch({ mode: val })}
             options={[
               { value: 'off', label: 'Off (0 Passes)' },
               { value: 'single-sun', label: 'Single Sun Focus (1 Pass)' },
@@ -230,7 +230,7 @@ export const ShadowsLightTab: React.FC<ShadowsLightTabProps> = ({
           <span className="font-semibold text-[11px]">Shadow Edge Sharpness (Filter Kernel)</span>
           <SegmentedSwitch
             value={shadowConfig.sharpness}
-            onChange={(val) => applyShadowPatch({ sharpness: val as any })}
+            onChange={(val) => applyShadowPatch({ sharpness: val })}
             options={[
               { value: 'sharp', label: 'Sharp (1-Tap Basic)' },
               { value: 'pcf', label: 'Medium (PCF)' },
@@ -298,7 +298,7 @@ export const ShadowsLightTab: React.FC<ShadowsLightTabProps> = ({
               <span className="font-semibold text-[11px]">Key Light Direction Mode</span>
               <SegmentedSwitch
                 value={shadowConfig.keyLightMode || 'fixed'}
-                onChange={(val) => applyShadowPatch({ keyLightMode: val as any })}
+                onChange={(val) => applyShadowPatch({ keyLightMode: val })}
                 options={[
                   { value: 'fixed', label: 'Fixed (-2000,2000,-2000)' },
                   { value: 'opposite-sun', label: 'Opposite to Sun (+180°)' },

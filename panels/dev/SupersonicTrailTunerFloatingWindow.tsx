@@ -18,11 +18,25 @@ import { SliderControl } from '../../primitives/SliderControl';
 import { quickNotification } from '../../stores/quickNotificationStore';
 import { SupersonicTrailThreePointGradientSection } from './supersonic-trail-tuner/SupersonicTrailThreePointGradientSection';
 import { SupersonicTrailGeometryAndCameraTiltSection } from './supersonic-trail-tuner/SupersonicTrailGeometryAndCameraTiltSection';
+import type { SurfaceMeta, StandardSurfaceProps } from '../../manifest/surfaceMetaTypes';
 
-export interface SupersonicTrailTunerFloatingWindowProps {
-  isLight?: boolean;
-  active?: boolean;
-}
+export const SURFACE_META: SurfaceMeta = {
+  id: 'supersonic-trail-tuner',
+  title: 'Supersonic Wheel Trail',
+  layer: 'floating-dev',
+  menuGroup: 'calibrated-presets',
+  icon: 'Zap',
+  defaultSizing: {
+    width: 480,
+    height: 620,
+    minWidth: 360,
+    minHeight: 220,
+    maxHeight: 820,
+    mode: 'adaptive',
+  },
+};
+
+export interface SupersonicTrailTunerFloatingWindowProps extends StandardSurfaceProps {}
 
 export const SupersonicTrailTunerFloatingWindow: React.FC<
   SupersonicTrailTunerFloatingWindowProps

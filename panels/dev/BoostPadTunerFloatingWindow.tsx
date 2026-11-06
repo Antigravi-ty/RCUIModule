@@ -18,12 +18,33 @@ import { BoostPadRotationsTab } from './boost-pad-tuner/BoostPadRotationsTab';
 import { BoostPadRefillTab } from './boost-pad-tuner/BoostPadRefillTab';
 import { BoostPadCollectFxTab } from './boost-pad-tuner/BoostPadCollectFxTab';
 import { quickNotification } from '../../stores/quickNotificationStore';
+import type { SurfaceMeta, StandardSurfaceProps } from '../../manifest/surfaceMetaTypes';
 
-export interface BoostPadTunerFloatingWindowProps {
-  isLight?: boolean;
-  activeTab?: TabKey;
-  onTabChange?: (tab: TabKey) => void;
-  active?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'boost-pad-tuner',
+  title: 'Boost Pad Tuner',
+  layer: 'floating-dev',
+  menuGroup: 'calibrated-presets',
+  icon: 'Sparkles',
+  defaultSizing: {
+    width: 480,
+    height: 620,
+    minWidth: 360,
+    minHeight: 220,
+    maxHeight: 820,
+    mode: 'adaptive',
+  },
+  variants: [
+    { variantId: 'shader', label: 'Shader & Glow' },
+    { variantId: 'materials', label: 'Materials' },
+    { variantId: 'rotations', label: 'Rotations' },
+    { variantId: 'refill', label: 'Refill FX' },
+    { variantId: 'collect', label: 'Collect FX' },
+  ],
+};
+
+export interface BoostPadTunerFloatingWindowProps extends StandardSurfaceProps {
+  activeTab?: TabKey | string;
 }
 
 export type TabKey = 'shader' | 'materials' | 'rotations' | 'refill' | 'collect';
@@ -32,7 +53,6 @@ export const BoostPadTunerFloatingWindow: React.FC<BoostPadTunerFloatingWindowPr
   isLight = false,
   activeTab: controlledTab,
   onTabChange,
-  active = true,
 }) => {
   const tuner = useAppStore((s) => s.boostPadTuner);
   const updateTuner = useAppStore((s) => s.updateBoostPadTuner);
@@ -40,12 +60,12 @@ export const BoostPadTunerFloatingWindow: React.FC<BoostPadTunerFloatingWindowPr
 
   const [internalTab, setInternalTab] = useState<TabKey>(() =>
     controlledTab && ['shader', 'materials', 'rotations', 'refill', 'collect'].includes(controlledTab)
-      ? controlledTab
+      ? (controlledTab as TabKey)
       : 'shader'
   );
   const activeTab: TabKey =
     controlledTab && ['shader', 'materials', 'rotations', 'refill', 'collect'].includes(controlledTab)
-      ? controlledTab
+      ? (controlledTab as TabKey)
       : internalTab;
   const setActiveTab = (nextTab: TabKey) => {
     setInternalTab(nextTab);

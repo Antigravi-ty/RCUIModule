@@ -17,18 +17,52 @@ import { GoalVolumeHitboxSection } from './goal-volume-tuner/GoalVolumeHitboxSec
 import { GoalVolumeBallRimFxSection } from './goal-volume-tuner/GoalVolumeBallRimFxSection';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { quickNotification } from '../../stores/quickNotificationStore';
+import type { SurfaceMeta, StandardSurfaceProps } from '../../manifest/surfaceMetaTypes';
 
-export interface GoalVolumeTunerFloatingWindowProps {
-  isLight?: boolean;
-  active?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'goal-volume-tuner',
+  title: 'Goal Volume & Rim FX',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  icon: 'Box',
+  defaultSizing: {
+    width: 480,
+    height: 620,
+    minWidth: 360,
+    minHeight: 220,
+    maxHeight: 820,
+    mode: 'adaptive',
+  },
+  variants: [
+    { variantId: 'ball_rim_fx', label: 'Ball Rim FX' },
+    { variantId: 'hitbox', label: 'Hitbox Bounds' },
+  ],
+};
+
+export type TunerSectionTab = 'ball_rim_fx' | 'hitbox';
+
+export interface GoalVolumeTunerFloatingWindowProps extends StandardSurfaceProps {
+  activeTab?: TunerSectionTab | string;
 }
-
-type TunerSectionTab = 'ball_rim_fx' | 'hitbox';
 
 export const GoalVolumeTunerFloatingWindow: React.FC<GoalVolumeTunerFloatingWindowProps> = ({
   isLight = false,
+  activeTab: controlledTab,
+  onTabChange,
 }) => {
-  const [activeTab, setActiveTab] = useState<TunerSectionTab>('ball_rim_fx');
+  const [internalTab, setInternalTab] = useState<TunerSectionTab>(() =>
+    controlledTab && ['ball_rim_fx', 'hitbox'].includes(controlledTab)
+      ? (controlledTab as TunerSectionTab)
+      : 'ball_rim_fx'
+  );
+  const activeTab: TunerSectionTab =
+    controlledTab && ['ball_rim_fx', 'hitbox'].includes(controlledTab)
+      ? (controlledTab as TunerSectionTab)
+      : internalTab;
+  const setActiveTab = (nextTab: TunerSectionTab) => {
+    setInternalTab(nextTab);
+    onTabChange?.(nextTab);
+  };
   const [cfg, setCfg] = useState(() => getGoalVolumeTunerConfig());
   const [copied, setCopied] = useState(false);
   const [imported, setImported] = useState(false);

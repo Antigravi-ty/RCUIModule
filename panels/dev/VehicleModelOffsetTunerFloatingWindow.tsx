@@ -16,12 +16,13 @@ import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { TunerPrecisionContext } from '../../primitives/PrecisionDigitPicker';
 import { useReferenceOverlayStore } from '../../stores/referenceOverlayStore';
-import { HITBOX_PRESETS } from '../../config/vehicleConstants';
+import { HITBOX_PRESETS, type HitboxPresetSpec } from '../../config/vehicleConstants';
 import {
   FENNEC_DESCRIPTOR,
   INSIDIO_DESCRIPTOR,
   RYZA_DESCRIPTOR,
   getVehicleDescriptor,
+  type VehicleDescriptor,
 } from '../../config/vehicleTunerConfig';
 import {
   getVehicleTunerRuntimeFlags,
@@ -31,43 +32,50 @@ import {
 import { HitboxAlignTab } from './vehicle-model-offset-tuner/HitboxAlignTab';
 import { BoostNozzlesTab } from './vehicle-model-offset-tuner/BoostNozzlesTab';
 import { WheelOffsetsTab } from './vehicle-model-offset-tuner/WheelOffsetsTab';
+import type { SurfaceMeta, StandardSurfaceProps } from '../../manifest/surfaceMetaTypes';
 
-export interface VehicleModelOffsetTunerFloatingWindowProps {
-  isLight?: boolean;
-  activeTab?: VehicleTunerTab;
-  onTabChange?: (tab: VehicleTunerTab) => void;
-  active?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'vehicle-model-offset-tuner',
+  title: 'Vehicle Offsets & Hitbox',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  icon: 'Car',
+  defaultSizing: {
+    width: 480,
+    height: 620,
+    minWidth: 360,
+    minHeight: 220,
+    maxHeight: 820,
+    mode: 'adaptive',
+  },
+  variants: [
+    { variantId: 'hitbox', label: 'Hitbox & Align' },
+    { variantId: 'wheels', label: 'Wheel Offsets' },
+    { variantId: 'boost', label: 'Boost Nozzles' },
+  ],
+};
+
+export interface VehicleModelOffsetTunerFloatingWindowProps extends StandardSurfaceProps {
+  activeTab?: VehicleTunerTab | string;
 }
 
 export type VehicleTunerTab = 'hitbox' | 'wheels' | 'boost';
 export type CustomVehicleId = 'fennec' | 'insidio' | 'ryza';
 
+const pickVehicleOffsets = (d: VehicleDescriptor) => ({
+  hitboxPreset: d.hitboxPreset,
+  alignment: d.alignment,
+  wheelAnchors: d.wheelAnchors,
+  suspensionHeights: d.suspensionHeights,
+  boostNozzleParams: d.boostNozzleParams,
+  boostOutlets: d.boostOutlets,
+});
+
 const INITIAL_VEHICLE_OFFSET_SNAPSHOT = JSON.parse(
   JSON.stringify({
-    fennec: {
-      hitboxPreset: FENNEC_DESCRIPTOR.hitboxPreset,
-      alignment: FENNEC_DESCRIPTOR.alignment,
-      wheelAnchors: FENNEC_DESCRIPTOR.wheelAnchors,
-      suspensionHeights: FENNEC_DESCRIPTOR.suspensionHeights,
-      boostNozzleParams: FENNEC_DESCRIPTOR.boostNozzleParams,
-      boostOutlets: FENNEC_DESCRIPTOR.boostOutlets,
-    },
-    insidio: {
-      hitboxPreset: INSIDIO_DESCRIPTOR.hitboxPreset,
-      alignment: INSIDIO_DESCRIPTOR.alignment,
-      wheelAnchors: INSIDIO_DESCRIPTOR.wheelAnchors,
-      suspensionHeights: INSIDIO_DESCRIPTOR.suspensionHeights,
-      boostNozzleParams: INSIDIO_DESCRIPTOR.boostNozzleParams,
-      boostOutlets: INSIDIO_DESCRIPTOR.boostOutlets,
-    },
-    ryza: {
-      hitboxPreset: RYZA_DESCRIPTOR.hitboxPreset,
-      alignment: RYZA_DESCRIPTOR.alignment,
-      wheelAnchors: RYZA_DESCRIPTOR.wheelAnchors,
-      suspensionHeights: RYZA_DESCRIPTOR.suspensionHeights,
-      boostNozzleParams: RYZA_DESCRIPTOR.boostNozzleParams,
-      boostOutlets: RYZA_DESCRIPTOR.boostOutlets,
-    },
+    fennec: pickVehicleOffsets(FENNEC_DESCRIPTOR),
+    insidio: pickVehicleOffsets(INSIDIO_DESCRIPTOR),
+    ryza: pickVehicleOffsets(RYZA_DESCRIPTOR),
   })
 );
 
@@ -96,12 +104,12 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   );
   const [internalTab, setInternalTab] = useState<VehicleTunerTab>(() =>
     controlledTab && ['hitbox', 'wheels', 'boost'].includes(controlledTab)
-      ? controlledTab
+      ? (controlledTab as VehicleTunerTab)
       : 'hitbox'
   );
   const activeTab: VehicleTunerTab =
     controlledTab && ['hitbox', 'wheels', 'boost'].includes(controlledTab)
-      ? controlledTab
+      ? (controlledTab as VehicleTunerTab)
       : internalTab;
   const setActiveTab = (nextTab: VehicleTunerTab) => {
     setInternalTab(nextTab);
@@ -111,9 +119,9 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   const [, setRevision] = useState(0);
   const [runtimeFlags, setRuntimeFlagsState] = useState(() => getVehicleTunerRuntimeFlags());
 
-  const descriptor: any = getVehicleDescriptor(selectedCar) || FENNEC_DESCRIPTOR;
-  const hitboxSpec: any =
-    (HITBOX_PRESETS as any)[descriptor.hitboxPreset] || (HITBOX_PRESETS as any)['hitbox-octane'];
+  const descriptor: VehicleDescriptor = getVehicleDescriptor(selectedCar) || FENNEC_DESCRIPTOR;
+  const hitboxSpec: HitboxPresetSpec =
+    HITBOX_PRESETS[descriptor.hitboxPreset] || HITBOX_PRESETS['hitbox-octane'];
 
   const notifyAndRefresh = (carId: CustomVehicleId = selectedCar, nextHitboxPreset?: string) => {
     const desc = getVehicleDescriptor(carId);
@@ -154,7 +162,12 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   };
 
   const handleCenterOffsetAxis = (axisIndex: 0 | 1 | 2, val: number) => {
-    const nextOffset = [...(descriptor.alignment.centerOffset || [0, 0, 0])];
+    const baseOffset = descriptor.alignment.centerOffset || [0, 0, 0];
+    const nextOffset: [number, number, number] = [
+      baseOffset[0] ?? 0,
+      baseOffset[1] ?? 0,
+      baseOffset[2] ?? 0,
+    ];
     nextOffset[axisIndex] = Number(val.toFixed(6));
     descriptor.alignment.centerOffset = nextOffset;
     notifyAndRefresh(selectedCar);
@@ -231,30 +244,9 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
     exportedAt: new Date().toISOString(),
     referenceOverlayProfiles: useReferenceOverlayStore.getState().exportProfilesJson(),
     vehicles: {
-      fennec: {
-        hitboxPreset: FENNEC_DESCRIPTOR.hitboxPreset,
-        alignment: FENNEC_DESCRIPTOR.alignment,
-        wheelAnchors: FENNEC_DESCRIPTOR.wheelAnchors,
-        suspensionHeights: FENNEC_DESCRIPTOR.suspensionHeights,
-        boostNozzleParams: FENNEC_DESCRIPTOR.boostNozzleParams,
-        boostOutlets: FENNEC_DESCRIPTOR.boostOutlets,
-      },
-      insidio: {
-        hitboxPreset: INSIDIO_DESCRIPTOR.hitboxPreset,
-        alignment: INSIDIO_DESCRIPTOR.alignment,
-        wheelAnchors: INSIDIO_DESCRIPTOR.wheelAnchors,
-        suspensionHeights: INSIDIO_DESCRIPTOR.suspensionHeights,
-        boostNozzleParams: INSIDIO_DESCRIPTOR.boostNozzleParams,
-        boostOutlets: INSIDIO_DESCRIPTOR.boostOutlets,
-      },
-      ryza: {
-        hitboxPreset: RYZA_DESCRIPTOR.hitboxPreset,
-        alignment: RYZA_DESCRIPTOR.alignment,
-        wheelAnchors: RYZA_DESCRIPTOR.wheelAnchors,
-        suspensionHeights: RYZA_DESCRIPTOR.suspensionHeights,
-        boostNozzleParams: RYZA_DESCRIPTOR.boostNozzleParams,
-        boostOutlets: RYZA_DESCRIPTOR.boostOutlets,
-      },
+      fennec: pickVehicleOffsets(FENNEC_DESCRIPTOR),
+      insidio: pickVehicleOffsets(INSIDIO_DESCRIPTOR),
+      ryza: pickVehicleOffsets(RYZA_DESCRIPTOR),
     },
   });
 

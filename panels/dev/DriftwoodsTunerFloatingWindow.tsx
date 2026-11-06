@@ -24,12 +24,32 @@ import { DriftwoodsTransparentTab } from './driftwoods-tuner/DriftwoodsTranspare
 import { DriftwoodsPerformanceTab } from './driftwoods-tuner/DriftwoodsPerformanceTab';
 import { TunerPrecisionContext, PrecisionDigitPicker } from '../../primitives/PrecisionDigitPicker';
 import { TunerRow } from '../../compounds/TunerControls';
+import type { SurfaceMeta, StandardSurfaceProps } from '../../manifest/surfaceMetaTypes';
 
-export interface DriftwoodsTunerFloatingWindowProps {
-  isLight?: boolean;
-  activeTab?: TunerTab;
-  onTabChange?: (tab: TunerTab) => void;
-  active?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'driftwoods-tuner',
+  title: 'Driftwoods Stadium Tuner',
+  layer: 'floating-dev',
+  menuGroup: 'calibrated-presets',
+  icon: 'Palette',
+  defaultSizing: {
+    width: 480,
+    height: 620,
+    minWidth: 360,
+    minHeight: 220,
+    maxHeight: 820,
+    mode: 'adaptive',
+  },
+  variants: [
+    { variantId: 'ground', label: 'Ground Mask' },
+    { variantId: 'surfaces', label: 'Surfaces' },
+    { variantId: 'transparent', label: 'Transparent' },
+    { variantId: 'performance', label: 'Performance' },
+  ],
+};
+
+export interface DriftwoodsTunerFloatingWindowProps extends StandardSurfaceProps {
+  activeTab?: TunerTab | string;
 }
 
 export type TunerTab = 'ground' | 'surfaces' | 'transparent' | 'performance';
@@ -38,7 +58,6 @@ export const DriftwoodsTunerFloatingWindow: React.FC<DriftwoodsTunerFloatingWind
   isLight = false,
   activeTab: controlledTab,
   onTabChange,
-  active = true,
 }) => {
   const config = useAppStore((s) => s.driftwoodsTuner);
   const updateConfig = useAppStore((s) => s.updateDriftwoodsTuner);
@@ -55,12 +74,12 @@ export const DriftwoodsTunerFloatingWindow: React.FC<DriftwoodsTunerFloatingWind
 
   const [internalTab, setInternalTab] = useState<TunerTab>(() =>
     controlledTab && ['ground', 'surfaces', 'transparent', 'performance'].includes(controlledTab)
-      ? controlledTab
+      ? (controlledTab as TunerTab)
       : 'ground'
   );
   const activeTab: TunerTab =
     controlledTab && ['ground', 'surfaces', 'transparent', 'performance'].includes(controlledTab)
-      ? controlledTab
+      ? (controlledTab as TunerTab)
       : internalTab;
   const setActiveTab = (nextTab: TunerTab) => {
     setInternalTab(nextTab);
@@ -325,65 +344,30 @@ export const DriftwoodsTunerFloatingWindow: React.FC<DriftwoodsTunerFloatingWind
             isLight ? 'bg-neutral-100 border-neutral-200 text-neutral-600' : 'bg-neutral-900 border-neutral-800 text-neutral-400'
           }`}
         >
-          <button
-            type="button"
-            onClick={() => setActiveTab('ground')}
-            className={`py-1 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1 ${
-              activeTab === 'ground'
-                ? isLight
-                  ? 'bg-white text-emerald-600 shadow-xs'
-                  : 'bg-neutral-800 text-emerald-400 shadow-xs'
-                : 'hover:text-neutral-200'
-            }`}
-          >
-            <Grid className="h-3 w-3" />
-            <span>Ground</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('surfaces')}
-            className={`py-1 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1 ${
-              activeTab === 'surfaces'
-                ? isLight
-                  ? 'bg-white text-emerald-600 shadow-xs'
-                  : 'bg-neutral-800 text-emerald-400 shadow-xs'
-                : 'hover:text-neutral-200'
-            }`}
-          >
-            <Layers className="h-3 w-3" />
-            <span>Surfaces</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('transparent')}
-            className={`py-1 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1 ${
-              activeTab === 'transparent'
-                ? isLight
-                  ? 'bg-white text-emerald-600 shadow-xs'
-                  : 'bg-neutral-800 text-emerald-400 shadow-xs'
-                : 'hover:text-neutral-200'
-            }`}
-          >
-            <Sparkles className="h-3 w-3" />
-            <span>Enclosures</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('performance')}
-            className={`py-1 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1 ${
-              activeTab === 'performance'
-                ? isLight
-                  ? 'bg-white text-amber-600 shadow-xs'
-                  : 'bg-neutral-800 text-amber-400 shadow-xs'
-                : 'hover:text-neutral-200'
-            }`}
-          >
-            <Zap className="h-3 w-3" />
-            <span>Lite Mode</span>
-          </button>
+          {(
+            [
+              { id: 'ground', label: 'Ground', Icon: Grid, activeLight: 'text-emerald-600', activeDark: 'text-emerald-400' },
+              { id: 'surfaces', label: 'Surfaces', Icon: Layers, activeLight: 'text-emerald-600', activeDark: 'text-emerald-400' },
+              { id: 'transparent', label: 'Enclosures', Icon: Sparkles, activeLight: 'text-emerald-600', activeDark: 'text-emerald-400' },
+              { id: 'performance', label: 'Lite Mode', Icon: Zap, activeLight: 'text-amber-600', activeDark: 'text-amber-400' },
+            ] as const
+          ).map(({ id, label, Icon, activeLight, activeDark }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              className={`py-1 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1 ${
+                activeTab === id
+                  ? isLight
+                    ? `bg-white ${activeLight} shadow-xs`
+                    : `bg-neutral-800 ${activeDark} shadow-xs`
+                  : 'hover:text-neutral-200'
+              }`}
+            >
+              <Icon className="h-3 w-3" />
+              <span>{label}</span>
+            </button>
+          ))}
         </div>
 
         {/* 5. Tab Body */}

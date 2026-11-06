@@ -17,7 +17,6 @@ export interface HitboxSpec {
   height: number;
   forward: number;
   up: number;
-  [key: string]: unknown;
 }
 
 export interface HitboxAlignTabProps {
