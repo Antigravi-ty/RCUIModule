@@ -82,6 +82,7 @@ export const createAudioAndGameplaySlice: StateCreator<
     showCarHitbox: true,
     showAllCarHitboxes: false,
     ballCamIndicator: true,
+    enableFToMirror: true,
   },
   trajectory: getInitialTrajectory(),
 
@@ -92,6 +93,7 @@ export const createAudioAndGameplaySlice: StateCreator<
       showCarHitbox: true,
       showAllCarHitboxes: false,
       ballCamIndicator: true,
+      enableFToMirror: true,
     };
     get().bridge.onGameplayChange?.(next);
     set({ gameplay: next });

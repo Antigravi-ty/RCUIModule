@@ -240,7 +240,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
                 editable={true}
                 allowOutOfBoundsInput={false}
                 showStepper={false}
-                colorScheme="cyan"
+                colorScheme="sky"
                 label="Arrow Body Opacity"
                 unit=""
                 value={arrowOpacity}
@@ -255,7 +255,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
                 editable={true}
                 allowOutOfBoundsInput={false}
                 showStepper={false}
-                colorScheme="cyan"
+                colorScheme="sky"
                 label="Silhouette Shadow Opacity"
                 unit=""
                 value={shadowOpacity}
@@ -270,7 +270,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
                 editable={true}
                 allowOutOfBoundsInput={true}
                 showStepper={false}
-                colorScheme="cyan"
+                colorScheme="sky"
                 label="Silhouette Shadow Thickness"
                 unit="x"
                 value={shadowScale}
@@ -285,7 +285,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
                 editable={true}
                 allowOutOfBoundsInput={true}
                 showStepper={false}
-                colorScheme="cyan"
+                colorScheme="sky"
                 label="Contrast Halo Backdrop Size"
                 unit="UU"
                 value={haloScale}
@@ -360,7 +360,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
                 editable={true}
                 allowOutOfBoundsInput={true}
                 showStepper={false}
-                colorScheme="cyan"
+                colorScheme="sky"
                 label="Base Arrow Length (0 Speed)"
                 unit="UU"
                 value={arrowBaseLength}
@@ -375,7 +375,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
                 editable={true}
                 allowOutOfBoundsInput={true}
                 showStepper={false}
-                colorScheme="cyan"
+                colorScheme="sky"
                 label="Max Speed Extra Length"
                 unit="UU"
                 value={arrowMaxExtraLength}
@@ -390,7 +390,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
                 editable={true}
                 allowOutOfBoundsInput={true}
                 showStepper={false}
-                colorScheme="cyan"
+                colorScheme="sky"
                 label="Vertical Height Offset (高度偏移)"
                 unit="UU"
                 value={arrowHeightOffset}
@@ -405,7 +405,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
                 editable={true}
                 allowOutOfBoundsInput={true}
                 showStepper={false}
-                colorScheme="cyan"
+                colorScheme="sky"
                 label="Forward Offset (前后指向位置)"
                 unit="UU"
                 value={arrowForwardOffset}

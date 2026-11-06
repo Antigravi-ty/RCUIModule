@@ -17,16 +17,15 @@ import type {
   StaticTrainingPackSummary,
 } from './StaticTrainingPackFolderList';
 
-const DOWN_COUNTER_OPTIONS: { label: string; value: StaticPackDownCounterOption }[] = [
-  { label: '0s', value: 0 },
-  { label: '1s', value: 1 },
-  { label: '2s', value: 2 },
-  { label: '3s', value: 3 },
+const DOWN_COUNTER_OPTIONS: { label: string; value: string }[] = [
+  { label: '1s', value: '1' },
+  { label: '2s', value: '2' },
+  { label: '3s', value: '3' },
 ];
 
 export interface StaticTrainingPackInspectorActionsProps {
   isLight: boolean;
-  selectedMeta: StaticTrainingPackSummary;
+  selectedMeta: StaticTrainingPackSummary & { editable?: boolean };
   downCounterEnabled: boolean;
   setDownCounterEnabled: (val: boolean | ((prev: boolean) => boolean)) => void;
   downCounterValue: StaticPackDownCounterOption;
@@ -58,6 +57,7 @@ export const StaticTrainingPackInspectorActions: React.FC<
     onDeletePack,
     onHoverDesc,
   }) => {
+    const isEditable = selectedMeta.editable !== false;
     return (
       <div className="flex flex-col gap-2.5 pt-2.5 border-t border-neutral-500/20">
         {/* Down Counter Pre-Shot Freeze Toggle */}
@@ -69,7 +69,7 @@ export const StaticTrainingPackInspectorActions: React.FC<
           }`}
           onMouseEnter={() =>
             onHoverDesc(
-              'Down Counter: Freeze ball & car for 0-3s before each shot starts (or press jump/throttle to launch early).'
+              'Down Counter: Freeze ball & car for 1-3s before each shot starts (or press jump/throttle to launch early).'
             )
           }
           onMouseLeave={() => onHoverDesc(null)}
@@ -89,10 +89,12 @@ export const StaticTrainingPackInspectorActions: React.FC<
           </div>
           {downCounterEnabled && (
             <div className="w-40">
-              <SegmentedSwitch<StaticPackDownCounterOption>
+              <SegmentedSwitch
                 options={DOWN_COUNTER_OPTIONS}
-                value={downCounterValue}
-                onChange={setDownCounterValue}
+                value={String(downCounterValue)}
+                onChange={(v: string) =>
+                  setDownCounterValue((Number(v) || 1) as StaticPackDownCounterOption)
+                }
                 ariaLabel="Down Counter Seconds"
               />
             </div>
@@ -104,7 +106,7 @@ export const StaticTrainingPackInspectorActions: React.FC<
           <Button
             variant="primary"
             size="md"
-            iconLeft={<Play className="h-3.5 w-3.5" />}
+            icon={<Play className="h-3.5 w-3.5" />}
             onClick={() => onPlayPack(selectedMeta)}
             onMouseEnter={() =>
               onHoverDesc('Launch 3D arena and practice all shots in this pack.')
@@ -116,19 +118,19 @@ export const StaticTrainingPackInspectorActions: React.FC<
           <Button
             variant="secondary"
             size="md"
-            iconLeft={<Edit3 className="h-3.5 w-3.5" />}
-            disabled={!selectedMeta.editable}
+            icon={<Edit3 className="h-3.5 w-3.5" />}
+            disabled={!isEditable}
             onClick={() => onEditPack(selectedMeta)}
             onMouseEnter={() =>
               onHoverDesc(
-                selectedMeta.editable
+                isEditable
                   ? 'Open interactive 3D Editor to customize shots, vectors, and sequence.'
                   : 'This pack is a read-only .RCSPack release and cannot be modified.'
               )
             }
             onMouseLeave={() => onHoverDesc(null)}
           >
-            {selectedMeta.editable ? 'Edit Pack' : 'Locked Pack'}
+            {isEditable ? 'Edit Pack' : 'Locked Pack'}
           </Button>
         </div>
 
@@ -152,14 +154,14 @@ export const StaticTrainingPackInspectorActions: React.FC<
 
           <button
             type="button"
-            disabled={!selectedMeta.editable}
+            disabled={!isEditable}
             onClick={() => onExportPack(selectedMeta, true)}
             onMouseEnter={() =>
               onHoverDesc('Export as editable .RCSPackE creator project.')
             }
             onMouseLeave={() => onHoverDesc(null)}
             className={`px-2 py-1.5 rounded-lg border text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors ${
-              !selectedMeta.editable
+              !isEditable
                 ? 'opacity-40 cursor-not-allowed border-neutral-500/20'
                 : isLight
                   ? 'bg-cyan-50 hover:bg-cyan-100 border-cyan-300 text-cyan-800 cursor-pointer'

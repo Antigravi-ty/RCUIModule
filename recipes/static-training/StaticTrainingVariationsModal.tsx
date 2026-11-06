@@ -128,7 +128,7 @@ export const StaticTrainingVariationsModal: React.FC<StaticTrainingVariationsMod
                 <button
                   type="button"
                   onClick={() => {
-                    floatingStore.openWindow(STATIC_TRAINING_BALL_CAM_TUNER_PRESET);
+                    floatingStore.spawnWindow(STATIC_TRAINING_BALL_CAM_TUNER_PRESET);
                     onClose();
                   }}
                   title="Open 3D Direction Arrow, Expired Ball Opacity & Ball Cam Floating Tuner"

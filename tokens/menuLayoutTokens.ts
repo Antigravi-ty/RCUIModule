@@ -26,11 +26,8 @@ export type CanonicalMenuPanelId =
   | 'layer3-dev-calibrated-presets'
   | 'layer3-dev-self-test'
   | 'layer3-dev-under-development'
-<<<<<<< HEAD
   | 'layer3-dev-tem-pack-converter'
-=======
   | 'layer3-dev-remote-profile'
->>>>>>> b4aac6ee08f7cedd6dce7081e27fb1be6cb3dbfa
   | 'layer4-static-training-pack'
   | 'layer4-advanced-audio'
   | 'layer4-controller-settings'

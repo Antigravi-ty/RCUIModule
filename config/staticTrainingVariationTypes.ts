@@ -42,6 +42,11 @@ export interface StaticTrainingQuickVariationToggles {
    * while actual arena physics and the bottom-right boost gauge start at 100 and consume boost.
    */
   overrideUnlimitedBoostAs100?: boolean;
+  /**
+   * Enable pressing [F] during Static Training Play / Single-Shot Test to horizontally
+   * mirror the current shot across the longitudinal center plane X = 0 (default: true).
+   */
+  enableFToMirror?: boolean;
 }
 
 export const DEFAULT_QUICK_VARIATION_TOGGLES: StaticTrainingQuickVariationToggles = {
@@ -53,6 +58,7 @@ export const DEFAULT_QUICK_VARIATION_TOGGLES: StaticTrainingQuickVariationToggle
   disableAllRandomAngularVelocity: false,
   disableRLRCSPackAngularVelocity: true,
   overrideUnlimitedBoostAs100: true,
+  enableFToMirror: true,
 };
 
 export const ZERO_VARIATION_CONFIG: StaticTrainingVariationConfig = {

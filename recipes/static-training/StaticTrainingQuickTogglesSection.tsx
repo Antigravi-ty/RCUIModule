@@ -170,6 +170,32 @@ export const StaticTrainingQuickTogglesSection: React.FC<
             />
           </div>
 
+          {/* Enable F to Mirror (Default ON) */}
+          <div
+            className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 ${
+              isLight
+                ? 'bg-white border-neutral-200'
+                : 'bg-neutral-900/80 border-neutral-800'
+            }`}
+          >
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold">
+                Enable F to Mirror
+              </span>
+              <span className="text-[9px] opacity-65">
+                Default ON: Press [F] in Play Mode to horizontally mirror the active shot
+              </span>
+            </div>
+            <ToggleSwitch
+              checked={toggles.enableFToMirror !== false}
+              onCheckedChange={(v) =>
+                onUpdateToggles({ enableFToMirror: v })
+              }
+              isLight={isLight}
+              variant="neutral"
+            />
+          </div>
+
           {/* More Boost (0..100, clamped to 100 in arena) */}
           <div
             className={`p-2.5 rounded-lg border flex flex-col gap-1 ${

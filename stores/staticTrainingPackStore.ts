@@ -170,6 +170,7 @@ export interface StaticTrainingPackStoreState {
   replayType: 'goal' | 'expire' | null;
   isFreeCamTrajectoryTesting: boolean;
   isTestingSingleShot: boolean;
+  isShotMirrored: boolean;
 
   runtimeHandlers: StaticTrainingPackRuntimeHandlers;
 
@@ -228,6 +229,8 @@ export interface StaticTrainingPackStoreState {
   setDownCounterValue: (val: StaticPackDownCounterOption) => void;
   setFreeCamTrajectoryTesting: (active: boolean) => void;
   setTestingSingleShot: (active: boolean) => void;
+  setShotMirrored: (mirrored: boolean) => void;
+  toggleShotMirror: () => void;
   updateLiveTelemetry: (
     patch: Partial<{
       remainingTimeoutSec: number;
@@ -275,6 +278,7 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
   replayType: null,
   isFreeCamTrajectoryTesting: false,
   isTestingSingleShot: false,
+  isShotMirrored: false,
 
   runtimeHandlers: createGuardedRuntimeHandlers<StaticTrainingPackRuntimeHandlers>(
     'staticTrainingPackStore',
@@ -524,6 +528,7 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
         ...state.variationToggles,
         ...patch,
       },
+      ...(patch.enableFToMirror === false ? { isShotMirrored: false } : {}),
     }));
     if (get().sessionMode === 'play') {
       get().resetCurrentShot();
@@ -564,6 +569,16 @@ export const useStaticTrainingPackStore = create<StaticTrainingPackStoreState>((
 
   setTestingSingleShot: (active: boolean) => {
     set({ isTestingSingleShot: Boolean(active) });
+  },
+
+  setShotMirrored: (mirrored: boolean) => {
+    set({ isShotMirrored: Boolean(mirrored) });
+  },
+
+  toggleShotMirror: () => {
+    if (get().variationToggles.enableFToMirror === false) return;
+    set((state) => ({ isShotMirrored: !state.isShotMirrored }));
+    get().resetCurrentShot();
   },
 
   updateLiveTelemetry: (patch) => {

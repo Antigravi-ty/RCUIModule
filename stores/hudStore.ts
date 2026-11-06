@@ -349,6 +349,27 @@ export const useHudStore = create<HudStoreState>((set, get) => ({
     }
   },
 
+  clearReplayState: () => {
+    set({
+      replayProgress: 0,
+      replayFrameIndex: 0,
+      replayPaused: false,
+      replayPersistent: false,
+      replaySpeed: 1.0,
+      replayCameraMode: 'director',
+      replayScorerName: null,
+      replayScorerTeam: null,
+      replayScorerAnthemId: null,
+      replayBallSpeedKph: null,
+      replayAssistName: null,
+      onReplaySeekNormalized: null,
+      onReplayTogglePause: null,
+      onReplayCycleSpeed: null,
+      onReplayToggleCameraMode: null,
+      onReplaySelectPovCar: null,
+    });
+  },
+
   setMatchState: (partialState) => {
     const cur = get();
     const nextPatch = { ...partialState };

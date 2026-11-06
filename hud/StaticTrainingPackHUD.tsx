@@ -57,6 +57,7 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
     (s) => s.isFreeCamTrajectoryTesting
   );
   const isTestingSingleShot = useStaticTrainingPackStore((s) => s.isTestingSingleShot);
+  const isShotMirrored = useStaticTrainingPackStore((s) => s.isShotMirrored);
   const setEditSubMode = useStaticTrainingPackStore((s) => s.setEditSubMode);
 
   void editVarVersion;
@@ -133,6 +134,11 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
             {!isShotLaunched && downCounterEnabled && activeCountdownSec > 0 && (
               <span className="text-amber-300 font-bold animate-pulse text-[11px]">
                 {`COUNTDOWN ${activeCountdownSec}...`}
+              </span>
+            )}
+            {isShotMirrored && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold">
+                MIRRORED [F]
               </span>
             )}
             {isTestingSingleShot && (

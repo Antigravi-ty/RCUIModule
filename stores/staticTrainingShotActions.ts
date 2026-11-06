@@ -66,6 +66,7 @@ export interface StaticTrainingShotStoreSlice {
   editSubMode: EditSubMode;
   editVarVersion: number;
   remainingTimeoutSec: number;
+  isShotMirrored?: boolean;
   runtimeHandlers: StaticTrainingPackRuntimeHandlers;
   setCurrentShotIndex: (index: number) => void;
   isCurrentShotDirty: () => boolean;
@@ -321,6 +322,7 @@ export function createStaticTrainingShotActions<
     set({
       currentShotIndex: wrapped,
       remainingTimeoutSec: items[wrapped]?.timeoutSeconds ?? 10,
+      isShotMirrored: false,
     });
     get().runtimeHandlers.onShotChanged?.(wrapped);
   },

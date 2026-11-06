@@ -1,7 +1,7 @@
 /**
  * devBuiltInPacksLoader.ts
- * On-demand decoder for the 73 built-in Developer Mode `.RLRCSPack` training packs
- * converted from `Training.zip`.
+ * On-demand decoder for the 144 built-in Developer Mode `.RLRCSPack` training packs
+ * converted from `Training.zip` and `TRAINIC.zip`.
  */
 
 import {
