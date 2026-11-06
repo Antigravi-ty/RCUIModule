@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
+  "updatedAt": "2026-11-06T16:22:08.398Z",
   "templateHash": "574097ceda64cb92",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -1191,16 +1191,18 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3CustomPlayRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "c45025f83fc4eebc",
-      "visualAstHash": "dd89ba03a8bbd32a",
+      "sizingAndConfigHash": "463a21b3afb6e408",
+      "visualAstHash": "99d7f0a9c319173b",
       "fileVisualHashes": {
         "src/ui-core/primitives/Badge.tsx": "2c13f7eccf5b1baf",
         "src/ui-core/primitives/UnderConstructionPlaceholder.tsx": "667740c2fb2d758f",
-        "src/ui-core/recipes/Layer3CustomPlayRecipe.tsx": "fac4747c78c04b6d"
+        "src/ui-core/recipes/Layer3CustomPlayRecipe.tsx": "b7e41b49f58a420b"
       },
       "alphaDeps": [
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
       ],
@@ -1437,8 +1439,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3ExhibitionRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "3c493fa58137fcac",
-      "visualAstHash": "0c8549a5ed08f45a",
+      "sizingAndConfigHash": "fba564d216c32c37",
+      "visualAstHash": "92f8d1fd61755d39",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1448,18 +1450,15 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3ExhibitionRecipe.tsx": "bd4041b53765655c",
-        "src/ui-core/recipes/hooks/useLayer3PlayTrainingBindings.ts": "d7f9fd87657cc436"
+        "src/ui-core/recipes/Layer3ExhibitionRecipe.tsx": "8e5f14d53667d85a"
       },
       "alphaDeps": [
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/experimentalMultiBotsStore.ts",
-        "src/ui-core/stores/floatingPresets.ts",
-        "src/ui-core/stores/floatingStore.ts",
-        "src/ui-core/stores/kickoffTrainingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
-        "src/ui-core/stores/rewinderStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.388Z"
@@ -1679,8 +1678,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3KickoffTrainingRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "e65b55aa778999c2",
-      "visualAstHash": "108d1900bf573ec0",
+      "sizingAndConfigHash": "b763471c2ea00910",
+      "visualAstHash": "6750c2b031e326f6",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1693,20 +1692,18 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3KickoffTrainingRecipe.tsx": "9b2db2600b7a6bc6",
-        "src/ui-core/recipes/hooks/useLayer3PlayTrainingBindings.ts": "d7f9fd87657cc436",
+        "src/ui-core/recipes/Layer3KickoffTrainingRecipe.tsx": "166184342b58f83f",
         "src/ui-core/recipes/settings/components/FloatingWindowCard.tsx": "24594fbe7a613278"
       },
       "alphaDeps": [
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
-        "src/ui-core/stores/experimentalMultiBotsStore.ts",
-        "src/ui-core/stores/floatingPresets.ts",
         "src/ui-core/stores/floatingStore.ts",
         "src/ui-core/stores/kickoffTrainingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
-        "src/ui-core/stores/rewinderStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
@@ -1718,21 +1715,20 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3SelfTrainingRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "c948041406897fe1",
-      "visualAstHash": "e53f73d115609d5a",
+      "sizingAndConfigHash": "c8f2b867b67ebdb7",
+      "visualAstHash": "13cb6233e91b3ad7",
       "fileVisualHashes": {
-        "src/ui-core/recipes/Layer3SelfTrainingRecipe.tsx": "85d46165d99f8b50",
-        "src/ui-core/recipes/hooks/useLayer3PlayTrainingBindings.ts": "d7f9fd87657cc436"
+        "src/ui-core/recipes/Layer3SelfTrainingRecipe.tsx": "73cf7346528df435"
       },
       "alphaDeps": [
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
-        "src/ui-core/stores/experimentalMultiBotsStore.ts",
         "src/ui-core/stores/floatingPresets.ts",
         "src/ui-core/stores/floatingStore.ts",
-        "src/ui-core/stores/kickoffTrainingStore.ts",
         "src/ui-core/stores/mainMenuStyleStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
-        "src/ui-core/stores/rewinderStore.ts"
+        "src/ui-core/stores/rewinderStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx"
       ],
       "approvedAt": "2026-11-06T12:15:46.405Z"
     },
@@ -1741,8 +1737,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3TrainingConfigRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "972567c28a6ad9ad",
-      "visualAstHash": "78dd90d3a0922b80",
+      "sizingAndConfigHash": "f0f5b0193184e067",
+      "visualAstHash": "dba5fc375ed5ef2f",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1755,16 +1751,18 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3TrainingConfigRecipe.tsx": "19ddcd55084a10c7",
+        "src/ui-core/recipes/Layer3TrainingConfigRecipe.tsx": "e6c06c3f6f8637ba",
         "src/ui-core/recipes/settings/components/FloatingWindowCard.tsx": "24594fbe7a613278"
       },
       "alphaDeps": [
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/floatingPresets.ts",
         "src/ui-core/stores/floatingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
         "src/ui-core/stores/staticTrainingPackStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
         "src/ui-core/tokens/menuLayoutTokens.ts",
         "src/ui-core/tokens/radius.ts",

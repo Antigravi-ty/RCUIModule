@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
 import { Zap, Shield, History, CircleSlash2, FlipHorizontal2, Info } from 'lucide-react';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import {
+  resolveCalibratedDefaultConfig,
+  resolveCalibratedSurfaceSizing,
+} from '../manifest/surfaceCalibration';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
@@ -8,12 +13,12 @@ import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 import { useAppStore } from '../stores/appStore';
 import { useStaticTrainingPackStore } from '../stores/staticTrainingPackStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
 import {
   GOAL_BARRIER_CONFIGURATOR_PRESET,
   REWINDER_CONFIGURATOR_PRESET,
-  type PresetConfig,
 } from '../stores/floatingPresets';
 
 export interface TrainingGameplayConfig {
@@ -23,17 +28,61 @@ export interface TrainingGameplayConfig {
   enableFToMirror?: boolean;
 }
 
-export interface Layer3TrainingConfigRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  onNavigateTrajectory?: () => void;
-  onAddPresetWindow?: (preset: PresetConfig, e: React.MouseEvent<HTMLButtonElement>) => void;
-  activeWindows?: unknown[];
-  onClosePresetWindow?: (id: string) => void;
-  sizing?: PanelSizingConfig;
-  gameplay?: TrainingGameplayConfig;
-  onUpdateGameplay?: (patch: Partial<TrainingGameplayConfig>) => void;
-}
+export const DEFAULT_TRAINING_GAMEPLAY_CONFIG: Required<
+  Pick<TrainingGameplayConfig, 'unlimitedBoost' | 'goalRestart' | 'enableFToMirror'>
+> = {
+  unlimitedBoost: true,
+  goalRestart: true,
+  enableFToMirror: true,
+};
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer3TrainingConfigRecipe',
+  title: 'Training Configuration',
+  subtitle: 'Free Play Boost, Goal Reset, Rewinder & Training Scope Controls',
+  description:
+    'Configure Free Play rules (boost, goal reset, rewinder) and Training goal barrier. Automatically bypassed in Exhibition & Multiplayer.',
+  icon: 'History',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 480,
+    height: 460,
+    minHeight: 200,
+    maxHeight: 960,
+    mode: 'adaptive',
+  },
+  variants: [
+    {
+      variantId: 'training-config:default',
+      label: 'Default (Unlimited Boost · Goal Reset ON)',
+      storeOverrides: {
+        appStore: {
+          gameplay: {
+            unlimitedBoost: true,
+            goalRestart: true,
+            enableFToMirror: true,
+          },
+        },
+      },
+    },
+    {
+      variantId: 'training-config:standard-no-reset',
+      label: 'Standard Boost · Goal Reset Disabled',
+      storeOverrides: {
+        appStore: {
+          gameplay: {
+            unlimitedBoost: false,
+            goalRestart: false,
+            enableFToMirror: false,
+          },
+        },
+      },
+    },
+  ],
+};
+
+export interface Layer3TrainingConfigRecipeProps extends StandardSurfaceProps {}
 
 /**
  * [Recipe] Layer 3 Training Configuration Panel (User Tier)
@@ -45,63 +94,74 @@ export interface Layer3TrainingConfigRecipeProps {
  * - Training Scope (Free Play, Static Training Pack & Kickoff Training):
  *   4. Enable F to Mirror: ToggleSwitch (default ON)
  *   5. Goal Barrier Configurator: FloatingWindowCard spawner
+ *
+ * Store-First contract (`StandardSurfaceProps` <= 4 props), reading directly from
+ * `useAppStore` and `useStaticTrainingPackStore` via `useScopedStore`.
  */
-export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProps> = ({
+export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProps> = React.memo(({
   isLight = false,
   onBack: propOnBack,
-  sizing: propSizing,
-  gameplay: propGameplay,
-  onUpdateGameplay: propOnUpdateGameplay,
 }) => {
-  const goBack = useAppStore((s) => s.goBack);
-  const storeGameplay = useAppStore((s) => s.gameplay);
-  const storeUpdateGameplay = useAppStore((s) => s.updateGameplay);
-  const packEnableFToMirror = useStaticTrainingPackStore(
+  const goBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const storeGameplay = useScopedStore('appStore', useAppStore, (s) => s.gameplay);
+  const storeUpdateGameplay = useScopedStore('appStore', useAppStore, (s) => s.updateGameplay);
+  const packEnableFToMirror = useScopedStore(
+    'staticTrainingPackStore',
+    useStaticTrainingPackStore,
     (s) => s.variationToggles.enableFToMirror
   );
-  const setPackVariationToggles = useStaticTrainingPackStore((s) => s.setVariationToggles);
+  const setPackVariationToggles = useScopedStore(
+    'staticTrainingPackStore',
+    useStaticTrainingPackStore,
+    (s) => s.setVariationToggles
+  );
 
   const onBack = propOnBack ?? goBack;
-  const controlledGameplay = propGameplay ?? storeGameplay;
-  const onUpdateGameplay =
-    propOnUpdateGameplay ??
-    ((patch: Partial<TrainingGameplayConfig>) =>
-      storeUpdateGameplay({
-        ...(patch.unlimitedBoost !== undefined ? { unlimitedBoost: patch.unlimitedBoost } : {}),
-        ...(patch.goalRestart !== undefined ? { goalRestart: patch.goalRestart } : {}),
-        ...(patch.showCarHitbox !== undefined ? { showCarHitbox: Boolean(patch.showCarHitbox) } : {}),
-        ...(patch.enableFToMirror !== undefined ? { enableFToMirror: patch.enableFToMirror } : {}),
-      }));
-
-  const storeSizing = useMenuLayoutStore(
-    (s) => s.panels?.['layer3-training-config'] ?? DEFAULT_PANEL_SIZING['layer3-training-config']
+  const calibratedDefaults = resolveCalibratedDefaultConfig(
+    SURFACE_META.id,
+    DEFAULT_TRAINING_GAMEPLAY_CONFIG
   );
-  const sizing = propSizing ?? storeSizing;
-  const { rowGap } = useSettingActionRowStore();
 
-  const [internalUnlimitedBoost, setInternalUnlimitedBoost] = useState(true);
-  const [internalGoalRestart, setInternalGoalRestart] = useState(true);
-  const [internalEnableFToMirror, setInternalEnableFToMirror] = useState(true);
+  const storeSizing = useScopedStore(
+    'menuLayoutStore',
+    useMenuLayoutStore,
+    (s) => s.panels?.['layer3-training-config']
+  );
+  const calibratedSizing = resolveCalibratedSurfaceSizing(
+    SURFACE_META.id,
+    SURFACE_META.defaultSizing
+  );
+  const sizing = storeSizing ?? {
+    ...DEFAULT_PANEL_SIZING['layer3-training-config'],
+    mode: calibratedSizing.mode === 'fixed' ? 'fixed' : 'auto',
+    width: calibratedSizing.width,
+    targetHeight: typeof calibratedSizing.height === 'number' ? calibratedSizing.height : 460,
+    minHeight: calibratedSizing.minHeight ?? 200,
+    maxHeight: calibratedSizing.maxHeight ?? 960,
+  };
+
+  const { rowGap } = useScopedStore('settingRowStore', useSettingActionRowStore);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
-  const unlimitedBoost = controlledGameplay?.unlimitedBoost ?? internalUnlimitedBoost;
-  const goalRestart = controlledGameplay?.goalRestart ?? internalGoalRestart;
+  const unlimitedBoost =
+    storeGameplay?.unlimitedBoost ?? calibratedDefaults.unlimitedBoost;
+  const goalRestart =
+    storeGameplay?.goalRestart ?? calibratedDefaults.goalRestart;
   const enableFToMirror =
-    controlledGameplay?.enableFToMirror ?? packEnableFToMirror ?? internalEnableFToMirror;
+    storeGameplay?.enableFToMirror ??
+    packEnableFToMirror ??
+    calibratedDefaults.enableFToMirror;
 
   const handleSetUnlimitedBoost = (next: boolean) => {
-    setInternalUnlimitedBoost(next);
-    onUpdateGameplay?.({ unlimitedBoost: next });
+    storeUpdateGameplay({ unlimitedBoost: next });
   };
 
   const handleSetGoalRestart = (next: boolean) => {
-    setInternalGoalRestart(next);
-    onUpdateGameplay?.({ goalRestart: next });
+    storeUpdateGameplay({ goalRestart: next });
   };
 
   const handleSetEnableFToMirror = (next: boolean) => {
-    setInternalEnableFToMirror(next);
-    onUpdateGameplay?.({ enableFToMirror: next });
+    storeUpdateGameplay({ enableFToMirror: next });
     setPackVariationToggles({ enableFToMirror: next });
   };
 
@@ -111,7 +171,7 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
     : 'text-neutral-400 border-white/[0.08]';
 
   return (
-    <PanelContainer isLight={isLight} sizing={sizing} className="w-full">
+    <PanelContainer isLight={isLight} sizing={sizing} className="w-full select-none">
       <PanelHeader title="TRAINING CONFIGURATION" onBack={onBack} isLight={isLight} />
 
       <PanelContent scrollable>
@@ -233,4 +293,7 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
       />
     </PanelContainer>
   );
-};
+});
+
+Layer3TrainingConfigRecipe.displayName = 'Layer3TrainingConfigRecipe';
+export default Layer3TrainingConfigRecipe;
