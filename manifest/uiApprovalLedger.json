@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
-  "templateHash": "574097ceda64cb92",
+  "updatedAt": "2026-11-06T16:31:21.889Z",
+  "templateHash": "5fcbb83950b0b43a",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/AtmosphereFxTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "5cdd56ef78212122",
       "visualAstHash": "c6dc980dbc02ae7d",
       "fileVisualHashes": {
@@ -45,7 +45,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/BallTrajectoryTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "8bf9e0e36b708a1d",
       "visualAstHash": "8c836a3854277204",
       "fileVisualHashes": {
@@ -72,7 +72,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/BoostPadTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "85508e6d22221cf4",
       "visualAstHash": "2642393309fd7c5b",
       "fileVisualHashes": {
@@ -99,7 +99,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/BotsLoadoutTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "9617bb2c379ab9b5",
       "visualAstHash": "2f9918ae8c788f9b",
       "fileVisualHashes": {
@@ -118,7 +118,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/CameraDeterminismFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "b6d867efbdff426c",
       "visualAstHash": "cbb5a30bb1f9d831",
       "fileVisualHashes": {
@@ -133,7 +133,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ClockPacingTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "c8fd5633bcb660e2",
       "visualAstHash": "60b88f6b8b94c96d",
       "fileVisualHashes": {
@@ -155,7 +155,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/DiagnosticDumpFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "5824ebd6c972278c",
       "visualAstHash": "cd9e48c79fcc7f0f",
       "fileVisualHashes": {
@@ -174,7 +174,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/DriftwoodsTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "9427a695d72ea4da",
       "visualAstHash": "b7f0176e361f83e2",
       "fileVisualHashes": {
@@ -201,7 +201,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/DualArenaDeterminismHarnessFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "84181edc1ea0fc2c",
       "visualAstHash": "b78f57669297777d",
       "fileVisualHashes": {
@@ -219,7 +219,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/EngineAudioTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "4985d194293ad85f",
       "visualAstHash": "411f341183c55585",
       "fileVisualHashes": {
@@ -248,7 +248,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/EventStreamObserverFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "33c1df164d439be1",
       "visualAstHash": "974cb0a57038543e",
       "fileVisualHashes": {
@@ -266,7 +266,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ExperimentalBotPackFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "a0899131812c3768",
       "visualAstHash": "8670b6102385308b",
       "fileVisualHashes": {
@@ -293,7 +293,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ExperimentalMultiBotsFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "c500479cc708cda0",
       "visualAstHash": "002597a5172b2976",
       "fileVisualHashes": {
@@ -320,7 +320,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/GoalVolumeTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "085b877529289423",
       "visualAstHash": "d72f6729e970b587",
       "fileVisualHashes": {
@@ -346,7 +346,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/KickoffTrainingTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "bf8264a528da5afb",
       "visualAstHash": "6b3c180bf9e88151",
       "fileVisualHashes": {
@@ -372,7 +372,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/NameTagTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "36a7ce501b5e89e3",
       "visualAstHash": "719d24e88c49869b",
       "fileVisualHashes": {
@@ -409,7 +409,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/NetworkStressInjectionFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "72838277080fd910",
       "visualAstHash": "e42e0a56ecbd7e63",
       "fileVisualHashes": {
@@ -428,7 +428,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ReachabilityTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "350eed345c933ae4",
       "visualAstHash": "eb23b0634facfe26",
       "fileVisualHashes": {
@@ -448,7 +448,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ReplayDirectorTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "d1deac27377b0d92",
       "visualAstHash": "4b6698228d58f59e",
       "fileVisualHashes": {
@@ -484,7 +484,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ReplayToRcsImporterFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "f1f1ff920530b90f",
       "visualAstHash": "940fb57f45f070d5",
       "fileVisualHashes": {
@@ -518,7 +518,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/SpatialAudioTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "7195e4a85e9bc80b",
       "visualAstHash": "1ee30af7989c61ea",
       "fileVisualHashes": {
@@ -545,7 +545,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/StaticTrainingBallCamTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "a300db099a8cd7f9",
       "visualAstHash": "fd5b94e2d7023b27",
       "fileVisualHashes": {
@@ -565,7 +565,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/SubsystemIsolationLabFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "c344efd644ac5966",
       "visualAstHash": "3f9933842d0c51b5",
       "fileVisualHashes": {
@@ -607,7 +607,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/SupersonicTrailTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "ee2e19271505b08e",
       "visualAstHash": "5d6d05997a302336",
       "fileVisualHashes": {
@@ -632,7 +632,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/VehicleGlobalFxTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "7673b0666e1ea43e",
       "visualAstHash": "e50b73bec19e1b2d",
       "fileVisualHashes": {
@@ -660,7 +660,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "068f6f008bf52cef",
       "visualAstHash": "c8c6c2b18511e64b",
       "fileVisualHashes": {
@@ -691,7 +691,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/FloatingWindowOpacityFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "fb56055e01dd5b27",
       "visualAstHash": "230266bf3ffe1e4b",
       "fileVisualHashes": {
@@ -715,7 +715,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/GoalBarrierConfiguratorFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "2c0d5869f32797bf",
       "visualAstHash": "109fe21c3cf4d6e1",
       "fileVisualHashes": {
@@ -747,7 +747,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/NetworkMonitorFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "e60d11c38fe8aaea",
       "visualAstHash": "c868be856aad8bcd",
       "fileVisualHashes": {
@@ -773,7 +773,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/PerformanceMonitorFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "0e1485002595c701",
       "visualAstHash": "fcdda37125a2fd23",
       "fileVisualHashes": {
@@ -793,7 +793,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/ReplayViewerFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "9fc890cb132085e2",
       "visualAstHash": "55f3b8c84b5e72b5",
       "fileVisualHashes": {
@@ -829,7 +829,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/RewinderConfiguratorFloatingWindow.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "97d86cc8ba179347",
       "visualAstHash": "f3178bdc4146d652",
       "fileVisualHashes": {
@@ -862,7 +862,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer1MainMenuRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "248b11a858985ed2",
       "visualAstHash": "86d2be67e8aad3b5",
       "fileVisualHashes": {
@@ -892,7 +892,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2GarageRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "a2ca9849a0327cf9",
       "visualAstHash": "305845ce0792a47d",
       "fileVisualHashes": {
@@ -947,7 +947,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2ManageRoomRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "78b5f42b856e34da",
       "visualAstHash": "35d7f1b3d6d139a8",
       "fileVisualHashes": {
@@ -991,7 +991,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2PlayRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "d0d6784aef9aebe7",
       "visualAstHash": "5f4207e1e3d1a3f3",
       "fileVisualHashes": {
@@ -1020,7 +1020,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2SettingsRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "6ecea37af03cc602",
       "visualAstHash": "c4a80f12f4f8431b",
       "fileVisualHashes": {
@@ -1083,7 +1083,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3AcousticsEqualizerRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "783e4d0f8b495700",
       "visualAstHash": "453179e6bd494fcc",
       "fileVisualHashes": {
@@ -1116,7 +1116,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3BallTrajectoryRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "7e525303f4ed36ef",
       "visualAstHash": "3a113698c8c8c1e7",
       "fileVisualHashes": {
@@ -1155,7 +1155,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3CameraRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "f129d123d0d8945e",
       "visualAstHash": "0e3344585487895e",
       "fileVisualHashes": {
@@ -1190,7 +1190,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3CustomPlayRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "c45025f83fc4eebc",
       "visualAstHash": "dd89ba03a8bbd32a",
       "fileVisualHashes": {
@@ -1210,7 +1210,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevActiveTunersRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "8e71e93c2967d4ec",
       "visualAstHash": "42569d3d5c147594",
       "fileVisualHashes": {
@@ -1254,7 +1254,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevCalibratedPresetsRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "3d45b9610cdb5b7e",
       "visualAstHash": "7c58105d88f6c35a",
       "fileVisualHashes": {
@@ -1283,7 +1283,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevQuickActionsRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "ae6667eae514ad1a",
       "visualAstHash": "7bf6e21ba0d091be",
       "fileVisualHashes": {
@@ -1319,7 +1319,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevRemoteProfileRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "4abfbb263d17b73b",
       "visualAstHash": "b2de0b0a032f620f",
       "fileVisualHashes": {
@@ -1346,7 +1346,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevSandboxesRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "c68efa098bc894d4",
       "visualAstHash": "70bcd267a5aec3b0",
       "fileVisualHashes": {
@@ -1376,7 +1376,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevSelfTestRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "93387080b7821f64",
       "visualAstHash": "fb4c3a4a4d1910d0",
       "fileVisualHashes": {
@@ -1400,7 +1400,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevUnderDevelopmentRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "3f9a8f25bbb8da11",
       "visualAstHash": "cf23105fa793982e",
       "fileVisualHashes": {
@@ -1436,7 +1436,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3ExhibitionRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "3c493fa58137fcac",
       "visualAstHash": "0c8549a5ed08f45a",
       "fileVisualHashes": {
@@ -1468,7 +1468,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3ExpBotPackRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "04db45fbe3f26dfc",
       "visualAstHash": "cb6122f6263625f1",
       "fileVisualHashes": {
@@ -1498,7 +1498,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3ExpMultiBotsRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "363bfe9e675ddb1e",
       "visualAstHash": "c2096a84c051cafe",
       "fileVisualHashes": {
@@ -1528,7 +1528,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3HostMatchRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "6d4e05e64fdfba6b",
       "visualAstHash": "0de95b8701223ec9",
       "fileVisualHashes": {
@@ -1573,7 +1573,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3HostTrainingRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "e7baa11ea6430fef",
       "visualAstHash": "f6dc6230257751ab",
       "fileVisualHashes": {
@@ -1608,7 +1608,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3JoinRoomRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "5e774c9a68c495e6",
       "visualAstHash": "c5e90ffa6bd202de",
       "fileVisualHashes": {
@@ -1649,7 +1649,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3KeybindingsRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "6dc18c4f3cd6c76b",
       "visualAstHash": "7e0918e7f66e591c",
       "fileVisualHashes": {
@@ -1678,7 +1678,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3KickoffTrainingRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "e65b55aa778999c2",
       "visualAstHash": "108d1900bf573ec0",
       "fileVisualHashes": {
@@ -1717,7 +1717,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3SelfTrainingRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "c948041406897fe1",
       "visualAstHash": "e53f73d115609d5a",
       "fileVisualHashes": {
@@ -1740,7 +1740,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3TrainingConfigRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "972567c28a6ad9ad",
       "visualAstHash": "78dd90d3a0922b80",
       "fileVisualHashes": {
@@ -1776,7 +1776,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4AdvancedAudioRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "16dbe377538c268e",
       "visualAstHash": "b48f2efd9fd79eb9",
       "fileVisualHashes": {
@@ -1803,7 +1803,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4ControllerSettingsRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "30f1f8f8791911ff",
       "visualAstHash": "5776870178fa6b71",
       "fileVisualHashes": {
@@ -1843,7 +1843,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "b82ff233e28f9063",
       "visualAstHash": "dc6d73b3c6db4c93",
       "fileVisualHashes": {
@@ -1863,7 +1863,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4EventTriggerRulesRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "dffdfe1e1b07919c",
       "visualAstHash": "330c3f110c5bb8c3",
       "fileVisualHashes": {
@@ -1896,7 +1896,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4StaticTrainingPackBrowseRecipe.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "3e5c44580dabce9a",
       "visualAstHash": "5040c8b4f50a0053",
       "fileVisualHashes": {
@@ -1935,7 +1935,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/StaticTrainingShotInspectorDrawer.tsx",
-      "templateHash": "574097ceda64cb92",
+      "templateHash": "5fcbb83950b0b43a",
       "sizingAndConfigHash": "5cccb627523d7fd1",
       "visualAstHash": "bcb0ea9f175d2888",
       "fileVisualHashes": {

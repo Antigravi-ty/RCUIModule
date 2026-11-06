@@ -1,3 +1,4 @@
+import { getSurfaceCalibrationOverride } from '../manifest/surfaceCalibration';
 import type { FloatingWindowItem } from '../stores/floatingStore';
 import { PRESET_WINDOWS } from '../stores/devFloatingPresets';
 
@@ -54,8 +55,15 @@ export interface ResolvedWindowSizeLimits {
   effectiveMaxHeight: number;
 }
 
+function resolveFloatingCalibration(itemId: string) {
+  return (
+    getSurfaceCalibrationOverride(itemId) ??
+    getSurfaceCalibrationOverride(`floating:${itemId}`)
+  );
+}
+
 /**
- * Pure helper to resolve preset + manual + intrinsic size limits for a floating window.
+ * Pure helper to resolve preset + calibration override + manual + intrinsic size limits for a floating window.
  */
 export function resolveWindowSizeLimits(
   item: FloatingWindowItem,
@@ -63,24 +71,34 @@ export function resolveWindowSizeLimits(
   intrinsicMinWidth: number,
   intrinsicMaxHeight: number | null
 ): ResolvedWindowSizeLimits {
+  const calibrated = resolveFloatingCalibration(item.id);
   const isResizable = (item.resizable ?? matchedPreset?.resizable ?? true) !== false;
+  const calibratedAutoFit =
+    calibrated?.mode !== undefined ? calibrated.mode === 'adaptive' : undefined;
   const shouldAutoFitHeight =
-    matchedPreset?.tier === 'developer'
+    calibratedAutoFit !== undefined
+      ? calibratedAutoFit
+      : matchedPreset?.tier === 'developer'
       ? Boolean(matchedPreset.autoFitHeight)
       : item.autoFitHeight ??
         matchedPreset?.autoFitHeight ??
         (!isResizable || matchedPreset?.tier === 'user');
 
   const presetMinWidth = Math.round(
-    item.minWidth ?? matchedPreset?.minWidth ?? DEFAULT_MIN_WINDOW_WIDTH
+    item.minWidth ??
+      calibrated?.minWidth ??
+      matchedPreset?.minWidth ??
+      DEFAULT_MIN_WINDOW_WIDTH
   );
   const presetMinHeight = Math.round(
     item.minHeight ??
+      calibrated?.minHeight ??
       matchedPreset?.minHeight ??
       (isResizable ? DEFAULT_MIN_WINDOW_HEIGHT : MIN_NON_RESIZABLE_HEIGHT)
   );
   const presetMaxWidth = item.maxWidth ?? matchedPreset?.maxWidth ?? Infinity;
-  const presetMaxHeight = item.maxHeight ?? matchedPreset?.maxHeight;
+  const presetMaxHeight =
+    item.maxHeight ?? calibrated?.maxHeight ?? matchedPreset?.maxHeight;
 
   const autoMinWidth = Math.max(presetMinWidth, intrinsicMinWidth);
   const effectiveMinWidth =
@@ -133,10 +151,18 @@ export function computeInitialDesiredAnchor(
     'shouldAutoFitHeight' | 'effectiveMinWidth' | 'rawMinHeight'
   >
 ): WindowRect {
+  const calibrated = resolveFloatingCalibration(item.id);
+  const calibratedHeight =
+    typeof calibrated?.height === 'number' ? calibrated.height : undefined;
+  const defaultPresetHeight = calibratedHeight ?? matchedPreset?.height;
+  const defaultPresetWidth = calibrated?.width ?? matchedPreset?.width;
+
   const baseHeight =
-    !item.userAdjustedSize && !limits.shouldAutoFitHeight && matchedPreset?.height !== undefined
-      ? matchedPreset.height
-      : item.height ?? matchedPreset?.height ?? 360;
+    !item.userAdjustedSize &&
+    !limits.shouldAutoFitHeight &&
+    defaultPresetHeight !== undefined
+      ? defaultPresetHeight
+      : item.height ?? defaultPresetHeight ?? 360;
 
   return {
     x: Math.round(item.position?.x ?? 40),
@@ -146,7 +172,7 @@ export function computeInitialDesiredAnchor(
         ? limits.effectiveMinWidth
         : Math.max(
             limits.effectiveMinWidth,
-            item.width ?? matchedPreset?.width ?? 440
+            item.width ?? defaultPresetWidth ?? 440
           )
     ),
     height: Math.round(Math.max(limits.rawMinHeight, baseHeight)),

@@ -1,3 +1,9 @@
+import {
+  CANONICAL_PANEL_SIZING,
+  DEFAULT_PANEL_SIZING,
+  resolveMenuPanelSizing,
+} from './menuPanelSizingPresets';
+
 export type PanelSizingMode = 'auto' | 'fixed';
 
 export type CanonicalMenuPanelId =
@@ -97,7 +103,34 @@ export interface BackBtnResolvedGeometry {
   radiusSummary: string;
 }
 
-export interface MenuLayoutTokens {
+export interface FloatingShellTokens {
+  /** Floating window outer border-radius in px (default: 16px) */
+  floatingOuterRadius: number;
+  /** Stage 1 Floating window header horizontal padding in px (default: 12px) */
+  floatingHeaderPaddingX: number;
+  /** Stage 1 Floating window header vertical padding in px (default: 8px) */
+  floatingHeaderPaddingY: number;
+  /** Stage 1 Floating window header title font size in px (default: 14px) */
+  floatingHeaderTitleFontSize: number;
+  /** Stage 1 Floating window header minimize button width & height in px (default: 22px) */
+  floatingHeaderMinimizeBtnSize: number;
+  /** Stage 1 Floating window header minimize button corner radius in px (default: 6px) */
+  floatingHeaderMinimizeBtnRadius: number;
+  /** Stage 2 Floating window fallback content body horizontal padding in px (default: 14px) */
+  floatingBodyPaddingX: number;
+  /** Stage 2 Floating window fallback content body vertical padding in px (default: 14px) */
+  floatingBodyPaddingY: number;
+  /** Stage 3 Floating window footer horizontal padding in px (default: 14px) */
+  floatingFooterPaddingX: number;
+  /** Stage 3 Floating window footer vertical padding in px (default: 6px) */
+  floatingFooterPaddingY: number;
+  /** Stage 3 Floating window footer right padding when corner resize dragger is visible (default: 24px) */
+  floatingFooterCornerReserveRightPx: number;
+  /** Stage 3 Floating window footer font size in px (default: 11px) */
+  floatingFooterFontSize: number;
+}
+
+export interface MenuLayoutTokens extends FloatingShellTokens {
   /** Per-panel independent sizing contracts */
   panels: Record<MenuPanelId, PanelSizingConfig>;
   /** Vertical margin (top & bottom in px) for MenuDivider (default: 2px) */
@@ -196,254 +229,25 @@ export interface MenuLayoutTokens {
   layer3Height: number;
 }
 
-export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingConfig> = {
-  'layer1-main': {
-    mode: 'auto',
-    width: 420,
-    targetHeight: 377,
-    minHeight: 180,
-    maxHeight: 960,
-  },
-  'layer2-play': {
-    mode: 'auto',
-    width: 640,
-    targetHeight: 298,
-    minHeight: 200,
-    maxHeight: 960,
-  },
-  'layer2-garage': {
-    mode: 'auto',
-    width: 640,
-    targetHeight: 417,
-    minHeight: 220,
-    maxHeight: 1080,
-  },
-  'layer2-settings': {
-    mode: 'auto',
-    width: 680,
-    targetHeight: 457,
-    minHeight: 220,
-    maxHeight: 1120,
-  },
-  'layer2-previews': {
-    mode: 'auto',
-    width: 600,
-    targetHeight: 440,
-    minHeight: 220,
-    maxHeight: 960,
-  },
-  'layer2-manage-room': {
-    mode: 'auto',
-    width: 720,
-    targetHeight: 500,
-    minHeight: 220,
-    maxHeight: 1080,
-  },
-  'layer3-training-config': {
-    mode: 'auto',
-    width: 480,
-    targetHeight: 460,
-    minHeight: 200,
-    maxHeight: 960,
-  },
-  'layer3-acoustics-equalizer': {
-    mode: 'auto',
-    width: 480,
-    targetHeight: 540,
-    minHeight: 220,
-    maxHeight: 1080,
-  },
-  'layer3-ball-trajectory': {
-    mode: 'auto',
-    width: 560,
-    targetHeight: 520,
-    minHeight: 220,
-    maxHeight: 1080,
-  },
-  'layer3-host-match': {
-    mode: 'auto',
-    width: 520,
-    targetHeight: 560,
-    minHeight: 220,
-    maxHeight: 1120,
-  },
-  'layer3-host-training': {
-    mode: 'auto',
-    width: 500,
-    targetHeight: 420,
-    minHeight: 200,
-    maxHeight: 1080,
-  },
-  'layer3-custom-play': {
-    mode: 'auto',
-    width: 500,
-    targetHeight: 400,
-    minHeight: 220,
-    maxHeight: 960,
-  },
-  'layer3-join-room': {
-    mode: 'auto',
-    width: 480,
-    targetHeight: 360,
-    minHeight: 200,
-    maxHeight: 960,
-  },
-  'layer3-exhibition': {
-    mode: 'auto',
-    width: 480,
-    targetHeight: 420,
-    minHeight: 200,
-    maxHeight: 960,
-  },
-  'layer3-self-training': {
-    mode: 'auto',
-    width: 500,
-    targetHeight: 460,
-    minHeight: 200,
-    maxHeight: 960,
-  },
-  'layer3-kickoff-training': {
-    mode: 'auto',
-    width: 520,
-    targetHeight: 520,
-    minHeight: 220,
-    maxHeight: 1080,
-  },
-  'layer3-camera': {
-    mode: 'auto',
-    width: 560,
-    targetHeight: 520,
-    minHeight: 220,
-    maxHeight: 1080,
-  },
-  'layer3-keybindings': {
-    mode: 'auto',
-    width: 560,
-    targetHeight: 560,
-    minHeight: 240,
-    maxHeight: 1120,
-  },
-  'layer3-exp-multi-bots': {
-    mode: 'auto',
-    width: 580,
-    targetHeight: 580,
-    minHeight: 240,
-    maxHeight: 1120,
-  },
-  'layer3-exp-botpack': {
-    mode: 'auto',
-    width: 580,
-    targetHeight: 580,
-    minHeight: 240,
-    maxHeight: 1120,
-  },
-  'layer3-dev-sandboxes': {
-    mode: 'auto',
-    width: 560,
-    targetHeight: 460,
-    minHeight: 200,
-    maxHeight: 960,
-  },
-  'layer3-dev-active-tuners': {
-    mode: 'auto',
-    width: 600,
-    targetHeight: 580,
-    minHeight: 240,
-    maxHeight: 1120,
-  },
-  'layer3-dev-calibrated-presets': {
-    mode: 'auto',
-    width: 560,
-    targetHeight: 420,
-    minHeight: 200,
-    maxHeight: 960,
-  },
-  'layer3-dev-quick-actions': {
-    mode: 'auto',
-    width: 560,
-    targetHeight: 460,
-    minHeight: 200,
-    maxHeight: 960,
-  },
-  'layer3-dev-self-test': {
-    mode: 'auto',
-    width: 560,
-    targetHeight: 420,
-    minHeight: 200,
-    maxHeight: 960,
-  },
-  'layer3-dev-under-development': {
-    mode: 'auto',
-    width: 600,
-    targetHeight: 580,
-    minHeight: 240,
-    maxHeight: 1120,
-  },
-  'layer3-dev-tem-pack-converter': {
-    mode: 'fixed',
-    width: 920,
-    targetHeight: 740,
-    minHeight: 320,
-    maxHeight: 1120,
-  },
-  'layer3-dev-remote-profile': {
-    mode: 'auto',
-    width: 620,
-    targetHeight: 540,
-    minHeight: 240,
-    maxHeight: 1120,
-  },
-  'layer4-static-training-pack': {
-    mode: 'fixed',
-    width: 920,
-    targetHeight: 740,
-    minHeight: 320,
-    maxHeight: 1120,
-  },
-  'layer4-advanced-audio': {
-    mode: 'auto',
-    width: 560,
-    targetHeight: 560,
-    minHeight: 240,
-    maxHeight: 1120,
-  },
-  'layer4-controller-settings': {
-    mode: 'auto',
-    width: 640,
-    targetHeight: 960,
-    minHeight: 260,
-    maxHeight: 1120,
-  },
-  'layer4-event-trigger-rules': {
-    mode: 'auto',
-    width: 580,
-    targetHeight: 560,
-    minHeight: 240,
-    maxHeight: 1120,
-  },
-  'layer4-dev-signaling-lab': {
-    mode: 'auto',
-    width: 760,
-    targetHeight: 680,
-    minHeight: 260,
-    maxHeight: 1120,
-  },
+export {
+  CANONICAL_PANEL_SIZING,
+  DEFAULT_PANEL_SIZING,
+  resolveMenuPanelSizing,
 };
 
-export const DEFAULT_PANEL_SIZING: Record<MenuPanelId, PanelSizingConfig> = {
-  ...CANONICAL_PANEL_SIZING,
-};
-
-export const resolveMenuPanelSizing = (
-  panels: Partial<Record<MenuPanelId, PanelSizingConfig>> | undefined,
-  id: MenuPanelId | string
-): PanelSizingConfig => {
-  const panelId = id as CanonicalMenuPanelId;
-  return (
-    panels?.[panelId] ??
-    CANONICAL_PANEL_SIZING[panelId] ??
-    CANONICAL_PANEL_SIZING['layer2-settings']
-  );
+export const DEFAULT_FLOATING_SHELL_TOKENS: FloatingShellTokens = {
+  floatingOuterRadius: 16,
+  floatingHeaderPaddingX: 12,
+  floatingHeaderPaddingY: 8,
+  floatingHeaderTitleFontSize: 14,
+  floatingHeaderMinimizeBtnSize: 22,
+  floatingHeaderMinimizeBtnRadius: 6,
+  floatingBodyPaddingX: 14,
+  floatingBodyPaddingY: 14,
+  floatingFooterPaddingX: 14,
+  floatingFooterPaddingY: 6,
+  floatingFooterCornerReserveRightPx: 24,
+  floatingFooterFontSize: 11,
 };
 
 export const DEFAULT_PANEL_SHELL_TOKENS = {
@@ -479,6 +283,7 @@ export const DEFAULT_PANEL_SHELL_TOKENS = {
   panelFooterSplitRight: false,
   panelFooterRightDivider: false,
   panelFooterRightPaddingX: 12,
+  ...DEFAULT_FLOATING_SHELL_TOKENS,
 };
 
 /**

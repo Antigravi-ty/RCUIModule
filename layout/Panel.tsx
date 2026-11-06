@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
-import { ArrowLeft, Info, LogOut, Minimize2 } from 'lucide-react';
-import { KeycapBadge } from '../primitives/KeycapBadge';
+import { ArrowLeft, LogOut, Minimize2 } from 'lucide-react';
 import { UI_RADIUS } from '../tokens/radius';
+import { getSurfaceCalibrationOverride } from '../manifest/surfaceCalibration';
 import { useCloudProfileSyncStore } from '../stores/cloudProfileSyncStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import {
@@ -174,6 +174,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
     <div
       data-ui-element="panel-header"
       data-panel-section="header"
+      data-alpha-id="Alpha:3StagePanelShell"
       style={{
         paddingLeft: `${headerPadX}px`,
         paddingRight: shouldRenderRightAction ? `${headerPadX}px` : `${headerPadX || 12}px`,
@@ -384,6 +385,8 @@ export interface PanelContainerProps {
   isLight?: boolean;
   className?: string;
   transparent?: boolean;
+  /** Optional surface ID to automatically merge `surfaceCalibrationOverrides.json` sizing overrides */
+  surfaceId?: string;
   /** Unified per-panel sizing contract ('auto' clamping vs 'fixed' height) */
   sizing?: PanelSizingConfig;
   /** Legacy / explicit outer container height (in px or CSS string) when rendered standalone outside MorphContainer */
@@ -403,6 +406,7 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
   isLight = false,
   className = '',
   transparent,
+  surfaceId,
   sizing,
   height,
   width,
@@ -411,6 +415,33 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
   const inMorphContainer = useInMorphContainer();
   const isTransparent = transparent ?? inMorphContainer;
 
+  const calibratedOverride = surfaceId
+    ? getSurfaceCalibrationOverride(surfaceId) ??
+      getSurfaceCalibrationOverride(`recipe:${surfaceId}`)
+    : undefined;
+
+  const effectiveSizing: PanelSizingConfig | undefined =
+    sizing && calibratedOverride
+      ? {
+          ...sizing,
+          ...(calibratedOverride.width !== undefined
+            ? { width: calibratedOverride.width }
+            : {}),
+          ...(typeof calibratedOverride.height === 'number'
+            ? { targetHeight: calibratedOverride.height }
+            : {}),
+          ...(calibratedOverride.minHeight !== undefined
+            ? { minHeight: calibratedOverride.minHeight }
+            : {}),
+          ...(calibratedOverride.maxHeight !== undefined
+            ? { maxHeight: calibratedOverride.maxHeight }
+            : {}),
+          ...(calibratedOverride.mode !== undefined
+            ? { mode: calibratedOverride.mode === 'adaptive' ? 'auto' : 'fixed' }
+            : {}),
+        }
+      : sizing;
+
   const effectiveClassName = isTransparent
     ? className
         .replace(/shadow-\[[^\]]+\]/g, '')
@@ -418,7 +449,8 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
         .trim()
     : className;
 
-  const effectiveWidth = sizing?.width ?? width;
+  const effectiveWidth =
+    effectiveSizing?.width ?? calibratedOverride?.width ?? width;
   const resolvedMaxWidth =
     !inMorphContainer && effectiveWidth !== undefined
       ? typeof effectiveWidth === 'number'
@@ -426,19 +458,19 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
         : effectiveWidth
       : undefined;
 
-  const sizingMode: PanelSizingMode = sizing?.mode ?? 'fixed';
+  const sizingMode: PanelSizingMode = effectiveSizing?.mode ?? 'fixed';
 
   // Compute standalone container height constraints when outside MorphContainer
   const standaloneSizingStyle: React.CSSProperties = {};
   if (!inMorphContainer) {
-    if (sizing) {
-      if (sizing.mode === 'auto') {
+    if (effectiveSizing) {
+      if (effectiveSizing.mode === 'auto') {
         standaloneSizingStyle.height = 'auto';
-        standaloneSizingStyle.minHeight = `min(${sizing.minHeight}px, var(--avail-h, 100vh))`;
-        standaloneSizingStyle.maxHeight = `min(${sizing.maxHeight}px, var(--avail-h, 100vh))`;
+        standaloneSizingStyle.minHeight = `min(${effectiveSizing.minHeight}px, var(--avail-h, 100vh))`;
+        standaloneSizingStyle.maxHeight = `min(${effectiveSizing.maxHeight}px, var(--avail-h, 100vh))`;
       } else {
-        standaloneSizingStyle.height = `min(${sizing.targetHeight}px, var(--avail-h, 100vh))`;
-        standaloneSizingStyle.maxHeight = `min(${sizing.targetHeight}px, var(--avail-h, 100vh))`;
+        standaloneSizingStyle.height = `min(${effectiveSizing.targetHeight}px, var(--avail-h, 100vh))`;
+        standaloneSizingStyle.maxHeight = `min(${effectiveSizing.targetHeight}px, var(--avail-h, 100vh))`;
       }
     } else if (height !== undefined) {
       const hStr = typeof height === 'number' ? `${height}px` : height;
@@ -453,6 +485,8 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
     <PanelSizingModeContext.Provider value={sizingMode}>
       <div
         data-panel="container"
+        data-shell-variant="menu"
+        data-alpha-id="Alpha:3StagePanelShell"
         data-sizing-mode={sizingMode}
         style={{
           ...standaloneSizingStyle,
@@ -461,7 +495,7 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
           ...style,
         }}
         className={`flex flex-col ${
-          inMorphContainer ? 'h-full' : sizing?.mode === 'auto' ? 'h-auto' : 'h-full'
+          inMorphContainer ? 'h-full' : effectiveSizing?.mode === 'auto' ? 'h-auto' : 'h-full'
         } w-full overflow-hidden transition-colors ${
           isTransparent
             ? 'bg-transparent border-0 ring-0 shadow-none'
