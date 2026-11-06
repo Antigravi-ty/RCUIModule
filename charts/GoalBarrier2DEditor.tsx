@@ -34,13 +34,11 @@ const GRID_V = BARRIER_GRID_ROWS;
 
 export interface GoalBarrier2DEditorProps {
   isLight?: boolean;
-  defaultPreset?: GoalBarrierPresetId;
   /** Controlled 32x16 barrier grid */
   grid?: Uint8Array;
   onGridChange?: (grid: Uint8Array, decomposition: GoalBarrierDecomposition) => void;
   /** Controlled selection mode ('new' | 'add' | 'subtract') */
   selectionMode?: GoalBarrierSelectionMode;
-  defaultSelectionMode?: GoalBarrierSelectionMode;
   onSelectionModeChange?: (mode: GoalBarrierSelectionMode) => void;
   /** Controlled enabled state */
   enabled?: boolean;
@@ -55,7 +53,6 @@ export interface GoalBarrier2DEditorProps {
   variant?: 'card' | 'embedded';
   onApplyPreset?: (presetId: GoalBarrierPresetId, grid: Uint8Array) => void;
   onClear?: () => void;
-  onChangeDecomposition?: (decomposition: GoalBarrierDecomposition) => void;
   className?: string;
 }
 
@@ -76,11 +73,9 @@ interface DragState {
 export const GoalBarrier2DEditor: React.FC<GoalBarrier2DEditorProps> = React.memo(
   ({
     isLight = true,
-    defaultPreset = 'top-corners-open',
     grid: controlledGrid,
     onGridChange,
     selectionMode: controlledSelectionMode,
-    defaultSelectionMode = 'subtract',
     onSelectionModeChange,
     enabled: controlledEnabled,
     onEnabledChange,
@@ -91,18 +86,17 @@ export const GoalBarrier2DEditor: React.FC<GoalBarrier2DEditorProps> = React.mem
     variant = 'card',
     onApplyPreset,
     onClear,
-    onChangeDecomposition,
     className = '',
   }) => {
     const isEmbedded = variant === 'embedded';
     const [internalEnabled, setInternalEnabled] = useState(true);
     const [internalSelectionMode, setInternalSelectionMode] =
-      useState<GoalBarrierSelectionMode>(defaultSelectionMode);
+      useState<GoalBarrierSelectionMode>('subtract');
     const [internalTargetGoal, setInternalTargetGoal] =
       useState<GoalBarrierTargetGoal>('both');
     const [internalOpacity, setInternalOpacity] = useState(0.65);
     const [internalGrid, setInternalGrid] = useState<Uint8Array>(() =>
-      buildPresetBarrierGrid(defaultPreset)
+      buildPresetBarrierGrid('top-corners-open')
     );
 
     const enabled = controlledEnabled ?? internalEnabled;
@@ -112,10 +106,6 @@ export const GoalBarrier2DEditor: React.FC<GoalBarrier2DEditorProps> = React.mem
     const grid = controlledGrid ?? internalGrid;
 
     const decomposition = useMemo(() => decomposeBarrierGrid(grid), [grid]);
-
-    useEffect(() => {
-      onChangeDecomposition?.(decomposition);
-    }, [decomposition, onChangeDecomposition]);
 
     const updateSelectionMode = useCallback(
       (mode: GoalBarrierSelectionMode) => {

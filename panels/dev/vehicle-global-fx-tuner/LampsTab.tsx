@@ -3,12 +3,17 @@ import { SegmentedSwitch } from '../../../primitives/SegmentedSwitch';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { TunerColorRow } from '../../../compounds/TunerControls';
+import type {
+  VehicleDescriptor,
+  VehicleLampsConfig,
+  VehicleTunerRuntimeFlags,
+} from '../../../config/vehicleTunerConfig';
 
 export interface LampsTabProps {
-  descriptor: any;
-  runtimeFlags: any;
-  handleLampsChange: (patch: Record<string, any>) => void;
-  handleToggleRuntimeFlag: (patch: Record<string, any>) => void;
+  descriptor: Pick<VehicleDescriptor, 'lampsConfig'>;
+  runtimeFlags: VehicleTunerRuntimeFlags;
+  handleLampsChange: (patch: Partial<VehicleLampsConfig>) => void;
+  handleToggleRuntimeFlag: (patch: Partial<VehicleTunerRuntimeFlags>) => void;
   isLight: boolean;
   cardClass: string;
 }

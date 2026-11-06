@@ -56,10 +56,9 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
 
   useEffect(() => {
     if (!active) return;
-    const id = window.setInterval(() => {
+    return globalPacingTelemetryRecorder.subscribe(() => {
       setTickRefresh((v) => (v + 1) % 100000);
-    }, 200);
-    return () => window.clearInterval(id);
+    });
   }, [active]);
 
   const isOnlineSession = Boolean(diag?.isOnlineSession || metrics.connected);
@@ -146,21 +145,6 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
       includeClientReplay,
       includeReconcileTelemetry,
       includeServerReplay,
-      isOnlineSession,
-      isHosting,
-      isLobby,
-      matchState,
-      diag,
-      activeSlots,
-      clientFrames,
-      effectiveMaxFrames,
-      clientOverflowPaused,
-      autoPauseOnOverflow,
-      clientMb,
-      telemetryTicks,
-      telemetrySummary,
-      metrics,
-      serverFrames,
     });
     setLastExportStatus(status);
   };
@@ -170,7 +154,7 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
       setLastExportStatus('No client presentation replay frames recorded yet.');
       return;
     }
-    const status = networkDiagnosticsStore.getSnapshot().bridge.onExportStandaloneClientReplay?.();
+    const status = networkDiagnosticsStore.getState().bridge.onExportStandaloneClientReplay?.();
     setLastExportStatus(
       typeof status === 'string'
         ? status
@@ -179,7 +163,7 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
   };
 
   const handleExportStandaloneTelemetry = () => {
-    setLastExportStatus(exportStandaloneTelemetryZip(isLobby, telemetryTicks));
+    setLastExportStatus(exportStandaloneTelemetryZip());
   };
 
   return (

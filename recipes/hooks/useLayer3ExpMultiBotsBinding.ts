@@ -17,60 +17,17 @@ import type {
   CarColorSwatch,
 } from '../../compounds/TeamRosterCard';
 
-export interface Layer3ExpMultiBotsRecipeProps {
-  isLight?: boolean;
-  defaultBlueSlots?: TeamRosterSlotConfig[];
-  defaultOrangeSlots?: TeamRosterSlotConfig[];
-  blueSlots?: TeamRosterSlotConfig[];
-  orangeSlots?: TeamRosterSlotConfig[];
-  colorPalette?: CarColorSwatch[];
-  activeCameraCarIndex?: number;
-  activeBotpackShowcaseModel?: BotPolicyId | null;
-  playerParticipation?: 'none' | 'blue' | 'orange';
-  matchDurationSec?: number;
-  simSpeedValue?: string;
-  unlimitedBoost?: boolean;
-  disableGoalReplay?: boolean;
-  nextoLoaded?: boolean;
-  nectoLoaded?: boolean;
-  lastTotalInferenceMs?: number;
-  isInExpMode?: boolean;
-  onSelectBotpackShowcaseModel?: (botType: BotPolicyId) => void;
-  onSetPlayerParticipation?: (mode: 'none' | 'blue' | 'orange') => void;
-  onApplyFormatPreset?: (preset: string) => void;
-  onAddBot?: (team: 0 | 1, botType: BotPolicyId) => void;
-  onSelectCameraCar?: (carIndex: number) => void;
-  onSetSlotBotType?: (team: 0 | 1, slotIndex: number, botType: BotPolicyId) => void;
-  onSetSlotColor?: (team: 0 | 1, slotIndex: number, colorId: string) => void;
-  onRemoveSlot?: (team: 0 | 1, slotIndex: number) => void;
-  onSetMatchDurationSec?: (sec: number) => void;
-  onSetSimSpeed?: (val: string) => void;
-  onSetUnlimitedBoost?: (val: boolean) => void;
-  onSetDisableGoalReplay?: (val: boolean) => void;
-  onTriggerSandboxAction?: (
-    action: 'reset_kickoff' | 'score_blue' | 'score_orange' | 'force_overtime'
-  ) => void;
-  onStartSimulation?: (config: {
-    blueSlots: TeamRosterSlotConfig[];
-    orangeSlots: TeamRosterSlotConfig[];
-    activeCameraCarIndex: number;
-  }) => void;
-  onLaunchFloatingControl?: () => void;
-  onEnterGame?: () => void;
-  onBack?: () => void;
-  className?: string;
-}
-
 const EXP_SWATCH_PALETTE: CarColorSwatch[] = EXP_CAR_COLOR_PALETTE.map((c) => ({
   id: String(c.id),
   name: c.name,
   hex: c.hex,
 }));
 
-export function useLayer3ExpMultiBotsStoreBinding(
-  rawProps: Layer3ExpMultiBotsRecipeProps,
+export function useLayer3ExpMultiBotsStoreBinding<TProps extends object>(
+  rawProps: TProps,
   targetSubMode: 'multi-bots' | 'botpack' = 'multi-bots'
-): Layer3ExpMultiBotsRecipeProps {
+): TProps & Record<string, any> {
+  const props = rawProps as Record<string, any>;
   const {
     playerParticipation,
     blueSlots: storeBlueSlots,
@@ -189,8 +146,8 @@ export function useLayer3ExpMultiBotsStoreBinding(
   };
 
   const handleEnterGame = () => {
-    if (rawProps.onEnterGame) {
-      rawProps.onEnterGame();
+    if (props.onEnterGame) {
+      props.onEnterGame();
       return;
     }
     if (targetSubMode === 'botpack') {
@@ -228,53 +185,53 @@ export function useLayer3ExpMultiBotsStoreBinding(
 
   return {
     ...rawProps,
-    onBack: rawProps.onBack ?? goBack,
-    blueSlots: rawProps.blueSlots ?? blueSlots,
-    orangeSlots: rawProps.orangeSlots ?? orangeSlots,
-    colorPalette: rawProps.colorPalette ?? EXP_SWATCH_PALETTE,
-    activeCameraCarIndex: rawProps.activeCameraCarIndex ?? activeCameraCarIndex,
-    playerParticipation: rawProps.playerParticipation ?? playerParticipation,
-    matchDurationSec: rawProps.matchDurationSec ?? matchDurationSec,
-    simSpeedValue: rawProps.simSpeedValue ?? simSpeedValue,
-    unlimitedBoost: rawProps.unlimitedBoost ?? unlimitedBoost,
-    disableGoalReplay: rawProps.disableGoalReplay ?? disableGoalReplay,
-    nextoLoaded: rawProps.nextoLoaded ?? nextoLoaded,
-    nectoLoaded: rawProps.nectoLoaded ?? nectoLoaded,
+    onBack: props.onBack ?? goBack,
+    blueSlots: props.blueSlots ?? blueSlots,
+    orangeSlots: props.orangeSlots ?? orangeSlots,
+    colorPalette: props.colorPalette ?? EXP_SWATCH_PALETTE,
+    activeCameraCarIndex: props.activeCameraCarIndex ?? activeCameraCarIndex,
+    playerParticipation: props.playerParticipation ?? playerParticipation,
+    matchDurationSec: props.matchDurationSec ?? matchDurationSec,
+    simSpeedValue: props.simSpeedValue ?? simSpeedValue,
+    unlimitedBoost: props.unlimitedBoost ?? unlimitedBoost,
+    disableGoalReplay: props.disableGoalReplay ?? disableGoalReplay,
+    nextoLoaded: props.nextoLoaded ?? nextoLoaded,
+    nectoLoaded: props.nectoLoaded ?? nectoLoaded,
     lastTotalInferenceMs:
-      rawProps.lastTotalInferenceMs ?? lastTotalInferenceMs,
-    isInExpMode: rawProps.isInExpMode ?? isInExpMode,
+      props.lastTotalInferenceMs ?? lastTotalInferenceMs,
+    isInExpMode: props.isInExpMode ?? isInExpMode,
     activeBotpackShowcaseModel:
-      rawProps.activeBotpackShowcaseModel ??
+      props.activeBotpackShowcaseModel ??
       activeBotpackShowcaseModel ??
       (targetSubMode === 'botpack' ? savedBotpackModel : null),
     onSelectBotpackShowcaseModel:
-      rawProps.onSelectBotpackShowcaseModel ??
+      props.onSelectBotpackShowcaseModel ??
       ((botType: BotPolicyId) => applyBotpack9700488Showcase(botType, true)),
     onSetPlayerParticipation:
-      rawProps.onSetPlayerParticipation ??
+      props.onSetPlayerParticipation ??
       ((v: ExpPlayerParticipation) => setPlayerParticipation(v)),
     onApplyFormatPreset:
-      rawProps.onApplyFormatPreset ?? handleApplyFormatPreset,
+      props.onApplyFormatPreset ?? handleApplyFormatPreset,
     onAddBot:
-      rawProps.onAddBot ?? ((team: 0 | 1, botType: BotPolicyId) => addBotToTeam(team, botType)),
-    onSelectCameraCar: rawProps.onSelectCameraCar ?? setActiveCameraCarIndex,
+      props.onAddBot ?? ((team: 0 | 1, botType: BotPolicyId) => addBotToTeam(team, botType)),
+    onSelectCameraCar: props.onSelectCameraCar ?? setActiveCameraCarIndex,
     onSetSlotBotType:
-      rawProps.onSetSlotBotType ??
+      props.onSetSlotBotType ??
       ((team: 0 | 1, slotIndex: number, botType: BotPolicyId) =>
         setSlotBotType(team, slotIndex, botType)),
     onSetSlotColor:
-      rawProps.onSetSlotColor ??
-      ((team: 0 | 1, slotIndex: number, colorId: string) =>
+      props.onSetSlotColor ??
+      ((team: 0 | 1, slotIndex: number, colorId: string | number) =>
         setSlotColor(team, slotIndex, Number(colorId))),
-    onRemoveSlot: rawProps.onRemoveSlot ?? removeSlotFromTeam,
+    onRemoveSlot: props.onRemoveSlot ?? removeSlotFromTeam,
     onSetMatchDurationSec:
-      rawProps.onSetMatchDurationSec ?? setMatchDurationSec,
-    onSetSimSpeed: rawProps.onSetSimSpeed ?? handleSimSpeedChange,
-    onSetUnlimitedBoost: rawProps.onSetUnlimitedBoost ?? setUnlimitedBoost,
+      props.onSetMatchDurationSec ?? setMatchDurationSec,
+    onSetSimSpeed: props.onSetSimSpeed ?? handleSimSpeedChange,
+    onSetUnlimitedBoost: props.onSetUnlimitedBoost ?? setUnlimitedBoost,
     onSetDisableGoalReplay:
-      rawProps.onSetDisableGoalReplay ?? setDisableGoalReplay,
+      props.onSetDisableGoalReplay ?? setDisableGoalReplay,
     onTriggerSandboxAction:
-      rawProps.onTriggerSandboxAction ?? triggerSandboxAction,
+      props.onTriggerSandboxAction ?? triggerSandboxAction,
     onEnterGame: handleEnterGame,
   };
 }

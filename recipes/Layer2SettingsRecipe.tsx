@@ -23,6 +23,25 @@ import { DeveloperTab } from './settings/tabs/DeveloperTab';
 
 export type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'advanced' | 'developer';
 
+export interface Layer2SettingsStateOverride {
+  initialTab?: string;
+  onDeveloperModeChange?: (unlocked: boolean) => void;
+  onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
+  onNavigateRoute?: (route: string) => void;
+  onNavigateAdvancedAudio?: () => void;
+  onNavigateEventTriggerRules?: () => void;
+  onNavigateDevQuickActions?: () => void;
+  onNavigateDevSelfTest?: () => void;
+  onNavigateDevUnderDevelopment?: () => void;
+  onNavigateDevRemoteProfile?: () => void;
+  sizing?: PanelSizingConfig;
+  gameplay?: Partial<GameplayConfig>;
+  audio?: Partial<AudioConfig>;
+  graphics?: Partial<GraphicsConfig>;
+  telemetry?: Partial<TelemetryOverlayConfig>;
+  audioDebug?: AudioDebugTelemetryProps;
+}
+
 export interface Layer2SettingsRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
@@ -30,43 +49,19 @@ export interface Layer2SettingsRecipeProps {
   onNavigateAcousticsEqualizer?: () => void;
   onNavigateKeybindingsDetail?: () => void;
   onNavigateTrajectoryDetail?: () => void;
-  /** Alias for onNavigateTrajectoryDetail */
-  onNavigateTrajectory?: () => void;
   onNavigateCameraDetail?: () => void;
-  onNavigateCameraSettings?: () => void;
-  onNavigateAdvancedAudio?: () => void;
-  onNavigateEventTriggerRules?: () => void;
-  onNavigateEventAndTriggerer?: () => void;
   onNavigateExpMultiBots?: () => void;
   onNavigateDevSandboxes?: () => void;
-  onNavigateDevSubsystemIsolation?: () => void;
   onNavigateDevActiveTuners?: () => void;
   onNavigateDevCalibratedPresets?: () => void;
   onNavigateDevQuickActions?: () => void;
-  onNavigateDevSelfTest?: () => void;
-  onNavigateDevUnderDevelopment?: () => void;
-  onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
-  initialTab?: string;
   activeTab?: string;
   onTabChange?: (tab: SettingsTabId) => void;
   /** Whether Developer Mode is unlocked (controls visibility of 5th 'Developer' tab) */
   developerMode?: boolean;
-  developerModeEnabled?: boolean;
-  onDeveloperModeChange?: (unlocked: boolean) => void;
-  onToggleDeveloperMode?: (unlocked: boolean) => void;
-  backgroundRenderPaused?: boolean;
-  onToggleBackgroundRender?: (paused: boolean) => void;
   highlightSetting?: string | null;
   onClearHighlight?: () => void;
-
-  // --- Structured domain config overrides (optional) ---
-  gameplayConfig?: Partial<GameplayConfig>;
-  audioConfig?: Partial<AudioConfig>;
-  graphicsConfig?: Partial<GraphicsConfig>;
-  telemetryConfig?: Partial<TelemetryOverlayConfig>;
-  audioDebug?: AudioDebugTelemetryProps;
-
-  sizing?: PanelSizingConfig;
+  stateOverride?: Layer2SettingsStateOverride;
 }
 
 /**
@@ -86,46 +81,44 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   isLight = false,
   onBack: propOnBack,
   onNavigateTrainingDetail,
+  onNavigateAcousticsEqualizer,
   onNavigateKeybindingsDetail,
   onNavigateTrajectoryDetail,
-  onNavigateTrajectory,
   onNavigateCameraDetail,
-  onNavigateCameraSettings,
-  onNavigateAcousticsEqualizer,
-  onNavigateAdvancedAudio,
-  onNavigateEventTriggerRules,
-  onNavigateEventAndTriggerer,
   onNavigateExpMultiBots,
   onNavigateDevSandboxes,
-  onNavigateDevSubsystemIsolation,
   onNavigateDevActiveTuners,
   onNavigateDevCalibratedPresets,
-  onNavigateDevQuickActions,
-  onNavigateDevSelfTest,
-  onNavigateDevUnderDevelopment,
-  onSpawnDiagnosticWindow,
-  initialTab = 'gameplay',
+  onNavigateDevQuickActions: propOnNavigateDevQuickActions,
   activeTab: controlledTab,
   onTabChange,
   developerMode: propDevMode,
-  developerModeEnabled,
-  onDeveloperModeChange,
-  onToggleDeveloperMode,
   highlightSetting,
   onClearHighlight,
-  gameplayConfig,
-  audioConfig,
-  graphicsConfig,
-  telemetryConfig,
-  audioDebug,
-  sizing: propSizing,
+  stateOverride,
 }) => {
+  const {
+    initialTab = 'gameplay',
+    onDeveloperModeChange,
+    onSpawnDiagnosticWindow,
+    onNavigateRoute,
+    onNavigateAdvancedAudio,
+    onNavigateEventTriggerRules,
+    onNavigateDevQuickActions: overrideOnNavigateDevQuickActions,
+    onNavigateDevSelfTest,
+    onNavigateDevUnderDevelopment,
+    onNavigateDevRemoteProfile,
+    sizing: propSizing,
+  } = stateOverride ?? {};
+  const onNavigateDevQuickActions =
+    propOnNavigateDevQuickActions ?? overrideOnNavigateDevQuickActions;
+
   const storeGoBack = useAppStore((s) => s.goBack);
   const storeDevMode = useAppStore((s) => s.developerMode);
   const setStoreDevMode = useAppStore((s) => s.setDeveloperMode);
+  const storeNavigate = useAppStore((s) => s.navigate);
 
   const onBack = propOnBack ?? storeGoBack;
-  const resolvedPropDevMode = propDevMode ?? developerModeEnabled;
 
   const normalizeTab = (t?: string): SettingsTabId => {
     if (t === 'video') return 'display';
@@ -151,15 +144,14 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   }, [initialTab, controlledTab]);
 
   const [internalDevMode, setInternalDevMode] = useState<boolean>(
-    resolvedPropDevMode ?? storeDevMode ?? (initialTab === 'developer' || controlledTab === 'developer')
+    propDevMode ?? storeDevMode ?? (initialTab === 'developer' || controlledTab === 'developer')
   );
-  const developerMode = resolvedPropDevMode ?? storeDevMode ?? internalDevMode;
+  const developerMode = propDevMode ?? storeDevMode ?? internalDevMode;
 
   const handleDeveloperModeChange = (next: boolean) => {
     setInternalDevMode(next);
     setStoreDevMode(next);
     onDeveloperModeChange?.(next);
-    onToggleDeveloperMode?.(next);
     if (!next && currentTab === 'developer') {
       setInternalTab('advanced');
       onTabChange?.('advanced');
@@ -179,26 +171,40 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   const panelBodyPaddingX = useMenuLayoutStore((s) => s.panelBodyPaddingX ?? 18);
   const sizing = propSizing ?? storeSizing;
 
-  const handleNavigateTrajectory = () => {
-    const externalHandler = onNavigateTrajectoryDetail ?? onNavigateTrajectory;
-    externalHandler?.();
-  };
-
-  const handleNavigateTraining = () => {
-    onNavigateTrainingDetail?.();
-  };
-
-  const handleNavigateCamera = () => {
-    const externalHandler = onNavigateCameraDetail ?? onNavigateCameraSettings;
-    externalHandler?.();
-  };
-
-  const handleNavigateKeybindings = () => {
-    onNavigateKeybindingsDetail?.();
-  };
-
-  const handleNavigateAcousticsEqualizer = () => {
-    onNavigateAcousticsEqualizer?.();
+  const handleNavigateRoute = (route: string) => {
+    const normalizedRoute =
+      route === 'training'
+        ? 'training-config'
+        : route === 'audio-eq'
+          ? 'acoustics-equalizer'
+          : route;
+    const specificHandlers: Record<string, (() => void) | undefined> = {
+      'acoustics-equalizer': onNavigateAcousticsEqualizer,
+      trajectory: onNavigateTrajectoryDetail,
+      camera: onNavigateCameraDetail,
+      keybindings: onNavigateKeybindingsDetail,
+      'training-config': onNavigateTrainingDetail,
+      'advanced-audio': onNavigateAdvancedAudio,
+      'event-trigger-rules': onNavigateEventTriggerRules,
+      'exp-multi-bots': onNavigateExpMultiBots,
+      'dev-sandboxes': onNavigateDevSandboxes,
+      'dev-active-tuners': onNavigateDevActiveTuners,
+      'dev-calibrated-presets': onNavigateDevCalibratedPresets,
+      'dev-quick-actions': onNavigateDevQuickActions,
+      'dev-self-test': onNavigateDevSelfTest,
+      'dev-under-development': onNavigateDevUnderDevelopment,
+      'dev-remote-profile': onNavigateDevRemoteProfile,
+    };
+    const specificHandler = specificHandlers[normalizedRoute];
+    if (specificHandler) {
+      specificHandler();
+      return;
+    }
+    if (onNavigateRoute) {
+      onNavigateRoute(normalizedRoute);
+      return;
+    }
+    storeNavigate(normalizedRoute as Parameters<typeof storeNavigate>[0]);
   };
 
   const tabs: TabItem[] = [
@@ -268,12 +274,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
           >
             <GameplayTab
               isLight={isLight}
-              gameplayConfig={gameplayConfig}
-              onNavigateTrainingDetail={handleNavigateTraining}
-              onNavigateKeybindingsDetail={handleNavigateKeybindings}
-              onNavigateTrajectoryDetail={handleNavigateTrajectory}
-              onNavigateTrajectory={handleNavigateTrajectory}
-              onNavigateCameraDetail={handleNavigateCamera}
+              gameplayConfig={stateOverride?.gameplay}
+              onNavigateRoute={handleNavigateRoute}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />
@@ -292,8 +294,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
             <AudioTab
               isLight={isLight}
               developerMode={developerMode}
-              audioConfig={audioConfig}
-              onNavigateAcousticsEqualizer={handleNavigateAcousticsEqualizer}
+              audioConfig={stateOverride?.audio}
+              onNavigateAcousticsEqualizer={() => handleNavigateRoute('acoustics-equalizer')}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />
@@ -312,7 +314,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
             <DisplayTab
               isLight={isLight}
               developerMode={developerMode}
-              graphicsConfig={graphicsConfig}
+              graphicsConfig={stateOverride?.graphics}
               highlightSetting={highlightSetting}
               onClearHighlight={onClearHighlight}
               onHover={setHoveredDesc}
@@ -335,8 +337,8 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
               developerMode={developerMode}
               onDeveloperModeChange={handleDeveloperModeChange}
               onSpawnDiagnosticWindow={onSpawnDiagnosticWindow}
-              telemetryConfig={telemetryConfig}
-              audioDebug={audioDebug}
+              telemetryConfig={stateOverride?.telemetry}
+              audioDebug={stateOverride?.audioDebug}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />
@@ -355,16 +357,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
             >
               <DeveloperTab
                 isLight={isLight}
-                onNavigateAdvancedAudio={onNavigateAdvancedAudio}
-                onNavigateEventAndTriggerer={onNavigateEventTriggerRules ?? onNavigateEventAndTriggerer}
-                onNavigateExpMultiBots={onNavigateExpMultiBots}
-                onNavigateDevSandboxes={onNavigateDevSandboxes}
-                onNavigateDevSubsystemIsolation={onNavigateDevSubsystemIsolation}
-                onNavigateDevActiveTuners={onNavigateDevActiveTuners}
-                onNavigateDevCalibratedPresets={onNavigateDevCalibratedPresets}
-                onNavigateDevQuickActions={onNavigateDevQuickActions}
-                onNavigateDevSelfTest={onNavigateDevSelfTest}
-                onNavigateDevUnderDevelopment={onNavigateDevUnderDevelopment}
+                onNavigateRoute={handleNavigateRoute}
                 onHover={setHoveredDesc}
                 onLeave={() => setHoveredDesc(null)}
               />

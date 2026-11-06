@@ -55,6 +55,12 @@ export interface NameTagBallOcclusionProjection2D {
   opacity: number;
 }
 
+export {
+  hexToRgba,
+  resolveActiveBoostFillColor,
+  resolveUnfilledBaseHexColor,
+} from './nameTagOffscreenRenderer';
+
 export function drawNameTagPillCard2D(
   ctx: CanvasRenderingContext2D,
   card: NameTagPillRenderCard2D,
@@ -68,6 +74,8 @@ export function drawNameTagPillCard2D(
     Partial<
       Pick<
         NameTagConfig,
+        | 'boostFillColorBlendRatio'
+        | 'boostUnfilledDarkenRatio'
         | 'aerialClimbGlowColor'
         | 'aerialClimbGlowRadiusPx'
         | 'aerialClimbGlowOpacity'
@@ -78,9 +86,12 @@ export function drawNameTagPillCard2D(
     config.boostIndicatorMode || DEFAULT_NAME_TAG_CONFIG.boostIndicatorMode;
   const clampedBoost = Math.max(0, Math.min(1, card.boostFraction));
   const boostFillAlpha = Math.max(
-    0.05,
+    0,
     Math.min(1, config.boostFillOpacity ?? DEFAULT_NAME_TAG_CONFIG.boostFillOpacity)
   );
+  const boostFillBlendRatio =
+    config.boostFillColorBlendRatio ??
+    DEFAULT_NAME_TAG_CONFIG.boostFillColorBlendRatio;
   const unfilledAlpha = Math.max(
     0,
     Math.min(
@@ -88,6 +99,9 @@ export function drawNameTagPillCard2D(
       config.boostUnfilledBgOpacity ?? DEFAULT_NAME_TAG_CONFIG.boostUnfilledBgOpacity
     )
   );
+  const unfilledDarkenRatio =
+    config.boostUnfilledDarkenRatio ??
+    DEFAULT_NAME_TAG_CONFIG.boostUnfilledDarkenRatio;
   const showHorizon =
     config.boostShowHorizonLine ?? DEFAULT_NAME_TAG_CONFIG.boostShowHorizonLine;
 
@@ -97,10 +111,14 @@ export function drawNameTagPillCard2D(
     card.boostBorderVisible &&
     (mode === 'bottom-up-fill' || mode === 'left-right-fill')
   ) {
-    const unfilledHex = resolveUnfilledBaseHexColor(card.bgColor);
+    const unfilledHex = resolveUnfilledBaseHexColor(
+      card.bgColor,
+      unfilledDarkenRatio
+    );
     const activeFillHex = resolveActiveBoostFillColor(
       card.bgColor,
-      card.boostBorderColor
+      card.boostBorderColor,
+      boostFillBlendRatio
     );
 
     ctx.save();
@@ -108,37 +126,51 @@ export function drawNameTagPillCard2D(
     ctx.roundRect(card.left, card.top, card.width, card.height, card.radius);
     ctx.clip();
 
-    ctx.fillStyle = hexToRgba(unfilledHex, unfilledAlpha);
-    ctx.fillRect(card.left, card.top, card.width, card.height);
+    if (mode === 'bottom-up-fill') {
+      const fillH = card.height * clampedBoost;
+      const unfilledH = Math.max(0, card.height - fillH);
+      const fillTop = card.top + unfilledH;
 
-    if (clampedBoost > 0.001) {
-      ctx.fillStyle = hexToRgba(activeFillHex, boostFillAlpha);
-      if (mode === 'bottom-up-fill') {
-        const fillH = card.height * clampedBoost;
-        const fillTop = card.top + card.height - fillH;
+      if (unfilledH > 0.001 && unfilledAlpha > 0.001) {
+        ctx.fillStyle = hexToRgba(unfilledHex, unfilledAlpha);
+        ctx.fillRect(card.left, card.top, card.width, unfilledH);
+      }
+
+      if (fillH > 0.001 && boostFillAlpha > 0.001) {
+        ctx.fillStyle = hexToRgba(activeFillHex, boostFillAlpha);
         ctx.fillRect(card.left, fillTop, card.width, fillH);
+      }
 
-        if (showHorizon && clampedBoost > 0.02 && clampedBoost < 0.98) {
-          ctx.beginPath();
-          ctx.moveTo(card.left, fillTop);
-          ctx.lineTo(card.left + card.width, fillTop);
-          ctx.lineWidth = Math.max(1.25, card.borderW * 0.55);
-          ctx.strokeStyle = card.boostBorderColor;
-          ctx.stroke();
-        }
-      } else {
-        const fillW = card.width * clampedBoost;
+      if (showHorizon && clampedBoost > 0.02 && clampedBoost < 0.98) {
+        ctx.beginPath();
+        ctx.moveTo(card.left, fillTop);
+        ctx.lineTo(card.left + card.width, fillTop);
+        ctx.lineWidth = Math.max(1.25, card.borderW * 0.55);
+        ctx.strokeStyle = card.boostBorderColor;
+        ctx.stroke();
+      }
+    } else {
+      const fillW = card.width * clampedBoost;
+      const unfilledW = Math.max(0, card.width - fillW);
+      const edgeX = card.left + fillW;
+
+      if (unfilledW > 0.001 && unfilledAlpha > 0.001) {
+        ctx.fillStyle = hexToRgba(unfilledHex, unfilledAlpha);
+        ctx.fillRect(edgeX, card.top, unfilledW, card.height);
+      }
+
+      if (fillW > 0.001 && boostFillAlpha > 0.001) {
+        ctx.fillStyle = hexToRgba(activeFillHex, boostFillAlpha);
         ctx.fillRect(card.left, card.top, fillW, card.height);
+      }
 
-        if (showHorizon && clampedBoost > 0.02 && clampedBoost < 0.98) {
-          const edgeX = card.left + fillW;
-          ctx.beginPath();
-          ctx.moveTo(edgeX, card.top);
-          ctx.lineTo(edgeX, card.top + card.height);
-          ctx.lineWidth = Math.max(1.25, card.borderW * 0.55);
-          ctx.strokeStyle = card.boostBorderColor;
-          ctx.stroke();
-        }
+      if (showHorizon && clampedBoost > 0.02 && clampedBoost < 0.98) {
+        ctx.beginPath();
+        ctx.moveTo(edgeX, card.top);
+        ctx.lineTo(edgeX, card.top + card.height);
+        ctx.lineWidth = Math.max(1.25, card.borderW * 0.55);
+        ctx.strokeStyle = card.boostBorderColor;
+        ctx.stroke();
       }
     }
     ctx.restore();
@@ -279,7 +311,9 @@ export function renderNameTagOverlayPass2D(
 
   if (visibleCards2D.length > 0) {
     visibleCards2D.sort(
-      (a, b) => (a.cameraDistanceSq || 0) - (b.cameraDistanceSq || 0)
+      (a, b) =>
+        (a.cameraDistanceSq || 0) - (b.cameraDistanceSq || 0) ||
+        (a.carIndex ?? 0) - (b.carIndex ?? 0)
     );
 
     const drawSingleRankWithCloserClips = (rank: number) => {

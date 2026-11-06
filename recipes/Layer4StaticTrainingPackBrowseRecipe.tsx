@@ -146,7 +146,10 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
     onImportPack,
     onExportPack,
     className = '',
-  } = useLayer4StaticTrainingPackBrowseStoreBinding(rawProps);
+  } = useLayer4StaticTrainingPackBrowseStoreBinding({
+    ...rawProps.stateOverride,
+    ...rawProps,
+  });
 
   const sizing = useMenuLayoutStore(
     (s) =>
@@ -448,22 +451,26 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
               isLight={isLight}
               isDevMode={isDevMode}
               selectedMeta={selectedMeta}
-              editTitle={editTitle}
-              setEditTitle={setEditTitle}
-              editDescription={editDescription}
-              setEditDescription={setEditDescription}
-              isMetadataDirty={isMetadataDirty}
-              downCounterEnabled={downCounterEnabled}
-              setDownCounterEnabled={setDownCounterEnabled}
-              downCounterValue={downCounterValue}
-              setDownCounterValue={setDownCounterValue}
+              draft={{
+                editTitle,
+                setEditTitle,
+                editDescription,
+                setEditDescription,
+                isMetadataDirty,
+                onSaveMetadata: () => void handleSaveMetadata(),
+              }}
+              downCounter={{
+                downCounterEnabled,
+                setDownCounterEnabled,
+                downCounterValue,
+                setDownCounterValue,
+              }}
               confirmDeleteUuid={confirmDeleteUuid}
               setConfirmDeleteUuid={setConfirmDeleteUuid}
               applyNewKevpertBind={Boolean(variationToggles.applyNewKevpertBind)}
               onToggleApplyNewKevpertBind={(val) =>
                 onUpdateVariationToggles({ applyNewKevpertBind: val })
               }
-              onSaveMetadata={() => void handleSaveMetadata()}
               onPlayPack={(meta) => {
                 onStartPlaySession?.(meta.uuid);
                 onPlayPack?.(meta, downCounterEnabled);

@@ -1,10 +1,11 @@
 import React from 'react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
+import type { VehicleDescriptor } from '../../../config/vehicleTunerConfig';
 
 export interface BoostNozzlesTabProps {
-  descriptor: any;
-  handleBoostNozzleChange?: (patch: Record<string, any>) => void;
+  descriptor: VehicleDescriptor;
+  handleBoostNozzleChange?: (patch: Partial<VehicleDescriptor['boostNozzleParams']>) => void;
   isLight: boolean;
   cardClass: string;
 }

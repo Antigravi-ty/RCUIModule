@@ -124,7 +124,7 @@ export function ageTicksToMidPct(
 }
 
 type SupersonicTrailConfigCallback = (snapshot: SupersonicTrailConfig) => void;
-const trailConfigListeners = new Set<SupersonicTrailConfigCallback>();
+const trailConfigCallbacks: SupersonicTrailConfigCallback[] = [];
 
 export function getSupersonicTrailConfig(): SupersonicTrailConfig {
   return { ...supersonicTrailRuntimeConfig };
@@ -134,15 +134,20 @@ export function subscribeSupersonicTrailConfig(
   listener: SupersonicTrailConfigCallback
 ): () => void {
   if (typeof listener !== 'function') return () => {};
-  trailConfigListeners.add(listener);
+  if (!trailConfigCallbacks.includes(listener)) {
+    trailConfigCallbacks.push(listener);
+  }
   return () => {
-    trailConfigListeners.delete(listener);
+    const idx = trailConfigCallbacks.indexOf(listener);
+    if (idx !== -1) {
+      trailConfigCallbacks.splice(idx, 1);
+    }
   };
 }
 
 function notifySupersonicTrailListeners(): SupersonicTrailConfig {
   const snapshot = getSupersonicTrailConfig();
-  for (const listener of trailConfigListeners) {
+  for (const listener of trailConfigCallbacks) {
     try {
       listener(snapshot);
     } catch {

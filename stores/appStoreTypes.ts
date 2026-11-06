@@ -21,6 +21,11 @@ import {
   type DriftwoodsPreset
 } from '../config/driftwoodsConfig';
 import { type StoredColorPrefs } from '../config/vehiclePresets';
+import type { ExperimentalWallFxConfig, ShadowConfig } from '../config/atmosphereFxConfig';
+import type { AnodizedPaintTuning, BoostParticleRuntimeConfig } from '../config/vehicleTunerConfig';
+import type { SkyboxConfig } from '../config/skyboxConfig';
+import type { BallVisualConfig } from '../config/ballVisualConfig';
+import type { InputBindingsConfig } from '../config/inputBindingValidators';
 
 export interface PerCarBoostDevConfig {
   unlimitedBoost: boolean;
@@ -182,6 +187,7 @@ export interface AppState {
     onStartMatch?: (botId: string, durationSeconds?: number, teamSize?: 'standard' | 'double' | 'solo') => void;
     onStartKickoffTraining?: () => void;
     onStartReplayViewer?: () => void;
+    onStartReplayToRcsImporter?: () => void;
     onStartStaticTrainingPack?: (sessionMode?: 'play' | 'edit') => void;
     onStartDevTestLab?: () => void;
     onStartExpMultiBots?: () => void;
@@ -226,7 +232,7 @@ export interface AppState {
     onFreeCamToggle?: (enabled: boolean) => void;
     onFreeCamFovChange?: (fov: number) => void;
     onResetFreeCam?: () => void;
-    onBindingsChange?: (bindings: any) => void;
+    onBindingsChange?: (bindings: InputBindingsConfig) => void;
     onClockPacingModeChange?: (mode: ClockPacingMode) => void;
     onClockPacingPriorityChange?: (priority: ClockPacingPriority) => void;
     onClockPacingParamsChange?: (params: ClockPacingParams) => void;
@@ -236,12 +242,12 @@ export interface AppState {
     onEnsureNetworkDiagnostics?: () => void;
     onSimulateBoostPadCollect?: (padIndex: number | 'all') => void;
     onSimulateBoostPadRefill?: (padIndex: number | 'all', duration?: number) => void;
-    onExperimentalWallConfigChange?: (config: any) => void;
-    onShadowConfigChange?: (config: any) => void;
-    onAnodizedPaintChange?: (config: any) => void;
-    onBoostParticleConfigChange?: (config: any) => void;
-    onSkyboxConfigChange?: (config: any) => void;
-    onBallVisualConfigChange?: (config: any) => void;
+    onExperimentalWallConfigChange?: (config: ExperimentalWallFxConfig) => void;
+    onShadowConfigChange?: (config: ShadowConfig) => void;
+    onAnodizedPaintChange?: (config: AnodizedPaintTuning) => void;
+    onBoostParticleConfigChange?: (config: BoostParticleRuntimeConfig) => void;
+    onSkyboxConfigChange?: (config: SkyboxConfig) => void;
+    onBallVisualConfigChange?: (config: BallVisualConfig) => void;
     onCustomVehicleTunerChange?: (vehicleId: string, hitboxPreset?: string) => void;
     onUnderDevelopmentChange?: (config: UnderDevelopmentConfig, patch: Partial<UnderDevelopmentConfig>) => Promise<void> | void;
   };

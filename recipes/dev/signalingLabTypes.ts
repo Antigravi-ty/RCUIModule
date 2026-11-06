@@ -88,6 +88,18 @@ export interface SignalingLabProbeSummaryView {
   combinedLogs: SignalingLabCloudAuditLogItem[];
 }
 
+export interface Layer4DevSignalingLabStateOverride {
+  roomCode?: string;
+  onRoomCodeChange?: (next: string) => void;
+  roomPassword?: string;
+  onRoomPasswordChange?: (next: string) => void;
+  customSourceRelay?: CanonicalLabRelayId;
+  onCustomSourceRelayChange?: (next: CanonicalLabRelayId) => void;
+  customTargetRelay?: CanonicalLabRelayId;
+  onCustomTargetRelayChange?: (next: CanonicalLabRelayId) => void;
+  sizing?: PanelSizingConfig;
+}
+
 export interface Layer4DevSignalingLabRecipeProps {
   isLight?: boolean;
   onBack?: () => void;
@@ -99,10 +111,6 @@ export interface Layer4DevSignalingLabRecipeProps {
   onRoomCodeChange?: (next: string) => void;
   roomPassword?: string;
   onRoomPasswordChange?: (next: string) => void;
-  customSourceRelay?: CanonicalLabRelayId;
-  onCustomSourceRelayChange?: (next: CanonicalLabRelayId) => void;
-  customTargetRelay?: CanonicalLabRelayId;
-  onCustomTargetRelayChange?: (next: CanonicalLabRelayId) => void;
   isBusy?: boolean;
   activeActionLabel?: string | null;
   lastResultBanner?: { ok: boolean; text: string } | null;
@@ -111,10 +119,11 @@ export interface Layer4DevSignalingLabRecipeProps {
   onOneClickFullDiagnostic?: () => void;
   onRunScenario?: (scenario: SignalingLabScenarioId, label: string) => void;
   onClearTraces?: () => void;
+  stateOverride?: Layer4DevSignalingLabStateOverride;
 }
 
 export const DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG: SignalingLabEndpointViewConfig = {
-  topicNamespace: 'rc/sig',
+  topicNamespace: '<topic_namespace>',
   jpEdgeFunctionUrl: 'https://relay-jp.carball.dev/functions/v1/signaling-bridge',
   sgEdgeFunctionUrl: 'https://relay-sg.carball.dev/functions/v1/signaling-bridge',
   slots: {
@@ -186,7 +195,7 @@ export function buildEmqxBridgeRuleSql(
   topicNamespace: string,
   bridgeUser = '<bridge_mqtt_username>'
 ): string {
-  const cleanNs = (topicNamespace || 'rc/sig').replace(/\/+$/, '');
+  const cleanNs = (topicNamespace || '<topic_namespace>').replace(/\/+$/, '');
   return `SELECT
   topic,
   payload,

@@ -51,7 +51,7 @@ export const STORAGE_KEYS = Object.freeze({
 export const UI_THEME_STORAGE_KEY = STORAGE_KEYS.UI_THEME;
 
 type SafeStorageChangeListener = (key: string) => void;
-const storageListeners = new Set<SafeStorageChangeListener>();
+const storageListeners: SafeStorageChangeListener[] = [];
 
 export const safeStorage = {
   get: (k: string, fallback: string | null = null): string | null => {
@@ -72,7 +72,7 @@ export const safeStorage = {
         const prevStr = localStorage.getItem(k);
         localStorage.setItem(k, nextStr);
         if (prevStr !== nextStr) {
-          storageListeners.forEach((fn) => fn(k));
+          for (let i = 0; i < storageListeners.length; i++) storageListeners[i](k);
         }
       }
     } catch (err) {
@@ -88,7 +88,7 @@ export const safeStorage = {
         const hadPrev = localStorage.getItem(k) !== null;
         localStorage.removeItem(k);
         if (hadPrev) {
-          storageListeners.forEach((fn) => fn(k));
+          for (let i = 0; i < storageListeners.length; i++) storageListeners[i](k);
         }
       }
     } catch (err) {
@@ -99,9 +99,12 @@ export const safeStorage = {
     safeStorage.remove(k);
   },
   subscribe: (listener: SafeStorageChangeListener): (() => void) => {
-    storageListeners.add(listener);
+    if (!storageListeners.includes(listener)) {
+      storageListeners.push(listener);
+    }
     return () => {
-      storageListeners.delete(listener);
+      const idx = storageListeners.indexOf(listener);
+      if (idx >= 0) storageListeners.splice(idx, 1);
     };
   },
 };
@@ -137,7 +140,7 @@ export function writeStorageJson<T>(key: string, value: T): void {
   }
 }
 
-export function isPlainObject(val: unknown): val is Record<string, any> {
+export function isPlainObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
 }
 
@@ -177,7 +180,17 @@ export function stringOrDefault(val: unknown, allowed: readonly string[] | Set<s
   return fallback;
 }
 
-export function filterArraySlice<T>(val: unknown, filterFn: (item: any) => boolean, maxLen: number): T[] | null {
+export function filterArraySlice<T>(
+  val: unknown,
+  filterFn: (item: unknown) => item is T,
+  maxLen: number
+): T[] | null;
+export function filterArraySlice<T>(
+  val: unknown,
+  filterFn: (item: unknown) => boolean,
+  maxLen: number
+): T[] | null;
+export function filterArraySlice<T>(val: unknown, filterFn: (item: unknown) => boolean, maxLen: number): T[] | null {
   return Array.isArray(val) ? (val.filter(filterFn).slice(0, maxLen) as T[]) : null;
 }
 
@@ -191,10 +204,10 @@ export interface LocalStorageStore<T> {
   clear: () => void;
 }
 
-export function createLocalStorageStore<T extends Record<string, any>>(
+export function createLocalStorageStore<T extends object>(
   key: string,
   defaultFactory: () => T,
-  migrateFn?: (target: T, loaded: any) => void
+  migrateFn?: (target: T, loaded: Record<string, unknown>) => void
 ): LocalStorageStore<T> {
   const load = (): T => {
     const defaults = defaultFactory();

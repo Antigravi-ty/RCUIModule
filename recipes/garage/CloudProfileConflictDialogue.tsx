@@ -136,6 +136,28 @@ export const CloudProfileConflictDialogueContent: React.FC<{
   );
 };
 
+import { useCloudProfileSyncStore } from '../../stores/cloudProfileSyncStore';
+
+let conflictDialogueSubscriptionAttached = false;
+
+export function attachCloudProfileConflictDialogueAutoSync(): void {
+  if (conflictDialogueSubscriptionAttached) return;
+  conflictDialogueSubscriptionAttached = true;
+
+  let prevConflictsCount = useCloudProfileSyncStore.getState().conflicts.length;
+  if (prevConflictsCount > 0) {
+    syncConflictDialogueState(prevConflictsCount, useCloudProfileSyncStore);
+  }
+
+  useCloudProfileSyncStore.subscribe((state) => {
+    const nextCount = state.conflicts.length;
+    if (nextCount !== prevConflictsCount) {
+      prevConflictsCount = nextCount;
+      syncConflictDialogueState(nextCount, useCloudProfileSyncStore);
+    }
+  });
+}
+
 export function syncConflictDialogueState(
   conflictsCount: number,
   storePort: ConflictDialogueStorePort

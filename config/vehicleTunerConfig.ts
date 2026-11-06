@@ -123,7 +123,7 @@ export interface VehicleTunerRuntimeFlags {
   forceBrakeLightPreview: boolean;
   brakePreviewMode: string;
   showNozzleGizmos: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const vehicleTunerRuntimeFlags: VehicleTunerRuntimeFlags = {
@@ -173,7 +173,7 @@ export interface WheelModifierConfig {
   shaderMode: string;
   roughness: number;
   metalness: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_WHEEL_MODIFIER_CONFIG: WheelModifierConfig = {
@@ -311,7 +311,7 @@ export interface AnodizedPaintTuning {
   envMapIntensity: number;
   pearlFresnelPower: number;
   pearlBlendStrength: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const anodizedPaintTuning: AnodizedPaintTuning = {
@@ -327,13 +327,16 @@ export const anodizedPaintTuning: AnodizedPaintTuning = {
 };
 
 type AnodizedPaintListener = (patch: Partial<AnodizedPaintTuning>, state: AnodizedPaintTuning) => void;
-const anodizedPaintListeners = new Set<AnodizedPaintListener>();
+const anodizedPaintCallbacks: AnodizedPaintListener[] = [];
 
 export function subscribeAnodizedPaintTuning(listener: AnodizedPaintListener): () => void {
   if (typeof listener !== 'function') return () => {};
-  anodizedPaintListeners.add(listener);
+  if (!anodizedPaintCallbacks.includes(listener)) {
+    anodizedPaintCallbacks.push(listener);
+  }
   return () => {
-    anodizedPaintListeners.delete(listener);
+    const idx = anodizedPaintCallbacks.indexOf(listener);
+    if (idx !== -1) anodizedPaintCallbacks.splice(idx, 1);
   };
 }
 
@@ -346,7 +349,7 @@ export function updateAnodizedPaintTuning(
 ): AnodizedPaintTuning {
   if (!patch) return anodizedPaintTuning;
   Object.assign(anodizedPaintTuning, patch);
-  for (const listener of anodizedPaintListeners) {
+  for (const listener of anodizedPaintCallbacks) {
     try {
       listener(patch, anodizedPaintTuning);
     } catch (err) {
@@ -372,7 +375,7 @@ export interface BoostParticleRuntimeConfig {
   drivePuffsEnabled: boolean;
   pointLightEnabled: boolean;
   bloomEnabled: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const boostParticleRuntimeConfig: BoostParticleRuntimeConfig = {
@@ -414,17 +417,24 @@ export function setBoostParticleRuntimeConfig(
   return boostParticleRuntimeConfig;
 }
 
-type VehicleTunerListener = (payload: Record<string, any>) => void;
-const vehicleTunerListeners = new Set<VehicleTunerListener>();
+type VehicleTunerListener = (payload: Record<string, unknown>) => void;
+const vehicleTunerCallbacks: VehicleTunerListener[] = [];
 
 export function subscribeVehicleTunerConfig(listener: VehicleTunerListener): () => boolean {
   if (typeof listener !== 'function') return () => false;
-  vehicleTunerListeners.add(listener);
-  return () => vehicleTunerListeners.delete(listener);
+  if (!vehicleTunerCallbacks.includes(listener)) {
+    vehicleTunerCallbacks.push(listener);
+  }
+  return () => {
+    const idx = vehicleTunerCallbacks.indexOf(listener);
+    if (idx === -1) return false;
+    vehicleTunerCallbacks.splice(idx, 1);
+    return true;
+  };
 }
 
-export function notifyVehicleTunerConfigChange(payload: Record<string, any> = {}): void {
-  for (const fn of vehicleTunerListeners) {
+export function notifyVehicleTunerConfigChange(payload: Record<string, unknown> = {}): void {
+  for (const fn of vehicleTunerCallbacks) {
     try {
       fn(payload);
     } catch (err) {

@@ -27,7 +27,7 @@ export interface StaticTrainingPackInspectorActionsProps {
   isLight: boolean;
   selectedMeta: StaticTrainingPackSummary & { editable?: boolean };
   downCounterEnabled: boolean;
-  setDownCounterEnabled: (val: boolean | ((prev: boolean) => boolean)) => void;
+  setDownCounterEnabled: (val: boolean) => void;
   downCounterValue: StaticPackDownCounterOption;
   setDownCounterValue: (val: StaticPackDownCounterOption) => void;
   confirmDeleteUuid: string | null;
@@ -83,7 +83,7 @@ export const StaticTrainingPackInspectorActions: React.FC<
             <span className="text-[11px] font-bold">Down Counter</span>
             <ToggleSwitch
               checked={downCounterEnabled}
-              onChange={() => setDownCounterEnabled((v) => !v)}
+              onChange={(checked) => setDownCounterEnabled(checked)}
               ariaLabel="Toggle Down Counter"
             />
           </div>

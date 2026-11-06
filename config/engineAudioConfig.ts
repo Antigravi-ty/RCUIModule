@@ -329,7 +329,7 @@ export const ENGINE_AUDIO_TUNING_CONFIG: EngineAudioTuningConfig = {
 };
 
 type EngineAudioConfigListener = (config: EngineAudioTuningConfig) => void;
-const configListeners = new Set<EngineAudioConfigListener>();
+const configCallbacks: EngineAudioConfigListener[] = [];
 
 export function getEngineAudioTuningConfig(): EngineAudioTuningConfig {
   return ENGINE_AUDIO_TUNING_CONFIG;
@@ -342,7 +342,7 @@ export function updateEngineAudioTuningConfig(
   if (patch.eqBandGainsDb) {
     ENGINE_AUDIO_TUNING_CONFIG.eqBandGainsDb = [...patch.eqBandGainsDb];
   }
-  for (const listener of configListeners) {
+  for (const listener of configCallbacks) {
     try {
       listener(ENGINE_AUDIO_TUNING_CONFIG);
     } catch (err) {
@@ -362,9 +362,12 @@ export function resetEngineAudioTuningConfig(): EngineAudioTuningConfig {
 export function subscribeEngineAudioTuningConfig(
   listener: EngineAudioConfigListener
 ): () => void {
-  configListeners.add(listener);
+  if (!configCallbacks.includes(listener)) {
+    configCallbacks.push(listener);
+  }
   return () => {
-    configListeners.delete(listener);
+    const idx = configCallbacks.indexOf(listener);
+    if (idx !== -1) configCallbacks.splice(idx, 1);
   };
 }
 
@@ -392,10 +395,10 @@ export function getEngineAudioRuntimeActions(): EngineAudioRuntimeActions {
 }
 
 type EngineAudioTelemetryListener = (patch: Partial<EngineAudioLiveTelemetry>) => void;
-const telemetryListeners = new Set<EngineAudioTelemetryListener>();
+const telemetryCallbacks: EngineAudioTelemetryListener[] = [];
 
 export function publishEngineAudioTelemetry(patch: Partial<EngineAudioLiveTelemetry>): void {
-  for (const listener of telemetryListeners) {
+  for (const listener of telemetryCallbacks) {
     try {
       listener(patch);
     } catch {
@@ -407,8 +410,11 @@ export function publishEngineAudioTelemetry(patch: Partial<EngineAudioLiveTeleme
 export function subscribeEngineAudioTelemetry(
   listener: EngineAudioTelemetryListener
 ): () => void {
-  telemetryListeners.add(listener);
+  if (!telemetryCallbacks.includes(listener)) {
+    telemetryCallbacks.push(listener);
+  }
   return () => {
-    telemetryListeners.delete(listener);
+    const idx = telemetryCallbacks.indexOf(listener);
+    if (idx !== -1) telemetryCallbacks.splice(idx, 1);
   };
 }

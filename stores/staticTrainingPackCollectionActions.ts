@@ -54,7 +54,7 @@ export interface StaticTrainingShotActionHelpers {
   ) => ActiveStaticTrainingPackBundle | null;
 }
 
-export interface StaticTrainingShotStoreSlice {
+export interface StaticTrainingShotStoreState {
   initialized: boolean;
   devInitialized: boolean;
   isLoading: boolean;
@@ -90,7 +90,7 @@ export function buildScopePackStatePatch(
   packs: StaticTrainingPackMetadata[],
   selectedUuid: string | null,
   isActiveScope: boolean
-): Partial<StaticTrainingShotStoreSlice> {
+): Partial<StaticTrainingShotStoreState> {
   return {
     ...(scope === 'dev'
       ? { devPacks: packs, devSelectedPackUuid: selectedUuid }
@@ -99,9 +99,9 @@ export function buildScopePackStatePatch(
   };
 }
 
-export function createStaticTrainingPackCollectionActions<TState extends StaticTrainingShotStoreSlice>(
+export function createStaticTrainingPackCollectionActions<TState extends StaticTrainingShotStoreState>(
   set: (
-    partial: Partial<StaticTrainingShotStoreSlice> | ((state: TState) => Partial<StaticTrainingShotStoreSlice>)
+    partial: Partial<StaticTrainingShotStoreState> | ((state: TState) => Partial<StaticTrainingShotStoreState>)
   ) => void,
   get: () => TState,
   helpers: StaticTrainingShotActionHelpers

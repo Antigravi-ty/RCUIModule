@@ -33,6 +33,7 @@ import {
   SUBSYSTEM_ISOLATION_LAB_PRESET,
   EXPERIMENTAL_MULTI_BOTS_PRESET,
   EXPERIMENTAL_BOT_PACK_PRESET,
+  REPLAY_TO_RCS_IMPORTER_PRESET,
 } from '../stores/devFloatingPresets';
 
 export type { DevTestLabTab, Layer3DevSandboxesRecipeProps };
@@ -140,6 +141,16 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
     icon: FileArchive,
     iconColor: 'text-cyan-400',
   },
+  {
+    id: 'replay-to-rcs-importer',
+    title: 'Replay to RCS Replay Importer',
+    summary:
+      'Import raw Rocket League .replay files, upsample 30Hz to 120Hz, intervene (Disappear/Trajectory/Nexto/Necto), and save as .rcreplay.gz.',
+    details:
+      'Replay to RCS Replay Importer (UE3 Bitstream Decoder · 30Hz->120Hz SLERP/Hermite · Track Delta): Parses raw .replay files into 120Hz RocketCompanion tracks, preserves native UE3 telemetry in Track Delta, and exports RCS Replay Packs.',
+    icon: FileArchive,
+    iconColor: 'text-cyan-400',
+  },
 ];
 
 /**
@@ -207,7 +218,9 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
         ? EXPERIMENTAL_BOT_PACK_PRESET
         : tab === 'exp-multi-bots'
           ? EXPERIMENTAL_MULTI_BOTS_PRESET
-          : SUBSYSTEM_ISOLATION_LAB_PRESET;
+          : tab === 'replay-to-rcs-importer'
+            ? REPLAY_TO_RCS_IMPORTER_PRESET
+            : SUBSYSTEM_ISOLATION_LAB_PRESET;
 
     floatingStore.setOpacity(70);
     const snap = floatingStore.getSnapshot();

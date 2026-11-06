@@ -4,16 +4,13 @@ import { STORAGE_KEYS, safeStorage } from '../../config/storageHelpers';
 import { getInitialTheme } from '../../config/themeConfig';
 import {
   getInitialCar,
-  garageSettingsStore,
-  loadStoredPlayerName,
-  loadStoredColorPrefs,
-  saveStoredColorPrefs,
   getPreferredColorHex,
-  type StoredColorPrefs,
+  loadStoredColorPrefs,
+  loadStoredPlayerName,
+  saveStoredColorPrefs,
 } from '../../config/vehiclePresets';
 import { ROUTE_PARENT_MAP, type ActiveMenuRoute } from '../../config/uiConfig';
 import { type AppState } from '../appStoreTypes';
-import { useExperimentalMultiBotsStore } from '../experimentalMultiBotsStore';
 
 export const initialTheme = getInitialTheme();
 
@@ -146,7 +143,6 @@ export const createNavigationAndCarSlice: StateCreator<
 
   setActiveCar: (carId) => {
     set({ activeCar: carId });
-    garageSettingsStore.save({ vehiclePreset: carId, carVisual: carId });
     safeStorage.set(
       STORAGE_KEYS.DISPLAY_SETTINGS,
       JSON.stringify({ vehiclePreset: carId, carVisual: carId })
@@ -154,9 +150,9 @@ export const createNavigationAndCarSlice: StateCreator<
     get().bridge.onVehicleChange?.(carId);
   },
 
-  setColorPrefs: (prefs: StoredColorPrefs) => {
-    const normalized: StoredColorPrefs = {
-      primaryTeam: prefs.primaryTeam === 'blue' ? 'blue' : 'orange',
+  setColorPrefs: (prefs) => {
+    const normalized = {
+      primaryTeam: prefs.primaryTeam === 'orange' ? ('orange' as const) : ('blue' as const),
       blueOrder:
         Array.isArray(prefs.blueOrder) && prefs.blueOrder.length > 0
           ? prefs.blueOrder.map((n) => Number(n))
@@ -169,7 +165,6 @@ export const createNavigationAndCarSlice: StateCreator<
     const activeSlotId = saveStoredColorPrefs(normalized);
     const activeHex = getPreferredColorHex(normalized);
     set({ colorPrefs: normalized });
-    useExperimentalMultiBotsStore.getState().syncExhibitionFromColorPrefs(false);
     get().bridge.onColorChange?.(activeHex, activeSlotId);
   },
 

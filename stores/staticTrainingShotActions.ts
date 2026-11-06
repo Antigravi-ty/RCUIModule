@@ -17,7 +17,7 @@ import {
   type ActiveStaticTrainingPackBundle,
   type StaticTrainingPackRuntimeHandlers,
   type StaticTrainingShotActionHelpers,
-  type StaticTrainingShotStoreSlice,
+  type StaticTrainingShotStoreState,
 } from './staticTrainingPackCollectionActions';
 
 export type {
@@ -26,16 +26,16 @@ export type {
   ActiveStaticTrainingPackBundle,
   StaticTrainingPackRuntimeHandlers,
   StaticTrainingShotActionHelpers,
-  StaticTrainingShotStoreSlice,
+  StaticTrainingShotStoreState,
 };
 
 export function createStaticTrainingShotActions<
-  TState extends StaticTrainingShotStoreSlice
+  TState extends StaticTrainingShotStoreState
 >(
   set: (
     partial:
-      | Partial<StaticTrainingShotStoreSlice>
-      | ((state: TState) => Partial<StaticTrainingShotStoreSlice>)
+      | Partial<StaticTrainingShotStoreState>
+      | ((state: TState) => Partial<StaticTrainingShotStoreState>)
   ) => void,
   get: () => TState,
   helpers: StaticTrainingShotActionHelpers

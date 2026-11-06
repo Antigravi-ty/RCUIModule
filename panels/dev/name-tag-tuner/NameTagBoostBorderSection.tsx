@@ -181,10 +181,59 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
 
             {config.boostIndicatorMode !== 'sunset-circle' && (
               <>
+                <div className="flex items-center justify-between gap-1 text-[10px] pt-0.5">
+                  <span className={mutedText}>Fill Color Mix Presets:</span>
+                  <div className="flex items-center gap-1">
+                    {[
+                      { label: '100% Pure Boost Color', value: 1.0 },
+                      { label: '65% Tinted', value: 0.65 },
+                      { label: '38% Legacy Team Mix', value: 0.38 },
+                      { label: '0% Pure Team Bg', value: 0.0 },
+                    ].map((preset) => {
+                      const isPresetActive =
+                        Math.abs(
+                          (config.boostFillColorBlendRatio ?? 1.0) - preset.value
+                        ) < 0.015;
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() =>
+                            updateConfig({ boostFillColorBlendRatio: preset.value })
+                          }
+                          className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer transition-colors ${
+                            isPresetActive
+                              ? isLight
+                                ? 'bg-cyan-500/15 border-cyan-500 text-cyan-800 font-bold'
+                                : 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold'
+                              : isLight
+                                ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
+                                : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <SliderControl
-                  label="Active Boost Fill Opacity"
+                  label="Active Boost Color Blend (0% Team Bg -> 100% Pure Boost Color)"
+                  value={Math.round((config.boostFillColorBlendRatio ?? 1.0) * 100)}
+                  min={0}
+                  max={100}
+                  step={2}
+                  unit="%"
+                  onChange={(nextPct) =>
+                    updateConfig({ boostFillColorBlendRatio: nextPct / 100 })
+                  }
+                  isLight={isLight}
+                />
+                <SliderControl
+                  label="Active Boost Fill Opacity (Filled Region Alpha)"
                   value={config.boostFillOpacity}
-                  min={0.1}
+                  min={0.0}
                   max={1.0}
                   step={0.02}
                   onChange={(nextValue) =>
@@ -193,14 +242,35 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
                   isLight={isLight}
                 />
                 <SliderControl
-                  label="Unfilled Base Background Opacity"
+                  label="Unfilled Base Background Opacity (Depleted Region Alpha)"
                   value={config.boostUnfilledBgOpacity}
                   min={0.0}
-                  max={0.9}
+                  max={1.0}
                   step={0.02}
                   onChange={(nextValue) =>
                     updateConfig({ boostUnfilledBgOpacity: nextValue })
                   }
+                  isLight={isLight}
+                />
+                <SliderControl
+                  label="Unfilled Base Darken Mix (0% Pure Team Bg -> 100% Dark #040914)"
+                  value={Math.round((config.boostUnfilledDarkenRatio ?? 0.45) * 100)}
+                  min={0}
+                  max={100}
+                  step={5}
+                  unit="%"
+                  onChange={(nextPct) =>
+                    updateConfig({ boostUnfilledDarkenRatio: nextPct / 100 })
+                  }
+                  isLight={isLight}
+                />
+                <SliderControl
+                  label="Overall Card Master Opacity (Multiplies Entire Pill Alpha)"
+                  value={config.opacity}
+                  min={0.1}
+                  max={1.0}
+                  step={0.02}
+                  onChange={(nextValue) => updateConfig({ opacity: nextValue })}
                   isLight={isLight}
                 />
               </>

@@ -17,7 +17,7 @@ export interface CameraSettingsConfig {
   swivelSpeed: number;
   transitionSpeed: number;
   invertSwivel: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_CAMERA_SETTINGS: Readonly<CameraSettingsConfig> = Object.freeze({

@@ -12,6 +12,12 @@ export interface ReplaySignalMarker {
   synthesized?: boolean;
 }
 
+export interface MultiTrackReplayDomRefs {
+  trackAFillRef: React.RefObject<HTMLDivElement | null>;
+  trackBCursorRef: React.RefObject<HTMLDivElement | null>;
+  trackCCursorRef: React.RefObject<HTMLDivElement | null>;
+}
+
 export interface MultiTrackReplayTracksOnlyViewProps {
   fileName: string;
   totalFrames: number;
@@ -21,13 +27,9 @@ export interface MultiTrackReplayTracksOnlyViewProps {
   isTrackDisabled: boolean;
   isLight: boolean;
   className: string;
-  trackBgClass: string;
-  cursorLineClass: string;
   incidentMarkers: ReplayIncidentMarker[];
   signalMarkers: ReplaySignalMarker[];
-  trackAFillRef: React.RefObject<HTMLDivElement | null>;
-  trackBCursorRef: React.RefObject<HTMLDivElement | null>;
-  trackCCursorRef: React.RefObject<HTMLDivElement | null>;
+  trackRefs: MultiTrackReplayDomRefs;
   handleTrackSeek: (e: React.MouseEvent<HTMLDivElement>) => void;
   applyCursorToDom: (frameIndex: number) => void;
   onSeekFrame?: (frameIndex: number) => void;
@@ -42,17 +44,15 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
   isTrackDisabled,
   isLight,
   className,
-  trackBgClass,
-  cursorLineClass,
   incidentMarkers,
   signalMarkers,
-  trackAFillRef,
-  trackBCursorRef,
-  trackCCursorRef,
+  trackRefs: { trackAFillRef, trackBCursorRef, trackCCursorRef },
   handleTrackSeek,
   applyCursorToDom,
   onSeekFrame,
 }) => {
+  const trackBgClass = isLight ? 'bg-neutral-200/90' : 'bg-neutral-800/95';
+  const cursorLineClass = isLight ? 'bg-neutral-900' : 'bg-white';
   const clampedCursor = isTrackDisabled ? 0 : Math.max(0, Math.min(totalFrames, effectiveInitialFrame));
   const cursorSec = (clampedCursor / 120).toFixed(2);
   const totalSec = (Math.max(0, totalFrames) / 120).toFixed(2);

@@ -21,9 +21,7 @@ import type {
 } from '../../config/staticTrainingVariationTypes';
 import { DEFAULT_QUICK_VARIATION_TOGGLES, KEVPERT_LATEST_PRESETS } from '../../config/staticTrainingVariationTypes';
 
-export interface Layer4StaticTrainingPackBrowseRecipeProps {
-  isLight?: boolean;
-  isDevMode?: boolean;
+export interface Layer4StaticTrainingPackBrowseStateOverride {
   packs?: StaticTrainingPackSummary[];
   selectedPackUuid?: string | null;
   onSelectPack?: (uuid: string) => void;
@@ -48,17 +46,24 @@ export interface Layer4StaticTrainingPackBrowseRecipeProps {
     bundleName: string,
     editable: boolean
   ) => Promise<string | null> | void;
+  onExportPack?: (pack: StaticTrainingPackSummary, editable?: boolean) => Promise<void> | void;
+}
+
+export interface Layer4StaticTrainingPackBrowseRecipeProps
+  extends Partial<Layer4StaticTrainingPackBrowseStateOverride> {
+  isLight?: boolean;
+  isDevMode?: boolean;
   onBack?: () => void;
   onStartPlaySession?: (uuid: string) => void;
   onStartEditSession?: (uuid: string) => void;
   onPlayPack?: (pack: StaticTrainingPackSummary, useDownCounter: boolean) => void;
   onEditPack?: (pack: StaticTrainingPackSummary) => void;
   onImportPack?: () => void;
-  onExportPack?: (pack: StaticTrainingPackSummary, editable?: boolean) => Promise<void> | void;
+  stateOverride?: Layer4StaticTrainingPackBrowseStateOverride;
   className?: string;
 }
 
-export interface StaticTrainingShotInspectorDrawerProps {
+export interface StaticTrainingShotInspectorBindingInput {
   isLight?: boolean;
   transparent?: boolean;
   packTitle?: string;
@@ -219,8 +224,8 @@ export function useLayer4StaticTrainingPackBrowseStoreBinding(
 }
 
 export function useStaticTrainingShotInspectorDrawerStoreBinding(
-  rawProps: StaticTrainingShotInspectorDrawerProps
-): StaticTrainingShotInspectorDrawerProps {
+  rawProps: StaticTrainingShotInspectorBindingInput
+): StaticTrainingShotInspectorBindingInput {
   const activePack = useStaticTrainingPackStore((s) => s.activePack);
   const storeShotIndex = useStaticTrainingPackStore((s) => s.currentShotIndex);
   const storeIsEditingItem = useStaticTrainingPackStore((s) => s.isEditingItem);

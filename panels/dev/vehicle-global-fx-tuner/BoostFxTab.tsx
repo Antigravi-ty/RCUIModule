@@ -2,12 +2,13 @@ import React from 'react';
 import { SegmentedSwitch } from '../../../primitives/SegmentedSwitch';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
+import type { BoostParticleRuntimeConfig } from '../../../config/vehicleTunerConfig';
 
 export interface BoostFxTabProps {
   boostVisual?: 'cartoon' | 'gold-rush';
   onBoostVisualChange?: (mode: 'cartoon' | 'gold-rush') => void;
-  particleConfig?: any;
-  applyParticlePatch?: (patch: Record<string, any>) => void;
+  particleConfig: BoostParticleRuntimeConfig;
+  applyParticlePatch?: (patch: Partial<BoostParticleRuntimeConfig>) => void;
   isLight: boolean;
   cardClass: string;
 }

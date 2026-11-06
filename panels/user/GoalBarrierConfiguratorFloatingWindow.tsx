@@ -12,18 +12,44 @@ import {
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { SettingActionRow } from '../../compounds/SettingActionRow';
 import { SettingSliderRow } from '../../compounds/SettingSliderRow';
-import {
-  useGoalBarrierPanelBinding,
-  type GoalBarrierPlacement,
-  type GoalBarrierConfigState,
-  type GoalBarrierConfiguratorFloatingWindowProps,
-} from './useGoalBarrierPanelBinding';
+import { useGoalBarrierPanelBinding } from './useGoalBarrierPanelBinding';
 
-export type {
-  GoalBarrierPlacement,
-  GoalBarrierConfigState,
-  GoalBarrierConfiguratorFloatingWindowProps,
-};
+export type GoalBarrierPlacement = 'none' | 'both' | 'orange' | 'blue';
+
+export interface GoalBarrierConfigState {
+  placement: GoalBarrierPlacement;
+  selectionMode: GoalBarrierSelectionMode;
+  opacityPct: number;
+  grid: Uint8Array;
+  mergedRects?: NormalizedBarrierRect[];
+}
+
+export interface GoalBarrierConfiguratorFloatingWindowProps {
+  isLight?: boolean;
+  active?: boolean;
+  /** Controlled placement ('none' | 'both' | 'orange' | 'blue') */
+  placement?: GoalBarrierPlacement;
+  defaultPlacement?: GoalBarrierPlacement;
+  onPlacementChange?: (placement: GoalBarrierPlacement) => void;
+  /** Controlled selection mode ('new' | 'add' | 'subtract') */
+  selectionMode?: GoalBarrierSelectionMode;
+  defaultSelectionMode?: GoalBarrierSelectionMode;
+  onSelectionModeChange?: (mode: GoalBarrierSelectionMode) => void;
+  /** Controlled opacity percentage (1..100) */
+  opacityPct?: number;
+  defaultOpacityPct?: number;
+  onOpacityPctChange?: (opacityPct: number) => void;
+  /** Controlled 32x16 barrier grid */
+  grid?: Uint8Array;
+  defaultGrid?: Uint8Array;
+  onGridChange?: (grid: Uint8Array, mergedRects: NormalizedBarrierRect[]) => void;
+  /** Callback when a preset is clicked */
+  onApplyPreset?: (presetId: GoalBarrierPresetId, grid: Uint8Array) => void;
+  /** Callback when Clear is clicked */
+  onClear?: () => void;
+  /** Aggregated state change callback */
+  onChange?: (state: GoalBarrierConfigState) => void;
+}
 
 /**
  * 2. [User] Goal Barrier Config (`goal-barrier-config`)

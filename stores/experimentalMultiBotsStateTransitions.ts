@@ -26,7 +26,7 @@ export interface ExperimentalMultiBotsRuntimeHandlers {
   onPreloadEngines?: () => void;
 }
 
-export interface ExperimentalMultiBotsTransitionSlice {
+export interface ExperimentalMultiBotsTransitionState {
   activeSubMode: ExpSubMode;
   savedMultiBotsRoster: ExpRosterSnapshot;
   savedBotpackModel: ExpBotPolicyId;
@@ -69,7 +69,7 @@ export function createExperimentalMultiBotsRuntimeHandlersProxy(
 
 function snapshotCurrentMultiBotsRoster(
   state: Pick<
-    ExperimentalMultiBotsTransitionSlice,
+    ExperimentalMultiBotsTransitionState,
     | 'activeSubMode'
     | 'playerParticipation'
     | 'blueSlots'
@@ -89,8 +89,8 @@ function snapshotCurrentMultiBotsRoster(
 }
 
 export function computeActivateMultiBotsTransition(
-  state: ExperimentalMultiBotsTransitionSlice
-): Partial<ExperimentalMultiBotsTransitionSlice> {
+  state: ExperimentalMultiBotsTransitionState
+): Partial<ExperimentalMultiBotsTransitionState> {
   const restored = snapshotCurrentMultiBotsRoster(state);
   return {
     activeSubMode: 'multi-bots',
@@ -104,11 +104,11 @@ export function computeActivateMultiBotsTransition(
 }
 
 export function computeConfigureExhibitionTransition(
-  state: ExperimentalMultiBotsTransitionSlice,
+  state: ExperimentalMultiBotsTransitionState,
   botId: ExpBotPolicyId = 'necto',
   durationSec = 90,
   teamSize: 'solo' | 'double' | 'standard' = 'standard'
-): Partial<ExperimentalMultiBotsTransitionSlice> {
+): Partial<ExperimentalMultiBotsTransitionState> {
   const savedMultiBotsRoster = snapshotCurrentMultiBotsRoster(state);
   const resolvedBotId: ExpBotPolicyId = botId === 'nexto' ? 'nexto' : 'necto';
   const resolvedDuration = Math.max(30, Math.min(900, Math.round(Number(durationSec) || 90)));
@@ -134,9 +134,9 @@ export function computeConfigureExhibitionTransition(
 }
 
 export function computeSyncExhibitionFromColorPrefsTransition(
-  state: ExperimentalMultiBotsTransitionSlice
+  state: ExperimentalMultiBotsTransitionState
 ): {
-  patch: Partial<ExperimentalMultiBotsTransitionSlice>;
+  patch: Partial<ExperimentalMultiBotsTransitionState>;
   participationChanged: boolean;
   nextParticipation: ExpPlayerParticipation;
   hotSwapColorSlot: number;
@@ -188,9 +188,9 @@ export function computeSyncExhibitionFromColorPrefsTransition(
 }
 
 export function computeSetPlayerParticipationTransition(
-  state: ExperimentalMultiBotsTransitionSlice,
+  state: ExperimentalMultiBotsTransitionState,
   playerParticipation: ExpPlayerParticipation
-): Partial<ExperimentalMultiBotsTransitionSlice> {
+): Partial<ExperimentalMultiBotsTransitionState> {
   let blue = [...state.blueSlots];
   let orange = [...state.orangeSlots];
 
@@ -235,10 +235,10 @@ export function computeSetPlayerParticipationTransition(
 }
 
 export function computeAddBotToTeamTransition(
-  state: ExperimentalMultiBotsTransitionSlice,
+  state: ExperimentalMultiBotsTransitionState,
   team: 0 | 1,
   botType: ExpBotPolicyId = 'nexto'
-): Partial<ExperimentalMultiBotsTransitionSlice> | null {
+): Partial<ExperimentalMultiBotsTransitionState> | null {
   const targetList = team === 0 ? state.blueSlots : state.orangeSlots;
   const totalCars = state.blueSlots.length + state.orangeSlots.length;
   if (targetList.length >= 5 || totalCars >= 6) return null;
@@ -276,10 +276,10 @@ export function computeAddBotToTeamTransition(
 }
 
 export function computeRemoveSlotFromTeamTransition(
-  state: ExperimentalMultiBotsTransitionSlice,
+  state: ExperimentalMultiBotsTransitionState,
   team: 0 | 1,
   slotIndex: number
-): Partial<ExperimentalMultiBotsTransitionSlice> | null {
+): Partial<ExperimentalMultiBotsTransitionState> | null {
   const targetList = team === 0 ? state.blueSlots : state.orangeSlots;
   const otherList = team === 0 ? state.orangeSlots : state.blueSlots;
 
@@ -314,11 +314,11 @@ export function computeRemoveSlotFromTeamTransition(
 }
 
 export function computeSetSlotBotTypeTransition(
-  state: ExperimentalMultiBotsTransitionSlice,
+  state: ExperimentalMultiBotsTransitionState,
   team: 0 | 1,
   slotIndex: number,
   botType: ExpBotPolicyId
-): Partial<ExperimentalMultiBotsTransitionSlice> {
+): Partial<ExperimentalMultiBotsTransitionState> {
   const meta = getExpBotPolicyMeta(botType);
   const maxCap = meta.maxPlayersPerTeam;
 
@@ -352,11 +352,11 @@ export function computeSetSlotBotTypeTransition(
 }
 
 export function computeSetSlotColorTransition(
-  state: ExperimentalMultiBotsTransitionSlice,
+  state: ExperimentalMultiBotsTransitionState,
   team: 0 | 1,
   slotIndex: number,
   colorSlot: number
-): Partial<ExperimentalMultiBotsTransitionSlice> | null {
+): Partial<ExperimentalMultiBotsTransitionState> | null {
   const currentList = team === 0 ? state.blueSlots : state.orangeSlots;
   const prevColor = currentList[slotIndex]?.colorSlot ?? 0;
   if (prevColor === colorSlot) return null;
@@ -388,7 +388,7 @@ export function computeSetSlotColorTransition(
 
 export function computeApplyPresetRosterTransition(
   preset: '1v1-player' | '2v2-player' | '3v3-player' | '1v1-bots' | '2v2-bots' | '3v3-bots'
-): Partial<ExperimentalMultiBotsTransitionSlice> {
+): Partial<ExperimentalMultiBotsTransitionState> {
   const isPlayerPreset =
     preset === '1v1-player' || preset === '2v2-player' || preset === '3v3-player';
   let countPerTeam = 3;
@@ -421,11 +421,11 @@ export function computeApplyPresetRosterTransition(
 }
 
 export function computeApplyAsymmetricPresetRosterTransition(
-  state: ExperimentalMultiBotsTransitionSlice,
+  state: ExperimentalMultiBotsTransitionState,
   blueCount: number,
   orangeCount: number,
   participationOverride?: ExpPlayerParticipation
-): Partial<ExperimentalMultiBotsTransitionSlice> {
+): Partial<ExperimentalMultiBotsTransitionState> {
   const botPattern: ExpBotPolicyId[] = ['nexto', 'necto', 'nexto'];
   const roster = buildAsymmetricTeamSlotsFromColorPrefs(
     blueCount,
@@ -447,9 +447,9 @@ export function computeApplyAsymmetricPresetRosterTransition(
 }
 
 export function computeApplyBotpackShowcaseTransition(
-  state: ExperimentalMultiBotsTransitionSlice,
+  state: ExperimentalMultiBotsTransitionState,
   botType: ExpBotPolicyId
-): Partial<ExperimentalMultiBotsTransitionSlice> {
+): Partial<ExperimentalMultiBotsTransitionState> {
   const savedMultiBotsRoster = snapshotCurrentMultiBotsRoster(state);
   const meta = getExpBotPolicyMeta(botType);
   const countPerTeam = meta.maxPlayersPerTeam;

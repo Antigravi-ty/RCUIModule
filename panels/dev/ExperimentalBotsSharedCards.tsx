@@ -1,5 +1,6 @@
 import React from 'react';
 import { Eye, Zap } from 'lucide-react';
+import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
 import {
   getExpColorSwatch,
   type ExperimentalMultiBotsSlotConfig,
@@ -107,26 +108,30 @@ export const ExperimentalBotsCameraPovCard: React.FC<
   );
 };
 
+export interface ExperimentalBotsMatchControlsStateOverride {
+  blueScore?: number;
+  orangeScore?: number;
+  remainingSec?: number;
+  isOvertime?: boolean;
+  matchPhase?: string;
+  matchDurationSec?: number;
+  speedMultiplier?: ExpSpeedMultiplier;
+  unlimitedBoost?: boolean;
+  disableGoalReplay?: boolean;
+  onSetMatchDurationSec?: (sec: number) => void;
+  onSetSpeedMultiplier?: (mult: ExpSpeedMultiplier) => void;
+  onSetUnlimitedBoost?: (val: boolean) => void;
+  onSetDisableGoalReplay?: (val: boolean) => void;
+  onTriggerSandboxAction?: (
+    action: 'reset_kickoff' | 'score_blue' | 'score_orange' | 'force_overtime' | 'end_match'
+  ) => void;
+}
+
 export interface ExperimentalBotsMatchControlsCardProps {
   isLight: boolean;
   cardBg: string;
   mutedText: string;
-  blueScore: number;
-  orangeScore: number;
-  remainingSec: number;
-  isOvertime: boolean;
-  matchPhase: string;
-  matchDurationSec: number;
-  speedMultiplier: ExpSpeedMultiplier;
-  unlimitedBoost: boolean;
-  disableGoalReplay: boolean;
-  onSetMatchDurationSec: (sec: number) => void;
-  onSetSpeedMultiplier: (mult: ExpSpeedMultiplier) => void;
-  onSetUnlimitedBoost: (val: boolean) => void;
-  onSetDisableGoalReplay: (val: boolean) => void;
-  onTriggerSandboxAction: (
-    action: 'reset_kickoff' | 'score_blue' | 'score_orange' | 'force_overtime' | 'end_match'
-  ) => void;
+  stateOverride?: ExperimentalBotsMatchControlsStateOverride;
 }
 
 export const ExperimentalBotsMatchControlsCard: React.FC<
@@ -135,21 +140,24 @@ export const ExperimentalBotsMatchControlsCard: React.FC<
   isLight,
   cardBg,
   mutedText,
-  blueScore,
-  orangeScore,
-  remainingSec,
-  isOvertime,
-  matchPhase,
-  matchDurationSec,
-  speedMultiplier,
-  unlimitedBoost,
-  disableGoalReplay,
-  onSetMatchDurationSec,
-  onSetSpeedMultiplier,
-  onSetUnlimitedBoost,
-  onSetDisableGoalReplay,
-  onTriggerSandboxAction,
+  stateOverride,
 }) => {
+  const store = useExperimentalMultiBotsStore();
+  const blueScore = stateOverride?.blueScore ?? store.blueScore;
+  const orangeScore = stateOverride?.orangeScore ?? store.orangeScore;
+  const remainingSec = stateOverride?.remainingSec ?? store.remainingSec;
+  const isOvertime = stateOverride?.isOvertime ?? store.isOvertime;
+  const matchPhase = stateOverride?.matchPhase ?? store.matchPhase;
+  const matchDurationSec = stateOverride?.matchDurationSec ?? store.matchDurationSec;
+  const speedMultiplier = stateOverride?.speedMultiplier ?? store.speedMultiplier;
+  const unlimitedBoost = stateOverride?.unlimitedBoost ?? store.unlimitedBoost;
+  const disableGoalReplay = stateOverride?.disableGoalReplay ?? store.disableGoalReplay;
+  const onSetMatchDurationSec = stateOverride?.onSetMatchDurationSec ?? store.setMatchDurationSec;
+  const onSetSpeedMultiplier = stateOverride?.onSetSpeedMultiplier ?? store.setSpeedMultiplier;
+  const onSetUnlimitedBoost = stateOverride?.onSetUnlimitedBoost ?? store.setUnlimitedBoost;
+  const onSetDisableGoalReplay = stateOverride?.onSetDisableGoalReplay ?? store.setDisableGoalReplay;
+  const onTriggerSandboxAction = stateOverride?.onTriggerSandboxAction ?? store.triggerSandboxAction;
+
   const formatClock = (sec: number) => {
     const abs = Math.max(0, Math.floor(sec));
     const m = Math.floor(abs / 60);

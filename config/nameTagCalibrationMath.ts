@@ -2,7 +2,14 @@ import {
   DEFAULT_NAME_TAG_CONFIG,
   DEFAULT_RUNTIME_SYNC_SNAPSHOT,
   KICKOFF_PERMUTATION_COUNT,
+  NAME_TAG_FAR_CALIBRATION_DEPTH_UU,
+  NAME_TAG_NEAR_CALIBRATION_DEPTH_UU,
   NAME_TAG_REFERENCE_DEPTH_UU,
+  computeAdaptiveNameTagWidthPx,
+  formatNameTagDisplayText,
+  resolveNameTagBoostBorderVisible,
+  resolveNameTagCornerRadiusPx,
+  resolveNameTagFontFamilyCss,
   type NameTagAerialClimbTriggerMode,
   type NameTagBoostBorderAudience,
   type NameTagBoostBorderColorMode,
@@ -10,6 +17,7 @@ import {
   type NameTagBoostIndicatorMode,
   type NameTagCameraMode,
   type NameTagCarOverride,
+  type NameTagCarTelemetry,
   type NameTagConfig,
   type NameTagFittedParameters,
   type NameTagFontFamily,
@@ -17,6 +25,21 @@ import {
   type NameTagRuntimeSyncSnapshot,
   type NameTagTelemetrySnapshot,
 } from './nameTagConfig';
+
+export {
+  NAME_TAG_FAR_CALIBRATION_DEPTH_UU,
+  NAME_TAG_NEAR_CALIBRATION_DEPTH_UU,
+  NAME_TAG_REFERENCE_DEPTH_UU,
+  computeAdaptiveNameTagWidthPx,
+  formatNameTagDisplayText,
+  resolveNameTagBoostBorderVisible,
+  resolveNameTagCornerRadiusPx,
+  resolveNameTagFontFamilyCss,
+  type NameTagBoostBorderOverride,
+  type NameTagBoostIndicatorMode,
+  type NameTagCarTelemetry,
+  type NameTagConfig,
+};
 
 export function sanitizeHexColor(raw: unknown, fallbackHex: string): string {
   return typeof raw === 'string' && raw.startsWith('#') && raw.length >= 4
@@ -192,7 +215,19 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
     boostBorderEnabled: boolOr(source.boostBorderEnabled, D.boostBorderEnabled),
     boostIndicatorMode: sanitizeBoostIndicatorMode(source.boostIndicatorMode, D.boostIndicatorMode),
     boostFillOpacity: sanitizeClampedNumber(source.boostFillOpacity, 0.05, 1.0, D.boostFillOpacity),
+    boostFillColorBlendRatio: sanitizeClampedNumber(
+      source.boostFillColorBlendRatio,
+      0.0,
+      1.0,
+      D.boostFillColorBlendRatio
+    ),
     boostUnfilledBgOpacity: sanitizeClampedNumber(source.boostUnfilledBgOpacity, 0.0, 1.0, D.boostUnfilledBgOpacity),
+    boostUnfilledDarkenRatio: sanitizeClampedNumber(
+      source.boostUnfilledDarkenRatio,
+      0.0,
+      0.9,
+      D.boostUnfilledDarkenRatio
+    ),
     boostShowHorizonLine: boolOr(source.boostShowHorizonLine, D.boostShowHorizonLine),
     boostBorderColorMode,
     blueBoostBorderColor: sanitizeHexColor(source.blueBoostBorderColor, D.blueBoostBorderColor),

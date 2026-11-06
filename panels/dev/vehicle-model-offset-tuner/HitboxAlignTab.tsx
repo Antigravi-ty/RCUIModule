@@ -8,14 +8,25 @@ import {
 } from '../../../primitives/PrecisionDigitPicker';
 import { ReferenceOverlayCard } from './ReferenceOverlayCard';
 import { CameraSwivelSimulatorCard } from '../../../compounds/CameraSwivelSimulatorCard';
+import type { VehicleDescriptor } from '../../../config/vehicleTunerConfig';
+
+export interface HitboxSpec {
+  name: string;
+  length: number;
+  width: number;
+  height: number;
+  forward: number;
+  up: number;
+  [key: string]: unknown;
+}
 
 export interface HitboxAlignTabProps {
-  descriptor: any;
-  hitboxSpec: any;
+  descriptor: VehicleDescriptor;
+  hitboxSpec: HitboxSpec;
   selectedCar: 'fennec' | 'insidio' | 'ryza';
   notifyAndRefresh: (carId?: 'fennec' | 'insidio' | 'ryza', nextHitboxPreset?: string) => void;
   handleCenterOffsetAxis: (axisIndex: 0 | 1 | 2, val: number) => void;
-  handleAlignmentChange: (patch: Record<string, any>) => void;
+  handleAlignmentChange: (patch: Partial<VehicleDescriptor['alignment']>) => void;
   handleAlignTopToRLHitbox: () => void;
   handleAlignToWheelArches: () => void;
   handleAlignRawOrigin: () => void;

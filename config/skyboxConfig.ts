@@ -380,14 +380,12 @@ export interface SkyboxConfig {
   groundColor: string;
   zenithColor: string;
   middleColor: string;
-
   fullSphereLowerVOffset: number;
   fullSphereLowerVerticalStretch: number;
   fullSphereLowerCutoffElev: number;
   fullSphereLowerFadeRange: number;
   fullSphereLowerDimming: number;
   fullSphereLowerSampleHorizon: boolean;
-
   coronaEnabled: boolean;
   coronaFollowSceneSun: boolean;
   coronaAzimuthDeg: number;
@@ -398,18 +396,16 @@ export interface SkyboxConfig {
   sunGlowSize: number;
   sunGlowIntensity: number;
   sunGlowColor: string;
-
   cloudOverlayEnabled: boolean;
   cloudOverlayOpacity: number;
   cloudOverlayScrollSpeed: number;
   cloudOverlayScaleU: number;
   cloudOverlayElevationOffset: number;
-
   oobNormalEnabled: boolean;
   oobNormalStrength: number;
   oobNormalTileScale: number;
   oobNormalScrollSpeed: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_SKYBOX_CONFIG: SkyboxConfig = {
@@ -439,14 +435,12 @@ export const DEFAULT_SKYBOX_CONFIG: SkyboxConfig = {
   groundColor: '#585858',
   zenithColor: '#0c220d',
   middleColor: '#476649',
-
   fullSphereLowerVOffset: 0.04,
   fullSphereLowerVerticalStretch: 1.0,
   fullSphereLowerCutoffElev: 0.18,
   fullSphereLowerFadeRange: 0.45,
   fullSphereLowerDimming: 0.25,
   fullSphereLowerSampleHorizon: false,
-
   coronaEnabled: false,
   coronaFollowSceneSun: false,
   coronaAzimuthDeg: 0,
@@ -457,13 +451,11 @@ export const DEFAULT_SKYBOX_CONFIG: SkyboxConfig = {
   sunGlowSize: 0.42,
   sunGlowIntensity: 0.65,
   sunGlowColor: '#ffaa44',
-
   cloudOverlayEnabled: false,
   cloudOverlayOpacity: 0.45,
   cloudOverlayScrollSpeed: 1.5,
   cloudOverlayScaleU: 1,
   cloudOverlayElevationOffset: 0,
-
   oobNormalEnabled: false,
   oobNormalStrength: 0.35,
   oobNormalTileScale: 6,
@@ -475,13 +467,16 @@ export const skyboxRuntimeConfig: SkyboxConfig = {
 };
 
 type SkyboxConfigListener = (config: SkyboxConfig) => void;
-const skyboxConfigListeners = new Set<SkyboxConfigListener>();
+const skyboxConfigCallbacks: SkyboxConfigListener[] = [];
 
 export function subscribeSkyboxConfig(listener: SkyboxConfigListener): () => void {
   if (typeof listener !== 'function') return () => {};
-  skyboxConfigListeners.add(listener);
+  if (!skyboxConfigCallbacks.includes(listener)) {
+    skyboxConfigCallbacks.push(listener);
+  }
   return () => {
-    skyboxConfigListeners.delete(listener);
+    const idx = skyboxConfigCallbacks.indexOf(listener);
+    if (idx !== -1) skyboxConfigCallbacks.splice(idx, 1);
   };
 }
 
@@ -491,7 +486,6 @@ export function getSkyboxConfig(): SkyboxConfig {
 
 export function normalizeSkyboxPatch(patch: Partial<SkyboxConfig> = {}): Partial<SkyboxConfig> {
   const normalized: Partial<SkyboxConfig> = { ...patch };
-
   if (normalized.skyCategory !== undefined && normalized.presetId === undefined && normalized.texturePath === undefined) {
     const targetCat: SkyboxCategory = normalized.skyCategory === 'full-sphere' ? 'full-sphere' : 'hemisphere';
     normalized.skyCategory = targetCat;
@@ -503,44 +497,25 @@ export function normalizeSkyboxPatch(patch: Partial<SkyboxConfig> = {}): Partial
     normalized.presetId = preset.id;
     normalized.texturePath = preset.path;
   }
-
-  if (normalized.presetId !== undefined) {
-    const preset = resolveSkyboxPreset(normalized.presetId, normalized.skyCategory || skyboxRuntimeConfig.skyCategory);
+  if (normalized.presetId !== undefined || normalized.texturePath !== undefined) {
+    const key = normalized.presetId !== undefined ? normalized.presetId : normalized.texturePath;
+    const preset = resolveSkyboxPreset(key, normalized.skyCategory || skyboxRuntimeConfig.skyCategory);
     normalized.presetId = preset.id;
-    normalized.texturePath = preset.path;
+    if (normalized.presetId !== undefined) normalized.texturePath = preset.path;
     normalized.skyCategory = preset.category;
-    if (preset.category === 'full-sphere') {
-      normalized.fullSpherePresetId = preset.id;
-    } else {
-      normalized.hemispherePresetId = preset.id;
-    }
-  } else if (normalized.texturePath !== undefined) {
-    const preset = resolveSkyboxPreset(normalized.texturePath, normalized.skyCategory || skyboxRuntimeConfig.skyCategory);
-    normalized.presetId = preset.id;
-    normalized.skyCategory = preset.category;
-    if (preset.category === 'full-sphere') {
-      normalized.fullSpherePresetId = preset.id;
-    } else {
-      normalized.hemispherePresetId = preset.id;
-    }
+    if (preset.category === 'full-sphere') normalized.fullSpherePresetId = preset.id;
+    else normalized.hemispherePresetId = preset.id;
   }
-
   if (normalized.useTexture !== undefined) {
     normalized.useTexture = Boolean(normalized.useTexture);
     normalized.mode = normalized.useTexture ? 'texture' : 'procedural';
   } else if (normalized.mode !== undefined) {
     normalized.useTexture = normalized.mode === 'texture';
   }
-  if (normalized.rotationDeg !== undefined) {
-    normalized.textureRotationDeg = Number(normalized.rotationDeg) || 0;
-  } else if (normalized.textureRotationDeg !== undefined) {
-    normalized.rotationDeg = Number(normalized.textureRotationDeg) || 0;
-  }
-  if (normalized.exposure !== undefined) {
-    normalized.textureExposure = Number(normalized.exposure) ?? 0.6;
-  } else if (normalized.textureExposure !== undefined) {
-    normalized.exposure = Number(normalized.textureExposure) ?? 0.6;
-  }
+  if (normalized.rotationDeg !== undefined) normalized.textureRotationDeg = Number(normalized.rotationDeg) || 0;
+  else if (normalized.textureRotationDeg !== undefined) normalized.rotationDeg = Number(normalized.textureRotationDeg) || 0;
+  if (normalized.exposure !== undefined) normalized.textureExposure = Number(normalized.exposure) ?? 0.6;
+  else if (normalized.textureExposure !== undefined) normalized.exposure = Number(normalized.textureExposure) ?? 0.6;
   return normalized;
 }
 
@@ -548,7 +523,7 @@ export function updateSkyboxConfig(patch: Partial<SkyboxConfig> = {}): SkyboxCon
   if (!patch) return skyboxRuntimeConfig;
   const normalized = normalizeSkyboxPatch(patch);
   Object.assign(skyboxRuntimeConfig, normalized);
-  for (const listener of skyboxConfigListeners) {
+  for (const listener of skyboxConfigCallbacks) {
     try {
       listener(skyboxRuntimeConfig);
     } catch (err) {

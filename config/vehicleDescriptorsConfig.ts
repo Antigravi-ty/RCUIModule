@@ -73,7 +73,7 @@ export interface VehicleDescriptor {
       pearl: number;
     };
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const GLOBAL_VEHICLE_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {

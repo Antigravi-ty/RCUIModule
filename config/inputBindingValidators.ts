@@ -8,7 +8,35 @@ import {
   AXIS_NAMES,
 } from './inputConstants';
 
-export function createDefaultKeyboardBindings(): Record<string, any[]> {
+export type KeyboardInputBindingItem =
+  | { kind: 'key'; code: string }
+  | { kind: 'mouse'; button: number };
+
+export type GamepadInputBindingItem =
+  | { kind: 'padButton'; index: number }
+  | { kind: 'padAxis'; axis: number; dir: 1 | -1 };
+
+export type InputBindingItem = KeyboardInputBindingItem | GamepadInputBindingItem;
+
+export interface InputAxisConfig {
+  axis: number;
+  invert: boolean;
+}
+
+export interface InputAxesBindings {
+  steer: InputAxisConfig;
+  pitch: InputAxisConfig;
+  deadzone: number;
+  triggerThreshold: number;
+}
+
+export type InputBindingsConfig = {
+  keyboard: Record<string, KeyboardInputBindingItem[]>;
+  pad: Record<string, GamepadInputBindingItem[]>;
+  axes: InputAxesBindings;
+};
+
+export function createDefaultKeyboardBindings(): Record<string, KeyboardInputBindingItem[]> {
   return {
     throttleForward: [{ kind: 'key', code: 'KeyW' }],
     throttleReverse: [{ kind: 'key', code: 'KeyS' }],
@@ -48,7 +76,7 @@ export function createDefaultKeyboardBindings(): Record<string, any[]> {
   };
 }
 
-export function createDefaultGamepadBindings(): Record<string, any[]> {
+export function createDefaultGamepadBindings(): Record<string, GamepadInputBindingItem[]> {
   return {
     throttleForward: [{ kind: 'padButton', index: 7 }],
     throttleReverse: [{ kind: 'padAxis', axis: 1, dir: 1 }],
@@ -79,7 +107,7 @@ export function createDefaultGamepadBindings(): Record<string, any[]> {
   };
 }
 
-export function createDefaultInputBindings(): Record<string, any> {
+export function createDefaultInputBindings(): InputBindingsConfig {
   return {
     keyboard: createDefaultKeyboardBindings(),
     pad: createDefaultGamepadBindings(),
@@ -92,7 +120,10 @@ export function createDefaultInputBindings(): Record<string, any> {
   };
 }
 
-export function areBindingsEqual(a: any, b: any): boolean {
+export function areBindingsEqual(
+  a: InputBindingItem | null | undefined,
+  b: InputBindingItem | null | undefined
+): boolean {
   if (!a || !b || a.kind !== b.kind) return false;
   if (a.kind === 'key' && b.kind === 'key') return a.code === b.code;
   if (a.kind === 'mouse' && b.kind === 'mouse') return a.button === b.button;
@@ -105,30 +136,35 @@ export function getBindingCategory(binding: { kind: string }): 'keyboard' | 'pad
   return binding.kind === 'key' || binding.kind === 'mouse' ? 'keyboard' : 'pad';
 }
 
-export function validateBinding(b: any): boolean {
+export function validateBinding(b: unknown): b is InputBindingItem {
   if (!isPlainObject(b)) return false;
   switch (b.kind) {
     case 'key':
       return typeof b.code === 'string' && b.code.length > 0;
     case 'mouse':
-      return Number.isInteger(b.button) && b.button >= 0;
+      return typeof b.button === 'number' && Number.isInteger(b.button) && b.button >= 0;
     case 'padButton':
-      return Number.isInteger(b.index) && b.index >= 0;
+      return typeof b.index === 'number' && Number.isInteger(b.index) && b.index >= 0;
     case 'padAxis':
-      return Number.isInteger(b.axis) && b.axis >= 0 && (b.dir === 1 || b.dir === -1);
+      return (
+        typeof b.axis === 'number' &&
+        Number.isInteger(b.axis) &&
+        b.axis >= 0 &&
+        (b.dir === 1 || b.dir === -1)
+      );
     default:
       return false;
   }
 }
 
 export function assignBinding(
-  bindings: any,
+  bindings: InputBindingsConfig,
   device: 'keyboard' | 'pad',
   action: string,
   slot: number,
-  newBinding: any
+  newBinding: InputBindingItem
 ): { changed: boolean } {
-  const currentSlots = bindings[device][action];
+  const currentSlots = bindings[device][action] as InputBindingItem[];
   if (
     getBindingCategory(newBinding) !== device ||
     !Number.isInteger(slot) ||
@@ -138,7 +174,7 @@ export function assignBinding(
   ) {
     return { changed: false };
   }
-  if (currentSlots.some((existing: any) => areBindingsEqual(existing, newBinding))) {
+  if (currentSlots.some((existing: InputBindingItem) => areBindingsEqual(existing, newBinding))) {
     return { changed: false };
   }
   if (slot < currentSlots.length) {
@@ -149,18 +185,27 @@ export function assignBinding(
   return { changed: true };
 }
 
-export function removeBinding(bindings: any, device: 'keyboard' | 'pad', action: string, slot: number): void {
-  const list = bindings[device][action];
+export function removeBinding(
+  bindings: InputBindingsConfig,
+  device: 'keyboard' | 'pad',
+  action: string,
+  slot: number
+): void {
+  const list = bindings[device][action] as InputBindingItem[];
   if (slot >= 0 && slot < list.length) {
     list.splice(slot, 1);
   }
 }
 
-export function resetDeviceBindings(bindings: any, device: 'keyboard' | 'pad'): void {
-  bindings[device] = device === 'keyboard' ? createDefaultKeyboardBindings() : createDefaultGamepadBindings();
+export function resetDeviceBindings(bindings: InputBindingsConfig, device: 'keyboard' | 'pad'): void {
+  if (device === 'keyboard') {
+    bindings.keyboard = createDefaultKeyboardBindings();
+  } else {
+    bindings.pad = createDefaultGamepadBindings();
+  }
 }
 
-export function resetAxisBindings(bindings: any): void {
+export function resetAxisBindings(bindings: InputBindingsConfig): void {
   bindings.axes = createDefaultInputBindings().axes;
 }
 
@@ -188,7 +233,10 @@ export function detectControllerType(id?: string | null): 'playstation' | 'xbox'
   return id && /playstation|dualshock|dualsense|sony|054c/i.test(id) ? 'playstation' : 'xbox';
 }
 
-export function formatBindingDisplayName(binding: any, controllerType: 'playstation' | 'xbox' = 'xbox'): string {
+export function formatBindingDisplayName(
+  binding: InputBindingItem | null | undefined,
+  controllerType: 'playstation' | 'xbox' = 'xbox'
+): string {
   if (!binding) return '';
   switch (binding.kind) {
     case 'key':

@@ -15,8 +15,8 @@ export type SegmentedRadius = 'sm' | 'md' | 'lg' | 'none';
 
 export interface SegmentedSwitchProps {
   value: string;
-  onValueChange?: (val: any) => void;
-  onChange?: (val: any) => void;
+  onValueChange?: (val: string) => void;
+  onChange?: (val: string) => void;
   options: SegmentedSwitchOption[];
   id?: string;
   ariaLabel?: string;

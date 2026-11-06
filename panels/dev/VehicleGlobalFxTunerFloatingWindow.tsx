@@ -124,18 +124,21 @@ export const VehicleGlobalFxTunerFloatingWindow: React.FC<VehicleGlobalFxTunerFl
 
   const handleSetAllSurfacesMode = (mode: 'standard' | 'toon' | 'pbr') => {
     for (const key of Object.keys(GLOBAL_VEHICLE_SURFACE_MATERIALS)) {
-      (GLOBAL_VEHICLE_SURFACE_MATERIALS as any)[key].mode = mode;
+      GLOBAL_VEHICLE_SURFACE_MATERIALS[key].mode = mode;
     }
     notifyAndRefresh();
   };
 
-  const handleSurfaceSlotChange = (slotKey: string, patch: Record<string, any>) => {
-    if (!(GLOBAL_VEHICLE_SURFACE_MATERIALS as any)[slotKey]) return;
-    Object.assign((GLOBAL_VEHICLE_SURFACE_MATERIALS as any)[slotKey], patch);
+  const handleSurfaceSlotChange = (
+    slotKey: string,
+    patch: Partial<typeof GLOBAL_VEHICLE_SURFACE_MATERIALS.body>
+  ) => {
+    if (!GLOBAL_VEHICLE_SURFACE_MATERIALS[slotKey]) return;
+    Object.assign(GLOBAL_VEHICLE_SURFACE_MATERIALS[slotKey], patch);
     notifyAndRefresh();
   };
 
-  const handleLampsChange = (patch: Record<string, any>) => {
+  const handleLampsChange = (patch: Partial<typeof GLOBAL_VEHICLE_LAMPS_CONFIG>) => {
     Object.assign(GLOBAL_VEHICLE_LAMPS_CONFIG, patch);
     notifyAndRefresh();
   };
@@ -159,10 +162,13 @@ export const VehicleGlobalFxTunerFloatingWindow: React.FC<VehicleGlobalFxTunerFl
   };
 
   const handleResetGlobal = () => {
-    const snap = JSON.parse(JSON.stringify(INITIAL_GLOBAL_SURFACES_SNAPSHOT));
+    const snap = JSON.parse(JSON.stringify(INITIAL_GLOBAL_SURFACES_SNAPSHOT)) as {
+      surfaceMaterials: typeof GLOBAL_VEHICLE_SURFACE_MATERIALS;
+      lampsConfig: typeof GLOBAL_VEHICLE_LAMPS_CONFIG;
+    };
     for (const key of Object.keys(snap.surfaceMaterials)) {
-      if ((GLOBAL_VEHICLE_SURFACE_MATERIALS as any)[key]) {
-        Object.assign((GLOBAL_VEHICLE_SURFACE_MATERIALS as any)[key], snap.surfaceMaterials[key]);
+      if (GLOBAL_VEHICLE_SURFACE_MATERIALS[key]) {
+        Object.assign(GLOBAL_VEHICLE_SURFACE_MATERIALS[key], snap.surfaceMaterials[key]);
       }
     }
     Object.assign(GLOBAL_VEHICLE_LAMPS_CONFIG, snap.lampsConfig);

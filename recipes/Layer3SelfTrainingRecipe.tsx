@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  useLayer3SelfTrainingStoreBinding,
-  type SelfTrainingModeId,
-  type Layer3SelfTrainingRecipeProps,
-} from './hooks/useLayer3PlayTrainingBindings';
+import { useLayer3SelfTrainingStoreBinding } from './hooks/useLayer3PlayTrainingBindings';
 import {
   Barrel,
   FileVideoCamera,
@@ -21,7 +17,12 @@ import {
   type MainMenuItemSlotId,
 } from '../stores/mainMenuStyleStore';
 
-export type { SelfTrainingModeId, Layer3SelfTrainingRecipeProps };
+export type SelfTrainingModeId =
+  | 'free-play'
+  | 'static-training-pack'
+  | 'dynamic-training-pack'
+  | 'kickoff-training'
+  | 'replay-viewer';
 
 export interface SelfTrainingOption {
   id: SelfTrainingModeId;
@@ -79,6 +80,13 @@ export const SELF_TRAINING_OPTIONS: SelfTrainingOption[] = [
   },
 ];
 
+export interface Layer3SelfTrainingRecipeProps {
+  isLight?: boolean;
+  onSelectMode?: (mode: SelfTrainingModeId) => void;
+  onBack?: () => void;
+  className?: string;
+}
+
 /**
  * [Recipe] Layer 3 Self-Training Hub
  * Vertically stacked menu rows matching Layer 1 Main Menu style:
@@ -127,7 +135,6 @@ export const Layer3SelfTrainingRecipe: React.FC<Layer3SelfTrainingRecipeProps> =
           {SELF_TRAINING_OPTIONS.map((opt) => (
             <MainMenuRow
               key={opt.id}
-              id={opt.id}
               slotId={opt.slotId}
               title={opt.title}
               subtitle={opt.subtitle}

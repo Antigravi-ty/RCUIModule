@@ -84,7 +84,7 @@ export interface TrajectoryConfig {
   // Developer vs User menu exposure locks
   allowUserThicknessEdit?: boolean;
   allowUserDashEdit?: boolean;
-  [key: string]: any;
+  calculationMode?: string;
 }
 
 export const DEFAULT_TRAJECTORY_CONFIG: TrajectoryConfig = {

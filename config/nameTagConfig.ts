@@ -72,7 +72,9 @@ export interface NameTagConfig {
   boostBorderEnabled: boolean;
   boostIndicatorMode: NameTagBoostIndicatorMode;
   boostFillOpacity: number;
+  boostFillColorBlendRatio: number;
   boostUnfilledBgOpacity: number;
+  boostUnfilledDarkenRatio: number;
   boostShowHorizonLine: boolean;
   boostBorderColorMode: NameTagBoostBorderColorMode;
   blueBoostBorderColor: string;
@@ -263,7 +265,9 @@ export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   boostBorderEnabled: true,
   boostIndicatorMode: 'bottom-up-fill',
   boostFillOpacity: 1.0,
+  boostFillColorBlendRatio: 1.0,
   boostUnfilledBgOpacity: 0.1,
+  boostUnfilledDarkenRatio: 0.45,
   boostShowHorizonLine: true,
   boostBorderColorMode: 'shared',
   blueBoostBorderColor: '#ffffff',

@@ -39,13 +39,35 @@ export function mixHexColors(hexA: string, hexB: string, weightB = 0.35): string
 
 export function resolveActiveBoostFillColor(
   bgColor: string,
-  boostBorderColor: string
+  boostBorderColor: string,
+  blendRatio = DEFAULT_NAME_TAG_CONFIG.boostFillColorBlendRatio
 ): string {
-  return mixHexColors(bgColor, boostBorderColor, 0.38);
+  const clampedBlend = Math.max(
+    0,
+    Math.min(
+      1,
+      Number.isFinite(Number(blendRatio))
+        ? Number(blendRatio)
+        : DEFAULT_NAME_TAG_CONFIG.boostFillColorBlendRatio
+    )
+  );
+  return mixHexColors(bgColor, boostBorderColor, clampedBlend);
 }
 
-export function resolveUnfilledBaseHexColor(bgColor: string): string {
-  return mixHexColors(bgColor, '#040914', 0.45);
+export function resolveUnfilledBaseHexColor(
+  bgColor: string,
+  darkenRatio = DEFAULT_NAME_TAG_CONFIG.boostUnfilledDarkenRatio
+): string {
+  const clampedDarken = Math.max(
+    0,
+    Math.min(
+      1,
+      Number.isFinite(Number(darkenRatio))
+        ? Number(darkenRatio)
+        : DEFAULT_NAME_TAG_CONFIG.boostUnfilledDarkenRatio
+    )
+  );
+  return mixHexColors(bgColor, '#040914', clampedDarken);
 }
 
 export interface NameTagOffscreenIndicatorCard2D {

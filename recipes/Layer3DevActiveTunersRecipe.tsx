@@ -66,8 +66,6 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
   onBack,
   onNavigateAdvancedAudio,
   onNavigateEventTriggerRules,
-  onNavigateEventAndTriggerer,
-  onNavigateEventTriggerer,
   wsVerticalOffsetPct: propWsOffset,
   onWsVerticalOffsetPctChange,
   carBallMode: propCarBallMode,
@@ -429,7 +427,7 @@ export const Layer3DevActiveTunersRecipe: React.FC<Layer3DevActiveTunersRecipePr
             actionLabel="Configure"
             bordered={false}
             showDescription={false}
-            onAction={() => (onNavigateEventTriggerRules ?? onNavigateEventAndTriggerer ?? onNavigateEventTriggerer)?.()}
+            onAction={() => onNavigateEventTriggerRules?.()}
             hoverDescription="Open Layer 4 Event & Trigger Rules: Configure collision impulse thresholds, audio/VFX event bindings, and trigger rules."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}

@@ -16,11 +16,20 @@ import { GoalVolumeTunerFloatingWindow } from './dev/GoalVolumeTunerFloatingWind
 import { ReplayDirectorTunerFloatingWindow } from './dev/ReplayDirectorTunerFloatingWindow';
 import { ReachabilityTunerFloatingWindow } from './dev/ReachabilityTunerFloatingWindow';
 import { BallTrajectoryTunerFloatingWindow } from './dev/BallTrajectoryTunerFloatingWindow';
-import { VehicleModelOffsetTunerFloatingWindow } from './dev/VehicleModelOffsetTunerFloatingWindow';
-import { VehicleGlobalFxTunerFloatingWindow } from './dev/VehicleGlobalFxTunerFloatingWindow';
+import {
+  VehicleModelOffsetTunerFloatingWindow,
+  type VehicleTunerTab,
+} from './dev/VehicleModelOffsetTunerFloatingWindow';
+import {
+  VehicleGlobalFxTunerFloatingWindow,
+  type VehicleGlobalFxTab,
+} from './dev/VehicleGlobalFxTunerFloatingWindow';
 import { ExperimentalMultiBotsFloatingWindow } from './dev/ExperimentalMultiBotsFloatingWindow';
 import { ExperimentalBotPackFloatingWindow } from './dev/ExperimentalBotPackFloatingWindow';
-import { AtmosphereFxTunerFloatingWindow } from './dev/AtmosphereFxTunerFloatingWindow';
+import {
+  AtmosphereFxTunerFloatingWindow,
+  type AtmosphereFxTab,
+} from './dev/AtmosphereFxTunerFloatingWindow';
 import { SubsystemIsolationLabFloatingWindow } from './dev/SubsystemIsolationLabFloatingWindow';
 import { KickoffTrainingTunerFloatingWindow } from './dev/KickoffTrainingTunerFloatingWindow';
 import { EventStreamObserverFloatingWindow } from './dev/EventStreamObserverFloatingWindow';
@@ -28,16 +37,66 @@ import { DualArenaDeterminismHarnessFloatingWindow } from './dev/DualArenaDeterm
 import { CameraDeterminismFloatingWindow } from './dev/CameraDeterminismFloatingWindow';
 import { NetworkStressInjectionFloatingWindow } from './dev/NetworkStressInjectionFloatingWindow';
 import { ClockPacingTunerFloatingWindow } from './dev/ClockPacingTunerFloatingWindow';
-import { BoostPadTunerFloatingWindow } from './dev/BoostPadTunerFloatingWindow';
-import { DriftwoodsTunerFloatingWindow } from './dev/DriftwoodsTunerFloatingWindow';
+import {
+  BoostPadTunerFloatingWindow,
+  type TabKey as BoostPadTabKey,
+} from './dev/BoostPadTunerFloatingWindow';
+import {
+  DriftwoodsTunerFloatingWindow,
+  type TunerTab as DriftwoodsTunerTab,
+} from './dev/DriftwoodsTunerFloatingWindow';
 import { SpatialAudioTunerFloatingWindow } from './dev/SpatialAudioTunerFloatingWindow';
 import { EngineAudioTunerFloatingWindow } from './dev/EngineAudioTunerFloatingWindow';
 import { BotsLoadoutTunerFloatingWindow } from './dev/BotsLoadoutTunerFloatingWindow';
 import { SupersonicTrailTunerFloatingWindow } from './dev/SupersonicTrailTunerFloatingWindow';
+import { ReplayToRcsImporterFloatingWindow } from './dev/ReplayToRcsImporterFloatingWindow';
+
+export type FloatingWindowHeaderTab =
+  | VehicleTunerTab
+  | VehicleGlobalFxTab
+  | AtmosphereFxTab
+  | BoostPadTabKey
+  | DriftwoodsTunerTab
+  | string;
+
+const VEHICLE_OFFSET_TABS: readonly VehicleTunerTab[] = ['hitbox', 'wheels', 'boost'];
+const VEHICLE_GLOBAL_FX_TABS: readonly VehicleGlobalFxTab[] = [
+  'surfaces',
+  'lamps',
+  'wheels',
+  'boost',
+];
+const ATMOSPHERE_FX_TABS: readonly AtmosphereFxTab[] = [
+  'wall-pulse',
+  'shadows-light',
+  'skybox',
+  'ball',
+];
+const BOOST_PAD_TABS: readonly BoostPadTabKey[] = [
+  'shader',
+  'materials',
+  'rotations',
+  'refill',
+  'collect',
+];
+const DRIFTWOODS_TABS: readonly DriftwoodsTunerTab[] = [
+  'ground',
+  'surfaces',
+  'transparent',
+  'performance',
+];
+
+function narrowHeaderTab<TTab extends string>(
+  rawTab: string | undefined,
+  validTabs: readonly TTab[]
+): TTab | undefined {
+  if (!rawTab) return undefined;
+  return validTabs.find((candidate) => candidate === rawTab);
+}
 
 export interface RenderFloatingWindowPanelOptions {
   isLight?: boolean;
-  activeTab?: string;
+  activeTab?: FloatingWindowHeaderTab;
   onTabChange?: (tab: string) => void;
 }
 
@@ -129,8 +188,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <VehicleModelOffsetTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as React.ComponentProps<typeof VehicleModelOffsetTunerFloatingWindow>['activeTab']}
-        onTabChange={onTabChange as React.ComponentProps<typeof VehicleModelOffsetTunerFloatingWindow>['onTabChange']}
+        activeTab={narrowHeaderTab(activeTab, VEHICLE_OFFSET_TABS)}
+        onTabChange={onTabChange}
       />
     ),
   },
@@ -141,8 +200,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <VehicleGlobalFxTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as React.ComponentProps<typeof VehicleGlobalFxTunerFloatingWindow>['activeTab']}
-        onTabChange={onTabChange as React.ComponentProps<typeof VehicleGlobalFxTunerFloatingWindow>['onTabChange']}
+        activeTab={narrowHeaderTab(activeTab, VEHICLE_GLOBAL_FX_TABS)}
+        onTabChange={onTabChange}
       />
     ),
   },
@@ -163,8 +222,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <AtmosphereFxTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as React.ComponentProps<typeof AtmosphereFxTunerFloatingWindow>['activeTab']}
-        onTabChange={onTabChange as React.ComponentProps<typeof AtmosphereFxTunerFloatingWindow>['onTabChange']}
+        activeTab={narrowHeaderTab(activeTab, ATMOSPHERE_FX_TABS)}
+        onTabChange={onTabChange}
       />
     ),
   },
@@ -175,8 +234,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <SubsystemIsolationLabFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as React.ComponentProps<typeof SubsystemIsolationLabFloatingWindow>['activeTab']}
-        onTabChange={onTabChange as React.ComponentProps<typeof SubsystemIsolationLabFloatingWindow>['onTabChange']}
+        activeTab={activeTab}
+        onTabChange={onTabChange}
       />
     ),
   },
@@ -217,8 +276,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <BoostPadTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as React.ComponentProps<typeof BoostPadTunerFloatingWindow>['activeTab']}
-        onTabChange={onTabChange as React.ComponentProps<typeof BoostPadTunerFloatingWindow>['onTabChange']}
+        activeTab={narrowHeaderTab(activeTab, BOOST_PAD_TABS)}
+        onTabChange={onTabChange}
       />
     ),
   },
@@ -229,8 +288,8 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     render: ({ isLight = false, activeTab, onTabChange }) => (
       <DriftwoodsTunerFloatingWindow
         isLight={isLight}
-        activeTab={activeTab as React.ComponentProps<typeof DriftwoodsTunerFloatingWindow>['activeTab']}
-        onTabChange={onTabChange as React.ComponentProps<typeof DriftwoodsTunerFloatingWindow>['onTabChange']}
+        activeTab={narrowHeaderTab(activeTab, DRIFTWOODS_TABS)}
+        onTabChange={onTabChange}
       />
     ),
   },
@@ -254,12 +313,41 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     category: 'developer',
     render: ({ isLight = false }) => <SupersonicTrailTunerFloatingWindow isLight={isLight} />,
   },
+  'replay-to-rcs-importer': {
+    id: 'replay-to-rcs-importer',
+    category: 'developer',
+    render: ({ isLight = false }) => <ReplayToRcsImporterFloatingWindow isLight={isLight} />,
+  },
 };
+
+import { getDiscoveredFloatingSurfaces } from '../manifest/surfaceRegistry';
+import { StoreSnapshotScope } from '../stores/storeSnapshotScope';
+
+export { getDiscoveredFloatingSurfaces, StoreSnapshotScope };
+
+for (const entry of getDiscoveredFloatingSurfaces()) {
+  if (!FLOATING_WINDOW_DESCRIPTORS[entry.meta.id]) {
+    const DiscoveredComponent = entry.Component;
+    FLOATING_WINDOW_DESCRIPTORS[entry.meta.id] = {
+      id: entry.meta.id,
+      category: entry.meta.layer === 'floating-user' ? 'user' : 'developer',
+      hasHeaderTabs: Boolean(entry.meta.variants && entry.meta.variants.length > 0),
+      render: ({ isLight = false, activeTab, onTabChange }) => (
+        <DiscoveredComponent
+          isLight={isLight}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+        />
+      ),
+    };
+  }
+}
 
 /**
  * [L6 Floating Window Registry]
- * Maps any of the 28 `RocketCompanion` Floating Window preset IDs (6 User + 22 Developer)
- * to its normalized, low-coupling L6 Floating Window Panel.
+ * Maps any of the `RocketCompanion` Floating Window preset IDs (User + Developer)
+ * to its normalized, low-coupling L6 Floating Window Panel, supporting both explicit
+ * descriptors and zero-conflict `SURFACE_META` auto-discovery.
  */
 export function renderFloatingWindowPanel(
   id: string,

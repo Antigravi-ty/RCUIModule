@@ -267,8 +267,8 @@ export const GarageAnthemTab: React.FC<GarageAnthemTabProps> = ({
                 isLight={isLight}
                 value={randomAnthemScope}
                 options={RANDOM_SCOPE_OPTIONS}
-                onValueChange={(nextScope: RandomAnthemScope) => {
-                  setRandomAnthemScope(nextScope);
+                onValueChange={(nextScope) => {
+                  setRandomAnthemScope(nextScope as RandomAnthemScope);
                   onSelectAnthem('random');
                 }}
               />

@@ -18,6 +18,7 @@ import {
   previewBoostAudioVariation,
 } from '../../config/audioConfig';
 import type { PanelSizingConfig } from '../../tokens/menuLayoutTokens';
+import type { PresetConfig } from '../../stores/floatingPresets';
 import type { PerCarBoostConfig } from '../dev/PerCarBoostConfigSection';
 
 export interface BoostPhaseSelectionState {
@@ -31,8 +32,6 @@ export interface Layer3DevActiveTunersRecipeProps {
   onBack?: () => void;
   onNavigateAdvancedAudio?: () => void;
   onNavigateEventTriggerRules?: () => void;
-  onNavigateEventAndTriggerer?: () => void;
-  onNavigateEventTriggerer?: () => void;
   showAllCarHitboxes?: boolean;
   onShowAllCarHitboxesChange?: (visible: boolean) => void;
   wsVerticalOffsetPct?: number;
@@ -44,8 +43,7 @@ export interface Layer3DevActiveTunersRecipeProps {
   boostSelection?: BoostPhaseSelectionState;
   onSelectBoostPhase?: (variationId: string, phase: 'start' | 'loop' | 'end') => void;
   onSelectAllBoostPhases?: (variationId: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onAddPresetWindow?: (preset: any, e: React.MouseEvent<HTMLButtonElement>) => void;
+  onAddPresetWindow?: (preset: PresetConfig, e: React.MouseEvent<HTMLButtonElement>) => void;
   activeWindows?: unknown[];
   onClosePresetWindow?: (id: string) => void;
   sizing?: PanelSizingConfig;
@@ -55,7 +53,8 @@ export type DevTestLabTab =
   | IsolationDevTestLabTab
   | 'exp-multi-bots'
   | 'exp-botpack-9700488'
-  | 'tem-pack-converter';
+  | 'tem-pack-converter'
+  | 'replay-to-rcs-importer';
 
 export type LayerDevTestLabTab = DevTestLabTab;
 
@@ -228,8 +227,6 @@ export function useLayer3DevActiveTunersStoreBinding(
       rawProps.onNavigateAdvancedAudio ?? (() => navigate('advanced-audio')),
     onNavigateEventTriggerRules:
       rawProps.onNavigateEventTriggerRules ??
-      rawProps.onNavigateEventAndTriggerer ??
-      rawProps.onNavigateEventTriggerer ??
       (() => navigate('event-trigger-rules')),
   };
 }
@@ -273,6 +270,15 @@ export function useLayer3DevSandboxesStoreBinding(
 
     if (tab === 'tem-pack-converter') {
       navigate('dev-tem-pack-converter');
+      return;
+    }
+
+    if (tab === 'replay-to-rcs-importer') {
+      if (bridge.onStartReplayToRcsImporter) {
+        bridge.onStartReplayToRcsImporter();
+      } else {
+        closeMenu();
+      }
       return;
     }
 

@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import {
-  useLayer1MainMenuStoreBinding,
-  type TouchInputAgentOption,
-  type Layer1MainMenuRecipeProps,
-} from './hooks/useMainMenuAndPlayStoreBindings';
+import { useLayer1MainMenuStoreBinding } from './hooks/useMainMenuAndPlayStoreBindings';
 import {
   Play,
   Gamepad2,
@@ -41,7 +37,71 @@ import {
   type Layer1CustomRowIconType,
 } from './layer1MenuContextSpecs';
 
-export type { TouchInputAgentOption, Layer1MainMenuRecipeProps };
+export {
+  LAYER1_CONTEXT_VARIATIONS,
+  LAYER1_CONTEXT_GROUPS,
+  type CanonicalLayer1ContextVariation,
+  type Layer1ContextVariation,
+  type Layer1MenuContextMode,
+  type Layer1ContextMeta,
+  type Layer1ContextGroupId,
+  type Layer1ContextGroupMeta,
+};
+
+export type TouchInputAgentOption = 'none' | 'necto' | 'nexto';
+
+export interface Layer1MainMenuStateOverride {
+  matchMode?: Layer1ContextVariation | 'online-warmup' | 'static-training-pack';
+  contextMode?: Layer1ContextVariation;
+  touchHeadlessMode?: boolean;
+  defaultTouchInputAgent?: TouchInputAgentOption;
+  backgroundRenderPaused?: boolean;
+  onNavigateRoomControl?: () => void;
+  onNavigateExpMultiBots?: () => void;
+  onExitEditMode?: () => void;
+  sizing?: PanelSizingConfig;
+  styleVariant?: MainMenuStyleVariant;
+  styleParams?: Partial<MainMenuStyleParams>;
+}
+
+export interface Layer1MainMenuRecipeProps {
+  isLight?: boolean;
+  /** Explicit context variation */
+  contextVariation?: Layer1ContextVariation;
+  /** Optional developer Touch Input Agent banner (?touch=1 / ?touch=2) */
+  touchMode?: boolean;
+  /** Controlled Touch Input Agent takeover model ('none' | 'necto' | 'nexto') */
+  touchInputAgent?: TouchInputAgentOption;
+  /** Callback fired when Touch Input Agent model changes */
+  onTouchInputAgentChange?: (agent: TouchInputAgentOption) => void;
+  /** Background power saving mode ('extreme' | '15' | '30' | 'disable' | 'freeze' | 'match') */
+  menuPowerSave?: 'extreme' | '15' | '30' | 'disable' | 'freeze' | 'match';
+  onResume?: () => void;
+  onRestartMatch?: () => void;
+  onReturnToFreeplay?: () => void;
+  onNavigatePlay?: () => void;
+  onNavigateGarage?: () => void;
+  onNavigateSettings?: (targetTab?: string) => void;
+  onNavigateManageRoom?: () => void;
+  onNavigateExpMultiBotsConfig?: () => void;
+  onLeaveRoom?: () => void;
+  /** Optional extra bottom action (e.g. "Exit Edit Mode" when EdgeInspectorDrawer is active) */
+  extraBottomAction?:
+    | {
+        title: string;
+        subtitle?: string;
+        icon?: React.ReactNode;
+        variant?: 'primary' | 'secondary' | 'danger';
+        onClick: () => void;
+      }
+    | React.ReactNode;
+  /** Optional explicit row style variant override (decoupled from store when provided) */
+  styleVariant?: MainMenuStyleVariant;
+  /** Optional explicit row & shell style parameters override (decoupled from store when provided) */
+  styleParams?: Partial<MainMenuStyleParams>;
+  stateOverride?: Layer1MainMenuStateOverride;
+  className?: string;
+}
 
 const renderCustomRowIcon = (
   iconType: Layer1CustomRowIconType,
@@ -69,35 +129,35 @@ const renderCustomRowIcon = (
  */
 export const Layer1MainMenuRecipe: React.FC<Layer1MainMenuRecipeProps> = (rawProps) => {
   const {
-  isLight = false,
-  matchMode,
-  contextVariation: propContextVariation,
-  contextMode,
-  touchMode = false,
-  touchHeadlessMode = false,
-  touchInputAgent: propTouchInputAgent,
-  defaultTouchInputAgent = 'none',
-  onTouchInputAgentChange,
-  menuPowerSave,
-  backgroundRenderPaused = false,
-  onResume,
-  onRestartMatch,
-  onReturnToFreeplay,
-  onNavigatePlay,
-  onNavigateGarage,
-  onNavigateSettings,
-  onNavigateManageRoom: propNavigateManageRoom,
-  onNavigateRoomControl,
-  onNavigateExpMultiBotsConfig: propNavigateExpMultiBotsConfig,
-  onNavigateExpMultiBots,
-  onLeaveRoom,
-  onExitEditMode,
-  extraBottomAction,
-  sizing: propSizing,
-  styleVariant,
-  styleParams,
-  className = '',
-} = useLayer1MainMenuStoreBinding(rawProps);
+    isLight = false,
+    matchMode,
+    contextVariation: propContextVariation,
+    contextMode,
+    touchMode = false,
+    touchHeadlessMode = false,
+    touchInputAgent: propTouchInputAgent,
+    defaultTouchInputAgent = 'none',
+    onTouchInputAgentChange,
+    menuPowerSave,
+    backgroundRenderPaused = false,
+    onResume,
+    onRestartMatch,
+    onReturnToFreeplay,
+    onNavigatePlay,
+    onNavigateGarage,
+    onNavigateSettings,
+    onNavigateManageRoom: propNavigateManageRoom,
+    onNavigateRoomControl,
+    onNavigateExpMultiBotsConfig: propNavigateExpMultiBotsConfig,
+    onNavigateExpMultiBots,
+    onLeaveRoom,
+    onExitEditMode,
+    extraBottomAction,
+    sizing: propSizing,
+    styleVariant,
+    styleParams,
+    className = '',
+  } = useLayer1MainMenuStoreBinding({ ...rawProps.stateOverride, ...rawProps });
   const contextVariation = propContextVariation ?? contextMode;
   const onNavigateManageRoom = propNavigateManageRoom ?? onNavigateRoomControl;
   const onNavigateExpMultiBotsConfig = propNavigateExpMultiBotsConfig ?? onNavigateExpMultiBots;

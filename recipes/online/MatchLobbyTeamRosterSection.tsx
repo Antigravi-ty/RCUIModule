@@ -28,13 +28,11 @@ export interface MatchLobbyTeamRosterSectionProps {
   localTeam: LobbyTeamAssignment;
   setLocalTeam: (team: LobbyTeamAssignment) => void;
   rosterLayout: 'stacked' | 'columns';
-  setRosterLayout: React.Dispatch<React.SetStateAction<'stacked' | 'columns'>>;
   showPairId?: boolean;
   onTogglePairId?: () => void;
   slotsPerSide: number;
   maxPlayers: number;
   humanCount: number;
-  botCount: number;
   blueRoster: LobbyPlayerSlot[];
   neutralRoster: LobbyPlayerSlot[];
   orangeRoster: LobbyPlayerSlot[];

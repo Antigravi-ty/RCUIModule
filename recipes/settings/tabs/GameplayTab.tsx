@@ -18,7 +18,7 @@ import { useAppStore } from '../../../stores/appStore';
 import {
   useSettingsPacingStore,
   type ExperiencePriorityOption,
-} from '../settingsPacingStore';
+} from '../../../stores/settingsPacingStore';
 
 export type ClockPacingPriority = ExperiencePriorityOption;
 export type BallOpacityMode = '70' | '100' | 'custom' | 'solid' | 'ghost' | 'hidden';
@@ -45,19 +45,10 @@ export interface GameplayTabProps {
   isLight?: boolean;
   /** Optional controlled override for GameplayConfig */
   gameplayConfig?: Partial<GameplayConfig>;
-  /** Alias for gameplayConfig */
-  config?: Partial<GameplayConfig>;
-  /** Initial GameplayConfig (uncontrolled) */
-  defaultGameplayConfig?: Partial<GameplayConfig>;
-  /** Callback when any field of GameplayConfig changes */
-  onGameplayConfigChange?: (next: GameplayConfig, patch: Partial<GameplayConfig>) => void;
-  /** Alias for onGameplayConfigChange */
-  onChange?: (next: GameplayConfig, patch: Partial<GameplayConfig>) => void;
+  onNavigateRoute?: (route: string) => void;
   onNavigateTrainingDetail?: () => void;
   onNavigateKeybindingsDetail?: () => void;
   onNavigateTrajectoryDetail?: () => void;
-  /** Alias for onNavigateTrajectoryDetail */
-  onNavigateTrajectory?: () => void;
   onNavigateCameraDetail?: () => void;
   onHover: (desc: string) => void;
   onLeave: () => void;
@@ -66,14 +57,10 @@ export interface GameplayTabProps {
 export const GameplayTab: React.FC<GameplayTabProps> = ({
   isLight = false,
   gameplayConfig: propGameplayConfig,
-  config: propAliasConfig,
-  defaultGameplayConfig,
-  onGameplayConfigChange,
-  onChange,
+  onNavigateRoute,
   onNavigateTrainingDetail,
   onNavigateKeybindingsDetail,
   onNavigateTrajectoryDetail,
-  onNavigateTrajectory,
   onNavigateCameraDetail,
   onHover,
   onLeave,
@@ -85,17 +72,15 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
   const updateStoreTrajectory = useAppStore((s) => s.updateTrajectory);
   const setAppClockPacingPriority = useAppStore((s) => s.setClockPacingPriority);
 
-  const controlledCfg = propGameplayConfig ?? propAliasConfig;
   const [internalConfig, setInternalConfig] = useState<GameplayConfig>(() => ({
     ...DEFAULT_GAMEPLAY_CONFIG,
     ...storeGameplay,
-    ...defaultGameplayConfig,
   }));
 
   const resolvedGameplayConfig: GameplayConfig = {
     ...internalConfig,
     ...storeGameplay,
-    ...controlledCfg,
+    ...propGameplayConfig,
   };
 
   const ballCamIndicator = resolvedGameplayConfig.ballCamIndicator;
@@ -105,8 +90,6 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
     const nextConfig: GameplayConfig = { ...resolvedGameplayConfig, ...patch };
     setInternalConfig(nextConfig);
     updateStoreGameplay(patch);
-    onGameplayConfigChange?.(nextConfig, patch);
-    onChange?.(nextConfig, patch);
   };
 
   const handleTrajectoryEnabledChange = (next: boolean) => {
@@ -121,14 +104,18 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
     setAppClockPacingPriority(next as Parameters<typeof setAppClockPacingPriority>[0]);
   };
 
-  const handleOpenTrajectoryConfig = () => {
-    if (onNavigateTrajectoryDetail) {
-      onNavigateTrajectoryDetail();
-    } else if (onNavigateTrajectory) {
-      onNavigateTrajectory();
+  const navigateRoute = (route: string, specificCb?: () => void) => {
+    if (specificCb) {
+      specificCb();
+    } else if (onNavigateRoute) {
+      onNavigateRoute(route);
     } else {
-      navigate('trajectory');
+      navigate(route as Parameters<typeof navigate>[0]);
     }
+  };
+
+  const handleOpenTrajectoryConfig = () => {
+    navigateRoute('trajectory', onNavigateTrajectoryDetail);
   };
 
   const {
@@ -201,7 +188,7 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
         title="Training Mode Configuration"
         description="Boost mode, goal barrier & car hitbox collision overlay"
         hoverDescription="Configure training rules, boost mode (standard vs unlimited), goal barrier designer, and car hitbox collision visualization."
-        onAction={onNavigateTrainingDetail ?? (() => navigate('training-config'))}
+        onAction={() => navigateRoute('training-config', onNavigateTrainingDetail)}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -214,7 +201,7 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
         description="Field of view, distance, height, angle & tracking stiffness"
         hoverDescription="Field of view, height, angle, distance & tracking stiffness."
         buttonHoverDescription="Open camera live preview panel to adjust FOV, height, angle and stiffness."
-        onAction={onNavigateCameraDetail ?? (() => navigate('camera'))}
+        onAction={() => navigateRoute('camera', onNavigateCameraDetail)}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -227,7 +214,7 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
         description="Keyboard, mouse & controller mapping configuration"
         hoverDescription="Customize keyboard keys and gamepad controller buttons."
         buttonHoverDescription="Open key bindings panel to reassign keyboard and gamepad actions."
-        onAction={onNavigateKeybindingsDetail ?? (() => navigate('keybindings'))}
+        onAction={() => navigateRoute('keybindings', onNavigateKeybindingsDetail)}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}

@@ -2,12 +2,48 @@
  * replayDirectorStore.ts
  * Active session subscription and diagnostic service locator for the Goal Replay Director Camera & Slow-Motion.
  */
+import { create } from 'zustand';
 import {
+  DEFAULT_REPLAY_DIRECTOR_CONFIG,
+  DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
   REPLAY_DIRECTOR_CONFIG,
-  updateReplayDirectorConfig,
+  getReplayDirectorConfig,
+  resetReplayDirectorConfig,
   setReplayDirectorActiveControllerHooks,
+  subscribeReplayDirectorConfig,
+  updateReplayDirectorConfig,
   type ReplayDirectorActiveControllerConfigTarget,
+  type ReplayDirectorConfigListener,
+  type ReplayDirectorConfigState,
 } from '../config/replayDirectorConfig';
+
+export {
+  DEFAULT_REPLAY_DIRECTOR_CONFIG,
+  DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
+  REPLAY_DIRECTOR_CONFIG,
+  getReplayDirectorConfig,
+  resetReplayDirectorConfig,
+  subscribeReplayDirectorConfig,
+  updateReplayDirectorConfig,
+  type ReplayDirectorConfigListener,
+  type ReplayDirectorConfigState,
+};
+
+export interface ReplayDirectorStoreState {
+  config: ReplayDirectorConfigState;
+  updateConfig: (patch?: Partial<ReplayDirectorConfigState>) => ReplayDirectorConfigState;
+  resetConfig: () => ReplayDirectorConfigState;
+}
+
+export const useReplayDirectorStore = create<ReplayDirectorStoreState>(() => ({
+  config: getReplayDirectorConfig(),
+  updateConfig: (patch = {}) => updateReplayDirectorConfig(patch),
+  resetConfig: () => resetReplayDirectorConfig(),
+}));
+
+subscribeReplayDirectorConfig((snapshot) => {
+  useReplayDirectorStore.setState({ config: snapshot });
+});
 
 export interface ReplayDirectorAnomalyPeakEntry {
   frameId?: number;

@@ -213,23 +213,31 @@ import {
   PackagedSvgIcon,
 } from './packagedSvgIcons';
 
-const CrossbarOutlineIcon: React.FC<any> = (props) => (
+export interface IconRenderProps {
+  size?: number;
+  strokeWidth?: number;
+  className?: string;
+  color?: string;
+  style?: React.CSSProperties;
+}
+
+const CrossbarOutlineIcon: React.FC<IconRenderProps> = (props) => (
   <PackagedSvgIcon name="crossbar-outline" {...props} />
 );
-const CrossbarSolidIcon: React.FC<any> = (props) => (
+const CrossbarSolidIcon: React.FC<IconRenderProps> = (props) => (
   <PackagedSvgIcon name="crossbar-solid" {...props} />
 );
-const BounceOutlineIcon: React.FC<any> = (props) => (
+const BounceOutlineIcon: React.FC<IconRenderProps> = (props) => (
   <PackagedSvgIcon name="bounce-outline" {...props} />
 );
-const BounceSolidIcon: React.FC<any> = (props) => (
+const BounceSolidIcon: React.FC<IconRenderProps> = (props) => (
   <PackagedSvgIcon name="bounce-solid" {...props} />
 );
-const TacticsSquareIcon: React.FC<any> = (props) => (
+const TacticsSquareIcon: React.FC<IconRenderProps> = (props) => (
   <PackagedSvgIcon name="tactics-square" {...props} />
 );
 
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
+const ICON_MAP: Record<string, React.ComponentType<IconRenderProps>> = {
   BombEmoji: BombEmojiSvg,
   'bomb-emoji': BombEmojiSvg,
   JetThrust: JetThrustSvg,
@@ -511,7 +519,7 @@ const toPascalCase = (str: string): string =>
  * Tree-shakeable Lucide & Packaged Custom SVG icon resolver by kebab-case or PascalCase name.
  * Avoids `import * as LucideIcons` which bundles 1,500+ unused icons (~1.5 MB).
  */
-export const lookupLucideIcon = (name: string): React.ComponentType<any> | null => {
+export const lookupLucideIcon = (name: string): React.ComponentType<IconRenderProps> | null => {
   if (!name || typeof name !== 'string') return null;
   const trimmed = name.trim();
   const pascal = toPascalCase(trimmed);
@@ -520,7 +528,7 @@ export const lookupLucideIcon = (name: string): React.ComponentType<any> | null 
 
 export const renderNamedIcon = (
   name: string,
-  props?: { size?: number; strokeWidth?: number; className?: string; color?: string }
+  props?: IconRenderProps
 ): React.ReactNode => {
   const Comp = lookupLucideIcon(name);
   if (!Comp) return null;

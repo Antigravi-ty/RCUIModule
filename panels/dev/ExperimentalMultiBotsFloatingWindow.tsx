@@ -297,20 +297,22 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
         isLight={isLight}
         cardBg={cardBg}
         mutedText={mutedText}
-        blueScore={blueScore}
-        orangeScore={orangeScore}
-        remainingSec={remainingSec}
-        isOvertime={isOvertime}
-        matchPhase={matchPhase}
-        matchDurationSec={matchDurationSec}
-        speedMultiplier={speedMultiplier}
-        unlimitedBoost={unlimitedBoost}
-        disableGoalReplay={disableGoalReplay}
-        onSetMatchDurationSec={setMatchDurationSec}
-        onSetSpeedMultiplier={setSpeedMultiplier}
-        onSetUnlimitedBoost={setUnlimitedBoost}
-        onSetDisableGoalReplay={setDisableGoalReplay}
-        onTriggerSandboxAction={triggerSandboxAction}
+        stateOverride={{
+          blueScore,
+          orangeScore,
+          remainingSec,
+          isOvertime,
+          matchPhase,
+          matchDurationSec,
+          speedMultiplier,
+          unlimitedBoost,
+          disableGoalReplay,
+          onSetMatchDurationSec: setMatchDurationSec,
+          onSetSpeedMultiplier: setSpeedMultiplier,
+          onSetUnlimitedBoost: setUnlimitedBoost,
+          onSetDisableGoalReplay: setDisableGoalReplay,
+          onTriggerSandboxAction: triggerSandboxAction,
+        }}
       />
     </div>
   );

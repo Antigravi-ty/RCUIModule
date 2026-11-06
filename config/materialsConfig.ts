@@ -18,7 +18,7 @@ export interface MaterialsConfigState {
   boostAudio: 'rush' | 'standard' | 'flamethrower' | 'plasma';
   boostFlameLuminance: 'balanced' | 'dynamic';
   boostPlumeLuminance: 'min' | 'balanced' | 'dynamic' | 'hdr';
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_MATERIALS_CONFIG: MaterialsConfigState = {
@@ -63,7 +63,7 @@ let activeMaterials: MaterialsConfigState = (() => {
 })();
 
 type MaterialsListener = (materials: MaterialsConfigState) => void;
-const materialsListeners = new Set<MaterialsListener>();
+const materialsCallbacks: MaterialsListener[] = [];
 
 export function getMaterialsConfig(): MaterialsConfigState {
   return activeMaterials;
@@ -86,7 +86,7 @@ export function setMaterialsConfig(
   if (persist) {
     safeStorage.set(MATERIALS_STORAGE_KEY, JSON.stringify(activeMaterials));
   }
-  for (const listener of materialsListeners) {
+  for (const listener of materialsCallbacks) {
     try {
       listener(activeMaterials);
     } catch (err) {
@@ -96,8 +96,15 @@ export function setMaterialsConfig(
 }
 
 export function onMaterialsConfigChange(listener: MaterialsListener): () => boolean {
-  materialsListeners.add(listener);
-  return () => materialsListeners.delete(listener);
+  if (!materialsCallbacks.includes(listener)) {
+    materialsCallbacks.push(listener);
+  }
+  return () => {
+    const idx = materialsCallbacks.indexOf(listener);
+    if (idx === -1) return false;
+    materialsCallbacks.splice(idx, 1);
+    return true;
+  };
 }
 
 export function getInitialMaterials(): MaterialsConfigState {

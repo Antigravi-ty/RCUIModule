@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import {
-  useLayer3ExpMultiBotsStoreBinding,
-  type Layer3ExpMultiBotsRecipeProps,
-} from './hooks/useLayer3ExpMultiBotsBinding';
+import { useLayer3ExpMultiBotsStoreBinding } from './hooks/useLayer3ExpMultiBotsBinding';
+import type { Layer3ExpMultiBotsRecipeProps } from './Layer3ExpMultiBotsRecipe';
 import { Card } from '../layout/Card';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -57,7 +55,7 @@ export const Layer3ExpBotPackRecipe: React.FC<Layer3ExpBotPackRecipeProps> = Rea
       onEnterGame,
       onBack = () => {},
       className = '',
-    } = useLayer3ExpMultiBotsStoreBinding(rawProps, 'botpack');
+    } = useLayer3ExpMultiBotsStoreBinding({ ...rawProps.stateOverride, ...rawProps }, 'botpack');
 
     const [internalBlueSlots, setInternalBlueSlots] =
       useState<TeamRosterSlotConfig[]>(defaultBlueSlots);

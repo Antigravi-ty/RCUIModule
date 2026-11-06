@@ -208,9 +208,9 @@ const runtimeVisualizerTelemetry: SpatialAudioVisualizerTelemetry = {
 type VisualizerConfigListener = (cfg: SpatialAudioVisualizerConfig) => void;
 type VisualizerTelemetryListener = (telemetry: SpatialAudioVisualizerTelemetry) => void;
 
-const configListeners = new Set<VisualizerConfigListener>();
-const configAppliers = new Set<VisualizerConfigListener>();
-const telemetryListeners = new Set<VisualizerTelemetryListener>();
+const configCallbacks: VisualizerConfigListener[] = [];
+const configAppliers: VisualizerConfigListener[] = [];
+const telemetryCallbacks: VisualizerTelemetryListener[] = [];
 
 export function sanitizeSpatialAudioVisualizerConfig(
   raw: unknown,
@@ -278,7 +278,7 @@ function notifyConfigChanged(): SpatialAudioVisualizerConfig {
       // ignore applier error
     }
   }
-  for (const listener of configListeners) {
+  for (const listener of configCallbacks) {
     try {
       listener(snapshot);
     } catch {
@@ -314,18 +314,24 @@ export function resetSpatialAudioVisualizerConfig(): SpatialAudioVisualizerConfi
 }
 
 export function subscribeSpatialAudioVisualizerConfig(cb: VisualizerConfigListener): () => void {
-  configListeners.add(cb);
+  if (!configCallbacks.includes(cb)) {
+    configCallbacks.push(cb);
+  }
   return () => {
-    configListeners.delete(cb);
+    const idx = configCallbacks.indexOf(cb);
+    if (idx !== -1) configCallbacks.splice(idx, 1);
   };
 }
 
 export function registerSpatialAudioVisualizerApplier(
   applier: VisualizerConfigListener
 ): () => void {
-  configAppliers.add(applier);
+  if (!configAppliers.includes(applier)) {
+    configAppliers.push(applier);
+  }
   return () => {
-    configAppliers.delete(applier);
+    const idx = configAppliers.indexOf(applier);
+    if (idx !== -1) configAppliers.splice(idx, 1);
   };
 }
 
@@ -352,7 +358,7 @@ export function publishSpatialAudioVisualizerTelemetry(
     runtimeVisualizerTelemetry.listenerPosUU = [...patch.listenerPosUU];
   }
   const snapshot = getSpatialAudioVisualizerTelemetry();
-  for (const listener of telemetryListeners) {
+  for (const listener of telemetryCallbacks) {
     try {
       listener(snapshot);
     } catch {
@@ -364,8 +370,11 @@ export function publishSpatialAudioVisualizerTelemetry(
 export function subscribeSpatialAudioVisualizerTelemetry(
   cb: VisualizerTelemetryListener
 ): () => void {
-  telemetryListeners.add(cb);
+  if (!telemetryCallbacks.includes(cb)) {
+    telemetryCallbacks.push(cb);
+  }
   return () => {
-    telemetryListeners.delete(cb);
+    const idx = telemetryCallbacks.indexOf(cb);
+    if (idx !== -1) telemetryCallbacks.splice(idx, 1);
   };
 }

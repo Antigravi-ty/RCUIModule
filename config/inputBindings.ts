@@ -39,6 +39,7 @@ import {
   detectControllerType,
   formatBindingDisplayName,
   getActionLabel,
+  type InputBindingItem,
 } from './inputBindingValidators';
 
 export {
@@ -109,25 +110,26 @@ export const inputBindingsStore = createLocalStorageStore(
 
     for (const dev of ['keyboard', 'pad'] as const) {
       const devObj = isPlainObject(loaded[dev]) ? loaded[dev] : {};
+      const devBindings = target[dev] as Record<string, InputBindingItem[]>;
       for (const act of INPUT_ACTIONS) {
         const slots = filterArraySlice(devObj[act.id], validateBinding, 2);
         if (slots) {
-          target[dev][act.id] = slots.filter((b: any) => getBindingCategory(b) === dev);
+          devBindings[act.id] = slots.filter((b) => getBindingCategory(b) === dev);
         }
       }
 
       if (!Object.hasOwn(devObj, 'airRoll')) {
         if (dev === 'pad') {
-          target[dev].airRoll = target[dev].powerslide.map((b: any) => ({ ...b }));
+          target.pad.airRoll = target.pad.powerslide.map((b) => ({ ...b }));
         } else {
-          target[dev].airRoll = [];
+          target.keyboard.airRoll = [];
         }
       }
 
       for (const act of [...BALL_CONTROL_MODES, ...CAMERA_LOOK_ACTIONS]) {
         if (!Array.isArray(devObj[act])) {
-          target[dev][act] = target[dev][act].filter(
-            (b: any) =>
+          devBindings[act] = devBindings[act].filter(
+            (b) =>
               !(
                 b.kind === 'padAxis' &&
                 CAMERA_LOOK_ACTIONS.includes(act) &&
@@ -137,7 +139,7 @@ export const inputBindingsStore = createLocalStorageStore(
                 (other) =>
                   other.id !== act &&
                   Array.isArray(devObj[other.id]) &&
-                  target[dev][other.id].some((o: any) => areBindingsEqual(b, o))
+                  devBindings[other.id].some((o) => areBindingsEqual(b, o))
               )
           );
         }

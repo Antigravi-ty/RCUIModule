@@ -31,7 +31,7 @@ import {
   getBallVisualConfig,
   updateBallVisualConfig,
   subscribeBallVisualConfig,
-} from '../../config/ballVisualConfig';
+} from '../../stores/ballVisualStore';
 import { WallPulseTab } from './atmosphere-fx/WallPulseTab';
 import { ShadowsLightTab } from './atmosphere-fx/ShadowsLightTab';
 import { SkyboxTab } from './atmosphere-fx/SkyboxTab';

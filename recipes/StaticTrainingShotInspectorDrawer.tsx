@@ -1,8 +1,5 @@
 import React, { useState, useRef } from 'react';
-import {
-  useStaticTrainingShotInspectorDrawerStoreBinding,
-  type StaticTrainingShotInspectorDrawerProps,
-} from './hooks/useStaticTrainingStoreBindings';
+import { useStaticTrainingShotInspectorDrawerStoreBinding } from './hooks/useStaticTrainingStoreBindings';
 import { Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -19,7 +16,41 @@ import {
 } from './static-training/staticTrainingTypes';
 import { StaticTrainingShotInspectorView } from './static-training/StaticTrainingShotInspectorView';
 
-export type { StaticTrainingShotInspectorDrawerProps };
+export interface StaticTrainingShotInspectorStateOverride {
+  currentShotOverride?: StaticTrainingShotItem | null;
+  isDirty?: boolean;
+  onMutateCurrentShot?: (updater: (draft: StaticTrainingShotItem) => void) => void;
+  onSaveCurrentShot?: () => void | Promise<void>;
+  onAddNewShot?: () => void | Promise<void>;
+  onDuplicateShot?: (idx: number) => void | Promise<void>;
+  onReorderShot?: (fromIdx: number, toIdx: number) => void | Promise<void>;
+  onDeleteShot?: (idx: number) => void | Promise<void>;
+  onExportSingleShot?: (idx: number) => void;
+  onImportSingleShot?: (file: File) => void | Promise<void>;
+}
+
+export interface StaticTrainingShotInspectorDrawerProps {
+  isLight?: boolean;
+  transparent?: boolean;
+  packTitle?: string;
+  /** Controlled or uncontrolled shots list */
+  shots?: StaticTrainingShotItem[];
+  onShotsChange?: (shots: StaticTrainingShotItem[]) => void;
+  /** Controlled or uncontrolled selected shot index */
+  selectedShotIndex?: number;
+  onSelectedShotIndexChange?: (idx: number) => void;
+  /** Controlled or uncontrolled item inspection state (false = full list, true = compressed rail + detail inspector) */
+  isInspectingShot?: boolean;
+  onInspectingShotChange?: (inspecting: boolean) => void;
+  /** Controlled or uncontrolled 3D edit sub-mode */
+  editSubMode?: EditSubMode;
+  onEditSubModeChange?: (mode: EditSubMode) => void;
+  /** Callback when user clicks Collapse [TAB] in header */
+  onCollapseDrawer?: () => void;
+  /** Callback when user confirms Exit in the double-check dialogue */
+  onExitSession?: (action: 'save' | 'ignore') => void | Promise<void>;
+  stateOverride?: StaticTrainingShotInspectorStateOverride;
+}
 
 /**
  * Standalone helper to spawn the Exit Edit Mode confirmation dialogue (`Save / Ignore / Cancel`).
@@ -93,7 +124,7 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
   onExportSingleShot,
   onImportSingleShot,
   onCollapseDrawer,
-} = useStaticTrainingShotInspectorDrawerStoreBinding(rawProps);
+} = useStaticTrainingShotInspectorDrawerStoreBinding({ ...rawProps.stateOverride, ...rawProps });
   const [internalShots, setInternalShots] = useState<StaticTrainingShotItem[]>(
     INITIAL_TRAINING_SHOTS
   );

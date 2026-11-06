@@ -82,8 +82,8 @@ export const REPLAY_DIRECTOR_CONFIG: ReplayDirectorConfigState = {
   ...DEFAULT_REPLAY_DIRECTOR_CONFIG,
 };
 
-type ReplayDirectorConfigListener = (config: ReplayDirectorConfigState) => void;
-const directorConfigListeners = new Set<ReplayDirectorConfigListener>();
+export type ReplayDirectorConfigListener = (config: ReplayDirectorConfigState) => void;
+const directorConfigCallbacks: ReplayDirectorConfigListener[] = [];
 
 export interface ReplayDirectorActiveControllerConfigTarget {
   isImportedPreview?: boolean;
@@ -106,30 +106,48 @@ export function setReplayDirectorActiveControllerHooks(hooks: {
   _notifyActiveController = hooks.notifyActiveController;
 }
 
-export function updateReplayDirectorConfig(
+export function sanitizeReplayDirectorConfigPatch(
+  current: ReplayDirectorConfigState,
   patch: Partial<ReplayDirectorConfigState> = {}
-): ReplayDirectorConfigState {
-  if (!patch || typeof patch !== 'object') return REPLAY_DIRECTOR_CONFIG;
+): { nextConfig: ReplayDirectorConfigState; changed: boolean } {
+  if (!patch || typeof patch !== 'object') {
+    return { nextConfig: current, changed: false };
+  }
+  const nextConfig: ReplayDirectorConfigState = { ...current };
   let changed = false;
   for (const [key, val] of Object.entries(patch)) {
-    if (!(key in REPLAY_DIRECTOR_CONFIG)) continue;
+    if (!(key in DEFAULT_REPLAY_DIRECTOR_CONFIG)) continue;
     if (typeof DEFAULT_REPLAY_DIRECTOR_CONFIG[key] === 'boolean' && typeof val === 'boolean') {
-      if (REPLAY_DIRECTOR_CONFIG[key] !== val) {
-        REPLAY_DIRECTOR_CONFIG[key] = val;
+      if (nextConfig[key] !== val) {
+        nextConfig[key] = val;
         changed = true;
       }
     } else if (typeof val === 'number' && Number.isFinite(val)) {
-      if (REPLAY_DIRECTOR_CONFIG[key] !== val) {
-        REPLAY_DIRECTOR_CONFIG[key] = val;
+      if (nextConfig[key] !== val) {
+        nextConfig[key] = val;
         changed = true;
       }
     }
+  }
+  return { nextConfig, changed };
+}
+
+export function getReplayDirectorConfig(): ReplayDirectorConfigState {
+  return { ...REPLAY_DIRECTOR_CONFIG };
+}
+
+export function updateReplayDirectorConfig(
+  patch: Partial<ReplayDirectorConfigState> = {}
+): ReplayDirectorConfigState {
+  const { nextConfig, changed } = sanitizeReplayDirectorConfigPatch(REPLAY_DIRECTOR_CONFIG, patch);
+  if (changed) {
+    Object.assign(REPLAY_DIRECTOR_CONFIG, nextConfig);
   }
   const activeCtrl = _getActiveController?.();
   if (changed && activeCtrl) {
     activeCtrl.invalidateCachedDirectorPlans?.(true);
   }
-  for (const fn of directorConfigListeners) {
+  for (const fn of directorConfigCallbacks) {
     try {
       fn({ ...REPLAY_DIRECTOR_CONFIG });
     } catch (err) {
@@ -148,7 +166,7 @@ export function resetReplayDirectorConfig(): ReplayDirectorConfigState {
   if (activeCtrl) {
     activeCtrl.invalidateCachedDirectorPlans?.(false);
   }
-  for (const fn of directorConfigListeners) {
+  for (const fn of directorConfigCallbacks) {
     try {
       fn({ ...REPLAY_DIRECTOR_CONFIG });
     } catch (err) {
@@ -161,6 +179,13 @@ export function resetReplayDirectorConfig(): ReplayDirectorConfigState {
 
 export function subscribeReplayDirectorConfig(listener: ReplayDirectorConfigListener): () => boolean {
   if (typeof listener !== 'function') return () => false;
-  directorConfigListeners.add(listener);
-  return () => directorConfigListeners.delete(listener);
+  if (!directorConfigCallbacks.includes(listener)) {
+    directorConfigCallbacks.push(listener);
+  }
+  return () => {
+    const idx = directorConfigCallbacks.indexOf(listener);
+    if (idx === -1) return false;
+    directorConfigCallbacks.splice(idx, 1);
+    return true;
+  };
 }

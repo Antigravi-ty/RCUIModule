@@ -3,12 +3,12 @@ import {
   type ClockPacingPriority,
   getInitialClockPacingMode,
   getInitialClockPacingPriority,
-} from '../../config/clockPacingConfig';
+} from '../config/clockPacingConfig';
 import {
   getInitialInputBufferTarget,
   getInitialInputBufferThreshold,
-} from '../../config/uiConfig';
-import { useAppStore } from '../../stores/appStore';
+} from '../config/uiConfig';
+import { useAppStore } from './appStore';
 
 export type ClockPacingMode = 'legacy' | 'sts' | 'csts' | 'custom';
 

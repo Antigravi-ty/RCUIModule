@@ -13,7 +13,22 @@ import {
   type NameTagRuntimeSyncSnapshot,
   type NameTagTelemetrySnapshot,
   createDefaultCarOverride,
+  resolveNameTagBoostBorderVisible,
 } from '../config/nameTagConfig';
+
+export {
+  DEFAULT_NAME_TAG_CONFIG,
+  KICKOFF_PERMUTATION_COUNT,
+  resolveNameTagBoostBorderVisible,
+  type NameTagBoostBorderOverride,
+  type NameTagCameraMode,
+  type NameTagCarOverride,
+  type NameTagConfig,
+  type NameTagFittedParameters,
+  type NameTagRuntimeState,
+  type NameTagRuntimeSyncSnapshot,
+  type NameTagTelemetrySnapshot,
+};
 import {
   buildNameTagCalibrationExportPayload as buildExportPayloadFromConfigAndSnapshot,
   computeFittedParametersFromSamples as computeFittedFromConfigAndSnapshot,

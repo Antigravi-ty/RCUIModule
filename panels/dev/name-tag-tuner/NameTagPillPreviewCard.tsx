@@ -92,10 +92,14 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
           const isFillMode =
             config.boostBorderEnabled &&
             (mode === 'bottom-up-fill' || mode === 'left-right-fill');
-          const unfilledHex = resolveUnfilledBaseHexColor(backgroundHex);
+          const unfilledHex = resolveUnfilledBaseHexColor(
+            backgroundHex,
+            config.boostUnfilledDarkenRatio
+          );
           const activeFillHex = resolveActiveBoostFillColor(
             backgroundHex,
-            boostBorderHex
+            boostBorderHex,
+            config.boostFillColorBlendRatio
           );
           const baseBgCss = isFillMode
             ? hexToRgba(unfilledHex, config.boostUnfilledBgOpacity)

@@ -12,7 +12,7 @@ export interface BallVisualConfig {
   wireframe: boolean;
   indicatorRingOpacity: number;
   goalDarkenJitterEnabled: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const DEFAULT_BALL_VISUAL_CONFIG: BallVisualConfig = {
@@ -31,7 +31,11 @@ export const ballVisualRuntimeConfig: BallVisualConfig = {
 };
 
 export type BallVisualListener = (snapshot: BallVisualConfig) => void;
-export type BallVisualApplier = (config: BallVisualConfig, ballRoot: any, indicatorRings: any[]) => void;
+export type BallVisualApplier = (
+  config: BallVisualConfig,
+  ballRoot: unknown,
+  indicatorRings: unknown[]
+) => void;
 
 const ballVisualCallbacks: BallVisualListener[] = [];
 const ballVisualObjectCallbacks: BallVisualApplier[] = [];
@@ -110,8 +114,8 @@ export function registerBallVisualApplier(applier: BallVisualApplier): () => voi
 
 export function updateBallVisualConfig(
   patch: Partial<BallVisualConfig> = {},
-  ballRoot: any = null,
-  indicatorRings: any[] = []
+  ballRoot: unknown = null,
+  indicatorRings: unknown[] = []
 ): BallVisualConfig {
   if (patch) {
     Object.assign(ballVisualRuntimeConfig, sanitizeBallVisualConfig(patch, ballVisualRuntimeConfig));
@@ -136,8 +140,8 @@ export function updateBallVisualConfig(
 
 export function setTemporaryBallOpacityOverride(
   opacityOrNull: number | null = null,
-  ballRoot: any = null,
-  indicatorRings: any[] = []
+  ballRoot: unknown = null,
+  indicatorRings: unknown[] = []
 ): BallVisualConfig {
   const normalized = normalizeTemporaryBallOpacityOverride(opacityOrNull);
   if (ballVisualRuntimeConfig.temporaryOpacityOverride === normalized && !ballRoot) {

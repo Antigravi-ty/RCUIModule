@@ -12,6 +12,7 @@ import {
   type TakeoverTeamSide,
 } from './TakeoverCountdownHUD';
 import { useReplayViewerStore } from '../stores/replayViewerStore';
+import { useReplayToRcsImporterStore } from '../stores/replayToRcsImporterStore';
 import { useHudStore } from '../stores/hudStore';
 import { useExperimentalMultiBotsStore } from '../stores/experimentalMultiBotsStore';
 import type { HudTransientChannel } from '../stores/hudTransientTypes';
@@ -275,20 +276,38 @@ export function useTakeoverPrerollChoreography(params: {
   return { isTakeoverPreroll, takeoverPayload, handleTakeoverExpire };
 }
 
+function dispatchReplayViewerSelectPovSlot(slotKey: 1 | 2 | 3 | 4 | 5 | 6 | null): void {
+  const impState = useReplayToRcsImporterStore.getState();
+  if (impState.viewerState !== 'idle' && impState.totalFrames > 0) {
+    if (slotKey !== null) {
+      impState.runtimeHandlers.onSelectPovSlot?.(slotKey);
+    }
+    return;
+  }
+  useReplayViewerStore.getState().runtimeHandlers.onSelectPovSlot?.(slotKey);
+}
+
 export function useReplayPovSlotHotkeys(params: {
   hudChannel: HudTransientChannel;
   matchMode: string;
   matchPhase: string;
   isReplayViewerActive: boolean;
+  isReplayViewerLoaded?: boolean;
 }) {
-  const { hudChannel, matchMode, matchPhase, isReplayViewerActive } = params;
+  const {
+    hudChannel,
+    matchMode,
+    matchPhase,
+    isReplayViewerActive,
+    isReplayViewerLoaded = isReplayViewerActive,
+  } = params;
 
   const handleSelectPovSlot = useCallback(
     (slotKey: 1 | 2 | 3 | 4 | 5 | 6 | null) => {
       if (slotKey === null) {
         hudChannel.setRoster({ focusedSlotKey: null });
-        if (isReplayViewerActive) {
-          useReplayViewerStore.getState().runtimeHandlers.onSelectPovSlot?.(null);
+        if (isReplayViewerLoaded) {
+          dispatchReplayViewerSelectPovSlot(null);
         }
         const curHud = useHudStore.getState();
         if (curHud.onReplaySelectPovCar) {
@@ -312,9 +331,9 @@ export function useReplayPovSlotHotkeys(params: {
           ? targetSlot.carIndex
           : null;
 
-      if (isReplayViewerActive) {
+      if (isReplayViewerLoaded) {
         hudChannel.setRoster({ focusedSlotKey: slotKey });
-        useReplayViewerStore.getState().runtimeHandlers.onSelectPovSlot?.(slotKey);
+        dispatchReplayViewerSelectPovSlot(slotKey);
         return;
       }
 
@@ -335,11 +354,11 @@ export function useReplayPovSlotHotkeys(params: {
         }
       }
     },
-    [hudChannel, matchMode, isReplayViewerActive]
+    [hudChannel, matchMode, isReplayViewerLoaded]
   );
 
   useEffect(() => {
-    if (matchPhase !== 'replay' && !isReplayViewerActive) return;
+    if (matchPhase !== 'replay' && !isReplayViewerLoaded) return;
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       const tag = target?.tagName;
@@ -364,7 +383,7 @@ export function useReplayPovSlotHotkeys(params: {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [matchPhase, isReplayViewerActive, handleSelectPovSlot]);
+  }, [matchPhase, isReplayViewerLoaded, handleSelectPovSlot]);
 
   return { handleSelectPovSlot };
 }

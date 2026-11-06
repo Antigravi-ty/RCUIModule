@@ -449,3 +449,146 @@ export async function performRemoteAccountBackupExport(
     account.userRevHash;
   return exportManagedAccountBackup(account, mergedSnap, activeHash);
 }
+
+export async function executeUserCloudLoginAndMerge(params: {
+  bridge: CloudProfileSyncBridgeCallbacks;
+  normalizedInput: string;
+  trimmedPassword: string;
+  currentLocalSnapshot: ProfileFlatSnapshot;
+  allowRemoteDeployment: boolean;
+  previousAppliedDevSnapshot: ProfileFlatSnapshot | null;
+  applySnapshotSafely: (snapshot: ProfileFlatSnapshot) => void;
+}): Promise<
+  | { ok: false; errorMessage: string }
+  | {
+      ok: true;
+      evaluated: EvaluatedCloudLoginMerge;
+      nextUserRev: number;
+      nextUserRevHash: string;
+      statusMessage: string;
+    }
+> {
+  const {
+    bridge,
+    normalizedInput,
+    trimmedPassword,
+    currentLocalSnapshot,
+    allowRemoteDeployment,
+    previousAppliedDevSnapshot,
+    applySnapshotSafely,
+  } = params;
+
+  const record = await bridge.fetchUserCompleteRecord(normalizedInput, 'client');
+  const resolvedUserId = record.index?.userId || normalizedInput;
+  const [hashByUserId, hashByUsername] = await Promise.all([
+    bridge.computePassphraseHash(resolvedUserId, trimmedPassword),
+    bridge.computePassphraseHash(normalizedInput, trimmedPassword),
+  ]);
+
+  const expectedHash = record.index?.passphraseHash || record.userSlot?.passphraseHash || '';
+  const expectedPlainPassword = record.index?.password || '';
+  if (
+    expectedHash &&
+    expectedHash !== hashByUserId &&
+    expectedHash !== hashByUsername &&
+    (!expectedPlainPassword || expectedPlainPassword !== trimmedPassword)
+  ) {
+    return { ok: false, errorMessage: 'Incorrect password for this cloud account.' };
+  }
+
+  const evaluated = evaluateRecordMergeOnLogin({
+    usernameInput: normalizedInput,
+    trimmedPassword,
+    record,
+    currentLocalSnapshot,
+    allowRemoteDeployment,
+    previousAppliedDevSnapshot,
+  });
+
+  saveCloudUser(evaluated.userObj);
+  applySnapshotSafely(evaluated.targetSnap);
+
+  if (evaluated.conflicts.length === 0 && evaluated.devRev > 0) {
+    saveStoredDevAckState(evaluated.userObj.userId, {
+      devRev: evaluated.devRev,
+      devRevHash: evaluated.devRevHash,
+      appliedDevSnapshot: evaluated.appliedDevSnapshot,
+    });
+  }
+
+  let nextUserRev = evaluated.userRev;
+  let nextUserRevHash = evaluated.userRevHash;
+
+  if (!record.userSlot || evaluated.autoAppliedCount > 0) {
+    const pub = await bridge.publishUserProfileSlot({
+      userId: evaluated.userObj.userId,
+      username: evaluated.userObj.username,
+      alias: evaluated.userObj.alias,
+      displayName: evaluated.userObj.displayName,
+      password: trimmedPassword,
+      snapshot: evaluated.targetSnap,
+      prevIndex: record.index,
+      ackDevRev: evaluated.conflicts.length === 0 ? evaluated.devRev : undefined,
+      ackDevRevHash: evaluated.conflicts.length === 0 ? evaluated.devRevHash : undefined,
+    });
+    nextUserRev = pub.rev;
+    nextUserRevHash = pub.revHash;
+  }
+
+  const statusMessage =
+    evaluated.conflicts.length > 0
+      ? `Synced with ${evaluated.conflicts.length} conflict(s) requiring resolution.`
+      : evaluated.autoAppliedCount > 0
+        ? `Merged ${evaluated.autoAppliedCount} developer setting(s) (commit #${nextUserRevHash}).`
+        : `Synced @${evaluated.userObj.username} (commit #${nextUserRevHash}).`;
+
+  return {
+    ok: true,
+    evaluated,
+    nextUserRev,
+    nextUserRevHash,
+    statusMessage,
+  };
+}
+
+export async function executeUserCloudProfilePush(params: {
+  bridge: CloudProfileSyncBridgeCallbacks;
+  loggedInUser: LoggedInCloudUser;
+  snapshot: ProfileFlatSnapshot;
+  devRev: number;
+  devRevHash: string;
+}): Promise<{
+  updatedUser: LoggedInCloudUser;
+  rev: number;
+  revHash: string;
+}> {
+  const { bridge, loggedInUser, snapshot, devRev, devRevHash } = params;
+  const snapName = snapshot['garage.displayName'];
+  const liveDisplayName =
+    typeof snapName === 'string' && snapName.trim()
+      ? snapName.trim()
+      : loggedInUser.displayName;
+  const record = await bridge.fetchUserCompleteRecord(loggedInUser.userId, 'client');
+  const pub = await bridge.publishUserProfileSlot({
+    userId: loggedInUser.userId,
+    username: loggedInUser.username,
+    alias: record.index?.alias || loggedInUser.alias,
+    displayName: liveDisplayName,
+    password: loggedInUser.password,
+    snapshot,
+    prevIndex: record.index,
+    ackDevRev: devRev > 0 ? devRev : undefined,
+    ackDevRevHash: devRevHash !== 'none' ? devRevHash : undefined,
+  });
+  const updatedUser: LoggedInCloudUser = {
+    ...loggedInUser,
+    displayName: liveDisplayName,
+    alias: record.index?.alias || loggedInUser.alias,
+  };
+  saveCloudUser(updatedUser);
+  return {
+    updatedUser,
+    rev: pub.rev,
+    revHash: pub.revHash,
+  };
+}

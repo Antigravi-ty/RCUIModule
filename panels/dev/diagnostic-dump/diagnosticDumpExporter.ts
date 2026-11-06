@@ -1,4 +1,7 @@
-import { networkDiagnosticsStore } from '../../../stores/networkDiagnosticsStore';
+import {
+  networkDiagnosticsStore,
+  type DiagnosticDumpExportOptions,
+} from '../../../stores/networkDiagnosticsStore';
 import {
   globalPacingTelemetryRecorder,
   MAX_TELEMETRY_TICKS,
@@ -31,50 +34,10 @@ export function triggerZipDownload(bytes: Uint8Array, filename: string): boolean
   return true;
 }
 
-export interface UnifiedDiagnosticDumpParams {
-  includeClientReplay: boolean;
-  includeReconcileTelemetry: boolean;
-  includeServerReplay: boolean;
-  isOnlineSession: boolean;
-  isHosting: boolean;
-  isLobby: boolean;
-  matchState: string;
-  diag: any;
-  activeSlots: number[];
-  clientFrames: number;
-  effectiveMaxFrames: number;
-  clientOverflowPaused: boolean;
-  autoPauseOnOverflow: boolean;
-  clientMb: string;
-  telemetryTicks: number;
-  telemetrySummary: any;
-  metrics: any;
-  serverFrames: number;
-}
+export function executeUnifiedDiagnosticDumpExport(options: DiagnosticDumpExportOptions): string {
+  const { includeClientReplay, includeReconcileTelemetry, includeServerReplay } = options;
 
-export function executeUnifiedDiagnosticDumpExport(params: UnifiedDiagnosticDumpParams): string {
-  const {
-    includeClientReplay,
-    includeReconcileTelemetry,
-    includeServerReplay,
-    isOnlineSession,
-    isHosting,
-    isLobby,
-    matchState,
-    diag,
-    activeSlots,
-    clientFrames,
-    effectiveMaxFrames,
-    clientOverflowPaused,
-    autoPauseOnOverflow,
-    clientMb,
-    telemetryTicks,
-    telemetrySummary,
-    metrics,
-    serverFrames,
-  } = params;
-
-  const bridge = networkDiagnosticsStore.getSnapshot().bridge;
+  const { metrics, bridge } = networkDiagnosticsStore.getState();
   if (bridge.onExportUnifiedDiagnosticDump) {
     const status = bridge.onExportUnifiedDiagnosticDump({
       includeClientReplay,
@@ -85,7 +48,30 @@ export function executeUnifiedDiagnosticDumpExport(params: UnifiedDiagnosticDump
     return 'Unified diagnostic dump requested via runtime bridge.';
   }
 
+  const diag = metrics.diagnosticBuffers as any;
+  const isOnlineSession = Boolean(diag?.isOnlineSession || metrics.connected);
+  const isLobby = Boolean(diag?.isLobby);
+  const matchState = String(diag?.matchState || 'FREEPLAY');
+  const isHosting = Boolean(diag?.isHosting);
+
+  const clientFrames = Number(diag?.clientFrames ?? 0);
+  const clientOverflowPaused = Boolean(diag?.clientOverflowPaused);
+  const effectiveMaxFrames = Number(diag?.maxClientFrames) || 36000;
+  const autoPauseOnOverflow = Boolean(diag?.autoPauseOnOverflow ?? true);
+  const clientBytes = clientFrames * RC_REPLAY_STATE_INPUT_STRIDE;
+  const clientMb = (clientBytes / (1024 * 1024)).toFixed(2);
+
   const recorder = globalPacingTelemetryRecorder;
+  const telemetryTicks = Number(diag?.telemetryTicks ?? recorder?.count ?? 0);
+  const telemetrySummary = recorder?.getSummaryStats?.() || {};
+
+  const serverFrames = Number(diag?.serverFrames ?? 0);
+  const activeCarMask = Number(diag?.activeCarMask ?? 1);
+  const activeSlots: number[] = [];
+  for (let i = 0; i < 8; i++) {
+    if (activeCarMask & (1 << i)) activeSlots.push(i);
+  }
+
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const phaseSlug = !isOnlineSession ? 'offline' : isLobby ? 'lobby' : 'match';
   const entries: Array<{ name: string; data: Uint8Array | string }> = [];
@@ -179,8 +165,12 @@ export function executeUnifiedDiagnosticDumpExport(params: UnifiedDiagnosticDump
   return `Exported ${filename} (${kb} KB · C:${clientFrames}f, T:${exportedTelemetryTicks}t, S:${serverFrames}f)`;
 }
 
-export function exportStandaloneTelemetryZip(isLobby: boolean, telemetryTicks: number): string {
+export function exportStandaloneTelemetryZip(): string {
+  const { metrics } = networkDiagnosticsStore.getState();
+  const diag = metrics.diagnosticBuffers;
+  const isLobby = Boolean(diag?.isLobby);
   const recorder = globalPacingTelemetryRecorder;
+  const telemetryTicks = Number(diag?.telemetryTicks ?? recorder?.count ?? 0);
   if (!recorder || recorder.count <= 0) {
     return 'No reconcile/pacing telemetry ticks recorded yet.';
   }

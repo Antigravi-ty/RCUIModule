@@ -17,24 +17,32 @@ import type {
 } from './StaticTrainingPackFolderList';
 import { StaticTrainingPackInspectorActions } from './StaticTrainingPackInspectorActions';
 
-export interface StaticTrainingPackMetadataInspectorProps {
-  isLight: boolean;
-  isDevMode?: boolean;
-  selectedMeta: StaticTrainingPackSummary | null;
+export interface StaticTrainingPackMetadataDraft {
   editTitle: string;
   setEditTitle: (val: string) => void;
   editDescription: string;
   setEditDescription: (val: string) => void;
   isMetadataDirty: boolean;
+  onSaveMetadata: () => void;
+}
+
+export interface StaticTrainingPackDownCounterControl {
   downCounterEnabled: boolean;
-  setDownCounterEnabled: (val: boolean | ((prev: boolean) => boolean)) => void;
+  setDownCounterEnabled: (val: boolean) => void;
   downCounterValue: StaticPackDownCounterOption;
   setDownCounterValue: (val: StaticPackDownCounterOption) => void;
+}
+
+export interface StaticTrainingPackMetadataInspectorProps {
+  isLight: boolean;
+  isDevMode?: boolean;
+  selectedMeta: StaticTrainingPackSummary | null;
+  draft: StaticTrainingPackMetadataDraft;
+  downCounter: StaticTrainingPackDownCounterControl;
   confirmDeleteUuid: string | null;
   setConfirmDeleteUuid: (val: string | null) => void;
   applyNewKevpertBind?: boolean;
   onToggleApplyNewKevpertBind?: (val: boolean) => void;
-  onSaveMetadata: () => void;
   onPlayPack: (meta: StaticTrainingPackSummary) => void;
   onEditPack: (meta: StaticTrainingPackSummary) => void;
   onExportPack: (meta: StaticTrainingPackSummary, editable: boolean) => void;
@@ -49,20 +57,24 @@ export const StaticTrainingPackMetadataInspector: React.FC<
     isLight,
     isDevMode = false,
     selectedMeta,
-    editTitle,
-    setEditTitle,
-    editDescription,
-    setEditDescription,
-    isMetadataDirty,
-    downCounterEnabled,
-    setDownCounterEnabled,
-    downCounterValue,
-    setDownCounterValue,
+    draft: {
+      editTitle,
+      setEditTitle,
+      editDescription,
+      setEditDescription,
+      isMetadataDirty,
+      onSaveMetadata,
+    },
+    downCounter: {
+      downCounterEnabled,
+      setDownCounterEnabled,
+      downCounterValue,
+      setDownCounterValue,
+    },
     confirmDeleteUuid,
     setConfirmDeleteUuid,
     applyNewKevpertBind = false,
     onToggleApplyNewKevpertBind,
-    onSaveMetadata,
     onPlayPack,
     onEditPack,
     onExportPack,

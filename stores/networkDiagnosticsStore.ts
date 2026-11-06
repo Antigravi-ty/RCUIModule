@@ -36,7 +36,7 @@ export {
   type NetworkDiagnosticsState,
 };
 
-import { bindReconcilerMetricsListener } from './networkDiagnosticsReconcilerSync';
+import { computeReconcilerMetricsPatch } from './networkDiagnosticsReconcilerSync';
 
 const stressSim = new NetworkStressSimulator();
 
@@ -54,7 +54,78 @@ function updateMetricsPatch(patch: Partial<NetworkMetrics>) {
   notify();
 }
 
+function attachReconcilerMetricsListener(reconciler: any) {
+  if (!reconciler) return;
+
+  const updateFn = (m: any) => {
+    const ch = resolveChannel();
+    const nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const incomingServerTick = m?.serverTick ?? state.metrics.serverTick;
+    if (incomingServerTick !== state.metrics.serverTick) {
+      stressSim.recordPacketReceived(nowMs);
+    }
+
+    const rawSample = {
+      ...m,
+      extraUplinkMs: m?.extraUplinkMs ?? ch?.extraUplinkMs ?? stressSim.extraUplinkMs,
+      extraDownlinkMs: m?.extraDownlinkMs ?? ch?.extraDownlinkMs ?? stressSim.extraDownlinkMs,
+      inputBufferSize: m?.inputBufferSize ?? reconciler.metrics?.inputBufferSize,
+      rollbackWindow: m?.rollbackWindow ?? reconciler.history?.length,
+      lastCorrectionDelta: m?.lastCorrectionDelta ?? reconciler.metrics?.lastCorrectionDelta,
+      maxCorrectionDelta: m?.maxCorrectionDelta ?? reconciler.metrics?.maxCorrectionDelta,
+      localCarIndex: reconciler.localCarIndex ?? 0,
+      enableSmoothing: m?.enableSmoothing ?? reconciler.enableSmoothing,
+    };
+
+    const computedPatch = computeReconcilerMetricsPatch(rawSample, ch, state.metrics);
+    const health = stressSim.getHealthSnapshot(
+      {
+        rttMs: computedPatch.rttMs,
+        jitterMs: computedPatch.jitterMs,
+        packetLossPct: computedPatch.packetLossPct,
+        lastErrorUu: computedPatch.lastErrorUu,
+      },
+      nowMs
+    );
+
+    let probeTelemetry = state.metrics.probeTelemetry;
+    if (state.metrics.zeroGFleetEnabled && state.bridge.onSampleZeroGFleetTelemetry) {
+      probeTelemetry = state.bridge.onSampleZeroGFleetTelemetry() || [];
+    }
+
+    updateMetricsPatch({
+      ...computedPatch,
+      stressPresetId: health.presetId,
+      impairmentPresetId: health.presetId,
+      qualityScore: health.score,
+      qualityGrade: health.grade,
+      healthState: health.healthState,
+      packetAgeMs: health.packetAgeMs,
+      neutralFallbackActive: health.neutralFallbackActive,
+      disconnectEvicted: health.disconnectEvicted,
+      probeTelemetry,
+    });
+  };
+
+  if (typeof reconciler.addMetricsListener === 'function') {
+    reconciler.addMetricsListener(updateFn);
+  } else {
+    const prev = reconciler.onMetricsUpdated;
+    reconciler.onMetricsUpdated = (m: any) => {
+      if (typeof prev === 'function') {
+        try {
+          prev(m);
+        } catch (err) {
+          console.error('[networkDiagnosticsStore] Error in previous reconciler onMetricsUpdated:', err);
+        }
+      }
+      updateFn(m);
+    };
+  }
+}
+
 export const networkDiagnosticsStore = {
+  getState: () => state,
   getSnapshot: () => state,
   subscribe: (listener: () => void) => {
     listeners.add(listener);
@@ -97,13 +168,7 @@ export const networkDiagnosticsStore = {
       },
     };
     if (channel) stressSim.syncToChannel(channel);
-    bindReconcilerMetricsListener(
-      reconciler,
-      () => state,
-      resolveChannel,
-      stressSim,
-      updateMetricsPatch
-    );
+    attachReconcilerMetricsListener(reconciler);
     notify();
   },
 
@@ -124,7 +189,7 @@ export const networkDiagnosticsStore = {
       nextRttMs = effectiveRtt;
       nextUplinkMs = breakdown ? breakdown.uplinkMs : Math.max(0, Math.round((effectiveRtt - extraRttMs) * 0.5) + upVal);
       nextDownlinkMs = breakdown ? breakdown.downlinkMs : Math.max(0, effectiveRtt - nextUplinkMs);
-      nextLeadTicks = reconciler.calculateLeadTicks(effectiveRtt);
+      nextLeadTicks = reconciler.calculateLeadTicks ? reconciler.calculateLeadTicks(effectiveRtt) : nextLeadTicks;
       reconciler.leadTicks = nextLeadTicks;
       if (reconciler.metrics) {
         reconciler.metrics.leadTicks = nextLeadTicks;
