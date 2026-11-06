@@ -35,21 +35,53 @@ export const TunerRow: React.FC<TunerRowProps> = ({
 
   const [text, setText] = useState<string>(String(value));
   const [isFocused, setIsFocused] = useState<boolean>(false);
+  const skipNextBlurCommitRef = React.useRef<boolean>(false);
 
   useEffect(() => {
-    setText(String(value));
-  }, [value]);
+    if (!isFocused) {
+      setText(String(value));
+    }
+  }, [value, isFocused]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    setText(raw);
-    const parsed = parseFloat(raw);
+  const commitInput = () => {
+    if (skipNextBlurCommitRef.current) {
+      skipNextBlurCommitRef.current = false;
+      return;
+    }
+    const trimmed = text.trim();
+    const parsed = trimmed === '' ? Number.NaN : Number(trimmed);
     if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
       onChange(parsed);
+      setText(String(parsed));
+    } else {
+      if (trimmed !== '') {
+        console.error(`[TunerRow] Invalid numeric input for "${label}": "${text}"`);
+      }
+      setText(String(value));
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      commitInput();
+      skipNextBlurCommitRef.current = true;
+      (e.target as HTMLElement)?.blur?.();
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      setText(String(value));
+      skipNextBlurCommitRef.current = true;
+      (e.target as HTMLElement)?.blur?.();
+      return;
+    }
     let delta = 0;
     if (e.key === 'ArrowUp') {
       delta = activeStep;
@@ -107,9 +139,10 @@ export const TunerRow: React.FC<TunerRowProps> = ({
             type="text"
             value={text}
             onChange={handleInputChange}
+            onBlur={commitInput}
             onKeyDown={handleKeyDown}
             placeholder="0.0"
-            title={`Step size: ±${activeStep}. Press Up/Down arrows to step; Left/Right arrows move text cursor.`}
+            title={`Step size: ±${activeStep}. Press Up/Down arrows to step or Enter to commit.`}
             className={`w-24 px-2 py-0.5 text-right font-mono text-xs rounded border transition-colors outline-none focus:ring-1 focus:ring-emerald-500 ${
               isLight
                 ? 'bg-white border-neutral-300 text-neutral-800'
@@ -248,15 +281,23 @@ export const TunerColorRow: React.FC<TunerColorRowProps> = ({
   isLight = false,
 }) => {
   const [text, setText] = useState<string>(value);
+  const skipNextBlurRef = React.useRef<boolean>(false);
 
   useEffect(() => {
     setText(value);
   }, [value]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    setText(raw);
-    onChange(raw);
+  const commitColorText = () => {
+    if (skipNextBlurRef.current) {
+      skipNextBlurRef.current = false;
+      return;
+    }
+    const trimmed = text.trim();
+    if (trimmed) {
+      onChange(trimmed);
+    } else {
+      setText(value);
+    }
   };
 
   return (
@@ -286,7 +327,20 @@ export const TunerColorRow: React.FC<TunerColorRowProps> = ({
         <input
           type="text"
           value={text}
-          onChange={handleInputChange}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={commitColorText}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commitColorText();
+              skipNextBlurRef.current = true;
+              e.currentTarget.blur();
+            } else if (e.key === 'Escape') {
+              setText(value);
+              skipNextBlurRef.current = true;
+              e.currentTarget.blur();
+            }
+          }}
           placeholder="#ffffff"
           className={`w-20 px-2 py-0.5 text-center font-mono text-xs rounded border transition-colors outline-none focus:ring-1 focus:ring-emerald-500 ${
             isLight

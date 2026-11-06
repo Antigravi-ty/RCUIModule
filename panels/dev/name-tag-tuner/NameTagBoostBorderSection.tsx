@@ -21,46 +21,30 @@ export interface NameTagBoostBorderSectionProps {
   setBoostBorderOverride?: (override: NameTagBoostBorderOverride) => void;
 }
 
-const BOOST_MODE_OPTIONS: Array<{
-  id: NameTagBoostIndicatorMode;
-  label: string;
-  shortDesc: string;
-}> = [
-  {
-    id: 'bottom-up-fill',
-    label: '1. Bottom-Up Fill',
-    shortDesc: 'Vertical liquid fill (0-100% height) - uniform across all name lengths',
-  },
-  {
-    id: 'left-right-fill',
-    label: '2. Left-Right Fill',
-    shortDesc: 'Horizontal bar fill + border progress across full pill width',
-  },
-  {
-    id: 'sunset-circle',
-    label: '3. Sunset Circle',
-    shortDesc: 'Embedded left circular gauge with bottom-to-top rising fill',
-  },
-  {
-    id: 'border-only',
-    label: '4. Border Only',
-    shortDesc: 'Perimeter stroke clip (0-100% left-to-right)',
-  },
+const BOOST_MODE_OPTIONS: Array<{ id: NameTagBoostIndicatorMode; label: string; shortDesc: string }> = [
+  { id: 'bottom-up-fill', label: '1. Bottom-Up Fill', shortDesc: 'Vertical liquid fill (0-100% height)' },
+  { id: 'left-right-fill', label: '2. Left-Right Fill', shortDesc: 'Horizontal bar fill + border progress across full pill width' },
+  { id: 'sunset-circle', label: '3. Sunset Circle', shortDesc: 'Embedded left circular gauge with bottom-to-top rising fill' },
+  { id: 'border-only', label: '4. Border Only', shortDesc: 'Perimeter stroke clip (0-100% left-to-right)' },
 ];
 
-const COLOR_MODE_OPTIONS: Array<{
-  id: NameTagBoostBorderColorMode;
-  label: string;
-}> = [
+const COLOR_MODE_OPTIONS: Array<{ id: NameTagBoostBorderColorMode; label: string }> = [
   { id: 'team', label: 'Team Specific' },
   { id: 'shared', label: 'Shared / Unified' },
 ];
 
-const BALL_OPACITY_PRESETS: Array<{ label: string; value: number }> = [
+const BALL_OPACITY_PRESETS = [
   { label: '100% Solid', value: 1.0 },
   { label: '70% Translucent', value: 0.7 },
   { label: '40% Ghost', value: 0.4 },
   { label: '0% Off', value: 0.0 },
+];
+
+const FILL_MIX_PRESETS = [
+  { label: '100% Pure Boost Color', value: 1.0 },
+  { label: '65% Tinted', value: 0.65 },
+  { label: '38% Legacy Team Mix', value: 0.38 },
+  { label: '0% Pure Team Bg', value: 0.0 },
 ];
 
 export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps> = ({
@@ -73,22 +57,24 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
 }) => {
   const store = useNameTagTunerStore();
   const config = propConfig ?? store.config;
-  const boostBorderOverride =
-    propOverride !== undefined ? propOverride : store.boostBorderOverride;
+  const boostBorderOverride = propOverride !== undefined ? propOverride : store.boostBorderOverride;
   const updateConfig = propUpdateConfig ?? store.updateConfig;
-  const updatePreviewBoostAmount =
-    propUpdatePreviewBoostAmount ?? store.updatePreviewBoostAmount;
-  const setBoostBorderOverride =
-    propSetBoostBorderOverride ?? store.setBoostBorderOverride;
+  const updatePreviewBoostAmount = propUpdatePreviewBoostAmount ?? store.updatePreviewBoostAmount;
+  const setBoostBorderOverride = propSetBoostBorderOverride ?? store.setBoostBorderOverride;
 
   const cardBackground = isLight
     ? 'bg-neutral-50/95 border-neutral-200/90 text-neutral-800 shadow-2xs'
     : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
+  const subCardBackground = isLight ? 'border-neutral-200 bg-neutral-100/75' : 'border-neutral-800 bg-neutral-900/50';
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
+  const btnInactive = isLight
+    ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
+    : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800';
+  const btnActiveCyan = isLight
+    ? 'bg-cyan-500/15 border-cyan-500 text-cyan-800 font-bold'
+    : 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold';
 
-  const activeModeMeta =
-    BOOST_MODE_OPTIONS.find((item) => item.id === config.boostIndicatorMode) ||
-    BOOST_MODE_OPTIONS[0];
+  const activeModeMeta = BOOST_MODE_OPTIONS.find((item) => item.id === config.boostIndicatorMode) || BOOST_MODE_OPTIONS[0];
 
   const handleUpdateBallOcclusionOpacity = (nextOpacity: number) => {
     const clamped = Math.max(0, Math.min(1, Number(nextOpacity) || 0));
@@ -100,9 +86,7 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
     <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBackground}`}>
       <div className="flex items-center justify-between gap-2">
         <span className="font-bold text-[11px] flex items-center gap-1.5">
-          <Gauge
-            className={`h-3.5 w-3.5 ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}
-          />
+          <Gauge className={`h-3.5 w-3.5 ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`} />
           <span>Boost Progress Indicator (4 Visual Modes · 0-100%)</span>
         </span>
         <div className="flex items-center gap-1.5">
@@ -115,21 +99,13 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
         </div>
       </div>
 
-      <div
-        className={`p-2 rounded-lg border flex flex-col gap-1.5 ${
-          isLight
-            ? 'border-neutral-200 bg-neutral-100/75'
-            : 'border-neutral-800 bg-neutral-900/50'
-        }`}
-      >
+      <div className={`p-2 rounded-lg border flex flex-col gap-1.5 ${subCardBackground}`}>
         <div className="flex items-center justify-between gap-1.5 text-[10px]">
           <span className="font-semibold flex items-center gap-1">
             <Layers className="h-3 w-3 opacity-80" />
             <span>Boost Display Mode (4 Candidates):</span>
           </span>
-          <span className={`font-mono text-[9px] truncate ${mutedText}`}>
-            {activeModeMeta.shortDesc}
-          </span>
+          <span className={`font-mono text-[9px] truncate ${mutedText}`}>{activeModeMeta.shortDesc}</span>
         </div>
 
         <div className="grid grid-cols-2 gap-1">
@@ -142,13 +118,7 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
                 onClick={() => updateConfig({ boostIndicatorMode: option.id })}
                 title={option.shortDesc}
                 className={`px-2 py-1 rounded border text-[10px] font-mono cursor-pointer text-left flex items-center justify-between gap-1 transition-colors ${
-                  isSelected
-                    ? isLight
-                      ? 'bg-cyan-500/15 border-cyan-500 text-cyan-900 font-bold shadow-2xs'
-                      : 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold'
-                    : isLight
-                      ? 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-100'
-                      : 'border-neutral-700/80 text-neutral-300 hover:bg-neutral-800'
+                  isSelected ? btnActiveCyan : btnInactive
                 }`}
               >
                 <span className="truncate">{option.label}</span>
@@ -167,14 +137,10 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
           config.boostIndicatorMode === 'sunset-circle') && (
           <div className="flex flex-col gap-1.5 pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
             <div className="flex items-center justify-between text-[10px]">
-              <span className={mutedText}>
-                Show Crisp Horizon / Edge Line at Boost Level
-              </span>
+              <span className={mutedText}>Show Crisp Horizon / Edge Line at Boost Level</span>
               <ToggleSwitch
                 checked={config.boostShowHorizonLine}
-                onChange={(nextValue) =>
-                  updateConfig({ boostShowHorizonLine: nextValue })
-                }
+                onChange={(nextValue) => updateConfig({ boostShowHorizonLine: nextValue })}
                 isLight={isLight}
               />
             </div>
@@ -184,31 +150,15 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
                 <div className="flex items-center justify-between gap-1 text-[10px] pt-0.5">
                   <span className={mutedText}>Fill Color Mix Presets:</span>
                   <div className="flex items-center gap-1">
-                    {[
-                      { label: '100% Pure Boost Color', value: 1.0 },
-                      { label: '65% Tinted', value: 0.65 },
-                      { label: '38% Legacy Team Mix', value: 0.38 },
-                      { label: '0% Pure Team Bg', value: 0.0 },
-                    ].map((preset) => {
-                      const isPresetActive =
-                        Math.abs(
-                          (config.boostFillColorBlendRatio ?? 1.0) - preset.value
-                        ) < 0.015;
+                    {FILL_MIX_PRESETS.map((preset) => {
+                      const isPresetActive = Math.abs((config.boostFillColorBlendRatio ?? 1.0) - preset.value) < 0.015;
                       return (
                         <button
                           key={preset.label}
                           type="button"
-                          onClick={() =>
-                            updateConfig({ boostFillColorBlendRatio: preset.value })
-                          }
+                          onClick={() => updateConfig({ boostFillColorBlendRatio: preset.value })}
                           className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer transition-colors ${
-                            isPresetActive
-                              ? isLight
-                                ? 'bg-cyan-500/15 border-cyan-500 text-cyan-800 font-bold'
-                                : 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold'
-                              : isLight
-                                ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
-                                : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
+                            isPresetActive ? btnActiveCyan : btnInactive
                           }`}
                         >
                           {preset.label}
@@ -219,53 +169,45 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
                 </div>
 
                 <SliderControl
-                  label="Active Boost Color Blend (0% Team Bg -> 100% Pure Boost Color)"
+                  label="Active Boost Color Blend"
                   value={Math.round((config.boostFillColorBlendRatio ?? 1.0) * 100)}
                   min={0}
                   max={100}
                   step={2}
                   unit="%"
-                  onChange={(nextPct) =>
-                    updateConfig({ boostFillColorBlendRatio: nextPct / 100 })
-                  }
+                  onChange={(nextPct) => updateConfig({ boostFillColorBlendRatio: nextPct / 100 })}
                   isLight={isLight}
                 />
                 <SliderControl
-                  label="Active Boost Fill Opacity (Filled Region Alpha)"
+                  label="Active Boost Fill Opacity"
                   value={config.boostFillOpacity}
                   min={0.0}
                   max={1.0}
                   step={0.02}
-                  onChange={(nextValue) =>
-                    updateConfig({ boostFillOpacity: nextValue })
-                  }
+                  onChange={(nextValue) => updateConfig({ boostFillOpacity: nextValue })}
                   isLight={isLight}
                 />
                 <SliderControl
-                  label="Unfilled Base Background Opacity (Depleted Region Alpha)"
+                  label="Unfilled Base Background Opacity"
                   value={config.boostUnfilledBgOpacity}
                   min={0.0}
                   max={1.0}
                   step={0.02}
-                  onChange={(nextValue) =>
-                    updateConfig({ boostUnfilledBgOpacity: nextValue })
-                  }
+                  onChange={(nextValue) => updateConfig({ boostUnfilledBgOpacity: nextValue })}
                   isLight={isLight}
                 />
                 <SliderControl
-                  label="Unfilled Base Darken Mix (0% Pure Team Bg -> 100% Dark #040914)"
+                  label="Unfilled Base Darken Mix"
                   value={Math.round((config.boostUnfilledDarkenRatio ?? 0.45) * 100)}
                   min={0}
                   max={100}
                   step={5}
                   unit="%"
-                  onChange={(nextPct) =>
-                    updateConfig({ boostUnfilledDarkenRatio: nextPct / 100 })
-                  }
+                  onChange={(nextPct) => updateConfig({ boostUnfilledDarkenRatio: nextPct / 100 })}
                   isLight={isLight}
                 />
                 <SliderControl
-                  label="Overall Card Master Opacity (Multiplies Entire Pill Alpha)"
+                  label="Overall Card Master Opacity"
                   value={config.opacity}
                   min={0.1}
                   max={1.0}
@@ -282,138 +224,80 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
       <div className="flex items-center justify-between gap-1.5 text-[10px]">
         <span className={mutedText}>Boost Accent / Fill Color Mode:</span>
         <div className="flex items-center gap-1">
-          {COLOR_MODE_OPTIONS.map((option) => {
-            const isSelected = config.boostBorderColorMode === option.id;
-            return (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => updateConfig({ boostBorderColorMode: option.id })}
-                className={`px-2 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
-                  isSelected
-                    ? isLight
-                      ? 'bg-cyan-500/15 border-cyan-500 text-cyan-800 font-bold'
-                      : 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold'
-                    : isLight
-                      ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
-                      : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+          {COLOR_MODE_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => updateConfig({ boostBorderColorMode: option.id })}
+              className={`px-2 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
+                config.boostBorderColorMode === option.id ? btnActiveCyan : btnInactive
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {config.boostBorderColorMode === 'team' ? (
         <div className="grid grid-cols-2 gap-2">
           <div className="p-2 rounded-lg border border-sky-500/30 bg-sky-500/5 flex items-center justify-between text-[10px]">
-            <span
-              className={`font-semibold ${isLight ? 'text-sky-700' : 'text-sky-300'}`}
-            >
-              Blue Boost Accent
-            </span>
+            <span className="font-semibold text-sky-400">Blue Boost Accent</span>
             <div className="flex items-center gap-1">
-              <span className="font-mono text-[9px] uppercase opacity-75">
-                {config.blueBoostBorderColor}
-              </span>
+              <span className="font-mono text-[9px] uppercase opacity-75">{config.blueBoostBorderColor}</span>
               <input
                 type="color"
                 value={config.blueBoostBorderColor}
-                onChange={(event) =>
-                  updateConfig({ blueBoostBorderColor: event.target.value })
-                }
+                onChange={(e) => updateConfig({ blueBoostBorderColor: e.target.value })}
                 className="h-5 w-8 rounded cursor-pointer bg-transparent border-0"
               />
             </div>
           </div>
 
           <div className="p-2 rounded-lg border border-orange-500/30 bg-orange-500/5 flex items-center justify-between text-[10px]">
-            <span
-              className={`font-semibold ${
-                isLight ? 'text-orange-700' : 'text-orange-300'
-              }`}
-            >
-              Orange Boost Accent
-            </span>
+            <span className="font-semibold text-orange-400">Orange Boost Accent</span>
             <div className="flex items-center gap-1">
-              <span className="font-mono text-[9px] uppercase opacity-75">
-                {config.orangeBoostBorderColor}
-              </span>
+              <span className="font-mono text-[9px] uppercase opacity-75">{config.orangeBoostBorderColor}</span>
               <input
                 type="color"
                 value={config.orangeBoostBorderColor}
-                onChange={(event) =>
-                  updateConfig({ orangeBoostBorderColor: event.target.value })
-                }
+                onChange={(e) => updateConfig({ orangeBoostBorderColor: e.target.value })}
                 className="h-5 w-8 rounded cursor-pointer bg-transparent border-0"
               />
             </div>
           </div>
         </div>
       ) : (
-        <div
-          className={`p-2 rounded-lg border flex items-center justify-between text-[10px] ${
-            isLight
-              ? 'border-neutral-300 bg-white'
-              : 'border-neutral-700/80 bg-neutral-900/50'
-          }`}
-        >
+        <div className={`p-2 rounded-lg border flex items-center justify-between text-[10px] ${subCardBackground}`}>
           <span className="font-semibold">Shared Boost Color (All Players)</span>
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => updateConfig({ sharedBoostBorderColor: '#ffffff' })}
-              className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                config.sharedBoostBorderColor.toLowerCase() === '#ffffff'
-                  ? isLight
-                    ? 'border-cyan-500 bg-cyan-500/15 text-cyan-800 font-bold'
-                    : 'border-cyan-400 bg-cyan-500/20 text-cyan-300 font-bold'
-                  : isLight
-                    ? 'border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                    : 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-              }`}
-            >
-              Pure White (#FFFFFF)
-            </button>
-            <button
-              type="button"
-              onClick={() => updateConfig({ sharedBoostBorderColor: '#000000' })}
-              className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                config.sharedBoostBorderColor.toLowerCase() === '#000000'
-                  ? isLight
-                    ? 'border-cyan-500 bg-cyan-500/15 text-cyan-800 font-bold'
-                    : 'border-cyan-400 bg-cyan-500/20 text-cyan-300 font-bold'
-                  : isLight
-                    ? 'border-neutral-300 bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                    : 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-              }`}
-            >
-              Pure Black (#000000)
-            </button>
-            <span className="font-mono text-[9px] uppercase opacity-75">
-              {config.sharedBoostBorderColor}
-            </span>
+            {[
+              { label: 'Pure White (#FFFFFF)', hex: '#ffffff' },
+              { label: 'Pure Black (#000000)', hex: '#000000' },
+            ].map((item) => (
+              <button
+                key={item.hex}
+                type="button"
+                onClick={() => updateConfig({ sharedBoostBorderColor: item.hex })}
+                className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
+                  config.sharedBoostBorderColor.toLowerCase() === item.hex ? btnActiveCyan : btnInactive
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+            <span className="font-mono text-[9px] uppercase opacity-75">{config.sharedBoostBorderColor}</span>
             <input
               type="color"
               value={config.sharedBoostBorderColor}
-              onChange={(event) =>
-                updateConfig({ sharedBoostBorderColor: event.target.value })
-              }
+              onChange={(e) => updateConfig({ sharedBoostBorderColor: e.target.value })}
               className="h-5 w-8 rounded cursor-pointer bg-transparent border-0"
             />
           </div>
         </div>
       )}
 
-      <div
-        className={`p-2 rounded-lg border flex flex-col gap-1.5 ${
-          isLight
-            ? 'border-neutral-200 bg-neutral-100/70'
-            : 'border-neutral-800 bg-neutral-900/40'
-        }`}
-      >
+      <div className={`p-2 rounded-lg border flex flex-col gap-1.5 ${subCardBackground}`}>
         <div className="flex items-center justify-between text-[10px]">
           <span className="font-semibold flex items-center gap-1">
             <CircleDot className="h-3 w-3 text-amber-500" />
@@ -421,39 +305,28 @@ export const NameTagBoostBorderSection: React.FC<NameTagBoostBorderSectionProps>
           </span>
           <div className="flex items-center gap-1.5">
             <span className={`font-mono text-[9px] ${mutedText}`}>
-              {config.ballOcclusionEnabled
-                ? `Active (${Math.round(config.ballOcclusionOpacity * 100)}% Mask)`
-                : 'Disabled (0 Overhead)'}
+              {config.ballOcclusionEnabled ? `Active (${Math.round(config.ballOcclusionOpacity * 100)}% Mask)` : 'Disabled'}
             </span>
             <ToggleSwitch
               checked={config.ballOcclusionEnabled}
-              onChange={(nextValue) =>
-                updateConfig({ ballOcclusionEnabled: nextValue })
-              }
+              onChange={(nextValue) => updateConfig({ ballOcclusionEnabled: nextValue })}
               isLight={isLight}
             />
           </div>
         </div>
 
         <div className="flex items-center justify-between gap-1.5 text-[10px]">
-          <span className={mutedText}>Ball Opacity Presets (Dev Settings Sync):</span>
+          <span className={mutedText}>Ball Opacity Presets:</span>
           <div className="flex items-center gap-1">
             {BALL_OPACITY_PRESETS.map((preset) => {
-              const isSelected =
-                Math.abs(config.ballOcclusionOpacity - preset.value) < 0.015;
+              const isSelected = Math.abs(config.ballOcclusionOpacity - preset.value) < 0.015;
               return (
                 <button
                   key={preset.label}
                   type="button"
                   onClick={() => handleUpdateBallOcclusionOpacity(preset.value)}
                   className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer transition-colors ${
-                    isSelected
-                      ? isLight
-                        ? 'bg-amber-500/15 border-amber-500 text-amber-800 font-bold'
-                        : 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
-                      : isLight
-                        ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
-                        : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
+                    isSelected ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold' : btnInactive
                   }`}
                 >
                   {preset.label}

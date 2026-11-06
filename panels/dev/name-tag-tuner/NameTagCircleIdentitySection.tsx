@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CircleDot, Hash, Palette } from 'lucide-react';
 import {
   DEFAULT_NAME_TAG_DISTINCT_COLORS,
@@ -26,12 +26,12 @@ const CARD_DISPLAY_MODES: Array<{
   {
     id: 'pill',
     label: 'Horizontal Pill Tag',
-    desc: 'Standard horizontal rounded pill name tag above cars in front of you',
+    desc: 'Standard horizontal rounded pill name tag above cars in front of you (defaults to Player Name)',
   },
   {
     id: 'circle',
     label: 'Big Boost Circle Indicator',
-    desc: 'Replace all on-screen name tags with a big circular boost indicator (no yellow glow on-screen; yellow glow only when behind you)',
+    desc: 'Replace on-screen name tags with a circular boost indicator (defaults to Match Code X/W/E · A/M/Z)',
   },
 ];
 
@@ -43,12 +43,12 @@ const CIRCLE_LABEL_MODES: Array<{
   {
     id: 'slot-code',
     label: 'Match Code (X/W/E · A/M/Z)',
-    desc: 'Assign each player a fixed 1-letter match code for the entire match (Team 1: X, W, E · Team 2: A, M, Z)',
+    desc: 'Assign each player a fixed 1-letter match code (Team 1: X, W, E · Team 2: A, M, Z)',
   },
   {
     id: 'none',
     label: 'No Name / Pure Circle',
-    desc: 'Hide usernames completely and show only the boost circle indicator',
+    desc: 'Hide usernames completely and show only the boost indicator',
   },
   {
     id: 'name',
@@ -94,15 +94,27 @@ export const NameTagCircleIdentitySection: React.FC<
       ? config.slotCodes
       : DEFAULT_NAME_TAG_SLOT_CODES;
 
+  const [draftSlotCodes, setDraftSlotCodes] = useState<string[]>(() => [...slotCodes]);
+
+  useEffect(() => {
+    setDraftSlotCodes([...slotCodes]);
+  }, [slotCodes]);
+
   const distinctColors =
     Array.isArray(config.distinctCarColors) && config.distinctCarColors.length === 6
       ? config.distinctCarColors
       : DEFAULT_NAME_TAG_DISTINCT_COLORS;
 
-  const handleSlotCodeChange = (index: number, rawVal: string) => {
+  const commitSlotCode = (index: number) => {
+    const rawVal = draftSlotCodes[index] ?? '';
+    const cleaned =
+      rawVal.trim().toUpperCase().slice(0, 2) || DEFAULT_NAME_TAG_SLOT_CODES[index];
     const next = [...slotCodes];
-    next[index] = rawVal.toUpperCase().slice(0, 2) || DEFAULT_NAME_TAG_SLOT_CODES[index];
-    updateConfig({ slotCodes: next });
+    next[index] = cleaned;
+    setDraftSlotCodes(next);
+    if (cleaned !== slotCodes[index]) {
+      updateConfig({ slotCodes: next });
+    }
   };
 
   const handleDistinctColorChange = (index: number, hexVal: string) => {
@@ -139,7 +151,6 @@ export const NameTagCircleIdentitySection: React.FC<
       </div>
 
       <div className={`p-2 rounded-lg border flex flex-col gap-2 ${subCardBackground}`}>
-        {/* 1. On-Screen Shape Mode */}
         <div className="flex items-center justify-between gap-1.5 text-[10px]">
           <span className={mutedText}>On-Screen Shape (In Front of You):</span>
           <div className="flex items-center gap-1">
@@ -168,12 +179,11 @@ export const NameTagCircleIdentitySection: React.FC<
           </div>
         </div>
 
-        {/* 2. On-Screen Circle Fixed Size vs Distance Scaled */}
         <div className="grid grid-cols-2 gap-2 pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
           <div className="flex items-center justify-between text-[10px]">
             <span
               className={mutedText}
-              title="When enabled, on-screen circle indicators stay at a fixed pixel radius regardless of 3D camera distance, without showing the yellow aerial climb glow."
+              title="When enabled, on-screen circle indicators stay at a fixed pixel radius regardless of 3D camera distance."
             >
               Fixed Screen Size (In Front of You)
             </span>
@@ -188,8 +198,8 @@ export const NameTagCircleIdentitySection: React.FC<
           <SliderControl
             label="On-Screen Circle Radius"
             value={config.onscreenCircleRadiusPx}
-            min={14}
-            max={64}
+            min={4}
+            max={48}
             step={1}
             unit="px"
             onChange={(nextValue) =>
@@ -197,9 +207,32 @@ export const NameTagCircleIdentitySection: React.FC<
             }
             isLight={isLight}
           />
+          <SliderControl
+            label="On-Screen Circle Font Size"
+            value={config.onscreenCircleFontSizePx}
+            min={12}
+            max={96}
+            step={1}
+            unit="px"
+            onChange={(nextValue) =>
+              updateConfig({ onscreenCircleFontSizePx: nextValue })
+            }
+            isLight={isLight}
+          />
+          <SliderControl
+            label="On-Screen Circle Border Thickness"
+            value={config.onscreenCircleBorderWidthPx}
+            min={0}
+            max={16}
+            step={0.5}
+            unit="px"
+            onChange={(nextValue) =>
+              updateConfig({ onscreenCircleBorderWidthPx: nextValue })
+            }
+            isLight={isLight}
+          />
         </div>
 
-        {/* 3. Label Identity Mode: Slot Code (X/W/E, A/M/Z) vs No Name vs Player Name */}
         <div className="flex flex-col gap-1.5 pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
           <div className="flex items-center justify-between gap-1.5 text-[10px]">
             <span className="font-semibold flex items-center gap-1">
@@ -245,7 +278,6 @@ export const NameTagCircleIdentitySection: React.FC<
             />
           </div>
 
-          {/* 6-Player Match Codes Editor: Team 1 [X, W, E] / Team 2 [A, M, Z] */}
           <div className="grid grid-cols-2 gap-2 pt-0.5">
             <div className="flex items-center justify-between gap-1 px-2 py-1 rounded border border-sky-500/30 bg-sky-500/5">
               <span className="text-[10px] font-bold text-sky-400">
@@ -257,8 +289,20 @@ export const NameTagCircleIdentitySection: React.FC<
                     key={idx}
                     type="text"
                     maxLength={2}
-                    value={slotCodes[idx] || DEFAULT_NAME_TAG_SLOT_CODES[idx]}
-                    onChange={(e) => handleSlotCodeChange(idx, e.target.value)}
+                    value={draftSlotCodes[idx] ?? DEFAULT_NAME_TAG_SLOT_CODES[idx]}
+                    onChange={(e) => {
+                      const next = [...draftSlotCodes];
+                      next[idx] = e.target.value;
+                      setDraftSlotCodes(next);
+                    }}
+                    onBlur={() => commitSlotCode(idx)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        commitSlotCode(idx);
+                        e.currentTarget.blur();
+                      }
+                    }}
                     className={`w-7 h-5 text-center font-mono font-bold text-[10px] rounded border ${
                       isLight
                         ? 'bg-white border-sky-300 text-sky-900'
@@ -279,8 +323,20 @@ export const NameTagCircleIdentitySection: React.FC<
                     key={idx}
                     type="text"
                     maxLength={2}
-                    value={slotCodes[idx] || DEFAULT_NAME_TAG_SLOT_CODES[idx]}
-                    onChange={(e) => handleSlotCodeChange(idx, e.target.value)}
+                    value={draftSlotCodes[idx] ?? DEFAULT_NAME_TAG_SLOT_CODES[idx]}
+                    onChange={(e) => {
+                      const next = [...draftSlotCodes];
+                      next[idx] = e.target.value;
+                      setDraftSlotCodes(next);
+                    }}
+                    onBlur={() => commitSlotCode(idx)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        commitSlotCode(idx);
+                        e.currentTarget.blur();
+                      }
+                    }}
                     className={`w-7 h-5 text-center font-mono font-bold text-[10px] rounded border ${
                       isLight
                         ? 'bg-white border-orange-300 text-orange-900'
@@ -293,7 +349,6 @@ export const NameTagCircleIdentitySection: React.FC<
           </div>
         </div>
 
-        {/* 4. Color Differentiation Mode: Team vs 6-Car Distinct Primary Colors */}
         <div className="flex flex-col gap-1.5 pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
           <div className="flex items-center justify-between gap-1.5 text-[10px]">
             <span className="font-semibold flex items-center gap-1">
@@ -337,7 +392,7 @@ export const NameTagCircleIdentitySection: React.FC<
                       : 'bg-neutral-900 border-neutral-700'
                   }`}
                 >
-                  <span>【{slotCodes[idx]}】</span>
+                  <span>[{slotCodes[idx]}]</span>
                   <input
                     type="color"
                     value={distinctColors[idx]}

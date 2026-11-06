@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Palette, Users, Camera } from 'lucide-react';
 import type { NameTagConfig } from '../../../config/nameTagConfig';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
@@ -73,6 +73,21 @@ export const NameTagColorsAndNamesSection: React.FC<
   updatePreviewName,
   selectPovCar,
 }) => {
+  const [draftNames, setDraftNames] = useState<string[]>(() => [
+    ...config.previewNames,
+  ]);
+
+  useEffect(() => {
+    setDraftNames([...config.previewNames]);
+  }, [config.previewNames]);
+
+  const commitName = (index: number) => {
+    const nextName = draftNames[index] ?? '';
+    if (nextName !== config.previewNames[index]) {
+      updatePreviewName(index, nextName);
+    }
+  };
+
   const cardBackground = isLight
     ? 'bg-neutral-50/95 border-neutral-200/90 text-neutral-800 shadow-2xs'
     : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
@@ -314,7 +329,7 @@ export const NameTagColorsAndNamesSection: React.FC<
         </div>
 
         <div className="grid grid-cols-2 gap-1.5 pt-0.5">
-          {config.previewNames.map((name, index) => {
+          {config.previewNames.map((_name, index) => {
             const isOrange = index >= 3;
             const isFocusedInPov =
               isPovMode && effectiveFocusedCarIndex === index;
@@ -342,8 +357,20 @@ export const NameTagColorsAndNamesSection: React.FC<
                 </button>
                 <input
                   type="text"
-                  value={name}
-                  onChange={(event) => updatePreviewName(index, event.target.value)}
+                  value={draftNames[index] ?? ''}
+                  onChange={(event) => {
+                    const next = [...draftNames];
+                    next[index] = event.target.value;
+                    setDraftNames(next);
+                  }}
+                  onBlur={() => commitName(index)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      commitName(index);
+                      event.currentTarget.blur();
+                    }
+                  }}
                   className={`w-full px-2 py-1 rounded border text-[10px] font-mono outline-none ${
                     isLight
                       ? 'bg-white border-neutral-300 text-neutral-800 focus:border-sky-500'

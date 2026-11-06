@@ -70,7 +70,7 @@ export function drawOnScreenCircleCard2D(
       Pick<NameTagConfig, 'boostFillColorBlendRatio' | 'boostUnfilledDarkenRatio'>
     >
 ): void {
-  const circleRadiusPx = Math.max(8, Math.min(card.width, card.height) * 0.5);
+  const circleRadiusPx = Math.max(1, Math.min(card.width, card.height) * 0.5);
   const circleDia = circleRadiusPx * 2;
   const clampedBoost = Math.max(0, Math.min(1, card.boostFraction));
   const boostFillAlpha = Math.max(
@@ -185,7 +185,7 @@ export function drawOnScreenCircleCard2D(
   }
 
   if (card.displayText) {
-    const fontPx = Math.max(9, Math.min(card.fontPx, circleRadiusPx * 0.78));
+    const fontPx = Math.max(1, card.fontPx);
     ctx.save();
     ctx.font = `${card.fontWeight} ${fontPx.toFixed(2)}px ${card.fontFamilyCss}`;
     ctx.fillStyle = card.textColor;
@@ -193,12 +193,7 @@ export function drawOnScreenCircleCard2D(
     ctx.textBaseline = 'middle';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
     ctx.shadowBlur = 3;
-    ctx.fillText(
-      card.displayText,
-      card.centerX,
-      card.centerY + fontPx * 0.04,
-      circleRadiusPx * 1.65
-    );
+    ctx.fillText(card.displayText, card.centerX, card.centerY + fontPx * 0.04);
     ctx.restore();
   }
 

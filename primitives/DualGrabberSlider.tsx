@@ -10,47 +10,27 @@ export interface DualGrabberSliderProps {
   label: string;
   subtitle?: string;
   description?: string;
-  /** Optional leading icon component or ReactNode */
   icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }> | React.ReactNode;
   iconName?: string;
   iconColor?: string;
-  /**
-   * Current dual-thumb values: `[leftVal, rightVal]`.
-   */
   value: [number, number];
   defaultValue?: [number, number];
   onChange: (val: [number, number]) => void;
-  /**
-   * Symmetric target alpha (shorthand from legacy `SettingTwoGrabberSliderRow`: sets `min = -target`, `max = +target`, `origin = 0`).
-   */
   target?: number;
   min?: number;
   max?: number;
   step?: number;
   origin?: number;
   unit?: string;
-  /**
-   * - 'centered-deadband': Left thumb clamped to `[min, origin]`, right thumb clamped to `[origin, max]` (ideal for [-α .. +α] deadbands).
-   * - 'free-range': Standard two-thumb interval `[low, high]` anywhere within `[min, max]`.
-   */
   mode?: DualGrabberMode;
   colorScheme?: DualGrabberColorScheme;
   showTicks?: boolean;
-  /**
-   * Optional domain badge text next to title (e.g. `[-α .. +α]`).
-   */
   domainBadge?: string;
-  /** Whether to show the domain badge next to the title */
   showDomainBadge?: boolean;
-  /** Whether to show outer border & card background */
   bordered?: boolean;
-  /** Whether to show subtitle/description below title */
   showDescription?: boolean;
   leftLabel?: string;
   rightLabel?: string;
-  /**
-   * Optional summary window badge formatter, e.g. `([l, r]) => \`Window: [\${target + l}..\${target + r}]\``
-   */
   formatWindowBadge?: (val: [number, number], origin: number) => string | null;
   onHover?: () => void;
   onLeave?: () => void;
@@ -59,16 +39,6 @@ export interface DualGrabberSliderProps {
   className?: string;
 }
 
-/**
- * DualGrabberSlider
- * Modularized from legacy `SettingTwoGrabberSliderRow`:
- * Two-grabber range slider supporting both:
- * 1. Centered Split-Domain Deadband (`mode="centered-deadband"`):
- *    Left grabber controls negative offset `[min .. origin]`, right grabber controls positive offset `[origin .. max]`.
- *    Both grabbers can meet at center `origin` or expand outward independently.
- * 2. Free Range Interval (`mode="free-range"`):
- *    Arbitrary `[low, high]` selection across `[min, max]`.
- */
 export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
   label,
   subtitle,

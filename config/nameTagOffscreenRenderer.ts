@@ -178,12 +178,12 @@ export function computeOffscreenRoiBounds2D(
   >
 ): NameTagRoiBounds2D {
   const circleRadius = Math.max(
-    8,
+    1,
     Number(config.offscreenCircleRadiusPx) || DEFAULT_NAME_TAG_CONFIG.offscreenCircleRadiusPx
   );
   const arrowLen = Math.max(
-    4,
-    Number(config.offscreenArrowLengthPx) || DEFAULT_NAME_TAG_CONFIG.offscreenArrowLengthPx
+    0,
+    Number(config.offscreenArrowLengthPx) ?? DEFAULT_NAME_TAG_CONFIG.offscreenArrowLengthPx
   );
   const arrowGap = Math.max(
     0,

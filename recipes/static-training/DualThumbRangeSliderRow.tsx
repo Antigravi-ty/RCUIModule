@@ -61,8 +61,12 @@ export const DualThumbRangeSliderRow: React.FC<DualThumbRangeSliderRowProps> = R
     }, [value[1], step]);
 
     const commitMinText = () => {
-      const parsed = Number.parseFloat(minText.trim());
+      const trimmed = minText.trim();
+      const parsed = trimmed === '' ? Number.NaN : Number(trimmed);
       if (!Number.isFinite(parsed)) {
+        if (trimmed !== '') {
+          console.error(`[DualThumbRangeSliderRow] Invalid numeric min input for "${label}": "${minText}"`);
+        }
         setMinText(formatNum(value[0], step));
         return;
       }
@@ -74,8 +78,12 @@ export const DualThumbRangeSliderRow: React.FC<DualThumbRangeSliderRowProps> = R
     };
 
     const commitMaxText = () => {
-      const parsed = Number.parseFloat(maxText.trim());
+      const trimmed = maxText.trim();
+      const parsed = trimmed === '' ? Number.NaN : Number(trimmed);
       if (!Number.isFinite(parsed)) {
+        if (trimmed !== '') {
+          console.error(`[DualThumbRangeSliderRow] Invalid numeric max input for "${label}": "${maxText}"`);
+        }
         setMaxText(formatNum(value[1], step));
         return;
       }

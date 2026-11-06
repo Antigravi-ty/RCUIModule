@@ -63,7 +63,6 @@ export const NameTagOffscreenAndAerialAlertSection: React.FC<
 
   return (
     <div className={`p-2.5 rounded-xl border flex flex-col gap-2.5 ${cardBackground}`}>
-      {/* 1. Off-Screen Edge Directional Indicator & ROI Effective Zone */}
       <div className="flex items-center justify-between gap-2">
         <span className="font-bold text-[11px] flex items-center gap-1.5">
           <Compass
@@ -139,12 +138,24 @@ export const NameTagOffscreenAndAerialAlertSection: React.FC<
           <SliderControl
             label="Boost Circle Radius"
             value={config.offscreenCircleRadiusPx}
-            min={8}
+            min={4}
             max={42}
             step={1}
             unit="px"
             onChange={(nextValue) =>
               updateConfig({ offscreenCircleRadiusPx: nextValue })
+            }
+            isLight={isLight}
+          />
+          <SliderControl
+            label="Off-Screen Border Thickness"
+            value={config.offscreenBorderWidthPx}
+            min={0}
+            max={12}
+            step={0.5}
+            unit="px"
+            onChange={(nextValue) =>
+              updateConfig({ offscreenBorderWidthPx: nextValue })
             }
             isLight={isLight}
           />
@@ -184,13 +195,12 @@ export const NameTagOffscreenAndAerialAlertSection: React.FC<
           />
         </div>
 
-        {/* ROI Effective Zone & HUD Avoidance */}
         <div className="flex flex-col gap-1.5 pt-1.5 border-t border-neutral-200/70 dark:border-neutral-800">
           <div className="flex items-center justify-between text-[10px]">
             <span className="font-semibold flex items-center gap-1">
               <Maximize2 className="h-3 w-3 text-teal-500" />
               <span>
-                ROI Effective Zone & HUD Safe Margin Avoidance (Top/Bottom/Side Insets)
+                ROI Effective Zone &amp; HUD Safe Margin Avoidance (Top/Bottom/Side Insets)
               </span>
             </span>
             <div className="flex items-center gap-1.5">
@@ -250,14 +260,12 @@ export const NameTagOffscreenAndAerialAlertSection: React.FC<
         </div>
       </div>
 
-      {/* 1b. Non-Linear Distance Curve Tuner & 360° Ground Dashed Simulator */}
       <NameTagOffscreenCurveTunerSection
         isLight={isLight}
         config={config}
         updateConfig={updateConfig}
       />
 
-      {/* 2. Decoupled Off-Screen Aerial Climb Alert Section */}
       <NameTagAerialClimbAlertSection
         isLight={isLight}
         config={config}

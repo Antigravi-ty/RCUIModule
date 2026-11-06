@@ -52,7 +52,7 @@ const TRIGGER_MODE_OPTIONS: Array<{
   {
     id: 'both',
     label: 'Hold Jump+Pitch OR Double Jump',
-    desc: 'Triggers when car either holds single jump + pitches up OR expends second jump while climbing',
+    desc: 'Triggers when car holds single jump + pitches up OR expends second jump while climbing',
   },
   {
     id: 'hold-jump-pitch',
@@ -66,7 +66,7 @@ const TRIGGER_MODE_OPTIONS: Array<{
   },
 ];
 
-const AERIAL_GLOW_COLOR_PRESETS: Array<{ label: string; hex: string }> = [
+const AERIAL_GLOW_COLOR_PRESETS = [
   { label: 'Alert Yellow (#FACC15)', hex: '#facc15' },
   { label: 'Amber Gold (#F59E0B)', hex: '#f59e0b' },
   { label: 'Lime Signal (#84CC16)', hex: '#84cc16' },
@@ -92,9 +92,7 @@ export const NameTagAerialClimbAlertSection: React.FC<
   );
 
   useEffect(() => {
-    return subscribeNameTagTelemetry((snap) => {
-      setTelemetry(snap);
-    });
+    return subscribeNameTagTelemetry((snap) => setTelemetry(snap));
   }, []);
 
   const focusedCarIdx = telemetry.focusedCarIndex ?? store.focusedCarIndex ?? 0;
@@ -107,6 +105,12 @@ export const NameTagAerialClimbAlertSection: React.FC<
     ? 'border-neutral-200 bg-neutral-100/75'
     : 'border-neutral-800 bg-neutral-900/50';
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
+  const btnInactive = isLight
+    ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
+    : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800';
+  const btnActiveAmber = isLight
+    ? 'bg-amber-500/15 border-amber-500 text-amber-900 font-bold'
+    : 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold';
 
   const povIsClimbing = Boolean(povCarTelemetry?.isDoubleJumpedAndClimbing);
   const povReason = povCarTelemetry?.aerialClimbTriggerReason || 'none';
@@ -140,89 +144,62 @@ export const NameTagAerialClimbAlertSection: React.FC<
             Target Audience (Off-Screen Only · Never On-Screen):
           </span>
           <div className="flex items-center gap-1">
-            {ALERT_AUDIENCE_OPTIONS.map((option) => {
-              const isSelected = config.aerialClimbAlertAudience === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  title={option.desc}
-                  onClick={() =>
-                    updateConfig({ aerialClimbAlertAudience: option.id })
-                  }
-                  className={`px-2 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
-                    isSelected
-                      ? isLight
-                        ? 'bg-amber-500/15 border-amber-500 text-amber-900 font-bold'
-                        : 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
-                      : isLight
-                        ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
-                        : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
+            {ALERT_AUDIENCE_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                title={option.desc}
+                onClick={() => updateConfig({ aerialClimbAlertAudience: option.id })}
+                className={`px-2 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
+                  config.aerialClimbAlertAudience === option.id
+                    ? btnActiveAmber
+                    : btnInactive
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Trigger Intent Mode */}
         <div className="flex items-center justify-between gap-1.5 text-[10px] pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
           <span className={mutedText}>Climb Intent Detection Mode:</span>
           <div className="flex items-center gap-1 flex-wrap justify-end">
-            {TRIGGER_MODE_OPTIONS.map((option) => {
-              const isSelected = config.aerialClimbTriggerMode === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  title={option.desc}
-                  onClick={() =>
-                    updateConfig({ aerialClimbTriggerMode: option.id })
-                  }
-                  className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer transition-colors ${
-                    isSelected
-                      ? isLight
-                        ? 'bg-amber-500/15 border-amber-500 text-amber-900 font-bold'
-                        : 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
-                      : isLight
-                        ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
-                        : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
+            {TRIGGER_MODE_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                title={option.desc}
+                onClick={() => updateConfig({ aerialClimbTriggerMode: option.id })}
+                className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer transition-colors ${
+                  config.aerialClimbTriggerMode === option.id
+                    ? btnActiveAmber
+                    : btnInactive
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="flex items-center justify-between gap-1.5 text-[10px]">
           <span className="font-semibold">Alert Ring Color:</span>
           <div className="flex items-center gap-1 flex-wrap justify-end">
-            {AERIAL_GLOW_COLOR_PRESETS.map((preset) => {
-              const isSelected =
-                config.aerialClimbGlowColor.toLowerCase() === preset.hex;
-              return (
-                <button
-                  key={preset.hex}
-                  type="button"
-                  onClick={() => updateConfig({ aerialClimbGlowColor: preset.hex })}
-                  className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                    isSelected
-                      ? isLight
-                        ? 'border-amber-500 bg-amber-500/15 text-amber-900 font-bold'
-                        : 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
-                      : isLight
-                        ? 'border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100'
-                        : 'border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
+            {AERIAL_GLOW_COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset.hex}
+                type="button"
+                onClick={() => updateConfig({ aerialClimbGlowColor: preset.hex })}
+                className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
+                  config.aerialClimbGlowColor.toLowerCase() === preset.hex
+                    ? btnActiveAmber
+                    : btnInactive
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
             <input
               type="color"
               value={config.aerialClimbGlowColor}
@@ -234,7 +211,6 @@ export const NameTagAerialClimbAlertSection: React.FC<
           </div>
         </div>
 
-        {/* Inward Ring Fill % and Opacity */}
         <div className="grid grid-cols-2 gap-2">
           <SliderControl
             label="Inward Ring Fill (50%=Half · 100%=Solid Dot)"
@@ -261,7 +237,6 @@ export const NameTagAerialClimbAlertSection: React.FC<
           />
         </div>
 
-        {/* Altitude, Velocity, Hold Jump Duration & Pitch Thresholds */}
         <div className="grid grid-cols-2 gap-2 pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
           <SliderControl
             label="Min Altitude Z"
@@ -312,7 +287,6 @@ export const NameTagAerialClimbAlertSection: React.FC<
           />
         </div>
 
-        {/* Live POV Action Simulation & Real-Time Light-Up Status */}
         <div className="flex flex-col gap-1.5 pt-1.5 border-t border-neutral-200/70 dark:border-neutral-800">
           <div className="flex items-center justify-between gap-2 text-[10px]">
             <span className="font-semibold flex items-center gap-1.5">
@@ -375,7 +349,6 @@ export const NameTagAerialClimbAlertSection: React.FC<
           )}
         </div>
 
-        {/* 6-Car Tuner Preview Toggles for Aerial Climb Ring */}
         <div className="flex flex-col gap-1 pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
           <div className="flex items-center justify-between text-[10px]">
             <span className={mutedText}>
@@ -389,11 +362,7 @@ export const NameTagAerialClimbAlertSection: React.FC<
                     previewAerialClimbingFlags: [true, true, true, true, true, true],
                   })
                 }
-                className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                  isLight
-                    ? 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-100'
-                    : 'border-neutral-700 text-neutral-300 hover:bg-neutral-800'
-                }`}
+                className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${btnInactive}`}
               >
                 All Climbing
               </button>
@@ -401,21 +370,10 @@ export const NameTagAerialClimbAlertSection: React.FC<
                 type="button"
                 onClick={() =>
                   updateConfig({
-                    previewAerialClimbingFlags: [
-                      false,
-                      false,
-                      false,
-                      false,
-                      false,
-                      false,
-                    ],
+                    previewAerialClimbingFlags: [false, false, false, false, false, false],
                   })
                 }
-                className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                  isLight
-                    ? 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-100'
-                    : 'border-neutral-700 text-neutral-300 hover:bg-neutral-800'
-                }`}
+                className={`px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${btnInactive}`}
               >
                 Clear All
               </button>
@@ -435,13 +393,7 @@ export const NameTagAerialClimbAlertSection: React.FC<
                     updatePreviewAerialClimbingFlag(slot.index, !isClimbing)
                   }
                   className={`px-1.5 py-1 rounded border text-[9px] font-mono cursor-pointer flex items-center justify-between transition-colors ${
-                    isClimbing
-                      ? isLight
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-900 font-bold shadow-2xs'
-                        : 'bg-amber-500/25 border-amber-400 text-amber-200 font-bold'
-                      : isLight
-                        ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
-                        : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
+                    isClimbing ? btnActiveAmber : btnInactive
                   }`}
                 >
                   <span>{slot.slotCode}</span>

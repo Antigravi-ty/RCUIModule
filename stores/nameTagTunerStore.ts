@@ -13,25 +13,10 @@ import {
   type NameTagRuntimeSyncSnapshot,
   type NameTagTelemetrySnapshot,
   createDefaultCarOverride,
-  resolveNameTagBoostBorderVisible,
 } from '../config/nameTagConfig';
-
-export {
-  DEFAULT_NAME_TAG_CONFIG,
-  KICKOFF_PERMUTATION_COUNT,
-  resolveNameTagBoostBorderVisible,
-  type NameTagBoostBorderOverride,
-  type NameTagCameraMode,
-  type NameTagCarOverride,
-  type NameTagConfig,
-  type NameTagFittedParameters,
-  type NameTagRuntimeState,
-  type NameTagRuntimeSyncSnapshot,
-  type NameTagTelemetrySnapshot,
-};
 import {
-  buildNameTagCalibrationExportPayload as buildExportPayloadFromConfigAndSnapshot,
-  computeFittedParametersFromSamples as computeFittedFromConfigAndSnapshot,
+  buildNameTagCalibrationExportPayload as buildExportPayload,
+  computeFittedParametersFromSamples as computeFittedFromSamples,
   mergeNameTagConfigPatch,
   sanitizeCarOverride,
   sanitizeConfig,
@@ -44,6 +29,17 @@ import {
 } from '../config/storageHelpers';
 import { getInitialDeveloperMode } from '../config/uiConfig';
 import { syncBridge } from './syncBridge';
+
+export type {
+  NameTagBoostBorderOverride,
+  NameTagCameraMode,
+  NameTagCarOverride,
+  NameTagConfig,
+  NameTagFittedParameters,
+  NameTagRuntimeState,
+  NameTagRuntimeSyncSnapshot,
+  NameTagTelemetrySnapshot,
+};
 
 const CONFIG_SYNC_KEY = 'store:nameTagConfig:v1';
 const RUNTIME_SYNC_KEY = 'store:nameTagRuntime:v1';
@@ -67,10 +63,7 @@ function loadSavedNameTagConfig(): NameTagConfig {
       !sanitized.offscreenIndicatorEnabled &&
       safeLocalStorageGet(DEV_OFFSCREEN_MANUAL_OFF_KEY) !== '1'
     ) {
-      return {
-        ...sanitized,
-        offscreenIndicatorEnabled: true,
-      };
+      return { ...sanitized, offscreenIndicatorEnabled: true };
     }
     return sanitized;
   } catch {
@@ -134,10 +127,11 @@ const DEFAULT_TELEMETRY_SNAPSHOT: NameTagTelemetrySnapshot = {
   cars: [],
 };
 
-let latestTelemetrySnapshot: NameTagTelemetrySnapshot = syncBridge.get<NameTagTelemetrySnapshot>(
-  TELEMETRY_SYNC_KEY,
-  DEFAULT_TELEMETRY_SNAPSHOT
-);
+let latestTelemetrySnapshot: NameTagTelemetrySnapshot =
+  syncBridge.get<NameTagTelemetrySnapshot>(
+    TELEMETRY_SYNC_KEY,
+    DEFAULT_TELEMETRY_SNAPSHOT
+  );
 
 const configListeners = new Set<() => void>();
 const telemetryListeners = new Set<(snapshot: NameTagTelemetrySnapshot) => void>();
@@ -155,7 +149,7 @@ function extractRuntimeSyncSnapshot(
   };
 }
 
-function syncStoreState(): void {
+export function notifyNameTagListeners(): void {
   useNameTagTunerStore.setState({
     config: currentConfig,
     isTunerArenaActive: runtimeState.isTunerArenaActive,
@@ -165,10 +159,6 @@ function syncStoreState(): void {
     selectedCalibrationCarIndex: runtimeState.selectedCalibrationCarIndex,
     boostBorderOverride: runtimeState.boostBorderOverride,
   });
-}
-
-export function notifyNameTagListeners(): void {
-  syncStoreState();
   for (const listener of configListeners) {
     try {
       listener();
@@ -208,9 +198,7 @@ export function updateNameTagConfig(
 }
 
 export function activateNameTagOffscreenForDeveloperMode(): void {
-  if (safeLocalStorageGet(DEV_OFFSCREEN_MANUAL_OFF_KEY) === '1') {
-    return;
-  }
+  if (safeLocalStorageGet(DEV_OFFSCREEN_MANUAL_OFF_KEY) === '1') return;
   if (!currentConfig.offscreenIndicatorEnabled) {
     updateNameTagConfig(
       { offscreenIndicatorEnabled: true },
@@ -274,9 +262,7 @@ export function resetNameTagConfig(): NameTagConfig {
 
 export function subscribeNameTagConfig(listener: () => void): () => void {
   configListeners.add(listener);
-  return () => {
-    configListeners.delete(listener);
-  };
+  return () => configListeners.delete(listener);
 }
 
 export function getNameTagRuntimeState(): NameTagRuntimeState {
@@ -314,9 +300,7 @@ export function setNameTagTelemetrySnapshot(
   if (broadcast && !syncBridge.isApplyingRemote()) {
     syncBridge.set(TELEMETRY_SYNC_KEY, snapshot);
   }
-  for (const listener of telemetryListeners) {
-    listener(snapshot);
-  }
+  for (const listener of telemetryListeners) listener(snapshot);
 }
 
 export function getNameTagTelemetrySnapshot(): NameTagTelemetrySnapshot {
@@ -327,13 +311,11 @@ export function subscribeNameTagTelemetry(
   listener: (snapshot: NameTagTelemetrySnapshot) => void
 ): () => void {
   telemetryListeners.add(listener);
-  return () => {
-    telemetryListeners.delete(listener);
-  };
+  return () => telemetryListeners.delete(listener);
 }
 
 export function computeFittedParametersFromSamples(): NameTagFittedParameters {
-  return computeFittedFromConfigAndSnapshot(getNameTagConfig(), latestTelemetrySnapshot);
+  return computeFittedFromSamples(getNameTagConfig(), latestTelemetrySnapshot);
 }
 
 export function applyFittedParametersFromCarOverrides(): NameTagConfig {
@@ -353,7 +335,7 @@ export function applyFittedParametersFromCarOverrides(): NameTagConfig {
 }
 
 export function buildNameTagCalibrationExportPayload() {
-  return buildExportPayloadFromConfigAndSnapshot(
+  return buildExportPayload(
     getNameTagConfig(),
     getNameTagTelemetrySnapshot(),
     runtimeState.kickoffPermutationIndex
@@ -395,19 +377,12 @@ export const useNameTagTunerStore = create<NameTagTunerStoreState>((_set, get) =
   focusedCarIndex: runtimeState.focusedCarIndex,
   selectedCalibrationCarIndex: runtimeState.selectedCalibrationCarIndex,
   boostBorderOverride: runtimeState.boostBorderOverride,
-
-  updateConfig: (patch) => {
-    updateNameTagConfig(patch);
-  },
-
+  updateConfig: (patch) => updateNameTagConfig(patch),
   updatePreviewName: (index, name) => {
     const nextNames = [...get().config.previewNames];
-    if (index >= 0 && index < 6) {
-      nextNames[index] = name;
-    }
+    if (index >= 0 && index < 6) nextNames[index] = name;
     updateNameTagConfig({ previewNames: nextNames });
   },
-
   updatePreviewBoostAmount: (index, boostAmount) => {
     const nextBoosts = [...get().config.previewBoostAmounts];
     if (index >= 0 && index < 6) {
@@ -415,49 +390,23 @@ export const useNameTagTunerStore = create<NameTagTunerStoreState>((_set, get) =
     }
     updateNameTagConfig({ previewBoostAmounts: nextBoosts });
   },
-
   updatePreviewAerialClimbingFlag: (index, climbing) => {
     const nextFlags = [...(get().config.previewAerialClimbingFlags || [])];
-    if (index >= 0 && index < 6) {
-      nextFlags[index] = Boolean(climbing);
-    }
+    if (index >= 0 && index < 6) nextFlags[index] = Boolean(climbing);
     updateNameTagConfig({ previewAerialClimbingFlags: nextFlags });
   },
-
-  setBoostBorderOverride: (override) => {
-    setNameTagRuntimeState({ boostBorderOverride: override });
-  },
-
+  setBoostBorderOverride: (override) => setNameTagRuntimeState({ boostBorderOverride: override }),
   selectCalibrationCar: (carIndex) => {
     const clampedIndex = Math.max(0, Math.min(5, Math.round(Number(carIndex) || 0)));
     setNameTagRuntimeState({ selectedCalibrationCarIndex: clampedIndex });
   },
-
-  updateCarOverride: (carIndex, patch) => {
-    updateNameTagCarOverride(carIndex, patch);
-  },
-
-  resetCarOverride: (carIndex) => {
-    resetNameTagCarOverride(carIndex);
-  },
-
-  resetAllCarOverrides: () => {
-    resetAllNameTagCarOverrides();
-  },
-
-  applyFittedFromCarOverrides: () => {
-    applyFittedParametersFromCarOverrides();
-  },
-
-  exportCalibrationJson: () => {
-    const payload = buildNameTagCalibrationExportPayload();
-    return JSON.stringify(payload, null, 2);
-  },
-
-  resetConfig: () => {
-    resetNameTagConfig();
-  },
-
+  updateCarOverride: (carIndex, patch) => updateNameTagCarOverride(carIndex, patch),
+  resetCarOverride: (carIndex) => resetNameTagCarOverride(carIndex),
+  resetAllCarOverrides: () => resetAllNameTagCarOverrides(),
+  applyFittedFromCarOverrides: () => applyFittedParametersFromCarOverrides(),
+  exportCalibrationJson: () =>
+    JSON.stringify(buildNameTagCalibrationExportPayload(), null, 2),
+  resetConfig: () => resetNameTagConfig(),
   enterTunerArenaAndSpawnSixCars: () => {
     setNameTagRuntimeState({
       isTunerArenaActive: true,
@@ -466,15 +415,10 @@ export const useNameTagTunerStore = create<NameTagTunerStoreState>((_set, get) =
     });
     runtimeState.onEnterTunerArena?.();
   },
-
   exitTunerArena: () => {
-    setNameTagRuntimeState({
-      isTunerArenaActive: false,
-      activeCameraMode: 'free',
-    });
+    setNameTagRuntimeState({ isTunerArenaActive: false, activeCameraMode: 'free' });
     runtimeState.onExitTunerArena?.();
   },
-
   reshuffleKickoffPositions: () => {
     const nextIndex =
       (runtimeState.kickoffPermutationIndex + 1) % KICKOFF_PERMUTATION_COUNT;
@@ -484,7 +428,6 @@ export const useNameTagTunerStore = create<NameTagTunerStoreState>((_set, get) =
     });
     runtimeState.onReshuffleKickoffPositions?.();
   },
-
   selectPovCar: (carIndex) => {
     const clampedIndex = Math.max(0, Math.min(5, Math.round(Number(carIndex) || 0)));
     setNameTagRuntimeState({
@@ -494,12 +437,8 @@ export const useNameTagTunerStore = create<NameTagTunerStoreState>((_set, get) =
     });
     runtimeState.onSelectPovCar?.(clampedIndex);
   },
-
   focusFreeCamOverview: () => {
-    setNameTagRuntimeState({
-      isTunerArenaActive: true,
-      activeCameraMode: 'free',
-    });
+    setNameTagRuntimeState({ isTunerArenaActive: true, activeCameraMode: 'free' });
     runtimeState.onFocusFreeCamOverview?.();
   },
 }));
@@ -514,10 +453,7 @@ syncBridge.onReset((scopePrefix) => {
     safeStorage.remove(NAME_TAG_STORAGE_KEY);
   }
   if (!scopePrefix || RUNTIME_SYNC_KEY.startsWith(scopePrefix)) {
-    runtimeState = {
-      ...runtimeState,
-      ...DEFAULT_RUNTIME_SYNC_SNAPSHOT,
-    };
+    runtimeState = { ...runtimeState, ...DEFAULT_RUNTIME_SYNC_SNAPSHOT };
   }
   notifyNameTagListeners();
 });
@@ -531,18 +467,12 @@ syncBridge.subscribeKey<NameTagConfig>(CONFIG_SYNC_KEY, (remote) => {
 
 syncBridge.subscribeKey<NameTagRuntimeSyncSnapshot>(RUNTIME_SYNC_KEY, (remote) => {
   if (!remote || typeof remote !== 'object') return;
-  const sanitized = sanitizeRuntimeSyncSnapshot(remote);
-  runtimeState = {
-    ...runtimeState,
-    ...sanitized,
-  };
+  runtimeState = { ...runtimeState, ...sanitizeRuntimeSyncSnapshot(remote) };
   notifyNameTagListeners();
 });
 
 syncBridge.subscribeKey<NameTagTelemetrySnapshot>(TELEMETRY_SYNC_KEY, (remote) => {
   if (!remote || typeof remote !== 'object' || !Array.isArray(remote.cars)) return;
   latestTelemetrySnapshot = remote;
-  for (const listener of telemetryListeners) {
-    listener(remote);
-  }
+  for (const listener of telemetryListeners) listener(remote);
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
 import { Minus, Plus, RotateCcw } from 'lucide-react';
 import { TunerPrecisionContext, getDecimalPlaces } from './PrecisionDigitPicker';
@@ -19,74 +19,22 @@ export interface SliderControlProps {
   showStepper?: boolean;
   isLight?: boolean;
   disabled?: boolean;
-  /**
-   * Color scheme for the slider active range track.
-   * Defaults to 'neutral' (monochrome black/white, zero saturation), avoiding harsh blue.
-   */
   colorScheme?: SliderColorScheme;
-  /**
-   * Optional distinct color scheme when value < origin in 'centered' / 'bipolar' mode.
-   */
   negativeColorScheme?: SliderColorScheme;
-  /**
-   * Slider variation mode:
-   * - 'default': fills continuously from the minimum left edge to the current value.
-   * - 'centered' / 'bipolar': fills bi-directionally (leftward or rightward) from a reference origin point (e.g. 0 for positive/negative values).
-   */
   variation?: SliderVariation;
-  /**
-   * Alias for `variation`.
-   */
   variant?: SliderVariation;
-  /**
-   * Reference origin point for the 'centered' / 'bipolar' variation.
-   * Defaults to 0 (or `(min + max) / 2` if 0 is out of bounds).
-   */
   origin?: number;
-  /**
-   * Whether to render a subtle vertical tick/notch at the origin position.
-   * Defaults to true in 'centered' mode.
-   */
   showOriginIndicator?: boolean;
-  /**
-   * Whether double-clicking the slider or clicking the origin badge resets value to `origin`.
-   * Defaults to true in 'centered' mode.
-   */
   allowOriginReset?: boolean;
-  /**
-   * Custom formatter for displaying the current value badge.
-   */
   formatValue?: (val: number) => string;
-  /**
-   * Whether to prefix positive values with a '+' sign in the readout badge (e.g. +20).
-   */
   showSign?: boolean;
-  /**
-   * Whether to render an inline editable numeric input box instead of a static badge
-   * (unified from legacy TunerRow / AdvancedSliderRow / StepperSliderRow).
-   */
   editable?: boolean;
-  /**
-   * Whether to allow typed values in `editable` mode to exceed `[min, max]` slider bounds.
-   */
   allowOutOfBoundsInput?: boolean;
-  /**
-   * Whether to subscribe to `TunerPrecisionContext` (from `PrecisionDigitPicker`) when focused.
-   */
   usePrecisionContext?: boolean;
   extraAction?: React.ReactNode;
   className?: string;
 }
 
-/**
- * SliderControl
- * Radix Slider primitive wrapped with SimpleUI tactile ergonomics:
- * - Direct value readout badge or inline editable numeric input (`editable={true}`)
- * - Stepper buttons (- / +) & keyboard arrow precision stepping
- * - Highly neutral zero-saturation black & white track theme by default (avoiding blue)
- * - Bi-directional origin-based filling (`variation="centered"`) for positive & negative values
- *   or custom anchor points (e.g., 0 center balance or 100% unity gain)
- */
 export const SliderControl: React.FC<SliderControlProps> = React.memo(({
   label,
   value,
@@ -109,14 +57,12 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
   formatValue,
   showSign = false,
   editable = true,
-  allowOutOfBoundsInput = true,
   usePrecisionContext = false,
   className = '',
 }) => {
   const precisionCtx = useContext(TunerPrecisionContext);
   const activeStep = usePrecisionContext && precisionCtx ? precisionCtx.step : step;
 
-  // Automatically resolve light mode from prop or document element
   const resolvedIsLight =
     isLight !== undefined
       ? isLight
@@ -124,7 +70,6 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
       ? document.documentElement.classList.contains('light') || document.documentElement.dataset.theme === 'light'
       : false;
 
-  // Resolve effective variation mode and reference origin
   const rawVariation = variation ?? variant ?? (origin !== undefined ? 'centered' : 'default');
   const isCentered = rawVariation === 'centered' || rawVariation === 'bipolar';
 
@@ -153,6 +98,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
 
   const [inputText, setInputText] = useState<string>(() => formatInputValue(value));
   const [isFocused, setIsFocused] = useState<boolean>(false);
+  const skipNextBlurCommitRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!isFocused) {
@@ -165,8 +111,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
     const existingDecimals = Math.max(getDecimalPlaces(currentVal), getDecimalPlaces(inputText));
     const stepDecimals = getDecimalPlaces(activeStep);
     const targetDecimals = Math.min(8, Math.max(existingDecimals, stepDecimals));
-    const unclamped = Number((currentVal + delta).toFixed(targetDecimals));
-    const nextVal = allowOutOfBoundsInput ? unclamped : Math.max(min, Math.min(max, unclamped));
+    const nextVal = Number((currentVal + delta).toFixed(targetDecimals));
     onChange(nextVal);
     setInputText(formatInputValue(nextVal));
   };
@@ -175,24 +120,34 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
   const handleIncrement = () => stepByDelta(activeStep);
 
   const commitInputText = () => {
+    if (skipNextBlurCommitRef.current) {
+      skipNextBlurCommitRef.current = false;
+      return;
+    }
     setIsFocused(false);
-    const parsed = parseFloat(inputText.trim());
+    const trimmed = inputText.trim();
+    const parsed = trimmed === '' ? Number.NaN : Number(trimmed);
     if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
-      const finalVal = allowOutOfBoundsInput ? parsed : Math.max(min, Math.min(max, parsed));
-      onChange(finalVal);
-      setInputText(formatInputValue(finalVal));
+      onChange(parsed);
+      setInputText(formatInputValue(parsed));
     } else {
+      if (trimmed !== '') {
+        console.error(`[SliderControl] Invalid numeric input for "${label}": "${inputText}"`);
+      }
       setInputText(formatInputValue(value));
     }
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       commitInputText();
+      skipNextBlurCommitRef.current = true;
       e.currentTarget.blur();
     } else if (e.key === 'Escape') {
       setInputText(formatInputValue(value));
       setIsFocused(false);
+      skipNextBlurCommitRef.current = true;
       e.currentTarget.blur();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -211,7 +166,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
   };
 
   // Resolve track active range color
-  const resolveSchemeClass = (scheme: SliderColorScheme) => {
+  const resolveSchemeClass = (scheme: SliderColorScheme | string) => {
     if (scheme === 'amber') return 'bg-amber-500';
     if (scheme === 'orange') return 'bg-orange-500';
     if (scheme === 'sky') return 'bg-sky-500';
@@ -279,14 +234,7 @@ export const SliderControl: React.FC<SliderControlProps> = React.memo(({
               value={inputText}
               onFocus={() => setIsFocused(true)}
               onBlur={commitInputText}
-              onChange={(e) => {
-                const raw = e.target.value;
-                setInputText(raw);
-                const parsed = parseFloat(raw);
-                if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
-                  onChange(allowOutOfBoundsInput ? parsed : Math.max(min, Math.min(max, parsed)));
-                }
-              }}
+              onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleInputKeyDown}
               title={`Step: ±${activeStep}. Press Up/Down arrows to step or Enter to commit.`}
               className={`w-16 px-1.5 py-0.5 text-right font-mono text-[11px] rounded border outline-none transition-colors ${

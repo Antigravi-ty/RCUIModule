@@ -1,20 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Play,
-  Shuffle,
-  XCircle,
-  Eye,
-  Copy,
-  Check,
-  Sliders,
-  Sparkles,
-} from 'lucide-react';
-import {
-  formatNameTagDisplayText,
-  type NameTagCarOverride,
-  type NameTagConfig,
-  type NameTagTelemetrySnapshot,
-} from '../../../config/nameTagConfig';
+import { Play, Shuffle, XCircle, Eye, Copy, Check, Sliders, Sparkles } from 'lucide-react';
+import { formatNameTagDisplayText, type NameTagTelemetrySnapshot } from '../../../config/nameTagConfig';
 import {
   computeFittedParametersFromSamples,
   getNameTagTelemetrySnapshot,
@@ -42,9 +28,7 @@ export interface NameTagCalibrationSectionProps {
   isLight?: boolean;
 }
 
-export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps> = ({
-  isLight = false,
-}) => {
+export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps> = ({ isLight = false }) => {
   const {
     config,
     isTunerArenaActive,
@@ -66,105 +50,70 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
     focusFreeCamOverview,
   } = useNameTagTunerStore();
 
-  const [telemetry, setTelemetry] = useState<NameTagTelemetrySnapshot>(() =>
-    getNameTagTelemetrySnapshot()
-  );
+  const [telemetry, setTelemetry] = useState<NameTagTelemetrySnapshot>(() => getNameTagTelemetrySnapshot());
+  const [copiedStatus, setCopiedStatus] = useState<'idle' | 'copied'>('idle');
 
   React.useEffect(() => {
-    const refreshTelemetry = () => {
-      setTelemetry({ ...getNameTagTelemetrySnapshot() });
-    };
-    refreshTelemetry();
-    const unsubTelemetry = subscribeNameTagTelemetry((snapshot) => {
-      setTelemetry({ ...snapshot });
-    });
-    const unsubConfig = subscribeNameTagConfig(refreshTelemetry);
+    const refresh = () => setTelemetry({ ...getNameTagTelemetrySnapshot() });
+    refresh();
+    const unsubTel = subscribeNameTagTelemetry((snapshot) => setTelemetry({ ...snapshot }));
+    const unsubCfg = subscribeNameTagConfig(refresh);
     return () => {
-      unsubTelemetry();
-      unsubConfig();
+      unsubTel();
+      unsubCfg();
     };
   }, []);
 
-  const isFreeCamApp = useAppStore((state) => state.isFreeCam);
-  const hudCameraMode = useHudStore((state) => state.cameraMode);
-  const hudFocusedCarIndex = useHudStore((state) => state.focusedCarIndex);
+  const isFreeCamApp = useAppStore((s) => s.isFreeCam);
+  const hudCameraMode = useHudStore((s) => s.cameraMode);
+  const hudFocusedCarIndex = useHudStore((s) => s.focusedCarIndex);
 
-  const effectiveCameraMode = isFreeCamApp
-    ? 'free'
-    : activeCameraMode || hudCameraMode || 'pov';
-  const isPovMode =
-    effectiveCameraMode === 'pov' ||
-    effectiveCameraMode === 'wasmPov' ||
-    effectiveCameraMode === 'rearView';
-  const effectiveFocusedCarIndex = isTunerArenaActive
-    ? focusedCarIndex
-    : hudFocusedCarIndex;
-  const focusedSlotCode =
-    CAR_SLOT_BADGES[effectiveFocusedCarIndex]?.slotCode ||
-    `#${effectiveFocusedCarIndex + 1}`;
+  const effCamMode = isFreeCamApp ? 'free' : activeCameraMode || hudCameraMode || 'pov';
+  const isPov = effCamMode === 'pov' || effCamMode === 'wasmPov' || effCamMode === 'rearView';
+  const effFocusedIdx = isTunerArenaActive ? focusedCarIndex : hudFocusedCarIndex;
+  const focusedSlotCode = CAR_SLOT_BADGES[effFocusedIdx]?.slotCode || `#${effFocusedIdx + 1}`;
 
-  const [copiedStatus, setCopiedStatus] = useState<'idle' | 'copied'>('idle');
-
-  const activeCalibIndex = Math.max(0, Math.min(5, selectedCalibrationCarIndex || 0));
-  const activeCalibSlot = CAR_SLOT_BADGES[activeCalibIndex] || CAR_SLOT_BADGES[0];
-  const activeCarOverride = config.carOverrides?.[activeCalibIndex] || {
+  const calibIdx = Math.max(0, Math.min(5, selectedCalibrationCarIndex || 0));
+  const calibSlot = CAR_SLOT_BADGES[calibIdx] || CAR_SLOT_BADGES[0];
+  const carOverride = config.carOverrides?.[calibIdx] || {
     enabled: false,
     scaleMultiplier: 1.0,
     worldOffsetUu: config.verticalOffsetUu,
     screenOffsetPx: config.screenVerticalOffsetPx,
   };
-  const activeCarTelemetry =
-    telemetry.cars?.find((entry) => entry.carIndex === activeCalibIndex) || null;
-  const enabledOverrideCount = (config.carOverrides || []).filter(
-    (entry) => entry?.enabled
-  ).length;
-  const fittedPreview = computeFittedParametersFromSamples();
+  const carTel = telemetry.cars?.find((c) => c.carIndex === calibIdx) || null;
+  const enabledOverrideCount = (config.carOverrides || []).filter((c) => c?.enabled).length;
+  const fitted = computeFittedParametersFromSamples();
 
-  const cardBackground = isLight
+  const cardBg = isLight
     ? 'bg-neutral-50/95 border-neutral-200/90 text-neutral-800 shadow-2xs'
     : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
-  const subCardBackground = isLight
-    ? 'bg-white border-neutral-200 text-neutral-800'
-    : 'bg-neutral-950/40 border-neutral-700/50 text-neutral-200';
-  const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
-  const dividerBorder = isLight ? 'border-neutral-200' : 'border-neutral-700/40';
+  const subCardBg = isLight ? 'bg-white border-neutral-200 text-neutral-800' : 'bg-neutral-950/40 border-neutral-700/50 text-neutral-200';
+  const muted = isLight ? 'text-neutral-500' : 'text-neutral-400';
+  const divider = isLight ? 'border-neutral-200' : 'border-neutral-700/40';
+  const slotInactive = isLight
+    ? 'bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700'
+    : 'bg-neutral-900/70 hover:bg-neutral-800 border-neutral-700/70 text-neutral-300';
 
-  const truncatePreview = (rawName: string) =>
-    formatNameTagDisplayText(rawName, config.maxChars);
+  const trunc = (rawName: string) => formatNameTagDisplayText(rawName, config.maxChars);
 
   const handleCopyCalibrationJson = async () => {
     const jsonText = exportCalibrationJson();
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(jsonText);
-      } else if (typeof document !== 'undefined') {
-        const tempArea = document.createElement('textarea');
-        tempArea.value = jsonText;
-        tempArea.style.position = 'fixed';
-        tempArea.style.opacity = '0';
-        document.body.appendChild(tempArea);
-        tempArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(tempArea);
-      }
-      setCopiedStatus('copied');
-      window.setTimeout(() => setCopiedStatus('idle'), 2200);
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) await navigator.clipboard.writeText(jsonText);
     } catch {
-      setCopiedStatus('copied');
-      window.setTimeout(() => setCopiedStatus('idle'), 2200);
+      // Ignore clipboard errors
     }
+    setCopiedStatus('copied');
+    window.setTimeout(() => setCopiedStatus('idle'), 2200);
   };
 
   return (
     <>
-      <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBackground}`}>
+      <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span
-              className={`h-2 w-2 rounded-full shrink-0 ${
-                isTunerArenaActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-              }`}
-            />
+            <span className={`h-2 w-2 rounded-full shrink-0 ${isTunerArenaActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
             <span className="font-bold text-xs truncate">
               {isTunerArenaActive
                 ? `6-Car Kickoff Arena Active (Formation #${kickoffPermutationIndex + 1})`
@@ -172,12 +121,8 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className={`text-[10px] ${mutedText}`}>Enabled</span>
-            <ToggleSwitch
-              checked={config.enabled}
-              onChange={(nextEnabled) => updateConfig({ enabled: nextEnabled })}
-              isLight={isLight}
-            />
+            <span className={`text-[10px] ${muted}`}>Enabled</span>
+            <ToggleSwitch checked={config.enabled} onChange={(v) => updateConfig({ enabled: v })} isLight={isLight} />
           </div>
         </div>
 
@@ -185,80 +130,43 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
           <Button
             variant="primary"
             size="sm"
-            onClick={
-              isTunerArenaActive ? focusFreeCamOverview : enterTunerArenaAndSpawnSixCars
-            }
+            onClick={isTunerArenaActive ? focusFreeCamOverview : enterTunerArenaAndSpawnSixCars}
             isLight={isLight}
             className="flex-1 gap-1.5 py-1.5 text-[11px] font-semibold justify-center"
           >
             <Play className="h-3.5 w-3.5 fill-current" />
-            <span>
-              {isTunerArenaActive
-                ? 'FreeCam Overview [0]'
-                : 'Enter Arena & Spawn 6 Kickoff Cars'}
-            </span>
+            <span>{isTunerArenaActive ? 'FreeCam Overview [0]' : 'Enter Arena & Spawn 6 Kickoff Cars'}</span>
           </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={reshuffleKickoffPositions}
-            isLight={isLight}
-            className="gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold"
-          >
+          <Button variant="secondary" size="sm" onClick={reshuffleKickoffPositions} isLight={isLight} className="gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold">
             <Shuffle className="h-3.5 w-3.5" />
             <span>Reshuffle Kickoff</span>
           </Button>
-
           {isTunerArenaActive && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={exitTunerArena}
-              isLight={isLight}
-              className={`gap-1 px-2 py-1.5 text-[11px] font-semibold ${
-                isLight ? 'text-rose-600' : 'text-rose-400'
-              }`}
-            >
+            <Button variant="secondary" size="sm" onClick={exitTunerArena} isLight={isLight} className="gap-1 px-2 py-1.5 text-[11px] font-semibold text-rose-500">
               <XCircle className="h-3.5 w-3.5" />
               <span>Exit</span>
             </Button>
           )}
         </div>
 
-        <div className={`pt-1 border-t flex flex-col gap-1.5 ${dividerBorder}`}>
+        <div className={`pt-1 border-t flex flex-col gap-1.5 ${divider}`}>
           <div className="flex items-center justify-between gap-2">
             <span className="font-bold text-[11px] flex items-center gap-1.5">
-              <Eye
-                className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`}
-              />
+              <Eye className="h-3.5 w-3.5 text-amber-500" />
               <span>Camera Mode &amp; POV Switcher (Keys 1–6)</span>
             </span>
             <span
               className={`text-[10px] font-mono px-1.5 py-0.5 rounded border font-semibold ${
-                isPovMode
-                  ? isLight
-                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-700'
-                    : 'bg-amber-500/15 border-amber-500/40 text-amber-400'
-                  : isLight
-                    ? 'bg-sky-500/15 border-sky-500/40 text-sky-700'
-                    : 'bg-sky-500/15 border-sky-500/40 text-sky-400'
+                isPov ? 'bg-amber-500/15 border-amber-500/40 text-amber-500' : 'bg-sky-500/15 border-sky-500/40 text-sky-500'
               }`}
             >
-              {isPovMode
-                ? `POV · ${focusedSlotCode} (${truncatePreview(
-                    config.previewNames[effectiveFocusedCarIndex] || ''
-                  )})`
-                : `CAMERA: ${effectiveCameraMode.toUpperCase()}`}
+              {isPov ? `POV · ${focusedSlotCode} (${trunc(config.previewNames[effFocusedIdx] || '')})` : `CAMERA: ${effCamMode.toUpperCase()}`}
             </span>
           </div>
 
           <div className="grid grid-cols-6 gap-1">
             {CAR_SLOT_BADGES.map((slot) => {
-              const isSelected =
-                isTunerArenaActive &&
-                isPovMode &&
-                effectiveFocusedCarIndex === slot.index;
+              const isSelected = isTunerArenaActive && isPov && effFocusedIdx === slot.index;
               return (
                 <button
                   key={slot.index}
@@ -266,20 +174,11 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
                   onClick={() => selectPovCar(slot.index)}
                   title={`Switch to ${slot.slotCode} POV (Key ${slot.keyLabel})`}
                   className={`px-1.5 py-1 rounded-lg border flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                    isSelected
-                      ? isLight
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-900 font-bold shadow-2xs'
-                        : 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold shadow-sm'
-                      : isLight
-                        ? 'bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700'
-                        : 'bg-neutral-900/70 hover:bg-neutral-800 border-neutral-700/70 text-neutral-300'
+                    isSelected ? 'bg-amber-500/20 border-amber-400 text-amber-400 font-bold' : slotInactive
                   }`}
                 >
                   <KeycapBadge label={slot.keyLabel} size="sm" isLight={isLight} />
-                  <span
-                    className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: slot.colorHex }}
-                  />
+                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: slot.colorHex }} />
                   <span className="text-[10px] font-mono">{slot.slotCode}</span>
                 </button>
               );
@@ -288,25 +187,15 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
         </div>
       </div>
 
-      <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBackground}`}>
+      <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
         <div className="flex items-center justify-between gap-2">
           <span className="font-bold text-[11px] flex items-center gap-1.5">
-            <Sliders
-              className={`h-3.5 w-3.5 ${
-                isLight ? 'text-emerald-600' : 'text-emerald-400'
-              }`}
-            />
+            <Sliders className="h-3.5 w-3.5 text-emerald-500" />
             <span>Per-Car Independent Calibration &amp; Export</span>
           </span>
           <div className="flex items-center gap-1.5">
             {enabledOverrideCount > 0 && (
-              <button
-                type="button"
-                onClick={resetAllCarOverrides}
-                className={`text-[10px] font-mono hover:underline cursor-pointer ${
-                  isLight ? 'text-rose-600' : 'text-rose-400'
-                }`}
-              >
+              <button type="button" onClick={resetAllCarOverrides} className="text-[10px] font-mono hover:underline cursor-pointer text-rose-500">
                 Clear All ({enabledOverrideCount})
               </button>
             )}
@@ -315,12 +204,8 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
               onClick={handleCopyCalibrationJson}
               className={`px-2 py-0.5 rounded border text-[10px] font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors ${
                 copiedStatus === 'copied'
-                  ? isLight
-                    ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-700'
-                    : 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
-                  : isLight
-                    ? 'bg-sky-500/10 border-sky-500/40 text-sky-700 hover:bg-sky-500/20'
-                    : 'bg-sky-500/15 border-sky-500/40 text-sky-300 hover:bg-sky-500/25'
+                  ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                  : 'bg-sky-500/15 border-sky-500/40 text-sky-400 hover:bg-sky-500/25'
               }`}
             >
               {copiedStatus === 'copied' ? (
@@ -340,197 +225,107 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
 
         <div className="grid grid-cols-6 gap-1">
           {CAR_SLOT_BADGES.map((slot) => {
-            const isTarget = activeCalibIndex === slot.index;
+            const isTarget = calibIdx === slot.index;
             const hasOverride = Boolean(config.carOverrides?.[slot.index]?.enabled);
-            const carTel = telemetry.cars?.find((c) => c.carIndex === slot.index);
-            const depthLabel = carTel
-              ? `${Math.round(carTel.activeDepthUu)}u`
-              : slot.slotCode;
+            const tel = telemetry.cars?.find((c) => c.carIndex === slot.index);
             return (
               <button
                 key={slot.index}
                 type="button"
                 onClick={() => selectCalibrationCar(slot.index)}
-                title={`Select ${slot.slotCode} for independent calibration (does not switch camera)`}
+                title={`Select ${slot.slotCode} for independent calibration`}
                 className={`px-1 py-1 rounded-lg border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
                   isTarget
-                    ? isLight
-                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-800 font-bold shadow-2xs'
-                      : 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold shadow-sm'
+                    ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400 font-bold'
                     : hasOverride
-                      ? isLight
-                        ? 'bg-amber-500/15 border-amber-500/50 text-amber-800'
-                        : 'bg-amber-500/15 border-amber-500/50 text-amber-300'
-                      : isLight
-                        ? 'bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700'
-                        : 'bg-neutral-900/70 hover:bg-neutral-800 border-neutral-700/70 text-neutral-300'
+                      ? 'bg-amber-500/15 border-amber-500/50 text-amber-400'
+                      : slotInactive
                 }`}
               >
                 <div className="flex items-center gap-1">
-                  <span
-                    className="h-1.5 w-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: slot.colorHex }}
-                  />
+                  <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: slot.colorHex }} />
                   <span className="text-[10px] font-mono">{slot.slotCode}</span>
-                  {hasOverride && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
-                  )}
+                  {hasOverride && <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />}
                 </div>
-                <span className={`text-[9px] font-mono ${mutedText}`}>{depthLabel}</span>
+                <span className={`text-[9px] font-mono ${muted}`}>{tel ? `${Math.round(tel.activeDepthUu)}u` : slot.slotCode}</span>
               </button>
             );
           })}
         </div>
 
-        <div className={`p-2 rounded-lg border flex flex-col gap-1.5 ${subCardBackground}`}>
+        <div className={`p-2 rounded-lg border flex flex-col gap-1.5 ${subCardBg}`}>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: activeCalibSlot.colorHex }}
-              />
+              <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: calibSlot.colorHex }} />
               <span className="font-mono font-bold text-[11px] truncate">
-                Target: {activeCalibSlot.slotCode} (
-                {truncatePreview(config.previewNames[activeCalibIndex] || '')})
+                Target: {calibSlot.slotCode} ({trunc(config.previewNames[calibIdx] || '')})
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {activeCarOverride.enabled && (
-                <button
-                  type="button"
-                  onClick={() => resetCarOverride(activeCalibIndex)}
-                  className={`text-[10px] font-mono hover:underline cursor-pointer ${
-                    isLight ? 'text-amber-700' : 'text-amber-400'
-                  }`}
-                >
-                  Reset {activeCalibSlot.slotCode}
+              {carOverride.enabled && (
+                <button type="button" onClick={() => resetCarOverride(calibIdx)} className="text-[10px] font-mono hover:underline cursor-pointer text-amber-500">
+                  Reset {calibSlot.slotCode}
                 </button>
               )}
-              <span className={`text-[10px] ${mutedText}`}>Override</span>
-              <ToggleSwitch
-                checked={activeCarOverride.enabled}
-                onChange={(nextEnabled) =>
-                  updateCarOverride(activeCalibIndex, { enabled: nextEnabled })
-                }
-                isLight={isLight}
-              />
+              <span className={`text-[10px] ${muted}`}>Override</span>
+              <ToggleSwitch checked={carOverride.enabled} onChange={(v) => updateCarOverride(calibIdx, { enabled: v })} isLight={isLight} />
             </div>
           </div>
 
-          {activeCarTelemetry ? (
-            <div
-              className={`grid grid-cols-3 gap-1 text-[10px] font-mono p-1.5 rounded border ${
-                isLight
-                  ? 'bg-neutral-100/90 border-neutral-200 text-neutral-800'
-                  : 'bg-neutral-900/70 border-neutral-800 text-neutral-200'
-              }`}
-            >
-              <div>
-                <span className={mutedText}>View-Z: </span>
-                <span
-                  className={`font-semibold ${
-                    isLight ? 'text-sky-700' : 'text-sky-300'
-                  }`}
-                >
-                  {Math.round(activeCarTelemetry.viewZDepthUu)} UU
-                </span>
-              </div>
-              <div>
-                <span className={mutedText}>3D Dist: </span>
-                <span>{Math.round(activeCarTelemetry.euclideanDistanceUu)} UU</span>
-              </div>
-              <div>
-                <span className={mutedText}>Angle: </span>
-                <span>{activeCarTelemetry.offAxisAngleDeg.toFixed(1)}°</span>
-              </div>
-              <div>
-                <span className={mutedText}>Screen: </span>
-                <span
-                  className={`font-semibold ${
-                    isLight ? 'text-emerald-700' : 'text-emerald-300'
-                  }`}
-                >
-                  {activeCarTelemetry.screenPillWidthPx.toFixed(1)}×
-                  {activeCarTelemetry.screenPillHeightPx.toFixed(1)}px
-                </span>
-              </div>
-              <div>
-                <span className={mutedText}>Scale×: </span>
-                <span>{activeCarTelemetry.effectiveScaleMultiplier.toFixed(2)}x</span>
-              </div>
-              <div>
-                <span className={mutedText}>Total Y: </span>
-                <span>{Math.round(activeCarTelemetry.totalWorldVerticalOffsetUu)} UU</span>
-              </div>
+          {carTel ? (
+            <div className="grid grid-cols-3 gap-1 text-[10px] font-mono p-1.5 rounded border border-neutral-700/50 bg-neutral-900/40">
+              <div><span className={muted}>View-Z: </span><span className="font-semibold text-sky-400">{Math.round(carTel.viewZDepthUu)} UU</span></div>
+              <div><span className={muted}>3D Dist: </span><span>{Math.round(carTel.euclideanDistanceUu)} UU</span></div>
+              <div><span className={muted}>Angle: </span><span>{carTel.offAxisAngleDeg.toFixed(1)}°</span></div>
+              <div><span className={muted}>Screen: </span><span className="font-semibold text-emerald-400">{carTel.screenPillWidthPx.toFixed(1)}×{carTel.screenPillHeightPx.toFixed(1)}px</span></div>
+              <div><span className={muted}>Scale×: </span><span>{carTel.effectiveScaleMultiplier.toFixed(2)}x</span></div>
+              <div><span className={muted}>Total Y: </span><span>{Math.round(carTel.totalWorldVerticalOffsetUu)} UU</span></div>
             </div>
           ) : (
-            <div className={`text-[10px] font-mono ${mutedText}`}>
+            <div className={`text-[10px] font-mono ${muted}`}>
               Enter the 6-Car Arena to stream live distance, depth, and screen pixel telemetry.
             </div>
           )}
 
           <SliderControl
-            label={`${activeCalibSlot.slotCode} Scale Multiplier`}
-            value={activeCarOverride.scaleMultiplier}
+            label={`${calibSlot.slotCode} Scale Multiplier`}
+            value={carOverride.scaleMultiplier}
             min={0.2}
             max={3.0}
             step={0.01}
             unit="x"
-            onChange={(nextValue) =>
-              updateCarOverride(activeCalibIndex, {
-                enabled: true,
-                scaleMultiplier: nextValue,
-              })
-            }
+            onChange={(v) => updateCarOverride(calibIdx, { enabled: true, scaleMultiplier: v })}
             isLight={isLight}
           />
           <SliderControl
-            label={`${activeCalibSlot.slotCode} 3D World Offset (Car Relative)`}
-            value={activeCarOverride.worldOffsetUu}
+            label={`${calibSlot.slotCode} 3D World Offset (Car Relative)`}
+            value={carOverride.worldOffsetUu}
             min={0}
             max={360}
             step={2}
             unit="UU"
-            onChange={(nextValue) =>
-              updateCarOverride(activeCalibIndex, {
-                enabled: true,
-                worldOffsetUu: nextValue,
-              })
-            }
+            onChange={(v) => updateCarOverride(calibIdx, { enabled: true, worldOffsetUu: v })}
             isLight={isLight}
           />
           <SliderControl
-            label={`${activeCalibSlot.slotCode} 2D Screen Offset (Viewport Relative)`}
-            value={activeCarOverride.screenOffsetPx}
+            label={`${calibSlot.slotCode} 2D Screen Offset (Viewport Relative)`}
+            value={carOverride.screenOffsetPx}
             min={-60}
             max={160}
             step={1}
             unit="px"
-            onChange={(nextValue) =>
-              updateCarOverride(activeCalibIndex, {
-                enabled: true,
-                screenOffsetPx: nextValue,
-              })
-            }
+            onChange={(v) => updateCarOverride(calibIdx, { enabled: true, screenOffsetPx: v })}
             isLight={isLight}
           />
 
-          <div
-            className={`flex items-center justify-between gap-2 pt-1 border-t ${dividerBorder}`}
-          >
-            <span className={`text-[10px] font-mono ${mutedText} truncate`}>
-              Fit Preview: Scale {fittedPreview.cameraScaleFactor} · γ=
-              {fittedPreview.distanceScaleExponent} · World {fittedPreview.verticalOffsetUu}
-              UU · Screen {fittedPreview.screenVerticalOffsetPx}px
+          <div className={`flex items-center justify-between gap-2 pt-1 border-t ${divider}`}>
+            <span className={`text-[10px] font-mono ${muted} truncate`}>
+              Fit Preview: Scale {fitted.cameraScaleFactor} · γ={fitted.distanceScaleExponent} · World {fitted.verticalOffsetUu}UU · Screen {fitted.screenVerticalOffsetPx}px
             </span>
             <button
               type="button"
               onClick={applyFittedFromCarOverrides}
-              className={`px-2 py-0.5 rounded border text-[10px] font-mono font-semibold flex items-center gap-1 shrink-0 cursor-pointer ${
-                isLight
-                  ? 'border-amber-500/50 bg-amber-500/15 hover:bg-amber-500/25 text-amber-800'
-                  : 'border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300'
-              }`}
+              className="px-2 py-0.5 rounded border text-[10px] font-mono font-semibold flex items-center gap-1 shrink-0 cursor-pointer border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400"
             >
               <Sparkles className="h-3 w-3" />
               <span>Apply Fit to Global</span>

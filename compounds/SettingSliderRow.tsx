@@ -118,6 +118,7 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
   const clampedValue = Math.max(min, Math.min(max, Number.isFinite(value) ? value : min));
   const [inputText, setInputText] = useState<string>(() => String(value));
   const [isFocused, setIsFocused] = useState<boolean>(false);
+  const skipNextBlurCommitRef = React.useRef<boolean>(false);
 
   useEffect(() => {
     if (!isFocused) {
@@ -128,19 +129,26 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
   const stepByDelta = (delta: number) => {
     const decimals = Math.min(6, Math.max(getDecimalPlaces(value), getDecimalPlaces(step)));
     const next = Number((value + delta).toFixed(decimals));
-    const clamped = Math.max(min, Math.min(max, next));
-    onChange(clamped);
-    setInputText(String(clamped));
+    const finalVal = resolvedEditable ? next : Math.max(min, Math.min(max, next));
+    onChange(finalVal);
+    setInputText(String(finalVal));
   };
 
   const commitInput = () => {
+    if (skipNextBlurCommitRef.current) {
+      skipNextBlurCommitRef.current = false;
+      return;
+    }
     setIsFocused(false);
-    const parsed = parseFloat(inputText.trim());
+    const trimmed = inputText.trim();
+    const parsed = trimmed === '' ? Number.NaN : Number(trimmed);
     if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
-      const clamped = Math.max(min, Math.min(max, parsed));
-      onChange(clamped);
-      setInputText(String(clamped));
+      onChange(parsed);
+      setInputText(String(parsed));
     } else {
+      if (trimmed !== '') {
+        console.error(`[SettingSliderRow] Invalid numeric input for "${String(label ?? title ?? '')}": "${inputText}"`);
+      }
       setInputText(String(value));
     }
   };
@@ -171,10 +179,12 @@ export const SettingSliderRow: React.FC<SettingSliderRowProps> = React.memo(({
               if (e.key === 'Enter') {
                 e.preventDefault();
                 commitInput();
+                skipNextBlurCommitRef.current = true;
                 e.currentTarget.blur();
               } else if (e.key === 'Escape') {
                 setInputText(String(value));
                 setIsFocused(false);
+                skipNextBlurCommitRef.current = true;
                 e.currentTarget.blur();
               } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
