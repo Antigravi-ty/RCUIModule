@@ -99,7 +99,14 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
   'name-tag-tuner': {
     id: 'name-tag-tuner',
     category: 'developer',
-    render: ({ isLight = false }) => <NameTagTunerFloatingWindow isLight={isLight} />,
+    hasHeaderTabs: true,
+    render: ({ isLight = false, activeTab, onTabChange }) => (
+      <NameTagTunerFloatingWindow
+        isLight={isLight}
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+      />
+    ),
   },
   'goal-volume-tuner': {
     id: 'goal-volume-tuner',

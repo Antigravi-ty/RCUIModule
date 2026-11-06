@@ -24,6 +24,7 @@ export type CanonicalMenuPanelId =
   | 'layer3-dev-sandboxes'
   | 'layer3-dev-active-tuners'
   | 'layer3-dev-calibrated-presets'
+  | 'layer3-dev-quick-actions'
   | 'layer3-dev-self-test'
   | 'layer3-dev-under-development'
   | 'layer3-dev-remote-profile'
@@ -353,6 +354,13 @@ export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingCon
     mode: 'auto',
     width: 560,
     targetHeight: 420,
+    minHeight: 200,
+    maxHeight: 960,
+  },
+  'layer3-dev-quick-actions': {
+    mode: 'auto',
+    width: 560,
+    targetHeight: 460,
     minHeight: 200,
     maxHeight: 960,
   },

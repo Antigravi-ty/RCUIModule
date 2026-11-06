@@ -223,6 +223,7 @@ const FIELD_CATEGORY_PREFIX_LABELS: Record<string, string> = {
   'pacing.': 'Clock Pacing & Buffer',
   'boostPad.': 'Boost Pad Tuner',
   'driftwoods.': 'Driftwoods Stadium',
+  'nameTag.': 'Name Tag & Off-Screen Indicator',
   'floating.': 'Floating Windows',
   'storage.': 'Extended Config',
 };

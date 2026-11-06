@@ -9,8 +9,9 @@ import {
 import {
   hexToRgba,
   resolveActiveBoostFillColor,
+  resolveAerialClimbInwardFillFraction,
   resolveUnfilledBaseHexColor,
-} from '../../../config/nameTagPillRenderer';
+} from '../../../config/nameTagOffscreenRenderer';
 import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
 import { useAppStore } from '../../../stores/appStore';
 
@@ -104,129 +105,251 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
             Math.round(Math.min(scaledHeightPx * 0.62, scaledWidthPx * 0.28))
           );
 
+          const sampleSlotIndex = isOrange ? 3 : 0;
+          const isAerialClimbing =
+            config.aerialClimbAlertEnabled &&
+            config.aerialClimbAlertAudience !== 'none' &&
+            Boolean(config.previewAerialClimbingFlags?.[sampleSlotIndex]);
+          const inwardFillFraction = resolveAerialClimbInwardFillFraction(
+            config.aerialClimbGlowRadiusPx
+          );
+          const offscreenCircleDiaPx = Math.max(
+            18,
+            Math.min(38, Math.round(config.offscreenCircleRadiusPx * 1.15))
+          );
+          const offscreenBorderPx = Math.max(1.5, scaledBorderPx);
+          const offscreenArrowW = Math.max(
+            6,
+            Math.min(20, Math.round(config.offscreenArrowBaseWidthPx * 0.65))
+          );
+          const offscreenArrowH = Math.max(
+            5,
+            Math.min(18, Math.round(config.offscreenArrowLengthPx * 0.65))
+          );
+          const inwardRingThicknessPx = Math.round(
+            offscreenCircleDiaPx * 0.5 * inwardFillFraction
+          );
+          const alertRingRgba = hexToRgba(
+            config.aerialClimbGlowColor,
+            config.aerialClimbGlowOpacity
+          );
+
           return (
-            <div
-              key={team}
-              style={{
-                width: `${scaledWidthPx}px`,
-                height: `${scaledHeightPx}px`,
-                backgroundColor: baseBgCss,
-                borderColor: borderHex,
-                borderWidth: `${scaledBorderPx}px`,
-                borderStyle: 'solid',
-                borderRadius: `${scaledRadiusPx}px`,
-                opacity: config.opacity,
-                color: textHex,
-                fontSize: `${Math.max(9, Math.round(config.fontSize * previewScale))}px`,
-                fontWeight: config.fontWeight,
-                fontFamily: resolveNameTagFontFamilyCss(config.fontFamily),
-              }}
-              className="relative flex items-center justify-center px-1.5 shadow-sm transition-all"
-            >
-              {isFillMode && sampleBoostPct > 0 && (
-                <div
-                  className="absolute inset-0 overflow-hidden pointer-events-none"
-                  style={{
-                    borderRadius: `${Math.max(0, scaledRadiusPx - scaledBorderPx)}px`,
-                  }}
-                >
-                  {mode === 'bottom-up-fill' ? (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: `${sampleBoostPct}%`,
-                        backgroundColor: hexToRgba(
-                          activeFillHex,
-                          config.boostFillOpacity
-                        ),
-                        borderTop:
-                          config.boostShowHorizonLine &&
-                          sampleBoostPct > 2 &&
-                          sampleBoostPct < 98
-                            ? `1.5px solid ${boostBorderHex}`
-                            : undefined,
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: `${sampleBoostPct}%`,
-                        backgroundColor: hexToRgba(
-                          activeFillHex,
-                          config.boostFillOpacity
-                        ),
-                        borderRight:
-                          config.boostShowHorizonLine &&
-                          sampleBoostPct > 2 &&
-                          sampleBoostPct < 98
-                            ? `1.5px solid ${boostBorderHex}`
-                            : undefined,
-                      }}
-                    />
-                  )}
-                </div>
-              )}
-
-              {config.boostBorderEnabled &&
-                scaledBorderPx > 0 &&
-                sampleBoostPct > 0 &&
-                (mode === 'border-only' || mode === 'left-right-fill') && (
+            <div key={team} className="flex items-center gap-2.5">
+              {/* On-Screen Pill Card: never shows aerial climb yellow ring */}
+              <div
+                style={{
+                  width: `${scaledWidthPx}px`,
+                  height: `${scaledHeightPx}px`,
+                  backgroundColor: baseBgCss,
+                  borderColor: borderHex,
+                  borderWidth: `${scaledBorderPx}px`,
+                  borderStyle: 'solid',
+                  borderRadius: `${scaledRadiusPx}px`,
+                  opacity: config.opacity,
+                  color: textHex,
+                  fontSize: `${Math.max(9, Math.round(config.fontSize * previewScale))}px`,
+                  fontWeight: config.fontWeight,
+                  fontFamily: resolveNameTagFontFamilyCss(config.fontFamily),
+                }}
+                className="relative flex items-center justify-center px-1.5 shadow-sm transition-all"
+              >
+                {isFillMode && sampleBoostPct > 0 && (
                   <div
+                    className="absolute inset-0 overflow-hidden pointer-events-none"
                     style={{
-                      position: 'absolute',
-                      inset: `-${scaledBorderPx}px`,
-                      borderRadius: `${scaledRadiusPx}px`,
-                      borderWidth: `${scaledBorderPx}px`,
-                      borderStyle: 'solid',
-                      borderColor: boostBorderHex,
-                      clipPath: `inset(0 ${100 - sampleBoostPct}% 0 0)`,
-                      pointerEvents: 'none',
+                      borderRadius: `${Math.max(0, scaledRadiusPx - scaledBorderPx)}px`,
                     }}
-                  />
-                )}
-
-              <div className="relative z-10 flex items-center justify-center gap-1 min-w-0 w-full">
-                {config.boostBorderEnabled && mode === 'sunset-circle' && (
-                  <span
-                    style={{
-                      width: `${circleDiaPx}px`,
-                      height: `${circleDiaPx}px`,
-                      borderColor:
-                        sampleBoostPct > 2 ? boostBorderHex : borderHex,
-                      borderWidth: '1.5px',
-                      borderStyle: 'solid',
-                    }}
-                    className="relative rounded-full overflow-hidden shrink-0 bg-slate-950/75"
                   >
-                    {sampleBoostPct > 0 && (
-                      <span
+                    {mode === 'bottom-up-fill' ? (
+                      <div
                         style={{
                           position: 'absolute',
                           left: 0,
                           right: 0,
                           bottom: 0,
                           height: `${sampleBoostPct}%`,
-                          background: `linear-gradient(to top, ${activeFillHex}, ${boostBorderHex})`,
+                          backgroundColor: hexToRgba(
+                            activeFillHex,
+                            config.boostFillOpacity
+                          ),
                           borderTop:
                             config.boostShowHorizonLine &&
-                            sampleBoostPct > 3 &&
-                            sampleBoostPct < 97
-                              ? '1px solid #ffffff'
+                            sampleBoostPct > 2 &&
+                            sampleBoostPct < 98
+                              ? `1.5px solid ${boostBorderHex}`
+                              : undefined,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: `${sampleBoostPct}%`,
+                          backgroundColor: hexToRgba(
+                            activeFillHex,
+                            config.boostFillOpacity
+                          ),
+                          borderRight:
+                            config.boostShowHorizonLine &&
+                            sampleBoostPct > 2 &&
+                            sampleBoostPct < 98
+                              ? `1.5px solid ${boostBorderHex}`
                               : undefined,
                         }}
                       />
                     )}
-                  </span>
+                  </div>
                 )}
-                <span className="whitespace-nowrap truncate">{sampleName}</span>
+
+                {config.boostBorderEnabled &&
+                  scaledBorderPx > 0 &&
+                  sampleBoostPct > 0 &&
+                  (mode === 'border-only' || mode === 'left-right-fill') && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: `-${scaledBorderPx}px`,
+                        borderRadius: `${scaledRadiusPx}px`,
+                        borderWidth: `${scaledBorderPx}px`,
+                        borderStyle: 'solid',
+                        borderColor: boostBorderHex,
+                        clipPath: `inset(0 ${100 - sampleBoostPct}% 0 0)`,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+
+                <div className="relative z-10 flex items-center justify-center gap-1 min-w-0 w-full">
+                  {config.boostBorderEnabled && mode === 'sunset-circle' && (
+                    <span
+                      style={{
+                        width: `${circleDiaPx}px`,
+                        height: `${circleDiaPx}px`,
+                        borderColor:
+                          sampleBoostPct > 2 ? boostBorderHex : borderHex,
+                        borderWidth: '1.5px',
+                        borderStyle: 'solid',
+                      }}
+                      className="relative rounded-full overflow-hidden shrink-0 bg-slate-950/75"
+                    >
+                      {sampleBoostPct > 0 && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: `${sampleBoostPct}%`,
+                            background: `linear-gradient(to top, ${activeFillHex}, ${boostBorderHex})`,
+                            borderTop:
+                              config.boostShowHorizonLine &&
+                              sampleBoostPct > 3 &&
+                              sampleBoostPct < 97
+                                ? '1px solid #ffffff'
+                                : undefined,
+                          }}
+                        />
+                      )}
+                    </span>
+                  )}
+                  <span className="whitespace-nowrap truncate">{sampleName}</span>
+                </div>
               </div>
+
+              {/* Off-Screen Edge Circle + Arrow: displays solid inward yellow ring when climbing */}
+              {config.offscreenIndicatorEnabled && (
+                <div
+                  title="Off-Screen Edge Indicator Preview (Bottom-Up Circle + Border Fill)"
+                  className="flex flex-col items-center justify-center shrink-0"
+                  style={{
+                    opacity:
+                      isOrange && config.offscreenAudience === 'teammates' ? 0.35 : 1,
+                  }}
+                >
+                  {config.offscreenShowArrow && (
+                    <div
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: `${offscreenArrowW * 0.5}px solid transparent`,
+                        borderRight: `${offscreenArrowW * 0.5}px solid transparent`,
+                        borderBottom: `${offscreenArrowH}px solid ${
+                          isAerialClimbing ? alertRingRgba : boostBorderHex
+                        }`,
+                        marginBottom: `${Math.max(1, Math.round(config.offscreenArrowGapPx * 0.5))}px`,
+                      }}
+                    />
+                  )}
+                  {config.offscreenShowBoostCircle && (
+                    <div
+                      style={{
+                        width: `${offscreenCircleDiaPx}px`,
+                        height: `${offscreenCircleDiaPx}px`,
+                        backgroundColor: baseBgCss,
+                        borderColor: isAerialClimbing ? alertRingRgba : borderHex,
+                        borderWidth: `${offscreenBorderPx}px`,
+                        borderStyle: 'solid',
+                      }}
+                      className="relative rounded-full"
+                    >
+                      <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none">
+                        {sampleBoostPct > 0 && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              height: `${sampleBoostPct}%`,
+                              backgroundColor: hexToRgba(
+                                activeFillHex,
+                                config.boostFillOpacity
+                              ),
+                              borderTop:
+                                config.boostShowHorizonLine &&
+                                sampleBoostPct > 2 &&
+                                sampleBoostPct < 98
+                                  ? `1.5px solid ${boostBorderHex}`
+                                  : undefined,
+                            }}
+                          />
+                        )}
+                        {isAerialClimbing && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              inset: 0,
+                              borderRadius: '9999px',
+                              boxShadow: `inset 0 0 0 ${inwardRingThicknessPx}px ${alertRingRgba}`,
+                              pointerEvents: 'none',
+                            }}
+                          />
+                        )}
+                      </div>
+                      {!isAerialClimbing &&
+                        config.boostBorderEnabled &&
+                        sampleBoostPct > 0 && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              inset: `-${offscreenBorderPx}px`,
+                              borderRadius: '9999px',
+                              borderWidth: `${offscreenBorderPx}px`,
+                              borderStyle: 'solid',
+                              borderColor: boostBorderHex,
+                              clipPath: `inset(${100 - sampleBoostPct}% 0 0 0)`,
+                              pointerEvents: 'none',
+                            }}
+                          />
+                        )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -243,10 +366,7 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
           Card Render Scale: <b>{config.cardRenderScale}%</b> (Native Retina Overlay)
         </span>
         <span className={mutedText}>
-          Ball Occlusion:{' '}
-          {config.ballOcclusionEnabled
-            ? `ON (${Math.round(config.ballOcclusionOpacity * 100)}%)`
-            : 'OFF'}{' '}
+          Off-Screen: {config.offscreenIndicatorEnabled ? config.offscreenAudience.toUpperCase() : 'OFF'}{' '}
           · 3D Scale: {sceneRenderScale}%
         </span>
       </div>

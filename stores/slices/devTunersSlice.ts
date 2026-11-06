@@ -1,6 +1,7 @@
 import { type StateCreator } from 'zustand';
 import { floatingStore } from '../floatingStore';
 import { FLOATING_WINDOW_OPACITY_PRESET } from '../floatingPresets';
+import { activateNameTagOffscreenForDeveloperMode } from '../nameTagTunerStore';
 import {
   DEFAULT_DRIFTWOODS_CONFIG,
   cloneDriftwoodsConfig,
@@ -97,6 +98,7 @@ export const createDevTunersSlice: StateCreator<
     }
     set({ developerMode: mode });
     if (mode) {
+      activateNameTagOffscreenForDeveloperMode();
       const existing = floatingStore
         .getSnapshot()
         .windows.some((w) => w.id === FLOATING_WINDOW_OPACITY_PRESET.id);

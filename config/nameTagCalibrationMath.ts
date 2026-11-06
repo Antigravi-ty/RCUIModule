@@ -3,6 +3,7 @@ import {
   DEFAULT_RUNTIME_SYNC_SNAPSHOT,
   KICKOFF_PERMUTATION_COUNT,
   NAME_TAG_REFERENCE_DEPTH_UU,
+  type NameTagAerialClimbTriggerMode,
   type NameTagBoostBorderAudience,
   type NameTagBoostBorderColorMode,
   type NameTagBoostBorderOverride,
@@ -48,6 +49,29 @@ export function sanitizeBoostIndicatorMode(
   return fallbackMode;
 }
 
+export function sanitizeAerialClimbTriggerMode(
+  raw: unknown,
+  fallbackMode: NameTagAerialClimbTriggerMode
+): NameTagAerialClimbTriggerMode {
+  if (raw === 'double-jump' || raw === 'hold-jump-pitch' || raw === 'either') {
+    return raw;
+  }
+  return fallbackMode;
+}
+
+function sanitizeClampedNumber(
+  raw: unknown,
+  min: number,
+  max: number,
+  fallback: number,
+  round = false
+): number {
+  const parsed = Number(raw);
+  const val = Number.isFinite(parsed) ? parsed : fallback;
+  const clamped = Math.max(min, Math.min(max, val));
+  return round ? Math.round(clamped) : clamped;
+}
+
 export function sanitizeCarOverride(
   raw: Partial<NameTagCarOverride> | null | undefined,
   fallbackWorldOffsetUu: number,
@@ -56,76 +80,46 @@ export function sanitizeCarOverride(
   const source = raw && typeof raw === 'object' ? raw : {};
   return {
     enabled: Boolean(source.enabled),
-    scaleMultiplier: Math.max(
-      0.2,
-      Math.min(
-        3.0,
-        Number.isFinite(Number(source.scaleMultiplier))
-          ? Number(source.scaleMultiplier)
-          : 1.0
-      )
-    ),
-    worldOffsetUu: Math.max(
+    scaleMultiplier: sanitizeClampedNumber(source.scaleMultiplier, 0.2, 3.0, 1.0),
+    worldOffsetUu: sanitizeClampedNumber(
+      source.worldOffsetUu,
       0,
-      Math.min(
-        360,
-        Number.isFinite(Number(source.worldOffsetUu))
-          ? Number(source.worldOffsetUu)
-          : fallbackWorldOffsetUu
-      )
+      360,
+      fallbackWorldOffsetUu
     ),
-    screenOffsetPx: Math.max(
+    screenOffsetPx: sanitizeClampedNumber(
+      source.screenOffsetPx,
       -60,
-      Math.min(
-        160,
-        Number.isFinite(Number(source.screenOffsetPx))
-          ? Number(source.screenOffsetPx)
-          : fallbackScreenOffsetPx
-      )
+      160,
+      fallbackScreenOffsetPx
     ),
   };
 }
 
 export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): NameTagConfig {
   const source = raw && typeof raw === 'object' ? raw : {};
+  const D = DEFAULT_NAME_TAG_CONFIG;
   const previewNames =
     Array.isArray(source.previewNames) && source.previewNames.length === 6
-      ? source.previewNames.map((name, index) =>
-          String(name || DEFAULT_NAME_TAG_CONFIG.previewNames[index])
-        )
-      : [...DEFAULT_NAME_TAG_CONFIG.previewNames];
+      ? source.previewNames.map((name, index) => String(name || D.previewNames[index]))
+      : [...D.previewNames];
 
   const previewBoostAmounts =
     Array.isArray(source.previewBoostAmounts) && source.previewBoostAmounts.length === 6
-      ? source.previewBoostAmounts.map((boostValue, index) => {
-          const parsed = Number(boostValue);
-          const fallback = DEFAULT_NAME_TAG_CONFIG.previewBoostAmounts[index] ?? 100;
-          return Math.max(
-            0,
-            Math.min(100, Math.round(Number.isFinite(parsed) ? parsed : fallback))
-          );
-        })
-      : [...DEFAULT_NAME_TAG_CONFIG.previewBoostAmounts];
+      ? source.previewBoostAmounts.map((boostValue, index) =>
+          sanitizeClampedNumber(boostValue, 0, 100, D.previewBoostAmounts[index] ?? 100, true)
+        )
+      : [...D.previewBoostAmounts];
 
-  const verticalOffsetUu = Math.max(
-    0,
-    Math.min(
-      360,
-      Number.isFinite(Number(source.verticalOffsetUu))
-        ? Number(source.verticalOffsetUu)
-        : DEFAULT_NAME_TAG_CONFIG.verticalOffsetUu
-    )
-  );
+  const previewAerialClimbingFlags =
+    Array.isArray(source.previewAerialClimbingFlags) && source.previewAerialClimbingFlags.length === 6
+      ? source.previewAerialClimbingFlags.map((flag, index) =>
+          typeof flag === 'boolean' ? flag : Boolean(D.previewAerialClimbingFlags[index])
+        )
+      : [...D.previewAerialClimbingFlags];
 
-  const screenVerticalOffsetPx = Math.max(
-    -60,
-    Math.min(
-      160,
-      Number.isFinite(Number(source.screenVerticalOffsetPx))
-        ? Number(source.screenVerticalOffsetPx)
-        : DEFAULT_NAME_TAG_CONFIG.screenVerticalOffsetPx
-    )
-  );
+  const verticalOffsetUu = sanitizeClampedNumber(source.verticalOffsetUu, 0, 360, D.verticalOffsetUu);
+  const screenVerticalOffsetPx = sanitizeClampedNumber(source.screenVerticalOffsetPx, -60, 160, D.screenVerticalOffsetPx);
 
   const carOverrides = Array.from({ length: 6 }, (_, index) =>
     sanitizeCarOverride(
@@ -135,253 +129,103 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
     )
   );
 
-  const rawMinWidth = Number.isFinite(Number(source.pillMinWidth))
-    ? Number(source.pillMinWidth)
-    : DEFAULT_NAME_TAG_CONFIG.pillMinWidth;
-  const rawMaxWidth = Number.isFinite(Number(source.pillMaxWidth))
-    ? Number(source.pillMaxWidth)
-    : DEFAULT_NAME_TAG_CONFIG.pillMaxWidth;
-  const clampedMinWidth = Math.max(40, Math.min(460, rawMinWidth));
-  const clampedMaxWidth = Math.max(clampedMinWidth, Math.min(480, rawMaxWidth));
+  const clampedMinWidth = sanitizeClampedNumber(source.pillMinWidth, 40, 460, D.pillMinWidth);
+  const clampedMaxWidth = sanitizeClampedNumber(source.pillMaxWidth, clampedMinWidth, 480, D.pillMaxWidth);
 
   const validFontFamilies: NameTagFontFamily[] = ['jetbrains-mono', 'sf-mono', 'archivo'];
-  const fontFamily: NameTagFontFamily = validFontFamilies.includes(
-    source.fontFamily as NameTagFontFamily
-  )
+  const fontFamily: NameTagFontFamily = validFontFamilies.includes(source.fontFamily as NameTagFontFamily)
     ? (source.fontFamily as NameTagFontFamily)
-    : DEFAULT_NAME_TAG_CONFIG.fontFamily;
+    : D.fontFamily;
 
   const validWeights: NameTagFontWeight[] = [400, 500, 600, 700];
-  const fontWeight: NameTagFontWeight = validWeights.includes(
-    Number(source.fontWeight) as NameTagFontWeight
-  )
+  const fontWeight: NameTagFontWeight = validWeights.includes(Number(source.fontWeight) as NameTagFontWeight)
     ? (Number(source.fontWeight) as NameTagFontWeight)
-    : DEFAULT_NAME_TAG_CONFIG.fontWeight;
+    : D.fontWeight;
 
   const rawCardRenderScale = Number(source.cardRenderScale);
   const normalizedCardRenderScale = Number.isFinite(rawCardRenderScale)
     ? rawCardRenderScale > 0 && rawCardRenderScale <= 4
       ? rawCardRenderScale * 100
       : rawCardRenderScale
-    : DEFAULT_NAME_TAG_CONFIG.cardRenderScale;
+    : D.cardRenderScale;
 
   const boostBorderColorMode: NameTagBoostBorderColorMode =
     source.boostBorderColorMode === 'shared' || source.boostBorderColorMode === 'team'
       ? source.boostBorderColorMode
-      : DEFAULT_NAME_TAG_CONFIG.boostBorderColorMode;
+      : D.boostBorderColorMode;
+
+  const boolOr = (val: unknown, fallback: boolean): boolean =>
+    typeof val === 'boolean' ? val : fallback;
 
   return {
-    enabled:
-      typeof source.enabled === 'boolean'
-        ? source.enabled
-        : DEFAULT_NAME_TAG_CONFIG.enabled,
+    enabled: boolOr(source.enabled, D.enabled),
     pillMinWidth: clampedMinWidth,
     pillMaxWidth: clampedMaxWidth,
-    pillHeight: Math.max(
-      28,
-      Math.min(
-        120,
-        Number.isFinite(Number(source.pillHeight))
-          ? Number(source.pillHeight)
-          : DEFAULT_NAME_TAG_CONFIG.pillHeight
-      )
-    ),
-    cornerRadius: Math.max(
-      0,
-      Math.min(
-        60,
-        Number.isFinite(Number(source.cornerRadius))
-          ? Number(source.cornerRadius)
-          : DEFAULT_NAME_TAG_CONFIG.cornerRadius
-      )
-    ),
-    borderWidth: Math.max(
-      0,
-      Math.min(
-        12,
-        Number.isFinite(Number(source.borderWidth))
-          ? Number(source.borderWidth)
-          : DEFAULT_NAME_TAG_CONFIG.borderWidth
-      )
-    ),
-    fontSize: Math.max(
-      12,
-      Math.min(
-        48,
-        Number.isFinite(Number(source.fontSize))
-          ? Number(source.fontSize)
-          : DEFAULT_NAME_TAG_CONFIG.fontSize
-      )
-    ),
+    pillHeight: sanitizeClampedNumber(source.pillHeight, 28, 120, D.pillHeight),
+    cornerRadius: sanitizeClampedNumber(source.cornerRadius, 0, 60, D.cornerRadius),
+    borderWidth: sanitizeClampedNumber(source.borderWidth, 0, 12, D.borderWidth),
+    fontSize: sanitizeClampedNumber(source.fontSize, 12, 48, D.fontSize),
     fontFamily,
     fontWeight,
     cardRenderScale: Math.max(25, Math.min(200, Math.round(normalizedCardRenderScale))),
-    maxChars: Math.max(
-      4,
-      Math.min(
-        32,
-        Number.isFinite(Number(source.maxChars))
-          ? Math.round(Number(source.maxChars))
-          : DEFAULT_NAME_TAG_CONFIG.maxChars
-      )
-    ),
-    opacity: Math.max(
-      0.1,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.opacity))
-          ? Number(source.opacity)
-          : DEFAULT_NAME_TAG_CONFIG.opacity
-      )
-    ),
-    bgOpacity: Math.max(
-      0.0,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.bgOpacity))
-          ? Number(source.bgOpacity)
-          : DEFAULT_NAME_TAG_CONFIG.bgOpacity
-      )
-    ),
+    maxChars: sanitizeClampedNumber(source.maxChars, 4, 32, D.maxChars, true),
+    opacity: sanitizeClampedNumber(source.opacity, 0.1, 1.0, D.opacity),
+    bgOpacity: sanitizeClampedNumber(source.bgOpacity, 0.0, 1.0, D.bgOpacity),
     verticalOffsetUu,
     screenVerticalOffsetPx,
-    cameraScaleFactor: Math.max(
-      0.02,
-      Math.min(
-        0.3,
-        Number.isFinite(Number(source.cameraScaleFactor))
-          ? Number(source.cameraScaleFactor)
-          : DEFAULT_NAME_TAG_CONFIG.cameraScaleFactor
-      )
-    ),
-    distanceScaleExponent: Math.max(
-      0.0,
-      Math.min(
-        1.5,
-        Number.isFinite(Number(source.distanceScaleExponent))
-          ? Number(source.distanceScaleExponent)
-          : DEFAULT_NAME_TAG_CONFIG.distanceScaleExponent
-      )
-    ),
-    nearScaleMultiplier: Math.max(
-      0.2,
-      Math.min(
-        2.5,
-        Number.isFinite(Number(source.nearScaleMultiplier))
-          ? Number(source.nearScaleMultiplier)
-          : DEFAULT_NAME_TAG_CONFIG.nearScaleMultiplier
-      )
-    ),
-    farScaleMultiplier: Math.max(
-      0.2,
-      Math.min(
-        2.5,
-        Number.isFinite(Number(source.farScaleMultiplier))
-          ? Number(source.farScaleMultiplier)
-          : DEFAULT_NAME_TAG_CONFIG.farScaleMultiplier
-      )
-    ),
+    cameraScaleFactor: sanitizeClampedNumber(source.cameraScaleFactor, 0.02, 0.3, D.cameraScaleFactor),
+    distanceScaleExponent: sanitizeClampedNumber(source.distanceScaleExponent, 0.0, 1.5, D.distanceScaleExponent),
+    nearScaleMultiplier: sanitizeClampedNumber(source.nearScaleMultiplier, 0.2, 2.5, D.nearScaleMultiplier),
+    farScaleMultiplier: sanitizeClampedNumber(source.farScaleMultiplier, 0.2, 2.5, D.farScaleMultiplier),
     depthMetric: source.depthMetric === 'euclidean' ? 'euclidean' : 'viewZ',
-    blueBgColor: sanitizeHexColor(
-      source.blueBgColor,
-      DEFAULT_NAME_TAG_CONFIG.blueBgColor
-    ),
-    blueBorderColor: sanitizeHexColor(
-      source.blueBorderColor,
-      DEFAULT_NAME_TAG_CONFIG.blueBorderColor
-    ),
-    blueTextColor: sanitizeHexColor(
-      source.blueTextColor,
-      DEFAULT_NAME_TAG_CONFIG.blueTextColor
-    ),
-    orangeBgColor: sanitizeHexColor(
-      source.orangeBgColor,
-      DEFAULT_NAME_TAG_CONFIG.orangeBgColor
-    ),
-    orangeBorderColor: sanitizeHexColor(
-      source.orangeBorderColor,
-      DEFAULT_NAME_TAG_CONFIG.orangeBorderColor
-    ),
-    orangeTextColor: sanitizeHexColor(
-      source.orangeTextColor,
-      DEFAULT_NAME_TAG_CONFIG.orangeTextColor
-    ),
-    boostBorderEnabled:
-      typeof source.boostBorderEnabled === 'boolean'
-        ? source.boostBorderEnabled
-        : DEFAULT_NAME_TAG_CONFIG.boostBorderEnabled,
-    boostIndicatorMode: sanitizeBoostIndicatorMode(
-      source.boostIndicatorMode,
-      DEFAULT_NAME_TAG_CONFIG.boostIndicatorMode
-    ),
-    boostFillOpacity: Math.max(
-      0.05,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.boostFillOpacity))
-          ? Number(source.boostFillOpacity)
-          : DEFAULT_NAME_TAG_CONFIG.boostFillOpacity
-      )
-    ),
-    boostUnfilledBgOpacity: Math.max(
-      0.0,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.boostUnfilledBgOpacity))
-          ? Number(source.boostUnfilledBgOpacity)
-          : DEFAULT_NAME_TAG_CONFIG.boostUnfilledBgOpacity
-      )
-    ),
-    boostShowHorizonLine:
-      typeof source.boostShowHorizonLine === 'boolean'
-        ? source.boostShowHorizonLine
-        : DEFAULT_NAME_TAG_CONFIG.boostShowHorizonLine,
+    blueBgColor: sanitizeHexColor(source.blueBgColor, D.blueBgColor),
+    blueBorderColor: sanitizeHexColor(source.blueBorderColor, D.blueBorderColor),
+    blueTextColor: sanitizeHexColor(source.blueTextColor, D.blueTextColor),
+    orangeBgColor: sanitizeHexColor(source.orangeBgColor, D.orangeBgColor),
+    orangeBorderColor: sanitizeHexColor(source.orangeBorderColor, D.orangeBorderColor),
+    orangeTextColor: sanitizeHexColor(source.orangeTextColor, D.orangeTextColor),
+    boostBorderEnabled: boolOr(source.boostBorderEnabled, D.boostBorderEnabled),
+    boostIndicatorMode: sanitizeBoostIndicatorMode(source.boostIndicatorMode, D.boostIndicatorMode),
+    boostFillOpacity: sanitizeClampedNumber(source.boostFillOpacity, 0.05, 1.0, D.boostFillOpacity),
+    boostUnfilledBgOpacity: sanitizeClampedNumber(source.boostUnfilledBgOpacity, 0.0, 1.0, D.boostUnfilledBgOpacity),
+    boostShowHorizonLine: boolOr(source.boostShowHorizonLine, D.boostShowHorizonLine),
     boostBorderColorMode,
-    blueBoostBorderColor: sanitizeHexColor(
-      source.blueBoostBorderColor,
-      DEFAULT_NAME_TAG_CONFIG.blueBoostBorderColor
+    blueBoostBorderColor: sanitizeHexColor(source.blueBoostBorderColor, D.blueBoostBorderColor),
+    orangeBoostBorderColor: sanitizeHexColor(source.orangeBoostBorderColor, D.orangeBoostBorderColor),
+    sharedBoostBorderColor: sanitizeHexColor(source.sharedBoostBorderColor, D.sharedBoostBorderColor),
+    showBoostBorderInMatchPlaying: boolOr(source.showBoostBorderInMatchPlaying, D.showBoostBorderInMatchPlaying),
+    boostBorderMatchAudience: sanitizeBoostBorderAudience(source.boostBorderMatchAudience, D.boostBorderMatchAudience),
+    showBoostBorderInGoalReplay: boolOr(source.showBoostBorderInGoalReplay, D.showBoostBorderInGoalReplay),
+    boostBorderReplayAudience: sanitizeBoostBorderAudience(source.boostBorderReplayAudience, D.boostBorderReplayAudience),
+    ballOcclusionEnabled: boolOr(source.ballOcclusionEnabled, D.ballOcclusionEnabled),
+    ballOcclusionOpacity: sanitizeClampedNumber(source.ballOcclusionOpacity, 0.0, 1.0, D.ballOcclusionOpacity),
+    offscreenIndicatorEnabled: boolOr(source.offscreenIndicatorEnabled, D.offscreenIndicatorEnabled),
+    offscreenAudience: sanitizeBoostBorderAudience(source.offscreenAudience, D.offscreenAudience),
+    offscreenShowBoostCircle: boolOr(source.offscreenShowBoostCircle, D.offscreenShowBoostCircle),
+    offscreenShowArrow: boolOr(source.offscreenShowArrow, D.offscreenShowArrow),
+    offscreenCircleRadiusPx: sanitizeClampedNumber(source.offscreenCircleRadiusPx, 8, 56, D.offscreenCircleRadiusPx, true),
+    offscreenArrowLengthPx: sanitizeClampedNumber(source.offscreenArrowLengthPx, 4, 36, D.offscreenArrowLengthPx, true),
+    offscreenArrowBaseWidthPx: sanitizeClampedNumber(source.offscreenArrowBaseWidthPx, 4, 36, D.offscreenArrowBaseWidthPx, true),
+    offscreenArrowGapPx: sanitizeClampedNumber(source.offscreenArrowGapPx, 0, 24, D.offscreenArrowGapPx, true),
+    offscreenRoiAvoidHud: boolOr(source.offscreenRoiAvoidHud, D.offscreenRoiAvoidHud),
+    offscreenRoiTopInsetPx: sanitizeClampedNumber(source.offscreenRoiTopInsetPx, 12, 260, D.offscreenRoiTopInsetPx, true),
+    offscreenRoiBottomInsetPx: sanitizeClampedNumber(source.offscreenRoiBottomInsetPx, 12, 260, D.offscreenRoiBottomInsetPx, true),
+    offscreenRoiSideInsetPx: sanitizeClampedNumber(source.offscreenRoiSideInsetPx, 12, 260, D.offscreenRoiSideInsetPx, true),
+    aerialClimbAlertEnabled: boolOr(source.aerialClimbAlertEnabled, D.aerialClimbAlertEnabled),
+    aerialClimbAlertAudience: sanitizeBoostBorderAudience(source.aerialClimbAlertAudience, D.aerialClimbAlertAudience),
+    aerialClimbTriggerMode: sanitizeAerialClimbTriggerMode(source.aerialClimbTriggerMode, D.aerialClimbTriggerMode),
+    aerialClimbMinAltitudeUu: sanitizeClampedNumber(source.aerialClimbMinAltitudeUu, 0, 1200, D.aerialClimbMinAltitudeUu, true),
+    aerialClimbMinVelZUu: sanitizeClampedNumber(source.aerialClimbMinVelZUu, -200, 1200, D.aerialClimbMinVelZUu, true),
+    aerialClimbHoldJumpMinMs: sanitizeClampedNumber(source.aerialClimbHoldJumpMinMs, 20, 500, D.aerialClimbHoldJumpMinMs, true),
+    aerialClimbMinPitchFwdZ: Number(
+      sanitizeClampedNumber(source.aerialClimbMinPitchFwdZ, -0.2, 0.95, D.aerialClimbMinPitchFwdZ).toFixed(2)
     ),
-    orangeBoostBorderColor: sanitizeHexColor(
-      source.orangeBoostBorderColor,
-      DEFAULT_NAME_TAG_CONFIG.orangeBoostBorderColor
-    ),
-    sharedBoostBorderColor: sanitizeHexColor(
-      source.sharedBoostBorderColor,
-      DEFAULT_NAME_TAG_CONFIG.sharedBoostBorderColor
-    ),
-    showBoostBorderInMatchPlaying:
-      typeof source.showBoostBorderInMatchPlaying === 'boolean'
-        ? source.showBoostBorderInMatchPlaying
-        : DEFAULT_NAME_TAG_CONFIG.showBoostBorderInMatchPlaying,
-    boostBorderMatchAudience: sanitizeBoostBorderAudience(
-      source.boostBorderMatchAudience,
-      DEFAULT_NAME_TAG_CONFIG.boostBorderMatchAudience
-    ),
-    showBoostBorderInGoalReplay:
-      typeof source.showBoostBorderInGoalReplay === 'boolean'
-        ? source.showBoostBorderInGoalReplay
-        : DEFAULT_NAME_TAG_CONFIG.showBoostBorderInGoalReplay,
-    boostBorderReplayAudience: sanitizeBoostBorderAudience(
-      source.boostBorderReplayAudience,
-      DEFAULT_NAME_TAG_CONFIG.boostBorderReplayAudience
-    ),
-    ballOcclusionEnabled:
-      typeof source.ballOcclusionEnabled === 'boolean'
-        ? source.ballOcclusionEnabled
-        : DEFAULT_NAME_TAG_CONFIG.ballOcclusionEnabled,
-    ballOcclusionOpacity: Math.max(
-      0.0,
-      Math.min(
-        1.0,
-        Number.isFinite(Number(source.ballOcclusionOpacity))
-          ? Number(source.ballOcclusionOpacity)
-          : DEFAULT_NAME_TAG_CONFIG.ballOcclusionOpacity
-      )
-    ),
-    showOnLocalCar:
-      typeof source.showOnLocalCar === 'boolean'
-        ? source.showOnLocalCar
-        : DEFAULT_NAME_TAG_CONFIG.showOnLocalCar,
+    aerialClimbGlowColor: sanitizeHexColor(source.aerialClimbGlowColor, D.aerialClimbGlowColor),
+    aerialClimbGlowRadiusPx: sanitizeClampedNumber(source.aerialClimbGlowRadiusPx, 8, 100, D.aerialClimbGlowRadiusPx, true),
+    aerialClimbGlowOpacity: sanitizeClampedNumber(source.aerialClimbGlowOpacity, 0.1, 1.0, D.aerialClimbGlowOpacity),
+    aerialClimbSimulatePovInTuner: boolOr(source.aerialClimbSimulatePovInTuner, D.aerialClimbSimulatePovInTuner),
+    previewAerialClimbingFlags,
+    showOnLocalCar: boolOr(source.showOnLocalCar, D.showOnLocalCar),
     previewNames,
     previewBoostAmounts,
     carOverrides,
@@ -596,6 +440,7 @@ export function buildNameTagCalibrationExportPayload(
   const {
     previewNames: _pn,
     previewBoostAmounts: _pb,
+    previewAerialClimbingFlags: _pa,
     carOverrides: _co,
     enabled: _en,
     ...globalConfig
@@ -628,6 +473,9 @@ export function buildNameTagCalibrationExportPayload(
       visible: car.visible,
       boostAmount: car.boostAmount,
       boostBorderVisible: car.boostBorderVisible,
+      isOffscreen: car.isOffscreen ?? false,
+      isDoubleJumpedAndClimbing: car.isDoubleJumpedAndClimbing ?? false,
+      aerialClimbTriggerReason: car.aerialClimbTriggerReason ?? 'none',
       override: config.carOverrides[car.carIndex] || null,
       telemetry: {
         carWorldPos: car.carWorldPos,
@@ -645,6 +493,10 @@ export function buildNameTagCalibrationExportPayload(
         effectiveWorldOffsetUu: car.effectiveWorldOffsetUu,
         effectiveScreenOffsetPx: car.effectiveScreenOffsetPx,
         totalWorldVerticalOffsetUu: car.totalWorldVerticalOffsetUu,
+        carAltitudeUu: car.carAltitudeUu ?? 0,
+        carVelZUu: car.carVelZUu ?? 0,
+        carPitchFwdZ: car.carPitchFwdZ ?? 0,
+        carJumpHoldMs: car.carJumpHoldMs ?? 0,
       },
     })),
   };

@@ -9,6 +9,11 @@ export type NameTagBoostIndicatorMode =
   | 'sunset-circle'
   | 'border-only';
 
+export type NameTagAerialClimbTriggerMode =
+  | 'double-jump'
+  | 'hold-jump-pitch'
+  | 'either';
+
 export interface NameTagBoostBorderSceneFlags {
   matchPlaying?: boolean | NameTagBoostBorderAudience;
   goalReplay?: boolean | NameTagBoostBorderAudience;
@@ -70,6 +75,30 @@ export interface NameTagConfig {
   boostBorderReplayAudience: NameTagBoostBorderAudience;
   ballOcclusionEnabled: boolean;
   ballOcclusionOpacity: number;
+  offscreenIndicatorEnabled: boolean;
+  offscreenAudience: NameTagBoostBorderAudience;
+  offscreenShowBoostCircle: boolean;
+  offscreenShowArrow: boolean;
+  offscreenCircleRadiusPx: number;
+  offscreenArrowLengthPx: number;
+  offscreenArrowBaseWidthPx: number;
+  offscreenArrowGapPx: number;
+  offscreenRoiAvoidHud: boolean;
+  offscreenRoiTopInsetPx: number;
+  offscreenRoiBottomInsetPx: number;
+  offscreenRoiSideInsetPx: number;
+  aerialClimbAlertEnabled: boolean;
+  aerialClimbAlertAudience: NameTagBoostBorderAudience;
+  aerialClimbTriggerMode: NameTagAerialClimbTriggerMode;
+  aerialClimbMinAltitudeUu: number;
+  aerialClimbMinVelZUu: number;
+  aerialClimbHoldJumpMinMs: number;
+  aerialClimbMinPitchFwdZ: number;
+  aerialClimbGlowColor: string;
+  aerialClimbGlowRadiusPx: number;
+  aerialClimbGlowOpacity: number;
+  aerialClimbSimulatePovInTuner: boolean;
+  previewAerialClimbingFlags: boolean[];
   previewBoostAmounts: number[];
   showOnLocalCar: boolean;
   previewNames: string[];
@@ -82,6 +111,8 @@ export interface NameTagCarEntry {
   team: 0 | 1 | number;
   boostAmount?: number;
   showBoostBorder?: boolean | null;
+  isDoubleJumpedAndClimbing?: boolean;
+  aerialClimbTriggerReason?: 'none' | 'double-jump' | 'hold-jump-pitch' | 'preview';
 }
 
 export type NameTagCameraMode =
@@ -100,6 +131,13 @@ export interface NameTagCarTelemetry {
   visible: boolean;
   boostAmount?: number;
   boostBorderVisible?: boolean;
+  isOffscreen?: boolean;
+  isDoubleJumpedAndClimbing?: boolean;
+  aerialClimbTriggerReason?: string;
+  carAltitudeUu?: number;
+  carVelZUu?: number;
+  carPitchFwdZ?: number;
+  carJumpHoldMs?: number;
   carWorldPos: [number, number, number];
   anchorWorldPos: [number, number, number];
   spriteWorldPos: [number, number, number];
@@ -216,18 +254,42 @@ export const DEFAULT_NAME_TAG_CONFIG: NameTagConfig = {
   boostBorderEnabled: true,
   boostIndicatorMode: 'bottom-up-fill',
   boostFillOpacity: 1.0,
-  boostUnfilledBgOpacity: 0.3,
+  boostUnfilledBgOpacity: 0.1,
   boostShowHorizonLine: true,
   boostBorderColorMode: 'shared',
-  blueBoostBorderColor: '#000000',
-  orangeBoostBorderColor: '#000000',
-  sharedBoostBorderColor: '#000000',
+  blueBoostBorderColor: '#ffffff',
+  orangeBoostBorderColor: '#ffffff',
+  sharedBoostBorderColor: '#ffffff',
   showBoostBorderInMatchPlaying: true,
   boostBorderMatchAudience: 'teammates',
   showBoostBorderInGoalReplay: true,
   boostBorderReplayAudience: 'all',
   ballOcclusionEnabled: true,
   ballOcclusionOpacity: 1.0,
+  offscreenIndicatorEnabled: true,
+  offscreenAudience: 'teammates',
+  offscreenShowBoostCircle: true,
+  offscreenShowArrow: true,
+  offscreenCircleRadiusPx: 24,
+  offscreenArrowLengthPx: 12,
+  offscreenArrowBaseWidthPx: 12,
+  offscreenArrowGapPx: 10,
+  offscreenRoiAvoidHud: true,
+  offscreenRoiTopInsetPx: 72,
+  offscreenRoiBottomInsetPx: 132,
+  offscreenRoiSideInsetPx: 60,
+  aerialClimbAlertEnabled: true,
+  aerialClimbAlertAudience: 'teammates',
+  aerialClimbTriggerMode: 'hold-jump-pitch',
+  aerialClimbMinAltitudeUu: 110,
+  aerialClimbMinVelZUu: 400,
+  aerialClimbHoldJumpMinMs: 70,
+  aerialClimbMinPitchFwdZ: 0.2,
+  aerialClimbGlowColor: '#facc15',
+  aerialClimbGlowRadiusPx: 100,
+  aerialClimbGlowOpacity: 0.9,
+  aerialClimbSimulatePovInTuner: false,
+  previewAerialClimbingFlags: [false, true, false, false, true, false],
   previewBoostAmounts: [100, 66, 33, 85, 50, 18],
   showOnLocalCar: false,
   previewNames: [

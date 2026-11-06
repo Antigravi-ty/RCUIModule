@@ -1,3 +1,14 @@
+import type { FloatingWindowItem } from '../stores/floatingStore';
+import { PRESET_WINDOWS } from '../stores/devFloatingPresets';
+
+export type FloatingPresetConfig = (typeof PRESET_WINDOWS)[number];
+
+export const DEFAULT_MIN_WINDOW_WIDTH = 340;
+export const DEFAULT_MIN_WINDOW_HEIGHT = 200;
+export const MIN_NON_RESIZABLE_HEIGHT = 92;
+export const OUTER_RADIUS = 16;
+export const CONTAINER_MARGIN = 8;
+
 export interface WindowRect {
   x: number;
   y: number;
@@ -29,6 +40,245 @@ export interface ClampedWindowGeometry extends WindowRect {
   effectiveMinWidth: number;
 }
 
+export interface ResolvedWindowSizeLimits {
+  isResizable: boolean;
+  shouldAutoFitHeight: boolean;
+  presetMinWidth: number;
+  presetMinHeight: number;
+  presetMaxWidth: number;
+  presetMaxHeight: number | undefined;
+  autoMinWidth: number;
+  effectiveMinWidth: number;
+  rawMinHeight: number;
+  effectiveMinHeight: number;
+  effectiveMaxHeight: number;
+}
+
+/**
+ * Pure helper to resolve preset + manual + intrinsic size limits for a floating window.
+ */
+export function resolveWindowSizeLimits(
+  item: FloatingWindowItem,
+  matchedPreset: FloatingPresetConfig | undefined,
+  intrinsicMinWidth: number,
+  intrinsicMaxHeight: number | null
+): ResolvedWindowSizeLimits {
+  const isResizable = (item.resizable ?? matchedPreset?.resizable ?? true) !== false;
+  const shouldAutoFitHeight =
+    matchedPreset?.tier === 'developer'
+      ? Boolean(matchedPreset.autoFitHeight)
+      : item.autoFitHeight ??
+        matchedPreset?.autoFitHeight ??
+        (!isResizable || matchedPreset?.tier === 'user');
+
+  const presetMinWidth = Math.round(
+    item.minWidth ?? matchedPreset?.minWidth ?? DEFAULT_MIN_WINDOW_WIDTH
+  );
+  const presetMinHeight = Math.round(
+    item.minHeight ??
+      matchedPreset?.minHeight ??
+      (isResizable ? DEFAULT_MIN_WINDOW_HEIGHT : MIN_NON_RESIZABLE_HEIGHT)
+  );
+  const presetMaxWidth = item.maxWidth ?? matchedPreset?.maxWidth ?? Infinity;
+  const presetMaxHeight = item.maxHeight ?? matchedPreset?.maxHeight;
+
+  const autoMinWidth = Math.max(presetMinWidth, intrinsicMinWidth);
+  const effectiveMinWidth =
+    item.manualMinWidth !== undefined && Number.isFinite(item.manualMinWidth)
+      ? Math.max(240, Math.round(item.manualMinWidth))
+      : autoMinWidth;
+
+  const rawMinHeight =
+    item.manualMinHeight !== undefined && Number.isFinite(item.manualMinHeight)
+      ? Math.max(72, Math.round(item.manualMinHeight))
+      : presetMinHeight;
+
+  const effectiveMinHeight =
+    !isResizable && item.manualMinHeight === undefined && intrinsicMaxHeight !== null
+      ? intrinsicMaxHeight
+      : intrinsicMaxHeight !== null
+      ? Math.min(rawMinHeight, intrinsicMaxHeight)
+      : rawMinHeight;
+
+  const effectiveMaxHeight =
+    presetMaxHeight !== undefined
+      ? presetMaxHeight
+      : intrinsicMaxHeight !== null
+      ? Math.max(effectiveMinHeight, Math.min(5000, intrinsicMaxHeight))
+      : 5000;
+
+  return {
+    isResizable,
+    shouldAutoFitHeight,
+    presetMinWidth,
+    presetMinHeight,
+    presetMaxWidth,
+    presetMaxHeight,
+    autoMinWidth,
+    effectiveMinWidth,
+    rawMinHeight,
+    effectiveMinHeight,
+    effectiveMaxHeight,
+  };
+}
+
+/**
+ * Pure helper to compute initial desired anchor rect for a floating window.
+ */
+export function computeInitialDesiredAnchor(
+  item: FloatingWindowItem,
+  matchedPreset: FloatingPresetConfig | undefined,
+  limits: Pick<
+    ResolvedWindowSizeLimits,
+    'shouldAutoFitHeight' | 'effectiveMinWidth' | 'rawMinHeight'
+  >
+): WindowRect {
+  const baseHeight =
+    !item.userAdjustedSize && !limits.shouldAutoFitHeight && matchedPreset?.height !== undefined
+      ? matchedPreset.height
+      : item.height ?? matchedPreset?.height ?? 360;
+
+  return {
+    x: Math.round(item.position?.x ?? 40),
+    y: Math.round(item.position?.y ?? 40),
+    width: Math.round(
+      limits.shouldAutoFitHeight && !item.userAdjustedSize
+        ? limits.effectiveMinWidth
+        : Math.max(
+            limits.effectiveMinWidth,
+            item.width ?? matchedPreset?.width ?? 440
+          )
+    ),
+    height: Math.round(Math.max(limits.rawMinHeight, baseHeight)),
+  };
+}
+
+/**
+ * Pure helper to adjust desired anchor height when intrinsic content height changes.
+ */
+export function resolveAutoFittedDesiredAnchor(
+  prev: WindowRect,
+  totalIntrinsicH: number,
+  options: {
+    isResizable: boolean;
+    shouldAutoFitHeight: boolean;
+    userHasResized: boolean;
+    prevIntrinsicH: number | null;
+  }
+): WindowRect {
+  if (!options.isResizable) {
+    return Math.abs(prev.height - totalIntrinsicH) <= 1
+      ? prev
+      : { ...prev, height: totalIntrinsicH };
+  }
+  if (!options.shouldAutoFitHeight) {
+    return prev;
+  }
+  if (!options.userHasResized) {
+    return Math.abs(prev.height - totalIntrinsicH) <= 1
+      ? prev
+      : { ...prev, height: totalIntrinsicH };
+  }
+  if (
+    options.prevIntrinsicH !== null &&
+    Math.abs(prev.height - options.prevIntrinsicH) <= 4 &&
+    Math.abs(totalIntrinsicH - options.prevIntrinsicH) > 2
+  ) {
+    return { ...prev, height: totalIntrinsicH };
+  }
+  if (prev.height > totalIntrinsicH) {
+    return { ...prev, height: totalIntrinsicH };
+  }
+  return prev;
+}
+
+/**
+ * Pure helper to sync external item width/height changes into the desired anchor rect.
+ */
+export function resolveSyncedDesiredSize(
+  prev: WindowRect,
+  item: FloatingWindowItem,
+  limits: Pick<
+    ResolvedWindowSizeLimits,
+    | 'isResizable'
+    | 'shouldAutoFitHeight'
+    | 'effectiveMinWidth'
+    | 'effectiveMinHeight'
+    | 'effectiveMaxHeight'
+  >,
+  intrinsicMaxHeight: number | null
+): WindowRect {
+  if (!item.width || !item.height) return prev;
+  const nextW =
+    limits.shouldAutoFitHeight && !item.userAdjustedSize
+      ? limits.effectiveMinWidth
+      : Math.max(limits.effectiveMinWidth, Math.round(item.width));
+  const nextH =
+    !limits.isResizable &&
+    item.manualMinHeight === undefined &&
+    intrinsicMaxHeight !== null
+      ? intrinsicMaxHeight
+      : limits.shouldAutoFitHeight &&
+        !item.userAdjustedSize &&
+        intrinsicMaxHeight !== null
+      ? intrinsicMaxHeight
+      : Math.max(
+          limits.effectiveMinHeight,
+          Math.min(limits.effectiveMaxHeight, Math.round(item.height))
+        );
+  if (prev.width === nextW && prev.height === nextH) return prev;
+  return { ...prev, width: nextW, height: nextH };
+}
+
+/**
+ * Pure helper to compute clamped resize rect during active bottom-right corner dragging.
+ */
+export function resolveResizedWindowAnchor(
+  startRect: WindowRect,
+  deltaW: number,
+  deltaH: number,
+  containerBounds: ContainerBounds | null,
+  constraints: {
+    effectiveMinWidth: number;
+    presetMaxWidth: number;
+    effectiveMinHeight: number;
+    effectiveMaxHeight: number;
+  },
+  margin = CONTAINER_MARGIN
+): WindowRect {
+  const maxWInContainer = containerBounds
+    ? Math.max(
+        constraints.effectiveMinWidth,
+        containerBounds.width - margin - startRect.x
+      )
+    : constraints.presetMaxWidth;
+  const maxHInContainer = containerBounds
+    ? Math.max(
+        constraints.effectiveMinHeight,
+        Math.min(
+          constraints.effectiveMaxHeight,
+          containerBounds.height - margin - startRect.y
+        )
+      )
+    : constraints.effectiveMaxHeight;
+
+  const nextWidth = Math.max(
+    constraints.effectiveMinWidth,
+    Math.min(maxWInContainer, Math.round(startRect.width + deltaW))
+  );
+  const nextHeight = Math.max(
+    constraints.effectiveMinHeight,
+    Math.min(maxHInContainer, Math.round(startRect.height + deltaH))
+  );
+
+  return {
+    x: startRect.x,
+    y: startRect.y,
+    width: nextWidth,
+    height: nextHeight,
+  };
+}
+
 /**
  * Pure, zero-coupling spatial constraint solver for floating windows.
  *
@@ -53,7 +303,7 @@ export function resolveClampedWindowGeometry(
     prioritizePositionSqueeze?: boolean;
   }
 ): ClampedWindowGeometry {
-  const margin = options?.margin ?? 8;
+  const margin = options?.margin ?? CONTAINER_MARGIN;
   const minW = Math.max(160, Math.round(constraints.minWidth));
   const maxW = Number.isFinite(constraints.maxWidth)
     ? Math.max(minW, Math.round(constraints.maxWidth))

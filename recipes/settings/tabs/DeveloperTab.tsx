@@ -11,12 +11,15 @@ import {
   Bot,
   Radio,
   UserCog,
+  Zap,
 } from 'lucide-react';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../../../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../../../compounds/SettingToggleRow';
+import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import { useAppStore } from '../../../stores/appStore';
+import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
 import {
   useSignalingProfileStore,
   type SignalingRelayMatchPolicyMode,
@@ -40,6 +43,7 @@ export interface DeveloperTabProps {
   onNavigateDevSubsystemIsolation?: () => void;
   onNavigateDevActiveTuners?: () => void;
   onNavigateDevCalibratedPresets?: () => void;
+  onNavigateDevQuickActions?: () => void;
   onNavigateDevSelfTest?: () => void;
   onNavigateDevUnderDevelopment?: () => void;
   onNavigateDevRemoteProfile?: () => void;
@@ -53,6 +57,7 @@ export interface DeveloperTabProps {
  * 1. `Sandboxes` (`package-open` icon, `Browse →`) — directly opens the isolated subsystem selection list (01–07 including Experimental Multiple Bots)
  * 2. `Active Tuners` (`sliders` icon, `Browse →`) — active calibration tools, floating tuners, Advanced Audio & Event & Trigger Rules
  * 3. `Calibrated Presets` (`book-check` icon, `Browse →`) — tuners whose baseline parameters have been calibrated and solidified
+ * 3.5 `Developer Quick Actions` (`zap` icon, inline `Off-Screen` toggle + `Browse →`) — placed below Calibrated Presets and above Self Test; auto-enables Off-Screen Indicator when Developer Mode is enabled
  * 4. `Self Test` (`bug-play` icon, `Browse →`) — developer self-test suites (4-Server Signaling & Bridge Lab when loaded in dev mode)
  * 5. `Remote Profile Management` (`user-cog` icon, `Browse →`) — Set Others Profile (`SETTINGS # <alias>`) & Manage Accounts
  * 6. `Bots Loadout Tuner` (`bot` icon, `Spawn`) — floating window for multi-select bot loadout pools (Car GLB models, Paint, Boost Trail, Boost Audio, Anthem)
@@ -66,6 +71,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   onNavigateDevSubsystemIsolation,
   onNavigateDevActiveTuners,
   onNavigateDevCalibratedPresets,
+  onNavigateDevQuickActions,
   onNavigateDevSelfTest,
   onNavigateDevUnderDevelopment,
   onNavigateDevRemoteProfile,
@@ -77,6 +83,10 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   const setShowSafeAreaHud = viewportStore.setShowSafeAreaHud;
   const relayMatchPolicy = useSignalingProfileStore((s) => s.relayMatchPolicy);
   const setRelayMatchPolicy = useSignalingProfileStore((s) => s.setRelayMatchPolicy);
+  const offscreenIndicatorEnabled = useNameTagTunerStore(
+    (s) => s.config.offscreenIndicatorEnabled
+  );
+  const updateNameTagConfig = useNameTagTunerStore((s) => s.updateConfig);
 
   const [ballOpacityMode, setBallOpacityMode] = useState<BallOpacityMode>(() => {
     const op = getBallVisualConfig()?.opacity ?? 1.0;
@@ -168,6 +178,70 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
+      />
+
+      {/* 3.5. Developer Quick Actions (placed below Calibrated Presets and above Self Test) */}
+      <SettingActionRow
+        icon={Zap}
+        iconName="zap"
+        iconColor="text-amber-400"
+        title="Developer Quick Actions"
+        description="Off-Screen Indicator (auto-enabled in Developer Mode; toggleable & cloud-syncable)"
+        hoverDescription="Developer Quick Actions: Automatically enables the Off-Screen Indicator when Developer Mode is active. Toggle it directly here or browse quick actions, and push to other players via Remote Profile Management."
+        onHover={onHover}
+        onLeave={onLeave}
+        isLight={isLight}
+        customActionNode={
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div
+              className="flex items-center gap-1.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span
+                className={`text-[10px] font-mono uppercase tracking-wider ${
+                  offscreenIndicatorEnabled
+                    ? isLight
+                      ? 'text-emerald-600 font-semibold'
+                      : 'text-emerald-400 font-semibold'
+                    : isLight
+                    ? 'text-slate-400'
+                    : 'text-white/40'
+                }`}
+              >
+                Off-Screen
+              </span>
+              <ToggleSwitch
+                checked={offscreenIndicatorEnabled}
+                onChange={(checked) =>
+                  updateNameTagConfig({ offscreenIndicatorEnabled: checked })
+                }
+                isLight={isLight}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                (onNavigateDevQuickActions ?? (() => navigate('dev-quick-actions')))()
+              }
+              style={{
+                paddingLeft: `${buttonPaddingX}px`,
+                paddingRight: `${buttonPaddingX}px`,
+                paddingTop: `${buttonPaddingY}px`,
+                paddingBottom: `${buttonPaddingY}px`,
+                borderRadius: `${buttonRadius}px`,
+                fontSize: `${buttonFontSize}px`,
+              }}
+              className={`flex items-center gap-2 font-bold uppercase tracking-wider transition-all border shrink-0 whitespace-nowrap leading-none cursor-pointer ${
+                isLight
+                  ? 'bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 border-sky-500/30 hover:border-sky-500/50'
+                  : 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 border-sky-500/30 hover:border-sky-500/50 shadow-[0_0_12px_rgba(56,189,248,0.12)]'
+              }`}
+            >
+              <span>Browse</span>
+              {showButtonArrow && <ArrowRight className="w-3.5 h-3.5 shrink-0" />}
+            </button>
+          </div>
+        }
       />
 
       {/* 3a. Self Test */}

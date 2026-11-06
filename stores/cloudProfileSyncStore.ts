@@ -48,6 +48,7 @@ import {
 } from './cloudProfileSyncPipeline';
 import { floatingStore } from './floatingStore';
 import { useKickoffTrainingStore } from './kickoffTrainingStore';
+import { subscribeNameTagConfig } from './nameTagTunerStore';
 import { useSpatialAudioStore } from './spatialAudioStore';
 import { useStaticTrainingBallCamTunerStore } from './staticTrainingBallCamTunerStore';
 import { viewportStore } from './viewportStore';
@@ -533,6 +534,7 @@ function ensureLiveStoreSubscriptions(): void {
   useBotsLoadoutStore.subscribe(scheduleLiveSyncFromStoreChange);
   useKickoffTrainingStore.subscribe(scheduleLiveSyncFromStoreChange);
   useStaticTrainingBallCamTunerStore.subscribe(scheduleLiveSyncFromStoreChange);
+  subscribeNameTagConfig(scheduleLiveSyncFromStoreChange);
   spatialAttenuationProfiles.subscribe(scheduleLiveSyncFromStoreChange);
   safeStorage.subscribe((key) => {
     if (SYNCABLE_EXTRA_STORAGE_KEY_SET.has(key)) {

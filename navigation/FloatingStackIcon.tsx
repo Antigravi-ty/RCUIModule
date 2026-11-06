@@ -3,8 +3,13 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layers, X } from 'lucide-react';
 import { useFloatingStore, FloatingWindowItem, FlyingGhostState, type FloatingStoreInstance } from '../stores/floatingStore';
+import { PRESET_WINDOWS } from '../stores/devFloatingPresets';
 import { UI_EASING } from '../tokens/easing';
 import { getFloatingWindowIcon } from './FloatingWindowIcon';
+import {
+  resolveClampedWindowGeometry,
+  resolveWindowSizeLimits,
+} from './floatingWindowGeometry';
 
 export interface FloatingStackIconProps {
   isLight?: boolean;
@@ -262,22 +267,51 @@ export const FloatingStackIcon: React.FC<FloatingStackIconProps> = ({
 
     const bRect = btnEl.getBoundingClientRect();
     const cRect = containerEl.getBoundingClientRect();
+    const localW =
+      containerEl.clientWidth > 0 ? Math.floor(containerEl.clientWidth) : Math.floor(cRect.width);
+    const localH =
+      containerEl.clientHeight > 0 ? Math.floor(containerEl.clientHeight) : Math.floor(cRect.height);
+    const scaleX = localW > 0 && cRect.width > 0 ? cRect.width / localW : 1;
+    const scaleY = localH > 0 && cRect.height > 0 ? cRect.height / localH : 1;
 
-    const startX = Math.round(bRect.left - cRect.left);
-    const startY = Math.round(bRect.top - cRect.top);
-    const startW = Math.round(bRect.width);
-    const startH = Math.round(bRect.height);
+    const startX = Math.round((bRect.left - cRect.left) / scaleX);
+    const startY = Math.round((bRect.top - cRect.top) / scaleY);
+    const startW = Math.round(bRect.width / scaleX);
+    const startH = Math.round(bRect.height / scaleY);
 
-    const targetX = win.position?.x ?? 40;
-    const targetY = win.position?.y ?? 40;
-    const targetW = win.width ?? 440;
-    const targetH = win.height ?? 300;
+    const matchedPreset = PRESET_WINDOWS.find(
+      (p) => p.id === win.id || win.id.startsWith(p.id)
+    );
+    const rawAnchor = {
+      x: win.position?.x ?? 40,
+      y: win.position?.y ?? 40,
+      width: win.width ?? matchedPreset?.width ?? 440,
+      height: win.height ?? matchedPreset?.height ?? 300,
+    };
+    const limits = resolveWindowSizeLimits(
+      win,
+      matchedPreset,
+      win.autoMinWidth ?? 240,
+      win.intrinsicMaxHeight ?? null
+    );
+    const clampedTarget = resolveClampedWindowGeometry(
+      rawAnchor,
+      localW > 0 && localH > 0 ? { width: localW, height: localH } : null,
+      {
+        minWidth: limits.effectiveMinWidth,
+        maxWidth: limits.presetMaxWidth,
+        minHeight: limits.effectiveMinHeight,
+        maxHeight: limits.effectiveMaxHeight,
+        resizable: limits.isResizable,
+      },
+      { prioritizePositionSqueeze: false }
+    );
 
     // Step 1: Set restoring state - all other items immediately disappear, this item's content disappears
     setRestoringWindow({
       id: win.id,
       startRect: { x: startX, y: startY, width: startW, height: startH },
-      targetRect: { x: targetX, y: targetY, width: targetW, height: targetH },
+      targetRect: clampedTarget,
     });
 
     // Step 2 & 3: After 240ms 4-corner resize completes, restore window and close tray

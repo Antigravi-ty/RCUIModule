@@ -41,6 +41,7 @@ export type ActiveMenuRoute =
   | 'dev-sandboxes'
   | 'dev-active-tuners'
   | 'dev-calibrated-presets'
+  | 'dev-quick-actions'
   | 'dev-self-test'
   | 'dev-under-development'
   | 'dev-remote-profile'
@@ -73,6 +74,7 @@ export const ROUTE_PARENT_MAP: Record<ActiveMenuRoute, ActiveMenuRoute | null> =
   'dev-sandboxes': 'settings',
   'dev-active-tuners': 'settings',
   'dev-calibrated-presets': 'settings',
+  'dev-quick-actions': 'settings',
   'dev-self-test': 'settings',
   'dev-under-development': 'settings',
   'dev-remote-profile': 'settings',

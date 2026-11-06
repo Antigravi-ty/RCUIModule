@@ -3,6 +3,11 @@ import {
   type NameTagBoostIndicatorMode,
   type NameTagConfig,
 } from './nameTagConfig';
+import {
+  hexToRgba,
+  resolveActiveBoostFillColor,
+  resolveUnfilledBaseHexColor,
+} from './nameTagOffscreenRenderer';
 
 export interface NameTagPillRenderCard2D {
   carIndex: number;
@@ -36,6 +41,7 @@ export interface NameTagPillRenderCard2D {
   boostBorderVisible: boolean;
   boostFraction: number;
   boostBorderColor: string;
+  aerialClimbGlowVisible?: boolean;
 }
 
 export interface NameTagBallOcclusionProjection2D {
@@ -47,55 +53,6 @@ export interface NameTagBallOcclusionProjection2D {
   opacity: number;
 }
 
-export function parseHexRgb(hexColor: string): [number, number, number] {
-  const cleanHex = String(hexColor || '#075985').replace('#', '').trim();
-  const expanded =
-    cleanHex.length === 3
-      ? cleanHex
-          .split('')
-          .map((ch) => ch + ch)
-          .join('')
-      : cleanHex;
-  const numericValue = Number.parseInt(expanded, 16);
-  if (!Number.isFinite(numericValue)) return [12, 45, 72];
-  return [
-    (numericValue >> 16) & 255,
-    (numericValue >> 8) & 255,
-    numericValue & 255,
-  ];
-}
-
-export function hexToRgba(hexColor: string, alpha = 1.0): string {
-  const [r, g, b] = parseHexRgb(hexColor);
-  const clampedAlpha = Math.max(0, Math.min(1, Number(alpha) || 0));
-  return `rgba(${r}, ${g}, ${b}, ${clampedAlpha})`;
-}
-
-export function mixHexColors(hexA: string, hexB: string, weightB = 0.35): string {
-  const [rA, gA, bA] = parseHexRgb(hexA);
-  const [rB, gB, bB] = parseHexRgb(hexB);
-  const t = Math.max(0, Math.min(1, weightB));
-  const r = Math.round(rA + (rB - rA) * t);
-  const g = Math.round(gGChannel(gA, gB, t));
-  const b = Math.round(bA + (bB - bA) * t);
-  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
-}
-
-function gGChannel(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-export function resolveActiveBoostFillColor(
-  bgColor: string,
-  boostBorderColor: string
-): string {
-  return mixHexColors(bgColor, boostBorderColor, 0.38);
-}
-
-export function resolveUnfilledBaseHexColor(bgColor: string): string {
-  return mixHexColors(bgColor, '#040914', 0.45);
-}
-
 export function drawNameTagPillCard2D(
   ctx: CanvasRenderingContext2D,
   card: NameTagPillRenderCard2D,
@@ -105,7 +62,15 @@ export function drawNameTagPillCard2D(
     | 'boostFillOpacity'
     | 'boostUnfilledBgOpacity'
     | 'boostShowHorizonLine'
-  >
+  > &
+    Partial<
+      Pick<
+        NameTagConfig,
+        | 'aerialClimbGlowColor'
+        | 'aerialClimbGlowRadiusPx'
+        | 'aerialClimbGlowOpacity'
+      >
+    >
 ): void {
   const mode: NameTagBoostIndicatorMode =
     config.boostIndicatorMode || DEFAULT_NAME_TAG_CONFIG.boostIndicatorMode;

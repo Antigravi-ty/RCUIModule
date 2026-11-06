@@ -27,22 +27,42 @@ import {
   safeLocalStorageSet,
   safeStorage,
 } from '../config/storageHelpers';
+import { getInitialDeveloperMode } from '../config/uiConfig';
 import { syncBridge } from './syncBridge';
 
 const CONFIG_SYNC_KEY = 'store:nameTagConfig:v1';
 const RUNTIME_SYNC_KEY = 'store:nameTagRuntime:v1';
 const TELEMETRY_SYNC_KEY = 'store:nameTagTelemetry:v1';
+const DEV_OFFSCREEN_MANUAL_OFF_KEY = 'rc_dev_quick_offscreen_manual_off_v1';
 
 function loadSavedNameTagConfig(): NameTagConfig {
+  const isDevMode = getInitialDeveloperMode();
   try {
     const raw = safeLocalStorageGet(NAME_TAG_STORAGE_KEY);
     if (!raw) {
-      return sanitizeConfig(DEFAULT_NAME_TAG_CONFIG);
+      return sanitizeConfig({
+        ...DEFAULT_NAME_TAG_CONFIG,
+        offscreenIndicatorEnabled: isDevMode,
+      });
     }
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    return sanitizeConfig(parsed);
+    const sanitized = sanitizeConfig(parsed);
+    if (
+      isDevMode &&
+      !sanitized.offscreenIndicatorEnabled &&
+      safeLocalStorageGet(DEV_OFFSCREEN_MANUAL_OFF_KEY) !== '1'
+    ) {
+      return {
+        ...sanitized,
+        offscreenIndicatorEnabled: true,
+      };
+    }
+    return sanitized;
   } catch {
-    return sanitizeConfig(DEFAULT_NAME_TAG_CONFIG);
+    return sanitizeConfig({
+      ...DEFAULT_NAME_TAG_CONFIG,
+      offscreenIndicatorEnabled: isDevMode,
+    });
   }
 }
 
@@ -147,11 +167,41 @@ export function getNameTagConfig(): NameTagConfig {
   return currentConfig;
 }
 
-export function updateNameTagConfig(patch: Partial<NameTagConfig>): NameTagConfig {
+export function updateNameTagConfig(
+  patch: Partial<NameTagConfig>,
+  options?: { fromCloudSync?: boolean; fromDevAutoActivate?: boolean }
+): NameTagConfig {
+  if (
+    typeof patch.offscreenIndicatorEnabled === 'boolean' &&
+    !options?.fromCloudSync &&
+    !options?.fromDevAutoActivate &&
+    !syncBridge.isApplyingRemote()
+  ) {
+    try {
+      safeLocalStorageSet(
+        DEV_OFFSCREEN_MANUAL_OFF_KEY,
+        patch.offscreenIndicatorEnabled ? '0' : '1'
+      );
+    } catch {
+      // Ignore storage errors
+    }
+  }
   currentConfig = mergeNameTagConfigPatch(currentConfig, patch);
   persistNameTagConfig(currentConfig, true);
   notifyNameTagListeners();
   return currentConfig;
+}
+
+export function activateNameTagOffscreenForDeveloperMode(): void {
+  if (safeLocalStorageGet(DEV_OFFSCREEN_MANUAL_OFF_KEY) === '1') {
+    return;
+  }
+  if (!currentConfig.offscreenIndicatorEnabled) {
+    updateNameTagConfig(
+      { offscreenIndicatorEnabled: true },
+      { fromDevAutoActivate: true }
+    );
+  }
 }
 
 export function updateNameTagCarOverride(
@@ -193,7 +243,15 @@ export function resetAllNameTagCarOverrides(): NameTagConfig {
 }
 
 export function resetNameTagConfig(): NameTagConfig {
-  currentConfig = sanitizeConfig(DEFAULT_NAME_TAG_CONFIG);
+  try {
+    safeLocalStorageSet(DEV_OFFSCREEN_MANUAL_OFF_KEY, '0');
+  } catch {
+    // Ignore storage errors
+  }
+  currentConfig = sanitizeConfig({
+    ...DEFAULT_NAME_TAG_CONFIG,
+    offscreenIndicatorEnabled: getInitialDeveloperMode(),
+  });
   persistNameTagConfig(currentConfig, true);
   notifyNameTagListeners();
   return currentConfig;
@@ -298,6 +356,7 @@ export interface NameTagTunerStoreState {
   updateConfig: (patch: Partial<NameTagConfig>) => void;
   updatePreviewName: (index: number, name: string) => void;
   updatePreviewBoostAmount: (index: number, boostAmount: number) => void;
+  updatePreviewAerialClimbingFlag: (index: number, climbing: boolean) => void;
   setBoostBorderOverride: (override: NameTagBoostBorderOverride) => void;
   selectCalibrationCar: (carIndex: number) => void;
   updateCarOverride: (carIndex: number, patch: Partial<NameTagCarOverride>) => void;
@@ -340,6 +399,14 @@ export const useNameTagTunerStore = create<NameTagTunerStoreState>((_set, get) =
       nextBoosts[index] = Math.max(0, Math.min(100, Math.round(Number(boostAmount) || 0)));
     }
     updateNameTagConfig({ previewBoostAmounts: nextBoosts });
+  },
+
+  updatePreviewAerialClimbingFlag: (index, climbing) => {
+    const nextFlags = [...(get().config.previewAerialClimbingFlags || [])];
+    if (index >= 0 && index < 6) {
+      nextFlags[index] = Boolean(climbing);
+    }
+    updateNameTagConfig({ previewAerialClimbingFlags: nextFlags });
   },
 
   setBoostBorderOverride: (override) => {

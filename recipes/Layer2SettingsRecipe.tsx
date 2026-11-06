@@ -42,6 +42,7 @@ export interface Layer2SettingsRecipeProps {
   onNavigateDevSubsystemIsolation?: () => void;
   onNavigateDevActiveTuners?: () => void;
   onNavigateDevCalibratedPresets?: () => void;
+  onNavigateDevQuickActions?: () => void;
   onNavigateDevSelfTest?: () => void;
   onNavigateDevUnderDevelopment?: () => void;
   onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
@@ -99,6 +100,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   onNavigateDevSubsystemIsolation,
   onNavigateDevActiveTuners,
   onNavigateDevCalibratedPresets,
+  onNavigateDevQuickActions,
   onNavigateDevSelfTest,
   onNavigateDevUnderDevelopment,
   onSpawnDiagnosticWindow,
@@ -360,6 +362,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
                 onNavigateDevSubsystemIsolation={onNavigateDevSubsystemIsolation}
                 onNavigateDevActiveTuners={onNavigateDevActiveTuners}
                 onNavigateDevCalibratedPresets={onNavigateDevCalibratedPresets}
+                onNavigateDevQuickActions={onNavigateDevQuickActions}
                 onNavigateDevSelfTest={onNavigateDevSelfTest}
                 onNavigateDevUnderDevelopment={onNavigateDevUnderDevelopment}
                 onHover={setHoveredDesc}

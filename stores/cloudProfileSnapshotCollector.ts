@@ -31,6 +31,7 @@ import { useBotsLoadoutStore } from './botsLoadoutStore';
 import { PRESET_WINDOWS } from './devFloatingPresets';
 import { floatingStore } from './floatingStore';
 import { useKickoffTrainingStore } from './kickoffTrainingStore';
+import { getNameTagConfig, updateNameTagConfig } from './nameTagTunerStore';
 import { useSpatialAudioStore } from './spatialAudioStore';
 import { useStaticTrainingBallCamTunerStore } from './staticTrainingBallCamTunerStore';
 import { viewportStore } from './viewportStore';
@@ -88,7 +89,16 @@ export function collectUnifiedProfileSnapshot(): ProfileFlatSnapshot {
   flattenNestedConfigObject('pacing.custom', app.customClockPacingParams, snapshot);
 
   flattenNestedConfigObject('boostPad', app.boostPadTuner, snapshot);
-  flattenNestedConfigObject('driftwoods', app.driftwoodsTuner as Record<string, any>, snapshot);
+  flattenNestedConfigObject(
+    'driftwoods',
+    app.driftwoodsTuner as unknown as Record<string, unknown>,
+    snapshot
+  );
+  flattenNestedConfigObject(
+    'nameTag',
+    getNameTagConfig() as unknown as Record<string, unknown>,
+    snapshot
+  );
 
   // 3. Floating Windows (ONLY id & isMinimized + global opacity; never position/width/height)
   const floatSnap = floatingStore.getSnapshot();
@@ -267,9 +277,16 @@ export function applyUnifiedProfileSnapshot(snapshot: ProfileFlatSnapshot): void
   const nextDriftwoods = unflattenConfigPrefix(
     snapshot,
     'driftwoods',
-    app.driftwoodsTuner as Record<string, any>
+    app.driftwoodsTuner as unknown as Record<string, unknown>
   );
   app.updateDriftwoodsTuner(nextDriftwoods);
+
+  const nextNameTag = unflattenConfigPrefix(
+    snapshot,
+    'nameTag',
+    getNameTagConfig() as unknown as Record<string, unknown>
+  );
+  updateNameTagConfig(nextNameTag, { fromCloudSync: true });
 
   // 4. Apply Floating Windows (spawn/minimize/restore matching preset IDs without overriding pixel positions)
   if (typeof snapshot['floating.opacity'] === 'number') {
