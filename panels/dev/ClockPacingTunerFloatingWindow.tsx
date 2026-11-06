@@ -25,13 +25,30 @@ import {
   getImportedTelemetryPayload,
   setImportedTelemetryPayload,
 } from '../../stores/pacingTelemetryExporter';
+import type { PacingTelemetrySerializableObject } from '../../stores/pacingTelemetryRecorder';
+import { ClockPacingParameterGroups } from './clock-pacing-tuner/ClockPacingParameterGroups';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface ClockPacingTunerFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'clock-pacing-tuner',
+  title: 'Input Buffer & Clock Pacing Tuner',
+  subtitle: 'PacingTuner',
+  description:
+    'Low-level STS/CSTS hysteresis, PD gains, RTT bias compensation, trace import & What-If simulator.',
+  icon: 'Sliders',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 580,
+    height: 640,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface ClockPacingTunerFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
-
-import { ClockPacingParameterGroups } from './clock-pacing-tuner/ClockPacingParameterGroups';
 
 export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWindowProps> = ({
   isLight = false,
@@ -43,7 +60,9 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
   const updateCustomParams = useAppStore((s) => s.updateCustomClockPacingParams);
   const resetCustomParams = useAppStore((s) => s.resetCustomClockPacingParams);
 
-  const [importedTrace, setImportedTrace] = useState<any>(() => getImportedTelemetryPayload());
+  const [importedTrace, setImportedTrace] = useState<PacingTelemetrySerializableObject | null>(() =>
+    getImportedTelemetryPayload()
+  );
   const [useImportedSource, setUseImportedSource] = useState<boolean>(() => Boolean(getImportedTelemetryPayload()));
   const [windowSeconds, setWindowSeconds] = useState<number>(15);
   const [simRefreshTick, setSimRefreshTick] = useState<number>(0);
@@ -78,7 +97,7 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
     e.target.value = '';
     if (!file) return;
     try {
-      const normalized: any = await parseImportedTelemetryFile(file);
+      const normalized = await parseImportedTelemetryFile(file);
       setImportedTelemetryPayload(normalized);
       setImportedTrace(normalized);
       setUseImportedSource(true);
@@ -174,7 +193,7 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
           </button>
           <button
             type="button"
-            onClick={() => (downloadNetworkTelemetryZip as any)(globalPacingTelemetryRecorder, 'dev_tuner')}
+            onClick={() => downloadNetworkTelemetryZip(globalPacingTelemetryRecorder, 'dev_tuner')}
             className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border cursor-pointer transition-colors ${
               isLight
                 ? 'bg-sky-50 hover:bg-sky-100 border-sky-300 text-sky-800'

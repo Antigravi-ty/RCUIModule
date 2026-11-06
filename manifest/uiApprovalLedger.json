@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
+  "updatedAt": "2026-11-06T16:26:54.891Z",
   "templateHash": "574097ceda64cb92",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -134,10 +134,10 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ClockPacingTunerFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "c8fd5633bcb660e2",
-      "visualAstHash": "60b88f6b8b94c96d",
+      "sizingAndConfigHash": "14be80b255465d69",
+      "visualAstHash": "3149fae930f900f9",
       "fileVisualHashes": {
-        "src/ui-core/panels/dev/ClockPacingTunerFloatingWindow.tsx": "8ae9920c600df3a3",
+        "src/ui-core/panels/dev/ClockPacingTunerFloatingWindow.tsx": "5cc0fbc4cd09c1d1",
         "src/ui-core/panels/dev/clock-pacing-tuner/ClockPacingParameterGroups.tsx": "32ca6c313075f2e3",
         "src/ui-core/panels/dev/clock-pacing-tuner/PacingOscilloscopeCanvas.tsx": "a0ffd88fadbc81e0",
         "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c",
@@ -156,11 +156,11 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/DiagnosticDumpFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "5824ebd6c972278c",
-      "visualAstHash": "cd9e48c79fcc7f0f",
+      "sizingAndConfigHash": "1f563879311701e7",
+      "visualAstHash": "aa6824e02ddbbe09",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/DiagnosticDumpFloatingWindow.tsx": "190fa44130ca25b0",
-        "src/ui-core/panels/dev/diagnostic-dump/diagnosticDumpExporter.ts": "df7004526395d0f9"
+        "src/ui-core/panels/dev/diagnostic-dump/diagnosticDumpExporter.ts": "719de7922c99477b"
       },
       "alphaDeps": [
         "src/ui-core/stores/appStore.ts",
@@ -202,7 +202,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/DualArenaDeterminismHarnessFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "84181edc1ea0fc2c",
+      "sizingAndConfigHash": "c5d91a1f0690c35f",
       "visualAstHash": "b78f57669297777d",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/DualArenaDeterminismHarnessFloatingWindow.tsx": "96ac20a38a131cb5",
@@ -249,7 +249,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/EventStreamObserverFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "33c1df164d439be1",
+      "sizingAndConfigHash": "b31c9d66fb3f01b4",
       "visualAstHash": "974cb0a57038543e",
       "fileVisualHashes": {
         "src/ui-core/charts/EventImpulseScatterChart.tsx": "51131c3bd42156c3",
@@ -410,7 +410,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/NetworkStressInjectionFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "72838277080fd910",
+      "sizingAndConfigHash": "141c0a777b3fe2ec",
       "visualAstHash": "e42e0a56ecbd7e63",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/NetworkStressInjectionFloatingWindow.tsx": "75dd7b36d1c27cd2",
@@ -566,7 +566,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/SubsystemIsolationLabFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "c344efd644ac5966",
+      "sizingAndConfigHash": "79a0d311bc2007c5",
       "visualAstHash": "3f9933842d0c51b5",
       "fileVisualHashes": {
         "src/ui-core/compounds/KickoffDuelMatrixCard.tsx": "7893767acf067942",

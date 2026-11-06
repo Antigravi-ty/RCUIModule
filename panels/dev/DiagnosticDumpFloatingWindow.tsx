@@ -27,9 +27,26 @@ import {
   executeUnifiedDiagnosticDumpExport,
   exportStandaloneTelemetryZip,
 } from './diagnostic-dump/diagnosticDumpExporter';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface DiagnosticDumpFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'diagnostic-dump',
+  title: 'Export Diagnostic Dump',
+  subtitle: 'DiagnosticDump',
+  description:
+    'Live Client Replay, Reconcile & Pacing Telemetry, and Server Replay buffer gauges + one-click .zip dump.',
+  icon: 'FileArchive',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 480,
+    height: 580,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface DiagnosticDumpFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
 
@@ -131,11 +148,8 @@ export const DiagnosticDumpFloatingWindow: React.FC<DiagnosticDumpFloatingWindow
 
   const handleClearBuffersNow = () => {
     networkDiagnosticsStore.clearDiagnosticBuffers();
-    (recorder as any)?.reset?.({
-      mode: 'csts',
-      priority: 'balanced',
-      params: {},
-    });
+    recorder?.setSessionMetadata?.('csts', 'balanced', {});
+    recorder?.reset?.();
     setLastExportStatus('All client, telemetry & server diagnostic buffers cleared to 0.');
     setTickRefresh((v) => v + 1);
   };
