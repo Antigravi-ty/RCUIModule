@@ -1,7 +1,7 @@
 import React from 'react';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { CompactNumberSlider } from './CompactNumberSlider';
-import type { StaticTrainingShotItem } from './staticTrainingTypes';
+import type { EditSubMode, StaticTrainingShotItem } from './staticTrainingTypes';
 
 const radToDeg = (r: number) => Math.round((r * 180) / Math.PI);
 const degToRad = (d: number) => Number(((d * Math.PI) / 180).toFixed(4));
@@ -14,6 +14,8 @@ export interface StaticTrainingAdvancedParamsSectionProps {
   rowHoverClass: string;
   onMutateShot: (updater: (draft: StaticTrainingShotItem) => void) => void;
   onHoverDesc: (desc: string | null) => void;
+  onFocusCarCamera?: (targetMode?: EditSubMode) => void;
+  onFocusBallCamera?: () => void;
 }
 
 export const StaticTrainingAdvancedParamsSection: React.FC<
@@ -26,6 +28,8 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
   rowHoverClass,
   onMutateShot,
   onHoverDesc,
+  onFocusCarCamera,
+  onFocusBallCamera,
 }) => (
   <div className={`p-2 rounded-xl border flex flex-col gap-1 ${sectionBg}`}>
     <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-500 px-1">
@@ -41,11 +45,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
       unit=" UU"
       description="Car Spawn X Coordinate (-3900 to +3900 UU)."
       onHoverDesc={onHoverDesc}
-      onChange={(val) =>
+      onChange={(val) => {
+        onFocusCarCamera?.();
         onMutateShot((d) => {
           d.car.location[0] = val;
-        })
-      }
+        });
+      }}
       isLight={isLight}
     />
     <CompactNumberSlider
@@ -57,11 +62,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
       unit=" UU"
       description="Car Spawn Y Coordinate (-5000 Blue Goal to +5000 Orange Goal UU)."
       onHoverDesc={onHoverDesc}
-      onChange={(val) =>
+      onChange={(val) => {
+        onFocusCarCamera?.();
         onMutateShot((d) => {
           d.car.location[1] = val;
-        })
-      }
+        });
+      }}
       isLight={isLight}
     />
     <CompactNumberSlider
@@ -73,12 +79,13 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
       unit=" UU"
       description="Car Spawn Z Elevation (17 UU Ground to 1980 UU Ceiling)."
       onHoverDesc={onHoverDesc}
-      onChange={(val) =>
+      onChange={(val) => {
+        onFocusCarCamera?.();
         onMutateShot((d) => {
           d.car.location[2] = val;
           if (val > 22) d.car.snapToGround = false;
-        })
-      }
+        });
+      }}
       isLight={isLight}
     />
 
@@ -91,14 +98,15 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
       unit="°"
       description="Car Nose Heading Yaw Angle (-180° to +180°)."
       onHoverDesc={onHoverDesc}
-      onChange={(deg) =>
+      onChange={(deg) => {
+        onFocusCarCamera?.('car-heading');
         onMutateShot((d) => {
           d.car.headingYaw = degToRad(deg);
           if (d.car.speedFollowsHeading !== false) {
             d.car.speedYaw = d.car.headingYaw;
           }
-        })
-      }
+        });
+      }}
       isLight={isLight}
     />
     <CompactNumberSlider
@@ -110,15 +118,16 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
       unit="°"
       description="Car Nose Pitch Angle (-85° dive to +85° nose up)."
       onHoverDesc={onHoverDesc}
-      onChange={(deg) =>
+      onChange={(deg) => {
+        onFocusCarCamera?.('car-heading');
         onMutateShot((d) => {
           d.car.headingPitch = degToRad(deg);
           if (deg !== 0) d.car.snapToGround = false;
           if (d.car.speedFollowsHeading !== false) {
             d.car.speedPitch = d.car.headingPitch;
           }
-        })
-      }
+        });
+      }}
       isLight={isLight}
     />
     <CompactNumberSlider
@@ -130,12 +139,13 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
       unit="°"
       description="Car Air Roll Bank Angle (-180° to +180°, shortcut [Q]/[E])."
       onHoverDesc={onHoverDesc}
-      onChange={(deg) =>
+      onChange={(deg) => {
+        onFocusCarCamera?.('car-heading');
         onMutateShot((d) => {
           d.car.airRoll = degToRad(deg);
           if (deg !== 0) d.car.snapToGround = false;
-        })
-      }
+        });
+      }}
       isLight={isLight}
     />
 
@@ -148,11 +158,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
       unit=" UU"
       description="Car Initial Launch Speed (0 to 2300 UU/s supersonic, shortcut [[] / []])."
       onHoverDesc={onHoverDesc}
-      onChange={(spd) =>
+      onChange={(spd) => {
+        onFocusCarCamera?.();
         onMutateShot((d) => {
           d.car.speed = spd;
-        })
-      }
+        });
+      }}
       isLight={isLight}
     />
     {!speedFollowsHeading && (
@@ -166,11 +177,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
           unit="°"
           description="Independent Car Linear Velocity Yaw Angle (-180° to +180°)."
           onHoverDesc={onHoverDesc}
-          onChange={(deg) =>
+          onChange={(deg) => {
+            onFocusCarCamera?.('car-speed');
             onMutateShot((d) => {
               d.car.speedYaw = degToRad(deg);
-            })
-          }
+            });
+          }}
           isLight={isLight}
         />
         <CompactNumberSlider
@@ -182,11 +194,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
           unit="°"
           description="Independent Car Linear Velocity Pitch Angle (-85° to +85°)."
           onHoverDesc={onHoverDesc}
-          onChange={(deg) =>
+          onChange={(deg) => {
+            onFocusCarCamera?.('car-speed');
             onMutateShot((d) => {
               d.car.speedPitch = degToRad(deg);
-            })
-          }
+            });
+          }}
           isLight={isLight}
         />
       </>
@@ -209,12 +222,13 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
         <span className="text-[11px] font-semibold">Kickoff Freeze State</span>
         <ToggleSwitch
           checked={currentShot.ball.kickoffState}
-          onCheckedChange={(checked) =>
+          onCheckedChange={(checked) => {
+            onFocusBallCamera?.();
             onMutateShot((d) => {
               d.ball.kickoffState = checked;
               if (checked) d.ball.speed = 0;
-            })
-          }
+            });
+          }}
           isLight={isLight}
           variant="neutral"
         />
@@ -229,11 +243,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
         unit=" UU"
         description="Ball Spawn X Coordinate (-3900 to +3900 UU)."
         onHoverDesc={onHoverDesc}
-        onChange={(val) =>
+        onChange={(val) => {
+          onFocusBallCamera?.();
           onMutateShot((d) => {
             d.ball.location[0] = val;
-          })
-        }
+          });
+        }}
         isLight={isLight}
       />
       <CompactNumberSlider
@@ -245,11 +260,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
         unit=" UU"
         description="Ball Spawn Y Coordinate (-5000 to +5000 UU)."
         onHoverDesc={onHoverDesc}
-        onChange={(val) =>
+        onChange={(val) => {
+          onFocusBallCamera?.();
           onMutateShot((d) => {
             d.ball.location[1] = val;
-          })
-        }
+          });
+        }}
         isLight={isLight}
       />
       <CompactNumberSlider
@@ -261,11 +277,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
         unit=" UU"
         description="Ball Spawn Z Elevation (94 UU Floor to 1940 UU Ceiling)."
         onHoverDesc={onHoverDesc}
-        onChange={(val) =>
+        onChange={(val) => {
+          onFocusBallCamera?.();
           onMutateShot((d) => {
             d.ball.location[2] = val;
-          })
-        }
+          });
+        }}
         isLight={isLight}
       />
 
@@ -280,11 +297,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
             unit=" UU"
             description="Ball Launch Speed (0 to 4000 UU/s, shortcut [[] / []])."
             onHoverDesc={onHoverDesc}
-            onChange={(spd) =>
+            onChange={(spd) => {
+              onFocusBallCamera?.();
               onMutateShot((d) => {
                 d.ball.speed = spd;
-              })
-            }
+              });
+            }}
             isLight={isLight}
           />
           <CompactNumberSlider
@@ -296,11 +314,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
             unit="°"
             description="Ball Velocity Horizontal Aim Yaw (-180° to +180°)."
             onHoverDesc={onHoverDesc}
-            onChange={(deg) =>
+            onChange={(deg) => {
+              onFocusBallCamera?.();
               onMutateShot((d) => {
                 d.ball.speedYaw = degToRad(deg);
-              })
-            }
+              });
+            }}
             isLight={isLight}
           />
           <CompactNumberSlider
@@ -312,11 +331,12 @@ export const StaticTrainingAdvancedParamsSection: React.FC<
             unit="°"
             description="Ball Velocity Vertical Trajectory Pitch (-85° to +85°)."
             onHoverDesc={onHoverDesc}
-            onChange={(deg) =>
+            onChange={(deg) => {
+              onFocusBallCamera?.();
               onMutateShot((d) => {
                 d.ball.speedPitch = degToRad(deg);
-              })
-            }
+              });
+            }}
             isLight={isLight}
           />
         </>

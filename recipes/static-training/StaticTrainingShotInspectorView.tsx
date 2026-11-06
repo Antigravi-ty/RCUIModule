@@ -92,6 +92,18 @@ export const StaticTrainingShotInspectorView: React.FC<
     ? SUB_MODE_OPTIONS.filter((opt) => opt.id !== 'car-speed')
     : SUB_MODE_OPTIONS;
 
+  const focusCarCameraIfNeeded = (targetMode: EditSubMode = 'car-heading') => {
+    if (editSubMode === 'ball-speed') {
+      onChangeSubMode(targetMode);
+    }
+  };
+
+  const focusBallCameraIfNeeded = () => {
+    if (editSubMode === 'car-heading' || editSubMode === 'car-speed') {
+      onChangeSubMode('ball-speed');
+    }
+  };
+
   const sectionBg = isLight
     ? 'bg-white border-neutral-200/90 text-neutral-900'
     : 'bg-neutral-900/60 border-neutral-800 text-neutral-100';
@@ -211,15 +223,16 @@ export const StaticTrainingShotInspectorView: React.FC<
         {/* Reset Level (Air Roll & Pitch = 0) */}
         <button
           type="button"
-          onClick={() =>
+          onClick={() => {
+            focusCarCameraIfNeeded('car-heading');
             onMutateShot((d) => {
               d.car.airRoll = 0;
               d.car.headingPitch = 0;
               if (d.car.speedFollowsHeading !== false) {
                 d.car.speedPitch = 0;
               }
-            })
-          }
+            });
+          }}
           onMouseEnter={() =>
             onHoverDesc(
               'Air Roll Reset Level: Reset Car Air Roll and Pitch to horizontal level (0 deg).'
@@ -254,11 +267,12 @@ export const StaticTrainingShotInspectorView: React.FC<
           <span className="text-[11px] font-semibold">Limit Boost Amount</span>
           <ToggleSwitch
             checked={limitBoostAmount}
-            onCheckedChange={(checked) =>
+            onCheckedChange={(checked) => {
+              focusCarCameraIfNeeded();
               onMutateShot((d) => {
                 d.car.unlimitedBoost = !checked;
-              })
-            }
+              });
+            }}
             isLight={isLight}
             variant="neutral"
           />
@@ -274,11 +288,12 @@ export const StaticTrainingShotInspectorView: React.FC<
             unit="%"
             description="Initial Boost Reserve (0% – 100%). Press [O] / [P] in 3D editor to adjust."
             onHoverDesc={onHoverDesc}
-            onChange={(b) =>
+            onChange={(b) => {
+              focusCarCameraIfNeeded();
               onMutateShot((d) => {
                 d.car.initialBoost = b;
-              })
-            }
+              });
+            }}
             isLight={isLight}
           />
         )}
@@ -326,6 +341,8 @@ export const StaticTrainingShotInspectorView: React.FC<
               });
               if (checked && editSubMode === 'car-speed') {
                 onChangeSubMode('car-heading');
+              } else {
+                focusCarCameraIfNeeded(checked ? 'car-heading' : 'car-speed');
               }
             }}
             isLight={isLight}
@@ -346,7 +363,8 @@ export const StaticTrainingShotInspectorView: React.FC<
           <span className="text-[11px] font-semibold">Snap to Ground</span>
           <ToggleSwitch
             checked={currentShot.car.snapToGround}
-            onCheckedChange={(checked) =>
+            onCheckedChange={(checked) => {
+              focusCarCameraIfNeeded();
               onMutateShot((d) => {
                 d.car.snapToGround = checked;
                 if (checked) {
@@ -360,8 +378,8 @@ export const StaticTrainingShotInspectorView: React.FC<
                 } else if (d.car.location[2] < 45) {
                   d.car.location[2] = 120;
                 }
-              })
-            }
+              });
+            }}
             isLight={isLight}
             variant="neutral"
           />
@@ -384,7 +402,8 @@ export const StaticTrainingShotInspectorView: React.FC<
           <span className="text-[11px] font-semibold">Has Flip</span>
           <ToggleSwitch
             checked={currentShot.car.snapToGround ? true : hasFlip}
-            onCheckedChange={(checked) =>
+            onCheckedChange={(checked) => {
+              focusCarCameraIfNeeded();
               onMutateShot((d) => {
                 d.car.hasFlip = checked;
                 if (!checked && d.car.snapToGround) {
@@ -393,8 +412,8 @@ export const StaticTrainingShotInspectorView: React.FC<
                     d.car.location[2] = 120;
                   }
                 }
-              })
-            }
+              });
+            }}
             isLight={isLight}
             variant="neutral"
           />
@@ -415,11 +434,12 @@ export const StaticTrainingShotInspectorView: React.FC<
           <span className="text-[11px] font-semibold">Random Angular Velocity</span>
           <ToggleSwitch
             checked={currentShot.ball.randomAngularVelocity}
-            onCheckedChange={(checked) =>
+            onCheckedChange={(checked) => {
+              focusBallCameraIfNeeded();
               onMutateShot((d) => {
                 d.ball.randomAngularVelocity = checked;
-              })
-            }
+              });
+            }}
             isLight={isLight}
             variant="neutral"
           />
@@ -437,11 +457,12 @@ export const StaticTrainingShotInspectorView: React.FC<
               unit=" r/s"
               description="Ball Angular Velocity X-axis (Pitch spin in rad/s, -6 to +6)."
               onHoverDesc={onHoverDesc}
-              onChange={(v) =>
+              onChange={(v) => {
+                focusBallCameraIfNeeded();
                 onMutateShot((d) => {
                   d.ball.angularVelocity[0] = Number(v.toFixed(2));
-                })
-              }
+                });
+              }}
               isLight={isLight}
             />
             <CompactNumberSlider
@@ -453,11 +474,12 @@ export const StaticTrainingShotInspectorView: React.FC<
               unit=" r/s"
               description="Ball Angular Velocity Y-axis (Roll spin in rad/s, -6 to +6)."
               onHoverDesc={onHoverDesc}
-              onChange={(v) =>
+              onChange={(v) => {
+                focusBallCameraIfNeeded();
                 onMutateShot((d) => {
                   d.ball.angularVelocity[1] = Number(v.toFixed(2));
-                })
-              }
+                });
+              }}
               isLight={isLight}
             />
             <CompactNumberSlider
@@ -469,11 +491,12 @@ export const StaticTrainingShotInspectorView: React.FC<
               unit=" r/s"
               description="Ball Angular Velocity Z-axis (Yaw side-spin in rad/s, -6 to +6)."
               onHoverDesc={onHoverDesc}
-              onChange={(v) =>
+              onChange={(v) => {
+                focusBallCameraIfNeeded();
                 onMutateShot((d) => {
                   d.ball.angularVelocity[2] = Number(v.toFixed(2));
-                })
-              }
+                });
+              }}
               isLight={isLight}
             />
           </div>
@@ -509,6 +532,8 @@ export const StaticTrainingShotInspectorView: React.FC<
           rowHoverClass={rowHoverClass}
           onMutateShot={onMutateShot}
           onHoverDesc={onHoverDesc}
+          onFocusCarCamera={focusCarCameraIfNeeded}
+          onFocusBallCamera={focusBallCameraIfNeeded}
         />
       )}
     </div>
