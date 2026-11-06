@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
+  "updatedAt": "2026-11-06T17:03:13.100Z",
   "templateHash": "574097ceda64cb92",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -1777,8 +1777,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4AdvancedAudioRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "16dbe377538c268e",
-      "visualAstHash": "b48f2efd9fd79eb9",
+      "sizingAndConfigHash": "ea8cbc2d99f6d41b",
+      "visualAstHash": "7a148054bf69d220",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
         "src/ui-core/compounds/SettingSliderRow.tsx": "93d262e1e0c4f22c",
@@ -1788,14 +1788,15 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer4AdvancedAudioRecipe.tsx": "6b52cf5f09a20fdd",
-        "src/ui-core/recipes/hooks/useLayer4AudioAndEventBindings.ts": "c6a744e7386bf052"
+        "src/ui-core/recipes/Layer4AdvancedAudioRecipe.tsx": "b309b5334bb15e59"
       },
       "alphaDeps": [
         "src/ui-core/config/audioConfig.ts",
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
-        "src/ui-core/stores/settingRowStore.ts"
+        "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx"
       ],
       "approvedAt": "2026-11-06T12:15:46.410Z"
     },
@@ -1804,8 +1805,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4ControllerSettingsRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "30f1f8f8791911ff",
-      "visualAstHash": "5776870178fa6b71",
+      "sizingAndConfigHash": "ac51d60c8825c8de",
+      "visualAstHash": "cdb7c623b153ce0d",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1821,19 +1822,19 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer4ControllerSettingsRecipe.tsx": "bd979c3a2a8b0824",
+        "src/ui-core/recipes/Layer4ControllerSettingsRecipe.tsx": "1c1fd3b9699f7b83",
         "src/ui-core/recipes/controller/ControllerDeadzoneVisualizer.tsx": "99428b9ae60efcff",
-        "src/ui-core/recipes/controller/ControllerVisualizerOptionsSection.tsx": "d8de48c79715e8f2",
-        "src/ui-core/recipes/controller/deadzoneCanvasRenderer.ts": "f596ca272b9d9a53",
-        "src/ui-core/recipes/hooks/useLayer4ControllerSettingsBinding.ts": "d0f61ceac4dd958a"
+        "src/ui-core/recipes/controller/ControllerVisualizerOptionsSection.tsx": "9af47ef6a9aabbbb",
+        "src/ui-core/recipes/controller/deadzoneCanvasRenderer.ts": "f596ca272b9d9a53"
       },
       "alphaDeps": [
         "src/ui-core/config/inputBindings.ts",
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
       ],
@@ -1844,18 +1845,20 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "b82ff233e28f9063",
-      "visualAstHash": "dc6d73b3c6db4c93",
+      "sizingAndConfigHash": "cc85ccec50c7e360",
+      "visualAstHash": "efa3faf8f8c0cebd",
       "fileVisualHashes": {
-        "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx": "5b3229e66cd93e0e",
+        "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx": "583cdc9188c480aa",
         "src/ui-core/recipes/dev/DevSignalingRelayStatusGrid.tsx": "d789fcf19dbd63a2",
         "src/ui-core/recipes/dev/SignalingLabLiveMonitorsSection.tsx": "bd63bfac2252368a",
         "src/ui-core/recipes/dev/SignalingLabStatusAndScenariosSection.tsx": "1f19d609198435bf",
         "src/ui-core/recipes/dev/signalingLabTypes.ts": "d2665f2ce8eba9de"
       },
       "alphaDeps": [
+        "src/ui-core/manifest/surfaceCalibration.ts",
+        "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts"
+        "src/ui-core/stores/storeSnapshotScope.tsx"
       ],
       "approvedAt": "2026-11-06T12:15:46.414Z"
     },
@@ -1864,8 +1867,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4EventTriggerRulesRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "dffdfe1e1b07919c",
-      "visualAstHash": "330c3f110c5bb8c3",
+      "sizingAndConfigHash": "1637573055ec67cf",
+      "visualAstHash": "3a1c6c53054e476f",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1880,14 +1883,16 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer4EventTriggerRulesRecipe.tsx": "09603a19456e5c0d",
-        "src/ui-core/recipes/hooks/useLayer4AudioAndEventBindings.ts": "c6a744e7386bf052"
+        "src/ui-core/recipes/Layer4EventTriggerRulesRecipe.tsx": "196d7137db750b0b",
+        "src/ui-core/recipes/dev/EventTriggerRulesSection.tsx": "968a9af04d92436a"
       },
       "alphaDeps": [
         "src/ui-core/config/audioConfig.ts",
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.417Z"
@@ -1897,35 +1902,36 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4StaticTrainingPackBrowseRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "3e5c44580dabce9a",
-      "visualAstHash": "5040c8b4f50a0053",
+      "sizingAndConfigHash": "b6cd7add8441145f",
+      "visualAstHash": "01b0177f1bcf3a89",
       "fileVisualHashes": {
         "src/ui-core/primitives/Badge.tsx": "2c13f7eccf5b1baf",
         "src/ui-core/primitives/Button.tsx": "f89ab717ec972345",
         "src/ui-core/primitives/KeycapBadge.tsx": "50693226896bfa19",
         "src/ui-core/primitives/SegmentedSwitch.tsx": "afee1765f7de86ef",
         "src/ui-core/primitives/ToggleSwitch.tsx": "1cd0acabbcd1be6e",
-        "src/ui-core/recipes/Layer4StaticTrainingPackBrowseRecipe.tsx": "c2f4025586ac65b3",
-        "src/ui-core/recipes/hooks/useStaticTrainingStoreBindings.ts": "c12d7b9a983d03d7",
+        "src/ui-core/recipes/Layer4StaticTrainingPackBrowseRecipe.tsx": "397580ecc5708bdd",
         "src/ui-core/recipes/static-training/DualThumbRangeSliderRow.tsx": "7f5d6117e8a82882",
         "src/ui-core/recipes/static-training/StaticTrainingPackFolderList.tsx": "e50d502759894fc4",
         "src/ui-core/recipes/static-training/StaticTrainingPackInspectorActions.tsx": "339376c708046285",
         "src/ui-core/recipes/static-training/StaticTrainingPackMetadataInspector.tsx": "dffc95410bb22e80",
         "src/ui-core/recipes/static-training/StaticTrainingPackToolbar.tsx": "9110fbba136749d6",
         "src/ui-core/recipes/static-training/StaticTrainingQuickTogglesSection.tsx": "9b5ded016ee3c05b",
-        "src/ui-core/recipes/static-training/StaticTrainingVariationsModal.tsx": "1efbcaf601604911",
-        "src/ui-core/recipes/static-training/staticTrainingPackFilterLogic.ts": "9186fef5a1e8c1a3"
+        "src/ui-core/recipes/static-training/StaticTrainingVariationSlidersGrid.tsx": "44522161e7a46765",
+        "src/ui-core/recipes/static-training/StaticTrainingVariationsModal.tsx": "689b7451b1138b00",
+        "src/ui-core/recipes/static-training/staticTrainingPackFilterLogic.ts": "3c0bf181a905599f"
       },
       "alphaDeps": [
         "src/ui-core/config/staticTrainingVariationTypes.ts",
         "src/ui-core/config/temTrainingPackParser.ts",
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
         "src/ui-core/stores/floatingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/staticTrainingPackStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
       ],
@@ -1936,25 +1942,23 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/StaticTrainingShotInspectorDrawer.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "5cccb627523d7fd1",
-      "visualAstHash": "bcb0ea9f175d2888",
+      "sizingAndConfigHash": "ed2451d5e02c499d",
+      "visualAstHash": "b6bfc70a6190aae4",
       "fileVisualHashes": {
         "src/ui-core/compounds/CollapsibleNumberedRailList.tsx": "9fda4832718a1100",
         "src/ui-core/compounds/dialogue/dialogueStore.ts": "b0987bc553ea677a",
         "src/ui-core/compounds/dialogue/dialogueTypes.ts": "2493994aa372f1da",
         "src/ui-core/primitives/KeycapBadge.tsx": "50693226896bfa19",
         "src/ui-core/primitives/ToggleSwitch.tsx": "1cd0acabbcd1be6e",
-        "src/ui-core/recipes/StaticTrainingShotInspectorDrawer.tsx": "dcfeb90030d47fc9",
-        "src/ui-core/recipes/hooks/useStaticTrainingStoreBindings.ts": "c12d7b9a983d03d7",
+        "src/ui-core/recipes/StaticTrainingShotInspectorDrawer.tsx": "f497a02c8152e6ce",
         "src/ui-core/recipes/static-training/CompactNumberSlider.tsx": "423fd60473f8ad0f",
         "src/ui-core/recipes/static-training/StaticTrainingAdvancedParamsSection.tsx": "f61326d1b499e857",
         "src/ui-core/recipes/static-training/StaticTrainingShotInspectorView.tsx": "6bdd2707c8677cc5",
         "src/ui-core/recipes/static-training/staticTrainingTypes.ts": "9563b100c00fa2ae"
       },
       "alphaDeps": [
-        "src/ui-core/config/staticTrainingVariationTypes.ts",
-        "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/staticTrainingPackStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"

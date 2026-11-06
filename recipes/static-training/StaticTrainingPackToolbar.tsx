@@ -1,18 +1,22 @@
 import React from 'react';
 import { Check, Plus, Upload, X } from 'lucide-react';
 
-export interface StaticTrainingPackToolbarProps {
-  isLight: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
+export interface StaticTrainingCreatePackDraft {
   isCreatingPack: boolean;
   setIsCreatingPack: React.Dispatch<React.SetStateAction<boolean>>;
   newTitle: string;
   setNewTitle: (val: string) => void;
   newDescription: string;
   setNewDescription: (val: string) => void;
+  onCreateSubmit: () => void;
+}
+
+export interface StaticTrainingPackToolbarProps {
+  isLight: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  createDraft: StaticTrainingCreatePackDraft;
   onImportClick: () => void;
   onImportFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onCreateSubmit: () => void;
   onHoverDesc: (desc: string | null) => void;
 }
 
@@ -20,15 +24,17 @@ export const StaticTrainingPackToolbar: React.FC<StaticTrainingPackToolbarProps>
   ({
     isLight,
     fileInputRef,
-    isCreatingPack,
-    setIsCreatingPack,
-    newTitle,
-    setNewTitle,
-    newDescription,
-    setNewDescription,
+    createDraft: {
+      isCreatingPack,
+      setIsCreatingPack,
+      newTitle,
+      setNewTitle,
+      newDescription,
+      setNewDescription,
+      onCreateSubmit,
+    },
     onImportClick,
     onImportFileChange,
-    onCreateSubmit,
     onHoverDesc,
   }) => {
     return (

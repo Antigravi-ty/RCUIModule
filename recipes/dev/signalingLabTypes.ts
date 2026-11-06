@@ -1,3 +1,4 @@
+import type { StandardSurfaceProps } from '../../manifest/surfaceMetaTypes';
 import type { PanelSizingConfig } from '../../tokens/menuLayoutTokens';
 
 export type CanonicalLabRelayId = 'emqx_cn' | 'emqx_gb' | 'supabase_jp' | 'supabase_sg';
@@ -89,20 +90,6 @@ export interface SignalingLabProbeSummaryView {
 }
 
 export interface Layer4DevSignalingLabStateOverride {
-  roomCode?: string;
-  onRoomCodeChange?: (next: string) => void;
-  roomPassword?: string;
-  onRoomPasswordChange?: (next: string) => void;
-  customSourceRelay?: CanonicalLabRelayId;
-  onCustomSourceRelayChange?: (next: CanonicalLabRelayId) => void;
-  customTargetRelay?: CanonicalLabRelayId;
-  onCustomTargetRelayChange?: (next: CanonicalLabRelayId) => void;
-  sizing?: PanelSizingConfig;
-}
-
-export interface Layer4DevSignalingLabRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
   sizing?: PanelSizingConfig;
   endpointConfig?: SignalingLabEndpointViewConfig;
   probeSummary?: SignalingLabProbeSummaryView | null;
@@ -111,6 +98,10 @@ export interface Layer4DevSignalingLabRecipeProps {
   onRoomCodeChange?: (next: string) => void;
   roomPassword?: string;
   onRoomPasswordChange?: (next: string) => void;
+  customSourceRelay?: CanonicalLabRelayId;
+  onCustomSourceRelayChange?: (next: CanonicalLabRelayId) => void;
+  customTargetRelay?: CanonicalLabRelayId;
+  onCustomTargetRelayChange?: (next: CanonicalLabRelayId) => void;
   isBusy?: boolean;
   activeActionLabel?: string | null;
   lastResultBanner?: { ok: boolean; text: string } | null;
@@ -119,7 +110,12 @@ export interface Layer4DevSignalingLabRecipeProps {
   onOneClickFullDiagnostic?: () => void;
   onRunScenario?: (scenario: SignalingLabScenarioId, label: string) => void;
   onClearTraces?: () => void;
+}
+
+export interface Layer4DevSignalingLabRecipeProps extends StandardSurfaceProps {
+  sizing?: PanelSizingConfig;
   stateOverride?: Layer4DevSignalingLabStateOverride;
+  className?: string;
 }
 
 export const DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG: SignalingLabEndpointViewConfig = {

@@ -2,7 +2,10 @@ import React from 'react';
 import { SettingSegmentedRow } from '../../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../../compounds/SettingToggleRow';
 import { SettingSliderRow } from '../../compounds/SettingSliderRow';
-import { ControllerDeadzoneVisualizer } from './ControllerDeadzoneVisualizer';
+import {
+  ControllerDeadzoneVisualizer,
+  type ControllerDeadzoneRenderConfig,
+} from './ControllerDeadzoneVisualizer';
 import type { DeadzoneAntiAliasing, StickAxisOption } from './deadzoneCanvasRenderer';
 
 export interface ControllerVisualizerInputState {
@@ -17,14 +20,8 @@ export interface ControllerVisualizerInputState {
 
 export interface ControllerVisualizerOptionsSectionProps {
   controllerState: ControllerVisualizerInputState;
-  showCircularOverlay: boolean;
-  onShowCircularOverlayChange: (val: boolean) => void;
-  maxDiagonal: number;
-  onMaxDiagonalChange: (val: number) => void;
-  altArrow: boolean;
-  onAltArrowChange: (val: boolean) => void;
-  antiAliasing: DeadzoneAntiAliasing;
-  onAntiAliasingChange: (val: DeadzoneAntiAliasing) => void;
+  renderConfig: ControllerDeadzoneRenderConfig;
+  onRenderConfigChange: (patch: Partial<ControllerDeadzoneRenderConfig>) => void;
   developerMode?: boolean;
   isLight?: boolean;
   onHoverDesc: (desc: string | null) => void;
@@ -43,26 +40,22 @@ export const ControllerVisualizerOptionsSection: React.FC<
     invertPitchAxis,
     selectedGamepadIndex,
   },
-  showCircularOverlay,
-  onShowCircularOverlayChange,
-  maxDiagonal,
-  onMaxDiagonalChange,
-  altArrow,
-  onAltArrowChange,
-  antiAliasing,
-  onAntiAliasingChange,
+  renderConfig,
+  onRenderConfigChange,
   developerMode = false,
   isLight = false,
   onHoverDesc,
   onResetToDefault,
 }) => {
+  const { showCircularOverlay, maxDiagonal, altArrow, antiAliasing } = renderConfig;
+
   return (
     <>
       {/* 9. Show Circular Overlay (HalfwayDead Visualizer Option) */}
       <SettingToggleRow
         title="Show Circular Overlay"
         checked={showCircularOverlay}
-        onChange={onShowCircularOverlayChange}
+        onChange={(val) => onRenderConfigChange({ showCircularOverlay: val })}
         bordered={false}
         showDescription={false}
         hoverDescription="Display circular physical thumbstick boundary overlay on the Turning and Dodging diagrams."
@@ -78,7 +71,7 @@ export const ControllerVisualizerOptionsSection: React.FC<
         max={1.0}
         step={0.01}
         value={maxDiagonal}
-        onChange={onMaxDiagonalChange}
+        onChange={(val) => onRenderConfigChange({ maxDiagonal: val })}
         disabled={!showCircularOverlay}
         layout="inline"
         bordered={false}
@@ -94,7 +87,7 @@ export const ControllerVisualizerOptionsSection: React.FC<
       <SettingToggleRow
         title="Display Alternative Arrow"
         checked={altArrow}
-        onChange={onAltArrowChange}
+        onChange={(val) => onRenderConfigChange({ altArrow: val })}
         bordered={false}
         showDescription={false}
         hoverDescription="Anchor the Turning vector arrow at the deadzone offset pointing to the raw cursor position."
@@ -107,7 +100,9 @@ export const ControllerVisualizerOptionsSection: React.FC<
       <SettingSegmentedRow
         title="Anti-Aliasing"
         value={antiAliasing}
-        onChange={(val) => onAntiAliasingChange(val as DeadzoneAntiAliasing)}
+        onChange={(val) =>
+          onRenderConfigChange({ antiAliasing: val as DeadzoneAntiAliasing })
+        }
         options={[
           { value: 'off', label: 'Off' },
           { value: '4x', label: '4x' },
@@ -124,17 +119,16 @@ export const ControllerVisualizerOptionsSection: React.FC<
 
       {/* 13. Turning & Dodging Deadzone Visualizer + Dual Raw Input Readouts */}
       <ControllerDeadzoneVisualizer
-        deadzone={stickDeadzone}
-        dodgeDeadzone={dodgeDeadzone}
-        showCircularOverlay={showCircularOverlay}
-        maxDiagonal={maxDiagonal}
-        altArrow={altArrow}
-        antiAliasing={antiAliasing}
-        steerAxisRole={steerAxisRole}
-        invertSteerAxis={invertSteerAxis}
-        pitchAxisRole={pitchAxisRole}
-        invertPitchAxis={invertPitchAxis}
-        selectedGamepadIndex={selectedGamepadIndex}
+        axisState={{
+          deadzone: stickDeadzone,
+          dodgeDeadzone,
+          steerAxisRole,
+          invertSteerAxis,
+          pitchAxisRole,
+          invertPitchAxis,
+          selectedGamepadIndex,
+        }}
+        renderConfig={renderConfig}
         isLight={isLight}
         onHover={(desc) => onHoverDesc(desc)}
         onLeave={() => onHoverDesc(null)}

@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useLayer4EventTriggerRulesStoreBinding } from './hooks/useLayer4AudioAndEventBindings';
+import React, { useState, useEffect } from 'react';
 import {
   Timer,
   Waves,
@@ -12,32 +11,48 @@ import {
   Terminal,
   Filter,
 } from 'lucide-react';
-import { Card } from '../layout/Card';
+import {
+  audioConfig,
+  CONSOLE_LOG_EVENT_CATALOG,
+  selectAllEventLogs,
+  deselectAllEventLogs,
+  setEventLogFilterItem,
+  createDefaultLogEventFilter,
+} from '../config/audioConfig';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
-import { DualGrabberSlider } from '../primitives/DualGrabberSlider';
-import { DropdownMenu } from '../compounds/DropdownMenu';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
-import { ToggleSwitch } from '../primitives/ToggleSwitch';
-import {
-  EventFilterMatrix,
-  EventCatalogEntry,
-} from '../compounds/tuner/EventFilterMatrix';
+import type { EventCatalogEntry } from '../compounds/tuner/EventFilterMatrix';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import { resolveCalibratedSurfaceSizing } from '../manifest/surfaceCalibration';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { useStoreSnapshotOverride } from '../stores/storeSnapshotScope';
+import {
+  EventTriggerRulesSection,
+  type EventTriggerRule,
+} from './dev/EventTriggerRulesSection';
 
-export interface EventTriggerRule {
-  id: string;
-  name: string;
-  conditionType: 'ball-speed' | 'boost-below' | 'car-air-time' | 'touch-count';
-  range: [number, number];
-  unit: string;
-  minLimit: number;
-  maxLimit: number;
-  actionType: 'reset-shot' | 'award-goal' | 'slow-motion' | 'flash-hud';
-  enabled: boolean;
-}
+export type { EventTriggerRule } from './dev/EventTriggerRulesSection';
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer4EventTriggerRulesRecipe',
+  title: 'Event & Trigger Rules Engine',
+  subtitle:
+    'Audio debounce shielding, collision impulse thresholds, event filter catalog, and telemetry rules',
+  icon: 'filter',
+  layer: 'layer4',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: 580,
+    height: 560,
+    minHeight: 240,
+    maxHeight: 1120,
+  },
+};
 
 export interface Layer4EventTriggerRulesStateOverride {
   hitCooldownMs?: number;
@@ -64,14 +79,12 @@ export interface Layer4EventTriggerRulesStateOverride {
   onToggleEventHex?: (hex: string) => void;
   onSelectAllEvents?: () => void;
   onDeselectAllEvents?: () => void;
-}
-
-export interface Layer4EventTriggerRulesRecipeProps {
-  isLight?: boolean;
   defaultRules?: EventTriggerRule[];
   onChange?: (rules: EventTriggerRule[]) => void;
   eventCatalogItems?: EventCatalogEntry[];
-  onBack?: () => void;
+}
+
+export interface Layer4EventTriggerRulesRecipeProps extends StandardSurfaceProps {
   stateOverride?: Layer4EventTriggerRulesStateOverride;
   className?: string;
 }
@@ -101,414 +114,368 @@ const DEFAULT_TRIGGER_RULES: EventTriggerRule[] = [
   },
 ];
 
-const DEFAULT_EVENT_CATALOG_ITEMS: EventCatalogEntry[] = [
-  { hex: '0x01', id: 'CAR_BALL_TOUCH', name: 'Car-Ball Impact Impulse' },
-  { hex: '0x02', id: 'WORLD_BOUNCE', name: 'Arena Wall / Rim Bounce' },
-  { hex: '0x03', id: 'BOOST_PICKUP', name: 'Boost Orb Collect / Respawn' },
-  { hex: '0x04', id: 'SUPERSONIC_STATE', name: 'Supersonic Threshold Cross' },
-  { hex: '0x05', id: 'GOAL_EXPLOSION', name: 'Goal Line Plane Crossing' },
-  { hex: '0x06', id: 'CAR_DEMOLITION', name: 'Car-Car Bump & Demolition' },
-  { hex: '0x07', id: 'FLIP_RESET_CONTACT', name: '4-Wheel Undercarriage Reset' },
-  { hex: '0x08', id: 'KICKOFF_COUNTDOWN', name: 'Kickoff Phase State Transition' },
-];
+const EVENT_CATALOG_ITEMS: EventCatalogEntry[] = CONSOLE_LOG_EVENT_CATALOG.map(
+  (item) => ({
+    hex: item.hex,
+    id: item.id,
+    name: item.name,
+  })
+);
 
-export const Layer4EventTriggerRulesRecipe: React.FC<Layer4EventTriggerRulesRecipeProps> = React.memo((rawProps) => {
-  const {
-  isLight = true,
-  defaultRules = DEFAULT_TRIGGER_RULES,
-  onChange,
-  eventCatalogItems = DEFAULT_EVENT_CATALOG_ITEMS,
-  hitCooldownMs: controlledHitCooldownMs,
-  onHitCooldownMsChange,
-  scrapeCooldownMs: controlledScrapeCooldownMs,
-  onScrapeCooldownMsChange,
-  supersonicHoldMs: controlledSupersonicHoldMs,
-  onSupersonicHoldMsChange,
-  lightTouchImpulse: controlledLightTouchImpulse,
-  onLightTouchImpulseChange,
-  mediumHitImpulse: controlledMediumHitImpulse,
-  onMediumHitImpulseChange,
-  heavyBoomImpulse: controlledHeavyBoomImpulse,
-  onHeavyBoomImpulseChange,
-  rimClankGate: controlledRimClankGate,
-  onRimClankGateChange,
-  carBumpGate: controlledCarBumpGate,
-  onCarBumpGateChange,
-  enableConsoleLog: controlledEnableConsoleLog,
-  onEnableConsoleLogChange,
-  logHitStructsOnly: controlledLogHitStructsOnly,
-  onLogHitStructsOnlyChange,
-  selectedEvents: controlledSelectedEvents,
-  onToggleEventHex,
-  onSelectAllEvents,
-  onDeselectAllEvents,
-  onBack = () => {},
-  className = '',
-} = useLayer4EventTriggerRulesStoreBinding({ ...rawProps.stateOverride, ...rawProps });
-  const { rowGap } = useSettingActionRowStore();
-  const [rules, setRules] = useState<EventTriggerRule[]>(defaultRules);
-  // Audio Debounce & Shielding (3 sliders)
-  const [internalHitCooldownMs, setInternalHitCooldownMs] = useState(45);
-  const [internalScrapeCooldownMs, setInternalScrapeCooldownMs] = useState(80);
-  const [internalSupersonicHoldMs, setInternalSupersonicHoldMs] = useState(220);
-  // Collision Impulse Thresholds (5 sliders)
-  const [internalLightTouchImpulse, setInternalLightTouchImpulse] = useState(120);
-  const [internalMediumHitImpulse, setInternalMediumHitImpulse] = useState(650);
-  const [internalHeavyBoomImpulse, setInternalHeavyBoomImpulse] = useState(1450);
-  const [internalRimClankGate, setInternalRimClankGate] = useState(420);
-  const [internalCarBumpGate, setInternalCarBumpGate] = useState(550);
-  // Event Stream & Console Logging
-  const [internalEnableConsoleLog, setInternalEnableConsoleLog] = useState(true);
-  const [internalLogHitStructsOnly, setInternalLogHitStructsOnly] = useState(false);
-  const [internalSelectedEvents, setInternalSelectedEvents] = useState<Record<string, boolean>>({
-    '0x01': true,
-    '0x02': true,
-    '0x03': false,
-    '0x04': true,
-    '0x05': true,
-    '0x06': true,
-    '0x07': true,
-    '0x08': false,
-  });
-  const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
-  const sizing = useMenuLayoutStore((s) => s.panels['layer4-event-trigger-rules']);
+export const Layer4EventTriggerRulesRecipe: React.FC<Layer4EventTriggerRulesRecipeProps> =
+  React.memo(({ isLight = true, onBack, stateOverride, className = '' }) => {
+    const goBack = useAppStore((s) => s.goBack);
+    const { rowGap } = useSettingActionRowStore();
+    const scopeOverride =
+      useStoreSnapshotOverride<Layer4EventTriggerRulesStateOverride>('eventTriggerRules');
+    const ov = { ...scopeOverride, ...stateOverride };
 
-  const hitCooldownMs = controlledHitCooldownMs ?? internalHitCooldownMs;
-  const scrapeCooldownMs = controlledScrapeCooldownMs ?? internalScrapeCooldownMs;
-  const supersonicHoldMs = controlledSupersonicHoldMs ?? internalSupersonicHoldMs;
-  const lightTouchImpulse = controlledLightTouchImpulse ?? internalLightTouchImpulse;
-  const mediumHitImpulse = controlledMediumHitImpulse ?? internalMediumHitImpulse;
-  const heavyBoomImpulse = controlledHeavyBoomImpulse ?? internalHeavyBoomImpulse;
-  const rimClankGate = controlledRimClankGate ?? internalRimClankGate;
-  const carBumpGate = controlledCarBumpGate ?? internalCarBumpGate;
-  const enableConsoleLog = controlledEnableConsoleLog ?? internalEnableConsoleLog;
-  const logHitStructsOnly = controlledLogHitStructsOnly ?? internalLogHitStructsOnly;
-  const selectedEvents = controlledSelectedEvents ?? internalSelectedEvents;
+    const [rules, setRules] = useState<EventTriggerRule[]>(
+      () => ov.defaultRules ?? DEFAULT_TRIGGER_RULES
+    );
+    const [internalHitCooldownMs, setInternalHitCooldownMs] = useState<number>(() =>
+      Number(audioConfig.get('carBallHitCooldownMs') ?? 40)
+    );
+    const [internalScrapeCooldownMs, setInternalScrapeCooldownMs] = useState<number>(() =>
+      Number(audioConfig.get('goalpostHitCooldownMs') ?? 60)
+    );
+    const [internalSupersonicHoldMs, setInternalSupersonicHoldMs] = useState<number>(() =>
+      Number(audioConfig.get('incidentCooldownMs') ?? 40)
+    );
+    const [internalLightTouchImpulse, setInternalLightTouchImpulse] = useState<number>(() =>
+      Number(audioConfig.get('carBallHitImpulseThreshold') ?? 120)
+    );
+    const [internalMediumHitImpulse, setInternalMediumHitImpulse] = useState<number>(() =>
+      Number(audioConfig.get('ballGroundHitThreshold') ?? 140)
+    );
+    const [internalHeavyBoomImpulse, setInternalHeavyBoomImpulse] = useState<number>(() =>
+      Number(audioConfig.get('ballWallHitThreshold') ?? 160)
+    );
+    const [internalRimClankGate, setInternalRimClankGate] = useState<number>(() =>
+      Number(audioConfig.get('goalpostHitThreshold') ?? 120)
+    );
+    const [internalCarBumpGate, setInternalCarBumpGate] = useState<number>(() =>
+      Number(audioConfig.get('netDualTriggerAngleDeg') ?? 60)
+    );
+    const [internalEnableConsoleLog, setInternalEnableConsoleLog] = useState<boolean>(() =>
+      Boolean(audioConfig.get('logAllEvents'))
+    );
+    const [internalLogHitStructsOnly, setInternalLogHitStructsOnly] = useState<boolean>(() =>
+      Boolean(audioConfig.get('logCarBallHitEvents'))
+    );
+    const [internalSelectedEvents, setInternalSelectedEvents] = useState<
+      Record<string, boolean>
+    >(() => ({
+      ...(audioConfig.config?.logEventFilter || createDefaultLogEventFilter()),
+    }));
+    const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
-  const updateRule = (id: string, patch: Partial<EventTriggerRule>) => {
-    const next = rules.map((r) => (r.id === id ? { ...r, ...patch } : r));
-    setRules(next);
-    onChange?.(next);
-  };
+    const storeSizing = useMenuLayoutStore((s) => s.panels['layer4-event-trigger-rules']);
+    const calibratedSizing = resolveCalibratedSurfaceSizing(
+      SURFACE_META.id,
+      SURFACE_META.defaultSizing
+    );
+    const sizing = storeSizing ?? {
+      mode: calibratedSizing.mode === 'fixed' ? ('fixed' as const) : ('auto' as const),
+      width: calibratedSizing.width,
+      targetHeight:
+        typeof calibratedSizing.height === 'number' ? calibratedSizing.height : 560,
+      minHeight: calibratedSizing.minHeight ?? 240,
+      maxHeight: calibratedSizing.maxHeight ?? 1120,
+    };
 
-  const handleToggleEventHex = (hex: string) => {
-    if (onToggleEventHex) {
-      onToggleEventHex(hex);
-      return;
-    }
-    const key = hex.toLowerCase();
-    setInternalSelectedEvents((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+    useEffect(() => {
+      const handleSync = () => {
+        setInternalHitCooldownMs(Number(audioConfig.get('carBallHitCooldownMs') ?? 40));
+        setInternalScrapeCooldownMs(Number(audioConfig.get('goalpostHitCooldownMs') ?? 60));
+        setInternalSupersonicHoldMs(Number(audioConfig.get('incidentCooldownMs') ?? 40));
+        setInternalLightTouchImpulse(
+          Number(audioConfig.get('carBallHitImpulseThreshold') ?? 120)
+        );
+        setInternalMediumHitImpulse(Number(audioConfig.get('ballGroundHitThreshold') ?? 140));
+        setInternalHeavyBoomImpulse(Number(audioConfig.get('ballWallHitThreshold') ?? 160));
+        setInternalRimClankGate(Number(audioConfig.get('goalpostHitThreshold') ?? 120));
+        setInternalCarBumpGate(Number(audioConfig.get('netDualTriggerAngleDeg') ?? 60));
+        setInternalEnableConsoleLog(Boolean(audioConfig.get('logAllEvents')));
+        setInternalLogHitStructsOnly(Boolean(audioConfig.get('logCarBallHitEvents')));
+        setInternalSelectedEvents({
+          ...(audioConfig.config?.logEventFilter || createDefaultLogEventFilter()),
+        });
+      };
+      const unsub = audioConfig.subscribe(handleSync);
+      return () => {
+        unsub();
+      };
+    }, []);
 
-  const handleSelectAllEvents = () => {
-    if (onSelectAllEvents) {
-      onSelectAllEvents();
-      return;
-    }
-    const next: Record<string, boolean> = {};
-    eventCatalogItems.forEach((i) => {
-      next[i.hex.toLowerCase()] = true;
-    });
-    setInternalSelectedEvents(next);
-  };
+    const eventCatalogItems = ov.eventCatalogItems ?? EVENT_CATALOG_ITEMS;
+    const hitCooldownMs = ov.hitCooldownMs ?? internalHitCooldownMs;
+    const scrapeCooldownMs = ov.scrapeCooldownMs ?? internalScrapeCooldownMs;
+    const supersonicHoldMs = ov.supersonicHoldMs ?? internalSupersonicHoldMs;
+    const lightTouchImpulse = ov.lightTouchImpulse ?? internalLightTouchImpulse;
+    const mediumHitImpulse = ov.mediumHitImpulse ?? internalMediumHitImpulse;
+    const heavyBoomImpulse = ov.heavyBoomImpulse ?? internalHeavyBoomImpulse;
+    const rimClankGate = ov.rimClankGate ?? internalRimClankGate;
+    const carBumpGate = ov.carBumpGate ?? internalCarBumpGate;
+    const enableConsoleLog = ov.enableConsoleLog ?? internalEnableConsoleLog;
+    const logHitStructsOnly = ov.logHitStructsOnly ?? internalLogHitStructsOnly;
+    const selectedEvents = ov.selectedEvents ?? internalSelectedEvents;
 
-  const handleDeselectAllEvents = () => {
-    if (onDeselectAllEvents) {
-      onDeselectAllEvents();
-      return;
-    }
-    setInternalSelectedEvents({});
-  };
+    const updateRule = (id: string, patch: Partial<EventTriggerRule>) => {
+      const next = rules.map((r) => (r.id === id ? { ...r, ...patch } : r));
+      setRules(next);
+      ov.onChange?.(next);
+    };
 
-  return (
-    <PanelContainer
-      isLight={isLight}
-      sizing={sizing}
-      className={`w-full select-none ${className}`}
-    >
-      <PanelHeader
+    const handleToggleEventHex = (hex: string) => {
+      if (ov.onToggleEventHex) {
+        ov.onToggleEventHex(hex);
+        return;
+      }
+      const key = hex.toLowerCase();
+      const nextVal = !Boolean(selectedEvents[key]);
+      setEventLogFilterItem(key, nextVal);
+      setInternalSelectedEvents((prev) => ({ ...prev, [key]: nextVal }));
+    };
+
+    const handleSelectAllEvents = () => {
+      if (ov.onSelectAllEvents) {
+        ov.onSelectAllEvents();
+        return;
+      }
+      selectAllEventLogs();
+      const next: Record<string, boolean> = {};
+      eventCatalogItems.forEach((i) => {
+        next[i.hex.toLowerCase()] = true;
+      });
+      setInternalEnableConsoleLog(true);
+      setInternalSelectedEvents(next);
+    };
+
+    const handleDeselectAllEvents = () => {
+      if (ov.onDeselectAllEvents) {
+        ov.onDeselectAllEvents();
+        return;
+      }
+      deselectAllEventLogs();
+      setInternalEnableConsoleLog(false);
+      setInternalSelectedEvents({});
+    };
+
+    return (
+      <PanelContainer
         isLight={isLight}
-        title="EVENT & TRIGGER RULES ENGINE"
-        onBack={onBack}
-      />
+        sizing={sizing}
+        className={`w-full select-none ${className}`}
+      >
+        <PanelHeader
+          isLight={isLight}
+          title="EVENT & TRIGGER RULES ENGINE"
+          onBack={onBack ?? goBack}
+        />
 
-      <PanelContent scrollable={true} className="flex flex-col gap-3">
-        {/* Audio Debounce & Collision Impulse Thresholds (Unified Slider Rows) */}
-        <div className="flex flex-col" style={{ gap: `${rowGap}px` }}>
-          <SettingSliderRow
-            icon={Timer}
-            iconColor="text-amber-400"
-            title="Car-Ball Hit Cooldown"
-            min={0}
-            max={250}
-            step={5}
-            value={hitCooldownMs}
-            onChange={(val) => {
-              if (onHitCooldownMsChange) onHitCooldownMsChange(val);
-              else setInternalHitCooldownMs(val);
-            }}
-            unit=" ms"
-            layout="inline"
-            developerMode={true}
-            editable={true}
-            isLight={isLight}
-          />
-          <SettingSliderRow
-            icon={Waves}
-            iconColor="text-sky-400"
-            title="Surface Scrape Cooldown"
-            min={0}
-            max={500}
-            step={5}
-            value={scrapeCooldownMs}
-            onChange={(val) => {
-              if (onScrapeCooldownMsChange) onScrapeCooldownMsChange(val);
-              else setInternalScrapeCooldownMs(val);
-            }}
-            unit=" ms"
-            layout="inline"
-            developerMode={true}
-            editable={true}
-            isLight={isLight}
-          />
-          <SettingSliderRow
-            icon={Zap}
-            iconColor="text-purple-400"
-            title="Supersonic Transition Hold"
-            min={0}
-            max={600}
-            step={10}
-            value={supersonicHoldMs}
-            onChange={(val) => {
-              if (onSupersonicHoldMsChange) onSupersonicHoldMsChange(val);
-              else setInternalSupersonicHoldMs(val);
-            }}
-            unit=" ms"
-            layout="inline"
-            developerMode={true}
-            editable={true}
-            isLight={isLight}
-          />
-          <SettingSliderRow
-            icon={Feather}
-            iconColor="text-emerald-400"
-            title="Light Touch Min Impulse"
-            min={0}
-            max={1000}
-            step={10}
-            value={lightTouchImpulse}
-            onChange={(val) => {
-              if (onLightTouchImpulseChange) onLightTouchImpulseChange(val);
-              else setInternalLightTouchImpulse(val);
-            }}
-            unit=" UU/s"
-            layout="inline"
-            developerMode={true}
-            editable={true}
-            isLight={isLight}
-          />
-          <SettingSliderRow
-            icon={Activity}
-            iconColor="text-cyan-400"
-            title="Medium Hit Impulse"
-            min={0}
-            max={1200}
-            step={25}
-            value={mediumHitImpulse}
-            onChange={(val) => {
-              if (onMediumHitImpulseChange) onMediumHitImpulseChange(val);
-              else setInternalMediumHitImpulse(val);
-            }}
-            unit=" UU/s"
-            layout="inline"
-            developerMode={true}
-            editable={true}
-            isLight={isLight}
-          />
-          <SettingSliderRow
-            icon={Flame}
-            iconColor="text-rose-400"
-            title="Heavy Boom Impulse"
-            min={0}
-            max={2500}
-            step={50}
-            value={heavyBoomImpulse}
-            onChange={(val) => {
-              if (onHeavyBoomImpulseChange) onHeavyBoomImpulseChange(val);
-              else setInternalHeavyBoomImpulse(val);
-            }}
-            unit=" UU/s"
-            layout="inline"
-            developerMode={true}
-            editable={true}
-            isLight={isLight}
-          />
-          <SettingSliderRow
-            icon={ShieldAlert}
-            iconColor="text-orange-400"
-            title="Rim / Post Clank Gate"
-            min={0}
-            max={1200}
-            step={20}
-            value={rimClankGate}
-            onChange={(val) => {
-              if (onRimClankGateChange) onRimClankGateChange(val);
-              else setInternalRimClankGate(val);
-            }}
-            unit=" UU/s"
-            layout="inline"
-            developerMode={true}
-            editable={true}
-            isLight={isLight}
-          />
-          <SettingSliderRow
-            icon={Car}
-            iconColor="text-indigo-400"
-            title="Car-Car Bump Gate"
-            min={0}
-            max={1500}
-            step={5}
-            value={carBumpGate}
-            onChange={(val) => {
-              if (onCarBumpGateChange) onCarBumpGateChange(val);
-              else setInternalCarBumpGate(val);
-            }}
-            unit=" UU/s"
-            layout="inline"
-            developerMode={true}
-            editable={true}
-            isLight={isLight}
-          />
-          <SettingToggleRow
-            icon={Terminal}
-            iconColor="text-emerald-400"
-            title="Enable Event Console Log"
-            checked={enableConsoleLog}
-            onCheckedChange={(val) => {
-              if (onEnableConsoleLogChange) onEnableConsoleLogChange(val);
-              else setInternalEnableConsoleLog(val);
-            }}
-            isLight={isLight}
-          />
-          <SettingToggleRow
-            icon={Filter}
-            iconColor="text-sky-400"
-            title="Log Car-Ball Hit Structs Only"
-            checked={logHitStructsOnly}
-            onCheckedChange={(val) => {
-              if (onLogHitStructsOnlyChange) onLogHitStructsOnlyChange(val);
-              else setInternalLogHitStructsOnly(val);
-            }}
-            isLight={isLight}
-          />
-        </div>
-
-        {/* Event Stream Filter Matrix */}
-        <Card isLight={isLight} variant="outlined" className="p-3.5 flex flex-col gap-2">
-          <EventFilterMatrix
-            items={eventCatalogItems}
-            selectedMap={selectedEvents}
-            onToggleItem={handleToggleEventHex}
-            onSelectAll={handleSelectAllEvents}
-            onDeselectAll={handleDeselectAllEvents}
-            isLight={isLight}
-          />
-        </Card>
-
-        {rules.map((rule) => (
-          <Card
-            key={rule.id}
-            isLight={isLight}
-            variant="outlined"
-            onMouseEnter={() =>
-              setHoveredDesc(
-                `${rule.name}: Evaluated every physics tick (120Hz) — [${rule.range[0]}${rule.unit} .. ${rule.range[1]}${rule.unit}].`
-              )
-            }
-            onMouseLeave={() => setHoveredDesc(null)}
-            className="p-3.5 flex flex-col gap-3"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider">
-                {rule.name}
-              </h3>
-              <ToggleSwitch
-                label="Enabled"
-                checked={rule.enabled}
-                onCheckedChange={(enabled) => updateRule(rule.id, { enabled })}
-                isLight={isLight}
-              />
-            </div>
-
-            <div
-              className={`grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t ${
-                isLight ? 'border-neutral-200' : 'border-neutral-800'
-              }`}
-            >
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
-                  Telemetry Condition
-                </span>
-                <DropdownMenu
-                  isLight={isLight}
-                  options={[
-                    { label: 'Ball Speed On Goal (kph)', value: 'ball-speed' },
-                    { label: 'Remaining Boost Tank (%)', value: 'boost-below' },
-                    { label: 'Continuous Car Air Time (s)', value: 'car-air-time' },
-                    { label: 'Aerial Ball Touches', value: 'touch-count' },
-                  ]}
-                  value={rule.conditionType}
-                  onChange={(v) =>
-                    updateRule(rule.id, {
-                      conditionType: v as EventTriggerRule['conditionType'],
-                    })
-                  }
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
-                  Triggered Action
-                </span>
-                <DropdownMenu
-                  isLight={isLight}
-                  options={[
-                    { label: 'Award Valid Goal', value: 'award-goal' },
-                    { label: 'Reset Shot Immediately', value: 'reset-shot' },
-                    { label: 'Engage 25% Slow Motion', value: 'slow-motion' },
-                    { label: 'Flash HUD Telemetry Alert', value: 'flash-hud' },
-                  ]}
-                  value={rule.actionType}
-                  onChange={(v) =>
-                    updateRule(rule.id, {
-                      actionType: v as EventTriggerRule['actionType'],
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <DualGrabberSlider
-              label="Acceptance Threshold Band"
-              min={rule.minLimit}
-              max={rule.maxLimit}
-              step={1}
-              value={rule.range}
-              onChange={(range) => updateRule(rule.id, { range })}
-              unit={rule.unit}
+        <PanelContent scrollable={true} className="flex flex-col gap-3">
+          {/* Audio Debounce & Collision Impulse Thresholds (Unified Slider Rows) */}
+          <div className="flex flex-col" style={{ gap: `${rowGap}px` }}>
+            <SettingSliderRow
+              icon={Timer}
+              iconColor="text-amber-400"
+              title="Car-Ball Hit Cooldown"
+              min={0}
+              max={250}
+              step={5}
+              value={hitCooldownMs}
+              onChange={(val) => {
+                setInternalHitCooldownMs(val);
+                if (ov.onHitCooldownMsChange) ov.onHitCooldownMsChange(val);
+                else audioConfig.set('carBallHitCooldownMs', val);
+              }}
+              unit=" ms"
+              layout="inline"
+              developerMode={true}
+              editable={true}
               isLight={isLight}
             />
-          </Card>
-        ))}
-      </PanelContent>
+            <SettingSliderRow
+              icon={Waves}
+              iconColor="text-sky-400"
+              title="Surface Scrape Cooldown"
+              min={0}
+              max={500}
+              step={5}
+              value={scrapeCooldownMs}
+              onChange={(val) => {
+                setInternalScrapeCooldownMs(val);
+                if (ov.onScrapeCooldownMsChange) ov.onScrapeCooldownMsChange(val);
+                else audioConfig.set('goalpostHitCooldownMs', val);
+              }}
+              unit=" ms"
+              layout="inline"
+              developerMode={true}
+              editable={true}
+              isLight={isLight}
+            />
+            <SettingSliderRow
+              icon={Zap}
+              iconColor="text-purple-400"
+              title="Supersonic Transition Hold"
+              min={0}
+              max={600}
+              step={10}
+              value={supersonicHoldMs}
+              onChange={(val) => {
+                setInternalSupersonicHoldMs(val);
+                if (ov.onSupersonicHoldMsChange) ov.onSupersonicHoldMsChange(val);
+                else audioConfig.set('incidentCooldownMs', val);
+              }}
+              unit=" ms"
+              layout="inline"
+              developerMode={true}
+              editable={true}
+              isLight={isLight}
+            />
+            <SettingSliderRow
+              icon={Feather}
+              iconColor="text-emerald-400"
+              title="Light Touch Min Impulse"
+              min={0}
+              max={1000}
+              step={10}
+              value={lightTouchImpulse}
+              onChange={(val) => {
+                setInternalLightTouchImpulse(val);
+                if (ov.onLightTouchImpulseChange) ov.onLightTouchImpulseChange(val);
+                else audioConfig.set('carBallHitImpulseThreshold', val);
+              }}
+              unit=" UU/s"
+              layout="inline"
+              developerMode={true}
+              editable={true}
+              isLight={isLight}
+            />
+            <SettingSliderRow
+              icon={Activity}
+              iconColor="text-cyan-400"
+              title="Medium Hit Impulse"
+              min={0}
+              max={1200}
+              step={25}
+              value={mediumHitImpulse}
+              onChange={(val) => {
+                setInternalMediumHitImpulse(val);
+                if (ov.onMediumHitImpulseChange) ov.onMediumHitImpulseChange(val);
+                else audioConfig.set('ballGroundHitThreshold', val);
+              }}
+              unit=" UU/s"
+              layout="inline"
+              developerMode={true}
+              editable={true}
+              isLight={isLight}
+            />
+            <SettingSliderRow
+              icon={Flame}
+              iconColor="text-rose-400"
+              title="Heavy Boom Impulse"
+              min={0}
+              max={2500}
+              step={50}
+              value={heavyBoomImpulse}
+              onChange={(val) => {
+                setInternalHeavyBoomImpulse(val);
+                if (ov.onHeavyBoomImpulseChange) ov.onHeavyBoomImpulseChange(val);
+                else audioConfig.set('ballWallHitThreshold', val);
+              }}
+              unit=" UU/s"
+              layout="inline"
+              developerMode={true}
+              editable={true}
+              isLight={isLight}
+            />
+            <SettingSliderRow
+              icon={ShieldAlert}
+              iconColor="text-orange-400"
+              title="Rim / Post Clank Gate"
+              min={0}
+              max={1200}
+              step={20}
+              value={rimClankGate}
+              onChange={(val) => {
+                setInternalRimClankGate(val);
+                if (ov.onRimClankGateChange) ov.onRimClankGateChange(val);
+                else audioConfig.set('goalpostHitThreshold', val);
+              }}
+              unit=" UU/s"
+              layout="inline"
+              developerMode={true}
+              editable={true}
+              isLight={isLight}
+            />
+            <SettingSliderRow
+              icon={Car}
+              iconColor="text-indigo-400"
+              title="Car-Car Bump Gate"
+              min={0}
+              max={1500}
+              step={5}
+              value={carBumpGate}
+              onChange={(val) => {
+                setInternalCarBumpGate(val);
+                if (ov.onCarBumpGateChange) ov.onCarBumpGateChange(val);
+                else audioConfig.set('netDualTriggerAngleDeg', val);
+              }}
+              unit=" UU/s"
+              layout="inline"
+              developerMode={true}
+              editable={true}
+              isLight={isLight}
+            />
+            <SettingToggleRow
+              icon={Terminal}
+              iconColor="text-emerald-400"
+              title="Enable Event Console Log"
+              checked={enableConsoleLog}
+              onCheckedChange={(val) => {
+                setInternalEnableConsoleLog(val);
+                if (ov.onEnableConsoleLogChange) ov.onEnableConsoleLogChange(val);
+                else audioConfig.set('logAllEvents', val);
+              }}
+              isLight={isLight}
+            />
+            <SettingToggleRow
+              icon={Filter}
+              iconColor="text-sky-400"
+              title="Log Car-Ball Hit Structs Only"
+              checked={logHitStructsOnly}
+              onCheckedChange={(val) => {
+                setInternalLogHitStructsOnly(val);
+                if (ov.onLogHitStructsOnlyChange) ov.onLogHitStructsOnlyChange(val);
+                else audioConfig.set('logCarBallHitEvents', val);
+              }}
+              isLight={isLight}
+            />
+          </div>
 
-      <PanelFooter
-        isLight={isLight}
-        defaultDescription="Configure audio debounce shielding, collision impulse thresholds, event filter catalog, and telemetry rules."
-        hoveredDescription={hoveredDesc}
-      />
-    </PanelContainer>
-  );
-});
+          <EventTriggerRulesSection
+            isLight={isLight}
+            eventCatalogItems={eventCatalogItems}
+            selectedEvents={selectedEvents}
+            onToggleEventHex={handleToggleEventHex}
+            onSelectAllEvents={handleSelectAllEvents}
+            onDeselectAllEvents={handleDeselectAllEvents}
+            rules={rules}
+            onUpdateRule={updateRule}
+            onHoverDesc={setHoveredDesc}
+          />
+        </PanelContent>
+
+        <PanelFooter
+          isLight={isLight}
+          defaultDescription="Configure audio debounce shielding, collision impulse thresholds, event filter catalog, and telemetry rules."
+          hoveredDescription={hoveredDesc}
+        />
+      </PanelContainer>
+    );
+  });
 
 Layer4EventTriggerRulesRecipe.displayName = 'Layer4EventTriggerRulesRecipe';
+export default Layer4EventTriggerRulesRecipe;

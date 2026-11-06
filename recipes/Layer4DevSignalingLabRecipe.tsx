@@ -11,8 +11,11 @@ import {
 import { Card } from '../layout/Card';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
+import type { SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import { resolveCalibratedSurfaceSizing } from '../manifest/surfaceCalibration';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
+import { useStoreSnapshotOverride } from '../stores/storeSnapshotScope';
 import {
   DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
   type CanonicalLabRelayId,
@@ -22,6 +25,23 @@ import {
 } from './dev/signalingLabTypes';
 import { SignalingLabStatusAndScenariosSection } from './dev/SignalingLabStatusAndScenariosSection';
 import { SignalingLabLiveMonitorsSection } from './dev/SignalingLabLiveMonitorsSection';
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer4DevSignalingLabRecipe',
+  title: '4-Server Signaling & Dual Bridge Lab',
+  subtitle:
+    'Full-mesh EMQX CN/GB + Supabase JP/SG physical dir/brg isolation, 4-bit mask, and 5-layer anti-loop guards',
+  icon: 'wifi',
+  layer: 'layer4',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: 760,
+    height: 680,
+    minHeight: 260,
+    maxHeight: 1120,
+  },
+};
 
 export type {
   CanonicalLabEdgeNodeId,
@@ -44,11 +64,11 @@ export type {
  * Dual Edge Function (JP + SG) 1-to-3 fanout, and 5-layer anti-loop guards.
  */
 export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipeProps> = React.memo(
-  (rawProps) => {
+  ({ isLight = false, onBack, sizing: propSizing, stateOverride, className = '' }) => {
+    const goBack = useAppStore((s) => s.goBack);
+    const scopeOverride =
+      useStoreSnapshotOverride<Layer4DevSignalingLabStateOverride>('signalingLab');
     const {
-      isLight = false,
-      onBack,
-      sizing: propSizing,
       endpointConfig = DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
       probeSummary = null,
       traces = [],
@@ -68,7 +88,9 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
       onOneClickFullDiagnostic,
       onRunScenario,
       onClearTraces,
-    } = { ...rawProps.stateOverride, ...rawProps };
+      sizing: overrideSizing,
+    } = { ...scopeOverride, ...stateOverride };
+
     const [localRoomCode, setLocalRoomCode] = useState('rocket-f');
     const [localRoomPassword, setLocalRoomPassword] = useState('test1234');
     const [localSource, setLocalSource] = useState<CanonicalLabRelayId>('emqx_cn');
@@ -86,12 +108,20 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
     const customTargetRelay = controlledTarget ?? localTarget;
     const setCustomTargetRelay = onCustomTargetRelayChange ?? setLocalTarget;
 
-    const storeSizing = useMenuLayoutStore(
-      (s) =>
-        s.panels?.['layer4-dev-signaling-lab'] ??
-        DEFAULT_PANEL_SIZING['layer4-dev-signaling-lab']
+    const storeSizing = useMenuLayoutStore((s) => s.panels?.['layer4-dev-signaling-lab']);
+    const calibratedSizing = resolveCalibratedSurfaceSizing(
+      SURFACE_META.id,
+      SURFACE_META.defaultSizing
     );
-    const sizing = propSizing ?? storeSizing;
+    const defaultResolvedSizing = {
+      mode: calibratedSizing.mode === 'fixed' ? ('fixed' as const) : ('auto' as const),
+      width: calibratedSizing.width,
+      targetHeight:
+        typeof calibratedSizing.height === 'number' ? calibratedSizing.height : 680,
+      minHeight: calibratedSizing.minHeight ?? 260,
+      maxHeight: calibratedSizing.maxHeight ?? 1120,
+    };
+    const sizing = propSizing ?? overrideSizing ?? storeSizing ?? defaultResolvedSizing;
 
     const handleCopyText = (text: string, label: string) => {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -106,10 +136,14 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
     };
 
     return (
-      <PanelContainer isLight={isLight} sizing={sizing} className="w-full select-none">
+      <PanelContainer
+        isLight={isLight}
+        sizing={sizing}
+        className={`w-full select-none ${className}`}
+      >
         <PanelHeader
           title="4-SERVER SIGNALING & DUAL BRIDGE LAB"
-          onBack={onBack}
+          onBack={onBack ?? goBack}
           isLight={isLight}
         />
 
@@ -313,3 +347,4 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
 );
 
 Layer4DevSignalingLabRecipe.displayName = 'Layer4DevSignalingLabRecipe';
+export default Layer4DevSignalingLabRecipe;
