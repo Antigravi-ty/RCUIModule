@@ -189,7 +189,7 @@ export const StaticTrainingVariationsModal: React.FC<StaticTrainingVariationsMod
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 flex items-center gap-1">
                     <Sparkles className="h-3 w-3 text-cyan-400" />
-                    Kevpert BakkesMod Latest Presets (F1–F12) & Custom Mode
+                    Kevpert BakkesMod Latest Presets (F3–F12) & Custom Mode
                   </span>
                   <span className="text-[10px] font-mono opacity-65 flex items-center gap-1">
                     {isCustomEditable ? (
@@ -205,7 +205,7 @@ export const StaticTrainingVariationsModal: React.FC<StaticTrainingVariationsMod
                   </span>
                 </div>
 
-                <div className="grid grid-cols-5 sm:grid-cols-7 lg:grid-cols-13 gap-1.5">
+                <div className="grid grid-cols-5 sm:grid-cols-9 gap-1.5">
                   {KEVPERT_PRESET_KEYS.map((k) => {
                     const preset = KEVPERT_LATEST_PRESETS[k];
                     const isSelected =

@@ -15,7 +15,9 @@ export type BadgeVariant =
   | 'outline'
   | 'muted'
   | 'sky'
-  | 'info';
+  | 'info'
+  | 'purple'
+  | 'violet';
 
 export type BadgeSize = 'sm' | 'md' | 'lg';
 export type BadgeShape = 'rounded' | 'pill';
@@ -86,6 +88,14 @@ const variantStyles: Record<BadgeVariant, { light: string; dark: string }> = {
     light: 'bg-sky-50 text-sky-800 border-sky-300 shadow-2xs',
     dark: 'bg-sky-500/15 text-sky-300 border-sky-500/40 shadow-xs',
   },
+  purple: {
+    light: 'bg-purple-100 text-purple-800 border-purple-300 shadow-2xs',
+    dark: 'bg-purple-500/15 text-purple-300 border-purple-500/40 shadow-xs',
+  },
+  violet: {
+    light: 'bg-violet-100 text-violet-800 border-violet-300 shadow-2xs',
+    dark: 'bg-violet-500/15 text-violet-300 border-violet-500/40 shadow-xs',
+  },
 };
 
 /**
@@ -119,8 +129,10 @@ export const Badge: React.FC<BadgeProps> = React.memo(({
       ? 'bg-amber-500'
       : variant === 'orange'
       ? 'bg-orange-500'
-      : variant === 'sky'
+      : variant === 'sky' || variant === 'info'
       ? 'bg-sky-500'
+      : variant === 'purple' || variant === 'violet'
+      ? 'bg-purple-500'
       : 'bg-neutral-400');
 
   return (

@@ -415,6 +415,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
           <StaticTrainingPackFolderList
             isLight={isLight}
             isDevMode={isDevMode}
+            applyNewKevpertBind={Boolean(variationToggles.applyNewKevpertBind)}
             packs={packs}
             selectedUuid={selectedMeta?.uuid}
             onSelectPack={handleSelectPack}
@@ -498,7 +499,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
         isLight={isLight}
         defaultDescription={
           isDevMode
-            ? 'Dev Mode: 139 built-in .RLRCSPack packs loaded • Click the top-right Gear icon for Training Variations (F1–F12 / Custom).'
+            ? 'Dev Mode: Batch import/export .Tem / .RCSPack / .RCSPackE / .zip • Click the top-right Gear icon for Training Variations (F3–F12 / Custom).'
             : 'Select a Static Training Pack on the left to Play, Edit, Export (.RCSPack / .RCSPackE), or Delete.'
         }
         hoveredDescription={hoveredDesc}

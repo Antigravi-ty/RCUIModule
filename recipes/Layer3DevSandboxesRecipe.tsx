@@ -134,9 +134,9 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
     id: 'tem-pack-converter',
     title: 'Static Training Packs (Dev Mode)',
     summary:
-      'Browse 73 built-in .RLRCSPack packs, batch import/export .Tem / .RCSPack / .RCSPackE / .zip, and configure Training Variations (F3–F12).',
+      'Batch import/export .Tem / .RCSPack / .RCSPackE / .zip, inspect .RLRCSPack metadata, and configure Training Variations (F3–F12).',
     details:
-      'Static Training Packs (Dev Mode): Unified pack browser with 73 built-in .Tem -> .RLRCSPack packs, Original Description inspector, EditorFreeCam (.RCSPackE) support, Folder/Rank filtering, and Kevpert BakkesMod Training Variations.',
+      'Static Training Packs (Dev Mode): Unified pack browser with .Tem -> .RLRCSPack importer, Original Description inspector, EditorFreeCam (.RCSPackE) support, Folder/Rank filtering, and Kevpert BakkesMod Training Variations.',
     icon: FileArchive,
     iconColor: 'text-cyan-400',
   },

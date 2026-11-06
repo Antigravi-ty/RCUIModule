@@ -132,9 +132,13 @@ export const StaticTrainingPackMetadataInspector: React.FC<
                           }
                           onMouseLeave={() => onHoverDesc(null)}
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold ${
-                            isLight
-                              ? 'bg-cyan-100 text-cyan-800 border border-cyan-300'
-                              : 'bg-cyan-950/70 text-cyan-300 border border-cyan-500/40'
+                            effectiveMatchesLatest
+                              ? isLight
+                                ? 'bg-cyan-100 text-cyan-800 border border-cyan-300'
+                                : 'bg-cyan-950/70 text-cyan-300 border border-cyan-500/40'
+                              : isLight
+                                ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                                : 'bg-purple-950/70 text-purple-300 border border-purple-500/40'
                           }`}
                         >
                           <Sparkles className="h-2.5 w-2.5" />

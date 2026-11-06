@@ -23,7 +23,7 @@ export interface StaticTrainingQuickVariationToggles {
   /**
    * When false (default / OFF = "Apply Old"), Kevpert packs use the exact BakkesMod
    * variation parameters from their original YouTube video description.
-   * When true (ON = "Apply New"), Kevpert packs use the latest F1-F12 keybinding parameters.
+   * When true (ON = "Apply New"), Kevpert packs use the latest F3–F12 keybinding parameters.
    */
   applyNewKevpertBind?: boolean;
   /** Additional boost added on top of active boost limit (0 - 100), capped at 100 */
@@ -62,9 +62,9 @@ export const DEFAULT_QUICK_VARIATION_TOGGLES: StaticTrainingQuickVariationToggle
 };
 
 export const ZERO_VARIATION_CONFIG: StaticTrainingVariationConfig = {
-  presetKey: 'F1',
-  label: 'Reset / No Variance (F1)',
-  presetLabel: 'Reset / No Variance (F1)',
+  presetKey: 'CUSTOM',
+  label: 'Reset / No Variance',
+  presetLabel: 'Reset / No Variance',
   ballSpeedModifierPct: [0, 0],
   ballLocationModifierXY: [0, 0],
   ballHeightModifierZ: [0, 0],
@@ -165,7 +165,7 @@ export function resolveRecommendedVariationForPack(
     return undefined;
   }
 
-  const fKeyMatch = (title || '').match(/\b(F1[0-2]|F[1-9])\b/i);
+  const fKeyMatch = (title || '').match(/\b(F1[0-2]|F[35789])\b/i);
   if (fKeyMatch) {
     const key = fKeyMatch[1].toUpperCase() as KevpertPresetKey;
     if (KEVPERT_LATEST_PRESETS[key]) {

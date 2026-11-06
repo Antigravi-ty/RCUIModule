@@ -3,6 +3,10 @@ import { ArrowUpDown, Download, FolderOpen, Search, Target } from 'lucide-react'
 import { Badge } from '../../primitives/Badge';
 import { UI_RADIUS } from '../../tokens/radius';
 import {
+  isVariationMatchingLatestPreset,
+  resolveEffectiveRecommendedVariation,
+} from '../../config/staticTrainingVariationTypes';
+import {
   type StaticPackDownCounterOption,
   type StaticPackSortOrder,
   type StaticTrainingPackSummary,
@@ -31,6 +35,7 @@ export type {
 export interface StaticTrainingPackFolderListProps {
   isLight: boolean;
   isDevMode?: boolean;
+  applyNewKevpertBind?: boolean;
   packs: StaticTrainingPackSummary[];
   selectedUuid?: string | null;
   onSelectPack: (uuid: string) => void;
@@ -46,6 +51,7 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
   ({
     isLight,
     isDevMode = false,
+    applyNewKevpertBind = false,
     packs,
     selectedUuid,
     onSelectPack,
@@ -409,8 +415,13 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
         <div className="flex flex-col gap-1.5 p-2 overflow-y-auto grow min-h-0">
           {filteredAndSortedPacks.map((pack) => {
             const isSelected = pack.uuid === selectedUuid;
-            const fKeyBadge = pack.recommendedVariation?.presetKey;
-            const hasRecommendedVariance = Boolean(pack.recommendedVariation);
+            const effectiveRec = resolveEffectiveRecommendedVariation(
+              pack.recommendedVariation,
+              applyNewKevpertBind
+            );
+            const hasRecommendedVariance = Boolean(effectiveRec);
+            const matchesLatest = isVariationMatchingLatestPreset(effectiveRec);
+            const fKeyBadge = effectiveRec?.presetKey;
             const displayRank = normalizeRankLabel(pack.rankTier) || pack.rankTier;
 
             return (
@@ -442,18 +453,24 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
                     {fKeyBadge && fKeyBadge !== 'CUSTOM' && fKeyBadge !== 'custom' && (
                       <span
                         className={`px-1.5 py-0.2 rounded text-[8px] font-mono font-bold ${
-                          isLight
-                            ? 'bg-cyan-100 text-cyan-800'
-                            : 'bg-cyan-950/80 text-cyan-300 border border-cyan-500/30'
+                          matchesLatest
+                            ? isLight
+                              ? 'bg-cyan-100 text-cyan-800'
+                              : 'bg-cyan-950/80 text-cyan-300 border border-cyan-500/30'
+                            : isLight
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-purple-950/80 text-purple-300 border border-purple-500/30'
                         }`}
                       >
-                        {fKeyBadge}
+                        {matchesLatest ? fKeyBadge : 'Variants Ready'}
                       </span>
                     )}
                     <Badge
                       variant={
                         hasRecommendedVariance
-                          ? 'info'
+                          ? matchesLatest
+                            ? 'info'
+                            : 'purple'
                           : isSelected
                             ? 'default'
                             : 'neutral'

@@ -89,7 +89,7 @@ export const StaticTrainingQuickTogglesSection: React.FC<
                 : applyNew
                   ? `ON (Apply New): Overriding this pack's historical video spec with Kevpert's latest ${packRecommendedVariation.presetKey} parameters.`
                   : `OFF (Apply Old • Default): Using the exact BakkesMod parameters from this pack's original YouTube video description (${packRecommendedVariation.presetLabel || packRecommendedVariation.label || packRecommendedVariation.presetKey}).`
-              : 'Default OFF (Apply Old) uses each Kevpert pack’s original YouTube video description parameters; ON (Apply New) upgrades to latest F1–F12 binds.'}
+              : 'Default OFF (Apply Old) uses each Kevpert pack’s original YouTube video description parameters; ON (Apply New) upgrades to latest F3–F12 binds.'}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">

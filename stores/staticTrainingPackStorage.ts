@@ -32,10 +32,6 @@ import {
   type ExportRCSPackOptions,
 } from '../config/staticTrainingPackCodec';
 import {
-  loadBuiltInDevPacksCatalog,
-  DEV_BUILTIN_RLRCSPACK_CATALOG_COUNT,
-} from '../config/devBuiltInPacksLoader';
-import {
   type VfsNodeRecord,
   type StaticTrainingPackStorageScope,
   EDIT_VFS_STORE_NAME,
@@ -65,7 +61,6 @@ export {
   type StaticTrainingPackStorageScope,
   EDIT_SUB_MODES_ORDER,
   MAX_SHOTS_PER_PACK,
-  DEV_BUILTIN_RLRCSPACK_CATALOG_COUNT,
   generateUUID,
   createDefaultShotItem,
   cloneShotItem,
@@ -74,7 +69,6 @@ export {
   exportStaticTrainingPackRCSPack,
   exportBatchStaticTrainingPacksZip,
   decodeMultiOrZipPackFiles,
-  loadBuiltInDevPacksCatalog,
   exportSingleShotItemToJson,
   parseSingleShotItemFromJsonFile,
   buildMetaPath,
@@ -473,62 +467,11 @@ export async function importBatchStaticTrainingPacksFromFiles(
   return importedMetas;
 }
 
-let devCatalogSeededInSession = false;
-
 /**
- * Ensures the built-in Developer Mode `.RLRCSPack` training packs from `Training.zip` + `TRAINIC.zip`
- * are seeded strictly into the isolated Developer IndexedDB (`rc-dev-virtual-fs-db`), never polluting
- * the normal user Static Training Pack database (`rc-virtual-fs-db`).
+ * Ensures the Developer Mode (`dev` scope in `rc-dev-virtual-fs-db`) is initialized.
+ * Note: The embedded Base64 `.RLRCSPack` catalog was exported to `AllPacks_144_RCSPackE.zip`
+ * and removed from the source bundle; packs can be imported on-demand via `.zip` / `.RCSPackE` / `.Tem`.
  */
-export async function ensureBuiltInDevPacksSeeded(forceReseed = false): Promise<number> {
-  if (devCatalogSeededInSession && !forceReseed) return 0;
-  const existing = await listStaticTrainingPacks('dev');
-  const existingByUuid = new Map(existing.map((m) => [m.uuid, m]));
-  const devCategory = resolveScopeCategory('dev');
-
-  const catalog = await loadBuiltInDevPacksCatalog();
-  let seededCount = 0;
-  for (const entry of catalog) {
-    const prevMeta = existingByUuid.get(entry.metadata.uuid);
-    if (!forceReseed && prevMeta) {
-      const prevTagsJson = JSON.stringify(prevMeta.tags || []);
-      const nextTagsJson = JSON.stringify(entry.metadata.tags || []);
-      const prevVarJson = JSON.stringify(prevMeta.recommendedVariation || null);
-      const nextVarJson = JSON.stringify(entry.metadata.recommendedVariation || null);
-      if (
-        prevMeta.rankTier !== entry.metadata.rankTier ||
-        prevTagsJson !== nextTagsJson ||
-        prevVarJson !== nextVarJson ||
-        prevMeta.creator !== entry.metadata.creator
-      ) {
-        const now = Date.now();
-        await vfsPutNodes(
-          [
-            {
-              path: buildMetaPath(entry.metadata.uuid, 'dev'),
-              category: devCategory,
-              uuid: entry.metadata.uuid,
-              nodeType: 'metadata',
-              updatedAt: prevMeta.updatedAt || now,
-              data: {
-                ...prevMeta,
-                creator: entry.metadata.creator,
-                tags: entry.metadata.tags,
-                rankTier: entry.metadata.rankTier,
-                releaseYearMonth: entry.metadata.releaseYearMonth,
-                recommendedVariation: entry.metadata.recommendedVariation,
-                isBuiltInDevPack: true,
-              } as unknown as Record<string, unknown>,
-            },
-          ],
-          'dev'
-        );
-      }
-      continue;
-    }
-    await saveStaticTrainingPackFull(entry.metadata, entry.items, 'dev');
-    seededCount++;
-  }
-  devCatalogSeededInSession = true;
-  return seededCount;
+export async function ensureBuiltInDevPacksSeeded(_forceReseed = false): Promise<number> {
+  return 0;
 }
