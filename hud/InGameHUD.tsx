@@ -117,11 +117,9 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     Boolean(isLivePreviewCollapsed) &&
     (activeRoute === 'trajectory' || activeRoute === 'camera');
   const isPowerSaveMenuOpen = Boolean(menuOpen) && !isLivePreviewDockCollapsed;
-  const isFpsPausedIndicator = isWindowMinimized || isPowerSaveMenuOpen || !isWindowFocused;
   const isPowerSaveModeEnabled = String(menuPowerSave) !== 'match' && String(menuPowerSave) !== 'disable';
   const isPowerSaveActive =
     isWindowMinimized ||
-    isFpsPausedIndicator ||
     (isPowerSaveModeEnabled && (isPowerSaveMenuOpen || !isWindowFocused));
   const shouldPollTelemetry =
     telemetryEnabled && !(pauseTelemetryInPowerSave && isPowerSaveActive);
@@ -307,6 +305,7 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
             {telemetryEnabled && (
               <CompactTelemetryBarHUD
                 isLight={isLight}
+                isFpsPaused={isPowerSaveActive}
                 subscribeTelemetry={hudChannel.subscribeTelemetry}
               />
             )}
