@@ -18,9 +18,22 @@ import {
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { SliderControl } from '../../primitives/SliderControl';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface ReachabilityTunerFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'reachability-tuner',
+  title: 'Reachability & Intercept Tuner',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 470,
+    height: 600,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface ReachabilityTunerFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
 
@@ -386,3 +399,5 @@ export const ReachabilityTunerFloatingWindow: React.FC<ReachabilityTunerFloating
     </div>
   );
 };
+
+export default ReachabilityTunerFloatingWindow;

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
+  "updatedAt": "2026-11-06T16:35:39.483Z",
   "templateHash": "574097ceda64cb92",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -46,7 +46,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/BallTrajectoryTunerFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "8bf9e0e36b708a1d",
+      "sizingAndConfigHash": "9116117a35e05d94",
       "visualAstHash": "8c836a3854277204",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/BallTrajectoryTunerFloatingWindow.tsx": "181647cef6251c81",
@@ -119,7 +119,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/CameraDeterminismFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "b6d867efbdff426c",
+      "sizingAndConfigHash": "d13d66a63969e1f9",
       "visualAstHash": "cbb5a30bb1f9d831",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/CameraDeterminismFloatingWindow.tsx": "81d5d807c50bc2b9"
@@ -373,15 +373,15 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/NameTagTunerFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "36a7ce501b5e89e3",
-      "visualAstHash": "719d24e88c49869b",
+      "sizingAndConfigHash": "e68dd70d2f84fa5f",
+      "visualAstHash": "1a4987ad642876f2",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/NameTagTunerFloatingWindow.tsx": "da07c75b91eb8a5a",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagAerialClimbAlertSection.tsx": "eaa9304af5f9345a",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagBoostBorderSection.tsx": "54b0481eaabcef7b",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagBoostVisibilityAndPreviewSection.tsx": "22dd3cff2b78d964",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagCalibrationSection.tsx": "3cd5d5efc8084f1c",
-        "src/ui-core/panels/dev/name-tag-tuner/NameTagColorsAndNamesSection.tsx": "846cedf287efe1d7",
+        "src/ui-core/panels/dev/name-tag-tuner/NameTagColorsAndNamesSection.tsx": "68ac548460245c98",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagDistanceCurveSection.tsx": "ebe24d23fd32ef89",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagOffscreenAndAerialAlertSection.tsx": "a8ceec11462620e1",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagPillGeometryAndPreviewSection.tsx": "70d9fab80943615b",
@@ -429,7 +429,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ReachabilityTunerFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "350eed345c933ae4",
+      "sizingAndConfigHash": "65859a3af1983af3",
       "visualAstHash": "eb23b0634facfe26",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/ReachabilityTunerFloatingWindow.tsx": "ba224d9e36c78a73",
@@ -449,14 +449,15 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ReplayDirectorTunerFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "d1deac27377b0d92",
-      "visualAstHash": "4b6698228d58f59e",
+      "sizingAndConfigHash": "57dfab64db897b43",
+      "visualAstHash": "21f135dac899b38a",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/ReplayDirectorTunerFloatingWindow.tsx": "650fad1e0281a342",
         "src/ui-core/panels/dev/replay-director-tuner/ReplayDirectorCameraCard.tsx": "f5d60eb2cf51f3d4",
         "src/ui-core/panels/dev/replay-director-tuner/ReplayDirectorOrientationCard.tsx": "73eec736f74f12b0",
         "src/ui-core/panels/dev/replay-director-tuner/ReplayDirectorPauseBanner.tsx": "a127ed751bfeeb34",
-        "src/ui-core/panels/dev/replay-director-tuner/ReplayDirectorSnapshotAndKeyframePanel.tsx": "ccb3c6fd37add384",
+        "src/ui-core/panels/dev/replay-director-tuner/ReplayDirectorRefKeyframeSection.tsx": "a52e30f61e5fbe49",
+        "src/ui-core/panels/dev/replay-director-tuner/ReplayDirectorSnapshotAndKeyframePanel.tsx": "ae42b09f682d2825",
         "src/ui-core/primitives/Badge.tsx": "2c13f7eccf5b1baf",
         "src/ui-core/primitives/Button.tsx": "f89ab717ec972345",
         "src/ui-core/primitives/KeycapBadge.tsx": "50693226896bfa19",
@@ -485,7 +486,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ReplayToRcsImporterFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "f1f1ff920530b90f",
+      "sizingAndConfigHash": "d1f7fcb4b69ae6c4",
       "visualAstHash": "940fb57f45f070d5",
       "fileVisualHashes": {
         "src/ui-core/charts/MultiTrackReplayTimeline.tsx": "d2789c8c2634685a",
@@ -546,11 +547,11 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/StaticTrainingBallCamTunerFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "a300db099a8cd7f9",
-      "visualAstHash": "fd5b94e2d7023b27",
+      "sizingAndConfigHash": "57f0d2debfa570f8",
+      "visualAstHash": "b073bcc7c2bc5970",
       "fileVisualHashes": {
-        "src/ui-core/panels/dev/DirectionArrowVisualsSection.tsx": "206df8dc7f54616f",
         "src/ui-core/panels/dev/StaticTrainingBallCamTunerFloatingWindow.tsx": "19256121a7968603",
+        "src/ui-core/panels/dev/static-training-ball-cam-tuner/DirectionArrowVisualsSection.tsx": "3ea188f71bcacac6",
         "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c",
         "src/ui-core/primitives/SliderControl.tsx": "4bdac03691420663"
       },

@@ -32,9 +32,23 @@ import {
   type RLReplayNonPovInterventionMode,
 } from '../../stores/replayToRcsImporterStore';
 import type { ReplayDownCounterOption } from '../../stores/replayViewerStore';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface ReplayToRcsImporterFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'replay-to-rcs-importer',
+  title: 'Replay to RCS Replay Importer',
+  layer: 'floating-dev',
+  menuGroup: 'sandboxes',
+  defaultSizing: {
+    width: 495,
+    height: 660,
+    minHeight: 220,
+    mode: 'adaptive',
+  },
+};
+
+export interface ReplayToRcsImporterFloatingWindowProps extends StandardSurfaceProps {
+  active?: boolean;
 }
 
 /**
@@ -461,3 +475,5 @@ export const ReplayToRcsImporterFloatingWindow: React.FC<ReplayToRcsImporterFloa
     );
   });
 ReplayToRcsImporterFloatingWindow.displayName = 'ReplayToRcsImporterFloatingWindow';
+
+export default ReplayToRcsImporterFloatingWindow;

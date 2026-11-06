@@ -5,23 +5,56 @@ import {
   DEFAULT_REPLAY_DIRECTOR_CONFIG,
   DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
 } from '../../../config/replayDirectorConfig';
+import {
+  useReplayDirectorStore,
+  updateReplayDirectorConfig,
+} from '../../../stores/replayDirectorStore';
+import { useAppStore } from '../../../stores/appStore';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { UnderlineTabs } from '../../../primitives/UnderlineTabs';
 
-type DirectorTabId = 'framing' | 'lookahead' | 'slowmo';
+export type DirectorTabId = 'framing' | 'lookahead' | 'slowmo';
 
 export interface ReplayDirectorCameraCardProps {
-  cfg: ReplayDirectorConfigState;
-  onParamChange: (key: keyof ReplayDirectorConfigState, val: number) => void;
   isLight?: boolean;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  cfg?: ReplayDirectorConfigState;
+  onParamChange?: (key: keyof ReplayDirectorConfigState, val: number) => void;
 }
 
 export const ReplayDirectorCameraCard: React.FC<ReplayDirectorCameraCardProps> = ({
-  cfg,
-  onParamChange,
   isLight = false,
+  activeTab: propActiveTab,
+  onTabChange,
+  cfg: propCfg,
+  onParamChange: propOnParamChange,
 }) => {
-  const [activeTab, setActiveTab] = useState<DirectorTabId>('framing');
+  const storeCfg = useReplayDirectorStore((s) => s.config);
+  const cfg = propCfg ?? storeCfg;
+
+  const [localTab, setLocalTab] = useState<DirectorTabId>('framing');
+  const activeTab: DirectorTabId =
+    propActiveTab === 'framing' || propActiveTab === 'lookahead' || propActiveTab === 'slowmo'
+      ? propActiveTab
+      : localTab;
+
+  const handleTabSelect = (id: string) => {
+    const nextTab = (
+      id === 'framing' || id === 'lookahead' || id === 'slowmo' ? id : 'framing'
+    ) as DirectorTabId;
+    setLocalTab(nextTab);
+    onTabChange?.(nextTab);
+  };
+
+  const onParamChange =
+    propOnParamChange ??
+    ((key: keyof ReplayDirectorConfigState, val: number) => {
+      updateReplayDirectorConfig({ [key]: val });
+      if (key === 'cameraFovDeg') {
+        useAppStore.getState().setFreeCamFov(val);
+      }
+    });
 
   const subPanelBg = isLight
     ? 'bg-white border-neutral-200'
@@ -51,7 +84,7 @@ export const ReplayDirectorCameraCard: React.FC<ReplayDirectorCameraCardProps> =
       <UnderlineTabs
         tabs={tabs}
         activeTab={activeTab}
-        onChange={(id) => setActiveTab(id as DirectorTabId)}
+        onChange={handleTabSelect}
         isLight={isLight}
       />
 

@@ -12,9 +12,22 @@ import { BallTrajectoryPresetIoSection } from './ball-trajectory-tuner/BallTraje
 import { BallTrajectoryTelemetryCard } from './ball-trajectory-tuner/BallTrajectoryTelemetryCard';
 import { BallTrajectoryAnomalyDebugCard } from './ball-trajectory-tuner/BallTrajectoryAnomalyDebugCard';
 import { BallTrajectoryTubeStyleSection } from './ball-trajectory-tuner/BallTrajectoryTubeStyleSection';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface BallTrajectoryTunerFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'ball-trajectory-tuner',
+  title: 'Ball Trajectory Prediction Line Tuner',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 480,
+    height: 640,
+    minHeight: 220,
+    mode: 'adaptive',
+  },
+};
+
+export interface BallTrajectoryTunerFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
 

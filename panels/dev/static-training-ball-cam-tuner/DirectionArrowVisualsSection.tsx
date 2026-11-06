@@ -1,43 +1,32 @@
 import React from 'react';
 import { Eye } from 'lucide-react';
-import type { StaticTrainingBallCamTunerConfig } from '../../stores/staticTrainingBallCamTunerStore';
-import { SliderControl } from '../../primitives/SliderControl';
+import { useStaticTrainingBallCamTunerStore } from '../../../stores/staticTrainingBallCamTunerStore';
+import { SliderControl } from '../../../primitives/SliderControl';
 
 export interface DirectionArrowVisualsSectionProps {
-  isLight: boolean;
-  expiredBallOpacity: number;
-  arrowOpacity: number;
-  shadowOpacity: number;
-  shadowScale: number;
-  haloScale: number;
-  coneRadius: number;
-  coneLength: number;
-  tipRadius: number;
-  shaftRadius: number;
-  arrowBaseLength: number;
-  arrowMaxExtraLength: number;
-  arrowHeightOffset: number;
-  arrowForwardOffset: number;
-  updateConfig: (patch: Partial<StaticTrainingBallCamTunerConfig>) => void;
+  isLight?: boolean;
 }
 
 export const DirectionArrowVisualsSection: React.FC<DirectionArrowVisualsSectionProps> = ({
-  isLight,
-  expiredBallOpacity,
-  arrowOpacity,
-  shadowOpacity,
-  shadowScale,
-  haloScale,
-  coneRadius,
-  coneLength,
-  tipRadius,
-  shaftRadius,
-  arrowBaseLength,
-  arrowMaxExtraLength,
-  arrowHeightOffset,
-  arrowForwardOffset,
-  updateConfig,
+  isLight = false,
 }) => {
+  const {
+    expiredBallOpacity,
+    arrowOpacity,
+    shadowOpacity,
+    shadowScale,
+    haloScale,
+    coneRadius,
+    coneLength,
+    tipRadius,
+    shaftRadius,
+    arrowBaseLength,
+    arrowMaxExtraLength,
+    arrowHeightOffset,
+    arrowForwardOffset,
+    updateConfig,
+  } = useStaticTrainingBallCamTunerStore();
+
   return (
     <>
       {/* Expired Ball (0s Landed Boom) Opacity Section */}

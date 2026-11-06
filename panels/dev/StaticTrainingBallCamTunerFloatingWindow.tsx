@@ -19,16 +19,33 @@ import {
   setTemporaryBallOpacityOverride,
 } from '../../config/ballVisualConfig';
 import { SliderControl } from '../../primitives/SliderControl';
-import { DirectionArrowVisualsSection } from './DirectionArrowVisualsSection';
+import { DirectionArrowVisualsSection } from './static-training-ball-cam-tuner/DirectionArrowVisualsSection';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface StaticTrainingBallCamTunerFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'static-training-ball-cam-tuner',
+  title: 'Static Training Ball Camera & Opacity Tuner',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 460,
+    height: 580,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+  variants: [
+    { variantId: 'arrow', label: '1. Direction Arrow & Expire' },
+    { variantId: 'ballcam', label: '2. Ball Cam & Edit Opacity' },
+  ],
+};
+
+export interface StaticTrainingBallCamTunerFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
 
 export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
   StaticTrainingBallCamTunerFloatingWindowProps
-> = ({ isLight = false, active = true }) => {
+> = ({ isLight = false, active = true, activeTab: controlledTab, onTabChange }) => {
   const {
     fov,
     distance,
@@ -60,7 +77,13 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
   const editSubMode = useStaticTrainingPackStore((s) => s.editSubMode);
   const setEditSubMode = useStaticTrainingPackStore((s) => s.setEditSubMode);
 
-  const [activeTab, setActiveTab] = useState<'arrow' | 'ballcam'>('arrow');
+  const [localTab, setLocalTab] = useState<'arrow' | 'ballcam'>('arrow');
+  const activeTab: 'arrow' | 'ballcam' =
+    controlledTab === 'arrow' || controlledTab === 'ballcam' ? controlledTab : localTab;
+  const handleSelectTab = (tab: 'arrow' | 'ballcam') => {
+    setLocalTab(tab);
+    onTabChange?.(tab);
+  };
   const [copied, setCopied] = useState(false);
 
   const isInEditModeUntested = sessionMode === 'edit' && !isTestingSingleShot;
@@ -144,7 +167,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
       <div className="grid grid-cols-2 gap-1.5">
         <button
           type="button"
-          onClick={() => setActiveTab('arrow')}
+          onClick={() => handleSelectTab('arrow')}
           className={`flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg border font-bold text-[11px] transition-all cursor-pointer ${
             activeTab === 'arrow'
               ? isLight
@@ -161,7 +184,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
 
         <button
           type="button"
-          onClick={() => setActiveTab('ballcam')}
+          onClick={() => handleSelectTab('ballcam')}
           className={`flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg border font-bold text-[11px] transition-all cursor-pointer ${
             activeTab === 'ballcam'
               ? isLight
@@ -178,23 +201,7 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
       </div>
 
       {activeTab === 'arrow' ? (
-        <DirectionArrowVisualsSection
-          isLight={isLight}
-          expiredBallOpacity={expiredBallOpacity}
-          arrowOpacity={arrowOpacity}
-          shadowOpacity={shadowOpacity}
-          shadowScale={shadowScale}
-          haloScale={haloScale}
-          coneRadius={coneRadius}
-          coneLength={coneLength}
-          tipRadius={tipRadius}
-          shaftRadius={shaftRadius}
-          arrowBaseLength={arrowBaseLength}
-          arrowMaxExtraLength={arrowMaxExtraLength}
-          arrowHeightOffset={arrowHeightOffset}
-          arrowForwardOffset={arrowForwardOffset}
-          updateConfig={updateConfig}
-        />
+        <DirectionArrowVisualsSection isLight={isLight} />
       ) : (
         <>
           {/* Header Status Bar */}
@@ -457,3 +464,5 @@ export const StaticTrainingBallCamTunerFloatingWindow: React.FC<
     </div>
   );
 };
+
+export default StaticTrainingBallCamTunerFloatingWindow;

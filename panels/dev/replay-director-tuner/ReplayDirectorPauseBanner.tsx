@@ -1,18 +1,13 @@
 import React from 'react';
 import { Play, Pause, FastForward } from 'lucide-react';
+import { useHudStore } from '../../../stores/hudStore';
 
 export interface ReplayDirectorPauseBannerProps {
   isGoalReplayActive: boolean;
   effectivePaused: boolean;
   effectiveSpeed: number;
-  replayCameraMode?: string;
-  replayScorerName?: string | null;
-  replayScorerTeam?: number | null;
-  replayBallSpeedKph?: number | null;
-  replayAssistName?: string | null;
-  subPanelBg: string;
+  isLight?: boolean;
   onTogglePauseScrub: () => void;
-  onToggleCameraMode?: (() => void) | null;
   onCycleSpeed: () => void;
 }
 
@@ -20,16 +15,21 @@ export const ReplayDirectorPauseBanner: React.FC<ReplayDirectorPauseBannerProps>
   isGoalReplayActive,
   effectivePaused,
   effectiveSpeed,
-  replayCameraMode,
-  replayScorerName,
-  replayScorerTeam,
-  replayBallSpeedKph,
-  replayAssistName,
-  subPanelBg,
+  isLight = false,
   onTogglePauseScrub,
-  onToggleCameraMode,
   onCycleSpeed,
 }) => {
+  const replayCameraMode = useHudStore((s) => s.replayCameraMode);
+  const replayScorerName = useHudStore((s) => s.replayScorerName);
+  const replayScorerTeam = useHudStore((s) => s.replayScorerTeam);
+  const replayBallSpeedKph = useHudStore((s) => s.replayBallSpeedKph);
+  const replayAssistName = useHudStore((s) => s.replayAssistName);
+  const onToggleCameraMode = useHudStore((s) => s.onReplayToggleCameraMode);
+
+  const subPanelBg = isLight
+    ? 'bg-white border-neutral-200'
+    : 'bg-neutral-900/60 border-neutral-800/80';
+
   return (
     <div
       data-testid="replay-director-pause-indicator"

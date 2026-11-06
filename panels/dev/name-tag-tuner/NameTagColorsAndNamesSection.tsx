@@ -1,17 +1,13 @@
 import React from 'react';
 import { Palette, Users, Camera } from 'lucide-react';
-import type { NameTagConfig } from '../../../config/nameTagConfig';
+import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
+import { useAppStore } from '../../../stores/appStore';
+import { useHudStore } from '../../../stores/hudStore';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
+import { CAR_SLOT_BADGES } from './NameTagCalibrationSection';
 
 export interface NameTagColorsAndNamesSectionProps {
-  config: NameTagConfig;
-  isPovMode: boolean;
-  effectiveFocusedCarIndex: number;
-  focusedSlotCode: string;
-  isLight: boolean;
-  updateConfig: (partial: Partial<NameTagConfig>) => void;
-  updatePreviewName: (index: number, value: string) => void;
-  selectPovCar: (carIndex: number) => void;
+  isLight?: boolean;
 }
 
 const COLOR_PALETTE_PRESETS = [
@@ -63,16 +59,35 @@ const COLOR_PALETTE_PRESETS = [
 
 export const NameTagColorsAndNamesSection: React.FC<
   NameTagColorsAndNamesSectionProps
-> = ({
-  config,
-  isPovMode,
-  effectiveFocusedCarIndex,
-  focusedSlotCode,
-  isLight,
-  updateConfig,
-  updatePreviewName,
-  selectPovCar,
-}) => {
+> = ({ isLight = false }) => {
+  const {
+    config,
+    isTunerArenaActive,
+    activeCameraMode,
+    focusedCarIndex,
+    updateConfig,
+    updatePreviewName,
+    selectPovCar,
+  } = useNameTagTunerStore();
+
+  const isFreeCamApp = useAppStore((state) => state.isFreeCam);
+  const hudCameraMode = useHudStore((state) => state.cameraMode);
+  const hudFocusedCarIndex = useHudStore((state) => state.focusedCarIndex);
+
+  const effectiveCameraMode = isFreeCamApp
+    ? 'free'
+    : activeCameraMode || hudCameraMode || 'pov';
+  const isPovMode =
+    effectiveCameraMode === 'pov' ||
+    effectiveCameraMode === 'wasmPov' ||
+    effectiveCameraMode === 'rearView';
+  const effectiveFocusedCarIndex = isTunerArenaActive
+    ? focusedCarIndex
+    : hudFocusedCarIndex;
+  const focusedSlotCode =
+    CAR_SLOT_BADGES[effectiveFocusedCarIndex]?.slotCode ||
+    `#${effectiveFocusedCarIndex + 1}`;
+
   const cardBackground = isLight
     ? 'bg-neutral-50/95 border-neutral-200/90 text-neutral-800 shadow-2xs'
     : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
