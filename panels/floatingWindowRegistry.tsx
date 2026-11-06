@@ -8,7 +8,7 @@ import { NetworkMonitorFloatingWindow } from './user/NetworkMonitorFloatingWindo
 import { PerformanceMonitorFloatingWindow } from './user/PerformanceMonitorFloatingWindow';
 import { FloatingWindowOpacityFloatingWindow } from './user/FloatingWindowOpacityFloatingWindow';
 
-// 22 Developer Floating Windows (Canonical UI-Aligned Filenames)
+// 23 Developer Floating Windows (Canonical UI-Aligned Filenames)
 import { DiagnosticDumpFloatingWindow } from './dev/DiagnosticDumpFloatingWindow';
 import { StaticTrainingBallCamTunerFloatingWindow } from './dev/StaticTrainingBallCamTunerFloatingWindow';
 import { NameTagTunerFloatingWindow } from './dev/NameTagTunerFloatingWindow';
@@ -33,6 +33,7 @@ import { DriftwoodsTunerFloatingWindow } from './dev/DriftwoodsTunerFloatingWind
 import { SpatialAudioTunerFloatingWindow } from './dev/SpatialAudioTunerFloatingWindow';
 import { EngineAudioTunerFloatingWindow } from './dev/EngineAudioTunerFloatingWindow';
 import { BotsLoadoutTunerFloatingWindow } from './dev/BotsLoadoutTunerFloatingWindow';
+import { SupersonicTrailTunerFloatingWindow } from './dev/SupersonicTrailTunerFloatingWindow';
 
 export interface RenderFloatingWindowPanelOptions {
   isLight?: boolean;
@@ -247,6 +248,11 @@ export const FLOATING_WINDOW_DESCRIPTORS: Record<string, FloatingWindowDescripto
     id: 'bots-loadout-tuner',
     category: 'developer',
     render: ({ isLight = false }) => <BotsLoadoutTunerFloatingWindow isLight={isLight} />,
+  },
+  'supersonic-trail-tuner': {
+    id: 'supersonic-trail-tuner',
+    category: 'developer',
+    render: ({ isLight = false }) => <SupersonicTrailTunerFloatingWindow isLight={isLight} />,
   },
 };
 

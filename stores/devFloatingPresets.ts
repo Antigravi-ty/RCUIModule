@@ -426,6 +426,22 @@ export const BOTS_LOADOUT_TUNER_PRESET: PresetConfig = {
   sourcePath: 'panels/dev/BotsLoadoutTunerFloatingWindow.tsx',
 };
 
+export const SUPERSONIC_TRAIL_TUNER_PRESET: PresetConfig = {
+  id: 'supersonic-trail-tuner',
+  title: 'Supersonic Wheel Trail Tuner',
+  category: 'SupersonicTrail',
+  width: 480,
+  height: 620,
+  minHeight: 220,
+  resizable: true,
+  singleton: true,
+  tier: 'developer',
+  summary: 'Dual rear-wheel contact trail ribbons (-1t to -30t window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright tilt & Force Active toggle).',
+  menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  component: 'SupersonicTrailTunerFloatingWindow',
+  sourcePath: 'panels/dev/SupersonicTrailTunerFloatingWindow.tsx',
+};
+
 export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   DIAGNOSTIC_DUMP_PRESET,
   STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
@@ -436,6 +452,7 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   BALL_TRAJECTORY_TUNER_PRESET,
   VEHICLE_MODEL_OFFSET_TUNER_PRESET,
   VEHICLE_GLOBAL_FX_TUNER_PRESET,
+  SUPERSONIC_TRAIL_TUNER_PRESET,
   EXPERIMENTAL_MULTI_BOTS_PRESET,
   EXPERIMENTAL_BOT_PACK_PRESET,
   ATMOSPHERE_FX_TUNER_PRESET,
