@@ -269,6 +269,7 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     matchMode,
     matchPhase,
     isReplayViewerActive,
+    isReplayViewerLoaded,
   });
 
   const showTopScoreboard =
