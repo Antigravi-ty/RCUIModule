@@ -40,19 +40,29 @@ import {
   useSettingsPacingStore,
   type ClockPacingMode,
 } from '../../../stores/settingsPacingStore';
+import { useScopedStore } from '../../../stores/storeSnapshotScope';
+import type { SurfaceVariantMeta } from '../../../manifest/surfaceMetaTypes';
+
 export type TelemetryOverlayConfig = TelemetryConfigState;
 export type InputBufferTargetOption = number;
+
+export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
+  variantId: 'settings:advanced',
+  label: '4. Advanced & Telemetry',
+  description:
+    'Input buffer target/thresholds, HUD telemetry overlay configuration, user floating monitors, and Developer Mode status.',
+  storeOverrides: {
+    appStore: {
+      settingsTargetTab: 'advanced',
+      developerMode: true,
+    },
+  },
+};
 
 export interface AdvancedTabProps {
   isLight?: boolean;
   developerMode?: boolean;
-  onDeveloperModeChange?: (unlocked: boolean) => void;
   telemetryConfig?: Partial<TelemetryConfigState>;
-  defaultTelemetryConfig?: Partial<TelemetryConfigState>;
-  onTelemetryConfigChange?: (
-    next: TelemetryConfigState,
-    patch: Partial<TelemetryConfigState>
-  ) => void;
   audioDebug?: AudioDebugTelemetryProps;
   onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
   onHover: (desc: string) => void;
@@ -78,29 +88,57 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   isLight = false,
   developerMode: propDevMode,
   telemetryConfig: propTelemetryConfig,
-  defaultTelemetryConfig,
-  onTelemetryConfigChange,
   audioDebug,
   onSpawnDiagnosticWindow,
   onHover,
   onLeave,
 }) => {
-  const storeDevMode = useAppStore((s) => s.developerMode);
-  const storeTelemetry = useAppStore((s) => s.telemetry);
-  const updateStoreTelemetry = useAppStore((s) => s.updateTelemetry);
-  const setAppInputBufferTarget = useAppStore((s) => s.setInputBufferTarget);
-  const setAppInputBufferThreshold = useAppStore((s) => s.setInputBufferThreshold);
-  const masterVolume = useAppStore((s) => s.audio.masterVolume);
+  const storeDevMode = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.developerMode
+  );
+  const storeTelemetry = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.telemetry
+  );
+  const updateStoreTelemetry = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.updateTelemetry
+  );
+  const setAppInputBufferTarget = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.setInputBufferTarget
+  );
+  const setAppInputBufferThreshold = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.setInputBufferThreshold
+  );
+  const masterVolume = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.audio.masterVolume
+  );
 
   const developerMode = propDevMode ?? storeDevMode ?? false;
 
-  const allowRemoteProfileDeployment = useCloudProfileSyncStore(
+  const allowRemoteProfileDeployment = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
     (s) => s.allowRemoteProfileDeployment
   );
-  const setAllowRemoteProfileDeployment = useCloudProfileSyncStore(
+  const setAllowRemoteProfileDeployment = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
     (s) => s.setAllowRemoteProfileDeployment
   );
-  const exportLocalUserProfileBackup = useCloudProfileSyncStore(
+  const exportLocalUserProfileBackup = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
     (s) => s.exportLocalUserProfileBackup
   );
   const [lastExportedFilename, setLastExportedFilename] = useState<string | null>(null);
@@ -110,14 +148,36 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
     setLastExportedFilename(filename);
   };
 
-  const {
-    clockPacingMode,
-    inputBufferTarget,
-    inputBufferThreshold,
-    setClockPacingMode,
-    setInputBufferTarget,
-    setInputBufferThreshold,
-  } = useSettingsPacingStore();
+  const clockPacingMode = useScopedStore(
+    'settingsPacingStore',
+    useSettingsPacingStore,
+    (s) => s.clockPacingMode
+  );
+  const inputBufferTarget = useScopedStore(
+    'settingsPacingStore',
+    useSettingsPacingStore,
+    (s) => s.inputBufferTarget
+  );
+  const inputBufferThreshold = useScopedStore(
+    'settingsPacingStore',
+    useSettingsPacingStore,
+    (s) => s.inputBufferThreshold
+  );
+  const setClockPacingMode = useScopedStore(
+    'settingsPacingStore',
+    useSettingsPacingStore,
+    (s) => s.setClockPacingMode
+  );
+  const setInputBufferTarget = useScopedStore(
+    'settingsPacingStore',
+    useSettingsPacingStore,
+    (s) => s.setInputBufferTarget
+  );
+  const setInputBufferThreshold = useScopedStore(
+    'settingsPacingStore',
+    useSettingsPacingStore,
+    (s) => s.setInputBufferThreshold
+  );
 
   const handleClockPacingModeChange = (next: ClockPacingMode) => {
     setClockPacingMode(next);
@@ -136,7 +196,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   const [internalTelemetry, setInternalTelemetry] = useState<TelemetryConfigState>(() => ({
     ...DEFAULT_TELEMETRY_CONFIG_STATE,
     ...(storeTelemetry as unknown as Partial<TelemetryConfigState>),
-    ...defaultTelemetryConfig,
   }));
 
   const telemetry: TelemetryConfigState = {
@@ -149,7 +208,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
     const next: TelemetryConfigState = { ...telemetry, ...patch };
     setInternalTelemetry(next);
     updateStoreTelemetry(patch as Parameters<typeof updateStoreTelemetry>[0]);
-    onTelemetryConfigChange?.(next, patch);
   };
 
   const { windows } = useFloatingStore();

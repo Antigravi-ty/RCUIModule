@@ -19,6 +19,8 @@ import {
   useSettingsPacingStore,
   type ExperiencePriorityOption,
 } from '../../../stores/settingsPacingStore';
+import { useScopedStore } from '../../../stores/storeSnapshotScope';
+import type { SurfaceVariantMeta } from '../../../manifest/surfaceMetaTypes';
 
 export type ClockPacingPriority = ExperiencePriorityOption;
 export type BallOpacityMode = '70' | '100' | 'custom' | 'solid' | 'ghost' | 'hidden';
@@ -41,15 +43,23 @@ export const DEFAULT_GAMEPLAY_CONFIG: GameplayConfig = {
   enableFToMirror: true,
 };
 
+export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
+  variantId: 'settings:gameplay',
+  label: '1. Gameplay Settings',
+  description:
+    'Camera, Keybindings, Ball Cam Indicator, Trajectory Predictor, Show POV Hitbox, Training Config, and Experience Priority.',
+  storeOverrides: {
+    appStore: {
+      settingsTargetTab: 'gameplay',
+      developerMode: true,
+    },
+  },
+};
+
 export interface GameplayTabProps {
   isLight?: boolean;
-  /** Optional controlled override for GameplayConfig */
   gameplayConfig?: Partial<GameplayConfig>;
   onNavigateRoute?: (route: string) => void;
-  onNavigateTrainingDetail?: () => void;
-  onNavigateKeybindingsDetail?: () => void;
-  onNavigateTrajectoryDetail?: () => void;
-  onNavigateCameraDetail?: () => void;
   onHover: (desc: string) => void;
   onLeave: () => void;
 }
@@ -58,19 +68,31 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
   isLight = false,
   gameplayConfig: propGameplayConfig,
   onNavigateRoute,
-  onNavigateTrainingDetail,
-  onNavigateKeybindingsDetail,
-  onNavigateTrajectoryDetail,
-  onNavigateCameraDetail,
   onHover,
   onLeave,
 }) => {
-  const navigate = useAppStore((s) => s.navigate);
-  const storeGameplay = useAppStore((s) => s.gameplay);
-  const updateStoreGameplay = useAppStore((s) => s.updateGameplay);
-  const storeTrajectoryEnabled = useAppStore((s) => s.trajectory.enabled);
-  const updateStoreTrajectory = useAppStore((s) => s.updateTrajectory);
-  const setAppClockPacingPriority = useAppStore((s) => s.setClockPacingPriority);
+  const navigate = useScopedStore('appStore', useAppStore, (s) => s.navigate);
+  const storeGameplay = useScopedStore('appStore', useAppStore, (s) => s.gameplay);
+  const updateStoreGameplay = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.updateGameplay
+  );
+  const storeTrajectoryEnabled = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.trajectory.enabled
+  );
+  const updateStoreTrajectory = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.updateTrajectory
+  );
+  const setAppClockPacingPriority = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.setClockPacingPriority
+  );
 
   const [internalConfig, setInternalConfig] = useState<GameplayConfig>(() => ({
     ...DEFAULT_GAMEPLAY_CONFIG,
@@ -96,18 +118,31 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
     updateStoreTrajectory({ enabled: next });
   };
 
-  const storeExperiencePriority = useSettingsPacingStore((s) => s.experiencePriority);
-  const setStoreExperiencePriority = useSettingsPacingStore((s) => s.setExperiencePriority);
+  const handleShowCarHitboxChange = (checked: boolean) => {
+    const patch: Partial<GameplayConfig> = { showCarHitbox: checked };
+    const nextConfig: GameplayConfig = { ...resolvedGameplayConfig, ...patch };
+    setInternalConfig(nextConfig);
+    updateStoreGameplay(patch);
+  };
+
+  const storeExperiencePriority = useScopedStore(
+    'settingsPacingStore',
+    useSettingsPacingStore,
+    (s) => s.experiencePriority
+  );
+  const setStoreExperiencePriority = useScopedStore(
+    'settingsPacingStore',
+    useSettingsPacingStore,
+    (s) => s.setExperiencePriority
+  );
 
   const handleExperiencePriorityChange = (next: ClockPacingPriority) => {
     setStoreExperiencePriority(next);
     setAppClockPacingPriority(next as Parameters<typeof setAppClockPacingPriority>[0]);
   };
 
-  const navigateRoute = (route: string, specificCb?: () => void) => {
-    if (specificCb) {
-      specificCb();
-    } else if (onNavigateRoute) {
+  const navigateRoute = (route: string) => {
+    if (onNavigateRoute) {
       onNavigateRoute(route);
     } else {
       navigate(route as Parameters<typeof navigate>[0]);
@@ -115,7 +150,7 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
   };
 
   const handleOpenTrajectoryConfig = () => {
-    navigateRoute('trajectory', onNavigateTrajectoryDetail);
+    navigateRoute('trajectory');
   };
 
   const {
@@ -186,9 +221,9 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
       <SettingActionRow
         icon={NotebookPen}
         title="Training Mode Configuration"
-        description="Boost mode, goal barrier & car hitbox collision overlay"
-        hoverDescription="Configure training rules, boost mode (standard vs unlimited), goal barrier designer, and car hitbox collision visualization."
-        onAction={() => navigateRoute('training-config', onNavigateTrainingDetail)}
+        description="Free Play boost mode, goal reset & Training goal barrier designer"
+        hoverDescription="Configure Free Play boost mode (standard vs unlimited), goal reset rules, and the Training goal barrier designer."
+        onAction={() => navigateRoute('training-config')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -201,7 +236,7 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
         description="Field of view, distance, height, angle & tracking stiffness"
         hoverDescription="Field of view, height, angle, distance & tracking stiffness."
         buttonHoverDescription="Open camera live preview panel to adjust FOV, height, angle and stiffness."
-        onAction={() => navigateRoute('camera', onNavigateCameraDetail)}
+        onAction={() => navigateRoute('camera')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -214,7 +249,7 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
         description="Keyboard, mouse & controller mapping configuration"
         hoverDescription="Customize keyboard keys and gamepad controller buttons."
         buttonHoverDescription="Open key bindings panel to reassign keyboard and gamepad actions."
-        onAction={() => navigateRoute('keybindings', onNavigateKeybindingsDetail)}
+        onAction={() => navigateRoute('keybindings')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -244,6 +279,19 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
         onChange={handleTrajectoryEnabledChange}
         extraRightSlot={trajectoryRowLayout !== 'stacked' ? configureTrajectoryButton : undefined}
         bottomSlot={trajectoryRowLayout === 'stacked' ? configureTrajectoryButton : undefined}
+        onHover={(desc) => desc && onHover(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
+      {/* 5b. Show POV Hitbox (directly below Ball Trajectory Predictor, above Experience Priority) */}
+      <SettingToggleRow
+        icon={Box}
+        title="Show POV Hitbox"
+        description="Render wireframe physics collision box on the active POV vehicle"
+        hoverDescription="Toggles the 3D wireframe physics collision box on your active POV vehicle."
+        checked={resolvedGameplayConfig.showCarHitbox ?? false}
+        onChange={handleShowCarHitboxChange}
         onHover={(desc) => desc && onHover(desc)}
         onLeave={onLeave}
         isLight={isLight}

@@ -16,6 +16,8 @@ import { SettingPresetCustomRow } from '../../../compounds/SettingPresetCustomRo
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import { useAppStore } from '../../../stores/appStore';
 import { useViewportStore, viewportStore } from '../../../stores/viewportStore';
+import { useScopedStore } from '../../../stores/storeSnapshotScope';
+import type { SurfaceVariantMeta } from '../../../manifest/surfaceMetaTypes';
 import { calculateSettingsSafeScale } from '../../../config/uiConfig';
 
 export type MenuPowerSaveOption = 'extreme' | '15' | '30' | 'disable' | 'freeze' | 'match';
@@ -37,13 +39,23 @@ export const DEFAULT_GRAPHICS_CONFIG: GraphicsConfig = {
 
 const FPS_PRESET_VALUES = new Set([30, 60, 75, 90, 120, 240]);
 
+export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
+  variantId: 'settings:display',
+  label: '3. Display & Graphics',
+  description:
+    'Theme toggle, UI Scale, Safe Area Margin, FPS limiter, Render Scale, and Menu Power Save mode.',
+  storeOverrides: {
+    appStore: {
+      settingsTargetTab: 'display',
+      developerMode: true,
+    },
+  },
+};
+
 export interface DisplayTabProps {
   isLight?: boolean;
   developerMode?: boolean;
-  /** Optional controlled GraphicsConfig override */
   graphicsConfig?: Partial<GraphicsConfig>;
-  highlightSetting?: string | null;
-  onClearHighlight?: () => void;
   onHover: (desc: string) => void;
   onLeave: () => void;
 }
@@ -64,22 +76,37 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
   isLight = false,
   developerMode = false,
   graphicsConfig: propGraphicsConfig,
-  highlightSetting: propHighlightSetting,
-  onClearHighlight: propOnClearHighlight,
   onHover,
   onLeave,
 }) => {
-  const storeTheme = useAppStore((s) => s.theme);
-  const setStoreTheme = useAppStore((s) => s.setTheme);
-  const storeGraphics = useAppStore((s) => s.graphics);
-  const updateStoreGraphics = useAppStore((s) => s.updateGraphics);
-  const storeRenderScale = useAppStore((s) => s.renderScale);
-  const setStoreRenderScale = useAppStore((s) => s.setRenderScale);
-  const storeHighlightSetting = useAppStore((s) => s.highlightSetting);
-  const clearHighlightSetting = useAppStore((s) => s.clearHighlightSetting);
-
-  const highlightSetting = propHighlightSetting ?? storeHighlightSetting;
-  const onClearHighlight = propOnClearHighlight ?? clearHighlightSetting;
+  const storeTheme = useScopedStore('appStore', useAppStore, (s) => s.theme);
+  const setStoreTheme = useScopedStore('appStore', useAppStore, (s) => s.setTheme);
+  const storeGraphics = useScopedStore('appStore', useAppStore, (s) => s.graphics);
+  const updateStoreGraphics = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.updateGraphics
+  );
+  const storeRenderScale = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.renderScale
+  );
+  const setStoreRenderScale = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.setRenderScale
+  );
+  const highlightSetting = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.highlightSetting
+  );
+  const onClearHighlight = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.clearHighlightSetting
+  );
 
   const {
     renderScale: uiScale = 100,

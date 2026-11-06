@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
+  "updatedAt": "2026-11-06T16:39:25.850Z",
   "templateHash": "574097ceda64cb92",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -1021,8 +1021,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2SettingsRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "6ecea37af03cc602",
-      "visualAstHash": "c4a80f12f4f8431b",
+      "sizingAndConfigHash": "b07142d2d7197751",
+      "visualAstHash": "9fa9a36abff60d0f",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1044,20 +1044,21 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer2SettingsRecipe.tsx": "7419ef59c9bf02d3",
+        "src/ui-core/recipes/Layer2SettingsRecipe.tsx": "f3747127a95053c8",
         "src/ui-core/recipes/settings/components/AudioDebugSection.tsx": "33f25fe12a045ccb",
         "src/ui-core/recipes/settings/components/DeveloperProfileExportSection.tsx": "7fe0ddc66167ba19",
         "src/ui-core/recipes/settings/components/FloatingWindowCard.tsx": "24594fbe7a613278",
         "src/ui-core/recipes/settings/components/RealisticBgmSection.tsx": "d80d6a158ca60f0d",
         "src/ui-core/recipes/settings/components/SignalingProfileSection.tsx": "f7c817a03be0afb6",
-        "src/ui-core/recipes/settings/tabs/AdvancedTab.tsx": "8e64966db5c041ce",
+        "src/ui-core/recipes/settings/tabs/AdvancedTab.tsx": "a75e461a96f36292",
         "src/ui-core/recipes/settings/tabs/AudioTab.tsx": "1e69a531cea0a03e",
         "src/ui-core/recipes/settings/tabs/DeveloperTab.tsx": "f61fe59551c24f1e",
         "src/ui-core/recipes/settings/tabs/DisplayTab.tsx": "4312f45b97bca164",
-        "src/ui-core/recipes/settings/tabs/GameplayTab.tsx": "c902b518ba506afb"
+        "src/ui-core/recipes/settings/tabs/GameplayTab.tsx": "6096ad8a687c2fe2"
       },
       "alphaDeps": [
         "src/ui-core/config/uiConfig.ts",
+        "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/ballVisualStore.ts",
         "src/ui-core/stores/cloudProfileSyncStore.ts",
@@ -1070,6 +1071,7 @@
         "src/ui-core/stores/settingsPacingStore.ts",
         "src/ui-core/stores/signalingProfileStore.ts",
         "src/ui-core/stores/spatialAudioStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/stores/underlineTabsStore.ts",
         "src/ui-core/stores/viewportStore.ts",
         "src/ui-core/tokens/easing.ts",
