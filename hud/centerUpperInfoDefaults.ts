@@ -196,3 +196,77 @@ export function buildOuterGlowTextShadow(
   }
   return layers.length > 0 ? layers.join(', ') : 'none';
 }
+
+export function buildCenterUpperKineticKeyframes(
+  resolvedTiming: CenterUpperTimingConfig,
+  animateEntry: boolean
+): { keyframes: Keyframe[]; totalTimelineMs: number } {
+  const entryMs = Math.max(0, resolvedTiming.entryDurationMs);
+  const holdMs = Math.max(entryMs, resolvedTiming.durationMs);
+  const exitMs = Math.max(0, resolvedTiming.exitDurationMs);
+  const totalTimelineMs = Math.max(1, holdMs + exitMs);
+  const entryScale = resolvedTiming.entryScale;
+  const holdEndOffset = Math.min(1, holdMs / totalTimelineMs);
+
+  if (animateEntry) {
+    const keyframes: Keyframe[] = [];
+    const entryOffset = entryMs > 0 ? Math.min(1, entryMs / totalTimelineMs) : 0;
+
+    if (entryOffset > 0) {
+      keyframes.push({
+        offset: 0,
+        transform: `scale3d(${entryScale}, ${entryScale}, 1)`,
+        opacity: 1,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      });
+      keyframes.push({
+        offset: entryOffset,
+        transform: 'scale3d(1, 1, 1)',
+        opacity: 1,
+        easing: 'linear',
+      });
+    } else {
+      keyframes.push({
+        offset: 0,
+        transform: 'scale3d(1, 1, 1)',
+        opacity: 1,
+        easing: 'linear',
+      });
+    }
+
+    if (exitMs > 0 && holdEndOffset > entryOffset && holdEndOffset < 1) {
+      keyframes.push({
+        offset: holdEndOffset,
+        transform: 'scale3d(1, 1, 1)',
+        opacity: 1,
+        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      });
+    }
+
+    if (exitMs > 0) {
+      keyframes.push({ offset: 1, transform: 'scale3d(1, 1, 1)', opacity: 0 });
+    } else if (entryOffset < 1) {
+      keyframes.push({ offset: 1, transform: 'scale3d(1, 1, 1)', opacity: 1 });
+    }
+
+    return { keyframes, totalTimelineMs };
+  }
+
+  const keyframes: Keyframe[] = [
+    { offset: 0, transform: 'scale3d(1, 1, 1)', opacity: 1, easing: 'linear' },
+  ];
+  if (exitMs > 0 && holdEndOffset > 0 && holdEndOffset < 1) {
+    keyframes.push({
+      offset: holdEndOffset,
+      transform: 'scale3d(1, 1, 1)',
+      opacity: 1,
+      easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    });
+  }
+  keyframes.push({
+    offset: 1,
+    transform: 'scale3d(1, 1, 1)',
+    opacity: exitMs > 0 ? 0 : 1,
+  });
+  return { keyframes, totalTimelineMs };
+}

@@ -86,6 +86,7 @@ const EdgePlayerHudStripInner = forwardRef<EdgePlayerHudStripHandle, EdgePlayerH
 
     return (
       <div
+        data-alpha-id="Alpha:EdgePlayerHudStrip"
         data-ui-element={`hud-edge-player-strip-${side}`}
         className={`flex flex-col gap-2 select-none pointer-events-auto ${
           side === 'left' ? 'items-start' : 'items-end'

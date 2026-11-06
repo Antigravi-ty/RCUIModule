@@ -6,10 +6,14 @@ import {
   getActiveEditItemVariable,
 } from '../stores/staticTrainingPackStore';
 
+export type StaticTrainingShotWithTimeout = StaticTrainingHudShot & {
+  timeoutSeconds?: number;
+};
+
 export interface StaticTrainingPackHUDProps {
   isLight?: boolean;
   shotIndex?: number;
-  shot?: StaticTrainingHudShot;
+  shot?: StaticTrainingShotWithTimeout;
   editSubMode?: EditSubMode;
   onSelectSubMode?: (mode: EditSubMode) => void;
   isTrajectoryTesting?: boolean;
@@ -70,7 +74,7 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
       ? propShotIndex
       : Math.max(0, Math.min(Math.max(0, items.length - 1), storeShotIndex));
 
-  const shot: StaticTrainingHudShot | null =
+  const shot: StaticTrainingShotWithTimeout | null =
     propShot ||
     (sessionMode === 'edit' && isEditingItem && getActiveEditItemVariable()) ||
     items[safeIdx] ||
@@ -98,6 +102,7 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
   return (
     <div
       data-ui-element="static-training-pack-hud"
+      data-alpha-id="Alpha:StaticTrainingPackHUD"
       className={`absolute top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none select-none flex flex-col items-center gap-1.5 ${className}`}
     >
       <div
@@ -179,7 +184,7 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
               )}
             </div>
 
-            {typeof (shot as any).timeoutSeconds === 'number' && (
+            {typeof shot.timeoutSeconds === 'number' && (
               <>
                 <span className="opacity-30">|</span>
                 <div
@@ -188,7 +193,7 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
                 >
                   <span className="opacity-60 text-[10px]">TIME</span>
                   <span className={`text-sm font-extrabold ${normalTextColor}`}>
-                    {Math.round((shot as any).timeoutSeconds ?? 10)}s
+                    {Math.round(shot.timeoutSeconds ?? 10)}s
                   </span>
                 </div>
               </>

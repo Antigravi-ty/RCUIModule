@@ -8,9 +8,7 @@ import React, {
 import {
   type CenterUpperTypographyConfig,
   type CenterUpperTimingConfig,
-  buildOuterGlowTextShadow,
-  hexToRgba,
-} from './CenterUpperInfoHUD';
+} from './centerUpperInfoDefaults';
 import {
   type TakeoverCountdownStep,
   type TakeoverSignal,
@@ -27,6 +25,7 @@ import {
   DEFAULT_TAKEOVER_TIMING,
   DEFAULT_TAKEOVER_LAYOUT,
   resolveTakeoverTopLabelVisuals,
+  applyTakeoverDomStyles,
 } from './takeoverCountdownDefaults';
 
 export {
@@ -149,91 +148,19 @@ export const TakeoverCountdownHUD = React.memo(
           mainWrapEl.style.opacity = '1';
           innerEl.style.gap = `${resolvedTypo.lineGapPx}px`;
 
-          // 1. Backdrop radial bloom
-          const bloomPct = resolvedGlow.backdropBloomPct ?? 0;
-          if (bloomPct > 0 && resolvedGlow.intensityPct > 0) {
-            const bloomAlpha = Math.min(
-              0.65,
-              (bloomPct / 100) * (resolvedGlow.intensityPct / 100) * 0.45
-            );
-            bloomEl.style.background = `radial-gradient(ellipse at center, ${hexToRgba(
-              resolvedGlow.glowColor,
-              bloomAlpha
-            )} 0%, ${hexToRgba(resolvedGlow.glowColor, bloomAlpha * 0.35)} 42%, transparent 74%)`;
-            bloomEl.style.opacity = '1';
-          } else {
-            bloomEl.style.opacity = '0';
-          }
+          applyTakeoverDomStyles({
+            nextPayload,
+            resolvedGlow,
+            resolvedTypo,
+            resolvedTeamSide,
+            bloomEl,
+            topEl,
+            mainEl,
+            subEl,
+          });
 
-          const strokeW = resolvedGlow.strokeWidthPx ?? 0;
-          const resolvedStrokeCol =
-            resolvedGlow.strokeColor || resolvedGlow.glowColor || resolvedGlow.textColor;
-
-          // 2. Top Line (JetBrains Mono Regular 400 - e.g. Takeover in...)
-          const hasTopText = Boolean(nextPayload.topText && nextPayload.topText.trim().length > 0);
-          if (hasTopText) {
-            const topVisuals = resolveTakeoverTopLabelVisuals(resolvedGlow, resolvedTeamSide);
-            topEl.style.display = 'block';
-            topEl.style.opacity = '1';
-            topEl.style.transform = 'none';
-            topEl.textContent = resolvedTypo.uppercase
-              ? nextPayload.topText.toUpperCase()
-              : nextPayload.topText;
-            topEl.style.fontSize = `${resolvedTypo.topFontSizePx}px`;
-            topEl.style.fontWeight = String(resolvedTypo.topFontWeight);
-            topEl.style.letterSpacing = `${resolvedTypo.topLetterSpacingEm}em`;
-            topEl.style.paddingLeft =
-              resolvedTypo.topLetterSpacingEm > 0
-                ? `${resolvedTypo.topLetterSpacingEm}em`
-                : '0px';
-            topEl.style.color = topVisuals.fillColor;
-            topEl.style.webkitTextStroke = topVisuals.strokeCss;
-            topEl.style.paintOrder = 'stroke fill';
-            topEl.style.textShadow = topVisuals.textShadowCss;
-          } else {
-            topEl.style.display = 'none';
-            topEl.textContent = '';
-          }
-
-          // 3. Bottom Countdown Line (JetBrains Mono Thin 100 - 3, 2, 1)
-          mainEl.textContent = resolvedTypo.uppercase
-            ? nextPayload.mainText.toUpperCase()
-            : nextPayload.mainText;
-          mainEl.style.fontSize = `${resolvedTypo.mainFontSizePx}px`;
-          mainEl.style.fontWeight = String(resolvedTypo.mainFontWeight);
-          mainEl.style.letterSpacing = `${resolvedTypo.mainLetterSpacingEm}em`;
-          mainEl.style.paddingLeft =
-            resolvedTypo.mainLetterSpacingEm > 0
-              ? `${resolvedTypo.mainLetterSpacingEm}em`
-              : '0px';
-          mainEl.style.fontStyle = resolvedTypo.italic ? 'italic' : 'normal';
-          mainEl.style.color = resolvedGlow.textColor;
-          mainEl.style.textShadow = buildOuterGlowTextShadow(
-            resolvedGlow.glowColor,
-            resolvedGlow.innerBlurPx,
-            resolvedGlow.outerBlurPx,
-            resolvedGlow.ambientBlurPx,
-            resolvedGlow.intensityPct
-          );
-          mainEl.style.webkitTextStroke =
-            strokeW > 0 ? `${strokeW}px ${resolvedStrokeCol}` : '0px transparent';
-
-          // 4. Optional Sub-caption
-          if (nextPayload.subText && nextPayload.subText.trim().length > 0) {
-            subEl.style.display = 'inline-flex';
-            subEl.textContent = resolvedTypo.uppercase
-              ? nextPayload.subText.toUpperCase()
-              : nextPayload.subText;
-            subEl.style.color = resolvedGlow.topLabelColor || '#E2E8F0';
-            subEl.style.borderColor = hexToRgba(resolvedGlow.glowColor, 0.45);
-            subEl.style.boxShadow = `0 0 0 1px ${hexToRgba(resolvedGlow.glowColor, 0.25)}`;
-          } else {
-            subEl.style.display = 'none';
-            subEl.textContent = '';
-          }
-
-          // 5. Kinetic Scale Pop strictly on mainWrapEl (3 -> 2 -> 1), while topEl stays rock-solid;
-          //    Tail exit fade applies to rootEl so 'Takeover in...' and the countdown digit always dismiss together.
+          // Kinetic Scale Pop strictly on mainWrapEl (3 -> 2 -> 1), while topEl stays rock-solid;
+          // Tail exit fade applies to rootEl so 'Takeover in...' and the countdown digit always dismiss together.
           const entryMs = Math.max(0, resolvedTiming.entryDurationMs);
           const holdMs = Math.max(entryMs, resolvedTiming.durationMs);
           const exitMs = Math.max(0, resolvedTiming.exitDurationMs);
@@ -330,6 +257,7 @@ export const TakeoverCountdownHUD = React.memo(
       return (
         <div
           ref={containerRef}
+          data-alpha-id="Alpha:TakeoverCountdownHUD"
           data-ui-element="hud-takeover-countdown"
           className={`relative w-[10000px] max-w-none flex flex-col items-center justify-end text-center select-none pointer-events-none py-2 ${className}`}
           style={{

@@ -3,19 +3,177 @@ import {
   DEFAULT_CENTER_UPPER_TIMING,
   DEFAULT_WINNER_BLUE_TEAM_CONFIG,
   type CenterUpperInfoPayload,
-} from './CenterUpperInfoHUD';
+} from './centerUpperInfoDefaults';
 import {
-  DEFAULT_TAKEOVER_GLOW,
-  DEFAULT_TAKEOVER_TIMING,
-  DEFAULT_TAKEOVER_TYPOGRAPHY,
+  buildTakeoverPrerollPayload,
   type TakeoverHudPayload,
   type TakeoverTeamSide,
-} from './TakeoverCountdownHUD';
+} from './takeoverCountdownDefaults';
 import { useReplayViewerStore } from '../stores/replayViewerStore';
 import { useReplayToRcsImporterStore } from '../stores/replayToRcsImporterStore';
 import { useHudStore } from '../stores/hudStore';
 import { useExperimentalMultiBotsStore } from '../stores/experimentalMultiBotsStore';
 import type { HudTransientChannel } from '../stores/hudTransientTypes';
+
+export interface ScoreboardDerivedState {
+  isLobbyPhase: boolean;
+  leftTeamColor: string;
+  leftBarColor: string;
+  rightTeamColor: string;
+  rightBarColor: string;
+  leftScore: number;
+  rightScore: number;
+  overtimeChinOpen: boolean;
+  phaseChinOpen: boolean;
+  phaseChinText: string;
+  phaseChinColor: string | undefined;
+  activeClockSec: number;
+}
+
+export function deriveInGameScoreboardState(params: {
+  matchPhase: string;
+  matchMode: string;
+  roomType?: string;
+  onlineLocalTeam?: string | null;
+  localTeam: number;
+  blueScore: number;
+  orangeScore: number;
+  isOvertime: boolean;
+  overtimeSeconds: number;
+  remainingSeconds: number;
+  matchDurationSeconds?: number;
+}): ScoreboardDerivedState {
+  const {
+    matchPhase,
+    matchMode,
+    roomType,
+    onlineLocalTeam,
+    localTeam,
+    blueScore,
+    orangeScore,
+    isOvertime,
+    overtimeSeconds,
+    remainingSeconds,
+    matchDurationSeconds,
+  } = params;
+
+  const isLobbyPhase =
+    matchPhase === 'lobby' ||
+    (matchMode === 'online-warmup' && roomType === 'match');
+
+  const isOrangeLeft = isLobbyPhase
+    ? onlineLocalTeam === 'orange' || (onlineLocalTeam !== 'blue' && localTeam === 1)
+    : localTeam === 1;
+  const leftTeamColor = isOrangeLeft ? '#EA580C' : '#2563EB';
+  const leftBarColor = isOrangeLeft ? '#F97316' : '#3B82F6';
+  const rightTeamColor = isOrangeLeft ? '#2563EB' : '#EA580C';
+  const rightBarColor = isOrangeLeft ? '#3B82F6' : '#F97316';
+  const leftScore = isLobbyPhase ? 0 : isOrangeLeft ? orangeScore : blueScore;
+  const rightScore = isLobbyPhase ? 0 : isOrangeLeft ? blueScore : orangeScore;
+
+  const overtimeChinOpen = Boolean(
+    isOvertime &&
+      !isLobbyPhase &&
+      matchPhase !== 'goal' &&
+      matchPhase !== 'replay' &&
+      matchPhase !== 'podium' &&
+      matchPhase !== 'ended'
+  );
+  const phaseChinOpen = overtimeChinOpen || isLobbyPhase;
+  const phaseChinText = overtimeChinOpen
+    ? 'OVERTIME'
+    : isLobbyPhase
+    ? 'LOBBY'
+    : 'OVERTIME';
+  const phaseChinColor = overtimeChinOpen
+    ? '#DC2626'
+    : isLobbyPhase
+    ? '#52525B'
+    : undefined;
+  const activeClockSec = overtimeChinOpen
+    ? overtimeSeconds
+    : isLobbyPhase
+    ? (matchDurationSeconds ?? remainingSeconds)
+    : remainingSeconds;
+
+  return {
+    isLobbyPhase,
+    leftTeamColor,
+    leftBarColor,
+    rightTeamColor,
+    rightBarColor,
+    leftScore,
+    rightScore,
+    overtimeChinOpen,
+    phaseChinOpen,
+    phaseChinText,
+    phaseChinColor,
+    activeClockSec,
+  };
+}
+
+export function useWindowFocusAndPowerSave(params: {
+  menuOpen: boolean;
+  isLivePreviewCollapsed: boolean;
+  activeRoute: string;
+  menuPowerSave: string | number;
+  telemetryEnabled: boolean;
+  pauseTelemetryInPowerSave: boolean;
+}) {
+  const {
+    menuOpen,
+    isLivePreviewCollapsed,
+    activeRoute,
+    menuPowerSave,
+    telemetryEnabled,
+    pauseTelemetryInPowerSave,
+  } = params;
+
+  const [isWindowMinimized, setIsWindowMinimized] = useState<boolean>(() =>
+    typeof document !== 'undefined' ? Boolean(document.hidden) : false
+  );
+  const [isWindowFocused, setIsWindowFocused] = useState<boolean>(() =>
+    typeof document !== 'undefined'
+      ? !document.hidden &&
+        (typeof document.hasFocus === 'function' ? document.hasFocus() : true)
+      : true
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const syncFocus = () => {
+      const minimized = Boolean(document.hidden);
+      const focused =
+        !minimized &&
+        (typeof document.hasFocus === 'function' ? document.hasFocus() : true);
+      setIsWindowMinimized(minimized);
+      setIsWindowFocused(focused);
+    };
+    window.addEventListener('blur', syncFocus);
+    window.addEventListener('focus', syncFocus);
+    document.addEventListener('visibilitychange', syncFocus);
+    return () => {
+      window.removeEventListener('blur', syncFocus);
+      window.removeEventListener('focus', syncFocus);
+      document.removeEventListener('visibilitychange', syncFocus);
+    };
+  }, []);
+
+  const isLivePreviewDockCollapsed =
+    Boolean(menuOpen) &&
+    Boolean(isLivePreviewCollapsed) &&
+    (activeRoute === 'trajectory' || activeRoute === 'camera');
+  const isPowerSaveMenuOpen = Boolean(menuOpen) && !isLivePreviewDockCollapsed;
+  const isPowerSaveModeEnabled =
+    String(menuPowerSave) !== 'match' && String(menuPowerSave) !== 'disable';
+  const isPowerSaveActive =
+    isWindowMinimized ||
+    (isPowerSaveModeEnabled && (isPowerSaveMenuOpen || !isWindowFocused));
+  const shouldPollTelemetry =
+    telemetryEnabled && !(pauseTelemetryInPowerSave && isPowerSaveActive);
+
+  return { isPowerSaveActive, shouldPollTelemetry };
+}
 
 export function useCenterUpperCountdownChoreography(params: {
   kickoffCountdown: number;
@@ -220,34 +378,19 @@ export function useTakeoverPrerollChoreography(params: {
       : isRewinderPreroll
       ? rewinderDownCounterSec
       : 0;
-    const effectiveDownSec = Math.max(1, activeDownSec);
 
     if (isTakeoverPreroll) {
-      if (activePrerollSec >= 1 && activePrerollSec <= effectiveDownSec + 1) {
-        const displayDigit = Math.min(3, activePrerollSec);
-        const isSilentLeadIn = activeDownSec > 0 && activePrerollSec > effectiveDownSec;
-        const stepTiming = isSilentLeadIn
-          ? {
-              ...DEFAULT_TAKEOVER_TIMING,
-              entryScale: 1,
-              entryDurationMs: 0,
-              persistentInspect: true,
-            }
-          : DEFAULT_TAKEOVER_TIMING;
-
+      const candidate = buildTakeoverPrerollPayload({
+        activePrerollSec,
+        activeDownSec,
+        takeoverTeam,
+        triggerKey: takeoverSeqRef.current + 1,
+      });
+      if (candidate) {
         if (lastTakeoverStepRef.current !== activePrerollSec) {
           lastTakeoverStepRef.current = activePrerollSec;
           takeoverSeqRef.current += 1;
-          setTakeoverPayload({
-            topText: 'Takeover in...',
-            mainText: String(displayDigit),
-            subText: '',
-            teamSide: takeoverTeam,
-            glow: DEFAULT_TAKEOVER_GLOW,
-            typography: DEFAULT_TAKEOVER_TYPOGRAPHY,
-            timing: stepTiming,
-            triggerKey: takeoverSeqRef.current,
-          });
+          setTakeoverPayload(candidate);
         } else {
           setTakeoverPayload((prev) =>
             prev && prev.teamSide !== takeoverTeam ? { ...prev, teamSide: takeoverTeam } : prev

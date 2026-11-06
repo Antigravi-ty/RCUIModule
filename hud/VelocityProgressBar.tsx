@@ -7,29 +7,28 @@ export interface VelocityProgressBarHandle {
 }
 
 export interface VelocityProgressBarProps {
-  /**  (0 ~ 2300 Unreal Units/s)/ Props  */
+  /** Current car speed (0 ~ 2300 Unreal Units/s) */
   speed?: number;
-  /**  120Hz  DOM Ref0 React VDOM  */
+  /** High-frequency 120Hz transient listener updating DOM refs with zero React VDOM re-renders */
   subscribeSpeed?: (listener: SpeedTransientListener) => () => void;
-  /**  (CSS  100%) */
+  /** Bar width (default '100%') */
   width?: string | number;
-  /**  ( 20px) */
+  /** Bar height (default 20px) */
   height?: string | number;
-  /**  className */
+  /** Optional container className */
   className?: string;
 }
 
-//  HEX  (#ffffff)  RGB 
 const hexToRgb = (hex: string): [number, number, number] => {
   const bigint = parseInt(hex.replace('#', ''), 16);
   return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
 };
 
 /**
- * 
- * -  (<= 1410) #d4af37 ()
- * -  (1410 ~ 2200) #77ca7a  #59f168 ()
- * -  (>= 2200)#a020f0 ( + )
+ * Computes piecewise velocity progress bar fill color and percentage:
+ * - Normal speed (<= 1410 uu/s): #d4af37 (Gold)
+ * - Boost speed (1410 ~ 2200 uu/s): #77ca7a to #59f168 (Green gradient)
+ * - Supersonic (>= 2200 uu/s): #a020f0 (Purple + heartbeat)
  */
 export const getVelocityBarColor = (v: number): {
   color: string;
@@ -56,7 +55,6 @@ export const getVelocityBarColor = (v: number): {
     return { color: '#d4af37', isSupersonic: false, percent };
   }
 
-  // 1410 ~ 2200 
   const ratio = (speed - 1410) / (2200 - 1410);
   const rgbStart = hexToRgb('#77ca7a');
   const rgbEnd = hexToRgb('#59f168');
@@ -68,10 +66,7 @@ export const getVelocityBarColor = (v: number): {
 
 /**
  * VelocityProgressBar
- *  120Hz  Props 
- * 1.  85% 
- * 2.  ()
- * 3.  ( ->  -> )
+ * High-frequency 120Hz car velocity progress bar with 85% supersonic threshold tick.
  */
 export const VelocityProgressBar = React.memo(
   forwardRef<VelocityProgressBarHandle, VelocityProgressBarProps>(
@@ -112,6 +107,7 @@ export const VelocityProgressBar = React.memo(
 
   return (
     <div
+      data-alpha-id="Alpha:VelocityProgressBar"
       data-ui-element="hud-velocity-progress-bar"
       className={`relative select-none pointer-events-auto overflow-hidden bg-[#333333]/80 ${className}`}
       style={{
@@ -120,7 +116,7 @@ export const VelocityProgressBar = React.memo(
         borderRadius: 0,
       }}
     >
-      {/* 85%  () */}
+      {/* 85% Supersonic Threshold Marker */}
       <div
         className="absolute top-0 bottom-0 pointer-events-none z-10"
         style={{
@@ -131,7 +127,7 @@ export const VelocityProgressBar = React.memo(
         title="Supersonic Threshold (2200 uu/s)"
       />
 
-      {/*  CSS  0ms  */}
+      {/* Zero-latency progress fill */}
       <div
         ref={fillRef}
         className={`h-full ${initial.isSupersonic ? 'supersonic-heartbeat' : ''}`}
@@ -143,7 +139,7 @@ export const VelocityProgressBar = React.memo(
         }}
       />
 
-      {/*  opacity 0 filter/box-shadow  */}
+      {/* Compositor-friendly opacity pulse */}
       <style>{`
         @keyframes supersonicHeartbeat {
           0%, 100% { opacity: 1; }

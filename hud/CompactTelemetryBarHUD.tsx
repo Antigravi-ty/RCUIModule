@@ -268,6 +268,7 @@ export const CompactTelemetryBarHUD = React.memo(
 
     return (
       <div
+        data-alpha-id="Alpha:CompactTelemetryBarHUD"
         data-ui-element="hud-compact-telemetry-bar"
         className={`select-none pointer-events-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[11px] font-mono transition-colors ${bgBorderClass} ${className}`}
       >

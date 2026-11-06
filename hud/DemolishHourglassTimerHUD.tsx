@@ -155,6 +155,7 @@ export const DemolishHourglassTimerHUD = React.memo(
       return (
         <div
           ref={containerRef}
+          data-alpha-id="Alpha:DemolishHourglassTimerHUD"
           data-ui-element="hud-demolish-hourglass-timer"
           className={`relative flex items-center justify-center box-border pointer-events-none select-none transition-opacity duration-100 ${className}`}
           style={{

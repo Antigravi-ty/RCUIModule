@@ -11,10 +11,8 @@ export interface StepperScoreboardHandle {
 }
 
 export interface StepperScoreboardHUDProps {
-  /** Declarative fallback props (used when subscribeScoreboard is not provided) */
   leftScore?: number;
   rightScore?: number;
-  /** Reserved character slots per score side: 2 digits (`w-[2ch]`) or 3 digits (`w-[3ch]`) */
   scoreDigits?: 2 | 3;
   seconds?: number;
   isOvertime?: boolean;
@@ -22,25 +20,15 @@ export interface StepperScoreboardHUDProps {
   overtimeChinText?: string;
   overtimeChinColor?: string;
   bestOf?: 0 | 3 | 5 | 7;
-  /** Optional custom series title in the middle of Single Chin (defaults to `BO3` / `BO5` / `BO7`) */
   seriesTitle?: string;
-  /** Left team wins (fills pills from left -> center) */
   leftSeriesWins?: number;
-  /** Right team wins (fills pills from right -> center) */
   rightSeriesWins?: number;
   seriesResults?: SeriesSlotWinner[];
-  /** Team accent colors (default: Left = Blue #2563EB, Right = Orange #EA580C) */
   leftTeamColor?: string;
   rightTeamColor?: string;
-  /** Optional team short labels shown subtly on outer wings if desired */
   leftLabel?: string;
   rightLabel?: string;
-  /** Light/Dark mode: Light = white center + black text; Dark = black center + white text */
   isLight?: boolean;
-  /**
-   * High-efficiency Transient Channel subscription (0 React re-renders).
-   * Mutates score text nodes, 5-char timer text node, symmetric BoX pills, and GPU Double-Chin transform directly.
-   */
   subscribeScoreboard?: (listener: ScoreboardTransientListener) => () => void;
   className?: string;
 }
@@ -56,7 +44,6 @@ export function formatFiveCharTimer(totalSeconds: number, isOvertime: boolean): 
   const ss = secs < 10 ? `0${secs}` : `${secs}`;
 
   if (isOvertime) {
-    // 5 characters: '+' + 1-digit minute (capped at 9 for 5-char lock) + ':' + 2-digit sec
     const mDigit = Math.min(9, mins);
     return `+${mDigit}:${ss}`;
   }
@@ -67,11 +54,8 @@ export function formatFiveCharTimer(totalSeconds: number, isOvertime: boolean): 
 
 /**
  * StepperScoreboardHUD
- * Top-flush unfolded-box 3-segment scoreboard with:
- * - Flush top edge (`rounded-t-none border-t-0`) and rounded bottom corners (`rounded-b-[6px]`)
- * - Single Chin (`z-20 -mt-[6px] pt-[9px]`) & Double Chin (`z-10 -mt-[6px] pt-[9px]`) with extra top bleed space
- *   tucked behind the upper rounded bottom corners to prevent corner gap / clipping ("")
- * - Zero-React-rerender transient channel subscription (`subscribeScoreboard`) + imperative `forwardRef`
+ * Top-flush unfolded-box 3-segment scoreboard with Single Chin & Double Chin sub-banners
+ * and zero-React-rerender transient channel subscription (`subscribeScoreboard`).
  */
 const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperScoreboardHUDProps>(
   (
@@ -106,9 +90,7 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
     const timerTextRef = useRef<HTMLSpanElement | null>(null);
     const singleChinWrapRef = useRef<HTMLDivElement | null>(null);
     const singleChinTitleRef = useRef<HTMLSpanElement | null>(null);
-    /** Left side pills (max 4 for Bo7): index 0 is outermost-left, index winsNeeded-1 is closest to center */
     const leftPillsRef = useRef<(HTMLSpanElement | null)[]>([]);
-    /** Right side pills (max 4 for Bo7): rendered in flex-row-reverse so index 0 is outermost-right, filling right-to-left toward center */
     const rightPillsRef = useRef<(HTMLSpanElement | null)[]>([]);
     const doubleChinOuterRef = useRef<HTMLDivElement | null>(null);
     const doubleChinInnerRef = useRef<HTMLDivElement | null>(null);
@@ -126,13 +108,16 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
         }
 
         const digits =
-          state.scoreDigits === 3 || state.leftScore >= 100 || state.rightScore >= 100 ? 3 : 2;
+          state.scoreDigits === 3 || state.leftScore >= 100 || state.rightScore >= 100
+            ? 3
+            : 2;
         const maxScore = digits === 3 ? 999 : 99;
         const slotWidthCh = `${digits}ch`;
 
-        // 1. Update Left & Right 2ch / 3ch centered score slots
         if (leftScoreRef.current) {
-          const nextLeft = String(Math.max(0, Math.min(maxScore, Math.floor(state.leftScore))));
+          const nextLeft = String(
+            Math.max(0, Math.min(maxScore, Math.floor(state.leftScore)))
+          );
           if (leftScoreRef.current.textContent !== nextLeft) {
             leftScoreRef.current.textContent = nextLeft;
           }
@@ -141,7 +126,9 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
           }
         }
         if (rightScoreRef.current) {
-          const nextRight = String(Math.max(0, Math.min(maxScore, Math.floor(state.rightScore))));
+          const nextRight = String(
+            Math.max(0, Math.min(maxScore, Math.floor(state.rightScore)))
+          );
           if (rightScoreRef.current.textContent !== nextRight) {
             rightScoreRef.current.textContent = nextRight;
           }
@@ -150,7 +137,6 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
           }
         }
 
-        // 2. Update 5-char Center Timer (`00:00` or `+0:00`)
         if (timerTextRef.current) {
           const formatted = formatFiveCharTimer(state.seconds, state.isOvertime);
           if (timerTextRef.current.textContent !== formatted) {
@@ -158,14 +144,13 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
           }
         }
 
-        // 3. Update Tier 1 Sub-Banner (Series Pips Banner): Center Series Title + Symmetric Race-to-Center Pips
-        //    Includes 6px extra top overlap (`30px` max-height) tucked behind the Scorebug's bottom rounded corners.
-        //    When `bestOf === 0`, resets `marginTop` to `0px` so Tier 2 (`Phase Drop-Banner`) does not double-tuck (-12px)!
         if (singleChinWrapRef.current) {
           const showSingleChin = state.bestOf > 0;
           singleChinWrapRef.current.style.maxHeight = showSingleChin ? '30px' : '0px';
           singleChinWrapRef.current.style.marginTop = showSingleChin ? '-6px' : '0px';
-          singleChinWrapRef.current.style.borderBottomWidth = showSingleChin ? '1px' : '0px';
+          singleChinWrapRef.current.style.borderBottomWidth = showSingleChin
+            ? '1px'
+            : '0px';
           singleChinWrapRef.current.style.opacity = showSingleChin ? '1' : '0';
 
           const winsNeeded = showSingleChin ? Math.ceil(state.bestOf / 2) : 0;
@@ -204,9 +189,6 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
           }
         }
 
-        // 4. Update Tier 2 Sub-Banner (Phase Drop-Banner: Overtime red slide-out / retract via GPU compositor)
-        //    Includes 6px extra top bleed (`-mt-[6px]` + `pt-[11px] pb-[4px]`, `38px` max-height) tucked behind the upper
-        //    layer's `rounded-b-[6px]` corners so the rounded corners never expose background gaps and text is never clipped.
         if (doubleChinOuterRef.current && doubleChinInnerRef.current) {
           const open = Boolean(state.overtimeChinOpen);
           doubleChinOuterRef.current.style.maxHeight = open ? '38px' : '0px';
@@ -214,10 +196,14 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
             ? 'translate3d(0, 0%, 0)'
             : 'translate3d(0, -105%, 0)';
           doubleChinInnerRef.current.style.opacity = open ? '1' : '0';
-          const chinBg = state.overtimeChinColor || (state.overtimeChinText === 'LOBBY' ? '#52525B' : '#DC2626');
+          const chinBg =
+            state.overtimeChinColor ||
+            (state.overtimeChinText === 'LOBBY' ? '#52525B' : '#DC2626');
           const chinBorder = state.overtimeChinColor
             ? state.overtimeChinColor
-            : (state.overtimeChinText === 'LOBBY' ? '#3F3F46' : '#B91C1C');
+            : state.overtimeChinText === 'LOBBY'
+            ? '#3F3F46'
+            : '#B91C1C';
           doubleChinInnerRef.current.style.backgroundColor = chinBg;
           doubleChinInnerRef.current.style.borderColor = chinBorder;
         }
@@ -276,7 +262,6 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
       seriesResults,
     ]);
 
-    // Center timer block & solid opaque gray borders (prevents red Phase Drop-Banner from bleeding through center seam)
     const centerBgClass = isLight ? 'bg-white text-[#09090B]' : 'bg-[#09090B] text-white';
     const outerBorderClass = isLight ? 'border-[#D4D4D8]' : 'border-[#3F3F46]';
     const dividerColorClass = isLight ? 'bg-[#D4D4D8]' : 'bg-[#3F3F46]';
@@ -289,13 +274,11 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
     return (
       <div
         data-ui-element="hud-stepper-scoreboard"
+        data-alpha-id="Alpha:StepperScoreboardHUD"
         className={`inline-flex flex-col items-center select-none pointer-events-auto ${className}`}
         style={{ fontFamily: 'var(--font-jetbrains)' }}
       >
-        {/* TOP UNFOLDED-BOX STEPPER (z-30):
-            - Flush with top edge (`rounded-t-none border-t-0`)
-            - Bottom corners always rounded (`rounded-b-[6px]`)
-            - No bottom shadow (`shadow-none`) so chins underneath stay clean */}
+        {/* TOP UNFOLDED-BOX STEPPER (z-30) */}
         <div
           className={`relative z-30 flex items-stretch rounded-t-none rounded-b-[6px] overflow-hidden border-x border-b shadow-none ${outerBorderClass} ${dividerColorClass}`}
         >
@@ -319,7 +302,6 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
             </span>
           </div>
 
-          {/* Vertical Stepper Fold Line */}
           <div className={`w-[1px] shrink-0 ${dividerColorClass}`} />
 
           {/* Center 5-Character Countdown / Overtime Block */}
@@ -335,7 +317,6 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
             </span>
           </div>
 
-          {/* Vertical Stepper Fold Line */}
           <div className={`w-[1px] shrink-0 ${dividerColorClass}`} />
 
           {/* Right Team Score Wing */}
@@ -359,10 +340,7 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
           </div>
         </div>
 
-        {/* TIER 1 SUB-BANNER: SERIES PIPS BANNER ( · z-20):
-            - Tucked `-mt-[6px]` with `pt-[9px]` behind the Scorebug's `rounded-b-[6px]` bottom corners
-              when `bestOf > 0` so there is zero corner gap.
-            - Resets `marginTop: 0px` when `bestOf === 0` so Tier 2 does not double-tuck! */}
+        {/* TIER 1 SUB-BANNER: SERIES PIPS BANNER (z-20) */}
         <div
           ref={singleChinWrapRef}
           className={`relative z-20 w-full overflow-hidden rounded-t-none rounded-b-[6px] transition-all duration-300 ease-out ${singleChinBgClass}`}
@@ -374,7 +352,6 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
           }}
         >
           <div className="flex items-center justify-between gap-2 px-2.5 pt-[9px] pb-[4px] w-full">
-            {/* Left Side Pips: Fills from Left (index 0) -> Center (index winsNeeded - 1) */}
             <div className="flex items-center justify-start gap-1 flex-1">
               {[0, 1, 2, 3].map((idx) => {
                 const isWon = idx < leftSeriesWins;
@@ -394,7 +371,6 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
               })}
             </div>
 
-            {/* Center Series Title Text */}
             <span
               ref={singleChinTitleRef}
               className="text-[9px] uppercase tracking-[0.16em] opacity-75 shrink-0 px-1 text-center"
@@ -403,7 +379,6 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
               {seriesTitle || `BO${bestOf || 5}`}
             </span>
 
-            {/* Right Side Pips: flex-row-reverse so index 0 is on the far right, filling from Right -> Center */}
             <div className="flex flex-row-reverse items-center justify-start gap-1 flex-1">
               {[0, 1, 2, 3].map((idx) => {
                 const isWon = idx < rightSeriesWins;
@@ -425,10 +400,7 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
           </div>
         </div>
 
-        {/* TIER 2 SUB-BANNER: PHASE DROP-BANNER ( · z-10):
-            - Exact same width (`w-full`) as Scorebug above it.
-            - Tucked `-mt-[6px]` with `pt-[11px] pb-[4px]` behind the upper layer's bottom rounded corners (`rounded-b-[6px]`)
-              so both with and without Series Pips Banner (`bestOf === 0`), OVERTIME has full vertical clearance. */}
+        {/* TIER 2 SUB-BANNER: PHASE DROP-BANNER (z-10) */}
         <div
           ref={doubleChinOuterRef}
           className="relative z-10 -mt-[6px] w-full overflow-hidden transition-[max-height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -438,9 +410,15 @@ const StepperScoreboardHUDInner = forwardRef<StepperScoreboardHandle, StepperSco
         >
           <div
             ref={doubleChinInnerRef}
-            className="w-full flex items-center justify-center bg-[#DC2626] text-white px-3 pt-[11px] pb-[4px] rounded-t-none rounded-b-[6px] border-x border-b border-red-700 will-change-transform transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            className={
+              'w-full flex items-center justify-center bg-[#DC2626] text-white px-3 pt-[11px] pb-[4px] ' +
+              'rounded-t-none rounded-b-[6px] border-x border-b border-red-700 will-change-transform ' +
+              'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
+            }
             style={{
-              transform: overtimeChinOpen ? 'translate3d(0, 0%, 0)' : 'translate3d(0, -105%, 0)',
+              transform: overtimeChinOpen
+                ? 'translate3d(0, 0%, 0)'
+                : 'translate3d(0, -105%, 0)',
               opacity: overtimeChinOpen ? 1 : 0,
             }}
           >

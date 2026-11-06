@@ -28,13 +28,15 @@ import {
   TakeoverVignetteOverlay,
   DEFAULT_TAKEOVER_VIGNETTE,
 } from './TakeoverVignetteOverlay';
+import { CenterUpperInfoHUD } from './CenterUpperInfoHUD';
 import {
-  CenterUpperInfoHUD,
   DEFAULT_RL_COUNTDOWN_GLOW,
   DEFAULT_CENTER_UPPER_TYPOGRAPHY,
   DEFAULT_CENTER_UPPER_TIMING,
-} from './CenterUpperInfoHUD';
+} from './centerUpperInfoDefaults';
 import {
+  deriveInGameScoreboardState,
+  useWindowFocusAndPowerSave,
   useCenterUpperCountdownChoreography,
   useReplayPovSlotHotkeys,
 } from './useInGameHudChoreography';
@@ -84,45 +86,14 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   const onlineSession = useAppStore((s) => s.onlineSession);
   const renderScale = useAppStore((s) => s.graphics?.renderScale ?? 100);
 
-  const [isWindowMinimized, setIsWindowMinimized] = React.useState<boolean>(() =>
-    typeof document !== 'undefined' ? Boolean(document.hidden) : false
-  );
-  const [isWindowFocused, setIsWindowFocused] = React.useState<boolean>(() =>
-    typeof document !== 'undefined'
-      ? !document.hidden && (typeof document.hasFocus === 'function' ? document.hasFocus() : true)
-      : true
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
-    const syncFocus = () => {
-      const minimized = Boolean(document.hidden);
-      const focused =
-        !minimized && (typeof document.hasFocus === 'function' ? document.hasFocus() : true);
-      setIsWindowMinimized(minimized);
-      setIsWindowFocused(focused);
-    };
-    window.addEventListener('blur', syncFocus);
-    window.addEventListener('focus', syncFocus);
-    document.addEventListener('visibilitychange', syncFocus);
-    return () => {
-      window.removeEventListener('blur', syncFocus);
-      window.removeEventListener('focus', syncFocus);
-      document.removeEventListener('visibilitychange', syncFocus);
-    };
-  }, []);
-
-  const isLivePreviewDockCollapsed =
-    Boolean(menuOpen) &&
-    Boolean(isLivePreviewCollapsed) &&
-    (activeRoute === 'trajectory' || activeRoute === 'camera');
-  const isPowerSaveMenuOpen = Boolean(menuOpen) && !isLivePreviewDockCollapsed;
-  const isPowerSaveModeEnabled = String(menuPowerSave) !== 'match' && String(menuPowerSave) !== 'disable';
-  const isPowerSaveActive =
-    isWindowMinimized ||
-    (isPowerSaveModeEnabled && (isPowerSaveMenuOpen || !isWindowFocused));
-  const shouldPollTelemetry =
-    telemetryEnabled && !(pauseTelemetryInPowerSave && isPowerSaveActive);
+  const { isPowerSaveActive, shouldPollTelemetry } = useWindowFocusAndPowerSave({
+    menuOpen: Boolean(menuOpen),
+    isLivePreviewCollapsed: Boolean(isLivePreviewCollapsed),
+    activeRoute,
+    menuPowerSave,
+    telemetryEnabled,
+    pauseTelemetryInPowerSave,
+  });
 
   const kickoffStore = useKickoffTrainingStore();
   const { data: perfSnap } = useTelemetryData(60, shouldPollTelemetry);
@@ -130,7 +101,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
 
   const hudChannel = globalHudTransientChannel;
 
-  // Layer 5E CenterUpperInfoHUD: Kickoff Countdown (3 -> 2 -> 1 -> GO), Match Paused, and Winner Blue/Orange Team
   const { countdownPayload, handleCountdownExpire } = useCenterUpperCountdownChoreography({
     kickoffCountdown,
     matchPhase,
@@ -141,11 +111,12 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     roomType: onlineSession.roomType,
   });
 
-  // 1. Push telemetry bar updates
   const isOnline =
     onlineSession.signalingConnected || (onlineSession.connectedPeers?.length ?? 0) > 0;
   useEffect(() => {
-    if (!shouldPollTelemetry || !perfSnap || (perfSnap.fps <= 0 && perfSnap.frameMs <= 0)) return;
+    if (!shouldPollTelemetry || !perfSnap || (perfSnap.fps <= 0 && perfSnap.frameMs <= 0)) {
+      return;
+    }
     hudChannel.setTelemetry({
       fps: Math.round(perfSnap.fps || 120),
       refreshHz: Math.round(perfSnap.refreshHz || 120),
@@ -163,40 +134,33 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     netSnap.metrics?.rttMs,
   ]);
 
-  const isLobbyPhase =
-    matchPhase === 'lobby' ||
-    (matchMode === 'online-warmup' && onlineSession.roomType === 'match');
+  const {
+    isLobbyPhase,
+    leftTeamColor,
+    leftBarColor,
+    rightTeamColor,
+    rightBarColor,
+    leftScore,
+    rightScore,
+    overtimeChinOpen,
+    phaseChinOpen,
+    phaseChinText,
+    phaseChinColor,
+    activeClockSec,
+  } = deriveInGameScoreboardState({
+    matchPhase,
+    matchMode,
+    roomType: onlineSession.roomType,
+    onlineLocalTeam: onlineSession.localTeam,
+    localTeam,
+    blueScore,
+    orangeScore,
+    isOvertime,
+    overtimeSeconds,
+    remainingSeconds,
+    matchDurationSeconds: onlineSession.matchDurationSeconds,
+  });
 
-  // 3. Push scoreboard clock & score updates (Series always hidden: bestOf = 0)
-  // Flip left/right sides so the local player's own team is always on the LEFT.
-  const isOrangeLeft = isLobbyPhase
-    ? onlineSession.localTeam === 'orange' ||
-      (onlineSession.localTeam !== 'blue' && localTeam === 1)
-    : localTeam === 1;
-  const leftTeamColor = isOrangeLeft ? '#EA580C' : '#2563EB';
-  const leftBarColor = isOrangeLeft ? '#F97316' : '#3B82F6';
-  const rightTeamColor = isOrangeLeft ? '#2563EB' : '#EA580C';
-  const rightBarColor = isOrangeLeft ? '#3B82F6' : '#F97316';
-  const leftScore = isLobbyPhase ? 0 : isOrangeLeft ? orangeScore : blueScore;
-  const rightScore = isLobbyPhase ? 0 : isOrangeLeft ? blueScore : orangeScore;
-
-  // Overtime drop-banner only opens when overtime kickoff starts (not during 0s goal celebration/replay)
-  const overtimeChinOpen = Boolean(
-    isOvertime &&
-      !isLobbyPhase &&
-      matchPhase !== 'goal' &&
-      matchPhase !== 'replay' &&
-      matchPhase !== 'podium' &&
-      matchPhase !== 'ended'
-  );
-  const phaseChinOpen = overtimeChinOpen || isLobbyPhase;
-  const phaseChinText = overtimeChinOpen ? 'OVERTIME' : isLobbyPhase ? 'LOBBY' : 'OVERTIME';
-  const phaseChinColor = overtimeChinOpen ? '#DC2626' : isLobbyPhase ? '#52525B' : undefined;
-  const activeClockSec = overtimeChinOpen
-    ? overtimeSeconds
-    : isLobbyPhase
-    ? (onlineSession.matchDurationSeconds ?? remainingSeconds)
-    : remainingSeconds;
   useEffect(() => {
     hudChannel.setScoreboard({
       leftScore,
@@ -222,7 +186,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     phaseChinColor,
   ]);
 
-  // 4. 4-Stage Choreography Signal State Machine + Layer 5G Takeover Preroll State:
   const {
     isTakeoverPreroll,
     bottomHudRetracted,
@@ -235,7 +198,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     localTeam,
   });
 
-  // 6. Push kickoff rhythm overlay frame updates
   const showKickoffOverlay =
     matchMode === 'kickoff-training' && kickoffStore.showKeyboardOverlay;
   useEffect(() => {
@@ -261,7 +223,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
     kickoffStore.playerKeys,
   ]);
 
-  // 7. Handle POV slot selection from EdgePlayerHudStrip in Replay / Spectator / Replay Viewer mode
   const { handleSelectPovSlot } = useReplayPovSlotHotkeys({
     hudChannel,
     matchMode,
@@ -282,20 +243,18 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
   return (
     <div
       data-ui-element="in-game-hud-layer"
+      data-alpha-id="Alpha:InGameHUD"
       className={`absolute inset-0 pointer-events-none select-none z-[5] overflow-hidden ${className}`}
     >
-      {/* Layer 5G Takeover Atmospheric Vignette Layer (beneath HudAnchorStage) */}
       <TakeoverVignetteOverlay
         config={DEFAULT_TAKEOVER_VIGNETTE}
         active={isTakeoverPreroll}
       />
 
-      {/* Layer 5A Spatial Choreography Stage */}
       <HudAnchorStage
         strategy="reserve"
         style={{ fontFamily: 'var(--font-jetbrains)' }}
       >
-        {/* 1. TOP-LEFT ZONE: Compact Telemetry Bar (56px reserved) + Left Team [1-3] Edge Strip */}
         <HudZone anchor="top-left" flush>
           <HudSlot
             visible={telemetryEnabled}
@@ -325,7 +284,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
           )}
         </HudZone>
 
-        {/* 2. TOP-CENTER ZONE: Stepper Scoreboard (bestOf=0) + Kickoff Rhythm */}
         <HudZone anchor="top-center" flush gap={12} zIndexClassName="z-40">
           {showTopScoreboard && (
             <StepperScoreboardHUD
@@ -365,7 +323,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
           )}
         </HudZone>
 
-        {/* 2.5. UPPER-CENTER ZONE: Layer 5E Kickoff Countdown (`3 -> 2 -> 1 -> GO` only) */}
         <HudZone anchor="upper-center" zIndexClassName="z-40">
           <HudSlot visible={true} mode="reserve">
             <CenterUpperInfoHUD
@@ -378,7 +335,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
           </HudSlot>
         </HudZone>
 
-        {/* 3. TOP-RIGHT ZONE: Right Team [4-6] Edge Strip (below 56px top band) */}
         <HudZone anchor="top-right" flush>
           {showEdgeRosterStrips && (
             <div className="pt-[56px]">
@@ -395,7 +351,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
           )}
         </HudZone>
 
-        {/* 4. BOTTOM-LEFT ZONE: Ball Camera Indicator (exits left on goal-replay-will-start, re-enters on kickoff-will-start) */}
         <HudZone anchor="bottom-left">
           <HudSlot
             visible={showBallCamIndicator && !menuOpen && !bottomHudRetracted}
@@ -412,7 +367,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
           </HudSlot>
         </HudZone>
 
-        {/* 5. BOTTOM-CENTER ZONE: Velocity Progress Bar + Flip Indicator Pill + Demolish Hourglass Timer */}
         <HudZone anchor="bottom-center">
           <HudSlot
             visible={!bottomHudRetracted}
@@ -462,7 +416,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
           </HudSlot>
         </HudZone>
 
-        {/* 6. BOTTOM-RIGHT ZONE: Circular Boost Gauge (exits right on goal-replay-will-start, re-enters on kickoff-will-start) */}
         <HudZone anchor="bottom-right" flush className="pb-4">
           <HudSlot
             visible={!bottomHudRetracted}
@@ -479,7 +432,6 @@ export const InGameHUD: React.FC<InGameHUDProps> = ({ className = '' }) => {
           </HudSlot>
         </HudZone>
 
-        {/* 7 & 8. GOAL REPLAY BOTTOM FOOTER + TAKEOVER COUNTDOWN OVERLAY */}
         <GoalReplayHudOverlay
           isLight={isLight}
           hudChannel={hudChannel}
