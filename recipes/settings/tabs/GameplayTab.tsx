@@ -101,8 +101,6 @@ export const GameplayTab: React.FC<GameplayTabProps> = ({
     const nextConfig: GameplayConfig = { ...resolvedGameplayConfig, ...patch };
     setInternalConfig(nextConfig);
     updateStoreGameplay(patch);
-    onGameplayConfigChange?.(nextConfig, patch);
-    onChange?.(nextConfig, patch);
   };
 
   const storeExperiencePriority = useSettingsPacingStore((s) => s.experiencePriority);

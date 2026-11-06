@@ -51,26 +51,24 @@ interface GlobSurfaceModule {
   [exportName: string]: unknown;
 }
 
-declare global {
-  interface ImportMeta {
-    glob<T = unknown>(
-      pattern: string,
-      options?: { eager?: boolean }
-    ): Record<string, T>;
-  }
-}
+type ImportMetaGlobFn = <T = unknown>(
+  pattern: string,
+  options?: { eager?: boolean }
+) => Record<string, T>;
+
+const importMetaGlob = (import.meta as unknown as { glob?: ImportMetaGlobFn }).glob;
 
 const floatingWindowModules: Record<string, GlobSurfaceModule> =
-  typeof import.meta.glob === 'function'
-    ? import.meta.glob<GlobSurfaceModule>(
+  typeof importMetaGlob === 'function'
+    ? importMetaGlob<GlobSurfaceModule>(
         '../panels/{user,dev}/*FloatingWindow.tsx',
         { eager: true }
       )
     : {};
 
 const recipeSurfaceModules: Record<string, GlobSurfaceModule> =
-  typeof import.meta.glob === 'function'
-    ? import.meta.glob<GlobSurfaceModule>('../recipes/Layer*Recipe.tsx', {
+  typeof importMetaGlob === 'function'
+    ? importMetaGlob<GlobSurfaceModule>('../recipes/Layer*Recipe.tsx', {
         eager: true,
       })
     : {};

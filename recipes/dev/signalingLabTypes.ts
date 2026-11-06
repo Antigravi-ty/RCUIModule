@@ -111,6 +111,10 @@ export interface Layer4DevSignalingLabRecipeProps {
   onRoomCodeChange?: (next: string) => void;
   roomPassword?: string;
   onRoomPasswordChange?: (next: string) => void;
+  customSourceRelay?: CanonicalLabRelayId;
+  onCustomSourceRelayChange?: (next: CanonicalLabRelayId) => void;
+  customTargetRelay?: CanonicalLabRelayId;
+  onCustomTargetRelayChange?: (next: CanonicalLabRelayId) => void;
   isBusy?: boolean;
   activeActionLabel?: string | null;
   lastResultBanner?: { ok: boolean; text: string } | null;
