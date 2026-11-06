@@ -99,6 +99,7 @@ export interface HudStoreState {
     onReplayToggleCameraMode: ((() => void) | null);
     onReplaySelectPovCar: (((carIndex: number | null) => void) | null);
   }>) => void;
+  clearReplayState: () => void;
   setMatchState: (state: Partial<{
     localTeam: 0 | 1;
     blueScore: number;
@@ -346,6 +347,27 @@ export const useHudStore = create<HudStoreState>((set, get) => ({
     if (hasChanges) {
       set(partialReplay);
     }
+  },
+
+  clearReplayState: () => {
+    set({
+      replayProgress: 0,
+      replayFrameIndex: 0,
+      replayPaused: false,
+      replayPersistent: false,
+      replaySpeed: 1.0,
+      replayCameraMode: 'director',
+      replayScorerName: null,
+      replayScorerTeam: null,
+      replayScorerAnthemId: null,
+      replayBallSpeedKph: null,
+      replayAssistName: null,
+      onReplaySeekNormalized: null,
+      onReplayTogglePause: null,
+      onReplayCycleSpeed: null,
+      onReplayToggleCameraMode: null,
+      onReplaySelectPovCar: null,
+    });
   },
 
   setMatchState: (partialState) => {

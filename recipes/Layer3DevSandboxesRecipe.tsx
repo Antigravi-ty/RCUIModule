@@ -7,6 +7,7 @@ import {
 import {
   Bot,
   Sparkles,
+  FileArchive,
   Radio,
   Layers,
   History,
@@ -129,6 +130,16 @@ const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
     icon: Sparkles,
     iconColor: 'text-teal-400',
   },
+  {
+    id: 'tem-pack-converter',
+    title: 'Static Training Packs (Dev Mode)',
+    summary:
+      'Browse 73 built-in .RLRCSPack packs, batch import/export .Tem / .RCSPack / .RCSPackE / .zip, and configure Training Variations (F3–F12).',
+    details:
+      'Static Training Packs (Dev Mode): Unified pack browser with 73 built-in .Tem -> .RLRCSPack packs, Original Description inspector, EditorFreeCam (.RCSPackE) support, Folder/Rank filtering, and Kevpert BakkesMod Training Variations.',
+    icon: FileArchive,
+    iconColor: 'text-cyan-400',
+  },
 ];
 
 /**
@@ -144,6 +155,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
   onLaunchIsolationTab,
   onNavigateExpMultiBots,
   onNavigateExpBotpack9700488,
+  onNavigateTemPackConverter,
   sizing: propSizing,
 } = useLayer3DevSandboxesStoreBinding(rawProps);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
@@ -167,6 +179,14 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
     tab: DevTestLabTab,
     sourceEl?: HTMLElement | null
   ) => {
+    if (tab === 'tem-pack-converter') {
+      if (onNavigateTemPackConverter) {
+        onNavigateTemPackConverter();
+      } else if (onEnterBench) {
+        onEnterBench(tab);
+      }
+      return;
+    }
     if (tab === 'exp-multi-bots' && !sourceEl && onNavigateExpMultiBots) {
       onNavigateExpMultiBots();
       return;

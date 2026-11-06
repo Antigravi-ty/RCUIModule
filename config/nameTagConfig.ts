@@ -20,7 +20,8 @@ export type NameTagAerialClimbTriggerReason =
   | 'none'
   | 'double-jump'
   | 'hold-jump-pitch'
-  | 'preview';
+  | 'preview'
+  | 'manual-override';
 
 export interface NameTagBoostBorderSceneFlags {
   matchPlaying?: boolean | NameTagBoostBorderAudience;
@@ -120,7 +121,7 @@ export interface NameTagCarEntry {
   boostAmount?: number;
   showBoostBorder?: boolean | null;
   isDoubleJumpedAndClimbing?: boolean;
-  aerialClimbTriggerReason?: 'none' | 'double-jump' | 'hold-jump-pitch' | 'preview';
+  aerialClimbTriggerReason?: NameTagAerialClimbTriggerReason;
 }
 
 export type NameTagCameraMode =

@@ -1,14 +1,25 @@
-import React from 'react';
-import { Download, Pencil, Play, Save, Target, Trash2 } from 'lucide-react';
-import { ToggleSwitch } from '../../primitives/ToggleSwitch';
-import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
+import React, { useState } from 'react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Code2,
+  Save,
+  Sparkles,
+  Target,
+} from 'lucide-react';
+import {
+  isVariationMatchingLatestPreset,
+  resolveEffectiveRecommendedVariation,
+} from '../../config/staticTrainingVariationTypes';
 import type {
   StaticPackDownCounterOption,
   StaticTrainingPackSummary,
 } from './StaticTrainingPackFolderList';
+import { StaticTrainingPackInspectorActions } from './StaticTrainingPackInspectorActions';
 
 export interface StaticTrainingPackMetadataInspectorProps {
   isLight: boolean;
+  isDevMode?: boolean;
   selectedMeta: StaticTrainingPackSummary | null;
   editTitle: string;
   setEditTitle: (val: string) => void;
@@ -16,15 +27,17 @@ export interface StaticTrainingPackMetadataInspectorProps {
   setEditDescription: (val: string) => void;
   isMetadataDirty: boolean;
   downCounterEnabled: boolean;
-  setDownCounterEnabled: (val: boolean) => void;
+  setDownCounterEnabled: (val: boolean | ((prev: boolean) => boolean)) => void;
   downCounterValue: StaticPackDownCounterOption;
   setDownCounterValue: (val: StaticPackDownCounterOption) => void;
   confirmDeleteUuid: string | null;
-  setConfirmDeleteUuid: (uuid: string | null) => void;
+  setConfirmDeleteUuid: (val: string | null) => void;
+  applyNewKevpertBind?: boolean;
+  onToggleApplyNewKevpertBind?: (val: boolean) => void;
   onSaveMetadata: () => void;
   onPlayPack: (meta: StaticTrainingPackSummary) => void;
   onEditPack: (meta: StaticTrainingPackSummary) => void;
-  onExportPack: (meta: StaticTrainingPackSummary) => void;
+  onExportPack: (meta: StaticTrainingPackSummary, editable: boolean) => void;
   onDeletePack: (uuid: string) => void;
   onHoverDesc: (desc: string | null) => void;
 }
@@ -34,6 +47,7 @@ export const StaticTrainingPackMetadataInspector: React.FC<
 > = React.memo(
   ({
     isLight,
+    isDevMode = false,
     selectedMeta,
     editTitle,
     setEditTitle,
@@ -46,6 +60,8 @@ export const StaticTrainingPackMetadataInspector: React.FC<
     setDownCounterValue,
     confirmDeleteUuid,
     setConfirmDeleteUuid,
+    applyNewKevpertBind = false,
+    onToggleApplyNewKevpertBind,
     onSaveMetadata,
     onPlayPack,
     onEditPack,
@@ -53,6 +69,13 @@ export const StaticTrainingPackMetadataInspector: React.FC<
     onDeletePack,
     onHoverDesc,
   }) => {
+    const [showOriginalDescription, setShowOriginalDescription] = useState(false);
+
+    const rawRec = selectedMeta?.recommendedVariation ?? null;
+    const effectiveRec = resolveEffectiveRecommendedVariation(rawRec, applyNewKevpertBind);
+    const rawMatchesLatest = isVariationMatchingLatestPreset(rawRec);
+    const effectiveMatchesLatest = isVariationMatchingLatestPreset(effectiveRec);
+
     return (
       <div
         className={`flex-1 min-h-0 flex flex-col justify-between rounded-xl border p-3.5 overflow-y-auto ${
@@ -63,7 +86,7 @@ export const StaticTrainingPackMetadataInspector: React.FC<
       >
         {selectedMeta ? (
           <>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-2">
                   <span
@@ -71,18 +94,138 @@ export const StaticTrainingPackMetadataInspector: React.FC<
                       isLight ? 'text-neutral-500' : 'text-neutral-400'
                     }`}
                   >
-                    PACK METADATA • {selectedMeta.itemCount}{' '}
+                    {selectedMeta.sourcePackType || 'RCSPACK'} • {selectedMeta.itemCount}{' '}
                     {selectedMeta.itemCount === 1 ? 'SCENARIO' : 'SCENARIOS'}
                   </span>
                   <span
-                    className={`text-[10px] font-mono truncate max-w-[170px] ${
+                    className={`text-[10px] font-mono truncate max-w-[210px] ${
                       isLight ? 'text-neutral-400' : 'text-neutral-500'
                     }`}
                     title={`/static-training-pack/${selectedMeta.uuid}`}
                   >
-                    ID: {selectedMeta.uuid.slice(0, 8)}
+                    {selectedMeta.code
+                      ? `Code: ${selectedMeta.code}`
+                      : `ID: ${selectedMeta.uuid.slice(0, 8)}`}
                   </span>
                 </div>
+
+                {/* Tags & Recommended Variance Badge Row + Apply Old / Apply New Toggle */}
+                {((selectedMeta.tags && selectedMeta.tags.length > 0) || effectiveRec) && (
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1">
+                      {effectiveRec && (
+                        <span
+                          onMouseEnter={() =>
+                            onHoverDesc(
+                              effectiveMatchesLatest
+                                ? `Recommended Kevpert Keybinding (${effectiveRec.presetKey}): Speed [${effectiveRec.ballSpeedModifierPct[0]}%, ${effectiveRec.ballSpeedModifierPct[1]}%], Ball XY [${effectiveRec.ballLocationModifierXY[0]}, ${effectiveRec.ballLocationModifierXY[1]}], Car Vel ${
+                                    effectiveRec.vehicleSpeedRange
+                                      ? `[${effectiveRec.vehicleSpeedRange[0]}, ${effectiveRec.vehicleSpeedRange[1]}]`
+                                      : 'Default'
+                                  }, Boost Limit ${effectiveRec.boostLimitOverride ?? 'Default'}`
+                                : `Historical Video Description Variance (${rawRec?.presetKey || 'Custom'}): Speed [${effectiveRec.ballSpeedModifierPct[0]}%, ${effectiveRec.ballSpeedModifierPct[1]}%], Ball XY [${effectiveRec.ballLocationModifierXY[0]}, ${effectiveRec.ballLocationModifierXY[1]}], Car Vel ${
+                                    effectiveRec.vehicleSpeedRange
+                                      ? `[${effectiveRec.vehicleSpeedRange[0]}, ${effectiveRec.vehicleSpeedRange[1]}]`
+                                      : 'Default'
+                                  }, Boost Limit ${effectiveRec.boostLimitOverride ?? 'Default'}`
+                            )
+                          }
+                          onMouseLeave={() => onHoverDesc(null)}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold ${
+                            isLight
+                              ? 'bg-cyan-100 text-cyan-800 border border-cyan-300'
+                              : 'bg-cyan-950/70 text-cyan-300 border border-cyan-500/40'
+                          }`}
+                        >
+                          <Sparkles className="h-2.5 w-2.5" />
+                          <span>
+                            {effectiveMatchesLatest
+                              ? `Variance: ${effectiveRec.presetKey} (B:${effectiveRec.boostLimitOverride ?? 100})`
+                              : `Variance Ready (B:${effectiveRec.boostLimitOverride ?? 100})`}
+                          </span>
+                        </span>
+                      )}
+                      {selectedMeta.tags?.map((tag) => (
+                        <span
+                          key={tag}
+                          className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                            isLight
+                              ? 'bg-neutral-100 text-neutral-700 border border-neutral-200'
+                              : 'bg-neutral-800 text-neutral-300 border border-neutral-700'
+                          }`}
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {rawRec &&
+                      rawRec.presetKey &&
+                      rawRec.presetKey !== 'CUSTOM' &&
+                      rawRec.presetKey !== 'custom' &&
+                      onToggleApplyNewKevpertBind && (
+                        <div
+                          onMouseEnter={() =>
+                            onHoverDesc(
+                              rawMatchesLatest
+                                ? `This pack's video description variance already matches Kevpert's latest ${rawRec.presetKey} keybinding.`
+                                : `OFF (Apply Old): Uses the exact BakkesMod variance parameters from this pack's original YouTube video description. ON (Apply New): Overrides with Kevpert's latest ${rawRec.presetKey} keybinding parameters.`
+                            )
+                          }
+                          onMouseLeave={() => onHoverDesc(null)}
+                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[8.5px] font-bold tracking-wider uppercase ${
+                            isLight
+                              ? 'bg-neutral-50 border-neutral-200 text-neutral-600'
+                              : 'bg-neutral-850 border-neutral-700 text-neutral-300'
+                          }`}
+                        >
+                          <span
+                            className={
+                              !applyNewKevpertBind
+                                ? isLight
+                                  ? 'text-neutral-900 font-extrabold'
+                                  : 'text-white font-extrabold'
+                                : 'opacity-45'
+                            }
+                          >
+                            Apply Old
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onToggleApplyNewKevpertBind(!applyNewKevpertBind)}
+                            className={`relative w-7 h-3.5 rounded-full transition-colors border cursor-pointer ${
+                              applyNewKevpertBind
+                                ? isLight
+                                  ? 'bg-neutral-900 border-neutral-900'
+                                  : 'bg-cyan-500/60 border-cyan-400'
+                                : isLight
+                                  ? 'bg-neutral-300 border-neutral-400'
+                                  : 'bg-neutral-700 border-neutral-600'
+                            }`}
+                          >
+                            <span
+                              className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-transform ${
+                                applyNewKevpertBind
+                                  ? 'translate-x-3.5 left-0.5'
+                                  : 'translate-x-0 left-0.5'
+                              }`}
+                            />
+                          </button>
+                          <span
+                            className={
+                              applyNewKevpertBind
+                                ? isLight
+                                  ? 'text-neutral-900 font-extrabold'
+                                  : 'text-cyan-300 font-extrabold'
+                                : 'opacity-45'
+                            }
+                          >
+                            Apply New
+                          </span>
+                        </div>
+                      )}
+                  </div>
+                )}
 
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
@@ -105,8 +248,8 @@ export const StaticTrainingPackMetadataInspector: React.FC<
                             ? 'bg-neutral-900 hover:bg-neutral-800 border-neutral-900 text-white cursor-pointer active:scale-95'
                             : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-400 text-neutral-950 cursor-pointer active:scale-95'
                           : isLight
-                          ? 'bg-neutral-100 border-neutral-200 text-neutral-400 opacity-50 cursor-not-allowed'
-                          : 'bg-neutral-850 border-neutral-800 text-neutral-500 opacity-50 cursor-not-allowed'
+                            ? 'bg-neutral-100 border-neutral-200 text-neutral-400 opacity-50 cursor-not-allowed'
+                            : 'bg-neutral-850 border-neutral-800 text-neutral-500 opacity-50 cursor-not-allowed'
                       }`}
                     >
                       <Save className="h-3 w-3" />
@@ -126,9 +269,16 @@ export const StaticTrainingPackMetadataInspector: React.FC<
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-semibold opacity-70">Description</label>
+                  <label className="text-[10px] font-semibold opacity-70">
+                    Description (Default: $Code by $CreatorName)
+                  </label>
                   <textarea
                     rows={2}
+                    placeholder={
+                      selectedMeta.code && (selectedMeta.creator || selectedMeta.creatorName)
+                        ? `${selectedMeta.code} by ${selectedMeta.creator || selectedMeta.creatorName}`
+                        : 'Optional pack description...'
+                    }
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                     className={`px-2.5 py-1.5 rounded-lg border text-xs outline-none resize-none transition-colors ${
@@ -138,201 +288,71 @@ export const StaticTrainingPackMetadataInspector: React.FC<
                     }`}
                   />
                 </div>
-              </div>
 
-              <div
-                className={`p-2.5 rounded-lg border flex flex-col gap-2 ${
-                  isLight
-                    ? 'bg-neutral-50 border-neutral-200'
-                    : 'bg-neutral-850/70 border-neutral-800'
-                }`}
-              >
-                <div
-                  className="flex items-center justify-between cursor-pointer select-none"
-                  onClick={() => setDownCounterEnabled(!downCounterEnabled)}
-                  onMouseEnter={() =>
-                    onHoverDesc(
-                      'When OFF (default), shot starts on first driving input. When ON, holds stationary with 3/2/1 countdown beep + Go cue.'
-                    )
-                  }
-                  onMouseLeave={() => onHoverDesc(null)}
-                >
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold">Pre-Launch Down Counter</span>
-                    <span
-                      className={`text-[10px] ${
-                        isLight ? 'text-neutral-500' : 'text-neutral-400'
-                      }`}
-                    >
-                      {downCounterEnabled
-                        ? `Hold ${downCounterValue + 1}s (${downCounterValue}s beep -> GO, pre-input buffered)`
-                        : 'Disabled (Instant launch on first driving input)'}
-                    </span>
-                  </div>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <ToggleSwitch
-                      checked={downCounterEnabled}
-                      onCheckedChange={(checked) => setDownCounterEnabled(checked)}
-                      isLight={isLight}
-                      variant="neutral"
-                    />
-                  </div>
-                </div>
-
-                {downCounterEnabled && (
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <span className="text-[11px] font-medium opacity-80">
-                      Countdown Seconds
-                    </span>
-                    <SegmentedSwitch
-                      options={[
-                        { value: '3', label: '3s' },
-                        { value: '2', label: '2s' },
-                        { value: '1', label: '1s (Default)' },
-                      ]}
-                      value={String(downCounterValue)}
-                      onValueChange={(val) =>
-                        setDownCounterValue(Number(val) as StaticPackDownCounterOption)
+                {/* Dev Mode Original Description (.Tem / RLRCSPack unmapped properties) */}
+                {isDevMode && selectedMeta.originalDescription && (
+                  <div
+                    className={`rounded-lg border overflow-hidden ${
+                      isLight
+                        ? 'bg-neutral-50 border-neutral-200'
+                        : 'bg-neutral-950/60 border-neutral-800'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setShowOriginalDescription((v) => !v)}
+                      onMouseEnter={() =>
+                        onHoverDesc(
+                          'Developer Mode: Inspect unmapped .Tem / RLRCSPack metadata and round extras.'
+                        )
                       }
-                      isLight={isLight}
-                      size="sm"
-                    />
+                      onMouseLeave={() => onHoverDesc(null)}
+                      className="w-full px-2.5 py-1.5 flex items-center justify-between text-[10px] font-mono font-bold cursor-pointer hover:bg-neutral-500/10"
+                    >
+                      <span className="flex items-center gap-1.5 text-cyan-400">
+                        <Code2 className="h-3.5 w-3.5" />
+                        <span>
+                          Original Description (RLRCSPack .Tem Extras •{' '}
+                          {(selectedMeta.originalDescription.length / 1024).toFixed(2)} KB)
+                        </span>
+                      </span>
+                      {showOriginalDescription ? (
+                        <ChevronUp className="h-3.5 w-3.5 opacity-70" />
+                      ) : (
+                        <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                      )}
+                    </button>
+                    {showOriginalDescription && (
+                      <pre
+                        className={`p-2.5 text-[10px] font-mono overflow-x-auto max-h-36 border-t select-text ${
+                          isLight
+                            ? 'bg-white border-neutral-200 text-neutral-700'
+                            : 'bg-neutral-950 border-neutral-800 text-neutral-300'
+                        }`}
+                      >
+                        {selectedMeta.originalDescription}
+                      </pre>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 pt-3 border-t border-neutral-500/15 mt-2">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => onPlayPack(selectedMeta)}
-                  onMouseEnter={() =>
-                    onHoverDesc(
-                      'Start playing this training pack. Hotkeys: [R] Reset Shot, [[] Prev Shot, []] Next Shot.'
-                    )
-                  }
-                  onMouseLeave={() => onHoverDesc(null)}
-                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border text-xs font-bold transition-all cursor-pointer active:scale-98 ${
-                    isLight
-                      ? 'bg-neutral-900 hover:bg-neutral-800 border-neutral-900 text-white shadow-xs'
-                      : 'bg-white hover:bg-neutral-200 border-white text-neutral-900 shadow-xs'
-                  }`}
-                >
-                  <Play className="h-4 w-4 fill-current" />
-                  <span>PLAY PACK</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onEditPack(selectedMeta)}
-                  onMouseEnter={() =>
-                    onHoverDesc(
-                      'Enter Edit Mode with Live Preview [TAB], 3D Car/Ball trajectory aiming, and Shot List reordering.'
-                    )
-                  }
-                  onMouseLeave={() => onHoverDesc(null)}
-                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border text-xs font-bold transition-all cursor-pointer active:scale-98 ${
-                    isLight
-                      ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-900'
-                      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-100'
-                  }`}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  <span>EDIT PACK</span>
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    disabled={!isMetadataDirty}
-                    onClick={onSaveMetadata}
-                    onMouseEnter={() =>
-                      onHoverDesc('Save global pack metadata (Pack Name & Description).')
-                    }
-                    onMouseLeave={() => onHoverDesc(null)}
-                    className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg border text-[11px] font-semibold transition-all ${
-                      isMetadataDirty
-                        ? isLight
-                          ? 'bg-neutral-900 hover:bg-neutral-800 border-neutral-900 text-white cursor-pointer'
-                          : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-400 text-neutral-950 font-bold cursor-pointer'
-                        : isLight
-                        ? 'bg-neutral-50 border-neutral-200 text-neutral-400 opacity-50 cursor-not-allowed'
-                        : 'bg-neutral-850 border-neutral-800 text-neutral-500 opacity-50 cursor-not-allowed'
-                    }`}
-                  >
-                    <Save className="h-3.5 w-3.5" />
-                    <span>Save</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onExportPack(selectedMeta)}
-                    onMouseEnter={() =>
-                      onHoverDesc(
-                        'Export this pack as a GZIP-compressed <Title>_<UUID>.RCSPack file.'
-                      )
-                    }
-                    onMouseLeave={() => onHoverDesc(null)}
-                    className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer ${
-                      isLight
-                        ? 'bg-neutral-50 hover:bg-neutral-100 border-neutral-300 text-neutral-700'
-                        : 'bg-neutral-850 hover:bg-neutral-800 border-neutral-700 text-neutral-300'
-                    }`}
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    <span>Export .RCSPack</span>
-                  </button>
-                </div>
-
-                {confirmDeleteUuid === selectedMeta.uuid ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-red-500">
-                      Confirm Delete?
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onDeletePack(selectedMeta.uuid)}
-                      className="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold cursor-pointer"
-                    >
-                      Yes, Delete
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDeleteUuid(null)}
-                      className={`px-2 py-1 rounded-lg border text-[11px] font-medium cursor-pointer ${
-                        isLight
-                          ? 'bg-neutral-100 border-neutral-300 text-neutral-700'
-                          : 'bg-neutral-800 border-neutral-700 text-neutral-300'
-                      }`}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDeleteUuid(selectedMeta.uuid)}
-                    onMouseEnter={() =>
-                      onHoverDesc(
-                        'Delete this training pack (requires double-check confirmation).'
-                      )
-                    }
-                    onMouseLeave={() => onHoverDesc(null)}
-                    className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer ${
-                      isLight
-                        ? 'bg-red-50/70 hover:bg-red-100 border-red-200 text-red-700'
-                        : 'bg-red-950/30 hover:bg-red-900/40 border-red-900/60 text-red-300'
-                    }`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span>Delete Pack</span>
-                  </button>
-                )}
-              </div>
-            </div>
+            <StaticTrainingPackInspectorActions
+              isLight={isLight}
+              selectedMeta={selectedMeta}
+              downCounterEnabled={downCounterEnabled}
+              setDownCounterEnabled={setDownCounterEnabled}
+              downCounterValue={downCounterValue}
+              setDownCounterValue={setDownCounterValue}
+              confirmDeleteUuid={confirmDeleteUuid}
+              setConfirmDeleteUuid={setConfirmDeleteUuid}
+              onPlayPack={onPlayPack}
+              onEditPack={onEditPack}
+              onExportPack={onExportPack}
+              onDeletePack={onDeletePack}
+              onHoverDesc={onHoverDesc}
+            />
           </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center opacity-60">

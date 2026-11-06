@@ -29,6 +29,7 @@ export interface GameplayConfig {
   showCarHitbox: boolean;
   showAllCarHitboxes?: boolean;
   ballCamIndicator: boolean;
+  enableFToMirror?: boolean;
 }
 
 export const DEFAULT_GAMEPLAY_CONFIG: GameplayConfig = {
@@ -37,6 +38,7 @@ export const DEFAULT_GAMEPLAY_CONFIG: GameplayConfig = {
   showCarHitbox: false,
   showAllCarHitboxes: false,
   ballCamIndicator: true,
+  enableFToMirror: true,
 };
 
 export interface GameplayTabProps {

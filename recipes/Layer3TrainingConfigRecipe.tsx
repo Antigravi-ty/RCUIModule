@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Zap, Shield, History, CircleSlash2, Info } from 'lucide-react';
+import { Zap, Shield, History, CircleSlash2, FlipHorizontal2, Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 import { useAppStore } from '../stores/appStore';
+import { useStaticTrainingPackStore } from '../stores/staticTrainingPackStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
@@ -19,6 +20,7 @@ export interface TrainingGameplayConfig {
   unlimitedBoost?: boolean;
   showCarHitbox?: boolean | string;
   goalRestart?: boolean;
+  enableFToMirror?: boolean;
 }
 
 export interface Layer3TrainingConfigRecipeProps {
@@ -41,7 +43,8 @@ export interface Layer3TrainingConfigRecipeProps {
  *   2. Disable Goal Reset: ToggleSwitch
  *   3. Rewinder Configurator: FloatingWindowCard spawner
  * - Training Scope (Free Play, Static Training Pack & Kickoff Training):
- *   4. Goal Barrier Configurator: FloatingWindowCard spawner
+ *   4. Enable F to Mirror: ToggleSwitch (default ON)
+ *   5. Goal Barrier Configurator: FloatingWindowCard spawner
  */
 export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProps> = ({
   isLight = false,
@@ -53,6 +56,10 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
   const goBack = useAppStore((s) => s.goBack);
   const storeGameplay = useAppStore((s) => s.gameplay);
   const storeUpdateGameplay = useAppStore((s) => s.updateGameplay);
+  const packEnableFToMirror = useStaticTrainingPackStore(
+    (s) => s.variationToggles.enableFToMirror
+  );
+  const setPackVariationToggles = useStaticTrainingPackStore((s) => s.setVariationToggles);
 
   const onBack = propOnBack ?? goBack;
   const controlledGameplay = propGameplay ?? storeGameplay;
@@ -63,6 +70,7 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
         ...(patch.unlimitedBoost !== undefined ? { unlimitedBoost: patch.unlimitedBoost } : {}),
         ...(patch.goalRestart !== undefined ? { goalRestart: patch.goalRestart } : {}),
         ...(patch.showCarHitbox !== undefined ? { showCarHitbox: Boolean(patch.showCarHitbox) } : {}),
+        ...(patch.enableFToMirror !== undefined ? { enableFToMirror: patch.enableFToMirror } : {}),
       }));
 
   const storeSizing = useMenuLayoutStore(
@@ -73,10 +81,13 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
 
   const [internalUnlimitedBoost, setInternalUnlimitedBoost] = useState(true);
   const [internalGoalRestart, setInternalGoalRestart] = useState(true);
+  const [internalEnableFToMirror, setInternalEnableFToMirror] = useState(true);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const unlimitedBoost = controlledGameplay?.unlimitedBoost ?? internalUnlimitedBoost;
   const goalRestart = controlledGameplay?.goalRestart ?? internalGoalRestart;
+  const enableFToMirror =
+    controlledGameplay?.enableFToMirror ?? packEnableFToMirror ?? internalEnableFToMirror;
 
   const handleSetUnlimitedBoost = (next: boolean) => {
     setInternalUnlimitedBoost(next);
@@ -86,6 +97,12 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
   const handleSetGoalRestart = (next: boolean) => {
     setInternalGoalRestart(next);
     onUpdateGameplay?.({ goalRestart: next });
+  };
+
+  const handleSetEnableFToMirror = (next: boolean) => {
+    setInternalEnableFToMirror(next);
+    onUpdateGameplay?.({ enableFToMirror: next });
+    setPackVariationToggles({ enableFToMirror: next });
   };
 
   const boostValue = unlimitedBoost ? 'unlimited' : 'standard';
@@ -177,7 +194,23 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
             </span>
           </div>
 
-          {/* 4. Goal Barrier Configurator: Floating Window Spawner */}
+          {/* 4. Enable F to Mirror: ToggleSwitch (Default ON) */}
+          <SettingToggleRow
+            icon={FlipHorizontal2}
+            iconName="flip-horizontal-2"
+            iconColor="text-cyan-400"
+            title="Enable F to Mirror"
+            checked={enableFToMirror !== false}
+            onChange={handleSetEnableFToMirror}
+            bordered={false}
+            showDescription={false}
+            hoverDescription="Static Training Packs: When enabled (default ON), pressing [F] horizontally mirrors the active shot across the field center axis."
+            onHover={(desc) => desc && setHoveredDesc(desc)}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 5. Goal Barrier Configurator: Floating Window Spawner */}
           <FloatingWindowCard
             preset={GOAL_BARRIER_CONFIGURATOR_PRESET}
             icon={Shield}

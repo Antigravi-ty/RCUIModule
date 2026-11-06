@@ -57,6 +57,7 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
     (s) => s.isFreeCamTrajectoryTesting
   );
   const isTestingSingleShot = useStaticTrainingPackStore((s) => s.isTestingSingleShot);
+  const isShotMirrored = useStaticTrainingPackStore((s) => s.isShotMirrored);
   const setEditSubMode = useStaticTrainingPackStore((s) => s.setEditSubMode);
 
   void editVarVersion;
@@ -81,7 +82,8 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
   const isTrajectoryTesting = propIsTrajectoryTesting ?? storeTrajectoryTesting;
   const handleSelectSubMode = onSelectSubMode ?? setEditSubMode;
 
-  const shotNumberText = `#${String(safeIdx + 1).padStart(2, '0')}`;
+  const totalShotsCount = Math.max(1, items.length);
+  const shotNumberText = `#${String(safeIdx + 1).padStart(2, '0')} / ${String(totalShotsCount).padStart(2, '0')}`;
   const isUnlimitedBoost = Boolean(shot.car.unlimitedBoost);
   const boostAmount = Math.round(shot.car.initialBoost ?? 100);
   const hasFlip = Boolean(shot.car.snapToGround || shot.car.hasFlip !== false);
@@ -105,7 +107,7 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
             : 'bg-neutral-950/92 border-neutral-700/80 text-neutral-100'
         }`}
       >
-        {/* 1. Shot Number (#01) */}
+        {/* 1. Shot Number (#14 / 99) */}
         <span className="text-base font-extrabold tracking-tight text-cyan-500 dark:text-cyan-400">
           {shotNumberText}
         </span>
@@ -121,7 +123,7 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
                   ? isLight
                     ? 'text-black'
                     : 'text-neutral-600'
-                  : remainingTimeoutSec <= 4
+                  : remainingTimeoutSec <= 3
                   ? 'text-rose-400'
                   : 'text-emerald-400'
               }`}
@@ -129,11 +131,14 @@ export const StaticTrainingPackHUD: React.FC<StaticTrainingPackHUDProps> = React
               {`${Math.max(0, remainingTimeoutSec).toFixed(1)}s`}
             </span>
 
-            {!isShotLaunched && (
+            {!isShotLaunched && downCounterEnabled && activeCountdownSec > 0 && (
               <span className="text-amber-300 font-bold animate-pulse text-[11px]">
-                {downCounterEnabled && activeCountdownSec > 0
-                  ? `COUNTDOWN ${activeCountdownSec}...`
-                  : 'READY'}
+                {`COUNTDOWN ${activeCountdownSec}...`}
+              </span>
+            )}
+            {isShotMirrored && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold">
+                MIRRORED [F]
               </span>
             )}
             {isTestingSingleShot && (
