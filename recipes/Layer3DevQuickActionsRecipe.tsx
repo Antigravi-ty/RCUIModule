@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Compass, Flame, Info, Tag, Users, Zap } from 'lucide-react';
+import { Compass, Flame, Info, Tag, Users } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
@@ -13,14 +13,30 @@ import {
   activateNameTagOffscreenForDeveloperMode,
   useNameTagTunerStore,
 } from '../stores/nameTagTunerStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
 import type { NameTagBoostBorderAudience } from '../config/nameTagConfig';
-import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 
-export interface Layer3DevQuickActionsRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  sizing?: PanelSizingConfig;
-}
+export type Layer3DevQuickActionsRecipeProps = StandardSurfaceProps;
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'layer3-dev-quick-actions',
+  title: 'DEVELOPER QUICK ACTIONS',
+  subtitle: 'Developer Mode Auto-Activated Quick Toggles',
+  description:
+    'Developer quick actions auto-activated in Developer Mode and deployable to remote profiles.',
+  icon: 'zap',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: DEFAULT_PANEL_SIZING['layer3-dev-quick-actions'].width,
+    height: DEFAULT_PANEL_SIZING['layer3-dev-quick-actions'].targetHeight,
+    minHeight: DEFAULT_PANEL_SIZING['layer3-dev-quick-actions'].minHeight,
+    maxHeight: DEFAULT_PANEL_SIZING['layer3-dev-quick-actions'].maxHeight,
+  },
+};
 
 /**
  * [Recipe] Layer 3 Developer — Developer Quick Actions (`zap`)
@@ -31,11 +47,23 @@ export interface Layer3DevQuickActionsRecipeProps {
 export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipeProps> = ({
   isLight = false,
   onBack: propOnBack,
-  sizing: propSizing,
 }) => {
-  const goBack = useAppStore((s) => s.goBack);
-  const developerMode = useAppStore((s) => s.developerMode);
-  const { config, updateConfig } = useNameTagTunerStore();
+  const goBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const developerMode = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.developerMode
+  );
+  const config = useScopedStore(
+    'nameTagTunerStore',
+    useNameTagTunerStore,
+    (s) => s.config
+  );
+  const updateConfig = useScopedStore(
+    'nameTagTunerStore',
+    useNameTagTunerStore,
+    (s) => s.updateConfig
+  );
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,12 +73,11 @@ export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipePr
   }, [developerMode]);
 
   const onBack = propOnBack ?? goBack;
-  const storeSizing = useMenuLayoutStore(
+  const sizing = useMenuLayoutStore(
     (s) =>
       s.panels?.['layer3-dev-quick-actions'] ??
       DEFAULT_PANEL_SIZING['layer3-dev-quick-actions']
   );
-  const sizing = propSizing ?? storeSizing;
   const { rowGap } = useSettingActionRowStore();
 
   return (

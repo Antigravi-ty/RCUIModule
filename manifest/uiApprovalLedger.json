@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
+  "updatedAt": "2026-11-06T16:29:32.532Z",
   "templateHash": "574097ceda64cb92",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -1211,8 +1211,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevActiveTunersRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "8e71e93c2967d4ec",
-      "visualAstHash": "42569d3d5c147594",
+      "sizingAndConfigHash": "c4d29394b7f6a48e",
+      "visualAstHash": "e685ff551e68a1bb",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/PhaseVariationMatrix.tsx": "ea5e78b57d416e71",
@@ -1229,20 +1229,21 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3DevActiveTunersRecipe.tsx": "1e8ebb32dcb19b1a",
-        "src/ui-core/recipes/hooks/useLayer3DevSettingsBindings.ts": "3fa7fb39d18297cd",
+        "src/ui-core/recipes/Layer3DevActiveTunersRecipe.tsx": "8117f360bfd873f1",
+        "src/ui-core/recipes/dev/DevActiveTunersInlineControlsSection.tsx": "a1bf8d90fbdf67b2",
+        "src/ui-core/recipes/dev/devHubSurfaceCatalog.ts": "3c0bf181a905599f",
         "src/ui-core/recipes/settings/components/FloatingWindowCard.tsx": "24594fbe7a613278"
       },
       "alphaDeps": [
         "src/ui-core/config/audioConfig.ts",
+        "src/ui-core/manifest/surfaceRegistry.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
-        "src/ui-core/stores/experimentalMultiBotsStore.ts",
         "src/ui-core/stores/floatingStore.ts",
         "src/ui-core/stores/kickoffTrainingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
-        "src/ui-core/stores/subsystemIsolationLabStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
         "src/ui-core/tokens/menuLayoutTokens.ts",
         "src/ui-core/tokens/radius.ts",
@@ -1255,8 +1256,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevCalibratedPresetsRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "3d45b9610cdb5b7e",
-      "visualAstHash": "7c58105d88f6c35a",
+      "sizingAndConfigHash": "98da8a77e9ee1a2b",
+      "visualAstHash": "7490ac2c56f81024",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
         "src/ui-core/primitives/Badge.tsx": "2c13f7eccf5b1baf",
@@ -1264,15 +1265,18 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3DevCalibratedPresetsRecipe.tsx": "c6ebe509f6f85bd6",
+        "src/ui-core/recipes/Layer3DevCalibratedPresetsRecipe.tsx": "f638eb4e8486d134",
+        "src/ui-core/recipes/dev/devHubSurfaceCatalog.ts": "3c0bf181a905599f",
         "src/ui-core/recipes/settings/components/FloatingWindowCard.tsx": "24594fbe7a613278"
       },
       "alphaDeps": [
+        "src/ui-core/manifest/surfaceRegistry.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
         "src/ui-core/stores/floatingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/menuLayoutTokens.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
@@ -1284,7 +1288,7 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevQuickActionsRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "ae6667eae514ad1a",
+      "sizingAndConfigHash": "57d32044539553d8",
       "visualAstHash": "7bf6e21ba0d091be",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
@@ -1308,6 +1312,7 @@
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/nameTagTunerStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
         "src/ui-core/tokens/menuLayoutTokens.ts",
         "src/ui-core/tokens/radius.ts",
@@ -1320,7 +1325,7 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevRemoteProfileRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "4abfbb263d17b73b",
+      "sizingAndConfigHash": "cecb58f07ce44589",
       "visualAstHash": "b2de0b0a032f620f",
       "fileVisualHashes": {
         "src/ui-core/primitives/Badge.tsx": "2c13f7eccf5b1baf",
@@ -1334,6 +1339,7 @@
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/cloudProfileSyncStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/stores/underlineTabsStore.ts",
         "src/ui-core/tokens/easing.ts",
         "src/ui-core/tokens/menuLayoutTokens.ts",
@@ -1347,8 +1353,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevSandboxesRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "c68efa098bc894d4",
-      "visualAstHash": "70bcd267a5aec3b0",
+      "sizingAndConfigHash": "4d7c5a15787ab0d2",
+      "visualAstHash": "9cc1430a3d2b505d",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
         "src/ui-core/primitives/iconLookup.tsx": "ba4e39322774a6f4",
@@ -1356,17 +1362,18 @@
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
         "src/ui-core/recipes/Layer3DevSandboxesRecipe.tsx": "c74fa4df91760e3e",
-        "src/ui-core/recipes/hooks/useLayer3DevSettingsBindings.ts": "3fa7fb39d18297cd"
+        "src/ui-core/recipes/dev/devHubSurfaceCatalog.ts": "3c0bf181a905599f",
+        "src/ui-core/recipes/dev/devSandboxBenchesCatalog.ts": "3c0bf181a905599f"
       },
       "alphaDeps": [
-        "src/ui-core/config/audioConfig.ts",
+        "src/ui-core/manifest/surfaceRegistry.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
         "src/ui-core/stores/experimentalMultiBotsStore.ts",
         "src/ui-core/stores/floatingStore.ts",
-        "src/ui-core/stores/kickoffTrainingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/stores/subsystemIsolationLabStore.ts",
         "src/ui-core/tokens/menuLayoutTokens.ts"
       ],
@@ -1377,7 +1384,7 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevSelfTestRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "93387080b7821f64",
+      "sizingAndConfigHash": "b583ee5713c015c4",
       "visualAstHash": "fb4c3a4a4d1910d0",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1392,6 +1399,7 @@
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
         "src/ui-core/stores/signalingProfileStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/menuLayoutTokens.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.384Z"
@@ -1401,8 +1409,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevUnderDevelopmentRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "3f9a8f25bbb8da11",
-      "visualAstHash": "cf23105fa793982e",
+      "sizingAndConfigHash": "ec02b385dccc1547",
+      "visualAstHash": "1e7245e6a0ce19b9",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
         "src/ui-core/compounds/SettingSliderRow.tsx": "93d262e1e0c4f22c",
@@ -1415,18 +1423,14 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer3DevUnderDevelopmentRecipe.tsx": "e030b754d2074d45",
-        "src/ui-core/recipes/dev/PerCarBoostConfigSection.tsx": "3c67f6a092cdb968",
-        "src/ui-core/recipes/hooks/useLayer3DevSettingsBindings.ts": "3fa7fb39d18297cd"
+        "src/ui-core/recipes/Layer3DevUnderDevelopmentRecipe.tsx": "a9d761d0e70233ef",
+        "src/ui-core/recipes/dev/PerCarBoostConfigSection.tsx": "3c67f6a092cdb968"
       },
       "alphaDeps": [
-        "src/ui-core/config/audioConfig.ts",
         "src/ui-core/stores/appStore.ts",
-        "src/ui-core/stores/experimentalMultiBotsStore.ts",
-        "src/ui-core/stores/kickoffTrainingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
-        "src/ui-core/stores/subsystemIsolationLabStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
         "src/ui-core/tokens/menuLayoutTokens.ts"
       ],
@@ -1469,8 +1473,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3ExpBotPackRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "04db45fbe3f26dfc",
-      "visualAstHash": "cb6122f6263625f1",
+      "sizingAndConfigHash": "7552dba60cedc5d0",
+      "visualAstHash": "4da65e8bdf4c39b8",
       "fileVisualHashes": {
         "src/ui-core/compounds/TeamRosterCard.tsx": "09acb796272172f4",
         "src/ui-core/primitives/KeycapBadge.tsx": "50693226896bfa19",
@@ -1478,8 +1482,8 @@
         "src/ui-core/primitives/SegmentedSwitch.tsx": "afee1765f7de86ef",
         "src/ui-core/primitives/SliderControl.tsx": "4bdac03691420663",
         "src/ui-core/primitives/ToggleSwitch.tsx": "1cd0acabbcd1be6e",
-        "src/ui-core/recipes/Layer3ExpBotPackRecipe.tsx": "551cf8f5df0c914c",
-        "src/ui-core/recipes/hooks/useLayer3ExpMultiBotsBinding.ts": "86e56e3d77262169"
+        "src/ui-core/recipes/Layer3ExpBotPackRecipe.tsx": "13eefc3af3455e36",
+        "src/ui-core/recipes/dev/ExpBotsMatchOptionsAndPovSection.tsx": "02c66924caabab50"
       },
       "alphaDeps": [
         "src/ui-core/stores/appStore.ts",
@@ -1488,7 +1492,9 @@
         "src/ui-core/stores/experimentalMultiBotsStore.ts",
         "src/ui-core/stores/floatingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/menuLayoutTokens.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
       ],
@@ -1499,8 +1505,8 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3ExpMultiBotsRecipe.tsx",
       "templateHash": "574097ceda64cb92",
-      "sizingAndConfigHash": "363bfe9e675ddb1e",
-      "visualAstHash": "c2096a84c051cafe",
+      "sizingAndConfigHash": "55245a15f10cbcde",
+      "visualAstHash": "56ac6d307ec8d5bb",
       "fileVisualHashes": {
         "src/ui-core/compounds/TeamRosterCard.tsx": "09acb796272172f4",
         "src/ui-core/primitives/KeycapBadge.tsx": "50693226896bfa19",
@@ -1508,8 +1514,8 @@
         "src/ui-core/primitives/SegmentedSwitch.tsx": "afee1765f7de86ef",
         "src/ui-core/primitives/SliderControl.tsx": "4bdac03691420663",
         "src/ui-core/primitives/ToggleSwitch.tsx": "1cd0acabbcd1be6e",
-        "src/ui-core/recipes/Layer3ExpMultiBotsRecipe.tsx": "36606ee839c22f32",
-        "src/ui-core/recipes/hooks/useLayer3ExpMultiBotsBinding.ts": "86e56e3d77262169"
+        "src/ui-core/recipes/Layer3ExpMultiBotsRecipe.tsx": "6cfd76d94b26d078",
+        "src/ui-core/recipes/dev/ExpBotsMatchOptionsAndPovSection.tsx": "02c66924caabab50"
       },
       "alphaDeps": [
         "src/ui-core/stores/appStore.ts",
@@ -1518,7 +1524,9 @@
         "src/ui-core/stores/experimentalMultiBotsStore.ts",
         "src/ui-core/stores/floatingStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
+        "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/menuLayoutTokens.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
       ],

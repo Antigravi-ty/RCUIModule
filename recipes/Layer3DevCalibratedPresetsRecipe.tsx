@@ -1,54 +1,62 @@
-import React, { useState } from 'react';
-import { useAppStore } from '../stores/appStore';
-import { Palette, Sparkles, Car, Tag, Zap, Info } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
-import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
-import { useSettingActionRowStore } from '../stores/settingRowStore';
-import {
-  ATMOSPHERE_FX_TUNER_PRESET,
-  VEHICLE_GLOBAL_FX_TUNER_PRESET,
-  SUPERSONIC_TRAIL_TUNER_PRESET,
-  DRIFTWOODS_TUNER_PRESET,
-  BOOST_PAD_TUNER_PRESET,
-  NAME_TAG_TUNER_PRESET,
-} from '../stores/devFloatingPresets';
-import type { PresetConfig } from '../stores/floatingPresets';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
+import { useAppStore } from '../stores/appStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import {
+  CALIBRATED_PRESET_SPECS,
+  resolveBadgeClasses,
+  resolveMenuGroupLauncherSpecs,
+} from './dev/devHubSurfaceCatalog';
 
-export interface Layer3DevCalibratedPresetsRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  onAddPresetWindow?: (preset: PresetConfig, e: React.MouseEvent<HTMLButtonElement>) => void;
-  activeWindows?: unknown[];
-  onClosePresetWindow?: (id: string) => void;
-  sizing?: PanelSizingConfig;
-}
+export type Layer3DevCalibratedPresetsRecipeProps = StandardSurfaceProps;
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'layer3-dev-calibrated-presets',
+  title: 'CALIBRATED PRESETS',
+  subtitle: 'Developer Calibrated Visual Presets',
+  description:
+    'Calibrated visual presets (Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods Stadium, Boost Pad & Multiplayer Name Tag).',
+  icon: 'palette',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: DEFAULT_PANEL_SIZING['layer3-dev-calibrated-presets'].width,
+    height: DEFAULT_PANEL_SIZING['layer3-dev-calibrated-presets'].targetHeight,
+    minHeight: DEFAULT_PANEL_SIZING['layer3-dev-calibrated-presets'].minHeight,
+    maxHeight: DEFAULT_PANEL_SIZING['layer3-dev-calibrated-presets'].maxHeight,
+  },
+};
 
 /**
  * [Recipe] Layer 3 Calibrated Presets (Developer Tier)
- * Compact borderless 6-row configuration panel matching Settings & Training Configuration:
- * 1. Atmosphere & FX Tuner
- * 2. Vehicle Global Surfaces & FX Tuner
- * 3. Supersonic Wheel Trail Tuner
- * 4. Driftwoods Stadium Tuner
- * 5. Boost Pad Visual Tuner
- * 6. Multiplayer Name Tag Tuner
+ * Data-driven `menuGroup === 'calibrated-presets'` floating window launcher list.
  */
 export const Layer3DevCalibratedPresetsRecipe: React.FC<
   Layer3DevCalibratedPresetsRecipeProps
-> = ({ isLight = false, onBack: propOnBack, sizing: propSizing }) => {
-  const storeGoBack = useAppStore((s) => s.goBack);
+> = ({ isLight = false, onBack: propOnBack }) => {
+  const storeGoBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
   const onBack = propOnBack ?? storeGoBack;
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
-  const storeSizing = useMenuLayoutStore(
+
+  const sizing = useMenuLayoutStore(
     (s) =>
       s.panels?.['layer3-dev-calibrated-presets'] ??
       DEFAULT_PANEL_SIZING['layer3-dev-calibrated-presets']
   );
-  const sizing = propSizing ?? storeSizing;
   const { rowGap } = useSettingActionRowStore();
+
+  const resolvedSpecs = useMemo(
+    () => resolveMenuGroupLauncherSpecs('calibrated-presets', CALIBRATED_PRESET_SPECS),
+    []
+  );
 
   return (
     <PanelContainer isLight={isLight} sizing={sizing} className="w-full">
@@ -60,125 +68,23 @@ export const Layer3DevCalibratedPresetsRecipe: React.FC<
           className="flex flex-col w-full"
           style={{ gap: `${rowGap}px` }}
         >
-          {/* 1. Atmosphere & FX Tuner */}
-          <FloatingWindowCard
-            preset={ATMOSPHERE_FX_TUNER_PRESET}
-            icon={Sparkles}
-            iconColor="text-sky-400"
-            badge="Calibrated"
-            badgeClass={
-              isLight
-                ? 'bg-sky-500/15 border-sky-500/30 text-sky-700'
-                : 'bg-sky-500/15 border-sky-500/30 text-sky-400'
-            }
-            bordered={false}
-            showDescription={false}
-            description="Wall & Pulse (Cubic-Bezier Fade-Out Curve), Shadows, Full-Sphere Skybox & 70% Ball"
-            hoverTooltip="Atmosphere & FX Tuner: Calibrated 3D Ball-Wall Intersection Ring & Sonar Pulse, Single-Sun Sharp Shadows, Full-Sphere Cloudy Skybox & 70% Ball Opacity."
-            onHover={setHoveredDesc}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
-
-          {/* 2. Vehicle Global Surfaces & FX Tuner */}
-          <FloatingWindowCard
-            preset={VEHICLE_GLOBAL_FX_TUNER_PRESET}
-            icon={Car}
-            iconColor="text-emerald-400"
-            badge="Calibrated"
-            badgeClass={
-              isLight
-                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700'
-                : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-            }
-            bordered={false}
-            showDescription={false}
-            description="Universal Surfaces & Paint, Head/Brake Lamps, 3-Face Solid Cylinder Wheels & Boost FX"
-            hoverTooltip="Vehicle Global Surfaces & FX Tuner: Calibrated universal vehicle surface materials, headlamp/brake intensities, 7uu solid-cylinder wheels & dual-stream Gold Rush boost FX."
-            onHover={setHoveredDesc}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
-
-          {/* 3. Supersonic Wheel Trail Tuner */}
-          <FloatingWindowCard
-            preset={SUPERSONIC_TRAIL_TUNER_PRESET}
-            icon={Zap}
-            iconColor="text-purple-400"
-            badge="Calibrated"
-            badgeClass={
-              isLight
-                ? 'bg-purple-500/15 border-purple-500/30 text-purple-700'
-                : 'bg-purple-500/15 border-purple-500/30 text-purple-400'
-            }
-            bordered={false}
-            showDescription={false}
-            description="Dual rear-wheel contact trail ribbons (-1t to -30t window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright tilt & POV preview)"
-            hoverTooltip="Supersonic Wheel Trail Tuner: Calibrated dual rear-wheel contact trail ribbons (-1t to -30t history window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright stand, dual-pass border occlusion & POV preview)."
-            onHover={setHoveredDesc}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
-
-          {/* 4. Driftwoods Stadium Tuner */}
-          <FloatingWindowCard
-            preset={DRIFTWOODS_TUNER_PRESET}
-            icon={Palette}
-            iconColor="text-emerald-400"
-            badge="Calibrated"
-            badgeClass={
-              isLight
-                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700'
-                : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-            }
-            bordered={false}
-            showDescription={false}
-            description="Ground dynamic mask, 8-mesh PBR palette, 0.20 Hex Shield & Lite mode"
-            hoverTooltip="Driftwoods Stadium Tuner: Calibrated PBR material colors, ground dual-color mask, 0.20 shield hex grid opacity & Lite Lambert mode."
-            onHover={setHoveredDesc}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
-
-          {/* 5. Boost Pad Visual Tuner */}
-          <FloatingWindowCard
-            preset={BOOST_PAD_TUNER_PRESET}
-            icon={Sparkles}
-            iconColor="text-amber-400"
-            badge="Calibrated"
-            badgeClass={
-              isLight
-                ? 'bg-amber-500/15 border-amber-500/30 text-amber-700'
-                : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
-            }
-            bordered={false}
-            showDescription={false}
-            description="Upward gradient opacity, midpoint falloff & Big Pad floating orb"
-            hoverTooltip="Boost Pad Visual Tuner: Calibrated upward opacity gradient falloff, midpoint calibration & Big Pad floating orb geometry."
-            onHover={setHoveredDesc}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
-
-          {/* 6. Multiplayer Name Tag Tuner */}
-          <FloatingWindowCard
-            preset={NAME_TAG_TUNER_PRESET}
-            icon={Tag}
-            iconColor="text-sky-400"
-            badge="Calibrated"
-            badgeClass={
-              isLight
-                ? 'bg-sky-500/15 border-sky-500/30 text-sky-700'
-                : 'bg-sky-500/15 border-sky-500/30 text-sky-400'
-            }
-            bordered={false}
-            showDescription={false}
-            description="208×54 pill, γ=0.86 distance curve, 50UU+6px dual offset, 100% Retina overlay & 6-car kickoff arena"
-            hoverTooltip="Multiplayer Name Tag Tuner: Calibrated 208×54 horizontal pill name cards (Scale 0.04, γ=0.86, 50 UU world + 6 px screen offset, 100% independent Retina overlay render scale)."
-            onHover={setHoveredDesc}
-            onLeave={() => setHoveredDesc(null)}
-            isLight={isLight}
-          />
+          {resolvedSpecs.map((spec) => (
+            <FloatingWindowCard
+              key={spec.id}
+              preset={spec.preset}
+              icon={spec.icon}
+              iconColor={spec.iconColor}
+              badge={spec.badge}
+              badgeClass={resolveBadgeClasses(spec.badgeTone, isLight)}
+              bordered={false}
+              showDescription={false}
+              description={spec.description}
+              hoverTooltip={spec.hoverTooltip}
+              onHover={setHoveredDesc}
+              onLeave={() => setHoveredDesc(null)}
+              isLight={isLight}
+            />
+          ))}
         </div>
       </PanelContent>
 

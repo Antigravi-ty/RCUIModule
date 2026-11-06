@@ -1,182 +1,96 @@
-import React, { useState } from 'react';
-import {
-  useLayer3DevSandboxesStoreBinding,
-  type DevTestLabTab,
-  type Layer3DevSandboxesRecipeProps,
-} from './hooks/useLayer3DevSettingsBindings';
-import {
-  Bot,
-  Sparkles,
-  FileArchive,
-  Radio,
-  Layers,
-  History,
-  Zap,
-  Film,
-  Swords,
-  Skull,
-  Play,
-  Info,
-} from 'lucide-react';
-import {
-  PanelContainer,
-  PanelHeader,
-  PanelContent,
-} from '../layout/Panel';
+import React, { useMemo, useState } from 'react';
+import { Info, Play } from 'lucide-react';
+import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingActionRow } from '../compounds/SettingActionRow';
-import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
-import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { useAppStore } from '../stores/appStore';
+import { useExperimentalMultiBotsStore } from '../stores/experimentalMultiBotsStore';
 import { floatingStore } from '../stores/floatingStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import {
-  SUBSYSTEM_ISOLATION_LAB_PRESET,
-  EXPERIMENTAL_MULTI_BOTS_PRESET,
+  useSubsystemIsolationLabStore,
+  type DevTestLabTab as IsolationDevTestLabTab,
+} from '../stores/subsystemIsolationLabStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
+import {
   EXPERIMENTAL_BOT_PACK_PRESET,
-  REPLAY_TO_RCS_IMPORTER_PRESET,
+  EXPERIMENTAL_MULTI_BOTS_PRESET,
+  SUBSYSTEM_ISOLATION_LAB_PRESET,
 } from '../stores/devFloatingPresets';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import {
+  resolveSandboxBenchSpecs,
+  type DevSandboxBenchSpec,
+  type DevTestLabTab,
+  type LayerDevTestLabTab,
+} from './dev/devSandboxBenchesCatalog';
 
-export type { DevTestLabTab, Layer3DevSandboxesRecipeProps };
+export type { DevTestLabTab, LayerDevTestLabTab };
+export type Layer3DevSandboxesRecipeProps = StandardSurfaceProps;
 
-interface SubsystemCardMeta {
-  id: DevTestLabTab;
-  title: string;
-  summary: string;
-  details: string;
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-  iconColor: string;
-}
-
-const SUBSYSTEM_BENCHES: SubsystemCardMeta[] = [
-  {
-    id: 'probes',
-    title: 'Physics & Hover Probes',
-    summary: 'Verify isolated angular torque (0G QE) and 1G vertical PID hover control.',
-    details:
-      'Physics & Hover Probes (0G QE · 1G Z-Hover): Isolates vehicle rigid-body attitude control and PID thrust stabilization before full arena flight tests.',
-    icon: Radio,
-    iconColor: 'text-amber-400',
+export const SURFACE_META: SurfaceMeta = {
+  id: 'layer3-dev-sandboxes',
+  title: 'SANDBOXES',
+  subtitle: 'Isolated Subsystem Selector & Test Benches',
+  description:
+    'Select an isolated subsystem to enter its dedicated test environment.',
+  icon: 'flask-conical',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: DEFAULT_PANEL_SIZING['layer3-dev-sandboxes'].width,
+    height: DEFAULT_PANEL_SIZING['layer3-dev-sandboxes'].targetHeight,
+    minHeight: DEFAULT_PANEL_SIZING['layer3-dev-sandboxes'].minHeight,
+    maxHeight: DEFAULT_PANEL_SIZING['layer3-dev-sandboxes'].maxHeight,
   },
-  {
-    id: 'multi-ghost',
-    title: 'Multi-World Ghost Isolation',
-    summary: 'Run 2 to 4 independent RocketSim physics worlds rendered simultaneously as ghosts.',
-    details:
-      'Multi-World Ghost Isolation (2..4 Parallel Worlds): Verifies multi-instance WASM memory isolation, independent tick stepping, and ghost vehicle visual synchronization.',
-    icon: Layers,
-    iconColor: 'text-sky-400',
-  },
-  {
-    id: 'state-replay',
-    title: 'State Replay & TAS Rewinder',
-    summary: 'Record 120Hz physics snapshots, scrub backward/forward, import/export & resume.',
-    details:
-      'State Replay & TAS Rewinder (RingBuffer · Scrubbing): Verifies deterministic RocketSim snapshot serialization, timeline scrubbing ([ / ]), and countdown takeover.',
-    icon: History,
-    iconColor: 'text-emerald-400',
-  },
-  {
-    id: '90s-match',
-    title: '90s Match & Overtime MVP',
-    summary: 'Verify regulation clock countdown, 0:00 airborne ball hold, and Overtime sudden death.',
-    details:
-      '90s Match & Overtime MVP (MatchController · OT): Isolates match state machine transitions, kickoff countdown freezes, and sudden-death victory triggers.',
-    icon: Zap,
-    iconColor: 'text-purple-400',
-  },
-  {
-    id: 'goal-replay',
-    title: 'Goal Incident Replay & Podium',
-    summary: 'Test goal explosion delay, focal director replay with touch slow-mo, and MVP podium.',
-    details:
-      'Goal Incident Replay & Podium (Director Cam · Slow-Mo): Verifies ReplayTimelineController camera lookahead on scoring touches, speed ramps, and post-match celebration.',
-    icon: Film,
-    iconColor: 'text-rose-400',
-  },
-  {
-    id: 'kickoff-duel',
-    title: '4-Model Kickoff Duel Bench',
-    summary: 'Benchmark Nexto, Necto, Kickoff PPO & Speedflip across all 5 kickoff spawn slots.',
-    details:
-      '4-Model Kickoff Duel Bench (10 Pairings × 5 Slots): Verifies SafeTensors model inference, kickoff spawn mirroring, and per-tick action diagnostics.',
-    icon: Swords,
-    iconColor: 'text-orange-400',
-  },
-  {
-    id: 'demolish-respawn',
-    title: 'Demolish & Respawn Ghost Bench',
-    summary: 'Simulate demolish countdown, Left (A) / Right (D) slot selection, and ghost wheel placement.',
-    details:
-      'Demolish & Respawn Ghost Bench (Left/Right · Ghost Wheels): Isolates left-handed coordinate spawn slot mapping (0..3), RespawnGhostPreview wheel suspension height, and conflict fallback.',
-    icon: Skull,
-    iconColor: 'text-red-400',
-  },
-  {
-    id: 'exp-multi-bots',
-    title: 'Experimental Multiple Bots Mode',
-    summary: 'Configure Blue & Orange rosters up to 3v3 with Native SafeTensors Nexto & Necto bots.',
-    details:
-      'Experimental Multiple Bots Mode (Up to 3v3 · Native SafeTensors): Multi-agent Nexto & Necto bot rosters, team & time config, and live POV switching (Keys 1–6).',
-    icon: Bot,
-    iconColor: 'text-emerald-400',
-  },
-  {
-    // experimental bot pack #9700488
-    id: 'exp-botpack-9700488',
-    title: 'Experimental Bot Pack #9700488',
-    summary:
-      'Spectate all 8 RLBot #9700488 models (Chronos v2.1, Dice, Ducky, Fury, Galactus v2, Kira, Rain, Ripple v1.1) at max format.',
-    details:
-      'Experimental Bot Pack #9700488 (8 Native SafeTensors Models · Max-Format All-Bots Spectate): Launches 3v3/2v2/1v1 self-play spectate for Chronos v2.1, Dice, Ducky, Fury, Galactus v2, Kira, Rain, and Ripple v1.1.',
-    icon: Sparkles,
-    iconColor: 'text-teal-400',
-  },
-  {
-    id: 'tem-pack-converter',
-    title: 'Static Training Packs (Dev Mode)',
-    summary:
-      'Batch import/export .Tem / .RCSPack / .RCSPackE / .zip, inspect .RLRCSPack metadata, and configure Training Variations (F3–F12).',
-    details:
-      'Static Training Packs (Dev Mode): Unified pack browser with .Tem -> .RLRCSPack importer, Original Description inspector, EditorFreeCam (.RCSPackE) support, Folder/Rank filtering, and Kevpert BakkesMod Training Variations.',
-    icon: FileArchive,
-    iconColor: 'text-cyan-400',
-  },
-  {
-    id: 'replay-to-rcs-importer',
-    title: 'Replay to RCS Replay Importer',
-    summary:
-      'Import raw Rocket League .replay files, upsample 30Hz to 120Hz, intervene (Disappear/Trajectory/Nexto/Necto), and save as .rcreplay.gz.',
-    details:
-      'Replay to RCS Replay Importer (UE3 Bitstream Decoder · 30Hz->120Hz SLERP/Hermite · Track Delta): Parses raw .replay files into 120Hz RocketCompanion tracks, preserves native UE3 telemetry in Track Delta, and exports RCS Replay Packs.',
-    icon: FileArchive,
-    iconColor: 'text-cyan-400',
-  },
-];
+};
 
 /**
  * [Recipe] Layer 3 Sandboxes — Isolated Subsystem Selector
- * Unified borderless single-line SettingActionRow list with tinted leading icons and inline [Play + Enter] buttons.
+ * Data-driven `menuGroup === 'sandboxes'` & `SANDBOX_BENCH_SPECS` list with Store-First navigation and launch actions.
  */
-export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> = (rawProps) => {
-  const {
+export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> = ({
   isLight = false,
-  onBack,
-  activeBenchId = null,
-  onEnterBench,
-  onLaunchIsolationTab,
-  onNavigateExpMultiBots,
-  onNavigateExpBotpack9700488,
-  onNavigateTemPackConverter,
-  sizing: propSizing,
-} = useLayer3DevSandboxesStoreBinding(rawProps);
+  onBack: propOnBack,
+}) => {
+  const storeGoBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const navigate = useScopedStore('appStore', useAppStore, (s) => s.navigate);
+  const closeMenu = useScopedStore('appStore', useAppStore, (s) => s.closeMenu);
+  const matchMode = useScopedStore('appStore', useAppStore, (s) => s.matchMode);
+  const bridge = useScopedStore('appStore', useAppStore, (s) => s.bridge);
+
+  const activeLabTab = useScopedStore(
+    'subsystemIsolationLabStore',
+    useSubsystemIsolationLabStore,
+    (s) => s.activeTab
+  );
+  const setSelectedTab = useScopedStore(
+    'subsystemIsolationLabStore',
+    useSubsystemIsolationLabStore,
+    (s) => s.setSelectedTab
+  );
+  const applyAndRestartLab = useScopedStore(
+    'subsystemIsolationLabStore',
+    useSubsystemIsolationLabStore,
+    (s) => s.applyAndRestartLab
+  );
+  const expActiveSubMode = useScopedStore(
+    'experimentalMultiBotsStore',
+    useExperimentalMultiBotsStore,
+    (s) => s.activeSubMode
+  );
+
+  const onBack = propOnBack ?? storeGoBack;
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
-  const storeSizing = useMenuLayoutStore(
+  const sizing = useMenuLayoutStore(
     (s) =>
       s.panels?.['layer3-dev-sandboxes'] ??
       DEFAULT_PANEL_SIZING['layer3-dev-sandboxes']
   );
-  const sizing = propSizing ?? storeSizing;
 
   const {
     rowGap,
@@ -186,24 +100,85 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
     buttonRadius,
   } = useSettingActionRowStore();
 
-  const handleLaunchSubsystem = (
-    tab: DevTestLabTab,
-    sourceEl?: HTMLElement | null
-  ) => {
-    if (tab === 'tem-pack-converter') {
-      if (onNavigateTemPackConverter) {
-        onNavigateTemPackConverter();
-      } else if (onEnterBench) {
-        onEnterBench(tab);
+  const activeBenchId: DevTestLabTab | null =
+    matchMode === 'dev-test-lab'
+      ? activeLabTab
+      : matchMode === 'exp-multi-bots'
+        ? expActiveSubMode === 'botpack'
+          ? 'exp-botpack-9700488'
+          : 'exp-multi-bots'
+        : null;
+
+  const benchSpecs = useMemo(() => resolveSandboxBenchSpecs(), []);
+
+  const enterSandboxBench = (tab: DevTestLabTab) => {
+    if (tab === 'exp-multi-bots') {
+      const expStore = useExperimentalMultiBotsStore.getState();
+      expStore.activateMultiBotsSubMode(true);
+      if (matchMode === 'exp-multi-bots') {
+        expStore.startOrApplyMatch();
+        closeMenu();
+      } else {
+        bridge.onStartExpMultiBots?.();
       }
       return;
     }
-    if (tab === 'exp-multi-bots' && !sourceEl && onNavigateExpMultiBots) {
-      onNavigateExpMultiBots();
+
+    if (tab === 'exp-botpack-9700488') {
+      const expStore = useExperimentalMultiBotsStore.getState();
+      expStore.activateBotpackSubMode(undefined, true);
+      if (matchMode === 'exp-multi-bots') {
+        expStore.startOrApplyMatch();
+        closeMenu();
+      } else {
+        bridge.onStartExpMultiBots?.();
+      }
       return;
     }
-    if (tab === 'exp-botpack-9700488' && !sourceEl && onNavigateExpBotpack9700488) {
-      onNavigateExpBotpack9700488();
+
+    if (tab === 'tem-pack-converter') {
+      navigate('dev-tem-pack-converter');
+      return;
+    }
+
+    if (tab === 'replay-to-rcs-importer') {
+      if (bridge.onStartReplayToRcsImporter) {
+        bridge.onStartReplayToRcsImporter();
+      } else {
+        closeMenu();
+      }
+      return;
+    }
+
+    const labTab = tab as IsolationDevTestLabTab;
+    setSelectedTab(labTab);
+    applyAndRestartLab(labTab);
+    if (matchMode === 'dev-test-lab') {
+      closeMenu();
+    } else {
+      bridge.onStartDevTestLab?.();
+    }
+  };
+
+  const handleLaunchSubsystem = (
+    bench: DevSandboxBenchSpec,
+    sourceEl?: HTMLElement | null
+  ) => {
+    const tab = bench.id;
+    if (tab === 'tem-pack-converter') {
+      navigate('dev-tem-pack-converter');
+      return;
+    }
+    if (tab === 'exp-multi-bots' && !sourceEl) {
+      useExperimentalMultiBotsStore.getState().activateMultiBotsSubMode(false);
+      navigate('exp-multi-bots');
+      return;
+    }
+    if (tab === 'exp-botpack-9700488' && !sourceEl) {
+      useExperimentalMultiBotsStore
+        .getState()
+        .activateBotpackSubMode(undefined, false);
+      navigate('exp-botpack-9700488');
       return;
     }
 
@@ -213,15 +188,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
       floatingStore.closeWindow(EXPERIMENTAL_BOT_PACK_PRESET.id);
     }
 
-    const targetPreset =
-      tab === 'exp-botpack-9700488'
-        ? EXPERIMENTAL_BOT_PACK_PRESET
-        : tab === 'exp-multi-bots'
-          ? EXPERIMENTAL_MULTI_BOTS_PRESET
-          : tab === 'replay-to-rcs-importer'
-            ? REPLAY_TO_RCS_IMPORTER_PRESET
-            : SUBSYSTEM_ISOLATION_LAB_PRESET;
-
+    const targetPreset = bench.preset ?? SUBSYSTEM_ISOLATION_LAB_PRESET;
     floatingStore.setOpacity(70);
     const snap = floatingStore.getSnapshot();
     const exists =
@@ -231,11 +198,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
       const containerEl =
         document.getElementById('game-ui-viewport-host') || document.body;
       if (sourceEl && containerEl) {
-        floatingStore.spawnWithFlight(
-          targetPreset,
-          sourceEl,
-          containerEl
-        );
+        floatingStore.spawnWithFlight(targetPreset, sourceEl, containerEl);
       } else {
         floatingStore.spawnWindow({
           ...targetPreset,
@@ -243,11 +206,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
         });
       }
     }
-    if (onEnterBench) {
-      onEnterBench(tab);
-    } else {
-      onLaunchIsolationTab?.(tab);
-    }
+    enterSandboxBench(tab);
   };
 
   return (
@@ -260,7 +219,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
           className="flex flex-col w-full"
           style={{ gap: `${rowGap}px` }}
         >
-          {SUBSYSTEM_BENCHES.map((bench) => {
+          {benchSpecs.map((bench) => {
             const isRunning = activeBenchId === bench.id;
             return (
               <SettingActionRow
@@ -272,7 +231,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
                 bordered={false}
                 showDescription={false}
                 hoverDescription={bench.details}
-                onAction={() => handleLaunchSubsystem(bench.id)}
+                onAction={() => handleLaunchSubsystem(bench)}
                 onHover={setHoveredDesc}
                 onLeave={() => setHoveredDesc(null)}
                 isLight={isLight}
@@ -281,7 +240,7 @@ export const Layer3DevSandboxesRecipe: React.FC<Layer3DevSandboxesRecipeProps> =
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleLaunchSubsystem(bench.id, e.currentTarget);
+                      handleLaunchSubsystem(bench, e.currentTarget);
                     }}
                     style={{
                       fontSize: `${buttonFontSize}px`,

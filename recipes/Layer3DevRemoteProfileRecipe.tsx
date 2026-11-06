@@ -17,51 +17,133 @@ import { UnderConstructionPlaceholder } from '../primitives/UnderConstructionPla
 import { useAppStore } from '../stores/appStore';
 import { useCloudProfileSyncStore } from '../stores/cloudProfileSyncStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
+import { useScopedStore } from '../stores/storeSnapshotScope';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import { DevManageAccountsSection } from './dev/DevManageAccountsSection';
 
 export type DevRemoteProfileTabId = 'set-profile' | 'manage-accounts';
+export type Layer3DevRemoteProfileRecipeProps = StandardSurfaceProps;
 
-export interface Layer3DevRemoteProfileRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  initialTab?: DevRemoteProfileTabId;
-  sizing?: PanelSizingConfig;
-}
+export const SURFACE_META: SurfaceMeta = {
+  id: 'layer3-dev-remote-profile',
+  title: 'REMOTE PROFILE MANAGEMENT',
+  subtitle: 'Cloud Account Directory & Live Remote Profile Tuning',
+  description:
+    'Manage cloud user accounts (immutable User ID, login username, password, #alias, Display Name), export JSON backups, and remotely tune profiles in real time.',
+  icon: 'user-cog',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: DEFAULT_PANEL_SIZING['layer3-dev-remote-profile'].width,
+    height: DEFAULT_PANEL_SIZING['layer3-dev-remote-profile'].targetHeight,
+    minHeight: DEFAULT_PANEL_SIZING['layer3-dev-remote-profile'].minHeight,
+    maxHeight: DEFAULT_PANEL_SIZING['layer3-dev-remote-profile'].maxHeight,
+  },
+  variants: [
+    {
+      variantId: 'set-profile',
+      label: 'Set Others Profile',
+    },
+    {
+      variantId: 'manage-accounts',
+      label: 'Manage Accounts',
+    },
+  ],
+};
 
 export const Layer3DevRemoteProfileRecipe: React.FC<
   Layer3DevRemoteProfileRecipeProps
-> = ({ isLight = false, onBack: propOnBack, initialTab = 'set-profile', sizing: propSizing }) => {
-  const storeGoBack = useAppStore((s) => s.goBack);
+> = ({
+  isLight = false,
+  activeTab: controlledTab,
+  onTabChange,
+  onBack: propOnBack,
+}) => {
+  const storeGoBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
   const onBack = propOnBack ?? storeGoBack;
 
-  const storeSizing = useMenuLayoutStore(
+  const sizing = useMenuLayoutStore(
     (s) =>
       s.panels?.['layer3-dev-remote-profile'] ??
       DEFAULT_PANEL_SIZING['layer3-dev-remote-profile']
   );
   const panelBodyPaddingX = useMenuLayoutStore((s) => s.panelBodyPaddingX ?? 18);
-  const sizing = propSizing ?? storeSizing;
 
-  const available = useCloudProfileSyncStore((s) => s.available);
-  const canManageAccounts = useCloudProfileSyncStore((s) => s.canManageAccounts);
-  const accounts = useCloudProfileSyncStore((s) => s.accounts);
-  const isLoadingAccounts = useCloudProfileSyncStore((s) => s.isLoadingAccounts);
-  const syncStatus = useCloudProfileSyncStore((s) => s.syncStatus);
-  const statusMessage = useCloudProfileSyncStore((s) => s.statusMessage);
-  const errorMessage = useCloudProfileSyncStore((s) => s.errorMessage);
-  const refreshAccounts = useCloudProfileSyncStore((s) => s.refreshAccounts);
-  const upsertAccount = useCloudProfileSyncStore((s) => s.upsertAccount);
-  const deleteAccount = useCloudProfileSyncStore((s) => s.deleteAccount);
-  const startRemoteTuningSession = useCloudProfileSyncStore(
+  const available = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.available
+  );
+  const canManageAccounts = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.canManageAccounts
+  );
+  const accounts = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.accounts
+  );
+  const isLoadingAccounts = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.isLoadingAccounts
+  );
+  const syncStatus = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.syncStatus
+  );
+  const statusMessage = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.statusMessage
+  );
+  const errorMessage = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.errorMessage
+  );
+  const refreshAccounts = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.refreshAccounts
+  );
+  const upsertAccount = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.upsertAccount
+  );
+  const deleteAccount = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
+    (s) => s.deleteAccount
+  );
+  const startRemoteTuningSession = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
     (s) => s.startRemoteTuningSession
   );
-  const exportRemoteAccountProfileBackup = useCloudProfileSyncStore(
+  const exportRemoteAccountProfileBackup = useScopedStore(
+    'cloudProfileSyncStore',
+    useCloudProfileSyncStore,
     (s) => s.exportRemoteAccountProfileBackup
   );
 
-  const [activeTab, setActiveTab] = useState<DevRemoteProfileTabId>(initialTab);
+  const [internalTab, setInternalTab] = useState<DevRemoteProfileTabId>('set-profile');
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+
+  const activeTab: DevRemoteProfileTabId =
+    controlledTab === 'manage-accounts' || controlledTab === 'set-profile'
+      ? controlledTab
+      : internalTab;
+
+  const handleSelectTab = (nextTab: DevRemoteProfileTabId) => {
+    setInternalTab(nextTab);
+    onTabChange?.(nextTab);
+  };
 
   useEffect(() => {
     if (available) {
@@ -101,7 +183,7 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
         <UnderlineTabs
           items={tabs}
           activeId={activeTab}
-          onChange={(id) => setActiveTab(id as DevRemoteProfileTabId)}
+          onChange={(id) => handleSelectTab(id as DevRemoteProfileTabId)}
           isLight={isLight}
           size="sm"
           fullWidth={true}
@@ -118,7 +200,6 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
           />
         ) : activeTab === 'set-profile' ? (
           <div className="flex flex-col gap-2.5 w-full">
-            {/* Header Toolbar */}
             <div className="flex items-center justify-between gap-2">
               <div
                 className={`text-xs ${
@@ -152,7 +233,6 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
               </button>
             </div>
 
-            {/* Accounts Selection List */}
             {accounts.length === 0 ? (
               <div
                 className={`rounded-xl border p-6 text-center flex flex-col items-center gap-2 ${
@@ -169,7 +249,7 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
                 </div>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('manage-accounts')}
+                  onClick={() => handleSelectTab('manage-accounts')}
                   className="mt-1 px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs cursor-pointer transition"
                 >
                   Create Account in Manage Accounts

@@ -1,0 +1,497 @@
+import type React from 'react';
+import {
+  Activity,
+  Bot,
+  Box,
+  Camera,
+  Car,
+  Crosshair,
+  Database,
+  Film,
+  Palette,
+  PencilRuler,
+  Router,
+  Sliders,
+  Sparkles,
+  Tag,
+  Target,
+  Volume2,
+  Zap,
+} from 'lucide-react';
+import {
+  ATMOSPHERE_FX_TUNER_PRESET,
+  BALL_TRAJECTORY_TUNER_PRESET,
+  BOOST_PAD_TUNER_PRESET,
+  BOTS_LOADOUT_TUNER_PRESET,
+  CAMERA_DETERMINISM_PRESET,
+  CLOCK_PACING_TUNER_PRESET,
+  DIAGNOSTIC_DUMP_PRESET,
+  DRIFTWOODS_TUNER_PRESET,
+  DUAL_ARENA_DETERMINISM_HARNESS_PRESET,
+  ENGINE_AUDIO_TUNER_PRESET,
+  EVENT_STREAM_OBSERVER_PRESET,
+  GOAL_VOLUME_TUNER_PRESET,
+  KICKOFF_TRAINING_TUNER_PRESET,
+  NAME_TAG_TUNER_PRESET,
+  NETWORK_STRESS_INJECTION_PRESET,
+  REACHABILITY_TUNER_PRESET,
+  REPLAY_DIRECTOR_TUNER_PRESET,
+  SPATIAL_AUDIO_TUNER_PRESET,
+  STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
+  SUPERSONIC_TRAIL_TUNER_PRESET,
+  VEHICLE_GLOBAL_FX_TUNER_PRESET,
+  VEHICLE_MODEL_OFFSET_TUNER_PRESET,
+} from '../../stores/devFloatingPresets';
+import type { PresetConfig } from '../../stores/floatingPresets';
+import {
+  getDiscoveredSurfacesByMenuGroup,
+  type DiscoveredSurfaceEntry,
+  type SurfaceMenuGroup,
+} from '../../manifest/surfaceRegistry';
+
+export type DevIconComponent = React.ComponentType<{
+  className?: string;
+  style?: React.CSSProperties;
+}>;
+
+export interface DevFloatingLauncherSpec {
+  id: string;
+  preset: PresetConfig;
+  icon: DevIconComponent;
+  iconColor: string;
+  badge?: string;
+  badgeTone?: 'sky' | 'amber' | 'emerald' | 'purple' | 'rose';
+  description: string;
+  hoverTooltip: string;
+  section?: 'primary' | 'diagnostics';
+}
+
+export const DEV_ICON_BY_NAME: Record<string, DevIconComponent> = {
+  activity: Activity,
+  bot: Bot,
+  box: Box,
+  camera: Camera,
+  car: Car,
+  crosshair: Crosshair,
+  database: Database,
+  film: Film,
+  palette: Palette,
+  'pencil-ruler': PencilRuler,
+  router: Router,
+  sliders: Sliders,
+  sparkles: Sparkles,
+  tag: Tag,
+  target: Target,
+  volume2: Volume2,
+  zap: Zap,
+};
+
+export function resolveBadgeClasses(
+  tone: DevFloatingLauncherSpec['badgeTone'],
+  isLight: boolean
+): string {
+  switch (tone) {
+    case 'amber':
+      return isLight
+        ? 'bg-amber-500/15 border-amber-500/30 text-amber-700'
+        : 'bg-amber-500/15 border-amber-500/30 text-amber-400';
+    case 'emerald':
+      return isLight
+        ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700'
+        : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400';
+    case 'purple':
+      return isLight
+        ? 'bg-purple-500/15 border-purple-500/30 text-purple-700'
+        : 'bg-purple-500/15 border-purple-500/30 text-purple-400';
+    case 'rose':
+      return isLight
+        ? 'bg-rose-500/15 border-rose-500/30 text-rose-700'
+        : 'bg-rose-500/15 border-rose-500/30 text-rose-400';
+    case 'sky':
+    default:
+      return isLight
+        ? 'bg-sky-500/15 border-sky-500/30 text-sky-700'
+        : 'bg-sky-500/15 border-sky-500/30 text-sky-400';
+  }
+}
+
+export const ACTIVE_TUNER_SPECS: DevFloatingLauncherSpec[] = [
+  {
+    id: DIAGNOSTIC_DUMP_PRESET.id,
+    preset: DIAGNOSTIC_DUMP_PRESET,
+    icon: Database,
+    iconColor: 'text-sky-400',
+    badge: 'Live Buffers · Anytime ZIP',
+    badgeTone: 'sky',
+    description:
+      'Live Client Replay, Reconcile & Pacing Telemetry, and Authoritative Server Replay gauges + anytime mid-match dump',
+    hoverTooltip:
+      'Export Diagnostic Dump: Real-time buffer usage monitor with configurable capacity and one-click unified .zip export anytime via ESC.',
+    section: 'primary',
+  },
+  {
+    id: BOTS_LOADOUT_TUNER_PRESET.id,
+    preset: BOTS_LOADOUT_TUNER_PRESET,
+    icon: Bot,
+    iconColor: 'text-amber-400',
+    badge: '3 GLB Default · Multi-Select',
+    badgeTone: 'amber',
+    description:
+      'Multi-select randomizable Bot Loadout pool (3 GLB models default, Metallic paint, Cartoon boost, Standard boost audio, Random TrainStation anthem)',
+    hoverTooltip:
+      'Bots Loadout Tuner: Configure multi-select randomizable bot loadout pools for Exhibition and Auto-Fill.',
+    section: 'primary',
+  },
+  {
+    id: SPATIAL_AUDIO_TUNER_PRESET.id,
+    preset: SPATIAL_AUDIO_TUNER_PRESET,
+    icon: Volume2,
+    iconColor: 'text-amber-400',
+    badge: '2.0s Curve · Stadium Reverb',
+    badgeTone: 'amber',
+    description:
+      'Stadium spatial acoustics (HPF 425Hz, LPF 3500Hz, Wet 69%, 3.0s Decay) & 2.0s directional non-linear transition curve',
+    hoverTooltip:
+      'Spatial Audio & Anthem Tuner: Live calibration for Player Anthem and Realistic Background Music stadium acoustics and 2.0s directional non-linear transitions.',
+    section: 'primary',
+  },
+  {
+    id: ENGINE_AUDIO_TUNER_PRESET.id,
+    preset: ENGINE_AUDIO_TUNER_PRESET,
+    icon: Volume2,
+    iconColor: 'text-emerald-400',
+    badge: 'Turtle Modem · 40-Slice REV',
+    badgeTone: 'emerald',
+    description:
+      'Turtle Modem 40-slice granular REV powertrain synthesizer, RPM/gear/reverse physics, backfire pops & Entity Spawn SFX',
+    hoverTooltip:
+      'Engine Audio Tuner (Turtle Modem): Calibrate 1st gear accel (1000), reverse accel (300), linear drop (1400), rev-limit bounce (200@0.02s), backfire threshold (4000 RPM), and Entity Spawn SFX.',
+    section: 'primary',
+  },
+  {
+    id: STATIC_TRAINING_BALL_CAM_TUNER_PRESET.id,
+    preset: STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
+    icon: Camera,
+    iconColor: 'text-sky-400',
+    badge: 'Ball Cam · Opacity Override',
+    badgeTone: 'sky',
+    description:
+      'Relative ball camera (Distance, Height, Angle, Lateral Offset), Edit-Mode 70% Opacity Override & JSON Export',
+    hoverTooltip:
+      'Training Ball Camera & Opacity Tuner: Live slider + text input tuner for Static Training Pack relative ball camera and temporary Edit-Mode ball opacity override.',
+    section: 'primary',
+  },
+  {
+    id: VEHICLE_MODEL_OFFSET_TUNER_PRESET.id,
+    preset: VEHICLE_MODEL_OFFSET_TUNER_PRESET,
+    icon: Car,
+    iconColor: 'text-amber-400',
+    badge: 'Per-Model Offsets',
+    badgeTone: 'amber',
+    description:
+      'Hitbox & Align, Per-Vehicle Wheel Hub Anchors & Dual Boost Exhaust Nozzle Offsets',
+    hoverTooltip:
+      'Vehicle Model & Offset Tuner: Per-vehicle spatial calibration for Fennec & Insidio (Hitbox archetype, Chassis Center Offset, Wheel Hub Anchors & Boost Nozzle Offsets).',
+    section: 'primary',
+  },
+  {
+    id: GOAL_VOLUME_TUNER_PRESET.id,
+    preset: GOAL_VOLUME_TUNER_PRESET,
+    icon: Box,
+    iconColor: 'text-emerald-400',
+    badge: '3D AABB · JSON Export',
+    badgeTone: 'emerald',
+    description:
+      'Goal Volume Hitbox 3D wireframe overlay (default off), Standard & Throwback AABB calibration & JSON export',
+    hoverTooltip:
+      'Goal Volume Hitbox Active Tuner: Toggle the 3D Goal Volume & Ball-Center Trigger wireframe overlay, tune Standard & Throwback goal bounds, and export/import JSON.',
+    section: 'primary',
+  },
+  {
+    id: REACHABILITY_TUNER_PRESET.id,
+    preset: REACHABILITY_TUNER_PRESET,
+    icon: Crosshair,
+    iconColor: 'text-emerald-400',
+    badge: 'LUT · 3D Horn · Cross',
+    badgeTone: 'emerald',
+    description:
+      'Ground 1s/2s/3s Isochrone LUT (Boost=0), Boost-Driven 3D Horn & Optimal Intercept 3D Cross',
+    hoverTooltip:
+      'Reachability & Intercept Tuner: Real-time 1.4µs WASM LUT ground reachability, boost-driven 3D spacetime interception horn, and 3D orthogonal intercept cross.',
+    section: 'primary',
+  },
+  {
+    id: BALL_TRAJECTORY_TUNER_PRESET.id,
+    preset: BALL_TRAJECTORY_TUNER_PRESET,
+    icon: Target,
+    iconColor: 'text-amber-400',
+    badge: 'WASM Incr · 3D Tube · JSON',
+    badgeTone: 'amber',
+    description:
+      'WASM Incremental Tail Prediction (600t), Car-Ball Hit / Deviation Triggers, 3D Volumetric Shaded Tube, Spatial Depth Cues & JSON Export',
+    hoverTooltip:
+      'Ball Trajectory Prediction Line Tuner: Configure continuous WASM incremental tail prediction (~20-50µs/tick), deviation triggers, 3D volumetric tube shading, bounce rings, ground drop lines, and one-click JSON export.',
+    section: 'primary',
+  },
+  {
+    id: REPLAY_DIRECTOR_TUNER_PRESET.id,
+    preset: REPLAY_DIRECTOR_TUNER_PRESET,
+    icon: Film,
+    iconColor: 'text-amber-400',
+    badge: '.rcgr.gz · Preview · AutoCam',
+    badgeTone: 'amber',
+    description:
+      'Export & import .rcgr.gz Goal Replay containers, 3D Arena preview, anomaly peak seek chips & ±15f window diagnostics',
+    hoverTooltip:
+      'Replay Director Camera & Slow-Mo Tuner: Export and import compressed .rcgr.gz Goal Replay containers, jump to anomaly peaks, and copy ±15-frame diagnostic windows.',
+    section: 'primary',
+  },
+  {
+    id: KICKOFF_TRAINING_TUNER_PRESET.id,
+    preset: KICKOFF_TRAINING_TUNER_PRESET,
+    icon: PencilRuler,
+    iconColor: 'text-sky-400',
+    badge: 'PPO AI',
+    badgeTone: 'sky',
+    description:
+      'Kickoff sub-modes, realistic wait (0.25s steps), N/120 speed & W/S offset',
+    hoverTooltip:
+      'Kickoff Training Tuner (PPO): Floating tuner for PPO AI kickoff training parameters.',
+    section: 'primary',
+  },
+  {
+    id: EVENT_STREAM_OBSERVER_PRESET.id,
+    preset: EVENT_STREAM_OBSERVER_PRESET,
+    icon: Activity,
+    iconColor: 'text-sky-400',
+    description:
+      'Physics collision observer, impulse curves & threshold visualizer',
+    hoverTooltip:
+      'Event Stream Observer: Real-time collision dynamics observer, impulse curves & audio threshold calibration.',
+    section: 'diagnostics',
+  },
+  {
+    id: DUAL_ARENA_DETERMINISM_HARNESS_PRESET.id,
+    preset: DUAL_ARENA_DETERMINISM_HARNESS_PRESET,
+    icon: Target,
+    iconColor: 'text-emerald-400',
+    description:
+      'Bit-exact physics rollback verification & desync delta monitoring',
+    hoverTooltip:
+      'Dual-Arena Determinism Harness: Parallel RocketSim physics verification with live rollback desync checking.',
+    section: 'diagnostics',
+  },
+  {
+    id: CAMERA_DETERMINISM_PRESET.id,
+    preset: CAMERA_DETERMINISM_PRESET,
+    icon: Camera,
+    iconColor: 'text-sky-400',
+    badge: 'WASM vs Clean JS · 600+600f',
+    badgeTone: 'sky',
+    description:
+      'Live toggle between Legacy WASM & Clean JS camera with 600+600f CSV auto-capture',
+    hoverTooltip:
+      'Camera Deterministic Harness: Side-by-side comparison between legacy camera.wasm and clean-room Clean JS camera.',
+    section: 'diagnostics',
+  },
+  {
+    id: CLOCK_PACING_TUNER_PRESET.id,
+    preset: CLOCK_PACING_TUNER_PRESET,
+    icon: Sliders,
+    iconColor: 'text-amber-400',
+    badge: 'What-If Sim · Trace JSON',
+    badgeTone: 'amber',
+    description:
+      'Low-level STS/CSTS hysteresis, PD gains, RTT bias compensation, trace import & counterfactual What-If simulator',
+    hoverTooltip:
+      'Input Buffer & Clock Pacing Tuner: Tune all low-level pacing parameters, import recorded telemetry traces (.json), and inspect simulated Starvations, Hard Snaps, Rate Switches/min, and 50/50 Lead Cost.',
+    section: 'diagnostics',
+  },
+  {
+    id: NETWORK_STRESS_INJECTION_PRESET.id,
+    preset: NETWORK_STRESS_INJECTION_PRESET,
+    icon: Router,
+    iconColor: 'text-rose-400',
+    badge: 'Asymmetric ↑/↓ · 2-Car Probes',
+    badgeTone: 'rose',
+    description:
+      'Asymmetric uplink/downlink delay, jitter, packet loss & burst drop injection + In-Arena 2-Car prediction probe lab',
+    hoverTooltip:
+      'Network Stress Injection: Inject asymmetric uplink/downlink latency, jitter, packet loss, and burst drops, or spawn 2-car 0G prediction probes.',
+    section: 'diagnostics',
+  },
+];
+
+export const CALIBRATED_PRESET_SPECS: DevFloatingLauncherSpec[] = [
+  {
+    id: ATMOSPHERE_FX_TUNER_PRESET.id,
+    preset: ATMOSPHERE_FX_TUNER_PRESET,
+    icon: Sparkles,
+    iconColor: 'text-sky-400',
+    badge: 'Calibrated',
+    badgeTone: 'sky',
+    description:
+      'Wall & Pulse (Cubic-Bezier Fade-Out Curve), Shadows, Full-Sphere Skybox & 70% Ball',
+    hoverTooltip:
+      'Atmosphere & FX Tuner: Calibrated 3D Ball-Wall Intersection Ring & Sonar Pulse, Single-Sun Sharp Shadows, Full-Sphere Cloudy Skybox & 70% Ball Opacity.',
+  },
+  {
+    id: VEHICLE_GLOBAL_FX_TUNER_PRESET.id,
+    preset: VEHICLE_GLOBAL_FX_TUNER_PRESET,
+    icon: Car,
+    iconColor: 'text-emerald-400',
+    badge: 'Calibrated',
+    badgeTone: 'emerald',
+    description:
+      'Universal Surfaces & Paint, Head/Brake Lamps, 3-Face Solid Cylinder Wheels & Boost FX',
+    hoverTooltip:
+      'Vehicle Global Surfaces & FX Tuner: Calibrated universal vehicle surface materials, headlamp/brake intensities, 7uu solid-cylinder wheels & dual-stream Gold Rush boost FX.',
+  },
+  {
+    id: SUPERSONIC_TRAIL_TUNER_PRESET.id,
+    preset: SUPERSONIC_TRAIL_TUNER_PRESET,
+    icon: Zap,
+    iconColor: 'text-purple-400',
+    badge: 'Calibrated',
+    badgeTone: 'purple',
+    description:
+      'Dual rear-wheel contact trail ribbons (-1t to -30t window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright tilt & POV preview)',
+    hoverTooltip:
+      'Supersonic Wheel Trail Tuner: Calibrated dual rear-wheel contact trail ribbons (-1t to -30t history window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright stand, dual-pass border occlusion & POV preview).',
+  },
+  {
+    id: DRIFTWOODS_TUNER_PRESET.id,
+    preset: DRIFTWOODS_TUNER_PRESET,
+    icon: Palette,
+    iconColor: 'text-emerald-400',
+    badge: 'Calibrated',
+    badgeTone: 'emerald',
+    description:
+      'Ground dynamic mask, 8-mesh PBR palette, 0.20 Hex Shield & Lite mode',
+    hoverTooltip:
+      'Driftwoods Stadium Tuner: Calibrated PBR material colors, ground dual-color mask, 0.20 shield hex grid opacity & Lite Lambert mode.',
+  },
+  {
+    id: BOOST_PAD_TUNER_PRESET.id,
+    preset: BOOST_PAD_TUNER_PRESET,
+    icon: Sparkles,
+    iconColor: 'text-amber-400',
+    badge: 'Calibrated',
+    badgeTone: 'amber',
+    description:
+      'Upward gradient opacity, midpoint falloff & Big Pad floating orb',
+    hoverTooltip:
+      'Boost Pad Visual Tuner: Calibrated upward opacity gradient falloff, midpoint calibration & Big Pad floating orb geometry.',
+  },
+  {
+    id: NAME_TAG_TUNER_PRESET.id,
+    preset: NAME_TAG_TUNER_PRESET,
+    icon: Tag,
+    iconColor: 'text-sky-400',
+    badge: 'Calibrated',
+    badgeTone: 'sky',
+    description:
+      '208×54 pill, γ=0.86 distance curve, 50UU+6px dual offset, 100% Retina overlay & 6-car kickoff arena',
+    hoverTooltip:
+      'Multiplayer Name Tag Tuner: Calibrated 208×54 horizontal pill name cards (Scale 0.04, γ=0.86, 50 UU world + 6 px screen offset, 100% independent Retina overlay render scale).',
+  },
+];
+
+export function discoveredSurfaceToLauncherSpec(
+  entry: DiscoveredSurfaceEntry,
+  defaultSection: 'primary' | 'diagnostics' = 'diagnostics'
+): DevFloatingLauncherSpec {
+  const { meta, resolvedSizing } = entry;
+  const preset: PresetConfig = {
+    id: meta.id,
+    title: meta.title,
+    category: meta.menuGroup ?? 'DeveloperTuner',
+    width: resolvedSizing.width,
+    height: typeof resolvedSizing.height === 'number' ? resolvedSizing.height : 580,
+    minWidth: resolvedSizing.minWidth,
+    minHeight: resolvedSizing.minHeight ?? 200,
+    resizable: true,
+    singleton: true,
+    tier: 'developer',
+    summary: meta.description || meta.subtitle || meta.title,
+    menuEntryPath: `Settings -> Developer -> ${meta.menuGroup ?? 'Active Tuners'}`,
+    component: entry.Component.displayName || entry.Component.name || meta.id,
+    sourcePath: entry.modulePath,
+  };
+  const iconKey = (meta.icon || '').toLowerCase();
+  const IconComp = DEV_ICON_BY_NAME[iconKey] ?? Sliders;
+  return {
+    id: meta.id,
+    preset,
+    icon: IconComp,
+    iconColor: meta.menuGroup === 'calibrated-presets' ? 'text-emerald-400' : 'text-sky-400',
+    badge:
+      meta.subtitle ||
+      (meta.menuGroup === 'calibrated-presets' ? 'Calibrated' : undefined),
+    badgeTone: meta.menuGroup === 'calibrated-presets' ? 'emerald' : 'sky',
+    description: meta.description || meta.subtitle || meta.title,
+    hoverTooltip: meta.description || meta.title,
+    section: defaultSection,
+  };
+}
+
+/**
+ * Merges the canonical ordered specs for `menuGroup` with any newly added
+ * `SURFACE_META` floating windows discovered via `import.meta.glob` in `surfaceRegistry.ts`.
+ */
+export function resolveMenuGroupLauncherSpecs(
+  menuGroup: Extract<SurfaceMenuGroup, 'active-tuners' | 'calibrated-presets'>,
+  baseSpecs: DevFloatingLauncherSpec[]
+): DevFloatingLauncherSpec[] {
+  const discovered = getDiscoveredSurfacesByMenuGroup(menuGroup);
+  const discoveredById = new Map(discovered.map((d) => [d.meta.id, d]));
+
+  const allDiscoveredFloating = [
+    ...getDiscoveredSurfacesByMenuGroup('active-tuners'),
+    ...getDiscoveredSurfacesByMenuGroup('calibrated-presets'),
+    ...getDiscoveredSurfacesByMenuGroup('sandboxes'),
+  ];
+  const explicitGroupById = new Map(
+    allDiscoveredFloating.map((d) => [d.meta.id, d.meta.menuGroup])
+  );
+
+  const merged: DevFloatingLauncherSpec[] = [];
+  const seenIds = new Set<string>();
+
+  for (const spec of baseSpecs) {
+    const explicitGroup = explicitGroupById.get(spec.id);
+    if (explicitGroup && explicitGroup !== menuGroup) {
+      continue;
+    }
+    const disc = discoveredById.get(spec.id);
+    if (disc) {
+      merged.push({
+        ...spec,
+        preset: {
+          ...spec.preset,
+          title: disc.meta.title || spec.preset.title,
+          width: disc.resolvedSizing.width,
+          height:
+            typeof disc.resolvedSizing.height === 'number'
+              ? disc.resolvedSizing.height
+              : spec.preset.height,
+          minWidth: disc.resolvedSizing.minWidth ?? spec.preset.minWidth,
+          minHeight: disc.resolvedSizing.minHeight ?? spec.preset.minHeight,
+        },
+        description: disc.meta.description || spec.description,
+      });
+    } else {
+      merged.push(spec);
+    }
+    seenIds.add(spec.id);
+  }
+
+  for (const entry of discovered) {
+    if (!seenIds.has(entry.meta.id)) {
+      merged.push(discoveredSurfaceToLauncherSpec(entry));
+      seenIds.add(entry.meta.id);
+    }
+  }
+
+  return merged;
+}

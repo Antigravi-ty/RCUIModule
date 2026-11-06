@@ -1,82 +1,90 @@
 import React, { useState } from 'react';
 import {
-  useLayer3DevUnderDevelopmentStoreBinding,
-  type Layer3DevUnderDevelopmentRecipeProps,
-} from './hooks/useLayer3DevSettingsBindings';
-import {
   AlertTriangle,
+  Eye,
+  FlagTriangleRight,
+  Info,
   Play,
   RotateCcw,
   Triangle,
-  FlagTriangleRight,
-  Info,
-  Eye,
 } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { ToggleSwitch } from '../primitives/ToggleSwitch';
 import { SettingActionRow } from '../compounds/SettingActionRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import {
   PerCarBoostConfigSection,
   DEFAULT_CAR_BOOST_CFG,
   type PerCarBoostConfig,
 } from './dev/PerCarBoostConfigSection';
 
-export type { Layer3DevUnderDevelopmentRecipeProps };
+export type Layer3DevUnderDevelopmentRecipeProps = StandardSurfaceProps;
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'layer3-dev-under-development',
+  title: 'UNDER DEVELOPMENT',
+  subtitle: 'Unstable Staging Area (Three-Wheeler, Throwback & Per-Car Boost)',
+  description:
+    'Unstable / Under Development workspace for Three-Wheeler mode, Throwback Stadium, and Per-Car Boost.',
+  icon: 'alert-triangle',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: DEFAULT_PANEL_SIZING['layer3-dev-under-development'].width,
+    height: DEFAULT_PANEL_SIZING['layer3-dev-under-development'].targetHeight,
+    minHeight: DEFAULT_PANEL_SIZING['layer3-dev-under-development'].minHeight,
+    maxHeight: DEFAULT_PANEL_SIZING['layer3-dev-under-development'].maxHeight,
+  },
+};
 
 /**
  * [Recipe] Layer 3 Developer — 4. Under Development (Unstable / WIP Workspace)
- * Streamlined single-line rows and unified Per-Car Boost controls sharing SettingActionRowStore tokens.
+ * Store-First single-line rows and unified Per-Car Boost controls sharing SettingActionRowStore tokens.
  */
-export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopmentRecipeProps> = (rawProps) => {
-  const {
-    isLight = false,
-    onBack,
-    threeWheelsEnabled: propThreeWheels,
-    onThreeWheelsChange,
-    onEnableAndDriveThreeWheels,
-    stadiumPreset: propStadiumPreset,
-    onStadiumPresetChange,
-    onLoadAndInspectThrowback,
-    showCollisionOverlay: propShowOverlay,
-    onShowCollisionOverlayChange,
-    selectedCarIdx: propSelectedCarIdx,
-    onSelectedCarIdxChange,
-    perCarBoostConfigs: propBoostConfigs,
-    onPerCarBoostConfigsChange,
-    sizing: propSizing,
-  } = useLayer3DevUnderDevelopmentStoreBinding(rawProps);
-  const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
-  const [localThreeWheels, setLocalThreeWheels] = useState<boolean>(false);
-  const [localStadiumPreset, setLocalStadiumPreset] = useState<'standard' | 'throwback'>(
-    'standard'
+export const Layer3DevUnderDevelopmentRecipe: React.FC<
+  Layer3DevUnderDevelopmentRecipeProps
+> = ({ isLight = false, onBack: propOnBack }) => {
+  const goBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const closeMenu = useScopedStore('appStore', useAppStore, (s) => s.closeMenu);
+  const underDev = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.underDevelopment
   );
-  const [localShowOverlay, setLocalShowOverlay] = useState<boolean>(false);
-  const [localSelectedCarIdx, setLocalSelectedCarIdx] = useState<number>(0);
-  const [localBoostConfigs, setLocalBoostConfigs] = useState<
-    Record<number, PerCarBoostConfig>
-  >({});
+  const updateUnderDev = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.updateUnderDevelopment
+  );
 
-  const threeWheelsEnabled = propThreeWheels ?? localThreeWheels;
-  const setThreeWheelsEnabled = onThreeWheelsChange ?? setLocalThreeWheels;
-  const stadiumPreset = propStadiumPreset ?? localStadiumPreset;
-  const setStadiumPreset = onStadiumPresetChange ?? setLocalStadiumPreset;
-  const showCollisionOverlay = propShowOverlay ?? localShowOverlay;
-  const setShowCollisionOverlay = onShowCollisionOverlayChange ?? setLocalShowOverlay;
-  const selectedCarIdx = propSelectedCarIdx ?? localSelectedCarIdx;
-  const setSelectedCarIdx = onSelectedCarIdxChange ?? setLocalSelectedCarIdx;
-  const perCarBoostConfigs = propBoostConfigs ?? localBoostConfigs;
+  const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+  const onBack = propOnBack ?? goBack;
 
-  const storeSizing = useMenuLayoutStore(
+  const threeWheelsEnabled = Boolean(underDev?.threeWheelsEnabled);
+  const stadiumPreset: 'standard' | 'throwback' =
+    underDev?.stadiumPreset || 'standard';
+  const showCollisionOverlay = Boolean(
+    underDev?.showThrowbackCollisionOverlay
+  );
+  const selectedCarIdx = underDev?.selectedBoostCarIndex ?? 0;
+  const perCarBoostConfigs =
+    (underDev?.perCarBoostConfigs as
+      | Record<number, PerCarBoostConfig>
+      | undefined) || {};
+
+  const sizing = useMenuLayoutStore(
     (s) =>
       s.panels?.['layer3-dev-under-development'] ??
       DEFAULT_PANEL_SIZING['layer3-dev-under-development']
   );
-  const sizing = propSizing ?? storeSizing;
 
   const {
     rowGap,
@@ -86,7 +94,8 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
     buttonRadius,
   } = useSettingActionRowStore();
 
-  const currentCarBoostCfg = perCarBoostConfigs[selectedCarIdx] || DEFAULT_CAR_BOOST_CFG;
+  const currentCarBoostCfg =
+    perCarBoostConfigs[selectedCarIdx] || DEFAULT_CAR_BOOST_CFG;
 
   const handleUpdateCarBoostCfg = (
     patch: Partial<PerCarBoostConfig>,
@@ -100,11 +109,7 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
     } else {
       next[selectedCarIdx] = { ...currentCarBoostCfg, ...patch };
     }
-    if (onPerCarBoostConfigsChange) {
-      onPerCarBoostConfigsChange(next);
-    } else {
-      setLocalBoostConfigs(next);
-    }
+    updateUnderDev({ perCarBoostConfigs: next });
   };
 
   return (
@@ -138,13 +143,17 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
                   Unstable Staging Area · Purely In Development
                 </span>
               </div>
-              <span className={`text-[11px] mt-1 ${isLight ? 'text-neutral-700' : 'text-neutral-300'}`}>
+              <span
+                className={`text-[11px] mt-1 ${
+                  isLight ? 'text-neutral-700' : 'text-neutral-300'
+                }`}
+              >
                 This workspace holds raw asset and WASM bridge integrations (Three-Wheeler Tricycle mode and Throwback Stadium) for quick inspection only.
               </span>
             </div>
           </div>
 
-          {/* 2. Three-Wheeler Mode: Single row with Triangle icon, ToggleSwitch + Enable & Drive on the right */}
+          {/* 2. Three-Wheeler Mode */}
           <SettingActionRow
             icon={Triangle}
             iconName="triangle"
@@ -153,7 +162,9 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
             bordered={false}
             showDescription={false}
             hoverDescription="Three-Wheeler Mode (Tricycle / Psyclops): Collapses the two front wheels into a single center-mounted steerable wheel (Y=0) in Bullet btVehicleRL with modified steering and handbrake curves."
-            onAction={() => setThreeWheelsEnabled(!threeWheelsEnabled)}
+            onAction={() =>
+              updateUnderDev({ threeWheelsEnabled: !threeWheelsEnabled })
+            }
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -161,15 +172,17 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
               <div className="flex items-center gap-2.5">
                 <ToggleSwitch
                   checked={threeWheelsEnabled}
-                  onCheckedChange={setThreeWheelsEnabled}
+                  onCheckedChange={(enabled) =>
+                    updateUnderDev({ threeWheelsEnabled: enabled })
+                  }
                   isLight={isLight}
                 />
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setThreeWheelsEnabled(true);
-                    onEnableAndDriveThreeWheels?.();
+                    updateUnderDev({ threeWheelsEnabled: true });
+                    closeMenu();
                   }}
                   style={{
                     fontSize: `${buttonFontSize}px`,
@@ -198,7 +211,7 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
             }
           />
 
-          {/* 3a. Throwback Stadium: Single row with FlagTriangleRight icon and Load & Inspect button */}
+          {/* 3a. Throwback Stadium */}
           <SettingActionRow
             icon={FlagTriangleRight}
             iconName="flag-triangle-right"
@@ -207,7 +220,7 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
             bordered={false}
             showDescription={false}
             hoverDescription="Throwback Stadium: Loads 36 .cmf collision meshes, ThrowbackHockey_Field.glb visual arena, 3D GoalVolume box (Y: 4922..5460) with open back-pass space, and Throwback boost pad layout."
-            onAction={() => setStadiumPreset('throwback')}
+            onAction={() => updateUnderDev({ stadiumPreset: 'throwback' })}
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -218,7 +231,7 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setStadiumPreset('standard');
+                      updateUnderDev({ stadiumPreset: 'standard' });
                     }}
                     style={{
                       fontSize: `${buttonFontSize}px`,
@@ -248,8 +261,8 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setStadiumPreset('throwback');
-                    onLoadAndInspectThrowback?.();
+                    updateUnderDev({ stadiumPreset: 'throwback' });
+                    closeMenu();
                   }}
                   style={{
                     fontSize: `${buttonFontSize}px`,
@@ -278,14 +291,16 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
             }
           />
 
-          {/* 3b. Show Wireframe Overlay: Extra single row below Throwback Stadium */}
+          {/* 3b. Show Wireframe Overlay */}
           <SettingToggleRow
             icon={Eye}
             iconName="eye"
             iconColor="text-sky-400"
             title="Show Wireframe Overlay"
             checked={showCollisionOverlay}
-            onChange={setShowCollisionOverlay}
+            onChange={(visible) =>
+              updateUnderDev({ showThrowbackCollisionOverlay: visible })
+            }
             bordered={false}
             showDescription={false}
             hoverDescription="Renders ThrowbackStadium_Collision.glb 3D collision mesh wireframe overlay in the arena."
@@ -297,7 +312,11 @@ export const Layer3DevUnderDevelopmentRecipe: React.FC<Layer3DevUnderDevelopment
           {/* 4. Per-Car Boost Adjustment */}
           <PerCarBoostConfigSection
             selectedCarIdx={selectedCarIdx}
-            onSelectedCarIdxChange={setSelectedCarIdx}
+            onSelectedCarIdxChange={(idx) =>
+              updateUnderDev({
+                selectedBoostCarIndex: Math.max(0, Math.min(7, Number(idx) || 0)),
+              })
+            }
             currentCarBoostCfg={currentCarBoostCfg}
             onUpdateCarBoostCfg={handleUpdateCarBoostCfg}
             onHover={setHoveredDesc}
