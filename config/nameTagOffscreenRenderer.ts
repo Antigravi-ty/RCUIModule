@@ -1,5 +1,6 @@
 import {
   DEFAULT_NAME_TAG_CONFIG,
+  DEFAULT_NAME_TAG_DISTINCT_COLORS,
   type NameTagConfig,
 } from './nameTagConfig';
 
@@ -70,6 +71,63 @@ export function resolveUnfilledBaseHexColor(
   return mixHexColors(bgColor, '#040914', clampedDarken);
 }
 
+export function resolveCarColorPalette(
+  carIndex: number,
+  team: 0 | 1,
+  config: Pick<
+    NameTagConfig,
+    | 'circleColorMode'
+    | 'distinctCarColors'
+    | 'blueBgColor'
+    | 'blueBorderColor'
+    | 'blueTextColor'
+    | 'orangeBgColor'
+    | 'orangeBorderColor'
+    | 'orangeTextColor'
+    | 'boostBorderColorMode'
+    | 'blueBoostBorderColor'
+    | 'orangeBoostBorderColor'
+    | 'sharedBoostBorderColor'
+  >,
+  liveCarColorHex?: string | null
+): {
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+  boostColor: string;
+} {
+  const isOrange = team === 1;
+  if (config.circleColorMode === 'car-primary') {
+    const slotIdx = Math.max(0, Math.floor(Number(carIndex) || 0)) % 6;
+    const configuredPrimary =
+      (Array.isArray(config.distinctCarColors) && config.distinctCarColors[slotIdx]) ||
+      DEFAULT_NAME_TAG_DISTINCT_COLORS[slotIdx] ||
+      (isOrange ? '#ea580c' : '#0284c7');
+    const primaryHex =
+      typeof liveCarColorHex === 'string' && liveCarColorHex.startsWith('#')
+        ? liveCarColorHex
+        : configuredPrimary;
+    return {
+      bgColor: mixHexColors(primaryHex, '#050b16', 0.36),
+      borderColor: mixHexColors(primaryHex, '#ffffff', 0.42),
+      textColor: '#ffffff',
+      boostColor: '#ffffff',
+    };
+  }
+  const boostColor =
+    config.boostBorderColorMode === 'team'
+      ? isOrange
+        ? config.orangeBoostBorderColor
+        : config.blueBoostBorderColor
+      : config.sharedBoostBorderColor;
+  return {
+    bgColor: isOrange ? config.orangeBgColor : config.blueBgColor,
+    borderColor: isOrange ? config.orangeBorderColor : config.blueBorderColor,
+    textColor: isOrange ? config.orangeTextColor : config.blueTextColor,
+    boostColor,
+  };
+}
+
 export interface NameTagOffscreenIndicatorCard2D {
   carIndex: number;
   team: 0 | 1;
@@ -86,6 +144,10 @@ export interface NameTagOffscreenIndicatorCard2D {
   bgOpacity: number;
   bgColor: string;
   borderColor: string;
+  textColor?: string;
+  labelText?: string;
+  fontFamilyCss?: string;
+  fontWeight?: number;
   showBoostCircle: boolean;
   showArrow: boolean;
   boostBorderVisible: boolean;
@@ -389,8 +451,6 @@ export function drawOffscreenIndicatorCard2D(
       );
     }
 
-    // Solid inward yellow alert ring when off-screen car is climbing:
-    // Shrinks inward from outer circumference toward center (50% leaves center boost visible, 100% fills solid yellow dot).
     if (aerialClimbGlowVisible) {
       drawAerialClimbInwardRing2D(ctx, centerX, centerY, circleRadiusPx, config);
     }
@@ -430,6 +490,28 @@ export function drawOffscreenIndicatorCard2D(
         ctx.stroke();
         ctx.restore();
       }
+    }
+
+    if (indicator.labelText) {
+      const fontPx = Math.max(9, circleRadiusPx * 0.72);
+      const fontFamily =
+        indicator.fontFamilyCss ||
+        '"JetBrains Mono", "SF Mono", ui-monospace, monospace';
+      const weight = indicator.fontWeight || 700;
+      ctx.save();
+      ctx.font = `${weight} ${fontPx.toFixed(1)}px ${fontFamily}`;
+      ctx.fillStyle = indicator.textColor || '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+      ctx.shadowBlur = 3;
+      ctx.fillText(
+        indicator.labelText,
+        centerX,
+        centerY + fontPx * 0.04,
+        circleRadiusPx * 1.65
+      );
+      ctx.restore();
     }
   }
 

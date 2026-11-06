@@ -8,7 +8,7 @@ import { safeStorage, createLocalStorageStore, stringOrDefault, STORAGE_KEYS } f
 export const DEFAULT_TRAINING_SETTINGS = Object.freeze({
   disableGoalReset: false,
   boostOption: 'unlimited',
-  showCarHitbox: true,
+  showCarHitbox: false,
   showAllCarHitboxes: false,
 });
 

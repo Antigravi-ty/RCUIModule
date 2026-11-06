@@ -73,18 +73,22 @@ export function getEffectiveCreator(pack: StaticTrainingPackSummary): string {
 }
 
 export function isKevpertPack(pack: StaticTrainingPackSummary): boolean {
+  if (pack.tags && pack.tags.length > 0) {
+    return hasTagCaseInsensitive(pack.tags, 'Kevpert');
+  }
   const creator = getEffectiveCreator(pack);
   return (
-    hasTagCaseInsensitive(pack.tags, 'Kevpert') ||
     /kevpert|hampert|samuraipert/i.test(creator) ||
     /^kevpert\b/i.test(pack.title)
   );
 }
 
 export function isPsyonixPack(pack: StaticTrainingPackSummary): boolean {
+  if (pack.tags && pack.tags.length > 0) {
+    return hasTagCaseInsensitive(pack.tags, 'Psyonix');
+  }
   const creator = getEffectiveCreator(pack);
   return (
-    hasTagCaseInsensitive(pack.tags, 'Psyonix') ||
     /psyonix/i.test(creator) ||
     /^psyonix\b/i.test(pack.title) ||
     /^(progression|ssl|gc|champion|diamond|platinum|gold|silver|bronze)\s+(pack|goals)\s+/i.test(
@@ -93,20 +97,20 @@ export function isPsyonixPack(pack: StaticTrainingPackSummary): boolean {
   );
 }
 
+/**
+ * Native packs are strictly `.RCSPack` or `.RCSPackE` packs (never `.RLRCSPack`).
+ */
 export function isNativePack(pack: StaticTrainingPackSummary): boolean {
-  if (isKevpertPack(pack) || isPsyonixPack(pack)) return false;
-  if (hasTagCaseInsensitive(pack.tags, 'Native') || hasTagCaseInsensitive(pack.tags, 'Local')) {
+  if (pack.sourcePackType === 'RLRCSPack') return false;
+  if (pack.sourcePackType === 'RCSPack' || pack.sourcePackType === 'RCSPackE') {
     return true;
   }
-  if (!pack.code || !pack.code.trim()) {
-    return true;
-  }
-  return Boolean(pack.sourcePackType && pack.sourcePackType !== 'RLRCSPack');
+  return hasTagCaseInsensitive(pack.tags, 'Native');
 }
 
 export function isOthersPack(pack: StaticTrainingPackSummary): boolean {
-  if (isNativePack(pack)) return false;
-  if (isKevpertPack(pack) || isPsyonixPack(pack)) return false;
+  if (hasTagCaseInsensitive(pack.tags, 'Others')) return true;
+  if (isKevpertPack(pack) || isPsyonixPack(pack) || isNativePack(pack)) return false;
   return true;
 }
 
@@ -122,12 +126,14 @@ export function normalizeRankLabel(rawRank: string | undefined): string | null {
 }
 
 export function matchesRankSubfolder(pack: StaticTrainingPackSummary, rank: string): boolean {
-  const normPackRank = normalizeRankLabel(pack.rankTier);
-  if (normPackRank === rank) return true;
-  if (hasTagCaseInsensitive(pack.tags, rank)) return true;
-  if (rank === 'SSL' && hasTagCaseInsensitive(pack.tags, 'Supersonic Legend')) return true;
-  if (rank === 'GC' && hasTagCaseInsensitive(pack.tags, 'Grand Champion')) return true;
-  return false;
+  if (pack.tags && pack.tags.length > 0) {
+    if (hasTagCaseInsensitive(pack.tags, rank)) return true;
+    if (rank === 'SSL' && hasTagCaseInsensitive(pack.tags, 'Supersonic Legend')) return true;
+    if (rank === 'GC' && hasTagCaseInsensitive(pack.tags, 'Grand Champion')) return true;
+    return false;
+  }
+  if (!isPsyonixPack(pack)) return false;
+  return normalizeRankLabel(pack.rankTier) === rank;
 }
 
 export function hasAnyRankTag(pack: StaticTrainingPackSummary): boolean {

@@ -150,46 +150,42 @@ export function derivePackTagsAndMetadata(params: {
   releaseYearMonth?: string;
   normalizedCreator?: string;
 } {
-  const { title, creator, code, difficulty } = params;
+  const { title, creator, code } = params;
   const tagSet = new Set<string>();
   const rawCreator = (creator || '').trim();
   const titleLower = (title || '').toLowerCase();
   const creatorLower = rawCreator.toLowerCase();
-  const hasPublishedCode = Boolean(code && code.trim());
 
   let normalizedCreator = rawCreator || undefined;
 
-  if (
+  const isKevpert =
     creatorLower.includes('kevpert') ||
     creatorLower.includes('hampert') ||
     creatorLower.includes('samuraipert') ||
-    titleLower.includes('kevpert')
-  ) {
+    titleLower.includes('kevpert');
+  const isPsyonix =
+    !isKevpert &&
+    (creatorLower === 'psyonix' ||
+      titleLower.includes('psyonix') ||
+      /^(progression|ssl|gc|champion|diamond|platinum|gold|silver|bronze)\s+(pack|goals)\s+/i.test(
+        (title || '').trim()
+      ));
+
+  if (isKevpert) {
     tagSet.add('Kevpert');
     if (!normalizedCreator) normalizedCreator = 'Kevpert';
-  } else if (
-    creatorLower === 'psyonix' ||
-    titleLower.includes('psyonix') ||
-    /^(progression|ssl|gc|champion|diamond|platinum|gold|silver|bronze)\s+(pack|goals)\s+/i.test(
-      (title || '').trim()
-    )
-  ) {
+  } else if (isPsyonix) {
     tagSet.add('Psyonix');
     normalizedCreator = 'Psyonix';
   } else {
     if (code && code.trim().toUpperCase() === '0FB6-C16F-D26D-0A6F' && !normalizedCreator) {
       normalizedCreator = 'Iowa';
     }
-    if (!hasPublishedCode) {
-      tagSet.add('Local');
-    } else {
-      tagSet.add('Others');
-      tagSet.add('Community');
-    }
+    tagSet.add('Others');
   }
 
   // Extract Kevpert F-key tag if present
-  const fKeyMatch = title.match(/\b(F1[0-2]|F[1-9])\b/i);
+  const fKeyMatch = title.match(/\b(F1[0-2]|F[35789])\b/i);
   if (fKeyMatch) {
     tagSet.add(fKeyMatch[1].toUpperCase());
   }
@@ -206,36 +202,33 @@ export function derivePackTagsAndMetadata(params: {
     releaseYearMonth = `${yr}-${mNum}`;
     tagSet.add(yr);
     tagSet.add(releaseYearMonth);
-    if (tagSet.has('Psyonix')) {
+    if (isPsyonix) {
       tagSet.add(`Psyonix ${yr}`);
     }
   }
 
-  // Detect Rank Tier or Progression
+  // Detect Rank Tier or Progression strictly for Psyonix packs
   let rankTier: string | undefined;
-  if (/\bprogression\b/i.test(title)) {
-    rankTier = 'Progression';
-  } else if (/\b(ssl|supersonic legend)\b/i.test(title)) {
-    rankTier = 'SSL';
-  } else if (/\b(gc|grand champion)\b/i.test(title)) {
-    rankTier = 'GC';
-  } else if (/\bchampion\b/i.test(title)) {
-    rankTier = 'Champion';
-  } else if (/\bdiamond\b/i.test(title)) {
-    rankTier = 'Diamond';
-  } else if (/\bplatinum\b/i.test(title)) {
-    rankTier = 'Platinum';
-  } else if (/\bgold\b/i.test(title)) {
-    rankTier = 'Gold';
-  } else if (/\bsilver\b/i.test(title)) {
-    rankTier = 'Silver';
-  } else if (/\bbronze\b/i.test(title)) {
-    rankTier = 'Bronze';
-  } else if (difficulty && typeof difficulty === 'object' && 'EDifficulty' in difficulty) {
-    const ediff = String((difficulty as { EDifficulty?: unknown }).EDifficulty || '');
-    if (ediff === 'D_Easy') rankTier = 'Gold';
-    else if (ediff === 'D_Medium') rankTier = 'Diamond';
-    else if (ediff === 'D_Hard') rankTier = 'Champion';
+  if (isPsyonix) {
+    if (/\bprogression\b/i.test(title)) {
+      rankTier = 'Progression';
+    } else if (/\b(ssl|supersonic legend)\b/i.test(title)) {
+      rankTier = 'SSL';
+    } else if (/\b(gc|grand champion)\b/i.test(title)) {
+      rankTier = 'GC';
+    } else if (/\bchampion\b/i.test(title)) {
+      rankTier = 'Champion';
+    } else if (/\bdiamond\b/i.test(title)) {
+      rankTier = 'Diamond';
+    } else if (/\bplatinum\b/i.test(title)) {
+      rankTier = 'Platinum';
+    } else if (/\bgold\b/i.test(title)) {
+      rankTier = 'Gold';
+    } else if (/\bsilver\b/i.test(title)) {
+      rankTier = 'Silver';
+    } else if (/\bbronze\b/i.test(title)) {
+      rankTier = 'Bronze';
+    }
   }
 
   if (rankTier) {

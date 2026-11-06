@@ -14,12 +14,12 @@ import { PanelFooter } from '../layout/PanelFooter';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import {
-  DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
-  type CanonicalLabRelayId,
   type Layer4DevSignalingLabRecipeProps,
   type Layer4DevSignalingLabStateOverride,
   type SignalingLabScenarioId,
 } from './dev/signalingLabTypes';
+import { Layer3DevSelfTestRecipe } from './Layer3DevSelfTestRecipe';
+import { useLayer4DevSignalingLabBinding } from './hooks/useLayer4DevSignalingLabBinding';
 import { SignalingLabStatusAndScenariosSection } from './dev/SignalingLabStatusAndScenariosSection';
 import { SignalingLabLiveMonitorsSection } from './dev/SignalingLabLiveMonitorsSection';
 
@@ -45,46 +45,36 @@ export type {
  */
 export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipeProps> = React.memo(
   (rawProps) => {
+    const mergedProps = { ...rawProps.stateOverride, ...rawProps };
     const {
-      isLight = false,
+      isDevPrivateSource,
+      isLight,
       onBack,
       sizing: propSizing,
-      endpointConfig = DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
-      probeSummary = null,
-      traces = [],
-      roomCode: controlledRoomCode,
-      onRoomCodeChange,
-      roomPassword: controlledRoomPassword,
-      onRoomPasswordChange,
-      customSourceRelay: controlledSource,
-      onCustomSourceRelayChange,
-      customTargetRelay: controlledTarget,
-      onCustomTargetRelayChange,
-      isBusy = false,
-      activeActionLabel = null,
-      lastResultBanner = null,
+      endpointConfig,
+      probeSummary,
+      traces,
+      roomCode,
+      onRoomCodeChange: setRoomCode,
+      roomPassword,
+      onRoomPasswordChange: setRoomPassword,
+      customSourceRelay,
+      onCustomSourceRelayChange: setCustomSourceRelay,
+      customTargetRelay,
+      onCustomTargetRelayChange: setCustomTargetRelay,
+      isBusy,
+      activeActionLabel,
+      lastResultBanner,
       onProbeAll,
       onCloudSelfTest,
       onOneClickFullDiagnostic,
       onRunScenario,
       onClearTraces,
-    } = { ...rawProps.stateOverride, ...rawProps };
-    const [localRoomCode, setLocalRoomCode] = useState('rocket-f');
-    const [localRoomPassword, setLocalRoomPassword] = useState('test1234');
-    const [localSource, setLocalSource] = useState<CanonicalLabRelayId>('emqx_cn');
-    const [localTarget, setLocalTarget] = useState<CanonicalLabRelayId>('emqx_gb');
+    } = useLayer4DevSignalingLabBinding(mergedProps);
+
     const [showEmqxRuleGuide, setShowEmqxRuleGuide] = useState(false);
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
     const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
-
-    const roomCode = controlledRoomCode ?? localRoomCode;
-    const setRoomCode = onRoomCodeChange ?? setLocalRoomCode;
-    const roomPassword = controlledRoomPassword ?? localRoomPassword;
-    const setRoomPassword = onRoomPasswordChange ?? setLocalRoomPassword;
-    const customSourceRelay = controlledSource ?? localSource;
-    const setCustomSourceRelay = onCustomSourceRelayChange ?? setLocalSource;
-    const customTargetRelay = controlledTarget ?? localTarget;
-    const setCustomTargetRelay = onCustomTargetRelayChange ?? setLocalTarget;
 
     const storeSizing = useMenuLayoutStore(
       (s) =>
@@ -92,6 +82,10 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
         DEFAULT_PANEL_SIZING['layer4-dev-signaling-lab']
     );
     const sizing = propSizing ?? storeSizing;
+
+    if (!isDevPrivateSource) {
+      return <Layer3DevSelfTestRecipe isLight={isLight} onBack={onBack} />;
+    }
 
     const handleCopyText = (text: string, label: string) => {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {

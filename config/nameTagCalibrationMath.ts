@@ -1,5 +1,7 @@
 import {
   DEFAULT_NAME_TAG_CONFIG,
+  DEFAULT_NAME_TAG_DISTINCT_COLORS,
+  DEFAULT_NAME_TAG_SLOT_CODES,
   DEFAULT_RUNTIME_SYNC_SNAPSHOT,
   KICKOFF_PERMUTATION_COUNT,
   NAME_TAG_FAR_CALIBRATION_DEPTH_UU,
@@ -18,6 +20,9 @@ import {
   type NameTagCameraMode,
   type NameTagCarOverride,
   type NameTagCarTelemetry,
+  type NameTagCardDisplayMode,
+  type NameTagCircleColorMode,
+  type NameTagCircleLabelMode,
   type NameTagConfig,
   type NameTagFittedParameters,
   type NameTagFontFamily,
@@ -51,40 +56,33 @@ export function sanitizeBoostBorderAudience(
   raw: unknown,
   fallbackAudience: NameTagBoostBorderAudience
 ): NameTagBoostBorderAudience {
-  if (raw === 'teammates' || raw === 'all' || raw === 'none') {
-    return raw;
-  }
-  return fallbackAudience;
+  return raw === 'teammates' || raw === 'all' || raw === 'none'
+    ? raw
+    : fallbackAudience;
 }
 
 export function sanitizeBoostIndicatorMode(
   raw: unknown,
   fallbackMode: NameTagBoostIndicatorMode
 ): NameTagBoostIndicatorMode {
-  if (
-    raw === 'bottom-up-fill' ||
+  return raw === 'bottom-up-fill' ||
     raw === 'left-right-fill' ||
     raw === 'sunset-circle' ||
     raw === 'border-only'
-  ) {
-    return raw;
-  }
-  return fallbackMode;
+    ? raw
+    : fallbackMode;
 }
 
 export function sanitizeAerialClimbTriggerMode(
   raw: unknown,
   fallbackMode: NameTagAerialClimbTriggerMode
 ): NameTagAerialClimbTriggerMode {
-  if (
-    raw === 'double-jump' ||
+  return raw === 'double-jump' ||
     raw === 'hold-jump-pitch' ||
     raw === 'either' ||
     raw === 'both'
-  ) {
-    return raw;
-  }
-  return fallbackMode;
+    ? raw
+    : fallbackMode;
 }
 
 function sanitizeClampedNumber(
@@ -109,18 +107,8 @@ export function sanitizeCarOverride(
   return {
     enabled: Boolean(source.enabled),
     scaleMultiplier: sanitizeClampedNumber(source.scaleMultiplier, 0.2, 3.0, 1.0),
-    worldOffsetUu: sanitizeClampedNumber(
-      source.worldOffsetUu,
-      0,
-      360,
-      fallbackWorldOffsetUu
-    ),
-    screenOffsetPx: sanitizeClampedNumber(
-      source.screenOffsetPx,
-      -60,
-      160,
-      fallbackScreenOffsetPx
-    ),
+    worldOffsetUu: sanitizeClampedNumber(source.worldOffsetUu, 0, 360, fallbackWorldOffsetUu),
+    screenOffsetPx: sanitizeClampedNumber(source.screenOffsetPx, -60, 160, fallbackScreenOffsetPx),
   };
 }
 
@@ -131,14 +119,12 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
     Array.isArray(source.previewNames) && source.previewNames.length === 6
       ? source.previewNames.map((name, index) => String(name || D.previewNames[index]))
       : [...D.previewNames];
-
   const previewBoostAmounts =
     Array.isArray(source.previewBoostAmounts) && source.previewBoostAmounts.length === 6
       ? source.previewBoostAmounts.map((boostValue, index) =>
           sanitizeClampedNumber(boostValue, 0, 100, D.previewBoostAmounts[index] ?? 100, true)
         )
       : [...D.previewBoostAmounts];
-
   const previewAerialClimbingFlags =
     Array.isArray(source.previewAerialClimbingFlags) && source.previewAerialClimbingFlags.length === 6
       ? source.previewAerialClimbingFlags.map((flag, index) =>
@@ -148,7 +134,6 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
 
   const verticalOffsetUu = sanitizeClampedNumber(source.verticalOffsetUu, 0, 360, D.verticalOffsetUu);
   const screenVerticalOffsetPx = sanitizeClampedNumber(source.screenVerticalOffsetPx, -60, 160, D.screenVerticalOffsetPx);
-
   const carOverrides = Array.from({ length: 6 }, (_, index) =>
     sanitizeCarOverride(
       Array.isArray(source.carOverrides) ? source.carOverrides[index] : null,
@@ -156,7 +141,6 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
       screenVerticalOffsetPx
     )
   );
-
   const clampedMinWidth = sanitizeClampedNumber(source.pillMinWidth, 40, 460, D.pillMinWidth);
   const clampedMaxWidth = sanitizeClampedNumber(source.pillMaxWidth, clampedMinWidth, 480, D.pillMaxWidth);
 
@@ -164,7 +148,6 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
   const fontFamily: NameTagFontFamily = validFontFamilies.includes(source.fontFamily as NameTagFontFamily)
     ? (source.fontFamily as NameTagFontFamily)
     : D.fontFamily;
-
   const validWeights: NameTagFontWeight[] = [400, 500, 600, 700];
   const fontWeight: NameTagFontWeight = validWeights.includes(Number(source.fontWeight) as NameTagFontWeight)
     ? (Number(source.fontWeight) as NameTagFontWeight)
@@ -176,17 +159,49 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
       ? rawCardRenderScale * 100
       : rawCardRenderScale
     : D.cardRenderScale;
-
   const boostBorderColorMode: NameTagBoostBorderColorMode =
     source.boostBorderColorMode === 'shared' || source.boostBorderColorMode === 'team'
       ? source.boostBorderColorMode
       : D.boostBorderColorMode;
-
   const boolOr = (val: unknown, fallback: boolean): boolean =>
     typeof val === 'boolean' ? val : fallback;
 
+  const cardDisplayMode: NameTagCardDisplayMode =
+    source.cardDisplayMode === 'circle' || source.cardDisplayMode === 'pill'
+      ? source.cardDisplayMode
+      : D.cardDisplayMode;
+  const circleLabelMode: NameTagCircleLabelMode =
+    source.circleLabelMode === 'slot-code' || source.circleLabelMode === 'none' || source.circleLabelMode === 'name'
+      ? source.circleLabelMode
+      : D.circleLabelMode;
+  const circleColorMode: NameTagCircleColorMode =
+    source.circleColorMode === 'car-primary' || source.circleColorMode === 'team'
+      ? source.circleColorMode
+      : D.circleColorMode;
+  const slotCodes =
+    Array.isArray(source.slotCodes) && source.slotCodes.length === 6
+      ? source.slotCodes.map((code, index) =>
+          String(code || DEFAULT_NAME_TAG_SLOT_CODES[index] || 'X').trim().slice(0, 3)
+        )
+      : [...DEFAULT_NAME_TAG_SLOT_CODES];
+  const distinctCarColors =
+    Array.isArray(source.distinctCarColors) && source.distinctCarColors.length === 6
+      ? source.distinctCarColors.map((hex, index) =>
+          sanitizeHexColor(hex, DEFAULT_NAME_TAG_DISTINCT_COLORS[index] || '#0284c7')
+        )
+      : [...DEFAULT_NAME_TAG_DISTINCT_COLORS];
+  const nearDistUu = sanitizeClampedNumber(source.offscreenDistanceNearUu, 50, 6000, D.offscreenDistanceNearUu, true);
+  const farDistUu = sanitizeClampedNumber(source.offscreenDistanceFarUu, nearDistUu + 100, 12000, D.offscreenDistanceFarUu, true);
+
   return {
     enabled: boolOr(source.enabled, D.enabled),
+    cardDisplayMode,
+    circleLabelMode,
+    circleColorMode,
+    onscreenCircleFixedSize: boolOr(source.onscreenCircleFixedSize, D.onscreenCircleFixedSize),
+    onscreenCircleRadiusPx: sanitizeClampedNumber(source.onscreenCircleRadiusPx, 12, 80, D.onscreenCircleRadiusPx, true),
+    slotCodes,
+    distinctCarColors,
     pillMinWidth: clampedMinWidth,
     pillMaxWidth: clampedMaxWidth,
     pillHeight: sanitizeClampedNumber(source.pillHeight, 28, 120, D.pillHeight),
@@ -243,10 +258,35 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
     offscreenAudience: sanitizeBoostBorderAudience(source.offscreenAudience, D.offscreenAudience),
     offscreenShowBoostCircle: boolOr(source.offscreenShowBoostCircle, D.offscreenShowBoostCircle),
     offscreenShowArrow: boolOr(source.offscreenShowArrow, D.offscreenShowArrow),
+    offscreenShowSlotCode: boolOr(source.offscreenShowSlotCode, D.offscreenShowSlotCode),
     offscreenCircleRadiusPx: sanitizeClampedNumber(source.offscreenCircleRadiusPx, 8, 56, D.offscreenCircleRadiusPx, true),
     offscreenArrowLengthPx: sanitizeClampedNumber(source.offscreenArrowLengthPx, 4, 36, D.offscreenArrowLengthPx, true),
     offscreenArrowBaseWidthPx: sanitizeClampedNumber(source.offscreenArrowBaseWidthPx, 4, 36, D.offscreenArrowBaseWidthPx, true),
     offscreenArrowGapPx: sanitizeClampedNumber(source.offscreenArrowGapPx, 0, 24, D.offscreenArrowGapPx, true),
+    offscreenDistanceScaleEnabled: boolOr(source.offscreenDistanceScaleEnabled, D.offscreenDistanceScaleEnabled),
+    offscreenDistanceMinScale: Number(
+      sanitizeClampedNumber(source.offscreenDistanceMinScale, 0.15, 1.0, D.offscreenDistanceMinScale).toFixed(2)
+    ),
+    offscreenDistanceNearUu: nearDistUu,
+    offscreenDistanceFarUu: farDistUu,
+    offscreenDistanceCurveExponent: Number(
+      sanitizeClampedNumber(source.offscreenDistanceCurveExponent, 0.15, 3.5, D.offscreenDistanceCurveExponent).toFixed(2)
+    ),
+    offscreenDistanceSimEnabled: boolOr(source.offscreenDistanceSimEnabled, D.offscreenDistanceSimEnabled),
+    offscreenDistanceSimDistanceUu: sanitizeClampedNumber(
+      source.offscreenDistanceSimDistanceUu,
+      100,
+      12000,
+      D.offscreenDistanceSimDistanceUu,
+      true
+    ),
+    offscreenDistanceSimAngleDeg: sanitizeClampedNumber(
+      source.offscreenDistanceSimAngleDeg,
+      0,
+      360,
+      D.offscreenDistanceSimAngleDeg,
+      true
+    ),
     offscreenRoiAvoidHud: boolOr(source.offscreenRoiAvoidHud, D.offscreenRoiAvoidHud),
     offscreenRoiTopInsetPx: sanitizeClampedNumber(source.offscreenRoiTopInsetPx, 12, 260, D.offscreenRoiTopInsetPx, true),
     offscreenRoiBottomInsetPx: sanitizeClampedNumber(source.offscreenRoiBottomInsetPx, 12, 260, D.offscreenRoiBottomInsetPx, true),

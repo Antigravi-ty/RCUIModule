@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06T12:15:46.421Z",
+  "updatedAt": "2026-11-06T13:50:54.839Z",
   "templateHash": "574097ceda64cb92",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -374,16 +374,18 @@
       "entryFile": "src/ui-core/panels/dev/NameTagTunerFloatingWindow.tsx",
       "templateHash": "574097ceda64cb92",
       "sizingAndConfigHash": "36a7ce501b5e89e3",
-      "visualAstHash": "719d24e88c49869b",
+      "visualAstHash": "758ce683b553f62f",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/NameTagTunerFloatingWindow.tsx": "da07c75b91eb8a5a",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagAerialClimbAlertSection.tsx": "eaa9304af5f9345a",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagBoostBorderSection.tsx": "54b0481eaabcef7b",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagBoostVisibilityAndPreviewSection.tsx": "22dd3cff2b78d964",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagCalibrationSection.tsx": "3cd5d5efc8084f1c",
+        "src/ui-core/panels/dev/name-tag-tuner/NameTagCircleIdentitySection.tsx": "8cc9897b3e2aec01",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagColorsAndNamesSection.tsx": "846cedf287efe1d7",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagDistanceCurveSection.tsx": "ebe24d23fd32ef89",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagOffscreenAndAerialAlertSection.tsx": "a8ceec11462620e1",
+        "src/ui-core/panels/dev/name-tag-tuner/NameTagOffscreenCurveTunerSection.tsx": "8617f01c406f99fc",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagPillGeometryAndPreviewSection.tsx": "70d9fab80943615b",
         "src/ui-core/panels/dev/name-tag-tuner/NameTagPillPreviewCard.tsx": "a5ff214a543bb1c3",
         "src/ui-core/primitives/Button.tsx": "f89ab717ec972345",
@@ -1022,7 +1024,7 @@
       "entryFile": "src/ui-core/recipes/Layer2SettingsRecipe.tsx",
       "templateHash": "574097ceda64cb92",
       "sizingAndConfigHash": "6ecea37af03cc602",
-      "visualAstHash": "c4a80f12f4f8431b",
+      "visualAstHash": "cbb30b20b68c5ac1",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "8c3d8b6d1a7820f8",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -1054,7 +1056,7 @@
         "src/ui-core/recipes/settings/tabs/AudioTab.tsx": "1e69a531cea0a03e",
         "src/ui-core/recipes/settings/tabs/DeveloperTab.tsx": "f61fe59551c24f1e",
         "src/ui-core/recipes/settings/tabs/DisplayTab.tsx": "4312f45b97bca164",
-        "src/ui-core/recipes/settings/tabs/GameplayTab.tsx": "c902b518ba506afb"
+        "src/ui-core/recipes/settings/tabs/GameplayTab.tsx": "6096ad8a687c2fe2"
       },
       "alphaDeps": [
         "src/ui-core/config/uiConfig.ts",
@@ -1157,7 +1159,7 @@
       "entryFile": "src/ui-core/recipes/Layer3CameraRecipe.tsx",
       "templateHash": "574097ceda64cb92",
       "sizingAndConfigHash": "f129d123d0d8945e",
-      "visualAstHash": "0e3344585487895e",
+      "visualAstHash": "376e65674f26e55a",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
         "src/ui-core/compounds/dialogue/dialogueStore.ts": "b0987bc553ea677a",
@@ -1174,7 +1176,7 @@
         "src/ui-core/recipes/camera/CameraResetSection.tsx": "6b7992f0623cffd2",
         "src/ui-core/recipes/camera/CameraSliderRow.tsx": "889598f4c0814f41",
         "src/ui-core/recipes/camera/cameraConfigSpecs.ts": "868e3f79797092ec",
-        "src/ui-core/recipes/hooks/useLayer3SettingsDetailBindings.ts": "bc1fd23c82c229fa"
+        "src/ui-core/recipes/hooks/useLayer3SettingsDetailBindings.ts": "258ad587443acf79"
       },
       "alphaDeps": [
         "src/ui-core/stores/appStore.ts",
@@ -1845,16 +1847,26 @@
       "entryFile": "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx",
       "templateHash": "574097ceda64cb92",
       "sizingAndConfigHash": "b82ff233e28f9063",
-      "visualAstHash": "dc6d73b3c6db4c93",
+      "visualAstHash": "1a6816390c813f4b",
       "fileVisualHashes": {
-        "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx": "5b3229e66cd93e0e",
+        "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
+        "src/ui-core/primitives/iconLookup.tsx": "ba4e39322774a6f4",
+        "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
+        "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
+        "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
+        "src/ui-core/recipes/Layer3DevSelfTestRecipe.tsx": "3a80cbcb5497496e",
+        "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx": "8c443d30f038965c",
         "src/ui-core/recipes/dev/DevSignalingRelayStatusGrid.tsx": "d789fcf19dbd63a2",
         "src/ui-core/recipes/dev/SignalingLabLiveMonitorsSection.tsx": "bd63bfac2252368a",
         "src/ui-core/recipes/dev/SignalingLabStatusAndScenariosSection.tsx": "1f19d609198435bf",
-        "src/ui-core/recipes/dev/signalingLabTypes.ts": "d2665f2ce8eba9de"
+        "src/ui-core/recipes/dev/signalingLabTypes.ts": "d2665f2ce8eba9de",
+        "src/ui-core/recipes/hooks/useLayer4DevSignalingLabBinding.ts": "9550a51efa37d898"
       },
       "alphaDeps": [
+        "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
+        "src/ui-core/stores/settingRowStore.ts",
+        "src/ui-core/stores/signalingProfileStore.ts",
         "src/ui-core/tokens/menuLayoutTokens.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.414Z"
@@ -1898,7 +1910,7 @@
       "entryFile": "src/ui-core/recipes/Layer4StaticTrainingPackBrowseRecipe.tsx",
       "templateHash": "574097ceda64cb92",
       "sizingAndConfigHash": "3e5c44580dabce9a",
-      "visualAstHash": "5040c8b4f50a0053",
+      "visualAstHash": "8fbd7beac4d7ab03",
       "fileVisualHashes": {
         "src/ui-core/primitives/Badge.tsx": "2c13f7eccf5b1baf",
         "src/ui-core/primitives/Button.tsx": "f89ab717ec972345",
@@ -1906,15 +1918,15 @@
         "src/ui-core/primitives/SegmentedSwitch.tsx": "afee1765f7de86ef",
         "src/ui-core/primitives/ToggleSwitch.tsx": "1cd0acabbcd1be6e",
         "src/ui-core/recipes/Layer4StaticTrainingPackBrowseRecipe.tsx": "c2f4025586ac65b3",
-        "src/ui-core/recipes/hooks/useStaticTrainingStoreBindings.ts": "c12d7b9a983d03d7",
+        "src/ui-core/recipes/hooks/useStaticTrainingStoreBindings.ts": "3b88b1437936ee79",
         "src/ui-core/recipes/static-training/DualThumbRangeSliderRow.tsx": "7f5d6117e8a82882",
-        "src/ui-core/recipes/static-training/StaticTrainingPackFolderList.tsx": "e50d502759894fc4",
+        "src/ui-core/recipes/static-training/StaticTrainingPackFolderList.tsx": "af8275eaa35e4401",
         "src/ui-core/recipes/static-training/StaticTrainingPackInspectorActions.tsx": "339376c708046285",
-        "src/ui-core/recipes/static-training/StaticTrainingPackMetadataInspector.tsx": "dffc95410bb22e80",
+        "src/ui-core/recipes/static-training/StaticTrainingPackMetadataInspector.tsx": "98220f5a909ca06c",
         "src/ui-core/recipes/static-training/StaticTrainingPackToolbar.tsx": "9110fbba136749d6",
         "src/ui-core/recipes/static-training/StaticTrainingQuickTogglesSection.tsx": "9b5ded016ee3c05b",
         "src/ui-core/recipes/static-training/StaticTrainingVariationsModal.tsx": "1efbcaf601604911",
-        "src/ui-core/recipes/static-training/staticTrainingPackFilterLogic.ts": "9186fef5a1e8c1a3"
+        "src/ui-core/recipes/static-training/staticTrainingPackFilterLogic.ts": "7e87d67fb58cdabc"
       },
       "alphaDeps": [
         "src/ui-core/config/staticTrainingVariationTypes.ts",
@@ -1937,7 +1949,7 @@
       "entryFile": "src/ui-core/recipes/StaticTrainingShotInspectorDrawer.tsx",
       "templateHash": "574097ceda64cb92",
       "sizingAndConfigHash": "5cccb627523d7fd1",
-      "visualAstHash": "bcb0ea9f175d2888",
+      "visualAstHash": "7c389a256e5a5515",
       "fileVisualHashes": {
         "src/ui-core/compounds/CollapsibleNumberedRailList.tsx": "9fda4832718a1100",
         "src/ui-core/compounds/dialogue/dialogueStore.ts": "b0987bc553ea677a",
@@ -1945,7 +1957,7 @@
         "src/ui-core/primitives/KeycapBadge.tsx": "50693226896bfa19",
         "src/ui-core/primitives/ToggleSwitch.tsx": "1cd0acabbcd1be6e",
         "src/ui-core/recipes/StaticTrainingShotInspectorDrawer.tsx": "dcfeb90030d47fc9",
-        "src/ui-core/recipes/hooks/useStaticTrainingStoreBindings.ts": "c12d7b9a983d03d7",
+        "src/ui-core/recipes/hooks/useStaticTrainingStoreBindings.ts": "3b88b1437936ee79",
         "src/ui-core/recipes/static-training/CompactNumberSlider.tsx": "423fd60473f8ad0f",
         "src/ui-core/recipes/static-training/StaticTrainingAdvancedParamsSection.tsx": "f61326d1b499e857",
         "src/ui-core/recipes/static-training/StaticTrainingShotInspectorView.tsx": "6bdd2707c8677cc5",

@@ -3,7 +3,7 @@ import { useAppStore } from '../../stores/appStore';
 export function useLayer3TrainingStoreBinding<TProps extends object>(
   rawProps: TProps
 ): TProps {
-  const props = rawProps as Record<string, any>;
+  const props = rawProps as Record<string, unknown>;
   const goBack = useAppStore((s) => s.goBack);
   const storeGameplay = useAppStore((s) => s.gameplay);
   const storeUpdateGameplay = useAppStore((s) => s.updateGameplay);
@@ -14,9 +14,9 @@ export function useLayer3TrainingStoreBinding<TProps extends object>(
     gameplay: props.gameplay ?? storeGameplay,
     onUpdateGameplay:
       props.onUpdateGameplay ??
-      ((patch: Record<string, any>) =>
+      ((patch: Record<string, unknown>) =>
         storeUpdateGameplay({
-          ...(patch as any),
+          ...patch,
           ...(patch.showCarHitbox !== undefined
             ? { showCarHitbox: Boolean(patch.showCarHitbox) }
             : {}),
@@ -27,7 +27,7 @@ export function useLayer3TrainingStoreBinding<TProps extends object>(
 export function useLayer3CameraStoreBinding<TProps extends object>(
   rawProps: TProps
 ): TProps {
-  const props = rawProps as Record<string, any>;
+  const props = rawProps as Record<string, unknown>;
   const goBack = useAppStore((s) => s.goBack);
   const storeCamera = useAppStore((s) => s.camera);
   const storeUpdateCamera = useAppStore((s) => s.updateCamera);
@@ -39,7 +39,8 @@ export function useLayer3CameraStoreBinding<TProps extends object>(
     onBack: props.onBack ?? goBack,
     config: props.config ?? props.settings ?? (props.defaultConfig ? undefined : storeCamera),
     onConfigChange:
-      props.onConfigChange ?? ((_next: any, patch: any) => storeUpdateCamera(patch)),
+      props.onConfigChange ??
+      ((_next: unknown, patch: Partial<typeof storeCamera>) => storeUpdateCamera(patch)),
     onReset: props.onReset ?? (() => storeResetCamera()),
     onCollapsePreview:
       props.onCollapsePreview ?? (() => setLivePreviewCollapsed(true)),
@@ -49,7 +50,7 @@ export function useLayer3CameraStoreBinding<TProps extends object>(
 export function useLayer3BallTrajectoryStoreBinding<TProps extends object>(
   rawProps: TProps
 ): TProps {
-  const props = rawProps as Record<string, any>;
+  const props = rawProps as Record<string, unknown>;
   const goBack = useAppStore((s) => s.goBack);
   const developerMode = useAppStore((s) => s.developerMode);
   const storeTrajectory = useAppStore((s) => s.trajectory);
@@ -64,7 +65,9 @@ export function useLayer3BallTrajectoryStoreBinding<TProps extends object>(
       props.config ??
       props.settings ??
       (props.defaultConfig ? undefined : storeTrajectory),
-    onChange: props.onChange ?? ((_next: any, patch: any) => storeUpdateTrajectory(patch)),
+    onChange:
+      props.onChange ??
+      ((_next: unknown, patch: Partial<typeof storeTrajectory>) => storeUpdateTrajectory(patch)),
     onCollapsePreview:
       props.onCollapsePreview ?? (() => setLivePreviewCollapsed(true)),
   } as TProps;

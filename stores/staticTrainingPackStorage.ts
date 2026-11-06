@@ -78,18 +78,14 @@ export {
 };
 
 /**
- * Determines whether a training pack metadata record belongs to the Developer RLRCSPack catalog
- * rather than the normal user Static Training Pack library.
+ * Determines whether a training pack metadata record belongs strictly to the Developer `.RLRCSPack` catalog
+ * rather than the normal user Static Training Pack library (`.RCSPack` / `.RCSPackE`).
  */
 export function isDevRlRcsPackMetadata(
   meta: Partial<StaticTrainingPackMetadata> | null | undefined
 ): boolean {
   if (!meta) return false;
-  return (
-    Boolean(meta.isBuiltInDevPack) ||
-    meta.sourcePackType === 'RLRCSPack' ||
-    Boolean(meta.code && meta.code.trim().length > 0)
-  );
+  return Boolean(meta.isBuiltInDevPack) || meta.sourcePackType === 'RLRCSPack';
 }
 
 export async function clearEditWorkspaceByUuid(
@@ -298,7 +294,7 @@ export async function seedDefaultStarterPack(
     createdAt: now,
     updatedAt: now,
     itemCount: shots.length,
-    sourcePackType: 'RCSPack',
+    sourcePackType: 'RCSPackE',
     tags: ['Native'],
   };
 
@@ -438,13 +434,16 @@ export async function deleteStaticTrainingPackByUuid(
 }
 
 /**
- * Imports a `.RCSPack`, `.RCSPackE`, `.RLRCSPack`, or `.Tem` file and persists it into the scoped VFS.
+ * Imports a `.RCSPack`, `.RCSPackE`, `.RLRCSPack` (Dev Mode only), or `.Tem` (Dev Mode only) file
+ * and persists it into the scoped VFS.
  */
 export async function importStaticTrainingPackFromFile(
   file: File,
   scope: StaticTrainingPackStorageScope = 'normal'
 ): Promise<{ metadata: StaticTrainingPackMetadata; items: StaticTrainingShotItem[] }> {
-  const { metadata, items } = await decodeRCSPackFilePayload(file);
+  const { metadata, items } = await decodeRCSPackFilePayload(file, {
+    allowDevFormats: scope === 'dev',
+  });
   const capped = items.slice(0, MAX_SHOTS_PER_PACK);
   await saveStaticTrainingPackFull(metadata, capped, scope);
   return { metadata: { ...metadata, itemCount: capped.length }, items: capped };
@@ -457,7 +456,9 @@ export async function importBatchStaticTrainingPacksFromFiles(
   files: File[] | FileList,
   scope: StaticTrainingPackStorageScope = 'normal'
 ): Promise<StaticTrainingPackMetadata[]> {
-  const decodedList = await decodeMultiOrZipPackFiles(files);
+  const decodedList = await decodeMultiOrZipPackFiles(files, {
+    allowDevFormats: scope === 'dev',
+  });
   const importedMetas: StaticTrainingPackMetadata[] = [];
   for (const entry of decodedList) {
     const capped = entry.items.slice(0, MAX_SHOTS_PER_PACK);

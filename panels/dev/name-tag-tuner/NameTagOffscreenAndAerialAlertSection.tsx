@@ -8,6 +8,7 @@ import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { NameTagAerialClimbAlertSection } from './NameTagAerialClimbAlertSection';
+import { NameTagOffscreenCurveTunerSection } from './NameTagOffscreenCurveTunerSection';
 
 export interface NameTagOffscreenAndAerialAlertSectionProps {
   isLight?: boolean;
@@ -248,6 +249,13 @@ export const NameTagOffscreenAndAerialAlertSection: React.FC<
           </div>
         </div>
       </div>
+
+      {/* 1b. Non-Linear Distance Curve Tuner & 360° Ground Dashed Simulator */}
+      <NameTagOffscreenCurveTunerSection
+        isLight={isLight}
+        config={config}
+        updateConfig={updateConfig}
+      />
 
       {/* 2. Decoupled Off-Screen Aerial Climb Alert Section */}
       <NameTagAerialClimbAlertSection
