@@ -23,8 +23,8 @@ export interface HitboxSpec {
 export interface HitboxAlignTabProps {
   descriptor: VehicleDescriptor;
   hitboxSpec: HitboxSpec;
-  selectedCar: 'fennec' | 'insidio' | 'ryza';
-  notifyAndRefresh: (carId?: 'fennec' | 'insidio' | 'ryza', nextHitboxPreset?: string) => void;
+  selectedCar: 'fennec' | 'insidio' | 'ryza' | 'o-car';
+  notifyAndRefresh: (carId?: 'fennec' | 'insidio' | 'ryza' | 'o-car', nextHitboxPreset?: string) => void;
   handleCenterOffsetAxis: (axisIndex: 0 | 1 | 2, val: number) => void;
   handleAlignmentChange: (patch: Partial<VehicleDescriptor['alignment']>) => void;
   handleAlignTopToRLHitbox: () => void;

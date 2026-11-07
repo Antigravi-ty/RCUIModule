@@ -335,3 +335,61 @@ export const RYZA_DESCRIPTOR: VehicleDescriptor = {
     },
   },
 };
+
+export const OCAR_DESCRIPTOR: VehicleDescriptor = {
+  id: 'o-car',
+  name: 'O-car',
+  aliases: ['ocar', 'pooroctane'],
+  hitboxPreset: 'hitbox-octane',
+  modelUrl: '/src/assets/vehicles/PoorOctane.glb',
+  rawBounds: {
+    min: [-50.7022, -9.3495, -27.1233],
+    max: [73.6787, 38.9327, 27.1644],
+    length: 124.3809,
+    height: 48.2822,
+    width: 54.2877,
+    center: [11.4883, 14.7916, 0.0206],
+    roofTopY: 38.9327,
+    rlHitboxTopY: 38.8346,
+  },
+  alignment: {
+    scale: 1.0,
+    scaleX: 1.0,
+    scaleY: 1.0,
+    scaleZ: 1.0,
+    centerOffset: [0, 0, 0],
+  },
+  wheelNames: [
+    'wheel-front-right',
+    'wheel-front-left',
+    'wheel-rear-right',
+    'wheel-rear-left',
+  ],
+  wheelAnchors: [
+    [48.55, 26.9291, 12.5],
+    [48.55, -26.9291, 12.5],
+    [-36.68, 28.6221, 15.0],
+    [-36.68, -28.6221, 15.0],
+  ],
+  suspensionHeights: [-4.5, -4.5, -2.0, -2.0],
+  boostOutlets: [
+    [-55.5, 16.0, 10.0],
+    [-55.5, 16.0, -10.0],
+  ],
+  boostNozzleParams: {
+    x: -55.5,
+    y: 16.0,
+    z: 10.0,
+    followChassisOffset: true,
+  },
+  surfaceMaterials: GLOBAL_VEHICLE_SURFACE_MATERIALS,
+  lampsConfig: GLOBAL_VEHICLE_LAMPS_CONFIG,
+  colors: {
+    default: {
+      primary: 16734742,
+      realisticPrimary: 16555020,
+      pearl: 16724660,
+    },
+  },
+};
+

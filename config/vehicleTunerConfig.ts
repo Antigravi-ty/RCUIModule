@@ -9,6 +9,7 @@ import {
   FENNEC_DESCRIPTOR,
   INSIDIO_DESCRIPTOR,
   RYZA_DESCRIPTOR,
+  OCAR_DESCRIPTOR,
   type VehicleSurfaceMaterialSlot,
   type VehicleLampsConfig,
   type VehicleDescriptor,
@@ -20,6 +21,7 @@ export {
   FENNEC_DESCRIPTOR,
   INSIDIO_DESCRIPTOR,
   RYZA_DESCRIPTOR,
+  OCAR_DESCRIPTOR,
   type VehicleSurfaceMaterialSlot,
   type VehicleLampsConfig,
   type VehicleDescriptor,
@@ -73,6 +75,8 @@ const vehicleRegistry = new Map<string, VehicleDescriptor>([
   ['fennec', FENNEC_DESCRIPTOR],
   ['insidio', INSIDIO_DESCRIPTOR],
   ['ryza', RYZA_DESCRIPTOR],
+  ['o-car', OCAR_DESCRIPTOR],
+  ['ocar', OCAR_DESCRIPTOR],
 ]);
 
 export function registerVehicleDescriptor(descriptor: VehicleDescriptor): void {

@@ -9,6 +9,7 @@ export const CARS: CarDef[] = [
   { id: 'fennec', name: 'Fennec', hitbox: 'Octane' },
   { id: 'insidio', name: 'Insidio', hitbox: 'Hybrid' },
   { id: 'ryza', name: 'Ryza', hitbox: 'Octane' },
+  { id: 'o-car', name: 'O-car', hitbox: 'Octane' },
   { id: 'hitbox-octane', name: 'Octane (Whitebox)', hitbox: 'Octane' },
   { id: 'hitbox-dominus', name: 'Dominus (Whitebox)', hitbox: 'Dominus' },
   { id: 'hitbox-breakout', name: 'Breakout (Whitebox)', hitbox: 'Breakout' },

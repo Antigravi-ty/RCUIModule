@@ -8,6 +8,7 @@ import {
   Download,
   Copy,
   Check,
+  Upload,
 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { garageSettingsStore } from '../../config/vehiclePresets';
@@ -21,6 +22,7 @@ import {
   FENNEC_DESCRIPTOR,
   INSIDIO_DESCRIPTOR,
   RYZA_DESCRIPTOR,
+  OCAR_DESCRIPTOR,
   getVehicleDescriptor,
 } from '../../config/vehicleTunerConfig';
 import {
@@ -40,7 +42,7 @@ export interface VehicleModelOffsetTunerFloatingWindowProps {
 }
 
 export type VehicleTunerTab = 'hitbox' | 'wheels' | 'boost';
-export type CustomVehicleId = 'fennec' | 'insidio' | 'ryza';
+export type CustomVehicleId = 'fennec' | 'insidio' | 'ryza' | 'o-car';
 
 const INITIAL_VEHICLE_OFFSET_SNAPSHOT = JSON.parse(
   JSON.stringify({
@@ -68,6 +70,14 @@ const INITIAL_VEHICLE_OFFSET_SNAPSHOT = JSON.parse(
       boostNozzleParams: RYZA_DESCRIPTOR.boostNozzleParams,
       boostOutlets: RYZA_DESCRIPTOR.boostOutlets,
     },
+    'o-car': {
+      hitboxPreset: OCAR_DESCRIPTOR.hitboxPreset,
+      alignment: OCAR_DESCRIPTOR.alignment,
+      wheelAnchors: OCAR_DESCRIPTOR.wheelAnchors,
+      suspensionHeights: OCAR_DESCRIPTOR.suspensionHeights,
+      boostNozzleParams: OCAR_DESCRIPTOR.boostNozzleParams,
+      boostOutlets: OCAR_DESCRIPTOR.boostOutlets,
+    },
   })
 );
 
@@ -92,7 +102,13 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   const setPrecisionStep = useAppStore((s) => s.setPrecisionStep);
 
   const [selectedCar, setSelectedCar] = useState<CustomVehicleId>(() =>
-    activeCar === 'insidio' ? 'insidio' : activeCar === 'ryza' ? 'ryza' : 'fennec'
+    activeCar === 'insidio'
+      ? 'insidio'
+      : activeCar === 'ryza'
+        ? 'ryza'
+        : activeCar === 'o-car'
+          ? 'o-car'
+          : 'fennec'
   );
   const [internalTab, setInternalTab] = useState<VehicleTunerTab>(() =>
     controlledTab && ['hitbox', 'wheels', 'boost'].includes(controlledTab)
@@ -110,6 +126,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   const [copiedJson, setCopiedJson] = useState(false);
   const [, setRevision] = useState(0);
   const [runtimeFlags, setRuntimeFlagsState] = useState(() => getVehicleTunerRuntimeFlags());
+  const glbInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const descriptor: any = getVehicleDescriptor(selectedCar) || FENNEC_DESCRIPTOR;
   const hitboxSpec: any =
@@ -255,6 +272,14 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
         boostNozzleParams: RYZA_DESCRIPTOR.boostNozzleParams,
         boostOutlets: RYZA_DESCRIPTOR.boostOutlets,
       },
+      'o-car': {
+        hitboxPreset: OCAR_DESCRIPTOR.hitboxPreset,
+        alignment: OCAR_DESCRIPTOR.alignment,
+        wheelAnchors: OCAR_DESCRIPTOR.wheelAnchors,
+        suspensionHeights: OCAR_DESCRIPTOR.suspensionHeights,
+        boostNozzleParams: OCAR_DESCRIPTOR.boostNozzleParams,
+        boostOutlets: OCAR_DESCRIPTOR.boostOutlets,
+      },
     },
   });
 
@@ -286,6 +311,22 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
     }
   };
 
+  const handleImportGlbFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const blobUrl = URL.createObjectURL(file);
+    descriptor.modelUrl = blobUrl;
+    if (!descriptor.name || descriptor.id === 'o-car') {
+      const stem = file.name.replace(/\.glb$/i, '');
+      if (stem && stem !== 'PoorOctane') {
+        descriptor.name = stem;
+      }
+    }
+    notifyAndRefresh(selectedCar);
+    bridge.onVehicleChange?.(selectedCar);
+    e.target.value = '';
+  };
+
   const tabs: TabItem[] = [
     { id: 'hitbox', label: '1. Hitbox & Align', icon: <Box className="h-3.5 w-3.5" /> },
     { id: 'wheels', label: '2. Wheel Offsets', icon: <Disc className="h-3.5 w-3.5" /> },
@@ -315,14 +356,48 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
             value={selectedCar}
             onValueChange={(v) => handleSelectVehicle(v as CustomVehicleId)}
             options={[
-              { value: 'fennec', label: 'Fennec (Fennec.glb)' },
-              { value: 'insidio', label: 'Insidio (Insidio.glb)' },
-              { value: 'ryza', label: 'Ryza (Ryza.glb)' },
+              { value: 'fennec', label: 'Fennec' },
+              { value: 'insidio', label: 'Insidio' },
+              { value: 'ryza', label: 'Ryza' },
+              { value: 'o-car', label: `${OCAR_DESCRIPTOR.name || 'O-car'} (PoorOctane)` },
             ]}
             size="sm"
             fullWidth
             isLight={isLight}
           />
+
+          <div className="flex items-center gap-1.5 pt-0.5">
+            <input
+              type="text"
+              value={descriptor.name || ''}
+              onChange={(e) => {
+                descriptor.name = e.target.value;
+                setRevision((r) => r + 1);
+              }}
+              placeholder="Model Name (e.g. O-car)"
+              className={`flex-1 px-2 py-1 rounded-lg border text-[10px] font-mono ${
+                isLight
+                  ? 'bg-white border-neutral-300 text-neutral-800'
+                  : 'bg-neutral-900/80 border-neutral-700 text-neutral-200'
+              }`}
+            />
+            <input
+              ref={glbInputRef}
+              type="file"
+              accept=".glb,.gltf"
+              className="hidden"
+              onChange={handleImportGlbFile}
+            />
+            <button
+              type="button"
+              onClick={() => glbInputRef.current?.click()}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 transition-colors cursor-pointer"
+              title="Import local .glb file into current vehicle slot"
+            >
+              <Upload className="h-3 w-3" />
+              Import .GLB
+            </button>
+          </div>
 
           <div className="grid grid-cols-3 gap-1.5 pt-0.5">
             <div className="flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">

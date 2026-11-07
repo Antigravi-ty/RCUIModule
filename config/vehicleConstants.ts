@@ -114,7 +114,8 @@ export const CAR_VISUAL_CATALOG: readonly Readonly<CarVisualCatalogItem>[] = Obj
   Object.freeze({ index: 4, id: 'hitbox-breakout', label: 'Breakout (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-breakout' }),
   Object.freeze({ index: 5, id: 'hitbox-plank', label: 'Batmobile/Plank (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-plank' }),
   Object.freeze({ index: 6, id: 'hitbox-merc', label: 'Merc (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-merc' }),
-  Object.freeze({ index: 7, id: 'ryza', label: 'Ryza', isPreset: false, defaultHitboxId: 'hitbox-octane' })
+  Object.freeze({ index: 7, id: 'ryza', label: 'Ryza', isPreset: false, defaultHitboxId: 'hitbox-octane' }),
+  Object.freeze({ index: 8, id: 'o-car', label: 'O-car', isPreset: false, defaultHitboxId: 'hitbox-octane' })
 ]);
 
 export const CAR_VISUAL_IDS: readonly string[] = Object.freeze(CAR_VISUAL_CATALOG.map((item) => item.id));
@@ -135,7 +136,9 @@ export const SHORT_VISUAL_ALIAS_MAP: Readonly<Record<string, string>> = Object.f
   'hitbox-hybrid': 'insidio',
   fennec: 'fennec',
   insidio: 'insidio',
-  ryza: 'ryza'
+  ryza: 'ryza',
+  'o-car': 'o-car',
+  ocar: 'o-car'
 });
 
 export const PLAYER_ROLES = Object.freeze({
@@ -204,7 +207,7 @@ export function resolveHitboxIndex(hitboxOrVisual: unknown): number {
   if (lower.includes('breakout')) return 3;
   if (lower.includes('hybrid') || lower.includes('insidio')) return 4;
   if (lower.includes('merc')) return 5;
-  if (lower.includes('octane') || lower.includes('fennec') || lower.includes('ryza') || lower === 'default') return 0;
+  if (lower.includes('octane') || lower.includes('fennec') || lower.includes('ryza') || lower.includes('o-car') || lower.includes('ocar') || lower === 'default') return 0;
   console.warn(`[vehicleConstants:Fallback] Unknown hitbox type "${hitboxOrVisual}", falling back to 0 (Octane).`);
   return 0;
 }
