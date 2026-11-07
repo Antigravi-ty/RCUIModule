@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import type React from 'react';
 import { resolveCalibratedSurfaceSizing } from './surfaceCalibration';
 import type {
@@ -13,20 +14,11 @@ export interface GlobSurfaceModule {
   [exportName: string]: unknown;
 }
 
-type ImportMetaGlobFn = <T = unknown>(
-  pattern: string,
-  options?: { eager?: boolean }
-) => Record<string, T>;
-
-const importMetaGlob = (import.meta as unknown as { glob?: ImportMetaGlobFn }).glob;
-
 const floatingWindowModules: Record<string, GlobSurfaceModule> =
-  typeof importMetaGlob === 'function'
-    ? importMetaGlob<GlobSurfaceModule>(
-        '../panels/{user,dev}/*FloatingWindow.tsx',
-        { eager: true }
-      )
-    : {};
+  import.meta.glob<GlobSurfaceModule>(
+    '../panels/{user,dev}/*FloatingWindow.tsx',
+    { eager: true }
+  );
 
 export function resolveModuleComponent(
   mod: GlobSurfaceModule

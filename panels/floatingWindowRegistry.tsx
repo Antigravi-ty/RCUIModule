@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import React from 'react';
 import { getDiscoveredFloatingSurfaces } from '../manifest/floatingSurfaceRegistry';
 import { type StandardSurfaceProps, type SurfaceMeta } from '../manifest/surfaceRegistry';
@@ -26,19 +27,10 @@ interface GlobFloatingWindowModule {
   [exportName: string]: unknown;
 }
 
-type ImportMetaGlobFn = <T = unknown>(
-  pattern: string,
-  options?: { eager?: boolean }
-) => Record<string, T>;
-
-const importMetaGlob = (import.meta as unknown as { glob?: ImportMetaGlobFn }).glob;
-
 const rawFloatingWindowModules: Record<string, GlobFloatingWindowModule> =
-  typeof importMetaGlob === 'function'
-    ? importMetaGlob<GlobFloatingWindowModule>('./{user,dev}/*FloatingWindow.tsx', {
-        eager: true,
-      })
-    : {};
+  import.meta.glob<GlobFloatingWindowModule>('./{user,dev}/*FloatingWindow.tsx', {
+    eager: true,
+  });
 
 const MULTI_TAB_WINDOW_IDS = new Set<string>([
   'vehicle-model-offset-tuner',
