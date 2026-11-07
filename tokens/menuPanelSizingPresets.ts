@@ -1,5 +1,53 @@
 import { getSurfaceCalibrationOverride } from '../manifest/surfaceCalibration';
-import type { CanonicalMenuPanelId, MenuPanelId, PanelSizingConfig } from './menuLayoutTokens';
+
+export type PanelSizingMode = 'auto' | 'fixed';
+
+export type CanonicalMenuPanelId =
+  | 'layer1-main'
+  | 'layer2-play'
+  | 'layer2-garage'
+  | 'layer2-settings'
+  | 'layer2-previews'
+  | 'layer2-manage-room'
+  | 'layer3-training-config'
+  | 'layer3-acoustics-equalizer'
+  | 'layer3-ball-trajectory'
+  | 'layer3-host-match'
+  | 'layer3-host-training'
+  | 'layer3-custom-play'
+  | 'layer3-join-room'
+  | 'layer3-exhibition'
+  | 'layer3-self-training'
+  | 'layer3-kickoff-training'
+  | 'layer3-camera'
+  | 'layer3-keybindings'
+  | 'layer3-exp-multi-bots'
+  | 'layer3-exp-botpack'
+  | 'layer3-dev-sandboxes'
+  | 'layer3-dev-active-tuners'
+  | 'layer3-dev-calibrated-presets'
+  | 'layer3-dev-quick-actions'
+  | 'layer3-dev-self-test'
+  | 'layer3-dev-under-development'
+  | 'layer3-dev-tem-pack-converter'
+  | 'layer3-dev-remote-profile'
+  | 'layer4-static-training-pack'
+  | 'layer4-advanced-audio'
+  | 'layer4-controller-settings'
+  | 'layer4-event-trigger-rules'
+  | 'layer4-dev-signaling-lab';
+
+export type MenuPanelId = CanonicalMenuPanelId;
+
+export interface PanelSizingConfig {
+  mode: PanelSizingMode;
+  width: number;
+  targetHeight: number;
+  minHeight: number;
+  maxHeight: number;
+  component?: string;
+  sourcePath?: string;
+}
 
 export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingConfig> = {
   'layer1-main': {

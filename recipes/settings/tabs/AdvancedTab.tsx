@@ -3,6 +3,7 @@ import {
   Activity,
   Code2,
   Download,
+  HatGlasses,
   Router,
   Sliders,
   CirclePile,
@@ -36,6 +37,8 @@ import { useFloatingStore } from '../../../stores/floatingStore';
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import { useAppStore } from '../../../stores/appStore';
 import { useCloudProfileSyncStore } from '../../../stores/cloudProfileSyncStore';
+import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
+import type { NameTagAnonymizeMode } from '../../../config/nameTagConfig';
 import {
   useSettingsPacingStore,
   type ClockPacingMode,
@@ -69,21 +72,6 @@ export interface AdvancedTabProps {
   onLeave: () => void;
 }
 
-/**
- * [Layer 2 Settings -> Advanced Tab]
- * Decoupled Advanced Settings layout:
- * 1. First Row: `Developer Settings` (`SettingDeveloperStatusRow`)
- * 2. Second Row: `Allow Remote Profile Deployment` (live persistent WebSocket subscription for instant developer updates)
- * 2a. `Export Profile Backup` (downloads unified JSON backup for LLM-assisted migration & local archiving)
- * 3. `Input Buffer` (`CirclePile`)
- * 4. `Input Buffer Target (α)` (`ChartNoAxesGantt`) — shown only when `Input Buffer` is `'custom'`
- * 5. `Threshold Tolerance Deadband` (`Settings2`) — shown only when `Input Buffer` is `'custom'`
- * 6. `Performance Monitor`
- * 7. `Show Telemetry Summary` (`TelemetryConfigCard`)
- * 8. `Network Monitor`
- * 9. `Audio Debug Mode` & `Audio Pipeline Diagnostics & Recovery` (`AudioDebugSection`)
- * 10. Last Row: `Floating Window Opacity`
- */
 export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   isLight = false,
   developerMode: propDevMode,
@@ -147,6 +135,18 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
     const filename = exportLocalUserProfileBackup();
     setLastExportedFilename(filename);
   };
+
+  const nameTagConfig = useScopedStore(
+    'nameTagTunerStore',
+    useNameTagTunerStore,
+    (s) => s.config
+  );
+  const updateNameTagConfig = useScopedStore(
+    'nameTagTunerStore',
+    useNameTagTunerStore,
+    (s) => s.updateConfig
+  );
+  const anonymizeMode = nameTagConfig.anonymizePlayerNames || 'disabled';
 
   const clockPacingMode = useScopedStore(
     'settingsPacingStore',
@@ -252,7 +252,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
       className="flex flex-col w-full"
       style={{ gap: `${rowGap}px` }}
     >
-      {/* 1. First Position: Developer Settings Status Badge Row (Read-Only, URL Query Gated) */}
       <SettingDeveloperStatusRow
         icon={Code2}
         title="Developer Settings"
@@ -264,7 +263,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 2. Second Position: Allow Remote Profile Deployment (Live Persistent Subscription) */}
       <SettingToggleRow
         icon={ChevronsLeftRightEllipsis}
         iconName="chevrons-left-right-ellipsis"
@@ -283,7 +281,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 2-Export. Profile Backup JSON Export */}
       <SettingActionRow
         icon={Download}
         title="Export Profile Backup"
@@ -302,7 +299,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 2a. Signaling Credential Bundle (.rctbnspib) */}
       <SignalingProfileSection
         bordered={resolvedBordered}
         onHover={onHover}
@@ -310,7 +306,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 2b. Realistic Background Music (Rendered when BGM folder is uploaded) */}
       <RealisticBgmSection
         bordered={resolvedBordered}
         onHover={onHover}
@@ -320,7 +315,36 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
 
       {renderOpacityAtFirst && opacityManagerCard}
 
-      {/* 2. Input Buffer (Renamed from Input Buffer Pacing, Icon: circle-pile / CirclePile) */}
+      <SettingSegmentedRow
+        icon={HatGlasses}
+        iconName="hat-glasses"
+        title="Anonymize Player Names"
+        description={
+          anonymizeMode === 'disabled'
+            ? 'Disabled: Display normal player usernames on on-screen name tags.'
+            : anonymizeMode === 'opponents'
+            ? 'Opponents Only: Replace opponent names with single-char indicators (A, M, Z).'
+            : anonymizeMode === 'teammates'
+            ? 'Teammates Only: Replace teammate names with single-char indicators (X, W, E).'
+            : 'Both: Replace all player names with single-char indicators (X, W, E · A, M, Z).'
+        }
+        value={anonymizeMode}
+        onChange={(val) =>
+          updateNameTagConfig({ anonymizePlayerNames: val as NameTagAnonymizeMode })
+        }
+        options={[
+          { value: 'disabled', label: 'Disabled' },
+          { value: 'opponents', label: 'Opponents Only' },
+          { value: 'teammates', label: 'Teammates Only' },
+          { value: 'both', label: 'Both' },
+        ]}
+        bordered={resolvedBordered}
+        hoverDescription="Anonymize Player Names: Replace player usernames on on-screen name tags with single-character slot indicators (X/W/E · A/M/Z) using the Single-Char Indicator profile."
+        onHover={(desc) => desc && onHover(desc)}
+        onLeave={onLeave}
+        isLight={isLight}
+      />
+
       <SettingSegmentedRow
         icon={CirclePile}
         iconName="circle-pile"
@@ -356,7 +380,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 3 & 4. Input Buffer Target (α) & Threshold Tolerance Deadband — displayed ONLY when Input Buffer is 'custom' */}
       {isCustomPacing && (
         <>
           <SettingSegmentedRow
@@ -409,7 +432,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         </>
       )}
 
-      {/* 5. Performance Monitor */}
       <FloatingWindowCard
         preset={PERFORMANCE_MONITOR_PRESET}
         icon={Activity}
@@ -422,7 +444,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 6. Show Telemetry Summary (TelemetryConfigCard with underlined Show v disclosure & framing variations) */}
       <TelemetryConfigCard
         telemetry={telemetry}
         onUpdateTelemetry={handleUpdateTelemetry}
@@ -431,7 +452,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 7. Network Monitor */}
       <FloatingWindowCard
         preset={NETWORK_MONITOR_PRESET}
         icon={Router}
@@ -444,7 +464,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 8. Audio Debug & Pipeline Diagnostics Section (Relocated from AudioTab) */}
       <AudioDebugSection
         telemetry={audioDebug}
         masterVolume={masterVolume}
@@ -454,7 +473,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 9. Last Position: Floating Window Opacity */}
       {renderOpacityAtLast && opacityManagerCard}
     </div>
   );

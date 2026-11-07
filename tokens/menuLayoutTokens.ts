@@ -1,67 +1,19 @@
 import {
-  CANONICAL_PANEL_SIZING,
-  DEFAULT_PANEL_SIZING,
-  resolveMenuPanelSizing,
+  CANONICAL_PANEL_SIZING as CANONICAL_PANEL_SIZING_PRESETS,
+  DEFAULT_PANEL_SIZING as DEFAULT_PANEL_SIZING_PRESETS,
+  resolveMenuPanelSizing as resolveMenuPanelSizingPreset,
+  type CanonicalMenuPanelId,
+  type MenuPanelId,
+  type PanelSizingConfig,
+  type PanelSizingMode,
 } from './menuPanelSizingPresets';
 
-export type PanelSizingMode = 'auto' | 'fixed';
-
-export type CanonicalMenuPanelId =
-  | 'layer1-main'
-  | 'layer2-play'
-  | 'layer2-garage'
-  | 'layer2-settings'
-  | 'layer2-previews'
-  | 'layer2-manage-room'
-  | 'layer3-training-config'
-  | 'layer3-acoustics-equalizer'
-  | 'layer3-ball-trajectory'
-  | 'layer3-host-match'
-  | 'layer3-host-training'
-  | 'layer3-custom-play'
-  | 'layer3-join-room'
-  | 'layer3-exhibition'
-  | 'layer3-self-training'
-  | 'layer3-kickoff-training'
-  | 'layer3-camera'
-  | 'layer3-keybindings'
-  | 'layer3-exp-multi-bots'
-  | 'layer3-exp-botpack'
-  | 'layer3-dev-sandboxes'
-  | 'layer3-dev-active-tuners'
-  | 'layer3-dev-calibrated-presets'
-  | 'layer3-dev-quick-actions'
-  | 'layer3-dev-self-test'
-  | 'layer3-dev-under-development'
-  | 'layer3-dev-tem-pack-converter'
-  | 'layer3-dev-remote-profile'
-  | 'layer4-static-training-pack'
-  | 'layer4-advanced-audio'
-  | 'layer4-controller-settings'
-  | 'layer4-event-trigger-rules'
-  | 'layer4-dev-signaling-lab';
-
-export type MenuPanelId = CanonicalMenuPanelId;
-
-export interface PanelSizingConfig {
-  /**
-   * 'auto': Height automatically fits content, clamped to [minHeight, min(maxHeight, availH)].
-   *         Ideal for single-view menus without internal tab switching (e.g., Layer 1 Main Menu, Layer 2 Play).
-   * 'fixed': Height is locked to min(targetHeight, availH).
-   *          Ideal for multi-tab menus (Garage, Settings) and Layer 3 panels with inline error notices so container never jumps.
-   */
-  mode: PanelSizingMode;
-  /** Target container width in px */
-  width: number;
-  /** Locked target height in px when mode === 'fixed' */
-  targetHeight: number;
-  /** Minimum height in px when mode === 'auto' */
-  minHeight: number;
-  /** Maximum allowed height in px when mode === 'auto' (overflows into internal scrolling beyond this) */
-  maxHeight: number;
-  component?: string;
-  sourcePath?: string;
-}
+export type {
+  CanonicalMenuPanelId,
+  MenuPanelId,
+  PanelSizingConfig,
+  PanelSizingMode,
+};
 
 export type PanelHeaderBackBtnRadiusMode =
   | 'auto'
@@ -229,11 +181,11 @@ export interface MenuLayoutTokens extends FloatingShellTokens {
   layer3Height: number;
 }
 
-export {
-  CANONICAL_PANEL_SIZING,
-  DEFAULT_PANEL_SIZING,
-  resolveMenuPanelSizing,
-};
+export const CANONICAL_PANEL_SIZING: Record<CanonicalMenuPanelId, PanelSizingConfig> =
+  CANONICAL_PANEL_SIZING_PRESETS;
+export const DEFAULT_PANEL_SIZING: Record<MenuPanelId, PanelSizingConfig> =
+  DEFAULT_PANEL_SIZING_PRESETS;
+export const resolveMenuPanelSizing = resolveMenuPanelSizingPreset;
 
 export const DEFAULT_FLOATING_SHELL_TOKENS: FloatingShellTokens = {
   floatingOuterRadius: 16,

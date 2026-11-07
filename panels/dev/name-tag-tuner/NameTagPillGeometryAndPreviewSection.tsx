@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  resolveNameTagVariantParams,
   type NameTagFontFamily,
   type NameTagFontWeight,
 } from '../../../config/nameTagConfig';
@@ -28,7 +29,9 @@ export interface NameTagPillGeometryAndPreviewSectionProps {
 export const NameTagPillGeometryAndPreviewSection: React.FC<
   NameTagPillGeometryAndPreviewSectionProps
 > = ({ isLight = false }) => {
-  const { config, updateConfig } = useNameTagTunerStore();
+  const { config, updateConfig, updateActiveVariant } = useNameTagTunerStore();
+  const isSingleChar = config.cardDisplayMode === 'single-char';
+  const variant = resolveNameTagVariantParams(config, isSingleChar);
 
   const cardBackground = isLight
     ? 'bg-neutral-50/95 border-neutral-200/90 text-neutral-800 shadow-2xs'
@@ -44,10 +47,12 @@ export const NameTagPillGeometryAndPreviewSection: React.FC<
       <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBackground}`}>
         <div className="flex items-center justify-between">
           <span className="font-bold text-[11px]">
-            Pill Geometry, Typography &amp; Opacity
+            {isSingleChar
+              ? 'Single-Char Indicator Geometry, Typography & Opacity'
+              : 'Standard Pill Geometry, Typography & Opacity'}
           </span>
           <span className={`text-[10px] font-mono ${mutedText}`}>
-            {config.pillMinWidth}-{config.pillMaxWidth}x{config.pillHeight}px
+            {variant.pillMinWidth}-{variant.pillMaxWidth}x{variant.pillHeight}px
           </span>
         </div>
 
@@ -56,12 +61,12 @@ export const NameTagPillGeometryAndPreviewSection: React.FC<
             <span className={mutedText}>Font Family:</span>
             <div className="flex items-center gap-1">
               {FONT_FAMILY_OPTIONS.map((opt) => {
-                const isSelected = config.fontFamily === opt.id;
+                const isSelected = variant.fontFamily === opt.id;
                 return (
                   <button
                     key={opt.id}
                     type="button"
-                    onClick={() => updateConfig({ fontFamily: opt.id })}
+                    onClick={() => updateActiveVariant({ fontFamily: opt.id })}
                     className={`px-2 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
                       isSelected
                         ? isLight
@@ -83,12 +88,12 @@ export const NameTagPillGeometryAndPreviewSection: React.FC<
             <span className={mutedText}>Font Weight:</span>
             <div className="grid grid-cols-4 gap-1">
               {FONT_WEIGHT_OPTIONS.map((opt) => {
-                const isSelected = config.fontWeight === opt.value;
+                const isSelected = variant.fontWeight === opt.value;
                 return (
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => updateConfig({ fontWeight: opt.value })}
+                    onClick={() => updateActiveVariant({ fontWeight: opt.value })}
                     className={`px-1.5 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
                       isSelected
                         ? isLight
@@ -110,90 +115,92 @@ export const NameTagPillGeometryAndPreviewSection: React.FC<
         <div className="flex flex-col gap-2">
           <SliderControl
             label="Minimum Width"
-            value={config.pillMinWidth}
+            value={variant.pillMinWidth}
             min={40}
             max={460}
             step={2}
             unit="px"
-            onChange={(nextValue) => updateConfig({ pillMinWidth: nextValue })}
+            onChange={(nextValue) => updateActiveVariant({ pillMinWidth: nextValue })}
             isLight={isLight}
           />
           <SliderControl
             label="Maximum Width"
-            value={config.pillMaxWidth}
+            value={variant.pillMaxWidth}
             min={80}
             max={480}
             step={4}
             unit="px"
-            onChange={(nextValue) => updateConfig({ pillMaxWidth: nextValue })}
+            onChange={(nextValue) => updateActiveVariant({ pillMaxWidth: nextValue })}
             isLight={isLight}
           />
           <SliderControl
-            label="Pill Height"
-            value={config.pillHeight}
+            label="Card Height"
+            value={variant.pillHeight}
             min={28}
             max={120}
             step={2}
             unit="px"
-            onChange={(nextValue) => updateConfig({ pillHeight: nextValue })}
+            onChange={(nextValue) => updateActiveVariant({ pillHeight: nextValue })}
             isLight={isLight}
           />
           <SliderControl
             label="Corner Radius"
-            value={config.cornerRadius}
+            value={variant.cornerRadius}
             min={0}
             max={60}
             step={1}
             unit="px"
-            onChange={(nextValue) => updateConfig({ cornerRadius: nextValue })}
+            onChange={(nextValue) => updateActiveVariant({ cornerRadius: nextValue })}
             isLight={isLight}
           />
           <SliderControl
             label="Font Size"
-            value={config.fontSize}
+            value={variant.fontSize}
             min={12}
             max={48}
             step={1}
             unit="px"
-            onChange={(nextValue) => updateConfig({ fontSize: nextValue })}
+            onChange={(nextValue) => updateActiveVariant({ fontSize: nextValue })}
             isLight={isLight}
           />
           <SliderControl
             label="Border Thickness"
-            value={config.borderWidth}
+            value={variant.borderWidth}
             min={0}
             max={12}
             step={0.5}
             unit="px"
-            onChange={(nextValue) => updateConfig({ borderWidth: nextValue })}
+            onChange={(nextValue) => updateActiveVariant({ borderWidth: nextValue })}
             isLight={isLight}
           />
-          <SliderControl
-            label="Truncation Length (Leading ...)"
-            value={config.maxChars}
-            min={4}
-            max={32}
-            step={1}
-            unit="chars"
-            onChange={(nextValue) => updateConfig({ maxChars: nextValue })}
-            isLight={isLight}
-          />
+          {!isSingleChar && (
+            <SliderControl
+              label="Truncation Length (Leading ...)"
+              value={config.maxChars}
+              min={4}
+              max={32}
+              step={1}
+              unit="chars"
+              onChange={(nextValue) => updateConfig({ maxChars: nextValue })}
+              isLight={isLight}
+            />
+          )}
           <SliderControl
             label="Card Opacity"
-            value={config.opacity}
+            value={variant.opacity}
             min={0.1}
             max={1.0}
             step={0.02}
-            onChange={(nextValue) => updateConfig({ opacity: nextValue })}
+            onChange={(nextValue) => updateActiveVariant({ opacity: nextValue })}
             isLight={isLight}
           />
           <SliderControl
             label="Background Fill Opacity"
-            value={config.bgOpacity}
+            value={variant.bgOpacity}
             min={0.0}
             max={1.0}
             step={0.02}
-            onChange={(nextValue) => updateConfig({ bgOpacity: nextValue })}
+            onChange={(nextValue) => updateActiveVariant({ bgOpacity: nextValue })}
             isLight={isLight}
           />
         </div>
