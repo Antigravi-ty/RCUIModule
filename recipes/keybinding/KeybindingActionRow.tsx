@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, X, Sparkles } from 'lucide-react';
 import { KeycapBadge } from '../../primitives/KeycapBadge';
+import { useSettingActionRowStore } from '../../stores/settingRowStore';
 
 export interface ActionBinding {
   id: string;
@@ -177,10 +178,6 @@ export const ListeningSlot: React.FC<ListeningSlotProps> = ({
 export interface KeybindingActionRowProps {
   binding: ActionBinding;
   isLight: boolean;
-  paddingX?: number;
-  paddingY?: number;
-  borderRadius?: number;
-  titleFontSize?: number;
   listeningTarget: ListeningTarget | null;
   onStartListening: (target: ListeningTarget | null) => void;
   onRemoveKey: (actionId: string, kind: 'keyboard' | 'gamepad', keyToRemove: string) => void;
@@ -192,10 +189,6 @@ export interface KeybindingActionRowProps {
 export const KeybindingActionRow: React.FC<KeybindingActionRowProps> = ({
   binding: b,
   isLight,
-  paddingX = 10,
-  paddingY = 6,
-  borderRadius = 8,
-  titleFontSize = 14,
   listeningTarget,
   onStartListening,
   onRemoveKey,
@@ -203,6 +196,7 @@ export const KeybindingActionRow: React.FC<KeybindingActionRowProps> = ({
   onHover,
   onLeave,
 }) => {
+  const { paddingX, paddingY, borderRadius, titleFontSize } = useSettingActionRowStore();
   const isListeningKeyboard =
     listeningTarget?.actionId === b.id && listeningTarget?.kind === 'keyboard';
   const isListeningGamepad =

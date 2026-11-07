@@ -4,7 +4,14 @@ import {
   DEFAULT_NAME_TAG_SLOT_CODES,
   DEFAULT_RUNTIME_SYNC_SNAPSHOT,
   KICKOFF_PERMUTATION_COUNT,
+  NAME_TAG_FAR_CALIBRATION_DEPTH_UU,
+  NAME_TAG_NEAR_CALIBRATION_DEPTH_UU,
   NAME_TAG_REFERENCE_DEPTH_UU,
+  computeAdaptiveNameTagWidthPx,
+  formatNameTagDisplayText,
+  resolveNameTagBoostBorderVisible,
+  resolveNameTagCornerRadiusPx,
+  resolveNameTagFontFamilyCss,
   type NameTagAerialClimbTriggerMode,
   type NameTagBoostBorderAudience,
   type NameTagBoostBorderColorMode,
@@ -12,6 +19,7 @@ import {
   type NameTagBoostIndicatorMode,
   type NameTagCameraMode,
   type NameTagCarOverride,
+  type NameTagCarTelemetry,
   type NameTagCardDisplayMode,
   type NameTagCircleColorMode,
   type NameTagCircleLabelMode,
@@ -22,6 +30,21 @@ import {
   type NameTagRuntimeSyncSnapshot,
   type NameTagTelemetrySnapshot,
 } from './nameTagConfig';
+
+export {
+  NAME_TAG_FAR_CALIBRATION_DEPTH_UU,
+  NAME_TAG_NEAR_CALIBRATION_DEPTH_UU,
+  NAME_TAG_REFERENCE_DEPTH_UU,
+  computeAdaptiveNameTagWidthPx,
+  formatNameTagDisplayText,
+  resolveNameTagBoostBorderVisible,
+  resolveNameTagCornerRadiusPx,
+  resolveNameTagFontFamilyCss,
+  type NameTagBoostBorderOverride,
+  type NameTagBoostIndicatorMode,
+  type NameTagCarTelemetry,
+  type NameTagConfig,
+};
 
 export const sanitizeHexColor = (raw: unknown, fb: string): string =>
   typeof raw === 'string' && raw.startsWith('#') && raw.length >= 4 ? raw : fb;

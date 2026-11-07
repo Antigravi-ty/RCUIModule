@@ -4,6 +4,8 @@ import { DropdownMenu } from './DropdownMenu';
 import { SettingActionRow } from './SettingActionRow';
 import { useSettingActionRowStore, type SegmentedRowLayout } from '../stores/settingRowStore';
 
+export const ALPHA_COMPONENT_ID = 'Alpha:SettingSegmentedRow' as const;
+
 export interface SettingSegmentedOption {
   value: string;
   label: string;
@@ -136,16 +138,18 @@ export const SettingSegmentedRow: React.FC<SettingSegmentedRowProps> = React.mem
         isLight={isLight}
         className={className}
         rightSlot={
-          <DropdownMenu
-            value={value}
-            options={options}
-            onChange={(val) => handleSelect(String(val))}
-            align="right"
-            menuWidthClass="w-64"
-            disabled={disabled}
-            isLight={isLight}
-            className="min-w-[168px]"
-          />
+          <div data-alpha-id={ALPHA_COMPONENT_ID} className="inline-flex items-center">
+            <DropdownMenu
+              value={value}
+              options={options}
+              onChange={(val) => handleSelect(String(val))}
+              align="right"
+              menuWidthClass="w-64"
+              disabled={disabled}
+              isLight={isLight}
+              className="min-w-[168px]"
+            />
+          </div>
         }
       />
     );
@@ -181,15 +185,17 @@ export const SettingSegmentedRow: React.FC<SettingSegmentedRowProps> = React.mem
           ) : null
         }
         bottomSlot={
-          <SegmentedSwitch
-            value={value}
-            onValueChange={handleSelect}
-            options={options}
-            size={size}
-            fullWidth
-            disabled={disabled}
-            isLight={isLight}
-          />
+          <div data-alpha-id={ALPHA_COMPONENT_ID} className="w-full">
+            <SegmentedSwitch
+              value={value}
+              onValueChange={handleSelect}
+              options={options}
+              size={size}
+              fullWidth
+              disabled={disabled}
+              isLight={isLight}
+            />
+          </div>
         }
       />
     );
@@ -213,7 +219,7 @@ export const SettingSegmentedRow: React.FC<SettingSegmentedRowProps> = React.mem
       className={className}
       rightSlot={
         hasSecondarySegmented ? (
-          <div className="inline-flex items-center gap-2 shrink-0">
+          <div data-alpha-id={ALPHA_COMPONENT_ID} className="inline-flex items-center gap-2 shrink-0">
             <SegmentedSwitch
               value={secondaryValue!}
               onValueChange={(val) => onSecondaryChange?.(val)}
@@ -232,14 +238,16 @@ export const SettingSegmentedRow: React.FC<SettingSegmentedRowProps> = React.mem
             />
           </div>
         ) : (
-          <SegmentedSwitch
-            value={value}
-            onValueChange={handleSelect}
-            options={options}
-            size={size}
-            disabled={disabled}
-            isLight={isLight}
-          />
+          <div data-alpha-id={ALPHA_COMPONENT_ID} className="inline-flex items-center shrink-0">
+            <SegmentedSwitch
+              value={value}
+              onValueChange={handleSelect}
+              options={options}
+              size={size}
+              disabled={disabled}
+              isLight={isLight}
+            />
+          </div>
         )
       }
     />

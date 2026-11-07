@@ -5,7 +5,7 @@ import {
   DEFAULT_RL_COUNTDOWN_GLOW,
   buildOuterGlowTextShadow,
   hexToRgba,
-} from './CenterUpperInfoHUD';
+} from './centerUpperInfoDefaults';
 
 export type TakeoverCountdownStep = '3' | '2' | '1' | 'complete';
 
@@ -179,7 +179,6 @@ export function resolveTakeoverTopLabelVisuals(
     style.glowIntensityPct
   );
 
-  // Pair crisp perimeter outline halo with the soft outer glow so team color glyphs stay legible on all arenas
   const crispHalo =
     strokeWidthPx > 0
       ? `0 0 2px ${hexToRgba(strokeColor, 0.95)}, 0 0 5px ${hexToRgba(strokeColor, 0.75)}`
@@ -194,5 +193,136 @@ export function resolveTakeoverTopLabelVisuals(
     textShadowCss,
     strokeColor,
     strokeWidthPx,
+  };
+}
+
+export function applyTakeoverDomStyles(params: {
+  nextPayload: TakeoverHudPayload;
+  resolvedGlow: TakeoverGlowConfig;
+  resolvedTypo: CenterUpperTypographyConfig;
+  resolvedTeamSide: TakeoverTeamSide;
+  bloomEl: HTMLDivElement;
+  topEl: HTMLDivElement;
+  mainEl: HTMLDivElement;
+  subEl: HTMLDivElement;
+}): void {
+  const {
+    nextPayload,
+    resolvedGlow,
+    resolvedTypo,
+    resolvedTeamSide,
+    bloomEl,
+    topEl,
+    mainEl,
+    subEl,
+  } = params;
+
+  const bloomPct = resolvedGlow.backdropBloomPct ?? 0;
+  if (bloomPct > 0 && resolvedGlow.intensityPct > 0) {
+    const bloomAlpha = Math.min(
+      0.65,
+      (bloomPct / 100) * (resolvedGlow.intensityPct / 100) * 0.45
+    );
+    bloomEl.style.background = `radial-gradient(ellipse at center, ${hexToRgba(
+      resolvedGlow.glowColor,
+      bloomAlpha
+    )} 0%, ${hexToRgba(resolvedGlow.glowColor, bloomAlpha * 0.35)} 42%, transparent 74%)`;
+    bloomEl.style.opacity = '1';
+  } else {
+    bloomEl.style.opacity = '0';
+  }
+
+  const strokeW = resolvedGlow.strokeWidthPx ?? 0;
+  const resolvedStrokeCol =
+    resolvedGlow.strokeColor || resolvedGlow.glowColor || resolvedGlow.textColor;
+
+  const hasTopText = Boolean(nextPayload.topText && nextPayload.topText.trim().length > 0);
+  if (hasTopText) {
+    const topVisuals = resolveTakeoverTopLabelVisuals(resolvedGlow, resolvedTeamSide);
+    topEl.style.display = 'block';
+    topEl.style.opacity = '1';
+    topEl.style.transform = 'none';
+    topEl.textContent = resolvedTypo.uppercase
+      ? nextPayload.topText.toUpperCase()
+      : nextPayload.topText;
+    topEl.style.fontSize = `${resolvedTypo.topFontSizePx}px`;
+    topEl.style.fontWeight = String(resolvedTypo.topFontWeight);
+    topEl.style.letterSpacing = `${resolvedTypo.topLetterSpacingEm}em`;
+    topEl.style.paddingLeft =
+      resolvedTypo.topLetterSpacingEm > 0 ? `${resolvedTypo.topLetterSpacingEm}em` : '0px';
+    topEl.style.color = topVisuals.fillColor;
+    topEl.style.webkitTextStroke = topVisuals.strokeCss;
+    topEl.style.paintOrder = 'stroke fill';
+    topEl.style.textShadow = topVisuals.textShadowCss;
+  } else {
+    topEl.style.display = 'none';
+    topEl.textContent = '';
+  }
+
+  mainEl.textContent = resolvedTypo.uppercase
+    ? nextPayload.mainText.toUpperCase()
+    : nextPayload.mainText;
+  mainEl.style.fontSize = `${resolvedTypo.mainFontSizePx}px`;
+  mainEl.style.fontWeight = String(resolvedTypo.mainFontWeight);
+  mainEl.style.letterSpacing = `${resolvedTypo.mainLetterSpacingEm}em`;
+  mainEl.style.paddingLeft =
+    resolvedTypo.mainLetterSpacingEm > 0 ? `${resolvedTypo.mainLetterSpacingEm}em` : '0px';
+  mainEl.style.fontStyle = resolvedTypo.italic ? 'italic' : 'normal';
+  mainEl.style.color = resolvedGlow.textColor;
+  mainEl.style.textShadow = buildOuterGlowTextShadow(
+    resolvedGlow.glowColor,
+    resolvedGlow.innerBlurPx,
+    resolvedGlow.outerBlurPx,
+    resolvedGlow.ambientBlurPx,
+    resolvedGlow.intensityPct
+  );
+  mainEl.style.webkitTextStroke =
+    strokeW > 0 ? `${strokeW}px ${resolvedStrokeCol}` : '0px transparent';
+
+  if (nextPayload.subText && nextPayload.subText.trim().length > 0) {
+    subEl.style.display = 'inline-flex';
+    subEl.textContent = resolvedTypo.uppercase
+      ? nextPayload.subText.toUpperCase()
+      : nextPayload.subText;
+    subEl.style.color = resolvedGlow.topLabelColor || '#E2E8F0';
+    subEl.style.borderColor = hexToRgba(resolvedGlow.glowColor, 0.45);
+    subEl.style.boxShadow = `0 0 0 1px ${hexToRgba(resolvedGlow.glowColor, 0.25)}`;
+  } else {
+    subEl.style.display = 'none';
+    subEl.textContent = '';
+  }
+}
+
+export function buildTakeoverPrerollPayload(params: {
+  activePrerollSec: number;
+  activeDownSec: number;
+  takeoverTeam: TakeoverTeamSide;
+  triggerKey: number;
+}): TakeoverHudPayload | null {
+  const { activePrerollSec, activeDownSec, takeoverTeam, triggerKey } = params;
+  const effectiveDownSec = Math.max(1, activeDownSec);
+  if (activePrerollSec < 1 || activePrerollSec > effectiveDownSec + 1) {
+    return null;
+  }
+  const displayDigit = Math.min(3, activePrerollSec);
+  const isSilentLeadIn = activeDownSec > 0 && activePrerollSec > effectiveDownSec;
+  const stepTiming = isSilentLeadIn
+    ? {
+        ...DEFAULT_TAKEOVER_TIMING,
+        entryScale: 1,
+        entryDurationMs: 0,
+        persistentInspect: true,
+      }
+    : DEFAULT_TAKEOVER_TIMING;
+
+  return {
+    topText: 'Takeover in...',
+    mainText: String(displayDigit),
+    subText: '',
+    teamSide: takeoverTeam,
+    glow: DEFAULT_TAKEOVER_GLOW,
+    typography: DEFAULT_TAKEOVER_TYPOGRAPHY,
+    timing: stepTiming,
+    triggerKey,
   };
 }

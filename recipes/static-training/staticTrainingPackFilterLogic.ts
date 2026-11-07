@@ -232,3 +232,115 @@ export function filterAndSortTrainingPacks(params: {
     return Number(b.updatedAt || 0) - Number(a.updatedAt || 0);
   });
 }
+
+export function generatePackUUID(): string {
+  const bytes = new Uint8Array(16);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
+export function normalizePackSummary(
+  pack: StaticTrainingPackSummary,
+  idx = 0
+): StaticTrainingPackSummary {
+  const uuid = pack.uuid || pack.id || `pack-${idx}`;
+  const title = pack.title || pack.name || 'Untitled Pack';
+  const itemCount =
+    typeof pack.itemCount === 'number'
+      ? pack.itemCount
+      : typeof pack.shotCount === 'number'
+      ? pack.shotCount
+      : 0;
+  return {
+    ...pack,
+    uuid,
+    id: uuid,
+    title,
+    name: title,
+    itemCount,
+    shotCount: itemCount,
+    createdAt: pack.createdAt ?? Date.now(),
+    updatedAt: pack.updatedAt ?? Date.now(),
+  };
+}
+
+export const DEFAULT_STATIC_TRAINING_PACKS: StaticTrainingPackSummary[] = [
+  {
+    uuid: '550e8400-e29b-41d4-a716-446655440001',
+    title: 'Aerial Striker Pack',
+    description:
+      'High-altitude redirects, double-tap setups, and fast aerial volleys for offensive precision.',
+    originalDescription: 'Code: C7E0-9E0B-B739-A899 | Creator: Kevpert | Target Rank: Champion',
+    code: 'C7E0-9E0B-B739-A899',
+    creator: 'Kevpert',
+    rankTier: 'Champion',
+    tags: ['Kevpert', 'Champion'],
+    sourcePackType: 'RLRCSPack',
+    itemCount: 18,
+    createdAt: 1711843200000,
+    updatedAt: 1711929600000,
+  },
+  {
+    uuid: '550e8400-e29b-41d4-a716-446655440002',
+    title: 'Shadow Defense & Backboard Clears',
+    description:
+      'Awkward overhead saves, corner reads, and backboard clears under heavy pressure.',
+    originalDescription: 'Code: 5CCE-FB29-7B05-A0B1 | Creator: Psyonix | 2024-05 Featured',
+    code: '5CCE-FB29-7B05-A0B1',
+    creator: 'Psyonix',
+    releaseYearMonth: '2024-05',
+    rankTier: 'Diamond',
+    tags: ['Psyonix', '2024', '2024-05', 'Diamond'],
+    sourcePackType: 'RLRCSPack',
+    itemCount: 12,
+    createdAt: 1711756800000,
+    updatedAt: 1711843200000,
+  },
+  {
+    uuid: '550e8400-e29b-41d4-a716-446655440003',
+    title: 'Wall-to-Air Dribble Mastery',
+    description:
+      'Clean first touches off the side wall into controlled air dribbles and flip resets.',
+    originalDescription: 'Native local pack created inside Rocket Companion Static Training Editor.',
+    tags: ['Native'],
+    sourcePackType: 'RCSPackE',
+    itemCount: 10,
+    createdAt: 1711324800000,
+    updatedAt: 1711497600000,
+  },
+  {
+    uuid: '550e8400-e29b-41d4-a716-446655440004',
+    title: 'Power Shots & Ground Placement',
+    description:
+      'Half-volley boomers, hook shots, and top-corner placement from midfield.',
+    originalDescription: 'Code: 6EB1-79B2-33B8-681C | Creator: Wayprotein | GC',
+    code: '6EB1-79B2-33B8-681C',
+    creator: 'Wayprotein',
+    rankTier: 'GC',
+    tags: ['GC'],
+    sourcePackType: 'RLRCSPack',
+    itemCount: 24,
+    createdAt: 1710720000000,
+    updatedAt: 1710892800000,
+  },
+];
+
+export async function decodeRCSPackText(file: File): Promise<string> {
+  const rawText = await file.text();
+  const trimmed = rawText.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    return trimmed;
+  }
+  const cleanB64 = trimmed.replace(/^RCS1:/, '').trim();
+  const binary = atob(cleanB64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}

@@ -14,13 +14,6 @@ import {
   exportActiveReplayDirectorDiagnosticPattern,
   importActiveReplayDirectorDiagnosticPattern,
   buildActiveReplayDirectorWindowDiagnostic,
-  startActiveReplayDirectorPreview,
-  exitActiveReplayDirectorPreview,
-  setActiveReplayDirectorCsvCameraMode,
-  enterActiveReplayDirectorReferenceFreeCam,
-  exitActiveReplayDirectorReferenceFreeCam,
-  getActiveReplayDirectorLiveCameraState,
-  exportActiveReplayDirectorReferenceKeyframe,
 } from '../../../stores/replayDirectorStore';
 import { useHudStore } from '../../../stores/hudStore';
 import { useAppStore } from '../../../stores/appStore';
@@ -38,35 +31,20 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
   isLight = false,
 }) => {
   const [copiedWindowSnap, setCopiedWindowSnap] = useState(false);
-  const [copiedRefKeyframe, setCopiedRefKeyframe] = useState(false);
   const [exportedFileMsg, setExportedFileMsg] = useState<string | null>(null);
   const [, setTickRevision] = useState(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const isFreeCam = useAppStore((s) => s.isFreeCam);
-  const freeCamFov = useAppStore((s) => s.freeCamFov);
-  const setFreeCamFov = useAppStore((s) => s.setFreeCamFov);
-
   const matchPhase = useHudStore((s) => s.matchPhase);
-  const replayProgress = useHudStore((s) => s.replayProgress);
   const replayFrameIndex = useHudStore((s) => s.replayFrameIndex);
-  const replayTotalFrames = useHudStore((s) => s.replayTotalFrames);
   const replayPaused = useHudStore((s) => s.replayPaused);
   const replayPersistent = useHudStore((s) => s.replayPersistent);
   const replaySpeed = useHudStore((s) => s.replaySpeed);
-  const replayCameraMode = useHudStore((s) => s.replayCameraMode);
-  const replayScorerName = useHudStore((s) => s.replayScorerName);
-  const replayScorerTeam = useHudStore((s) => s.replayScorerTeam);
-  const replayBallSpeedKph = useHudStore((s) => s.replayBallSpeedKph);
-  const replayAssistName = useHudStore((s) => s.replayAssistName);
-  const onReplaySeekNormalized = useHudStore((s) => s.onReplaySeekNormalized);
   const onReplayTogglePause = useHudStore((s) => s.onReplayTogglePause);
   const onReplayCycleSpeed = useHudStore((s) => s.onReplayCycleSpeed);
-  const onReplayToggleCameraMode = useHudStore((s) => s.onReplayToggleCameraMode);
 
   const devGoalReplayPhase = useSubsystemIsolationLabStore((s) => s.goalReplayPhase);
   const devGoalReplayCursor = useSubsystemIsolationLabStore((s) => s.goalReplayPlaybackCursor);
-  const devGoalReplayTotal = useSubsystemIsolationLabStore((s) => s.goalReplayPlaybackTotal);
   const devGoalReplayPaused = useSubsystemIsolationLabStore((s) => s.goalReplayPaused);
   const devGoalReplaySpeed = useSubsystemIsolationLabStore((s) => s.goalReplaySpeed);
   const devRuntimeHandlers = useSubsystemIsolationLabStore((s) => s.runtimeHandlers);
@@ -110,25 +88,16 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
     activeCtrl && (activeCtrl.sessionState?.isActive || hasRetainedReplay)
       ? activeCtrl.getCurrentFrameDiagnosticSnapshot()
       : null;
-  const liveCameraState = canExportReplay ? getActiveReplayDirectorLiveCameraState() : null;
 
   const effectiveFrameIdx =
     liveSnapshot?.replayFrameIndex ??
     (isDevLabReplaying ? devGoalReplayCursor : replayFrameIndex) ??
     0;
-  const effectiveTotalFrames =
-    liveSnapshot?.totalReplayFrames ??
-    (isDevLabReplaying ? devGoalReplayTotal : replayTotalFrames) ??
-    1;
   const effectiveFrameId = liveSnapshot?.frameId ?? effectiveFrameIdx;
   const effectivePaused =
     activeCtrl?.sessionState?.isPaused ?? (isDevLabReplaying ? devGoalReplayPaused : replayPaused);
   const effectiveSpeed =
     activeCtrl?.sessionState?.playbackSpeed ?? (isDevLabReplaying ? devGoalReplaySpeed : replaySpeed) ?? 1.0;
-  const effectiveProgress01 =
-    effectiveTotalFrames > 1
-      ? Math.max(0, Math.min(1, effectiveFrameIdx / (effectiveTotalFrames - 1)))
-      : replayProgress || 0;
 
   const handleTogglePauseScrub = () => {
     if (isDevLabReplaying && devRuntimeHandlers.onGoalReplayTogglePause) {
@@ -150,23 +119,6 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
       activeCtrl.cyclePlaybackSpeed();
     }
     setTickRevision((r) => r + 1);
-  };
-
-  const handleScrubNormalized = (norm01: number) => {
-    if (isDevLabReplaying && devRuntimeHandlers.onGoalReplaySeekNormalized) {
-      devRuntimeHandlers.onGoalReplaySeekNormalized(norm01);
-    } else if (isGoalReplayActive && onReplaySeekNormalized) {
-      onReplaySeekNormalized(norm01);
-    } else if (activeCtrl && (activeCtrl.sessionState?.isActive || hasRetainedReplay)) {
-      activeCtrl.seekToNormalized(norm01);
-    }
-    setTickRevision((r) => r + 1);
-  };
-
-  const handleSeekToFrameIndex = (targetIdx: number) => {
-    const total = Math.max(2, effectiveTotalFrames);
-    const norm01 = Math.max(0, Math.min(1, targetIdx / (total - 1)));
-    handleScrubNormalized(norm01);
   };
 
   const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,32 +143,6 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
     } catch (err) {
       console.warn('[ReplayDirectorTuner] Failed to read imported replay file:', err);
     }
-  };
-
-  const handleStartPreview = () => {
-    const ok = startActiveReplayDirectorPreview({ loop: true, startPaused: false });
-    if (ok) {
-      setExportedFileMsg('Started 3D Arena Replay Preview (looping)');
-      setTimeout(() => setExportedFileMsg(null), 2800);
-    }
-    setTickRevision((r) => r + 1);
-  };
-
-  const handleExitPreview = () => {
-    if (isDevLabReplaying && devRuntimeHandlers.onGoalReplayTriggerScenario) {
-      devRuntimeHandlers.onGoalReplayTriggerScenario('stop_replay');
-    } else {
-      exitActiveReplayDirectorPreview();
-    }
-    setExportedFileMsg('Exited 3D Arena Replay Preview (replay retained)');
-    setTimeout(() => setExportedFileMsg(null), 2800);
-    setTickRevision((r) => r + 1);
-  };
-
-  const handleToggleRecordedCameraMode = () => {
-    const next = !liveSnapshot?.useRecordedCsvCamera;
-    setActiveReplayDirectorCsvCameraMode(next);
-    setTickRevision((r) => r + 1);
   };
 
   const handleExportContainer = () => {
@@ -254,9 +180,6 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
   const cardBg = isLight
     ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
     : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
-  const subPanelBg = isLight
-    ? 'bg-white border-neutral-200'
-    : 'bg-neutral-900/60 border-neutral-800/80';
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
   return (
@@ -309,14 +232,8 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
         isGoalReplayActive={isGoalReplayActive}
         effectivePaused={effectivePaused}
         effectiveSpeed={effectiveSpeed}
-        replayCameraMode={replayCameraMode}
-        replayScorerName={replayScorerName}
-        replayScorerTeam={replayScorerTeam}
-        replayBallSpeedKph={replayBallSpeedKph}
-        replayAssistName={replayAssistName}
-        subPanelBg={subPanelBg}
+        isLight={isLight}
         onTogglePauseScrub={handleTogglePauseScrub}
-        onToggleCameraMode={onReplayToggleCameraMode}
         onCycleSpeed={handleCycleSpeed}
       />
 

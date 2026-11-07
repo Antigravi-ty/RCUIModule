@@ -9,9 +9,26 @@ import {
   EventImpulseScatterChart,
   type CollisionImpulseEvent,
 } from '../../charts/EventImpulseScatterChart';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface EventStreamObserverFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'event-stream-observer',
+  title: 'Event Stream Observer',
+  subtitle: 'Observer',
+  description:
+    'Real-time physics collision observer, impulse scatter chart & audio threshold visualizer.',
+  icon: 'Activity',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 460,
+    height: 420,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface EventStreamObserverFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
 

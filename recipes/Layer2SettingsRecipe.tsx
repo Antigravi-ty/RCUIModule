@@ -12,164 +12,173 @@ import { PanelFooter } from '../layout/PanelFooter';
 import { UnderlineTabs, TabItem } from '../primitives/UnderlineTabs';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useAppStore } from '../stores/appStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
+import { resolveCalibratedSurfaceSizing } from '../manifest/surfaceCalibration';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
 import type { DiagnosticWindowPayload } from './settings/components/FloatingWindowCard';
-import { GameplayTab, type GameplayConfig } from './settings/tabs/GameplayTab';
-import { AudioTab, type AudioConfig } from './settings/tabs/AudioTab';
-import { DisplayTab, type GraphicsConfig } from './settings/tabs/DisplayTab';
-import { AdvancedTab, type TelemetryOverlayConfig } from './settings/tabs/AdvancedTab';
+import {
+  GameplayTab,
+  SURFACE_VARIANT_META as GAMEPLAY_TAB_VARIANT_META,
+  type GameplayConfig,
+} from './settings/tabs/GameplayTab';
+import {
+  AudioTab,
+  SURFACE_VARIANT_META as AUDIO_TAB_VARIANT_META,
+  type AudioConfig,
+} from './settings/tabs/AudioTab';
+import {
+  DisplayTab,
+  SURFACE_VARIANT_META as DISPLAY_TAB_VARIANT_META,
+  type GraphicsConfig,
+} from './settings/tabs/DisplayTab';
+import {
+  AdvancedTab,
+  SURFACE_VARIANT_META as ADVANCED_TAB_VARIANT_META,
+  type TelemetryOverlayConfig,
+} from './settings/tabs/AdvancedTab';
 import type { AudioDebugTelemetryProps } from './settings/components/AudioDebugSection';
-import { DeveloperTab } from './settings/tabs/DeveloperTab';
+import {
+  DeveloperTab,
+  SURFACE_VARIANT_META as DEVELOPER_TAB_VARIANT_META,
+} from './settings/tabs/DeveloperTab';
+
+export type {
+  AudioConfig,
+  AudioDebugTelemetryProps,
+  DiagnosticWindowPayload,
+  GameplayConfig,
+  GraphicsConfig,
+  PanelSizingConfig,
+  TelemetryOverlayConfig,
+};
 
 export type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'advanced' | 'developer';
 
-export interface Layer2SettingsStateOverride {
-  initialTab?: string;
-  onDeveloperModeChange?: (unlocked: boolean) => void;
-  onSpawnDiagnosticWindow?: (window: DiagnosticWindowPayload) => void;
-  onNavigateRoute?: (route: string) => void;
-  onNavigateAdvancedAudio?: () => void;
-  onNavigateEventTriggerRules?: () => void;
-  onNavigateDevQuickActions?: () => void;
-  onNavigateDevSelfTest?: () => void;
-  onNavigateDevUnderDevelopment?: () => void;
-  onNavigateDevRemoteProfile?: () => void;
-  sizing?: PanelSizingConfig;
-  gameplay?: Partial<GameplayConfig>;
-  audio?: Partial<AudioConfig>;
-  graphics?: Partial<GraphicsConfig>;
-  telemetry?: Partial<TelemetryOverlayConfig>;
-  audioDebug?: AudioDebugTelemetryProps;
-}
+export const SETTINGS_TAB_VARIANTS = [
+  GAMEPLAY_TAB_VARIANT_META,
+  AUDIO_TAB_VARIANT_META,
+  DISPLAY_TAB_VARIANT_META,
+  ADVANCED_TAB_VARIANT_META,
+  DEVELOPER_TAB_VARIANT_META,
+] as const;
 
-export interface Layer2SettingsRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  onNavigateTrainingDetail?: () => void;
-  onNavigateAcousticsEqualizer?: () => void;
-  onNavigateKeybindingsDetail?: () => void;
-  onNavigateTrajectoryDetail?: () => void;
-  onNavigateCameraDetail?: () => void;
-  onNavigateExpMultiBots?: () => void;
-  onNavigateDevSandboxes?: () => void;
-  onNavigateDevActiveTuners?: () => void;
-  onNavigateDevCalibratedPresets?: () => void;
-  onNavigateDevQuickActions?: () => void;
-  activeTab?: string;
-  onTabChange?: (tab: SettingsTabId) => void;
-  /** Whether Developer Mode is unlocked (controls visibility of 5th 'Developer' tab) */
-  developerMode?: boolean;
-  highlightSetting?: string | null;
-  onClearHighlight?: () => void;
-  stateOverride?: Layer2SettingsStateOverride;
-}
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer2SettingsRecipe',
+  title: 'SETTINGS',
+  subtitle: '5-Tab System & Developer Settings',
+  description:
+    'Gameplay, Audio, Display, Advanced telemetry, and Developer Hub configuration shell.',
+  icon: 'Sliders',
+  layer: 'layer2',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: DEFAULT_PANEL_SIZING['layer2-settings'].width,
+    height: DEFAULT_PANEL_SIZING['layer2-settings'].targetHeight,
+    minHeight: DEFAULT_PANEL_SIZING['layer2-settings'].minHeight,
+    maxHeight: DEFAULT_PANEL_SIZING['layer2-settings'].maxHeight,
+    mode: 'adaptive',
+  },
+  variants: [...SETTINGS_TAB_VARIANTS],
+};
+
+export type Layer2SettingsRecipeProps = StandardSurfaceProps;
+
+const normalizeTab = (t?: string): SettingsTabId => {
+  if (t === 'video') return 'display';
+  if (
+    t === 'gameplay' ||
+    t === 'audio' ||
+    t === 'display' ||
+    t === 'advanced' ||
+    t === 'developer'
+  ) {
+    return t;
+  }
+  return 'gameplay';
+};
 
 /**
- * [Recipe] Layer 2 Settings Menu (Width: 680px, Height: 580px)
+ * [Recipe] Layer 2 Settings Menu (Width: 680px)
  * Matches RocketCompanion's authentic 5 icon+text tabs:
  * 1. Gameplay (`Gamepad2`)
  * 2. Audio (`Volume2`)
  * 3. Display (`Monitor`)
- * 4. Advanced (`Sliders`) — includes the Developer Settings bridge toggle
+ * 4. Advanced (`Sliders`) — includes the Developer Settings status row
  * 5. Developer (`Terminal`) — visible when developerMode is true or activeTab === 'developer'
  *
- * Each tab slot binds directly to its own store slice (useAppStore, useViewportStore,
- * useSettingsPacingStore, useSpatialAudioStore) so Layer2SettingsRecipe remains a clean
- * layout & tab-routing shell without funnel prop-drilling.
+ * Adheres to the 4-prop StandardSurfaceProps shell contract (`isLight`, `activeTab`,
+ * `onTabChange`, `onBack`). All domain data and route transitions flow directly through
+ * Zustand stores (or are locally shadowed in RCUITuner via `<StoreSnapshotScope>`).
  */
 export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
   isLight = false,
-  onBack: propOnBack,
-  onNavigateTrainingDetail,
-  onNavigateAcousticsEqualizer,
-  onNavigateKeybindingsDetail,
-  onNavigateTrajectoryDetail,
-  onNavigateCameraDetail,
-  onNavigateExpMultiBots,
-  onNavigateDevSandboxes,
-  onNavigateDevActiveTuners,
-  onNavigateDevCalibratedPresets,
-  onNavigateDevQuickActions: propOnNavigateDevQuickActions,
   activeTab: controlledTab,
   onTabChange,
-  developerMode: propDevMode,
-  highlightSetting,
-  onClearHighlight,
-  stateOverride,
+  onBack: propOnBack,
 }) => {
-  const {
-    initialTab = 'gameplay',
-    onDeveloperModeChange,
-    onSpawnDiagnosticWindow,
-    onNavigateRoute,
-    onNavigateAdvancedAudio,
-    onNavigateEventTriggerRules,
-    onNavigateDevQuickActions: overrideOnNavigateDevQuickActions,
-    onNavigateDevSelfTest,
-    onNavigateDevUnderDevelopment,
-    onNavigateDevRemoteProfile,
-    sizing: propSizing,
-  } = stateOverride ?? {};
-  const onNavigateDevQuickActions =
-    propOnNavigateDevQuickActions ?? overrideOnNavigateDevQuickActions;
-
-  const storeGoBack = useAppStore((s) => s.goBack);
-  const storeDevMode = useAppStore((s) => s.developerMode);
-  const setStoreDevMode = useAppStore((s) => s.setDeveloperMode);
-  const storeNavigate = useAppStore((s) => s.navigate);
+  const storeGoBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const storeDevMode = useScopedStore('appStore', useAppStore, (s) => s.developerMode);
+  const storeNavigate = useScopedStore('appStore', useAppStore, (s) => s.navigate);
+  const storeTargetTab = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.settingsTargetTab
+  );
+  const setStoreTargetTab = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.setSettingsTargetTab
+  );
 
   const onBack = propOnBack ?? storeGoBack;
 
-  const normalizeTab = (t?: string): SettingsTabId => {
-    if (t === 'video') return 'display';
-    if (
-      t === 'gameplay' ||
-      t === 'audio' ||
-      t === 'display' ||
-      t === 'advanced' ||
-      t === 'developer'
-    ) {
-      return t;
-    }
-    return 'gameplay';
-  };
+  const [internalTab, setInternalTab] = useState<SettingsTabId>(() =>
+    normalizeTab(controlledTab ?? storeTargetTab)
+  );
 
-  const [internalTab, setInternalTab] = useState<SettingsTabId>(() => normalizeTab(initialTab));
-  const currentTab: SettingsTabId = controlledTab ? normalizeTab(controlledTab) : internalTab;
+  const currentTab: SettingsTabId = controlledTab
+    ? normalizeTab(controlledTab)
+    : internalTab;
 
   useEffect(() => {
-    if (initialTab && !controlledTab) {
-      setInternalTab(normalizeTab(initialTab));
+    if (!controlledTab && storeTargetTab) {
+      setInternalTab(normalizeTab(storeTargetTab));
     }
-  }, [initialTab, controlledTab]);
+  }, [storeTargetTab, controlledTab]);
 
-  const [internalDevMode, setInternalDevMode] = useState<boolean>(
-    propDevMode ?? storeDevMode ?? (initialTab === 'developer' || controlledTab === 'developer')
-  );
-  const developerMode = propDevMode ?? storeDevMode ?? internalDevMode;
-
-  const handleDeveloperModeChange = (next: boolean) => {
-    setInternalDevMode(next);
-    setStoreDevMode(next);
-    onDeveloperModeChange?.(next);
-    if (!next && currentTab === 'developer') {
-      setInternalTab('advanced');
-      onTabChange?.('advanced');
-    }
-  };
+  const developerMode = Boolean(storeDevMode) || currentTab === 'developer';
 
   const handleTabChange = (t: string) => {
     const valid = normalizeTab(t);
     setInternalTab(valid);
+    setStoreTargetTab(valid);
     onTabChange?.(valid);
   };
 
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
-  const storeSizing = useMenuLayoutStore(
+  const storeSizing = useScopedStore(
+    'menuLayoutStore',
+    useMenuLayoutStore,
     (s) => s.panels?.['layer2-settings'] ?? DEFAULT_PANEL_SIZING['layer2-settings']
   );
-  const panelBodyPaddingX = useMenuLayoutStore((s) => s.panelBodyPaddingX ?? 18);
-  const sizing = propSizing ?? storeSizing;
+  const panelBodyPaddingX = useScopedStore(
+    'menuLayoutStore',
+    useMenuLayoutStore,
+    (s) => s.panelBodyPaddingX ?? 18
+  );
+
+  const calibratedSizing = resolveCalibratedSurfaceSizing(
+    SURFACE_META.id,
+    SURFACE_META.defaultSizing
+  );
+
+  const sizing: PanelSizingConfig = {
+    ...storeSizing,
+    width: calibratedSizing.width ?? storeSizing.width,
+    minHeight: calibratedSizing.minHeight ?? storeSizing.minHeight,
+    maxHeight: calibratedSizing.maxHeight ?? storeSizing.maxHeight,
+  };
 
   const handleNavigateRoute = (route: string) => {
     const normalizedRoute =
@@ -178,32 +187,6 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
         : route === 'audio-eq'
           ? 'acoustics-equalizer'
           : route;
-    const specificHandlers: Record<string, (() => void) | undefined> = {
-      'acoustics-equalizer': onNavigateAcousticsEqualizer,
-      trajectory: onNavigateTrajectoryDetail,
-      camera: onNavigateCameraDetail,
-      keybindings: onNavigateKeybindingsDetail,
-      'training-config': onNavigateTrainingDetail,
-      'advanced-audio': onNavigateAdvancedAudio,
-      'event-trigger-rules': onNavigateEventTriggerRules,
-      'exp-multi-bots': onNavigateExpMultiBots,
-      'dev-sandboxes': onNavigateDevSandboxes,
-      'dev-active-tuners': onNavigateDevActiveTuners,
-      'dev-calibrated-presets': onNavigateDevCalibratedPresets,
-      'dev-quick-actions': onNavigateDevQuickActions,
-      'dev-self-test': onNavigateDevSelfTest,
-      'dev-under-development': onNavigateDevUnderDevelopment,
-      'dev-remote-profile': onNavigateDevRemoteProfile,
-    };
-    const specificHandler = specificHandlers[normalizedRoute];
-    if (specificHandler) {
-      specificHandler();
-      return;
-    }
-    if (onNavigateRoute) {
-      onNavigateRoute(normalizedRoute);
-      return;
-    }
     storeNavigate(normalizedRoute as Parameters<typeof storeNavigate>[0]);
   };
 
@@ -214,7 +197,7 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
     { id: 'advanced', label: 'Advanced', icon: <Sliders className="h-3.5 w-3.5" /> },
   ];
 
-  if (developerMode || currentTab === 'developer') {
+  if (developerMode) {
     tabs.push({
       id: 'developer',
       label: 'Developer',
@@ -274,7 +257,6 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
           >
             <GameplayTab
               isLight={isLight}
-              gameplayConfig={stateOverride?.gameplay}
               onNavigateRoute={handleNavigateRoute}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
@@ -294,7 +276,6 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
             <AudioTab
               isLight={isLight}
               developerMode={developerMode}
-              audioConfig={stateOverride?.audio}
               onNavigateAcousticsEqualizer={() => handleNavigateRoute('acoustics-equalizer')}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
@@ -314,9 +295,6 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
             <DisplayTab
               isLight={isLight}
               developerMode={developerMode}
-              graphicsConfig={stateOverride?.graphics}
-              highlightSetting={highlightSetting}
-              onClearHighlight={onClearHighlight}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />
@@ -335,10 +313,6 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
             <AdvancedTab
               isLight={isLight}
               developerMode={developerMode}
-              onDeveloperModeChange={handleDeveloperModeChange}
-              onSpawnDiagnosticWindow={onSpawnDiagnosticWindow}
-              telemetryConfig={stateOverride?.telemetry}
-              audioDebug={stateOverride?.audioDebug}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
             />
@@ -375,3 +349,4 @@ export const Layer2SettingsRecipe: React.FC<Layer2SettingsRecipeProps> = ({
     </PanelContainer>
   );
 };
+

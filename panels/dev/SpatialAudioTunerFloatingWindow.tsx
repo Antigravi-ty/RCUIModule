@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Volume2,
   Download,
@@ -9,65 +9,81 @@ import {
   Square,
   Sliders,
 } from 'lucide-react';
+import type {
+  StandardSurfaceProps,
+  SurfaceMeta,
+} from '../../manifest/surfaceMetaTypes';
 import { SliderControl } from '../../primitives/SliderControl';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { useSpatialAudioStore } from '../../stores/spatialAudioStore';
 import { useSubsystemIsolationLabStore } from '../../stores/subsystemIsolationLabStore';
-import {
-  solveCubicBezier,
-  type SpatialAudioTunerConfig,
-} from '../../config/spatialAudioConfig';
 import { SpatialAudioCurveCard } from './SpatialAudioCurveCard';
 import { DistanceAttenuationTunerTab } from './spatial-audio-tuner/DistanceAttenuationTunerTab';
 
-export interface SpatialAudioTunerFloatingWindowProps {
-  isLight?: boolean;
+export type SpatialAudioTunerTab = 'distance' | 'reverb';
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'spatial-audio-tuner',
+  title: 'Spatial Audio & Anthem Tuner',
+  subtitle: '3D Distance Rolloff Profiles, Live Arena Gizmo & Stadium Reverb Engine',
+  description:
+    'Stadium spatial acoustics (HPF 425Hz, LPF 3500Hz, Wet 69%, 3.0s Decay) & 2.0s directional non-linear transition curve.',
+  icon: 'Volume2',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 480,
+    height: 620,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+  variants: [
+    {
+      variantId: 'distance',
+      label: '3D Distance Profiles & Gizmo',
+      description: 'Tactical attenuation categories, interactive rolloff curve & 3D arena spheres.',
+    },
+    {
+      variantId: 'reverb',
+      label: 'Stadium Reverb & BGM Transition',
+      description: 'Directional non-linear transition curve, stadium filter/reverb & goal stinger audition.',
+    },
+  ],
+};
+
+export interface SpatialAudioTunerFloatingWindowProps
+  extends StandardSurfaceProps {
   active?: boolean;
 }
 
 export const SpatialAudioTunerFloatingWindow: React.FC<
   SpatialAudioTunerFloatingWindowProps
-> = ({ isLight = false, active = true }) => {
+> = ({
+  isLight = false,
+  active = true,
+  activeTab: controlledTab,
+  onTabChange,
+}) => {
   const tunerConfig = useSpatialAudioStore((s) => s.tunerConfig);
   const updateTunerConfig = useSpatialAudioStore((s) => s.updateTunerConfig);
   const resetTunerConfig = useSpatialAudioStore((s) => s.resetTunerConfig);
 
   const selectedAnthem = useSpatialAudioStore((s) => s.selectedAnthem);
   const previewingAnthemId = useSpatialAudioStore((s) => s.previewingAnthemId);
-  const activeGoalAnthemId = useSpatialAudioStore((s) => s.activeGoalAnthemId);
   const togglePreviewAnthem = useSpatialAudioStore((s) => s.togglePreviewAnthem);
-  const anthemLinearPhase = useSpatialAudioStore((s) => s.anthemLinearPhase);
-  const anthemBlend = useSpatialAudioStore((s) => s.anthemBlend);
-  const bgmLinearPhase = useSpatialAudioStore((s) => s.bgmLinearPhase);
-  const bgmBlend = useSpatialAudioStore((s) => s.bgmBlend);
-  const bgmIsPlaying = useSpatialAudioStore((s) => s.bgmIsPlaying);
 
-  const [activeTab, setActiveTab] = useState<'distance' | 'reverb'>('distance');
+  const [internalTab, setInternalTab] = useState<SpatialAudioTunerTab>('distance');
   const [copied, setCopied] = useState(false);
 
-  const curveSvgPath = useMemo(() => {
-    const pts: string[] = [];
-    const steps = 40;
-    for (let i = 0; i <= steps; i++) {
-      const u = i / steps;
-      const b = solveCubicBezier(
-        u,
-        tunerConfig.bzX1,
-        tunerConfig.bzY1,
-        tunerConfig.bzX2,
-        tunerConfig.bzY2
-      );
-      const x = (u * 100).toFixed(2);
-      const y = ((1 - b) * 100).toFixed(2);
-      pts.push(`${i === 0 ? 'M' : 'L'} ${x} ${y}`);
-    }
-    return pts.join(' ');
-  }, [
-    tunerConfig.bzX1,
-    tunerConfig.bzY1,
-    tunerConfig.bzX2,
-    tunerConfig.bzY2,
-  ]);
+  const activeTab: SpatialAudioTunerTab =
+    controlledTab === 'reverb' || controlledTab === 'distance'
+      ? controlledTab
+      : internalTab;
+
+  const handleSelectTab = (tab: SpatialAudioTunerTab) => {
+    setInternalTab(tab);
+    onTabChange?.(tab);
+  };
 
   if (!active) return null;
 
@@ -99,16 +115,6 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
     URL.revokeObjectURL(url);
   };
 
-  const overrideModes: {
-    id: SpatialAudioTunerConfig['overrideMode'];
-    label: string;
-  }[] = [
-    { id: 'auto', label: 'Auto (Game State)' },
-    { id: 'normal', label: 'Normal (0.0)' },
-    { id: 'spatial', label: 'Spatial (1.0)' },
-    { id: 'manual', label: 'Manual Scrub' },
-  ];
-
   return (
     <div
       data-ui-interactive="true"
@@ -124,7 +130,7 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
       >
         <button
           type="button"
-          onClick={() => setActiveTab('distance')}
+          onClick={() => handleSelectTab('distance')}
           className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
             activeTab === 'distance'
               ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300'
@@ -137,7 +143,7 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab('reverb')}
+          onClick={() => handleSelectTab('reverb')}
           className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
             activeTab === 'reverb'
               ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300'
@@ -197,21 +203,8 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
             </button>
           </div>
 
-      {/* Live Directional Non-Linear Curve & Telemetry Card */}
-      <SpatialAudioCurveCard
-        isLight={isLight}
-        tunerConfig={tunerConfig}
-        curveSvgPath={curveSvgPath}
-        anthemLinearPhase={anthemLinearPhase}
-        anthemBlend={anthemBlend}
-        bgmLinearPhase={bgmLinearPhase}
-        bgmBlend={bgmBlend}
-        bgmIsPlaying={bgmIsPlaying}
-        activeGoalAnthemId={activeGoalAnthemId}
-        previewingAnthemId={previewingAnthemId}
-        overrideModes={overrideModes}
-        updateTunerConfig={updateTunerConfig}
-      />
+          {/* Live Directional Non-Linear Curve & Telemetry Card */}
+          <SpatialAudioCurveCard isLight={isLight} />
 
       {/* Transition Duration & Directional Cubic-Bezier Sliders */}
       <div className="grid grid-cols-1 gap-2">

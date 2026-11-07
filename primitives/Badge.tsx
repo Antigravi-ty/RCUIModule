@@ -2,6 +2,8 @@ import React from 'react';
 import { UI_SPACING } from '../tokens/spacing';
 import { UI_RADIUS } from '../tokens/radius';
 
+export const ALPHA_COMPONENT_ID = 'Alpha:Badge' as const;
+
 export type BadgeVariant =
   | 'default'
   | 'primary'
@@ -137,6 +139,7 @@ export const Badge: React.FC<BadgeProps> = React.memo(({
 
   return (
     <span
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="badge"
       data-variant={variant}
       data-shape={shape}
@@ -145,7 +148,7 @@ export const Badge: React.FC<BadgeProps> = React.memo(({
       {...props}
     >
       {dot && (
-        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${resolvedDotColor}`} />
+        <span className={`h-1.5 w-1.5 ${UI_RADIUS.full} shrink-0 ${resolvedDotColor}`} />
       )}
       {icon && <span className="shrink-0">{icon}</span>}
       <span className="truncate">{children}</span>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Trash2, Eye, UserCheck } from 'lucide-react';
+import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
 import {
   EXP_CAR_COLOR_PALETTE,
   EXP_BOT_POLICY_METAS,
@@ -20,16 +21,10 @@ export interface ExperimentalMultiBotsSlotRowProps {
   slot: ExperimentalMultiBotsSlotConfig;
   slotIndex: number;
   globalCarIdx: number;
-  activeCameraCarIndex: number;
-  totalCars: number;
   allowBotpackPolicies?: boolean;
   isLight: boolean;
   subPanelBg: string;
   mutedText: string;
-  onSelectCameraCar: (carIdx: number) => void;
-  onSetSlotBotType: (team: 0 | 1, slotIndex: number, botType: ExpBotPolicyId) => void;
-  onRemoveSlot: (team: 0 | 1, slotIndex: number) => void;
-  onSetSlotColor: (team: 0 | 1, slotIndex: number, colorSlot: number) => void;
   onHoverDesc?: (desc: string | null) => void;
 }
 
@@ -37,18 +32,29 @@ export const ExperimentalMultiBotsSlotRow: React.FC<ExperimentalMultiBotsSlotRow
   slot,
   slotIndex,
   globalCarIdx,
-  activeCameraCarIndex,
-  totalCars,
   allowBotpackPolicies = false,
   isLight,
   subPanelBg,
   mutedText,
-  onSelectCameraCar,
-  onSetSlotBotType,
-  onRemoveSlot,
-  onSetSlotColor,
   onHoverDesc,
 }) => {
+  const activeCameraCarIndex = useExperimentalMultiBotsStore(
+    (s) => s.activeCameraCarIndex
+  );
+  const totalCars = useExperimentalMultiBotsStore(
+    (s) => s.blueSlots.length + s.orangeSlots.length
+  );
+  const onSelectCameraCar = useExperimentalMultiBotsStore(
+    (s) => s.setActiveCameraCarIndex
+  );
+  const onSetSlotBotType = useExperimentalMultiBotsStore(
+    (s) => s.setSlotBotType
+  );
+  const onRemoveSlot = useExperimentalMultiBotsStore(
+    (s) => s.removeSlotFromTeam
+  );
+  const onSetSlotColor = useExperimentalMultiBotsStore((s) => s.setSlotColor);
+
   const keyNum = globalCarIdx + 1;
   const swatch = getExpColorSwatch(slot.colorSlot);
   const isCamActive = activeCameraCarIndex === globalCarIdx;
@@ -213,40 +219,45 @@ export const ExperimentalMultiBotsSlotRow: React.FC<ExperimentalMultiBotsSlotRow
 
 export interface ExperimentalMultiBotsTeamRosterCardProps {
   team: 0 | 1;
-  slots: ExperimentalMultiBotsSlotConfig[];
-  globalOffset: number;
-  activeCameraCarIndex: number;
-  totalCars: number;
   allowBotpackPolicies?: boolean;
-  isLight: boolean;
-  cardBg: string;
-  subPanelBg: string;
-  mutedText: string;
-  onAddBot: (team: 0 | 1, botType: ExpBotPolicyId) => void;
-  onSelectCameraCar: (carIdx: number) => void;
-  onSetSlotBotType: (team: 0 | 1, slotIndex: number, botType: ExpBotPolicyId) => void;
-  onRemoveSlot: (team: 0 | 1, slotIndex: number) => void;
-  onSetSlotColor: (team: 0 | 1, slotIndex: number, colorSlot: number) => void;
+  isLight?: boolean;
+  cardBg?: string;
+  subPanelBg?: string;
+  mutedText?: string;
 }
 
-export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBotsTeamRosterCardProps> = ({
+export const ExperimentalMultiBotsTeamRosterCard: React.FC<
+  ExperimentalMultiBotsTeamRosterCardProps
+> = ({
   team,
-  slots,
-  globalOffset,
-  activeCameraCarIndex,
-  totalCars,
   allowBotpackPolicies = false,
-  isLight,
+  isLight = false,
   cardBg,
   subPanelBg,
   mutedText,
-  onAddBot,
-  onSelectCameraCar,
-  onSetSlotBotType,
-  onRemoveSlot,
-  onSetSlotColor,
 }) => {
+  const blueSlots = useExperimentalMultiBotsStore((s) => s.blueSlots);
+  const orangeSlots = useExperimentalMultiBotsStore((s) => s.orangeSlots);
+  const onAddBot = useExperimentalMultiBotsStore((s) => s.addBotToTeam);
+
   const isBlue = team === 0;
+  const slots = isBlue ? blueSlots : orangeSlots;
+  const globalOffset = isBlue ? 0 : blueSlots.length;
+  const totalCars = blueSlots.length + orangeSlots.length;
+
+  const resolvedCardBg =
+    cardBg ??
+    (isLight
+      ? 'bg-neutral-50/90 border-neutral-200 text-neutral-800'
+      : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200');
+  const resolvedSubPanelBg =
+    subPanelBg ??
+    (isLight
+      ? 'bg-white border-neutral-200/90 text-neutral-800'
+      : 'bg-neutral-950/50 border-neutral-800 text-neutral-200');
+  const resolvedMutedText =
+    mutedText ?? (isLight ? 'text-neutral-500' : 'text-neutral-400');
+
   const teamLabel = isBlue ? 'BLUE TEAM' : 'ORANGE TEAM';
   const teamShort = isBlue ? 'Blue' : 'Orange';
   const dotClass = isBlue ? 'bg-sky-400' : 'bg-orange-400';
@@ -257,7 +268,9 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
   const canAddBot = slots.length < 5 && totalCars < 6;
 
   return (
-    <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
+    <div
+      className={`p-2.5 rounded-xl border flex flex-col gap-2 ${resolvedCardBg}`}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />
@@ -282,8 +295,11 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
 
       <div className="flex flex-col gap-1.5">
         {slots.length === 0 ? (
-          <div className={`p-2 rounded-lg border text-center text-[11px] ${subPanelBg} ${mutedText}`}>
-            No cars on {teamShort} Team. Click &ldquo;+ Add Bot&rdquo; to spawn a {teamShort} car.
+          <div
+            className={`p-2 rounded-lg border text-center text-[11px] ${resolvedSubPanelBg} ${resolvedMutedText}`}
+          >
+            No cars on {teamShort} Team. Click &ldquo;+ Add Bot&rdquo; to spawn a{' '}
+            {teamShort} car.
           </div>
         ) : (
           slots.map((slot, idx) => (
@@ -292,16 +308,10 @@ export const ExperimentalMultiBotsTeamRosterCard: React.FC<ExperimentalMultiBots
               slot={slot}
               slotIndex={idx}
               globalCarIdx={globalOffset + idx}
-              activeCameraCarIndex={activeCameraCarIndex}
-              totalCars={totalCars}
               allowBotpackPolicies={allowBotpackPolicies}
               isLight={isLight}
-              subPanelBg={subPanelBg}
-              mutedText={mutedText}
-              onSelectCameraCar={onSelectCameraCar}
-              onSetSlotBotType={onSetSlotBotType}
-              onRemoveSlot={onRemoveSlot}
-              onSetSlotColor={onSetSlotColor}
+              subPanelBg={resolvedSubPanelBg}
+              mutedText={resolvedMutedText}
             />
           ))
         )}

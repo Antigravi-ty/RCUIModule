@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
-import { useLayer3KickoffTrainingStoreBinding } from './hooks/useLayer3PlayTrainingBindings';
 import { Check, Clock, Compass, Crosshair, Ghost, GraduationCap, Play, Zap } from 'lucide-react';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import {
+  resolveCalibratedDefaultConfig,
+  resolveCalibratedSurfaceSizing,
+} from '../manifest/surfaceCalibration';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
+import { useAppStore } from '../stores/appStore';
 import { KICKOFF_TRAINING_TUNER_PRESET } from '../stores/devFloatingPresets';
+import {
+  useKickoffTrainingStore,
+  type KickoffSubMode,
+} from '../stores/kickoffTrainingStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 
-export type KickoffSubMode = 'instant' | 'easy-learning' | 'realistic';
+export type { KickoffSubMode };
 export type KickoffAISpawnSide = 'same-position' | 'opposite-side';
 
 export interface KickoffTrainingConfig {
@@ -27,28 +37,60 @@ export const DEFAULT_KICKOFF_TRAINING_CONFIG: KickoffTrainingConfig = {
   showRhythmHighway: true,
 };
 
-export interface Layer3KickoffTrainingRecipeProps {
-  isLight?: boolean;
-  /** Controlled kickoff training config */
-  config?: Partial<KickoffTrainingConfig>;
-  /** Alias for controlled config */
-  settings?: Partial<KickoffTrainingConfig>;
-  /** Initial kickoff training config for uncontrolled mode */
-  defaultConfig?: Partial<KickoffTrainingConfig>;
-  /** Callback fired when any kickoff training setting changes */
-  onChange?: (
-    next: KickoffTrainingConfig,
-    patch: Partial<KickoffTrainingConfig>
-  ) => void;
-  /** Alias for onChange */
-  onConfigChange?: (
-    next: KickoffTrainingConfig,
-    patch: Partial<KickoffTrainingConfig>
-  ) => void;
-  onStartTraining?: (config: KickoffTrainingConfig) => void;
-  onBack?: () => void;
-  className?: string;
-}
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer3KickoffTrainingRecipe',
+  title: 'Kickoff Training Setup',
+  subtitle: 'Kickoff Drill Pacing, AI Spawn Side, Ghost Mode & PPO Tuner',
+  description:
+    'Configure countdown pacing, AI opponent spawn geometry, and kickoff training floating tools.',
+  icon: 'Zap',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 520,
+    height: 520,
+    minHeight: 220,
+    maxHeight: 1080,
+    mode: 'adaptive',
+  },
+  variants: [
+    {
+      variantId: 'kickoff:instant',
+      label: 'Instant Drill · Opposite Side',
+      storeOverrides: {
+        kickoffTrainingStore: {
+          subMode: 'instant',
+          ghostPlacement: 'opposite',
+          ghostModeEnabled: false,
+        },
+      },
+    },
+    {
+      variantId: 'kickoff:easy-learning',
+      label: 'Easy Learning · Shadow Ghost',
+      storeOverrides: {
+        kickoffTrainingStore: {
+          subMode: 'easy-learning',
+          ghostPlacement: 'same',
+          ghostModeEnabled: true,
+        },
+      },
+    },
+    {
+      variantId: 'kickoff:realistic',
+      label: 'Realistic · Opposite Duel',
+      storeOverrides: {
+        kickoffTrainingStore: {
+          subMode: 'realistic',
+          ghostPlacement: 'opposite',
+          ghostModeEnabled: false,
+        },
+      },
+    },
+  ],
+};
+
+export interface Layer3KickoffTrainingRecipeProps extends StandardSurfaceProps {}
 
 const SUB_MODE_DESCRIPTIONS: Record<KickoffSubMode, string> = {
   instant:
@@ -74,55 +116,117 @@ const DRILL_MODE_CARDS: Array<{
  * 1. Drill Mode — small header + 3 selectable cards (Instant | Easy Learning | Realistic) with checkmark & inverted active state
  * 2. AI Spawn Position — inline SegmentedSwitch (Same Side | Opposite Side)
  * 3. Ghost Mode — single-line ToggleSwitch
- * 4. Kickoff Training Tuner (PPO) — single-line FloatingWindowCard spawner (Rhythm Note Highway toggle resides inside the Floating Window)
+ * 4. Kickoff Training Tuner (PPO) — single-line FloatingWindowCard spawner
  * 5. Start Kickoff Drill — primary action button
+ *
+ * Store-First contract (`StandardSurfaceProps` <= 4 props), reading directly from
+ * `useKickoffTrainingStore` and `useAppStore` via `useScopedStore`.
  */
-export const Layer3KickoffTrainingRecipe: React.FC<Layer3KickoffTrainingRecipeProps> = React.memo((rawProps) => {
-  const {
+export const Layer3KickoffTrainingRecipe: React.FC<Layer3KickoffTrainingRecipeProps> = React.memo(({
   isLight = true,
-  config: controlledConfigProp,
-  settings: controlledSettingsProp,
-  defaultConfig,
-  onChange,
-  onConfigChange,
-  onStartTraining,
-  onBack = () => {},
-  className = '',
-} = useLayer3KickoffTrainingStoreBinding(rawProps);
-  const [internalConfig, setInternalConfig] = useState<KickoffTrainingConfig>({
-    ...DEFAULT_KICKOFF_TRAINING_CONFIG,
-    ...defaultConfig,
-  });
+  onBack: propOnBack,
+}) => {
+  const storeGoBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const closeMenu = useScopedStore('appStore', useAppStore, (s) => s.closeMenu);
+  const setMatchMode = useScopedStore('appStore', useAppStore, (s) => s.setMatchMode);
+  const bridge = useScopedStore('appStore', useAppStore, (s) => s.bridge);
 
-  const controlledSource = controlledConfigProp ?? controlledSettingsProp;
-  const resolvedConfig: KickoffTrainingConfig = {
-    ...internalConfig,
-    ...controlledSource,
-  };
+  const subModeState = useScopedStore(
+    'kickoffTrainingStore',
+    useKickoffTrainingStore,
+    (s) => s.subMode
+  );
+  const ghostPlacement = useScopedStore(
+    'kickoffTrainingStore',
+    useKickoffTrainingStore,
+    (s) => s.ghostPlacement
+  );
+  const ghostModeEnabled = useScopedStore(
+    'kickoffTrainingStore',
+    useKickoffTrainingStore,
+    (s) => s.ghostModeEnabled
+  );
+  const setSubMode = useScopedStore(
+    'kickoffTrainingStore',
+    useKickoffTrainingStore,
+    (s) => s.setSubMode
+  );
+  const setGhostPlacement = useScopedStore(
+    'kickoffTrainingStore',
+    useKickoffTrainingStore,
+    (s) => s.setGhostPlacement
+  );
+  const setGhostModeEnabled = useScopedStore(
+    'kickoffTrainingStore',
+    useKickoffTrainingStore,
+    (s) => s.setGhostModeEnabled
+  );
+  const setShowKeyboardOverlay = useScopedStore(
+    'kickoffTrainingStore',
+    useKickoffTrainingStore,
+    (s) => s.setShowKeyboardOverlay
+  );
+
+  const calibratedDefaults = resolveCalibratedDefaultConfig(
+    SURFACE_META.id,
+    DEFAULT_KICKOFF_TRAINING_CONFIG
+  );
+
+  const subMode: KickoffSubMode = subModeState ?? calibratedDefaults.subMode;
+  const aiSpawnSide: KickoffAISpawnSide =
+    ghostPlacement === 'same' ? 'same-position' : 'opposite-side';
+  const ghostMode: boolean = ghostModeEnabled ?? calibratedDefaults.ghostMode;
 
   const updateConfig = (patch: Partial<KickoffTrainingConfig>) => {
-    const next: KickoffTrainingConfig = {
-      ...resolvedConfig,
-      ...patch,
-    };
-    if (controlledSource === undefined) {
-      setInternalConfig(next);
+    if (patch.subMode !== undefined) setSubMode(patch.subMode);
+    if (patch.aiSpawnSide !== undefined) {
+      setGhostPlacement(patch.aiSpawnSide === 'same-position' ? 'same' : 'opposite');
     }
-    onChange?.(next, patch);
-    onConfigChange?.(next, patch);
+    if (patch.ghostMode !== undefined) setGhostModeEnabled(patch.ghostMode);
+    if (patch.showRhythmHighway !== undefined) {
+      setShowKeyboardOverlay(patch.showRhythmHighway);
+    }
   };
 
-  const { subMode, aiSpawnSide, ghostMode, showRhythmHighway } = resolvedConfig;
-  const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+  const handleStartTraining = () => {
+    setSubMode(subMode);
+    setGhostPlacement(aiSpawnSide === 'same-position' ? 'same' : 'opposite');
+    setGhostModeEnabled(ghostMode);
+    setMatchMode('kickoff-training');
+    closeMenu();
+    bridge.onStartKickoffTraining?.();
+  };
 
-  const sizing = useMenuLayoutStore((s) => s.panels['layer3-kickoff-training']);
-  const { titleFontSize, rowGap, paddingX } = useSettingActionRowStore();
+  const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+  const onBack = propOnBack ?? storeGoBack;
+
+  const storeSizing = useScopedStore(
+    'menuLayoutStore',
+    useMenuLayoutStore,
+    (s) => s.panels['layer3-kickoff-training']
+  );
+  const calibratedSizing = resolveCalibratedSurfaceSizing(
+    SURFACE_META.id,
+    SURFACE_META.defaultSizing
+  );
+  const sizing = storeSizing ?? {
+    mode: calibratedSizing.mode === 'fixed' ? 'fixed' : 'auto',
+    width: calibratedSizing.width,
+    targetHeight: typeof calibratedSizing.height === 'number' ? calibratedSizing.height : 520,
+    minHeight: calibratedSizing.minHeight ?? 220,
+    maxHeight: calibratedSizing.maxHeight ?? 1080,
+  };
+
+  const { titleFontSize, rowGap, paddingX } = useScopedStore(
+    'settingRowStore',
+    useSettingActionRowStore
+  );
 
   return (
     <PanelContainer
       isLight={isLight}
       sizing={sizing}
-      className={`w-full select-none ${className}`}
+      className="w-full select-none"
     >
       <PanelHeader
         isLight={isLight}
@@ -250,14 +354,7 @@ export const Layer3KickoffTrainingRecipe: React.FC<Layer3KickoffTrainingRecipePr
 
         <button
           type="button"
-          onClick={() =>
-            onStartTraining?.({
-              subMode,
-              aiSpawnSide,
-              ghostMode,
-              showRhythmHighway,
-            })
-          }
+          onClick={handleStartTraining}
           onMouseEnter={() =>
             setHoveredDesc('Enter 120Hz Kickoff Training arena with the selected drill configuration.')
           }
@@ -279,3 +376,4 @@ export const Layer3KickoffTrainingRecipe: React.FC<Layer3KickoffTrainingRecipePr
 });
 
 Layer3KickoffTrainingRecipe.displayName = 'Layer3KickoffTrainingRecipe';
+export default Layer3KickoffTrainingRecipe;

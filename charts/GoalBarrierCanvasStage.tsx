@@ -1,5 +1,7 @@
 import React from 'react';
 import { Crosshair, Layers } from 'lucide-react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
 import {
   GOAL_BARRIER_WIDTH_UU,
   GOAL_BARRIER_HEIGHT_UU,
@@ -8,6 +10,8 @@ import {
   type GoalBarrierSelectionMode,
   type GoalBarrierPresetId,
 } from './goalBarrierMath';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:GoalBarrierCanvasStage' as const;
 
 export interface GoalBarrierCanvasStageProps {
   isEmbedded: boolean;
@@ -42,15 +46,17 @@ export const GoalBarrierCanvasStage: React.FC<GoalBarrierCanvasStageProps> = ({
 }) => {
   return (
     <>
-      <div className="flex flex-col gap-1.5">
+      <div data-alpha-id={ALPHA_COMPONENT_ID} className="flex flex-col gap-1.5">
         <div
           onMouseDown={onStageMouseDown}
           onMouseMove={onStageMouseMove}
           onMouseLeave={onStageMouseLeave}
           className={`relative ${
             isEmbedded ? 'p-5' : 'p-6'
-          } rounded-xl border cursor-crosshair overflow-hidden ${
-            isLight ? 'bg-neutral-100 border-neutral-300' : 'bg-neutral-950/90 border-neutral-800'
+          } ${UI_RADIUS.card} border cursor-crosshair overflow-hidden ${
+            isLight
+              ? `bg-neutral-100 border-neutral-300`
+              : `bg-neutral-950/90 ${UI_THEME.dark.border}`
           }`}
         >
           {!isEmbedded && (

@@ -23,19 +23,27 @@ const DOWN_COUNTER_OPTIONS: { label: string; value: string }[] = [
   { label: '3s', value: '3' },
 ];
 
-export interface StaticTrainingPackInspectorActionsProps {
-  isLight: boolean;
-  selectedMeta: StaticTrainingPackSummary & { editable?: boolean };
+export interface StaticTrainingPackDownCounterControl {
   downCounterEnabled: boolean;
   setDownCounterEnabled: (val: boolean) => void;
   downCounterValue: StaticPackDownCounterOption;
   setDownCounterValue: (val: StaticPackDownCounterOption) => void;
+}
+
+export interface StaticTrainingPackActionCallbacks {
   confirmDeleteUuid: string | null;
   setConfirmDeleteUuid: (val: string | null) => void;
   onPlayPack: (meta: StaticTrainingPackSummary) => void;
   onEditPack: (meta: StaticTrainingPackSummary) => void;
   onExportPack: (meta: StaticTrainingPackSummary, editable: boolean) => void;
   onDeletePack: (uuid: string) => void;
+}
+
+export interface StaticTrainingPackInspectorActionsProps {
+  isLight: boolean;
+  selectedMeta: StaticTrainingPackSummary & { editable?: boolean };
+  downCounter: StaticTrainingPackDownCounterControl;
+  actions: StaticTrainingPackActionCallbacks;
   onHoverDesc: (desc: string | null) => void;
 }
 
@@ -45,16 +53,20 @@ export const StaticTrainingPackInspectorActions: React.FC<
   ({
     isLight,
     selectedMeta,
-    downCounterEnabled,
-    setDownCounterEnabled,
-    downCounterValue,
-    setDownCounterValue,
-    confirmDeleteUuid,
-    setConfirmDeleteUuid,
-    onPlayPack,
-    onEditPack,
-    onExportPack,
-    onDeletePack,
+    downCounter: {
+      downCounterEnabled,
+      setDownCounterEnabled,
+      downCounterValue,
+      setDownCounterValue,
+    },
+    actions: {
+      confirmDeleteUuid,
+      setConfirmDeleteUuid,
+      onPlayPack,
+      onEditPack,
+      onExportPack,
+      onDeletePack,
+    },
     onHoverDesc,
   }) => {
     const isEditable =

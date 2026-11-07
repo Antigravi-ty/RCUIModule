@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAppStore } from '../stores/appStore';
-import { audioConfig, type DynamicRangeProfileId } from '../config/audioConfig';
 import {
   Activity,
   Compass,
@@ -13,61 +11,110 @@ import {
   Speaker,
   Volume2,
 } from 'lucide-react';
-import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
-import { PanelFooter } from '../layout/PanelFooter';
-import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
+import { audioConfig, type DynamicRangeProfileId } from '../config/audioConfig';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
+import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
+import { PanelFooter } from '../layout/PanelFooter';
+import { resolveCalibratedSurfaceSizing } from '../manifest/surfaceCalibration';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
 
-export interface Layer3AcousticsEqualizerStateOverride {
-  dynamicRangeProfile?: DynamicRangeProfileId;
-  spatialAudio?: boolean;
-  spatialPanningModel?: 'equalpower' | 'HRTF';
-  distanceModel?: 'smoothstep' | 'inverse' | 'linear' | 'exponential';
-  audibilityFloor?: number;
-  arenaAcousticScale?: number;
-  bassGain?: number;
-  midGain?: number;
-  trebleGain?: number;
-  farFieldHighShelfDb?: number;
-}
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer3AcousticsEqualizerRecipe',
+  title: 'Acoustics & Equalizer',
+  subtitle: 'Master 3-Band Parametric EQ, Dynamic Range Compressor & 3D Spatial Acoustics',
+  icon: 'Sliders',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 480,
+    height: 540,
+    minHeight: 220,
+    maxHeight: 1080,
+    mode: 'adaptive',
+  },
+  variants: [
+    {
+      variantId: 'dynamic-default',
+      label: 'Dynamic Profile (Default)',
+      storeOverrides: {
+        appStore: {
+          developerMode: true,
+        },
+      },
+    },
+    {
+      variantId: 'night-compressed',
+      label: 'Night Profile + HRTF',
+      storeOverrides: {
+        appStore: {
+          developerMode: true,
+          audio: {
+            masterVolume: 80,
+            sfxVolume: 100,
+            engineVolume: 85,
+            crowdVolume: 65,
+            musicVolume: 50,
+            voiceVolume: 90,
+            spatialAudio: true,
+            hrtfEnabled: true,
+            spatialPanningModel: 'HRTF',
+            distanceModel: 'smoothstep',
+            audibilityFloor: 20,
+            arenaAcousticScale: 1.0,
+            dynamicRangeProfile: 'compressed',
+            bassGain: 2,
+            midGain: 1,
+            trebleGain: -1,
+            farFieldHighShelfDb: -3,
+          },
+        },
+      },
+    },
+  ],
+};
 
-export interface Layer3AcousticsEqualizerRecipeProps {
-  isLight?: boolean;
-  developerMode?: boolean;
-  onBack?: () => void;
-  hasError?: boolean;
-  onCheckNotification?: () => void;
-  stateOverride?: Layer3AcousticsEqualizerStateOverride;
-}
+export type Layer3AcousticsEqualizerRecipeProps = StandardSurfaceProps;
 
 /**
  * [Recipe] Layer 3 Acoustics & Equalizer
  * Streamlined single-column vertical layout sharing unified Settings row typography & spacing,
  * wired directly to `useAppStore` and `audioConfig` -> `MasterAcousticProcessor`.
  */
-export const Layer3AcousticsEqualizerRecipe: React.FC<Layer3AcousticsEqualizerRecipeProps> = ({
-  isLight = false,
-  developerMode: propDevMode,
-  onBack: propOnBack,
-  hasError: propHasError,
-  onCheckNotification,
-  stateOverride,
-}) => {
-  const storeGoBack = useAppStore((s) => s.goBack);
-  const storeDevMode = useAppStore((s) => s.developerMode);
-  const storeAudio = useAppStore((s) => s.audio);
-  const updateAudio = useAppStore((s) => s.updateAudio);
+export const Layer3AcousticsEqualizerRecipe: React.FC<
+  Layer3AcousticsEqualizerRecipeProps
+> = ({ isLight = false, onBack: propOnBack }) => {
+  const storeGoBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const storeDevMode = useScopedStore('appStore', useAppStore, (s) => s.developerMode);
+  const storeAudio = useScopedStore('appStore', useAppStore, (s) => s.audio);
+  const updateAudio = useScopedStore('appStore', useAppStore, (s) => s.updateAudio);
 
   const onBack = propOnBack ?? storeGoBack;
-  const developerMode = propDevMode ?? storeDevMode ?? true;
-  const { panels, simulateLayer3Error } = useMenuLayoutStore();
-  const sizing = panels['layer3-acoustics-equalizer'];
-  const showError = propHasError ?? simulateLayer3Error;
-  const { rowGap } = useSettingActionRowStore();
+  const developerMode = storeDevMode ?? true;
+  const { panels, simulateLayer3Error } = useScopedStore(
+    'menuLayoutStore',
+    useMenuLayoutStore
+  );
+  const calibratedSizing = resolveCalibratedSurfaceSizing(
+    SURFACE_META.id,
+    SURFACE_META.defaultSizing
+  );
+  const sizing = panels?.['layer3-acoustics-equalizer'] ?? {
+    mode: calibratedSizing.mode === 'fixed' ? ('fixed' as const) : ('auto' as const),
+    width: calibratedSizing.width,
+    targetHeight:
+      typeof calibratedSizing.height === 'number' ? calibratedSizing.height : 540,
+    minHeight: calibratedSizing.minHeight ?? 220,
+    maxHeight: calibratedSizing.maxHeight ?? 1080,
+  };
+  const showError = Boolean(simulateLayer3Error);
+  const { rowGap } = useScopedStore('settingRowStore', useSettingActionRowStore);
 
   useEffect(() => {
     const unsub = audioConfig.subscribe((cfg) => {
@@ -136,22 +183,18 @@ export const Layer3AcousticsEqualizerRecipe: React.FC<Layer3AcousticsEqualizerRe
   }, []);
 
   const compressionMode: DynamicRangeProfileId =
-    stateOverride?.dynamicRangeProfile ?? storeAudio.dynamicRangeProfile ?? 'dynamic';
-  const spatialAudio: boolean =
-    stateOverride?.spatialAudio ?? storeAudio.hrtfEnabled ?? true;
+    storeAudio.dynamicRangeProfile ?? 'dynamic';
+  const spatialAudio: boolean = storeAudio.hrtfEnabled ?? true;
   const panningModel: 'equalpower' | 'HRTF' =
-    stateOverride?.spatialPanningModel ?? storeAudio.spatialPanningModel ?? 'equalpower';
+    storeAudio.spatialPanningModel ?? 'equalpower';
   const rolloffCurve: 'smoothstep' | 'inverse' | 'linear' | 'exponential' =
-    stateOverride?.distanceModel ?? storeAudio.distanceModel ?? 'smoothstep';
-  const audibilityFloor: number =
-    stateOverride?.audibilityFloor ?? storeAudio.audibilityFloor ?? 15;
-  const acousticScale: number =
-    stateOverride?.arenaAcousticScale ?? storeAudio.arenaAcousticScale ?? 1.0;
-  const bassGain: number = stateOverride?.bassGain ?? storeAudio.bassGain ?? 0;
-  const midGain: number = stateOverride?.midGain ?? storeAudio.midGain ?? 0;
-  const trebleGain: number = stateOverride?.trebleGain ?? storeAudio.trebleGain ?? 0;
-  const farFieldHighShelfDb: number =
-    stateOverride?.farFieldHighShelfDb ?? storeAudio.farFieldHighShelfDb ?? 0;
+    storeAudio.distanceModel ?? 'smoothstep';
+  const audibilityFloor: number = storeAudio.audibilityFloor ?? 15;
+  const acousticScale: number = storeAudio.arenaAcousticScale ?? 1.0;
+  const bassGain: number = storeAudio.bassGain ?? 0;
+  const midGain: number = storeAudio.midGain ?? 0;
+  const trebleGain: number = storeAudio.trebleGain ?? 0;
+  const farFieldHighShelfDb: number = storeAudio.farFieldHighShelfDb ?? 0;
 
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
@@ -206,11 +249,7 @@ export const Layer3AcousticsEqualizerRecipe: React.FC<Layer3AcousticsEqualizerRe
           className="flex flex-col w-full"
           style={{ gap: `${rowGap}px` }}
         >
-          <InlineErrorNotice
-            visible={showError}
-            isLight={isLight}
-            onCheckNotification={onCheckNotification}
-          />
+          <InlineErrorNotice visible={showError} isLight={isLight} />
 
           {/* 1. Dynamic Range Profile */}
           <SettingSegmentedRow
@@ -229,7 +268,7 @@ export const Layer3AcousticsEqualizerRecipe: React.FC<Layer3AcousticsEqualizerRe
               { value: 'dynamic', label: 'Dynamic' },
               { value: 'monitor', label: 'Studio' },
             ]}
-            hoverDescription="Dynamic range compression profile: Night (high-ratio peak control + detail lift), Dynamic (competitive limiter against multi-impact clipping), or Studio (uncompressed reference)."
+            hoverDescription="Dynamic range profile: Night (peak control + detail lift), Dynamic (competitive limiter), or Studio (uncompressed reference)."
             onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -428,7 +467,7 @@ export const Layer3AcousticsEqualizerRecipe: React.FC<Layer3AcousticsEqualizerRe
             showDescription={false}
             colorScheme={farFieldHighShelfDb !== 0 ? 'sky' : 'neutral'}
             onChange={(val) => updateAudio({ farFieldHighShelfDb: val })}
-            hoverDescription="Optional high-shelf roll-off (5.5kHz, 0dB to -12dB, default 0dB uncolored) to gently tame harshness without muffling transient snap."
+            hoverDescription="High-shelf roll-off (5.5kHz, 0dB to -12dB) to gently tame far-field harshness."
             onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -438,10 +477,11 @@ export const Layer3AcousticsEqualizerRecipe: React.FC<Layer3AcousticsEqualizerRe
 
       <PanelFooter
         isLight={isLight}
-        defaultDescription="Configure Master 3-Band Parametric EQ (100Hz / 1kHz / 10kHz), Dynamic Range Compressor (Night / Dynamic / Studio), and 3D spatial acoustics."
+        defaultDescription="Configure Master 3-Band EQ (100Hz / 1kHz / 10kHz), Dynamic Range Compressor, and 3D spatial acoustics."
         hoveredDescription={hoveredDesc}
       />
     </PanelContainer>
   );
 };
 
+export default Layer3AcousticsEqualizerRecipe;

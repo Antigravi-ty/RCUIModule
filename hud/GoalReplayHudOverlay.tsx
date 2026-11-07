@@ -5,14 +5,14 @@ import { useReplayToRcsImporterStore } from '../stores/replayToRcsImporterStore'
 import { useRewinderStore } from '../stores/rewinderStore';
 import type { HudTransientChannel } from '../stores/hudTransientTypes';
 import { TemporalReplayFooterHUD } from './TemporalReplayFooterHUD';
+import { TakeoverCountdownHUD } from './TakeoverCountdownHUD';
 import {
-  TakeoverCountdownHUD,
   DEFAULT_TAKEOVER_GLOW,
   DEFAULT_TAKEOVER_TYPOGRAPHY,
   DEFAULT_TAKEOVER_TIMING,
   DEFAULT_TAKEOVER_LAYOUT,
   type TakeoverTeamSide,
-} from './TakeoverCountdownHUD';
+} from './takeoverCountdownDefaults';
 import { useTakeoverPrerollChoreography } from './useInGameHudChoreography';
 
 export function useGoalReplayAndTakeoverHudState(params: {

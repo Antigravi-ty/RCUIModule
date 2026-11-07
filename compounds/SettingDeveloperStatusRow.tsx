@@ -5,6 +5,9 @@ import {
   useSettingActionRowStore,
   type DevStatusAccentColor,
 } from '../stores/settingRowStore';
+import { UI_RADIUS } from '../tokens/radius';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:SettingDeveloperStatusRow' as const;
 
 export interface SettingDeveloperStatusRowProps {
   /** Primary row title (default: 'Developer Settings') */
@@ -127,6 +130,7 @@ export const SettingDeveloperStatusRow: React.FC<SettingDeveloperStatusRowProps>
       className={className}
       rightSlot={
         <span
+          data-alpha-id={ALPHA_COMPONENT_ID}
           role={resolvedInteractive ? 'button' : 'status'}
           aria-disabled={!developerMode ? true : undefined}
           tabIndex={resolvedInteractive ? 0 : undefined}
@@ -163,7 +167,7 @@ export const SettingDeveloperStatusRow: React.FC<SettingDeveloperStatusRowProps>
               : 'Developer Mode is Disabled (requires ?dev=1 URL query parameter)'
           }
         >
-          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dotClass}`} />
+          <span className={`h-1.5 w-1.5 ${UI_RADIUS.full} shrink-0 ${dotClass}`} />
           <span>{developerMode ? 'Active' : 'Disabled'}</span>
         </span>
       }

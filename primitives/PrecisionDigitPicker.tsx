@@ -1,4 +1,8 @@
 import React, { createContext, useContext } from 'react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:PrecisionDigitPicker' as const;
 
 export interface TunerPrecisionContextValue {
   step: number;
@@ -75,6 +79,7 @@ export const PrecisionDigitPicker: React.FC<PrecisionDigitPickerProps> = React.m
   isLight = false,
   className = '',
 }) => {
+  const theme = isLight ? UI_THEME.light : UI_THEME.dark;
   const currentItem =
     digits.find((d) => Math.abs(d.val - step) < 0.0000001) || digits[Math.min(3, digits.length - 1)];
 
@@ -128,8 +133,9 @@ export const PrecisionDigitPicker: React.FC<PrecisionDigitPickerProps> = React.m
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="precision-digit-picker"
-      className={`p-2.5 rounded-xl border flex flex-col gap-1.5 select-none transition-colors ${
+      className={`p-2.5 ${UI_RADIUS.lg} border flex flex-col gap-1.5 select-none transition-colors ${
         isLight
           ? 'bg-neutral-50/90 border-neutral-200 text-neutral-800'
           : 'bg-neutral-900/60 border-neutral-800 text-neutral-200'
@@ -142,12 +148,12 @@ export const PrecisionDigitPicker: React.FC<PrecisionDigitPickerProps> = React.m
               {label}
             </span>
             {subtitle && (
-              <span className={`text-[10px] truncate ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+              <span className={`text-[10px] truncate ${theme.textMuted}`}>
                 {subtitle}
               </span>
             )}
           </div>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold border shrink-0 ${accent.badge}`}>
+          <span className={`text-[10px] px-1.5 py-0.5 ${UI_RADIUS.sm} font-mono font-bold border shrink-0 ${accent.badge}`}>
             {currentItem.delta} ({currentItem.name})
           </span>
         </div>
@@ -155,7 +161,7 @@ export const PrecisionDigitPicker: React.FC<PrecisionDigitPickerProps> = React.m
 
       {/* 1 . 0 0 0 0 0 interactive digital strip */}
       <div
-        className={`flex items-center justify-center p-1.5 rounded-lg border gap-1 ${
+        className={`flex items-center justify-center p-1.5 ${UI_RADIUS.md} border gap-1 ${
           isLight ? 'bg-neutral-200/60 border-neutral-300/80' : 'bg-neutral-950/80 border-neutral-800'
         }`}
       >
@@ -165,7 +171,7 @@ export const PrecisionDigitPicker: React.FC<PrecisionDigitPickerProps> = React.m
             type="button"
             onClick={() => onStepChange(unitDigit.val)}
             title={`${unitDigit.name} (Step ${unitDigit.delta})`}
-            className={`h-7 px-3 rounded text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center outline-none ${
+            className={`h-7 px-3 ${UI_RADIUS.sm} text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center outline-none ${
               Math.abs(step - unitDigit.val) < 0.0000001
                 ? accent.activeBtn
                 : isLight
@@ -189,7 +195,7 @@ export const PrecisionDigitPicker: React.FC<PrecisionDigitPickerProps> = React.m
               type="button"
               onClick={() => onStepChange(d.val)}
               title={`Digit ${idx + 1}: ${d.name} (Step ${d.delta})`}
-              className={`h-7 px-3 rounded text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center outline-none ${
+              className={`h-7 px-3 ${UI_RADIUS.sm} text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center outline-none ${
                 isSelected
                   ? accent.activeBtn
                   : isLight

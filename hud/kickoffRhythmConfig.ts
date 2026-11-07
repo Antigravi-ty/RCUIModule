@@ -220,3 +220,51 @@ export function paintKickoffHighway(
   ctx.fillStyle = isLight ? 'rgba(2, 132, 199, 0.85)' : 'rgba(56, 189, 248, 0.85)';
   ctx.fillRect(0, h - 2, w, 2);
 }
+
+export function applyKickoffReceptorRowState(
+  keyBoxRefs: Record<KickoffKeyId, HTMLDivElement | null>,
+  keyDotRefs: Record<KickoffKeyId, HTMLSpanElement | null>,
+  reqMap: Partial<Record<KickoffKeyId, boolean>> | undefined,
+  playMap: Partial<Record<KickoffKeyId, boolean>> | undefined,
+  isLight: boolean
+): void {
+  for (let i = 0; i < KICKOFF_RHYTHM_KEY_ORDER.length; i++) {
+    const k = KICKOFF_RHYTHM_KEY_ORDER[i];
+    const box = keyBoxRefs[k];
+    const dot = keyDotRefs[k];
+    if (!box) continue;
+
+    const aiActive = Boolean(reqMap?.[k]);
+    const playerActive = Boolean(playMap?.[k]);
+    const stateKey = `${aiActive ? 1 : 0}-${playerActive ? 1 : 0}-${isLight ? 1 : 0}`;
+    if (box.dataset.stateKey !== stateKey) {
+      box.dataset.stateKey = stateKey;
+      if (aiActive && playerActive) {
+        box.style.borderColor = '#10b981';
+        box.style.backgroundColor = isLight
+          ? 'rgba(16, 185, 129, 0.25)'
+          : 'rgba(16, 185, 129, 0.35)';
+        box.style.boxShadow = '0 0 0 1px rgba(52, 211, 153, 0.55)';
+      } else if (aiActive && !playerActive) {
+        box.style.borderColor = LANE_META[k].strokeHex;
+        box.style.backgroundColor = isLight
+          ? 'rgba(14, 165, 233, 0.2)'
+          : 'rgba(56, 189, 248, 0.22)';
+        box.style.boxShadow = `0 0 0 1px ${LANE_META[k].strokeHex}`;
+      } else if (!aiActive && playerActive) {
+        box.style.borderColor = '#f59e0b';
+        box.style.backgroundColor = 'rgba(245, 158, 11, 0.25)';
+        box.style.boxShadow = '0 0 0 1px rgba(251, 191, 36, 0.55)';
+      } else {
+        box.style.borderColor = '';
+        box.style.backgroundColor = '';
+        box.style.boxShadow = '';
+      }
+    }
+
+    if (dot) {
+      dot.style.display = playerActive ? 'block' : 'none';
+      dot.style.backgroundColor = aiActive ? '#34d399' : '#fbbf24';
+    }
+  }
+}

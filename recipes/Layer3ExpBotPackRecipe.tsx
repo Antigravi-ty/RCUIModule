@@ -1,111 +1,174 @@
-import React, { useState } from 'react';
-import { useLayer3ExpMultiBotsStoreBinding } from './hooks/useLayer3ExpMultiBotsBinding';
-import type { Layer3ExpMultiBotsRecipeProps } from './Layer3ExpMultiBotsRecipe';
+import React, { useEffect, useState } from 'react';
 import { Card } from '../layout/Card';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
-import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
-import { SliderControl } from '../primitives/SliderControl';
-import { ToggleSwitch } from '../primitives/ToggleSwitch';
 import {
   TeamRosterCard,
-  TeamRosterSlotConfig,
-  BotPolicyId,
-  DEFAULT_BLUE_TEAM_SLOTS,
-  DEFAULT_ORANGE_TEAM_SLOTS,
+  type TeamRosterSlotConfig,
+  type BotPolicyId,
+  type CarColorSwatch,
 } from '../compounds/TeamRosterCard';
+import { useAppStore } from '../stores/appStore';
+import { useExperimentalMultiBotsStore } from '../stores/experimentalMultiBotsStore';
 import {
   BOTPACK_9700488_POLICY_METAS,
+  EXP_CAR_COLOR_PALETTE,
   getExpBotPolicyMeta,
 } from '../stores/experimentalMultiBotsRosterUtils';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import {
+  ExpBotsMatchOptionsAndPovSection,
+  enterOrRestartExperimentalBotsGame,
+} from './dev/ExpBotsMatchOptionsAndPovSection';
 
-export type Layer3ExpBotPackRecipeProps = Layer3ExpMultiBotsRecipeProps;
+export type Layer3ExpBotPackRecipeProps = StandardSurfaceProps;
 
-export const Layer3ExpBotPackRecipe: React.FC<Layer3ExpBotPackRecipeProps> = React.memo(
-  (rawProps) => {
-    const {
-      isLight = true,
-      defaultBlueSlots = DEFAULT_BLUE_TEAM_SLOTS,
-      defaultOrangeSlots = DEFAULT_ORANGE_TEAM_SLOTS,
-      blueSlots: controlledBlueSlots,
-      orangeSlots: controlledOrangeSlots,
-      colorPalette,
-      activeCameraCarIndex: controlledActiveCameraCarIndex,
-      activeBotpackShowcaseModel = 'chronos',
-      matchDurationSec: controlledMatchDurationSec,
-      simSpeedValue: controlledSimSpeedValue,
-      unlimitedBoost: controlledUnlimitedBoost,
-      disableGoalReplay: controlledDisableGoalReplay,
-      lastTotalInferenceMs = 0,
-      isInExpMode = false,
-      onSelectBotpackShowcaseModel,
-      onAddBot,
-      onSelectCameraCar,
-      onSetSlotBotType,
-      onSetSlotColor,
-      onRemoveSlot,
-      onSetMatchDurationSec,
-      onSetSimSpeed,
-      onSetUnlimitedBoost,
-      onSetDisableGoalReplay,
-      onTriggerSandboxAction,
-      onStartSimulation,
-      onLaunchFloatingControl,
-      onEnterGame,
-      onBack = () => {},
-      className = '',
-    } = useLayer3ExpMultiBotsStoreBinding({ ...rawProps.stateOverride, ...rawProps }, 'botpack');
+export const SURFACE_META: SurfaceMeta = {
+  id: 'layer3-exp-botpack',
+  title: 'EXPERIMENTAL BOT PACK #9700488 (8 NATIVE MODELS)',
+  subtitle: '8 Native SafeTensors RLBot #9700488 Models Showcase',
+  description:
+    'Spectate the 8 native SafeTensors models from RLBot Pack #9700488 in their recommended match formats.',
+  icon: 'sparkles',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: DEFAULT_PANEL_SIZING['layer3-exp-botpack'].width,
+    height: DEFAULT_PANEL_SIZING['layer3-exp-botpack'].targetHeight,
+    minHeight: DEFAULT_PANEL_SIZING['layer3-exp-botpack'].minHeight,
+    maxHeight: DEFAULT_PANEL_SIZING['layer3-exp-botpack'].maxHeight,
+  },
+};
 
-    const [internalBlueSlots, setInternalBlueSlots] =
-      useState<TeamRosterSlotConfig[]>(defaultBlueSlots);
-    const [internalOrangeSlots, setInternalOrangeSlots] =
-      useState<TeamRosterSlotConfig[]>(defaultOrangeSlots);
-    const [internalActiveCameraCarIndex, setInternalActiveCameraCarIndex] =
-      useState<number>(0);
-    const [internalMatchDurationSec, setInternalMatchDurationSec] =
-      useState<number>(90);
-    const [internalSimSpeed, setInternalSimSpeed] = useState<string>('1x');
-    const [internalUnlimitedBoost, setInternalUnlimitedBoost] =
-      useState<boolean>(false);
-    const [internalDisableGoalReplay, setInternalDisableGoalReplay] =
-      useState<boolean>(true);
-    const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+const EXP_SWATCH_PALETTE: CarColorSwatch[] = EXP_CAR_COLOR_PALETTE.map((c) => ({
+  id: String(c.id),
+  name: c.name,
+  hex: c.hex,
+}));
 
-    const blueSlots = controlledBlueSlots ?? internalBlueSlots;
-    const orangeSlots = controlledOrangeSlots ?? internalOrangeSlots;
-    const activeCameraCarIndex =
-      controlledActiveCameraCarIndex ?? internalActiveCameraCarIndex;
-    const matchDurationSec =
-      controlledMatchDurationSec ?? internalMatchDurationSec;
-    const simSpeedValue = controlledSimSpeedValue ?? internalSimSpeed;
-    const unlimitedBoost = controlledUnlimitedBoost ?? internalUnlimitedBoost;
-    const disableGoalReplay =
-      controlledDisableGoalReplay ?? internalDisableGoalReplay;
+export const Layer3ExpBotPackRecipe: React.FC<Layer3ExpBotPackRecipeProps> =
+  React.memo(({ isLight = true, onBack: propOnBack }) => {
+    const storeGoBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+    const matchMode = useScopedStore('appStore', useAppStore, (s) => s.matchMode);
+    const onBack = propOnBack ?? storeGoBack;
+    const isInExpMode = matchMode === 'exp-multi-bots';
 
-    const sizing = useMenuLayoutStore((s) => s.panels['layer3-exp-botpack']);
-    const totalCars = blueSlots.length + orangeSlots.length;
-    const activeMeta = getExpBotPolicyMeta(
-      activeBotpackShowcaseModel || blueSlots[0]?.botType || 'chronos'
+    const storeBlueSlots = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.blueSlots
+    );
+    const storeOrangeSlots = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.orangeSlots
+    );
+    const activeBotpackShowcaseModel = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.activeBotpackShowcaseModel
+    );
+    const savedBotpackModel = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.savedBotpackModel
+    );
+    const activeCameraCarIndex = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.activeCameraCarIndex
+    );
+    const lastTotalInferenceMs = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.lastTotalInferenceMs
+    );
+    const addBotToTeam = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.addBotToTeam
+    );
+    const removeSlotFromTeam = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.removeSlotFromTeam
+    );
+    const setSlotBotType = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.setSlotBotType
+    );
+    const setSlotColor = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.setSlotColor
+    );
+    const applyBotpack9700488Showcase = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.applyBotpack9700488Showcase
+    );
+    const setActiveCameraCarIndex = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.setActiveCameraCarIndex
+    );
+    const preloadEngines = useScopedStore(
+      'experimentalMultiBotsStore',
+      useExperimentalMultiBotsStore,
+      (s) => s.preloadEngines
     );
 
-    const handleEnterOrRestart = () => {
-      onStartSimulation?.({ blueSlots, orangeSlots, activeCameraCarIndex });
-      onLaunchFloatingControl?.();
-      onEnterGame?.();
-    };
+    const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+
+    useEffect(() => {
+      const st = useExperimentalMultiBotsStore.getState();
+      if (st.activeSubMode !== 'botpack') {
+        st.activateBotpackSubMode(undefined, false);
+      }
+      preloadEngines?.();
+    }, [preloadEngines]);
+
+    const blueSlots: TeamRosterSlotConfig[] = storeBlueSlots.map((s) => ({
+      id: s.id,
+      team: s.team,
+      isPlayer: s.isPlayer,
+      botType: s.botType as BotPolicyId,
+      colorSlot: String(s.colorSlot),
+    }));
+
+    const orangeSlots: TeamRosterSlotConfig[] = storeOrangeSlots.map((s) => ({
+      id: s.id,
+      team: s.team,
+      isPlayer: s.isPlayer,
+      botType: s.botType as BotPolicyId,
+      colorSlot: String(s.colorSlot),
+    }));
+
+    const sizing = useMenuLayoutStore(
+      (s) =>
+        s.panels?.['layer3-exp-botpack'] ??
+        DEFAULT_PANEL_SIZING['layer3-exp-botpack']
+    );
+    const totalCars = blueSlots.length + orangeSlots.length;
+    const selectedModel =
+      activeBotpackShowcaseModel ||
+      savedBotpackModel ||
+      blueSlots[0]?.botType ||
+      'chronos';
+    const activeMeta = getExpBotPolicyMeta(selectedModel);
 
     return (
-      <PanelContainer
-        isLight={isLight}
-        sizing={sizing}
-        className={`w-full select-none ${className}`}
-      >
+      <PanelContainer isLight={isLight} sizing={sizing} className="w-full select-none">
         <PanelHeader
           isLight={isLight}
           title="EXPERIMENTAL BOT PACK #9700488 (8 NATIVE MODELS)"
           onBack={onBack}
-          onRightAction={handleEnterOrRestart}
+          onRightAction={() => enterOrRestartExperimentalBotsGame('botpack')}
           rightActionLabel={isInExpMode ? 'Apply & Restart ↗' : 'Enter Game ↗'}
         />
 
@@ -141,12 +204,12 @@ export const Layer3ExpBotPackRecipe: React.FC<Layer3ExpBotPackRecipeProps> = Rea
             </div>
             <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
               {BOTPACK_9700488_POLICY_METAS.map((m) => {
-                const isSelected = activeBotpackShowcaseModel === m.id;
+                const isSelected = selectedModel === m.id;
                 return (
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => onSelectBotpackShowcaseModel?.(m.id)}
+                    onClick={() => applyBotpack9700488Showcase(m.id, true)}
                     onMouseEnter={() =>
                       setHoveredDesc(
                         `Configure ${m.label} (${m.formatBadge}) all-bots spectate match where every car runs ${m.label}.`
@@ -188,41 +251,16 @@ export const Layer3ExpBotPackRecipe: React.FC<Layer3ExpBotPackRecipeProps> = Rea
                 maxTeamSlots={activeMeta.maxPlayersPerTeam}
                 maxTotalCars={activeMeta.maxPlayersPerTeam * 2}
                 allowBotpackPolicies={true}
-                colorPalette={colorPalette}
-                onAddBot={
-                  onAddBot ??
-                  ((t, b) =>
-                    setInternalBlueSlots((prev) => [
-                      ...prev,
-                      {
-                        id: `${t}-${Date.now()}`,
-                        team: t,
-                        isPlayer: false,
-                        botType: b,
-                        colorSlot: 'sky',
-                      },
-                    ]))
+                colorPalette={EXP_SWATCH_PALETTE}
+                onAddBot={(team, botType) => addBotToTeam(team, botType)}
+                onSelectCameraCar={setActiveCameraCarIndex}
+                onSetSlotBotType={(team, slotIdx, botType) =>
+                  setSlotBotType(team, slotIdx, botType)
                 }
-                onSelectCameraCar={onSelectCameraCar ?? setInternalActiveCameraCarIndex}
-                onSetSlotBotType={
-                  onSetSlotBotType ??
-                  ((_, idx, b) =>
-                    setInternalBlueSlots((prev) =>
-                      prev.map((s, i) => (i === idx ? { ...s, botType: b } : s))
-                    ))
+                onSetSlotColor={(team, slotIdx, colorId) =>
+                  setSlotColor(team, slotIdx, Number(colorId))
                 }
-                onSetSlotColor={
-                  onSetSlotColor ??
-                  ((_, idx, c) =>
-                    setInternalBlueSlots((prev) =>
-                      prev.map((s, i) => (i === idx ? { ...s, colorSlot: c } : s))
-                    ))
-                }
-                onRemoveSlot={
-                  onRemoveSlot ??
-                  ((_, idx) =>
-                    setInternalBlueSlots((prev) => prev.filter((_, i) => i !== idx)))
-                }
+                onRemoveSlot={removeSlotFromTeam}
                 isLight={isLight}
               />
             </div>
@@ -244,170 +282,33 @@ export const Layer3ExpBotPackRecipe: React.FC<Layer3ExpBotPackRecipeProps> = Rea
                 maxTeamSlots={activeMeta.maxPlayersPerTeam}
                 maxTotalCars={activeMeta.maxPlayersPerTeam * 2}
                 allowBotpackPolicies={true}
-                colorPalette={colorPalette}
-                onAddBot={
-                  onAddBot ??
-                  ((t, b) =>
-                    setInternalOrangeSlots((prev) => [
-                      ...prev,
-                      {
-                        id: `${t}-${Date.now()}`,
-                        team: t,
-                        isPlayer: false,
-                        botType: b,
-                        colorSlot: 'amber',
-                      },
-                    ]))
+                colorPalette={EXP_SWATCH_PALETTE}
+                onAddBot={(team, botType) => addBotToTeam(team, botType)}
+                onSelectCameraCar={setActiveCameraCarIndex}
+                onSetSlotBotType={(team, slotIdx, botType) =>
+                  setSlotBotType(team, slotIdx, botType)
                 }
-                onSelectCameraCar={onSelectCameraCar ?? setInternalActiveCameraCarIndex}
-                onSetSlotBotType={
-                  onSetSlotBotType ??
-                  ((_, idx, b) =>
-                    setInternalOrangeSlots((prev) =>
-                      prev.map((s, i) => (i === idx ? { ...s, botType: b } : s))
-                    ))
+                onSetSlotColor={(team, slotIdx, colorId) =>
+                  setSlotColor(team, slotIdx, Number(colorId))
                 }
-                onSetSlotColor={
-                  onSetSlotColor ??
-                  ((_, idx, c) =>
-                    setInternalOrangeSlots((prev) =>
-                      prev.map((s, i) => (i === idx ? { ...s, colorSlot: c } : s))
-                    ))
-                }
-                onRemoveSlot={
-                  onRemoveSlot ??
-                  ((_, idx) =>
-                    setInternalOrangeSlots((prev) => prev.filter((_, i) => i !== idx)))
-                }
+                onRemoveSlot={removeSlotFromTeam}
                 isLight={isLight}
               />
             </div>
           </div>
 
-          {/* Match Duration & Simulation Options */}
-          <Card isLight={isLight} variant="outlined" className="p-3 flex flex-col gap-2.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider">
-                Match Duration &amp; Simulation Options
-              </span>
-              <div className="flex items-center gap-1">
-                {[
-                  { label: '1:30', sec: 90 },
-                  { label: '3:00', sec: 180 },
-                  { label: '5:00', sec: 300 },
-                  { label: '10:00', sec: 600 },
-                ].map((d) => (
-                  <button
-                    key={d.label}
-                    type="button"
-                    onClick={() => (onSetMatchDurationSec ?? setInternalMatchDurationSec)(d.sec)}
-                    className={`px-2 py-0.5 rounded border text-[10px] font-mono font-bold cursor-pointer ${
-                      matchDurationSec === d.sec
-                        ? 'bg-emerald-500 text-neutral-950 border-emerald-500'
-                        : isLight
-                          ? 'bg-white border-neutral-300 text-neutral-700'
-                          : 'bg-neutral-900 border-neutral-700 text-neutral-300'
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <SliderControl
-              label="Custom Match Duration"
-              min={30}
-              max={900}
-              step={30}
-              value={matchDurationSec}
-              onChange={onSetMatchDurationSec ?? setInternalMatchDurationSec}
-              unit="s"
-              isLight={isLight}
-            />
-
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold">Simulation Speed</span>
-              <SegmentedSwitch
-                size="sm"
-                isLight={isLight}
-                options={[
-                  { label: '1x', value: '1x' },
-                  { label: '2x', value: '2x' },
-                  { label: '3x', value: '3x' },
-                  { label: '4x', value: '4x' },
-                ]}
-                value={simSpeedValue}
-                onValueChange={onSetSimSpeed ?? setInternalSimSpeed}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <ToggleSwitch
-                label="Unlimited Boost"
-                checked={unlimitedBoost}
-                onCheckedChange={onSetUnlimitedBoost ?? setInternalUnlimitedBoost}
-                isLight={isLight}
-              />
-              <ToggleSwitch
-                label="Fast Goal Reset"
-                checked={disableGoalReplay}
-                onCheckedChange={onSetDisableGoalReplay ?? setInternalDisableGoalReplay}
-                isLight={isLight}
-              />
-            </div>
-          </Card>
-
-          {/* Camera POV Switcher & Live Match Actions */}
-          <Card isLight={isLight} variant="outlined" className="p-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider">
-                Camera POV Switcher (Keys 1–{totalCars}) &amp; Live Match Actions
-              </span>
-              <span className="text-[10px] font-mono text-emerald-500">
-                Active POV: Car #{activeCameraCarIndex + 1}
-              </span>
-            </div>
-            <div className="grid grid-cols-4 gap-1.5">
-              {(
-                [
-                  { label: 'Reset Kickoff', action: 'reset_kickoff' },
-                  { label: '+1 Blue Goal', action: 'score_blue' },
-                  { label: '+1 Orange Goal', action: 'score_orange' },
-                  { label: 'Force OT', action: 'force_overtime' },
-                ] as const
-              ).map((act) => (
-                <button
-                  key={act.label}
-                  type="button"
-                  onClick={() => onTriggerSandboxAction?.(act.action)}
-                  className={`py-1.5 px-2 rounded-lg border text-[10px] font-mono font-bold transition-colors cursor-pointer ${
-                    isLight
-                      ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-700'
-                      : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-300'
-                  }`}
-                >
-                  {act.label}
-                </button>
-              ))}
-            </div>
-          </Card>
-
-          <button
-            type="button"
-            onClick={handleEnterOrRestart}
-            onMouseEnter={() =>
-              setHoveredDesc(
-                `Apply & Restart ${activeMeta.label} (${blueSlots.length}v${orangeSlots.length}) BotPack #9700488 showcase.`
-              )
+          <ExpBotsMatchOptionsAndPovSection
+            isLight={isLight}
+            accentColor="emerald"
+            totalCars={totalCars}
+            enterButtonLabel={
+              isInExpMode
+                ? `Apply & Restart Showcase (${activeMeta.shortLabel} · ${blueSlots.length}v${orangeSlots.length})`
+                : `Enter Bot Pack Showcase (${activeMeta.shortLabel} · ${blueSlots.length}v${orangeSlots.length})`
             }
-            onMouseLeave={() => setHoveredDesc(null)}
-            className="mt-auto w-full py-2.5 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shrink-0"
-          >
-            {isInExpMode
-              ? `Apply & Restart Showcase (${activeMeta.shortLabel} · ${blueSlots.length}v${orangeSlots.length})`
-              : `Enter Bot Pack Showcase (${activeMeta.shortLabel} · ${blueSlots.length}v${orangeSlots.length})`}
-          </button>
+            enterHoverDescription={`Apply & Restart ${activeMeta.label} (${blueSlots.length}v${orangeSlots.length}) BotPack #9700488 showcase.`}
+            onHover={setHoveredDesc}
+          />
         </PanelContent>
 
         <PanelFooter
@@ -417,7 +318,6 @@ export const Layer3ExpBotPackRecipe: React.FC<Layer3ExpBotPackRecipeProps> = Rea
         />
       </PanelContainer>
     );
-  }
-);
+  });
 
 Layer3ExpBotPackRecipe.displayName = 'Layer3ExpBotPackRecipe';

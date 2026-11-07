@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
 import {
   useTunerPrecision,
   getDecimalPlaces,
 } from '../primitives/PrecisionDigitPicker';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:TunerControls' as const;
 
 export interface TunerRowProps {
   label: string;
@@ -35,7 +39,7 @@ export const TunerRow: React.FC<TunerRowProps> = ({
 
   const [text, setText] = useState<string>(String(value));
   const [isFocused, setIsFocused] = useState<boolean>(false);
-  const skipNextBlurCommitRef = React.useRef<boolean>(false);
+  const skipNextBlurCommitRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!isFocused) {
@@ -111,21 +115,26 @@ export const TunerRow: React.FC<TunerRowProps> = ({
 
   return (
     <div
+      data-alpha-id="Alpha:TunerRow"
       tabIndex={0}
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
       onKeyDown={handleKeyDown}
-      className={`p-2 rounded-xl border flex flex-col gap-1.5 transition-all outline-none ${
+      className={`p-2 ${UI_RADIUS.card} border flex flex-col gap-1.5 transition-all outline-none ${
         isFocused
           ? 'ring-1 ring-emerald-500 border-emerald-500/80 shadow-xs'
           : isLight
-          ? 'bg-neutral-50/80 border-neutral-200'
-          : 'bg-neutral-850/60 border-neutral-700/60'
+          ? `${UI_THEME.light.bgSurface} ${UI_THEME.light.border}`
+          : `${UI_THEME.dark.bgSubtle} ${UI_THEME.dark.border}`
       }`}
     >
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className={`font-semibold truncate ${isLight ? 'text-neutral-800' : 'text-neutral-200'}`}>
+          <span
+            className={`font-semibold truncate ${
+              isLight ? UI_THEME.light.textPrimary : UI_THEME.dark.textPrimary
+            }`}
+          >
             {label}
           </span>
           {isFocused && (
@@ -143,10 +152,10 @@ export const TunerRow: React.FC<TunerRowProps> = ({
             onKeyDown={handleKeyDown}
             placeholder="0.0"
             title={`Step size: ±${activeStep}. Press Up/Down arrows to step or Enter to commit.`}
-            className={`w-24 px-2 py-0.5 text-right font-mono text-xs rounded border transition-colors outline-none focus:ring-1 focus:ring-emerald-500 ${
+            className={`w-24 px-2 py-0.5 text-right font-mono text-xs ${UI_RADIUS.badge} border transition-colors outline-none focus:ring-1 focus:ring-emerald-500 ${
               isLight
-                ? 'bg-white border-neutral-300 text-neutral-800'
-                : 'bg-neutral-900 border-neutral-700 text-neutral-100'
+                ? `bg-white border-neutral-300 ${UI_THEME.light.textPrimary}`
+                : `bg-neutral-900 border-neutral-700 ${UI_THEME.dark.textPrimary}`
             }`}
           />
           {unit && (
@@ -158,7 +167,11 @@ export const TunerRow: React.FC<TunerRowProps> = ({
       </div>
 
       {description && (
-        <span className={`text-[10px] leading-tight ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+        <span
+          className={`text-[10px] leading-tight ${
+            isLight ? UI_THEME.light.textSecondary : UI_THEME.dark.textSecondary
+          }`}
+        >
           {description}
         </span>
       )}
@@ -173,14 +186,14 @@ export const TunerRow: React.FC<TunerRowProps> = ({
           className="relative flex items-center select-none touch-none w-full h-4 cursor-pointer"
         >
           <SliderPrimitive.Track
-            className={`relative grow rounded-full h-1.5 overflow-hidden ${
+            className={`relative grow ${UI_RADIUS.full} h-1.5 overflow-hidden ${
               isLight ? 'bg-neutral-200' : 'bg-neutral-700'
             }`}
           >
             <SliderPrimitive.Range className="absolute h-full bg-emerald-500" />
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb
-            className="block h-3.5 w-3.5 rounded-full bg-white border border-neutral-300 shadow-sm transition-transform hover:scale-110 focus:outline-none"
+            className={`block h-3.5 w-3.5 ${UI_RADIUS.full} bg-white border border-neutral-300 shadow-sm transition-transform hover:scale-110 focus:outline-none`}
           />
         </SliderPrimitive.Root>
       </div>
@@ -213,26 +226,37 @@ export const TunerSegmentedControl = <T extends string | number>({
 }: TunerSegmentedControlProps<T>) => {
   return (
     <div
-      className={`p-2 rounded-xl border flex flex-col gap-1.5 transition-colors ${
-        isLight ? 'bg-neutral-50/80 border-neutral-200' : 'bg-neutral-850/60 border-neutral-700/60'
+      data-alpha-id="Alpha:TunerSegmentedControl"
+      className={`p-2 ${UI_RADIUS.card} border flex flex-col gap-1.5 transition-colors ${
+        isLight
+          ? `${UI_THEME.light.bgSurface} ${UI_THEME.light.border}`
+          : `${UI_THEME.dark.bgSubtle} ${UI_THEME.dark.border}`
       }`}
     >
       {label && (
         <div className="flex items-center justify-between text-xs">
-          <span className={`font-semibold ${isLight ? 'text-neutral-800' : 'text-neutral-200'}`}>
+          <span
+            className={`font-semibold ${
+              isLight ? UI_THEME.light.textPrimary : UI_THEME.dark.textPrimary
+            }`}
+          >
             {label}
           </span>
         </div>
       )}
 
       {description && (
-        <span className={`text-[10px] leading-tight ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+        <span
+          className={`text-[10px] leading-tight ${
+            isLight ? UI_THEME.light.textSecondary : UI_THEME.dark.textSecondary
+          }`}
+        >
           {description}
         </span>
       )}
 
       <div
-        className={`flex items-center p-0.5 rounded-lg border gap-0.5 ${
+        className={`flex items-center p-0.5 ${UI_RADIUS.button} border gap-0.5 ${
           isLight ? 'bg-neutral-200/70 border-neutral-300' : 'bg-neutral-900 border-neutral-750'
         }`}
       >
@@ -243,7 +267,7 @@ export const TunerSegmentedControl = <T extends string | number>({
               key={String(opt.value)}
               type="button"
               onClick={() => onChange(opt.value)}
-              className={`flex-1 py-1 px-1.5 rounded-md text-[11px] font-mono font-medium transition-all cursor-pointer text-center truncate ${
+              className={`flex-1 py-1 px-1.5 ${UI_RADIUS.badge} text-[11px] font-mono font-medium transition-all cursor-pointer text-center truncate ${
                 isSelected
                   ? isLight
                     ? 'bg-white text-emerald-600 shadow-xs font-semibold'
@@ -302,16 +326,27 @@ export const TunerColorRow: React.FC<TunerColorRowProps> = ({
 
   return (
     <div
-      className={`p-2 rounded-xl border flex items-center justify-between text-xs transition-colors ${
-        isLight ? 'bg-neutral-50/80 border-neutral-200' : 'bg-neutral-850/60 border-neutral-700/60'
+      data-alpha-id="Alpha:TunerColorRow"
+      className={`p-2 ${UI_RADIUS.card} border flex items-center justify-between text-xs transition-colors ${
+        isLight
+          ? `${UI_THEME.light.bgSurface} ${UI_THEME.light.border}`
+          : `${UI_THEME.dark.bgSubtle} ${UI_THEME.dark.border}`
       }`}
     >
       <div className="flex flex-col gap-0.5 min-w-0 pr-2">
-        <span className={`font-semibold ${isLight ? 'text-neutral-800' : 'text-neutral-200'}`}>
+        <span
+          className={`font-semibold ${
+            isLight ? UI_THEME.light.textPrimary : UI_THEME.dark.textPrimary
+          }`}
+        >
           {label}
         </span>
         {description && (
-          <span className={`text-[10px] leading-tight ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+          <span
+            className={`text-[10px] leading-tight ${
+              isLight ? UI_THEME.light.textSecondary : UI_THEME.dark.textSecondary
+            }`}
+          >
             {description}
           </span>
         )}
@@ -322,7 +357,7 @@ export const TunerColorRow: React.FC<TunerColorRowProps> = ({
           type="color"
           value={value.startsWith('#') && value.length === 7 ? value : '#ffffff'}
           onChange={(e) => onChange(e.target.value)}
-          className="w-6 h-6 rounded border border-neutral-600 cursor-pointer p-0 bg-transparent"
+          className={`w-6 h-6 ${UI_RADIUS.badge} border border-neutral-600 cursor-pointer p-0 bg-transparent`}
         />
         <input
           type="text"
@@ -342,10 +377,10 @@ export const TunerColorRow: React.FC<TunerColorRowProps> = ({
             }
           }}
           placeholder="#ffffff"
-          className={`w-20 px-2 py-0.5 text-center font-mono text-xs rounded border transition-colors outline-none focus:ring-1 focus:ring-emerald-500 ${
+          className={`w-20 px-2 py-0.5 text-center font-mono text-xs ${UI_RADIUS.badge} border transition-colors outline-none focus:ring-1 focus:ring-emerald-500 ${
             isLight
-              ? 'bg-white border-neutral-300 text-neutral-800'
-              : 'bg-neutral-900 border-neutral-700 text-neutral-100'
+              ? `bg-white border-neutral-300 ${UI_THEME.light.textPrimary}`
+              : `bg-neutral-900 border-neutral-700 ${UI_THEME.dark.textPrimary}`
           }`}
         />
       </div>
@@ -370,17 +405,28 @@ export const TunerToggleRow: React.FC<TunerToggleRowProps> = ({
 }) => {
   return (
     <div
-      className={`p-2 rounded-xl border flex items-center justify-between text-xs transition-colors cursor-pointer select-none ${
-        isLight ? 'bg-neutral-50/80 border-neutral-200' : 'bg-neutral-850/60 border-neutral-700/60'
+      data-alpha-id="Alpha:TunerToggleRow"
+      className={`p-2 ${UI_RADIUS.card} border flex items-center justify-between text-xs transition-colors cursor-pointer select-none ${
+        isLight
+          ? `${UI_THEME.light.bgSurface} ${UI_THEME.light.border}`
+          : `${UI_THEME.dark.bgSubtle} ${UI_THEME.dark.border}`
       }`}
       onClick={() => onChange(!checked)}
     >
       <div className="flex flex-col gap-0.5 min-w-0 pr-2">
-        <span className={`font-semibold ${isLight ? 'text-neutral-800' : 'text-neutral-200'}`}>
+        <span
+          className={`font-semibold ${
+            isLight ? UI_THEME.light.textPrimary : UI_THEME.dark.textPrimary
+          }`}
+        >
           {label}
         </span>
         {description && (
-          <span className={`text-[10px] leading-tight ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
+          <span
+            className={`text-[10px] leading-tight ${
+              isLight ? UI_THEME.light.textSecondary : UI_THEME.dark.textSecondary
+            }`}
+          >
             {description}
           </span>
         )}
@@ -394,12 +440,12 @@ export const TunerToggleRow: React.FC<TunerToggleRowProps> = ({
           e.stopPropagation();
           onChange(!checked);
         }}
-        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer ${UI_RADIUS.full} border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
           checked ? 'bg-emerald-500' : isLight ? 'bg-neutral-300' : 'bg-neutral-700'
         }`}
       >
         <span
-          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+          className={`pointer-events-none inline-block h-4 w-4 transform ${UI_RADIUS.full} bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
             checked ? 'translate-x-4' : 'translate-x-0'
           }`}
         />
@@ -424,7 +470,8 @@ export const TunerSummaryStrip: React.FC<TunerSummaryStripProps> = ({
 }) => {
   return (
     <div
-      className={`px-2.5 py-1.5 rounded-lg border flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono ${
+      data-alpha-id="Alpha:TunerSummaryStrip"
+      className={`px-2.5 py-1.5 ${UI_RADIUS.button} border flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono ${
         isLight
           ? 'bg-neutral-100/80 border-neutral-200 text-neutral-700'
           : 'bg-neutral-900/70 border-neutral-800 text-neutral-300'

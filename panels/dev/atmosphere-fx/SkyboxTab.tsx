@@ -28,9 +28,9 @@ export const SkyboxTab: React.FC<SkyboxTabProps> = ({
   cardBg,
   mutedText,
 }) => {
-  const activePreset = (resolveSkyboxPreset as any)(
+  const activePreset = resolveSkyboxPreset(
     skyboxConfig.presetId || skyboxConfig.texturePath,
-    skyboxConfig.skyCategory
+    skyboxConfig.skyCategory === 'full-sphere' ? 'full-sphere' : 'hemisphere'
   );
   const activeCategory: 'hemisphere' | 'full-sphere' =
     (skyboxConfig.skyCategory || activePreset.category) === 'full-sphere'

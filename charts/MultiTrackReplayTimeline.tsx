@@ -4,11 +4,15 @@ import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
 import { SliderControl } from '../primitives/SliderControl';
 import { Badge } from '../primitives/Badge';
 import { KeycapBadge } from '../primitives/KeycapBadge';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
 import {
   MultiTrackReplayTracksOnlyView,
   type ReplayIncidentMarker,
   type ReplaySignalMarker,
 } from './MultiTrackReplayTracksOnlyView';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:MultiTrackReplayTimeline' as const;
 
 export type { ReplayIncidentMarker, ReplaySignalMarker };
 
@@ -29,20 +33,17 @@ export type ReplayDownCounterSec = 3 | 2 | 1 | 0;
 export type ReplayFlowPresetId = '100' | '50' | '200' | '500' | 'custom';
 
 export interface MultiTrackReplayTimelineHandle {
-  /** Imperatively move the 3-track playhead cursor at 120Hz with zero React re-renders */
   setCursorFrame: (frameIndex: number) => void;
 }
 
 export interface MultiTrackReplayTimelineProps {
   fileName?: string;
   totalFrames?: number;
-  /** Controlled current frame index */
   cursorFrame?: number;
   initialCursorFrame?: number;
   isIntervening?: boolean;
   incidentMarkers?: ReplayIncidentMarker[];
   signalMarkers?: ReplaySignalMarker[];
-  /** Visual variant: 'card' (full 5B inspector) or 'tracks-only' (embedded 3-track scrub card for ReplayViewerFloatingWindow) */
   variant?: 'card' | 'tracks-only';
   disabled?: boolean;
   onSeekFrame?: (frameIndex: number) => void;
@@ -51,12 +52,6 @@ export interface MultiTrackReplayTimelineProps {
   className?: string;
 }
 
-/**
- * MultiTrackReplayTimeline
- * 3-Track Synchronized Replay Timeline Inspector (`Track A: State + Input`, `Track B: Incidents`, `Track C: Signals`)
- * with Down-Counter (`3 / 2 / 1 / 0`) takeover selector, Flow Speed control, and 120Hz zero-React-rerender playhead cursor refs.
- * Used both standalone in 5B Charts & Curves (`variant="card"`) and embedded in ReplayViewerFloatingWindow (`variant="tracks-only"`).
- */
 export const MultiTrackReplayTimeline = React.memo(
   forwardRef<MultiTrackReplayTimelineHandle, MultiTrackReplayTimelineProps>(
     (
@@ -109,15 +104,9 @@ export const MultiTrackReplayTimeline = React.memo(
           cursorFrameRef.current = clamped;
           const pct = (clamped / denomFrames) * 100;
 
-          if (trackAFillRef.current) {
-            trackAFillRef.current.style.width = `${pct}%`;
-          }
-          if (trackBCursorRef.current) {
-            trackBCursorRef.current.style.left = `${pct}%`;
-          }
-          if (trackCCursorRef.current) {
-            trackCCursorRef.current.style.left = `${pct}%`;
-          }
+          if (trackAFillRef.current) trackAFillRef.current.style.width = `${pct}%`;
+          if (trackBCursorRef.current) trackBCursorRef.current.style.left = `${pct}%`;
+          if (trackCCursorRef.current) trackCCursorRef.current.style.left = `${pct}%`;
           if (cursorTextRef.current) {
             const text = `Frame #${clamped} (${(clamped / 120).toFixed(2)}s)`;
             if (cursorTextRef.current.textContent !== text) {
@@ -128,13 +117,7 @@ export const MultiTrackReplayTimeline = React.memo(
         [totalFrames, denomFrames, isTracksOnly, isTrackDisabled]
       );
 
-      useImperativeHandle(
-        ref,
-        () => ({
-          setCursorFrame: applyCursorToDom,
-        }),
-        [applyCursorToDom]
-      );
+      useImperativeHandle(ref, () => ({ setCursorFrame: applyCursorToDom }), [applyCursorToDom]);
 
       useEffect(() => {
         applyCursorToDom(controlledCursorFrame ?? initialCursorFrame);
@@ -182,11 +165,7 @@ export const MultiTrackReplayTimeline = React.memo(
             className={className}
             incidentMarkers={incidentMarkers}
             signalMarkers={signalMarkers}
-            trackRefs={{
-              trackAFillRef,
-              trackBCursorRef,
-              trackCCursorRef,
-            }}
+            trackRefs={{ trackAFillRef, trackBCursorRef, trackCCursorRef }}
             handleTrackSeek={handleTrackSeek}
             applyCursorToDom={applyCursorToDom}
             onSeekFrame={onSeekFrame}
@@ -196,14 +175,14 @@ export const MultiTrackReplayTimeline = React.memo(
 
       return (
         <div
+          data-alpha-id={ALPHA_COMPONENT_ID}
           data-ui-element="chart-multitrack-replay-timeline"
-          className={`flex flex-col gap-3 p-4 rounded-2xl border select-none ${
+          className={`flex flex-col gap-3 p-4 ${UI_RADIUS.panel} border select-none ${
             isLight
-              ? 'bg-white border-neutral-200 text-neutral-900 shadow-xs'
-              : 'bg-neutral-900/90 border-neutral-800 text-neutral-100 shadow-lg'
+              ? `bg-white ${UI_THEME.light.border} ${UI_THEME.light.textPrimary} shadow-xs`
+              : `bg-neutral-900/90 ${UI_THEME.dark.border} ${UI_THEME.dark.textPrimary} shadow-lg`
           } ${className}`}
         >
-          {/* Top File & Status Bar */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <Film className="h-4 w-4 text-amber-500 shrink-0" />
@@ -212,12 +191,7 @@ export const MultiTrackReplayTimeline = React.memo(
               </span>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <Badge
-                variant={isPlaying ? 'success' : 'neutral'}
-                size="sm"
-                isLight={isLight}
-                className="font-mono"
-              >
+              <Badge variant={isPlaying ? 'success' : 'neutral'} size="sm" isLight={isLight} className="font-mono">
                 {isPlaying ? 'PLAYING 120HZ' : 'PAUSED'}
               </Badge>
               <Badge variant="primary" size="sm" isLight={isLight} className="font-mono">
@@ -226,24 +200,18 @@ export const MultiTrackReplayTimeline = React.memo(
             </div>
           </div>
 
-          {/* 3 Synchronized Tracks Container */}
           <div
-            className={`p-3 rounded-xl border font-mono text-[10px] flex flex-col gap-2.5 ${
-              isLight
-                ? 'bg-neutral-50 border-neutral-200 text-neutral-700'
-                : 'bg-neutral-950/80 border-neutral-800 text-neutral-300'
+            className={`p-3 ${UI_RADIUS.card} border font-mono text-[10px] flex flex-col gap-2.5 ${
+              isLight ? 'bg-neutral-50 border-neutral-200 text-neutral-700' : 'bg-neutral-950/80 border-neutral-800 text-neutral-300'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span>
-                Playhead: <b ref={cursorTextRef}>Frame #{effectiveInitialFrame}</b>
-              </span>
+              <span>Playhead: <b ref={cursorTextRef}>Frame #{effectiveInitialFrame}</b></span>
               <span className="text-emerald-500 font-semibold">
                 Takeover Preroll: -{downCounterSec + 1}s ({(downCounterSec + 1) * 120}f)
               </span>
             </div>
 
-            {/* Track A: State + Input */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-[9.5px] opacity-80">
                 <span>Track A · Physics State + Player Input</span>
@@ -251,7 +219,7 @@ export const MultiTrackReplayTimeline = React.memo(
               </div>
               <div
                 onClick={handleTrackSeek}
-                className={`w-full h-3 rounded-full overflow-hidden cursor-pointer relative ${trackBgClass}`}
+                className={`w-full h-3 ${UI_RADIUS.full} overflow-hidden cursor-pointer relative ${trackBgClass}`}
                 title="Click anywhere on Track A to seek frame"
               >
                 <div
@@ -262,7 +230,6 @@ export const MultiTrackReplayTimeline = React.memo(
               </div>
             </div>
 
-            {/* Track B: Incidents */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-[9.5px] opacity-80">
                 <span>Track B · Arena Incidents (Touch / Demo / Save / Goal)</span>
@@ -270,7 +237,7 @@ export const MultiTrackReplayTimeline = React.memo(
               </div>
               <div
                 onClick={handleTrackSeek}
-                className={`w-full h-3 rounded-full overflow-hidden cursor-pointer relative ${trackBgClass}`}
+                className={`w-full h-3 ${UI_RADIUS.full} overflow-hidden cursor-pointer relative ${trackBgClass}`}
               >
                 {incidentMarkers.map((m, idx) => {
                   const leftPct = (m.frameIndex / Math.max(1, totalFrames - 1)) * 100;
@@ -296,14 +263,10 @@ export const MultiTrackReplayTimeline = React.memo(
                     />
                   );
                 })}
-                <div
-                  ref={trackBCursorRef}
-                  className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`}
-                />
+                <div ref={trackBCursorRef} className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`} />
               </div>
             </div>
 
-            {/* Track C: Signals */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-[9.5px] opacity-80">
                 <span>Track C · Match Signals (Kickoff / Score / Boundary)</span>
@@ -311,16 +274,12 @@ export const MultiTrackReplayTimeline = React.memo(
               </div>
               <div
                 onClick={handleTrackSeek}
-                className={`w-full h-3 rounded-full overflow-hidden cursor-pointer relative ${trackBgClass}`}
+                className={`w-full h-3 ${UI_RADIUS.full} overflow-hidden cursor-pointer relative ${trackBgClass}`}
               >
                 {signalMarkers.map((s, idx) => {
                   const leftPct = (s.frameIndex / Math.max(1, totalFrames - 1)) * 100;
                   const colorCls =
-                    s.type === 'score'
-                      ? 'bg-emerald-500 w-1.5'
-                      : s.type === 'end'
-                      ? 'bg-violet-500 w-1'
-                      : 'bg-sky-500 w-1';
+                    s.type === 'score' ? 'bg-emerald-500 w-1.5' : s.type === 'end' ? 'bg-violet-500 w-1' : 'bg-sky-500 w-1';
                   return (
                     <div
                       key={`${s.frameIndex}-${idx}`}
@@ -335,127 +294,109 @@ export const MultiTrackReplayTimeline = React.memo(
                     />
                   );
                 })}
-                <div
-                  ref={trackCCursorRef}
-                  className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`}
-                />
+                <div ref={trackCCursorRef} className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`} />
               </div>
             </div>
           </div>
 
-        {/* Transport + Down Counter + Flow Speed */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setIsPlaying((p) => !p)}
-              className="flex-1 py-1.5 px-3 rounded-xl font-bold text-xs flex items-center justify-between bg-amber-500 hover:bg-amber-400 text-neutral-950 cursor-pointer transition-colors"
-            >
-              <span className="flex items-center gap-1.5">
-                {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-                <span>{isPlaying ? 'Pause' : 'Play'}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setIsPlaying((p) => !p)}
+                className={`flex-1 py-1.5 px-3 ${UI_RADIUS.card} font-bold text-xs flex items-center justify-between bg-amber-500 hover:bg-amber-400 text-neutral-950 cursor-pointer transition-colors`}
+              >
+                <span className="flex items-center gap-1.5">
+                  {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                  <span>{isPlaying ? 'Pause' : 'Play'}</span>
+                </span>
+                <KeycapBadge shortcut="P" size="sm" isLight={isLight} />
+              </button>
+
+              {([-60, 60] as const).map((delta) => (
+                <button
+                  key={delta}
+                  type="button"
+                  onClick={() => stepRelative(delta)}
+                  className={`py-1.5 px-2.5 ${UI_RADIUS.card} border text-xs font-semibold flex items-center gap-1 cursor-pointer ${
+                    isLight ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300' : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700'
+                  }`}
+                  title={delta < 0 ? 'Step Back 0.5s (-60f)' : 'Step Forward 0.5s (+60f)'}
+                >
+                  {delta < 0 ? <Rewind className="h-3.5 w-3.5" /> : <FastForward className="h-3.5 w-3.5" />}
+                  <span>{delta > 0 ? `+${delta}f` : `${delta}f`}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1 text-xs font-semibold shrink-0">
+                <Timer className="h-3.5 w-3.5 text-amber-500" />
+                <span>Down Counter</span>
               </span>
-              <KeycapBadge shortcut="P" size="sm" isLight={isLight} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => stepRelative(-60)}
-              className={`py-1.5 px-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1 cursor-pointer ${
-                isLight
-                  ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300'
-                  : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700'
-              }`}
-              title="Step Back 0.5s (-60f)"
-            >
-              <Rewind className="h-3.5 w-3.5" />
-              <span>-60f</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => stepRelative(60)}
-              className={`py-1.5 px-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1 cursor-pointer ${
-                isLight
-                  ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300'
-                  : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700'
-              }`}
-              title="Step Forward 0.5s (+60f)"
-            >
-              <FastForward className="h-3.5 w-3.5" />
-              <span>+60f</span>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1 text-xs font-semibold shrink-0">
-              <Timer className="h-3.5 w-3.5 text-amber-500" />
-              <span>Down Counter</span>
-            </span>
-            <SegmentedSwitch
-              value={String(downCounterSec)}
-              size="sm"
-              isLight={isLight}
-              onValueChange={(v) => setDownCounterSec(Number(v) as ReplayDownCounterSec)}
-              options={[
-                { value: '3', label: '3 (-4s)' },
-                { value: '2', label: '2 (-3s)' },
-                { value: '1', label: '1 (-2s)' },
-                { value: '0', label: '0 (-1s)' },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Flow Speed Row */}
-        <div className="flex flex-col gap-2 pt-1 border-t border-neutral-500/15">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold">
-              Playback Flow Speed ({effectiveFlowPct}% · {Math.round((120 * effectiveFlowPct) / 100)}{' '}
-              fps)
-            </span>
-            <div className="flex items-center gap-2">
               <SegmentedSwitch
-                value={flowPreset}
+                value={String(downCounterSec)}
                 size="sm"
                 isLight={isLight}
-                onValueChange={(v) => setFlowPreset(v as ReplayFlowPresetId)}
+                onValueChange={(v) => setDownCounterSec(Number(v) as ReplayDownCounterSec)}
                 options={[
-                  { value: '100', label: '100%' },
-                  { value: '50', label: '50%' },
-                  { value: '200', label: '200%' },
-                  { value: '500', label: '500%' },
-                  { value: 'custom', label: 'Custom' },
+                  { value: '3', label: '3 (-4s)' },
+                  { value: '2', label: '2 (-3s)' },
+                  { value: '1', label: '1 (-2s)' },
+                  { value: '0', label: '0 (-1s)' },
                 ]}
               />
-              {onResumeFromCursor && (
-                <button
-                  type="button"
-                  onClick={() => onResumeFromCursor(cursorFrameRef.current, downCounterSec)}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 text-[11px] font-bold cursor-pointer"
-                >
-                  Resume Here [G]
-                </button>
-              )}
             </div>
           </div>
 
-          {flowPreset === 'custom' && (
-            <SliderControl
-              label="Custom Flow Speed"
-              value={customFlowPct}
-              min={1}
-              max={500}
-              step={1}
-              unit="%"
-              isLight={isLight}
-              onChange={setCustomFlowPct}
-            />
-          )}
+          <div className="flex flex-col gap-2 pt-1 border-t border-neutral-500/15">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold">
+                Playback Flow Speed ({effectiveFlowPct}% · {Math.round((120 * effectiveFlowPct) / 100)} fps)
+              </span>
+              <div className="flex items-center gap-2">
+                <SegmentedSwitch
+                  value={flowPreset}
+                  size="sm"
+                  isLight={isLight}
+                  onValueChange={(v) => setFlowPreset(v as ReplayFlowPresetId)}
+                  options={[
+                    { value: '100', label: '100%' },
+                    { value: '50', label: '50%' },
+                    { value: '200', label: '200%' },
+                    { value: '500', label: '500%' },
+                    { value: 'custom', label: 'Custom' },
+                  ]}
+                />
+                {onResumeFromCursor && (
+                  <button
+                    type="button"
+                    onClick={() => onResumeFromCursor(cursorFrameRef.current, downCounterSec)}
+                    className={`px-2.5 py-1 ${UI_RADIUS.button} bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 text-[11px] font-bold cursor-pointer`}
+                  >
+                    Resume Here [G]
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {flowPreset === 'custom' && (
+              <SliderControl
+                label="Custom Flow Speed"
+                value={customFlowPct}
+                min={1}
+                max={500}
+                step={1}
+                unit="%"
+                isLight={isLight}
+                onChange={setCustomFlowPct}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    );
-  })
+      );
+    }
+  )
 );
 
 MultiTrackReplayTimeline.displayName = 'MultiTrackReplayTimeline';

@@ -1,85 +1,90 @@
 import React, { useState } from 'react';
 import { Shield, Paintbrush } from 'lucide-react';
+import type { SurfaceVariantMeta } from '../../manifest/surfaceMetaTypes';
+import type { StoredColorPrefs } from '../../config/uiConfig';
+import {
+  loadStoredColorPrefs,
+  saveStoredColorPrefs,
+} from '../../config/vehiclePresets';
 import { SettingSegmentedRow } from '../../compounds/SettingSegmentedRow';
 import {
   PriorityQueueList,
   PriorityQueueItem,
 } from '../../compounds/tuner/PriorityQueueList';
+import { useAppStore } from '../../stores/appStore';
+import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
+import {
+  useScopedStore,
+  useStoreSnapshotOverride,
+} from '../../stores/storeSnapshotScope';
 import { BLUE_TEAM_COLORS, ORANGE_TEAM_COLORS } from './garageConstants';
 
+export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
+  variantId: 'paint',
+  label: '2. Paint & Team Priority',
+  description:
+    'Primary team preview, Matte/Metallic paint finish, and 6-slot Blue/Orange color preference order.',
+};
+
 export interface GaragePaintTabProps {
-  blueOrder?: number[];
-  defaultBlueOrder?: number[];
-  onBlueOrderChange?: (next: number[]) => void;
-  orangeOrder?: number[];
-  defaultOrangeOrder?: number[];
-  onOrangeOrderChange?: (next: number[]) => void;
-  primaryTeam?: 'blue' | 'orange';
-  defaultPrimaryTeam?: 'blue' | 'orange';
-  onPrimaryTeamChange?: (team: 'blue' | 'orange') => void;
-  paintFinish?: 'matte' | 'metallic';
-  defaultPaintFinish?: 'matte' | 'metallic';
-  onPaintFinishChange?: (finish: 'matte' | 'metallic') => void;
   onHoverDesc?: (desc: string | null) => void;
   isLight?: boolean;
+}
+
+interface GaragePaintScopedOverrides {
+  primaryTeam?: 'blue' | 'orange';
+  blueOrder?: number[];
+  orangeOrder?: number[];
 }
 
 export const DEFAULT_BLUE_ORDER: number[] = [1, 5, 3];
 export const DEFAULT_ORANGE_ORDER: number[] = [2, 4, 0];
 
 export const GaragePaintTab: React.FC<GaragePaintTabProps> = ({
-  blueOrder: controlledBlueOrder,
-  defaultBlueOrder = DEFAULT_BLUE_ORDER,
-  onBlueOrderChange,
-  orangeOrder: controlledOrangeOrder,
-  defaultOrangeOrder = DEFAULT_ORANGE_ORDER,
-  onOrangeOrderChange,
-  primaryTeam: controlledPrimaryTeam,
-  defaultPrimaryTeam = 'blue',
-  onPrimaryTeamChange,
-  paintFinish: controlledPaintFinish,
-  defaultPaintFinish = 'metallic',
-  onPaintFinishChange,
   onHoverDesc,
   isLight = false,
 }) => {
-  const [internalPrimaryTeam, setInternalPrimaryTeam] = useState<'blue' | 'orange'>(
-    defaultPrimaryTeam
-  );
-  const [internalPaintFinish, setInternalPaintFinish] = useState<'matte' | 'metallic'>(
-    defaultPaintFinish
-  );
-  const [internalBlueList, setInternalBlueList] = useState<number[]>(
-    controlledBlueOrder ?? defaultBlueOrder
-  );
-  const [internalOrangeList, setInternalOrangeList] = useState<number[]>(
-    controlledOrangeOrder ?? defaultOrangeOrder
-  );
+  const paintFinish =
+    useScopedStore('appStore', useAppStore, (s) => s.materials?.paintFinish) ?? 'metallic';
+  const updateMaterials = useScopedStore('appStore', useAppStore, (s) => s.updateMaterials);
+  const paintOverrides = useStoreSnapshotOverride<GaragePaintScopedOverrides>('appStore');
 
-  const primaryTeam = controlledPrimaryTeam ?? internalPrimaryTeam;
-  const paintFinish = controlledPaintFinish ?? internalPaintFinish;
-  const blueList = controlledBlueOrder ?? internalBlueList;
-  const orangeList = controlledOrangeOrder ?? internalOrangeList;
+  const [colorPrefs, setColorPrefs] = useState<StoredColorPrefs>(() => {
+    const stored = loadStoredColorPrefs();
+    return {
+      primaryTeam: stored.primaryTeam ?? 'blue',
+      blueOrder: stored.blueOrder?.length ? stored.blueOrder : DEFAULT_BLUE_ORDER,
+      orangeOrder: stored.orangeOrder?.length ? stored.orangeOrder : DEFAULT_ORANGE_ORDER,
+    };
+  });
 
-  const handlePrimaryTeamChange = (next: 'blue' | 'orange') => {
-    if (controlledPrimaryTeam === undefined) {
-      setInternalPrimaryTeam(next);
+  const primaryTeam = paintOverrides?.primaryTeam ?? colorPrefs.primaryTeam;
+  const blueList = paintOverrides?.blueOrder ?? colorPrefs.blueOrder;
+  const orangeList = paintOverrides?.orangeOrder ?? colorPrefs.orangeOrder;
+
+  const saveAndBroadcastColors = (nextPrefs: StoredColorPrefs) => {
+    setColorPrefs(nextPrefs);
+    const activeSlotId = saveStoredColorPrefs(nextPrefs);
+    useExperimentalMultiBotsStore.getState().syncExhibitionFromColorPrefs?.();
+    const allColors = [...BLUE_TEAM_COLORS, ...ORANGE_TEAM_COLORS];
+    const found = allColors.find((c) => c.id === activeSlotId);
+    if (found) {
+      const bridge = useAppStore.getState().bridge;
+      bridge?.onColorChange?.(found.hex, found.id);
     }
-    onPrimaryTeamChange?.(next);
   };
 
-  const handlePaintFinishChange = (next: 'matte' | 'metallic') => {
-    if (controlledPaintFinish === undefined) {
-      setInternalPaintFinish(next);
-    }
-    onPaintFinishChange?.(next);
+  const handlePrimaryTeamChange = (nextTeam: 'blue' | 'orange') => {
+    saveAndBroadcastColors({ ...colorPrefs, primaryTeam: nextTeam });
   };
 
-  const reorderItem = (
+  const handlePaintFinishChange = (nextFinish: 'matte' | 'metallic') => {
+    updateMaterials({ paintFinish: nextFinish });
+  };
+
+  const reorderTeamQueue = (
+    team: 'blue' | 'orange',
     list: number[],
-    setList: React.Dispatch<React.SetStateAction<number[]>>,
-    isControlled: boolean,
-    onChangeCallback: ((next: number[]) => void) | undefined,
     index: number,
     direction: 'up' | 'down'
   ) => {
@@ -88,10 +93,11 @@ export const GaragePaintTab: React.FC<GaragePaintTabProps> = ({
     const next = [...list];
     const [removed] = next.splice(index, 1);
     next.splice(targetIdx, 0, removed);
-    if (!isControlled) {
-      setList(next);
+    if (team === 'blue') {
+      saveAndBroadcastColors({ ...colorPrefs, blueOrder: next });
+    } else {
+      saveAndBroadcastColors({ ...colorPrefs, orangeOrder: next });
     }
-    onChangeCallback?.(next);
   };
 
   const blueQueueItems: PriorityQueueItem[] = blueList
@@ -110,7 +116,6 @@ export const GaragePaintTab: React.FC<GaragePaintTabProps> = ({
 
   return (
     <div className="flex flex-col gap-2" data-ui-element="garage-tab-colour">
-      {/* Primary Team Priority Switch */}
       <SettingSegmentedRow
         icon={Shield}
         iconColor="text-sky-400"
@@ -138,7 +143,6 @@ export const GaragePaintTab: React.FC<GaragePaintTabProps> = ({
         onMouseLeave={() => onHoverDesc?.(null)}
       />
 
-      {/* Vehicle Paint Finishes */}
       <SettingSegmentedRow
         icon={Paintbrush}
         iconColor="text-amber-400"
@@ -161,7 +165,9 @@ export const GaragePaintTab: React.FC<GaragePaintTabProps> = ({
       <div className="grid grid-cols-2 gap-3.5 pt-1">
         <div
           onMouseEnter={() =>
-            onHoverDesc?.('Reorder Blue Team fallback palette priority (#1 Primary -> Fallback 1 -> Fallback 2).')
+            onHoverDesc?.(
+              'Reorder Blue Team fallback palette priority (#1 Primary -> Fallback 1 -> Fallback 2).'
+            )
           }
           onMouseLeave={() => onHoverDesc?.(null)}
         >
@@ -169,16 +175,7 @@ export const GaragePaintTab: React.FC<GaragePaintTabProps> = ({
             title="Blue Team Order"
             subtitle={primaryTeam === 'blue' ? 'Primary Choice' : 'Secondary Team'}
             items={blueQueueItems}
-            onReorder={(idx, dir) =>
-              reorderItem(
-                blueList,
-                setInternalBlueList,
-                controlledBlueOrder !== undefined,
-                onBlueOrderChange,
-                idx,
-                dir
-              )
-            }
+            onReorder={(idx, dir) => reorderTeamQueue('blue', blueList, idx, dir)}
             accentDotColor="#3b82f6"
             isLight={isLight}
           />
@@ -186,7 +183,9 @@ export const GaragePaintTab: React.FC<GaragePaintTabProps> = ({
 
         <div
           onMouseEnter={() =>
-            onHoverDesc?.('Reorder Orange Team fallback palette priority (#1 Primary -> Fallback 1 -> Fallback 2).')
+            onHoverDesc?.(
+              'Reorder Orange Team fallback palette priority (#1 Primary -> Fallback 1 -> Fallback 2).'
+            )
           }
           onMouseLeave={() => onHoverDesc?.(null)}
         >
@@ -194,16 +193,7 @@ export const GaragePaintTab: React.FC<GaragePaintTabProps> = ({
             title="Orange Team Order"
             subtitle={primaryTeam === 'orange' ? 'Primary Choice' : 'Secondary Team'}
             items={orangeQueueItems}
-            onReorder={(idx, dir) =>
-              reorderItem(
-                orangeList,
-                setInternalOrangeList,
-                controlledOrangeOrder !== undefined,
-                onOrangeOrderChange,
-                idx,
-                dir
-              )
-            }
+            onReorder={(idx, dir) => reorderTeamQueue('orange', orangeList, idx, dir)}
             accentDotColor="#f97316"
             isLight={isLight}
           />

@@ -1,5 +1,9 @@
 import React from 'react';
 import { Play, RotateCcw, Users } from 'lucide-react';
+import type {
+  StandardSurfaceProps,
+  SurfaceMeta,
+} from '../../manifest/surfaceMetaTypes';
 import { useExperimentalMultiBotsStore } from '../../stores/experimentalMultiBotsStore';
 import type { ExpPlayerParticipation } from '../../stores/experimentalMultiBotsRosterUtils';
 import { useAppStore } from '../../stores/appStore';
@@ -12,48 +16,54 @@ import {
   ExperimentalBotsMatchControlsCard,
 } from './ExperimentalBotsSharedCards';
 
-export interface ExperimentalMultiBotsFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'experimental-multi-bots',
+  title: 'Experimental Multiple Bots Mode',
+  subtitle: 'Up to 3v3 Native SafeTensors Nexto/Necto POV Switching & Inference Telemetry',
+  description:
+    'Live floating controller for up to 3v3 Native SafeTensors Nexto/Necto POV switching & inference telemetry.',
+  icon: 'Users',
+  layer: 'floating-dev',
+  menuGroup: 'sandboxes',
+  defaultSizing: {
+    width: 490,
+    height: 620,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface ExperimentalMultiBotsFloatingWindowProps
+  extends StandardSurfaceProps {
   active?: boolean;
 }
 
 export const ExperimentalMultiBotsFloatingWindow: React.FC<
   ExperimentalMultiBotsFloatingWindowProps
-> = ({ isLight = false }) => {
-  const {
-    playerParticipation,
-    blueSlots,
-    orangeSlots,
-    activeCameraCarIndex,
-    matchDurationSec,
-    speedMultiplier,
-    unlimitedBoost,
-    disableGoalReplay,
-    matchPhase,
-    blueScore,
-    orangeScore,
-    remainingSec,
-    isOvertime,
-    nextoLoaded,
-    nectoLoaded,
-    lastTotalInferenceMs,
-    spawnedCars,
-    setPlayerParticipation,
-    addBotToTeam,
-    removeSlotFromTeam,
-    setSlotBotType,
-    setSlotColor,
-    applyPresetRoster,
-    applyAsymmetricPresetRoster,
-    setActiveCameraCarIndex,
-    setMatchDurationSec,
-    setSpeedMultiplier,
-    setUnlimitedBoost,
-    setDisableGoalReplay,
-    startOrApplyMatch,
-    triggerSandboxAction,
-    preloadEngines,
-  } = useExperimentalMultiBotsStore();
+> = ({ isLight = false, active = true }) => {
+  const playerParticipation = useExperimentalMultiBotsStore(
+    (s) => s.playerParticipation
+  );
+  const blueSlots = useExperimentalMultiBotsStore((s) => s.blueSlots);
+  const orangeSlots = useExperimentalMultiBotsStore((s) => s.orangeSlots);
+  const nextoLoaded = useExperimentalMultiBotsStore((s) => s.nextoLoaded);
+  const nectoLoaded = useExperimentalMultiBotsStore((s) => s.nectoLoaded);
+  const lastTotalInferenceMs = useExperimentalMultiBotsStore(
+    (s) => s.lastTotalInferenceMs
+  );
+  const setPlayerParticipation = useExperimentalMultiBotsStore(
+    (s) => s.setPlayerParticipation
+  );
+  const applyPresetRoster = useExperimentalMultiBotsStore(
+    (s) => s.applyPresetRoster
+  );
+  const applyAsymmetricPresetRoster = useExperimentalMultiBotsStore(
+    (s) => s.applyAsymmetricPresetRoster
+  );
+  const startOrApplyMatch = useExperimentalMultiBotsStore(
+    (s) => s.startOrApplyMatch
+  );
+  const preloadEngines = useExperimentalMultiBotsStore((s) => s.preloadEngines);
 
   React.useEffect(() => {
     preloadEngines?.();
@@ -62,6 +72,8 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
   const matchMode = useAppStore((s) => s.matchMode);
   const bridge = useAppStore((s) => s.bridge);
   const isInExpMode = matchMode === 'exp-multi-bots';
+
+  if (!active) return null;
 
   const cardBg = isLight
     ? 'bg-neutral-50/90 border-neutral-200 text-neutral-800'
@@ -72,8 +84,6 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
     : 'bg-neutral-950/50 border-neutral-800 text-neutral-200';
 
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
-
-  const totalCars = blueSlots.length + orangeSlots.length;
 
   return (
     <div className="flex flex-col gap-2.5 select-none text-xs">
@@ -248,48 +258,24 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
         isLight={isLight}
         cardBg={cardBg}
         mutedText={mutedText}
-        playerParticipation={playerParticipation}
-        blueSlots={blueSlots}
-        orangeSlots={orangeSlots}
-        spawnedCars={spawnedCars}
-        activeCameraCarIndex={activeCameraCarIndex}
-        onSelectCameraCar={setActiveCameraCarIndex}
       />
 
       {/* 5. Blue Team (Team 0) Roster Builder (Max 3) */}
       <ExperimentalMultiBotsTeamRosterCard
         team={0}
-        slots={blueSlots}
-        globalOffset={0}
-        activeCameraCarIndex={activeCameraCarIndex}
-        totalCars={totalCars}
         isLight={isLight}
         cardBg={cardBg}
         subPanelBg={subPanelBg}
         mutedText={mutedText}
-        onAddBot={addBotToTeam}
-        onSelectCameraCar={setActiveCameraCarIndex}
-        onSetSlotBotType={setSlotBotType}
-        onRemoveSlot={removeSlotFromTeam}
-        onSetSlotColor={setSlotColor}
       />
 
       {/* 6. Orange Team (Team 1) Roster Builder (Max 3) */}
       <ExperimentalMultiBotsTeamRosterCard
         team={1}
-        slots={orangeSlots}
-        globalOffset={blueSlots.length}
-        activeCameraCarIndex={activeCameraCarIndex}
-        totalCars={totalCars}
         isLight={isLight}
         cardBg={cardBg}
         subPanelBg={subPanelBg}
         mutedText={mutedText}
-        onAddBot={addBotToTeam}
-        onSelectCameraCar={setActiveCameraCarIndex}
-        onSetSlotBotType={setSlotBotType}
-        onRemoveSlot={removeSlotFromTeam}
-        onSetSlotColor={setSlotColor}
       />
 
       {/* 7. Live Match Scoreboard, Speed Multiplier & Sandbox Triggers */}
@@ -297,22 +283,6 @@ export const ExperimentalMultiBotsFloatingWindow: React.FC<
         isLight={isLight}
         cardBg={cardBg}
         mutedText={mutedText}
-        stateOverride={{
-          blueScore,
-          orangeScore,
-          remainingSec,
-          isOvertime,
-          matchPhase,
-          matchDurationSec,
-          speedMultiplier,
-          unlimitedBoost,
-          disableGoalReplay,
-          onSetMatchDurationSec: setMatchDurationSec,
-          onSetSpeedMultiplier: setSpeedMultiplier,
-          onSetUnlimitedBoost: setUnlimitedBoost,
-          onSetDisableGoalReplay: setDisableGoalReplay,
-          onTriggerSandboxAction: triggerSandboxAction,
-        }}
       />
     </div>
   );

@@ -3,9 +3,26 @@ import { CheckCircle2, AlertOctagon, RotateCcw, Play, Pause } from 'lucide-react
 import { useDeterminismData, determinismStore } from '../../stores/determinismStore';
 import { useAppStore } from '../../stores/appStore';
 import { SliderControl } from '../../primitives/SliderControl';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface DualArenaDeterminismHarnessFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'dual-arena-determinism-harness',
+  title: 'Dual-Arena Determinism Harness',
+  subtitle: 'Determinism',
+  description:
+    'Bit-exact parallel RocketSim physics rollback verification & desync delta monitoring.',
+  icon: 'CheckCircle2',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 440,
+    height: 420,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface DualArenaDeterminismHarnessFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
 

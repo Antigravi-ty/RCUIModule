@@ -13,6 +13,7 @@ import {
   type NameTagRuntimeSyncSnapshot,
   type NameTagTelemetrySnapshot,
   createDefaultCarOverride,
+  resolveNameTagBoostBorderVisible,
 } from '../config/nameTagConfig';
 import {
   buildNameTagCalibrationExportPayload as buildExportPayload,
@@ -30,15 +31,16 @@ import {
 import { getInitialDeveloperMode } from '../config/uiConfig';
 import { syncBridge } from './syncBridge';
 
-export type {
-  NameTagBoostBorderOverride,
-  NameTagCameraMode,
-  NameTagCarOverride,
-  NameTagConfig,
-  NameTagFittedParameters,
-  NameTagRuntimeState,
-  NameTagRuntimeSyncSnapshot,
-  NameTagTelemetrySnapshot,
+export {
+  resolveNameTagBoostBorderVisible,
+  type NameTagBoostBorderOverride,
+  type NameTagCameraMode,
+  type NameTagCarOverride,
+  type NameTagConfig,
+  type NameTagFittedParameters,
+  type NameTagRuntimeState,
+  type NameTagRuntimeSyncSnapshot,
+  type NameTagTelemetrySnapshot,
 };
 
 const CONFIG_SYNC_KEY = 'store:nameTagConfig:v1';

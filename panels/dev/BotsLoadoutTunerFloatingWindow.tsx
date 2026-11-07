@@ -11,6 +11,10 @@ import {
   RotateCcw,
   Copy,
 } from 'lucide-react';
+import type {
+  StandardSurfaceProps,
+  SurfaceMeta,
+} from '../../manifest/surfaceMetaTypes';
 import { Badge } from '../../primitives/Badge';
 import { useBotsLoadoutStore } from '../../stores/botsLoadoutStore';
 import {
@@ -25,8 +29,25 @@ import {
   type BotAnthemCategoryOption,
 } from '../../config/botsLoadoutConfig';
 
-export interface BotsLoadoutTunerFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'bots-loadout-tuner',
+  title: 'Bots Loadout Tuner',
+  subtitle: 'Multi-Select Randomizable Bot Loadout Pool (Car Models, Paint, Boost & Anthem)',
+  description:
+    'Multi-select randomizable Bot Loadout pool (3 GLB models default, Metallic paint, Cartoon boost, Standard boost audio, Random TrainStation anthem).',
+  icon: 'Bot',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 480,
+    height: 580,
+    minHeight: 220,
+    mode: 'adaptive',
+  },
+};
+
+export interface BotsLoadoutTunerFloatingWindowProps
+  extends StandardSurfaceProps {
   active?: boolean;
 }
 

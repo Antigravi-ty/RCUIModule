@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Eye, UserCheck } from 'lucide-react';
 import { KeycapBadge } from '../primitives/KeycapBadge';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
 import {
   EXP_BOT_POLICY_METAS,
   BOTPACK_9700488_POLICY_METAS,
   getExpBotPolicyMeta,
   type ExpBotPolicyId,
 } from '../stores/experimentalMultiBotsRosterUtils';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:TeamRosterCard' as const;
 
 export type BotPolicyId = ExpBotPolicyId;
 
@@ -152,11 +156,12 @@ export const TeamRosterCard: React.FC<TeamRosterCardProps> = React.memo(
 
     return (
       <div
+        data-alpha-id={ALPHA_COMPONENT_ID}
         data-ui-element="compound-team-roster-card"
-        className={`p-3 rounded-xl border flex flex-col gap-2 select-none ${
+        className={`p-3 ${UI_RADIUS.card} border flex flex-col gap-2 select-none ${
           isLight
-            ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
-            : 'bg-neutral-900/70 border-neutral-800 text-neutral-200'
+            ? `bg-neutral-50 ${UI_THEME.light.border} ${UI_THEME.light.textPrimary}`
+            : `bg-neutral-900/70 ${UI_THEME.dark.border} ${UI_THEME.dark.textPrimary}`
         } ${className}`}
       >
         <div className="flex items-center justify-between">

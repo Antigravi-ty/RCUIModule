@@ -8,9 +8,26 @@ import {
 } from '../../stores/networkDiagnosticsStore';
 import { NetworkStressControlsSection } from './network-stress-injection/NetworkStressControlsSection';
 import { useAppStore } from '../../stores/appStore';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface NetworkStressInjectionFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'network-stress-injection',
+  title: 'Network Stress Injection',
+  subtitle: 'NetworkLab',
+  description:
+    'Asymmetric uplink/downlink delay, jitter, packet loss & burst drop injection + 2-Car 0G probes.',
+  icon: 'Wifi',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 480,
+    height: 520,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface NetworkStressInjectionFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
 

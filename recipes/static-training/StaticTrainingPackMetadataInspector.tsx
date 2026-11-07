@@ -13,11 +13,17 @@ import {
   isVariationMatchingLatestPreset,
   resolveEffectiveRecommendedVariation,
 } from '../../config/staticTrainingVariationTypes';
-import type {
-  StaticPackDownCounterOption,
-  StaticTrainingPackSummary,
-} from './StaticTrainingPackFolderList';
-import { StaticTrainingPackInspectorActions } from './StaticTrainingPackInspectorActions';
+import type { StaticTrainingPackSummary } from './StaticTrainingPackFolderList';
+import {
+  StaticTrainingPackInspectorActions,
+  type StaticTrainingPackActionCallbacks,
+  type StaticTrainingPackDownCounterControl,
+} from './StaticTrainingPackInspectorActions';
+
+export type {
+  StaticTrainingPackActionCallbacks,
+  StaticTrainingPackDownCounterControl,
+} from './StaticTrainingPackInspectorActions';
 
 export interface StaticTrainingPackMetadataDraft {
   editTitle: string;
@@ -28,28 +34,16 @@ export interface StaticTrainingPackMetadataDraft {
   onSaveMetadata: () => void;
 }
 
-export interface StaticTrainingPackDownCounterControl {
-  downCounterEnabled: boolean;
-  setDownCounterEnabled: (val: boolean) => void;
-  downCounterValue: StaticPackDownCounterOption;
-  setDownCounterValue: (val: StaticPackDownCounterOption) => void;
-}
-
 export interface StaticTrainingPackMetadataInspectorProps {
   isLight: boolean;
   isDevMode?: boolean;
   selectedMeta: StaticTrainingPackSummary | null;
   draft: StaticTrainingPackMetadataDraft;
   downCounter: StaticTrainingPackDownCounterControl;
-  confirmDeleteUuid: string | null;
-  setConfirmDeleteUuid: (val: string | null) => void;
+  actions: StaticTrainingPackActionCallbacks;
   applyNewKevpertBind?: boolean;
   onToggleApplyNewKevpertBind?: (val: boolean) => void;
   onUpdatePackTags?: (uuid: string, nextTags: string[]) => void;
-  onPlayPack: (meta: StaticTrainingPackSummary) => void;
-  onEditPack: (meta: StaticTrainingPackSummary) => void;
-  onExportPack: (meta: StaticTrainingPackSummary, editable: boolean) => void;
-  onDeletePack: (uuid: string) => void;
   onHoverDesc: (desc: string | null) => void;
 }
 
@@ -68,21 +62,11 @@ export const StaticTrainingPackMetadataInspector: React.FC<
       isMetadataDirty,
       onSaveMetadata,
     },
-    downCounter: {
-      downCounterEnabled,
-      setDownCounterEnabled,
-      downCounterValue,
-      setDownCounterValue,
-    },
-    confirmDeleteUuid,
-    setConfirmDeleteUuid,
+    downCounter,
+    actions,
     applyNewKevpertBind = false,
     onToggleApplyNewKevpertBind,
     onUpdatePackTags,
-    onPlayPack,
-    onEditPack,
-    onExportPack,
-    onDeletePack,
     onHoverDesc,
   }) => {
     const [showOriginalDescription, setShowOriginalDescription] = useState(false);
@@ -432,16 +416,8 @@ export const StaticTrainingPackMetadataInspector: React.FC<
             <StaticTrainingPackInspectorActions
               isLight={isLight}
               selectedMeta={selectedMeta}
-              downCounterEnabled={downCounterEnabled}
-              setDownCounterEnabled={setDownCounterEnabled}
-              downCounterValue={downCounterValue}
-              setDownCounterValue={setDownCounterValue}
-              confirmDeleteUuid={confirmDeleteUuid}
-              setConfirmDeleteUuid={setConfirmDeleteUuid}
-              onPlayPack={onPlayPack}
-              onEditPack={onEditPack}
-              onExportPack={onExportPack}
-              onDeletePack={onDeletePack}
+              downCounter={downCounter}
+              actions={actions}
               onHoverDesc={onHoverDesc}
             />
           </>

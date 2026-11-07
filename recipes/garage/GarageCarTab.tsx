@@ -1,33 +1,52 @@
 import React from 'react';
 import { Check } from 'lucide-react';
+import type { SurfaceVariantMeta } from '../../manifest/surfaceMetaTypes';
+import { garageSettingsStore } from '../../config/vehiclePresets';
 import { Badge } from '../../primitives/Badge';
+import { useAppStore } from '../../stores/appStore';
+import { useScopedStore } from '../../stores/storeSnapshotScope';
 import { CARS } from './garageConstants';
 
+export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
+  variantId: 'car',
+  label: '1. Car Body Selection',
+  description:
+    '8 vehicle chassis presets with Octane / Dominus / Plank / Hybrid hitbox archetype badges.',
+};
+
 export interface GarageCarTabProps {
-  selectedCar: string;
-  onSelectCar: (carId: string) => void;
   onHoverDesc?: (desc: string | null) => void;
   isLight?: boolean;
 }
 
 export const GarageCarTab: React.FC<GarageCarTabProps> = ({
-  selectedCar,
-  onSelectCar,
   onHoverDesc,
   isLight = false,
 }) => {
+  const activeCar = useScopedStore('appStore', useAppStore, (s) => s.activeCar) || 'fennec';
+  const setActiveCar = useScopedStore('appStore', useAppStore, (s) => s.setActiveCar);
+
+  const handleSelectCar = (carId: string) => {
+    setActiveCar(carId);
+    try {
+      garageSettingsStore.save({ vehiclePreset: carId, carVisual: carId });
+    } catch {
+      // ignore storage error
+    }
+  };
+
   return (
     <div
       className="grid grid-cols-4 auto-rows-fr gap-3 w-full h-full flex-1 p-0.5"
       data-ui-element="garage-tab-car"
     >
       {CARS.map((car) => {
-        const isSelected = selectedCar === car.id;
+        const isSelected = activeCar === car.id;
         return (
           <button
             key={car.id}
             type="button"
-            onClick={() => onSelectCar(car.id)}
+            onClick={() => handleSelectCar(car.id)}
             onMouseEnter={() =>
               onHoverDesc?.(`Equip ${car.name} chassis (${car.hitbox} Hitbox geometry).`)
             }
@@ -63,4 +82,3 @@ export const GarageCarTab: React.FC<GarageCarTabProps> = ({
     </div>
   );
 };
-

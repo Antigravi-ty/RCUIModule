@@ -1,3 +1,4 @@
+import type { SurfaceVariantMeta } from '../manifest/surfaceMetaTypes';
 import {
   normalizeMainMenuContextMode,
   type MainMenuIconColorValue,
@@ -496,6 +497,18 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     },
   },
 ];
+
+export const LAYER1_SURFACE_VARIANTS: SurfaceVariantMeta[] =
+  LAYER1_CONTEXT_VARIATIONS.map((meta) => ({
+    variantId: meta.id,
+    label: meta.label,
+    description: meta.description ?? meta.label,
+    storeOverrides: {
+      mainMenuStyleStore: {
+        previewContextMode: meta.id,
+      },
+    },
+  }));
 
 export const resolveLayer1ContextSpec = (
   rawCtx?: string | null

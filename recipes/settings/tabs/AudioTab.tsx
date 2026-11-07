@@ -20,6 +20,8 @@ import { JetThrustSvg } from '../../../primitives/packagedSvgIcons';
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 import { useSpatialAudioStore } from '../../../stores/spatialAudioStore';
 import { useAppStore } from '../../../stores/appStore';
+import { useScopedStore } from '../../../stores/storeSnapshotScope';
+import type { SurfaceVariantMeta } from '../../../manifest/surfaceMetaTypes';
 import type { BgmSceneConfig } from '../../../config/spatialAudioConfig';
 
 export interface AudioConfig {
@@ -46,10 +48,22 @@ export const DEFAULT_AUDIO_CONFIG: AudioConfig = {
   hrtfEnabled: true,
 };
 
+export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
+  variantId: 'settings:audio',
+  label: '2. Audio Settings',
+  description:
+    'Master, Engine, Boost, and Background Music volume sliders, Acoustics & EQ entry, and background mute toggle.',
+  storeOverrides: {
+    appStore: {
+      settingsTargetTab: 'audio',
+      developerMode: true,
+    },
+  },
+};
+
 export interface AudioTabProps {
   isLight?: boolean;
   developerMode?: boolean;
-  /** Optional controlled AudioConfig override */
   audioConfig?: Partial<AudioConfig>;
   onNavigateAcousticsEqualizer?: () => void;
   onHover: (desc: string) => void;
@@ -107,9 +121,13 @@ export const AudioTab: React.FC<AudioTabProps> = ({
   onHover,
   onLeave,
 }) => {
-  const navigate = useAppStore((s) => s.navigate);
-  const storeAudio = useAppStore((s) => s.audio);
-  const updateStoreAudio = useAppStore((s) => s.updateAudio);
+  const navigate = useScopedStore('appStore', useAppStore, (s) => s.navigate);
+  const storeAudio = useScopedStore('appStore', useAppStore, (s) => s.audio);
+  const updateStoreAudio = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.updateAudio
+  );
 
   const [internalConfig, setInternalConfig] = useState<AudioConfig>(() => ({
     ...DEFAULT_AUDIO_CONFIG,
@@ -141,19 +159,61 @@ export const AudioTab: React.FC<AudioTabProps> = ({
   const engineVolume = resolvedConfig.engineVolume;
   const boostVolume = resolvedConfig.boostVolume;
 
-  const storeBgmEnabled = useSpatialAudioStore((s) => s.bgmEnabled);
-  const setStoreBgmEnabled = useSpatialAudioStore((s) => s.setBgmEnabled);
-  const storeBgmVolume = useSpatialAudioStore((s) => s.bgmVolume);
-  const setStoreBgmVolume = useSpatialAudioStore((s) => s.setBgmVolume);
-  const bgmScenes = useSpatialAudioStore((s) => s.bgmScenes);
-  const setBgmSceneEnabled = useSpatialAudioStore((s) => s.setBgmSceneEnabled);
-  const uploadStoreBgmFiles = useSpatialAudioStore((s) => s.uploadBgmFiles);
-  const bgmTracksCount = useSpatialAudioStore((s) => s.bgmTracks.length);
-  const bgmCurrentTrackTitle = useSpatialAudioStore((s) => s.bgmCurrentTrackTitle);
-  const bgmFadeDurationSec = useSpatialAudioStore(
+  const storeBgmEnabled = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.bgmEnabled
+  );
+  const setStoreBgmEnabled = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.setBgmEnabled
+  );
+  const storeBgmVolume = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.bgmVolume
+  );
+  const setStoreBgmVolume = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.setBgmVolume
+  );
+  const bgmScenes = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.bgmScenes
+  );
+  const setBgmSceneEnabled = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.setBgmSceneEnabled
+  );
+  const uploadStoreBgmFiles = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.uploadBgmFiles
+  );
+  const bgmTracksCount = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.bgmTracks.length
+  );
+  const bgmCurrentTrackTitle = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.bgmCurrentTrackTitle
+  );
+  const bgmFadeDurationSec = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
     (s) => s.tunerConfig?.bgmFadeDurationSec ?? 2.0
   );
-  const updateTunerConfig = useSpatialAudioStore((s) => s.updateTunerConfig);
+  const updateTunerConfig = useScopedStore(
+    'spatialAudioStore',
+    useSpatialAudioStore,
+    (s) => s.updateTunerConfig
+  );
 
   const bgmEnabled = storeBgmEnabled;
   const bgmVolume = storeBgmVolume ?? resolvedConfig.bgmVolume ?? 80;

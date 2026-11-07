@@ -19,7 +19,7 @@ export const BoostPadRotationsTab: React.FC<BoostPadRotationsTabProps> = ({
 
   const handleCopyAngles = () => {
     try {
-      const angles = computeAllPadRotations(tuner as any);
+      const angles = computeAllPadRotations(tuner);
       const code = exportRotationsAsCode(angles);
       navigator.clipboard?.writeText(code);
       setCopied(true);

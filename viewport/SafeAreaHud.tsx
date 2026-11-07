@@ -12,7 +12,11 @@ export const SafeAreaHud: React.FC<SafeAreaHudProps> = React.memo(({ isLight = f
   if (!showSafeAreaHud) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[600] overflow-hidden font-mono text-[11px] select-none">
+    <div
+      data-alpha-id="Alpha:SafeAreaHud"
+      data-ui-element="viewport-safe-area-hud"
+      className="pointer-events-none fixed inset-0 z-[600] overflow-hidden font-mono text-[11px] select-none"
+    >
       {/* Outer bounding safe area dashed outline */}
       <div
         className={`absolute border border-dashed transition-all duration-150 ${

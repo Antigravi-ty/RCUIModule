@@ -3,7 +3,7 @@ import { Ear, Terminal, Volume2, RefreshCw, Activity } from 'lucide-react';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
 import { useSettingActionRowStore } from '../../../stores/settingRowStore';
 
-export interface AudioDebugTelemetryProps {
+export interface AudioDebugTelemetrySnapshot {
   audioDebugEnabled?: boolean;
   onAudioDebugEnabledChange?: (enabled: boolean) => void;
   masterRmsDb?: number;
@@ -20,10 +20,10 @@ export interface AudioDebugTelemetryProps {
   onForceRecovery?: () => void;
 }
 
+export type AudioDebugTelemetryProps = AudioDebugTelemetrySnapshot;
+
 export interface AudioDebugSectionProps {
-  telemetry?: AudioDebugTelemetryProps;
-  audioDebugMode?: boolean;
-  onAudioDebugModeChange?: (enabled: boolean) => void;
+  telemetry?: AudioDebugTelemetrySnapshot;
   masterVolume?: number;
   bordered?: boolean;
   onHover?: (desc: string) => void;
@@ -40,8 +40,6 @@ export interface AudioDebugSectionProps {
  */
 export const AudioDebugSection: React.FC<AudioDebugSectionProps> = React.memo(({
   telemetry,
-  audioDebugMode: propExpanded,
-  onAudioDebugModeChange,
   masterVolume = 100,
   bordered,
   onHover,
@@ -65,9 +63,8 @@ export const AudioDebugSection: React.FC<AudioDebugSectionProps> = React.memo(({
     onDumpConsole,
     onForceRecovery,
   } = telemetry ?? {};
-  const controlledExpanded = audioDebugEnabled ?? propExpanded;
-  const [internalExpanded, setInternalExpanded] = useState<boolean>(controlledExpanded ?? false);
-  const isExpanded = controlledExpanded ?? internalExpanded;
+  const [internalExpanded, setInternalExpanded] = useState<boolean>(audioDebugEnabled ?? false);
+  const isExpanded = audioDebugEnabled ?? internalExpanded;
   const [internalProbeStatus, setInternalProbeStatus] = useState<string | null>(null);
   const probeStatus = probeStatusText !== undefined ? probeStatusText : internalProbeStatus;
 
@@ -77,7 +74,6 @@ export const AudioDebugSection: React.FC<AudioDebugSectionProps> = React.memo(({
     const next = !isExpanded;
     setInternalExpanded(next);
     onAudioDebugEnabledChange?.(next);
-    onAudioDebugModeChange?.(next);
   };
 
   const formattedContextState = contextState ?? 'running (142.8s)';

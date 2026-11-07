@@ -117,7 +117,7 @@ export const PulseWaveCard: React.FC<PulseWaveCardProps> = ({
         <span className="font-semibold text-[11px]">Pulse Propagation Direction</span>
         <SegmentedSwitch
           value={direction}
-          onChange={(val) => applyWallPatch({ pulseDirection: val as any })}
+          onChange={(val) => applyWallPatch({ pulseDirection: val })}
           options={[
             { value: 'inward', label: 'Inward (Outer → Inner · Outward Fade-In)' },
             { value: 'outward', label: 'Outward (Inner → Outer · Outward Fade-Out)' },
@@ -134,7 +134,7 @@ export const PulseWaveCard: React.FC<PulseWaveCardProps> = ({
         <span className="font-semibold text-[11px]">Pulse Emission / Steady Override Mode</span>
         <SegmentedSwitch
           value={steadyMode}
-          onChange={(val) => applyWallPatch({ pulseSteadyMode: val as any })}
+          onChange={(val) => applyWallPatch({ pulseSteadyMode: val })}
           options={[
             { value: 'wave', label: isInward ? 'Inward Pulse Wave' : 'Outward Pulse Wave' },
             { value: 'solid-override', label: 'Solid Color Override' },

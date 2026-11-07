@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Disc,
   Flame,
@@ -7,107 +7,49 @@ import {
   Sun,
   Wand2,
 } from 'lucide-react';
-import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
+import type { SurfaceVariantMeta } from '../../manifest/surfaceMetaTypes';
+import type { VisualMaterialsConfig } from '../../config/uiConfig';
 import { SettingSegmentedRow } from '../../compounds/SettingSegmentedRow';
+import { useAppStore } from '../../stores/appStore';
 import { useSettingActionRowStore } from '../../stores/settingRowStore';
+import { useScopedStore } from '../../stores/storeSnapshotScope';
 
-export interface VisualMaterialsConfig {
-  ballStyle: 'football' | 'rocket-league';
-  demolishedEffect: 'toon' | 'smoke';
-  boostVisual: 'cartoon' | 'gold-rush';
-  boostAudio: 'rush' | 'standard' | 'flamethrower' | 'plasma';
-  boostFlameLuminance: 'balanced' | 'dynamic';
-  boostPlumeLuminance: 'min' | 'balanced' | 'dynamic' | 'hdr';
-}
+export type { VisualMaterialsConfig };
+
+export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
+  variantId: 'loadout',
+  label: '3. Loadout & Visual FX',
+  description:
+    'Ball visual style, demolition FX, boost trail visual, 4 boost audio variations, and luminance.',
+};
 
 export const DEFAULT_VISUAL_MATERIALS: VisualMaterialsConfig = {
   ballStyle: 'football',
+  carPaint: 'anodized',
   demolishedEffect: 'smoke',
   boostVisual: 'gold-rush',
   boostAudio: 'rush',
   boostFlameLuminance: 'balanced',
   boostPlumeLuminance: 'balanced',
-};
-
-export interface MaterialOptionRowProps {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-  options: { value: string; label: string }[];
-  onHover: () => void;
-  onLeave: () => void;
-  isLight?: boolean;
-  disabled?: boolean;
-}
-
-export const MaterialOptionRow: React.FC<MaterialOptionRowProps> = ({
-  label,
-  value,
-  onChange,
-  options,
-  onHover,
-  onLeave,
-  isLight = false,
-  disabled = false,
-}) => {
-  return (
-    <div
-      className={`flex items-center justify-between w-full py-1.5 px-3 rounded-lg transition-colors select-none ${
-        disabled
-          ? 'opacity-40 cursor-not-allowed'
-          : 'hover:bg-neutral-500/10 cursor-pointer'
-      }`}
-      onMouseEnter={onHover}
-      onMouseLeave={onLeave}
-    >
-      <span
-        className={`text-xs font-semibold truncate ${
-          disabled
-            ? 'opacity-60 text-neutral-400'
-            : isLight
-            ? 'text-neutral-800'
-            : 'text-neutral-200'
-        }`}
-      >
-        {label}
-      </span>
-      <div className="shrink-0 w-64 sm:w-80">
-        <SegmentedSwitch
-          value={value}
-          onValueChange={onChange}
-          options={options}
-          size="sm"
-          fullWidth
-          isLight={isLight}
-          disabled={disabled}
-        />
-      </div>
-    </div>
-  );
+  paintFinish: 'metallic',
 };
 
 export interface GarageLoadoutTabProps {
-  materials?: VisualMaterialsConfig;
-  onUpdateMaterials?: (partial: Partial<VisualMaterialsConfig>) => void;
   onHoverDesc?: (text: string | null) => void;
   isLight?: boolean;
 }
 
 export const GarageLoadoutTab: React.FC<GarageLoadoutTabProps> = ({
-  materials: propMaterials,
-  onUpdateMaterials,
   onHoverDesc,
   isLight = false,
 }) => {
   const { rowGap } = useSettingActionRowStore();
-  const [internalMaterials, setInternalMaterials] = useState<VisualMaterialsConfig>(
-    DEFAULT_VISUAL_MATERIALS
-  );
-  const materials = propMaterials ?? internalMaterials;
+  const storeMaterials = useScopedStore('appStore', useAppStore, (s) => s.materials);
+  const updateMaterials = useScopedStore('appStore', useAppStore, (s) => s.updateMaterials);
 
-  const updateMaterials = (partial: Partial<VisualMaterialsConfig>) => {
-    setInternalMaterials((prev) => ({ ...prev, ...partial }));
-    onUpdateMaterials?.(partial);
+  const materials: VisualMaterialsConfig = {
+    ...DEFAULT_VISUAL_MATERIALS,
+    ...(storeMaterials || {}),
   };
 
   const setHoveredDesc = (desc: string) => onHoverDesc?.(desc);
@@ -176,7 +118,7 @@ export const GarageLoadoutTab: React.FC<GarageLoadoutTabProps> = ({
         icon={Volume2}
         iconColor="text-emerald-400"
         title="Boosted Audio Effect"
-        value={materials.boostAudio}
+        value={materials.boostAudio ?? 'rush'}
         onValueChange={(val) =>
           updateMaterials({
             boostAudio: val as 'rush' | 'standard' | 'flamethrower' | 'plasma',

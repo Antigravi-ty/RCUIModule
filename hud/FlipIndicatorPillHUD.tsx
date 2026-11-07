@@ -221,6 +221,7 @@ export const FlipIndicatorPillHUD = React.memo(
       return (
         <div
           ref={containerRef}
+          data-alpha-id="Alpha:FlipIndicatorPillHUD"
           data-ui-element="hud-flip-indicator-pill"
           className={`relative overflow-hidden select-none pointer-events-auto inline-flex items-center justify-between gap-3 px-3 py-1.5 rounded-lg border shadow-md min-w-[152px] ${
             isLight

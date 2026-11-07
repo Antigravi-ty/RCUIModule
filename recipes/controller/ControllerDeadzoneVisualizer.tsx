@@ -10,18 +10,26 @@ import {
   type StickAxisOption,
 } from './deadzoneCanvasRenderer';
 
-export interface ControllerDeadzoneVisualizerProps {
+export interface ControllerDeadzoneAxisState {
   deadzone: number;
   dodgeDeadzone: number;
-  showCircularOverlay: boolean;
-  maxDiagonal: number;
-  altArrow: boolean;
-  antiAliasing: DeadzoneAntiAliasing;
   steerAxisRole?: StickAxisOption;
   invertSteerAxis?: boolean;
   pitchAxisRole?: StickAxisOption;
   invertPitchAxis?: boolean;
   selectedGamepadIndex?: number | null;
+}
+
+export interface ControllerDeadzoneRenderConfig {
+  showCircularOverlay: boolean;
+  maxDiagonal: number;
+  altArrow: boolean;
+  antiAliasing: DeadzoneAntiAliasing;
+}
+
+export interface ControllerDeadzoneVisualizerProps {
+  axisState: ControllerDeadzoneAxisState;
+  renderConfig: ControllerDeadzoneRenderConfig;
   isLight?: boolean;
   onHover?: (desc: string) => void;
   onLeave?: () => void;
@@ -34,17 +42,21 @@ export interface ControllerDeadzoneVisualizerProps {
 export const ControllerDeadzoneVisualizer: React.FC<ControllerDeadzoneVisualizerProps> =
   React.memo(
     ({
-      deadzone,
-      dodgeDeadzone,
-      showCircularOverlay,
-      maxDiagonal,
-      altArrow,
-      antiAliasing,
-      steerAxisRole = 'left-x',
-      invertSteerAxis = false,
-      pitchAxisRole = 'left-y',
-      invertPitchAxis = false,
-      selectedGamepadIndex = null,
+      axisState: {
+        deadzone,
+        dodgeDeadzone,
+        steerAxisRole = 'left-x',
+        invertSteerAxis = false,
+        pitchAxisRole = 'left-y',
+        invertPitchAxis = false,
+        selectedGamepadIndex = null,
+      },
+      renderConfig: {
+        showCircularOverlay,
+        maxDiagonal,
+        altArrow,
+        antiAliasing,
+      },
       isLight = false,
       onHover,
       onLeave,

@@ -5,6 +5,7 @@ import {
   DEFAULT_PLACEHOLDER_ENDPOINT_CONFIG,
   type CanonicalLabRelayId,
   type Layer4DevSignalingLabRecipeProps,
+  type Layer4DevSignalingLabStateOverride,
   type SignalingLabCloudAuditLogItem,
   type SignalingLabCloudStatsView,
   type SignalingLabEndpointViewConfig,
@@ -47,7 +48,7 @@ export function registerDevSignalingLabBridge(bridge: DevSignalingLabBridgePort)
   activeSignalingLabBridge = bridge;
 }
 
-export function useLayer4DevSignalingLabBinding(rawProps: Layer4DevSignalingLabRecipeProps) {
+export function useLayer4DevSignalingLabBinding(rawProps: Layer4DevSignalingLabRecipeProps & Layer4DevSignalingLabStateOverride) {
   const storeGoBack = useAppStore((s) => s.goBack);
   const signalingSource = useSignalingProfileStore((s) => s.source);
   const isDevPrivateSource =

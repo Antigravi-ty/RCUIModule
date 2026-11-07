@@ -2,54 +2,27 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Cpu, HardDrive, ClipboardCopy } from 'lucide-react';
 import { TelemetrySparklineChart, TelemetryPhaseItem } from '../../charts/TelemetrySparklineChart';
 import { TelemetryRingBuffer } from '../../charts/telemetryRingBuffer';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
+import { useStoreSnapshotOverride } from '../../stores/storeSnapshotScope';
 import { quickNotification } from '../../stores/quickNotificationStore';
 import { useTelemetryData } from '../../stores/perfTelemetryStore';
 
-function usePerformanceMonitorPanelBinding(
-  rawProps: PerformanceMonitorFloatingWindowProps
-): PerformanceMonitorFloatingWindowProps {
-  const { data: snap } = useTelemetryData(180, true);
-
-  const telemetrySnapshot = useMemo((): LiveSystemTelemetrySnapshot | undefined => {
-    if (!snap) return undefined;
-    const palette = ['#f59e0b', '#0ea5e9', '#d946ef', '#10b981', '#6366f1', '#f43f5e'];
-    const liveCpuPhases: TelemetryPhaseItem[] | undefined =
-      Array.isArray(snap.phases) && snap.phases.length > 0
-        ? snap.phases.map((item, idx) => ({
-            phase: item.phase,
-            avgMs: Math.max(0, Number(item.avgMs) || 0),
-            share: Math.max(0, Number(item.share) || 0),
-            color: palette[idx % palette.length],
-          }))
-        : undefined;
-    return {
-      frameTimeMs: snap.frameMs || 8.33,
-      budgetMs: snap.budgetMs || 8.33,
-      refreshHz: snap.refreshHz || 120,
-      p50Ms: snap.p50 || 8.3,
-      p95Ms: snap.p95 || 8.5,
-      p99Ms: snap.p99 || 9.0,
-      peakMs: snap.worstMs || 9.5,
-      overBudgetPct: snap.overBudgetPct || 0,
-      cpuPhases: liveCpuPhases,
-      physicsStepHz: snap.sim?.physicsRateHz || 120,
-      substepsPerTick: snap.sim?.ticksPerFrame || 1,
-      drawCalls: snap.renderer?.drawCalls || 0,
-      trianglesLabel: String(snap.renderer?.triangles ?? '0'),
-      geometries: snap.renderer?.geometries || 0,
-      shaderPrograms: snap.renderer?.textures || 29,
-    };
-  }, [snap]);
-
-  if (!telemetrySnapshot) {
-    return rawProps;
-  }
-
-  return {
-    ...rawProps,
-    snapshot: rawProps.snapshot ?? telemetrySnapshot,
-  };
-}
+export const SURFACE_META: SurfaceMeta = {
+  id: 'performance-monitor',
+  title: 'Performance Monitor',
+  description:
+    'Real-time CPU 6-phase breakdown, physics simulation sub-ticks, and WebGL rendering pipeline metrics.',
+  icon: 'cpu',
+  layer: 'floating-user',
+  menuGroup: 'user-floating',
+  defaultSizing: {
+    width: 441,
+    height: 801,
+    minWidth: 441,
+    minHeight: 130,
+    mode: 'adaptive',
+  },
+};
 
 const INITIAL_FRAME_SAMPLES: number[] = [
   3.18, 3.24, 3.31, 3.22, 3.45, 3.28, 3.19, 3.35, 3.41, 3.26, 3.3, 3.21,
@@ -93,278 +66,270 @@ export interface LiveSystemTelemetrySnapshot {
   shaderPrograms?: number;
 }
 
-export interface PerformanceMonitorFloatingWindowProps {
-  isLight?: boolean;
-  /** Aggregated telemetry snapshot; when provided, disables internal random setInterval and pushes frameTimeMs to RingBuffer */
-  snapshot?: LiveSystemTelemetrySnapshot;
-  /** Optional historical array of frame times (ms) to seed/replace RingBuffer */
-  frameSamplesMs?: number[];
-  budgetMs?: number;
-  refreshHz?: number;
-  isFrozen?: boolean;
-  defaultIsFrozen?: boolean;
-  onFreezeToggle?: (isFrozen: boolean) => void;
-  onPauseToggle?: (isFrozen: boolean) => void;
-  onReset?: () => void;
-  onClear?: () => void;
-  onExportLog?: () => void;
-}
+export interface PerformanceMonitorFloatingWindowProps extends StandardSurfaceProps {}
 
 /**
- * 5. [User] Performance Monitor (`live-system-telemetry`)
+ * 5. [User] Performance Monitor (`performance-monitor`)
  * Standalone L6 Floating Window Panel composing the L5 `<TelemetrySparklineChart />`:
  * 1. Top row: 5 quantile/metric cards (`P50`, `P95`, `P99`, `Peak`, `Budget`)
  * 2. Embedded `<TelemetrySparklineChart variant="embedded" />`: `Freeze`, `Reset`, and current window `Average`
  * 3. CPU Breakdown card: Header (`Cpu` icon + `CPU Breakdown` on left, `Total` on right) + vertical multi-color percentage bars
  * 4. Bottom cards: WASM Physics & WebGL2 Pipeline (preserved)
  */
-export const PerformanceMonitorFloatingWindow: React.FC<PerformanceMonitorFloatingWindowProps> =
-  React.memo((rawProps) => {
-    const {
-      isLight = false,
-      snapshot,
-      frameSamplesMs,
-      budgetMs: propBudgetMs,
-      refreshHz: propRefreshHz,
-      isFrozen: controlledIsFrozen,
-      defaultIsFrozen = false,
-      onFreezeToggle,
-      onPauseToggle,
-      onReset,
-      onClear,
-    } = usePerformanceMonitorPanelBinding(rawProps);
-      const budgetMs = propBudgetMs ?? snapshot?.budgetMs ?? 8.33;
-      const refreshHz = propRefreshHz ?? snapshot?.refreshHz ?? 120;
+export const PerformanceMonitorFloatingWindow: React.FC<
+  PerformanceMonitorFloatingWindowProps
+> = React.memo(({ isLight = false }) => {
+  const { data: snap } = useTelemetryData(180, true);
+  const scopedTelemetryOverride = useStoreSnapshotOverride<LiveSystemTelemetrySnapshot>(
+    'perfTelemetryStore'
+  );
 
-      const ringBufferRef = useRef<TelemetryRingBuffer | null>(null);
-      if (!ringBufferRef.current) {
-        ringBufferRef.current = new TelemetryRingBuffer(
-          240,
-          frameSamplesMs && frameSamplesMs.length > 0 ? frameSamplesMs : INITIAL_FRAME_SAMPLES
-        );
+  const snapshot = useMemo((): LiveSystemTelemetrySnapshot | undefined => {
+    if (scopedTelemetryOverride) {
+      return scopedTelemetryOverride;
+    }
+    if (!snap) return undefined;
+    const palette = ['#f59e0b', '#0ea5e9', '#d946ef', '#10b981', '#6366f1', '#f43f5e'];
+    const liveCpuPhases: TelemetryPhaseItem[] | undefined =
+      Array.isArray(snap.phases) && snap.phases.length > 0
+        ? snap.phases.map((item, idx) => ({
+            phase: item.phase,
+            avgMs: Math.max(0, Number(item.avgMs) || 0),
+            share: Math.max(0, Number(item.share) || 0),
+            color: palette[idx % palette.length],
+          }))
+        : undefined;
+    return {
+      frameTimeMs: snap.frameMs || 8.33,
+      budgetMs: snap.budgetMs || 8.33,
+      refreshHz: snap.refreshHz || 120,
+      p50Ms: snap.p50 || 8.3,
+      p95Ms: snap.p95 || 8.5,
+      p99Ms: snap.p99 || 9.0,
+      peakMs: snap.worstMs || 9.5,
+      overBudgetPct: snap.overBudgetPct || 0,
+      cpuPhases: liveCpuPhases,
+      physicsStepHz: snap.sim?.physicsRateHz || 120,
+      substepsPerTick: snap.sim?.ticksPerFrame || 1,
+      drawCalls: snap.renderer?.drawCalls || 0,
+      trianglesLabel: String(snap.renderer?.triangles ?? '0'),
+      geometries: snap.renderer?.geometries || 0,
+      shaderPrograms: snap.renderer?.textures || 29,
+    };
+  }, [snap, scopedTelemetryOverride]);
+
+  const budgetMs = snapshot?.budgetMs ?? 8.33;
+  const refreshHz = snapshot?.refreshHz ?? 120;
+
+  const ringBufferRef = useRef<TelemetryRingBuffer | null>(null);
+  if (!ringBufferRef.current) {
+    ringBufferRef.current = new TelemetryRingBuffer(240, INITIAL_FRAME_SAMPLES);
+  }
+  const ringBuffer = ringBufferRef.current;
+
+  const [isFrozen, setIsFrozen] = useState<boolean>(false);
+  const [frozenSnapshot, setFrozenSnapshot] = useState<Float32Array | null>(null);
+  const [, setVersionTick] = useState<number>(0);
+
+  const hasExternalFeed = snapshot !== undefined;
+
+  // Push incoming snapshot.frameTimeMs into internal Canvas RingBuffer
+  useEffect(() => {
+    if (!snapshot || snapshot.frameTimeMs === undefined || isFrozen) return;
+    ringBuffer.push(Number(snapshot.frameTimeMs));
+    setVersionTick((v) => (v + 1) % 10000);
+  }, [snapshot, isFrozen, ringBuffer]);
+
+  // Gentle self-simulation when unfrozen and no external snapshot is passed
+  useEffect(() => {
+    if (isFrozen || hasExternalFeed) return;
+    let phase = 0;
+    const id = window.setInterval(() => {
+      phase += 0.18;
+      const sample = 3.25 + Math.sin(phase) * 0.22 + (Math.random() - 0.5) * 0.18;
+      ringBuffer.push(Number(sample.toFixed(2)));
+      setVersionTick((v) => (v + 1) % 10000);
+    }, 120);
+    return () => window.clearInterval(id);
+  }, [isFrozen, hasExternalFeed, ringBuffer]);
+
+  const stats = ringBuffer.computeStats(budgetMs, refreshHz, isFrozen ? frozenSnapshot : null);
+  const displayP50 = snapshot?.p50Ms ?? stats.p50;
+  const displayP95 = snapshot?.p95Ms ?? stats.p95;
+  const displayP99 = snapshot?.p99Ms ?? stats.p99;
+  const displayPeak = snapshot?.peakMs ?? stats.worstMs;
+  const displayOverBudgetPct = snapshot?.overBudgetPct ?? stats.overBudgetPct;
+  const isOverBudget =
+    snapshot?.overBudgetPct !== undefined
+      ? snapshot.overBudgetPct > 0
+      : stats.overBudgetCount > 0;
+
+  const handleFreezeChange = (nextFrozen: boolean) => {
+    if (nextFrozen) {
+      setFrozenSnapshot(ringBuffer.snapshot());
+    } else {
+      setFrozenSnapshot(null);
+    }
+    setIsFrozen(nextFrozen);
+  };
+
+  const handleReset = () => {
+    ringBuffer.clear();
+    if (!hasExternalFeed) {
+      ringBuffer.pushBatch(INITIAL_FRAME_SAMPLES);
+    }
+    if (isFrozen) {
+      setFrozenSnapshot(ringBuffer.snapshot());
+    }
+    setVersionTick((v) => v + 1);
+    quickNotification.info('Reset frame-time telemetry window.');
+  };
+
+  const cpuPhases = snapshot?.cpuPhases ?? DEFAULT_CPU_PHASES;
+  const totalCpuMs = cpuPhases.reduce((acc, item) => acc + item.avgMs, 0);
+
+  const handleCopyDiagnosticReport = () => {
+    try {
+      const w =
+        typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
+      const customBuilder = w.exportRuntimeDiagnosticReport;
+      const payload =
+        typeof customBuilder === 'function'
+          ? (customBuilder as () => unknown)()
+          : {
+              capturedAt: new Date().toISOString(),
+              telemetry: {
+                p50Ms: Number(displayP50.toFixed(3)),
+                p95Ms: Number(displayP95.toFixed(3)),
+                p99Ms: Number(displayP99.toFixed(3)),
+                peakMs: Number(displayPeak.toFixed(3)),
+                budgetMs,
+                refreshHz,
+                overBudgetPct: displayOverBudgetPct,
+                totalCpuMs: Number(totalCpuMs.toFixed(3)),
+                cpuPhases: cpuPhases.map((p) => ({
+                  phase: p.phase,
+                  avgMs: Number(p.avgMs.toFixed(3)),
+                  sharePct: Math.round(p.share * 100),
+                })),
+                webgl: {
+                  drawCalls: snapshot?.drawCalls ?? 0,
+                  triangles: snapshot?.trianglesLabel ?? '0',
+                  geometries: snapshot?.geometries ?? 0,
+                  shaderPrograms: snapshot?.shaderPrograms ?? 0,
+                },
+              },
+            };
+      const jsonText = JSON.stringify(payload, null, 2);
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        void navigator.clipboard.writeText(jsonText);
       }
-      const ringBuffer = ringBufferRef.current;
+      quickNotification.success('Copied diagnostic performance report to clipboard.');
+    } catch {
+      quickNotification.error('Failed to copy diagnostic report.');
+    }
+  };
 
-      const [internalIsFrozen, setInternalIsFrozen] = useState<boolean>(defaultIsFrozen);
-      const isFrozen = controlledIsFrozen ?? internalIsFrozen;
-      const [frozenSnapshot, setFrozenSnapshot] = useState<Float32Array | null>(null);
-      const [, setVersionTick] = useState<number>(0);
+  const physicsStepLabel =
+    snapshot?.physicsStepHz !== undefined
+      ? typeof snapshot.physicsStepHz === 'number'
+        ? `${snapshot.physicsStepHz.toFixed(1)} Hz`
+        : snapshot.physicsStepHz
+      : '120.0 Hz';
+  const substepsLabel =
+    snapshot?.substepsPerTick !== undefined
+      ? typeof snapshot.substepsPerTick === 'number'
+        ? `${snapshot.substepsPerTick} / tick`
+        : snapshot.substepsPerTick
+      : '4 / tick';
+  const botPolicyLabel = snapshot?.botPolicyLabel ?? 'Nexto (15Hz)';
+  const wasmHeapLabel =
+    snapshot?.wasmHeapMb !== undefined
+      ? typeof snapshot.wasmHeapMb === 'number'
+        ? `${snapshot.wasmHeapMb.toFixed(1)} MB`
+        : snapshot.wasmHeapMb
+      : '64.0 MB';
 
-      const hasExternalFeed = snapshot !== undefined || frameSamplesMs !== undefined;
+  const pipelineBadge = snapshot?.pipelineBadge ?? 'DPR 1.0 · FXAA + Bloom';
+  const drawCalls = snapshot?.drawCalls ?? 142;
+  const trianglesLabel = snapshot?.trianglesLabel ?? '218.4 K';
+  const geometries = snapshot?.geometries ?? 68;
+  const shaderPrograms = snapshot?.shaderPrograms ?? 29;
 
-      // Sync external historical array when provided
-      useEffect(() => {
-        if (!frameSamplesMs || isFrozen) return;
-        ringBuffer.clear();
-        ringBuffer.pushBatch(frameSamplesMs);
-        setVersionTick((v) => (v + 1) % 10000);
-      }, [frameSamplesMs, isFrozen, ringBuffer]);
+  return (
+    <div className="p-3.5 flex flex-col gap-3 text-xs select-none">
+      {/* 1. Top 5 Data Metrics: P50, P95, P99, Peak, Budget */}
+      <div className="grid grid-cols-5 gap-1.5 text-center font-mono">
+        <div
+          className={`p-2 rounded-xl border ${
+            isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/70 border-neutral-800'
+          }`}
+        >
+          <span className="text-[9px] text-neutral-400 uppercase block">P50</span>
+          <span className="text-[11px] font-bold tabular-nums">{displayP50.toFixed(2)}ms</span>
+        </div>
 
-      // Push incoming snapshot.frameTimeMs into internal Canvas RingBuffer
-      useEffect(() => {
-        if (!snapshot || snapshot.frameTimeMs === undefined || isFrozen) return;
-        ringBuffer.push(Number(snapshot.frameTimeMs));
-        setVersionTick((v) => (v + 1) % 10000);
-      }, [snapshot, isFrozen, ringBuffer]);
+        <div
+          className={`p-2 rounded-xl border ${
+            isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/70 border-neutral-800'
+          }`}
+        >
+          <span className="text-[9px] text-neutral-400 uppercase block">P95</span>
+          <span className="text-[11px] font-bold tabular-nums">{displayP95.toFixed(2)}ms</span>
+        </div>
 
-      // Gentle self-simulation when unfrozen and no external snapshot is passed
-      useEffect(() => {
-        if (isFrozen || hasExternalFeed) return;
-        let phase = 0;
-        const id = window.setInterval(() => {
-          phase += 0.18;
-          const sample = 3.25 + Math.sin(phase) * 0.22 + (Math.random() - 0.5) * 0.18;
-          ringBuffer.push(Number(sample.toFixed(2)));
-          setVersionTick((v) => (v + 1) % 10000);
-        }, 120);
-        return () => window.clearInterval(id);
-      }, [isFrozen, hasExternalFeed, ringBuffer]);
+        <div
+          className={`p-2 rounded-xl border ${
+            isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/70 border-neutral-800'
+          }`}
+        >
+          <span className="text-[9px] text-neutral-400 uppercase block">P99</span>
+          <span className="text-[11px] font-bold text-amber-500 tabular-nums">
+            {displayP99.toFixed(2)}ms
+          </span>
+        </div>
 
-      const stats = ringBuffer.computeStats(budgetMs, refreshHz, isFrozen ? frozenSnapshot : null);
-      const displayP50 = snapshot?.p50Ms ?? stats.p50;
-      const displayP95 = snapshot?.p95Ms ?? stats.p95;
-      const displayP99 = snapshot?.p99Ms ?? stats.p99;
-      const displayPeak = snapshot?.peakMs ?? stats.worstMs;
-      const displayOverBudgetPct = snapshot?.overBudgetPct ?? stats.overBudgetPct;
-      const isOverBudget =
-        snapshot?.overBudgetPct !== undefined
-          ? snapshot.overBudgetPct > 0
-          : stats.overBudgetCount > 0;
+        <div
+          className={`p-2 rounded-xl border ${
+            isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/70 border-neutral-800'
+          }`}
+        >
+          <span className="text-[9px] text-neutral-400 uppercase block">Peak</span>
+          <span
+            className={`text-[11px] font-bold tabular-nums ${
+              displayPeak > budgetMs * 1.2 ? 'text-rose-500' : ''
+            }`}
+          >
+            {displayPeak.toFixed(2)}ms
+          </span>
+        </div>
 
-      const handleFreezeChange = (nextFrozen: boolean) => {
-        if (nextFrozen) {
-          setFrozenSnapshot(ringBuffer.snapshot());
-        } else {
-          setFrozenSnapshot(null);
-        }
-        if (controlledIsFrozen === undefined) {
-          setInternalIsFrozen(nextFrozen);
-        }
-        onFreezeToggle?.(nextFrozen);
-        onPauseToggle?.(nextFrozen);
-      };
+        <div
+          className={`p-2 rounded-xl border ${
+            isOverBudget
+              ? 'bg-rose-500/10 border-rose-500/30 text-rose-500'
+              : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+          }`}
+        >
+          <span className="text-[9px] opacity-80 uppercase block">Budget</span>
+          <span className="text-[11px] font-bold tabular-nums">
+            {isOverBudget ? `${displayOverBudgetPct}% Over` : `${budgetMs}ms`}
+          </span>
+        </div>
+      </div>
 
-      const handleReset = () => {
-        ringBuffer.clear();
-        if (!hasExternalFeed) {
-          ringBuffer.pushBatch(INITIAL_FRAME_SAMPLES);
-        } else if (frameSamplesMs && frameSamplesMs.length > 0) {
-          ringBuffer.pushBatch(frameSamplesMs);
-        }
-        if (isFrozen) {
-          setFrozenSnapshot(ringBuffer.snapshot());
-        }
-        setVersionTick((v) => v + 1);
-        onReset?.();
-        onClear?.();
-        quickNotification.info('Reset frame-time telemetry window.');
-      };
-
-      const cpuPhases = snapshot?.cpuPhases ?? DEFAULT_CPU_PHASES;
-      const totalCpuMs = cpuPhases.reduce((acc, item) => acc + item.avgMs, 0);
-
-      const handleCopyDiagnosticReport = () => {
-        try {
-          const w = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
-          const customBuilder = w.exportRuntimeDiagnosticReport;
-          const payload =
-            typeof customBuilder === 'function'
-              ? (customBuilder as () => unknown)()
-              : {
-                  capturedAt: new Date().toISOString(),
-                  telemetry: {
-                    p50Ms: Number(displayP50.toFixed(3)),
-                    p95Ms: Number(displayP95.toFixed(3)),
-                    p99Ms: Number(displayP99.toFixed(3)),
-                    peakMs: Number(displayPeak.toFixed(3)),
-                    budgetMs,
-                    refreshHz,
-                    overBudgetPct: displayOverBudgetPct,
-                    totalCpuMs: Number(totalCpuMs.toFixed(3)),
-                    cpuPhases: cpuPhases.map((p) => ({
-                      phase: p.phase,
-                      avgMs: Number(p.avgMs.toFixed(3)),
-                      sharePct: Math.round(p.share * 100),
-                    })),
-                    webgl: {
-                      drawCalls: snapshot?.drawCalls ?? 0,
-                      triangles: snapshot?.trianglesLabel ?? '0',
-                      geometries: snapshot?.geometries ?? 0,
-                      shaderPrograms: snapshot?.shaderPrograms ?? 0,
-                    },
-                  },
-                };
-          const jsonText = JSON.stringify(payload, null, 2);
-          if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-            void navigator.clipboard.writeText(jsonText);
-          }
-          rawProps.onExportLog?.();
-          quickNotification.success('Copied diagnostic performance report to clipboard.');
-        } catch {
-          quickNotification.error('Failed to copy diagnostic report.');
-        }
-      };
-
-      const physicsStepLabel =
-        snapshot?.physicsStepHz !== undefined
-          ? typeof snapshot.physicsStepHz === 'number'
-            ? `${snapshot.physicsStepHz.toFixed(1)} Hz`
-            : snapshot.physicsStepHz
-          : '120.0 Hz';
-      const substepsLabel =
-        snapshot?.substepsPerTick !== undefined
-          ? typeof snapshot.substepsPerTick === 'number'
-            ? `${snapshot.substepsPerTick} / tick`
-            : snapshot.substepsPerTick
-          : '4 / tick';
-      const botPolicyLabel = snapshot?.botPolicyLabel ?? 'Nexto (15Hz)';
-      const wasmHeapLabel =
-        snapshot?.wasmHeapMb !== undefined
-          ? typeof snapshot.wasmHeapMb === 'number'
-            ? `${snapshot.wasmHeapMb.toFixed(1)} MB`
-            : snapshot.wasmHeapMb
-          : '64.0 MB';
-
-      const pipelineBadge = snapshot?.pipelineBadge ?? 'DPR 1.0 · FXAA + Bloom';
-      const drawCalls = snapshot?.drawCalls ?? 142;
-      const trianglesLabel = snapshot?.trianglesLabel ?? '218.4 K';
-      const geometries = snapshot?.geometries ?? 68;
-      const shaderPrograms = snapshot?.shaderPrograms ?? 29;
-
-      return (
-        <div className="p-3.5 flex flex-col gap-3 text-xs select-none">
-          {/* 1. Top 5 Data Metrics: P50, P95, P99, Peak, Budget */}
-          <div className="grid grid-cols-5 gap-1.5 text-center font-mono">
-            <div
-              className={`p-2 rounded-xl border ${
-                isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/70 border-neutral-800'
-              }`}
-            >
-              <span className="text-[9px] text-neutral-400 uppercase block">P50</span>
-              <span className="text-[11px] font-bold tabular-nums">{displayP50.toFixed(2)}ms</span>
-            </div>
-
-            <div
-              className={`p-2 rounded-xl border ${
-                isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/70 border-neutral-800'
-              }`}
-            >
-              <span className="text-[9px] text-neutral-400 uppercase block">P95</span>
-              <span className="text-[11px] font-bold tabular-nums">{displayP95.toFixed(2)}ms</span>
-            </div>
-
-            <div
-              className={`p-2 rounded-xl border ${
-                isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/70 border-neutral-800'
-              }`}
-            >
-              <span className="text-[9px] text-neutral-400 uppercase block">P99</span>
-              <span className="text-[11px] font-bold text-amber-500 tabular-nums">
-                {displayP99.toFixed(2)}ms
-              </span>
-            </div>
-
-            <div
-              className={`p-2 rounded-xl border ${
-                isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-900/70 border-neutral-800'
-              }`}
-            >
-              <span className="text-[9px] text-neutral-400 uppercase block">Peak</span>
-              <span
-                className={`text-[11px] font-bold tabular-nums ${
-                  displayPeak > budgetMs * 1.2 ? 'text-rose-500' : ''
-                }`}
-              >
-                {displayPeak.toFixed(2)}ms
-              </span>
-            </div>
-
-            <div
-              className={`p-2 rounded-xl border ${
-                isOverBudget
-                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-500'
-                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
-              }`}
-            >
-              <span className="text-[9px] opacity-80 uppercase block">Budget</span>
-              <span className="text-[11px] font-bold tabular-nums">
-                {isOverBudget ? `${displayOverBudgetPct}% Over` : `${budgetMs}ms`}
-              </span>
-            </div>
-          </div>
-
-          {/* 2. L5 TelemetrySparklineChart (Embedded Frame-Time Sparkline Canvas + Freeze / Reset / Average Bar) */}
-          <TelemetrySparklineChart
-            variant="embedded"
-            ringBuffer={ringBuffer}
-            budgetMs={budgetMs}
-            refreshHz={refreshHz}
-            height={124}
-            isFrozen={isFrozen}
-            onFreezeToggle={handleFreezeChange}
-            onReset={handleReset}
-            isLight={isLight}
-          />
+      {/* 2. L5 TelemetrySparklineChart (Embedded Frame-Time Sparkline Canvas + Freeze / Reset / Average Bar) */}
+      <TelemetrySparklineChart
+        variant="embedded"
+        ringBuffer={ringBuffer}
+        budgetMs={budgetMs}
+        refreshHz={refreshHz}
+        height={124}
+        isFrozen={isFrozen}
+        onFreezeToggle={handleFreezeChange}
+        onReset={handleReset}
+        isLight={isLight}
+      />
 
       {/* 3. CPU Breakdown (Vertical Multi-Color Percentage Bars) */}
       <div
@@ -505,3 +470,4 @@ export const PerformanceMonitorFloatingWindow: React.FC<PerformanceMonitorFloati
   );
 });
 PerformanceMonitorFloatingWindow.displayName = 'PerformanceMonitorFloatingWindow';
+export default PerformanceMonitorFloatingWindow;

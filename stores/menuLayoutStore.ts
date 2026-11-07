@@ -117,6 +117,34 @@ const extractTokens = (state: MenuLayoutTokens): MenuLayoutTokens =>
     panelFooterSplitRight: state.panelFooterSplitRight,
     panelFooterRightDivider: state.panelFooterRightDivider,
     panelFooterRightPaddingX: state.panelFooterRightPaddingX,
+    floatingOuterRadius:
+      state.floatingOuterRadius ?? DEFAULT_PANEL_SHELL_TOKENS.floatingOuterRadius,
+    floatingHeaderPaddingX:
+      state.floatingHeaderPaddingX ?? DEFAULT_PANEL_SHELL_TOKENS.floatingHeaderPaddingX,
+    floatingHeaderPaddingY:
+      state.floatingHeaderPaddingY ?? DEFAULT_PANEL_SHELL_TOKENS.floatingHeaderPaddingY,
+    floatingHeaderTitleFontSize:
+      state.floatingHeaderTitleFontSize ??
+      DEFAULT_PANEL_SHELL_TOKENS.floatingHeaderTitleFontSize,
+    floatingHeaderMinimizeBtnSize:
+      state.floatingHeaderMinimizeBtnSize ??
+      DEFAULT_PANEL_SHELL_TOKENS.floatingHeaderMinimizeBtnSize,
+    floatingHeaderMinimizeBtnRadius:
+      state.floatingHeaderMinimizeBtnRadius ??
+      DEFAULT_PANEL_SHELL_TOKENS.floatingHeaderMinimizeBtnRadius,
+    floatingBodyPaddingX:
+      state.floatingBodyPaddingX ?? DEFAULT_PANEL_SHELL_TOKENS.floatingBodyPaddingX,
+    floatingBodyPaddingY:
+      state.floatingBodyPaddingY ?? DEFAULT_PANEL_SHELL_TOKENS.floatingBodyPaddingY,
+    floatingFooterPaddingX:
+      state.floatingFooterPaddingX ?? DEFAULT_PANEL_SHELL_TOKENS.floatingFooterPaddingX,
+    floatingFooterPaddingY:
+      state.floatingFooterPaddingY ?? DEFAULT_PANEL_SHELL_TOKENS.floatingFooterPaddingY,
+    floatingFooterCornerReserveRightPx:
+      state.floatingFooterCornerReserveRightPx ??
+      DEFAULT_PANEL_SHELL_TOKENS.floatingFooterCornerReserveRightPx,
+    floatingFooterFontSize:
+      state.floatingFooterFontSize ?? DEFAULT_PANEL_SHELL_TOKENS.floatingFooterFontSize,
     layer1Width: state.layer1Width,
     layer1Height: state.layer1Height,
     layer2Width: state.layer2Width,
@@ -178,6 +206,18 @@ const buildShellTokensSnapshot = (s: MenuLayoutTokens) => ({
   panelFooterSplitRight: s.panelFooterSplitRight,
   panelFooterRightDivider: s.panelFooterRightDivider,
   panelFooterRightPaddingX: s.panelFooterRightPaddingX,
+  floatingOuterRadius: s.floatingOuterRadius,
+  floatingHeaderPaddingX: s.floatingHeaderPaddingX,
+  floatingHeaderPaddingY: s.floatingHeaderPaddingY,
+  floatingHeaderTitleFontSize: s.floatingHeaderTitleFontSize,
+  floatingHeaderMinimizeBtnSize: s.floatingHeaderMinimizeBtnSize,
+  floatingHeaderMinimizeBtnRadius: s.floatingHeaderMinimizeBtnRadius,
+  floatingBodyPaddingX: s.floatingBodyPaddingX,
+  floatingBodyPaddingY: s.floatingBodyPaddingY,
+  floatingFooterPaddingX: s.floatingFooterPaddingX,
+  floatingFooterPaddingY: s.floatingFooterPaddingY,
+  floatingFooterCornerReserveRightPx: s.floatingFooterCornerReserveRightPx,
+  floatingFooterFontSize: s.floatingFooterFontSize,
 });
 
 const rawInitialTokens = syncBridge.get<MenuLayoutTokens>(SYNC_KEY, loadSavedTokens());

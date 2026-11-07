@@ -1,10 +1,16 @@
 import rawCalibrationOverrides from './surfaceCalibrationOverrides.json';
 import rawApprovalLedger from './uiApprovalLedger.json';
 import type {
+  RootCauseClusterRecommendation,
   SurfaceApprovalRecord,
   SurfaceCalibrationLedger,
   SurfaceCalibrationOverride,
+  SurfaceDriftState,
   SurfaceSizingSpec,
+  SurfaceTriageBucket,
+  SurfaceTriageStatus,
+  SurfaceVariantApprovalUnit,
+  SurfaceVariantTriageStatus,
   UiApprovalLedger,
 } from './surfaceMetaTypes';
 
@@ -12,7 +18,7 @@ export const SURFACE_CALIBRATION_OVERRIDES: SurfaceCalibrationLedger =
   (rawCalibrationOverrides as SurfaceCalibrationLedger) ?? {};
 
 export const UI_APPROVAL_LEDGER: UiApprovalLedger =
-  (rawApprovalLedger as UiApprovalLedger) ?? {
+  (rawApprovalLedger as unknown as UiApprovalLedger) ?? {
     schemaVersion: 1,
     updatedAt: '',
     templateHash: '',
@@ -76,4 +82,206 @@ export function getSurfaceApprovalRecord(
   surfaceId: string
 ): SurfaceApprovalRecord | undefined {
   return UI_APPROVAL_LEDGER.surfaces?.[surfaceId];
+}
+
+/**
+ * Looks up a specific sub-variant / tab approval unit (`SurfaceVariantApprovalUnit`),
+ * e.g. `getSurfaceVariantApprovalUnit('recipe:Layer2SettingsRecipe', 'gameplay')`.
+ */
+export function getSurfaceVariantApprovalUnit(
+  surfaceId: string,
+  variantId: string
+): SurfaceVariantApprovalUnit | undefined {
+  return UI_APPROVAL_LEDGER.surfaces?.[surfaceId]?.variants?.[variantId];
+}
+
+function classifyBucketAndDriftState(params: {
+  status: SurfaceApprovalRecord['status'];
+  visualDrifted: boolean;
+  configDrifted: boolean;
+  templateDrifted: boolean;
+}): { driftState: SurfaceDriftState; bucket: SurfaceTriageBucket } {
+  const { status, visualDrifted, configDrifted, templateDrifted } = params;
+  if (status === 'unreviewed' || status === 'pending') {
+    return { driftState: 'unreviewed', bucket: 'bucket-1-visual' };
+  }
+  if (status === 'rejected') {
+    return { driftState: 'rejected', bucket: 'bucket-1-visual' };
+  }
+  if (visualDrifted) {
+    return { driftState: 'visual-stale', bucket: 'bucket-1-visual' };
+  }
+  if (configDrifted) {
+    return { driftState: 'config-stale', bucket: 'bucket-2-config' };
+  }
+  if (templateDrifted) {
+    return { driftState: 'template-stale', bucket: 'bucket-3-template' };
+  }
+  if (status === 'deferred') {
+    return { driftState: 'deferred', bucket: 'clean' };
+  }
+  return { driftState: 'approved', bucket: 'clean' };
+}
+
+/**
+ * Evaluates a surface record against an optional runtime hash snapshot and classifies
+ * both the surface and its `SurfaceVariantApprovalUnit` sub-tabs into the 3-Bucket Triage queue.
+ */
+export function evaluateSurfaceTriageStatus(
+  surfaceId: string,
+  liveSnapshot?: Partial<
+    Pick<
+      SurfaceApprovalRecord,
+      'templateHash' | 'sizingAndConfigHash' | 'visualAstHash' | 'fileVisualHashes'
+    >
+  >
+): SurfaceTriageStatus | undefined {
+  const record = getSurfaceApprovalRecord(surfaceId);
+  if (!record) return undefined;
+
+  const templateDrifted = Boolean(
+    liveSnapshot?.templateHash && liveSnapshot.templateHash !== record.templateHash
+  );
+  const sizingOrConfigDrifted = Boolean(
+    liveSnapshot?.sizingAndConfigHash &&
+      liveSnapshot.sizingAndConfigHash !== record.sizingAndConfigHash
+  );
+  const visualAstDrifted = Boolean(
+    liveSnapshot?.visualAstHash && liveSnapshot.visualAstHash !== record.visualAstHash
+  );
+
+  const changedFiles: string[] = [];
+  if (liveSnapshot?.fileVisualHashes) {
+    for (const [fileRel, hash] of Object.entries(liveSnapshot.fileVisualHashes)) {
+      if (record.fileVisualHashes?.[fileRel] !== hash) {
+        changedFiles.push(fileRel);
+      }
+    }
+  }
+
+  const { driftState, bucket } = classifyBucketAndDriftState({
+    status: record.status,
+    visualDrifted: visualAstDrifted,
+    configDrifted: sizingOrConfigDrifted,
+    templateDrifted,
+  });
+
+  const variants: SurfaceVariantTriageStatus[] = Object.values(record.variants ?? {}).map(
+    (unit) => {
+      const unitChangedFiles = changedFiles.filter((f) => f in unit.fileVisualHashes);
+      const unitVisualDrifted = unitChangedFiles.length > 0;
+      const unitClass = classifyBucketAndDriftState({
+        status: unit.status,
+        visualDrifted: unitVisualDrifted,
+        configDrifted: sizingOrConfigDrifted,
+        templateDrifted,
+      });
+      return {
+        unitId: unit.unitId,
+        variantId: unit.variantId,
+        label: unit.label,
+        entryFile: unit.entryFile,
+        status: unit.status,
+        driftState: unitClass.driftState,
+        bucket: unitClass.bucket,
+        changedFiles: unitChangedFiles,
+        alphaDependencies: unit.alphaDependencies,
+        note: unit.note,
+      };
+    }
+  );
+
+  return {
+    surfaceId,
+    surfaceKind: record.surfaceKind,
+    entryFile: record.entryFile,
+    status: record.status,
+    driftState,
+    bucket,
+    templateDrifted,
+    sizingOrConfigDrifted,
+    visualAstDrifted,
+    changedFiles,
+    alphaDependencies: record.alphaDependencies ?? record.alphaDeps ?? [],
+    variants,
+    note: record.note,
+  };
+}
+
+/**
+ * Generates Alpha ⇄ Bravo Root-Cause Clustering Recommendations from a set of surface triage statuses.
+ *
+ * - When >= 2 rejected/stale surfaces share a `Alpha:*` component dependency, recommends inspecting
+ *   and fixing the shared Workspace Alpha mother component rather than patching individual Bravo surfaces.
+ * - When only 1 surface is rejected and its `Alpha:*` dependencies have healthy approved peers,
+ *   recommends local Bravo surface or `surfaceCalibrationOverrides.json` adjustment.
+ */
+export function buildAlphaBravoRootCauseRecommendations(
+  triageList: SurfaceTriageStatus[]
+): RootCauseClusterRecommendation[] {
+  const alphaStats = new Map<
+    string,
+    { rejected: string[]; drifted: string[]; approved: string[] }
+  >();
+
+  for (const item of triageList) {
+    const alphaTokens = item.alphaDependencies.filter((d) => d.startsWith('Alpha:'));
+    for (const alphaId of alphaTokens) {
+      if (!alphaStats.has(alphaId)) {
+        alphaStats.set(alphaId, { rejected: [], drifted: [], approved: [] });
+      }
+      const bucket = alphaStats.get(alphaId)!;
+      if (item.status === 'rejected') {
+        bucket.rejected.push(item.surfaceId);
+      } else if (item.bucket !== 'clean') {
+        bucket.drifted.push(item.surfaceId);
+      } else {
+        bucket.approved.push(item.surfaceId);
+      }
+    }
+  }
+
+  const recommendations: RootCauseClusterRecommendation[] = [];
+
+  for (const [alphaId, stat] of alphaStats.entries()) {
+    if (stat.rejected.length >= 2) {
+      recommendations.push({
+        targetType: 'alpha-mother-component',
+        targetId: alphaId,
+        affectedSurfaceIds: stat.rejected,
+        approvedPeerCount: stat.approved.length,
+        rejectedCount: stat.rejected.length,
+        driftedCount: stat.drifted.length,
+        recommendation: `Multiple rejected surfaces (${stat.rejected.length}) co-depend on ${alphaId}. Inspect and fix the ${alphaId} mother template in Workspace Alpha first instead of patching individual business surfaces.`,
+      });
+    }
+  }
+
+  for (const item of triageList) {
+    if (item.status === 'rejected') {
+      const sharedMotherTriggered = recommendations.some(
+        (r) =>
+          r.targetType === 'alpha-mother-component' &&
+          r.affectedSurfaceIds.includes(item.surfaceId)
+      );
+      if (!sharedMotherTriggered) {
+        const alphaTokens = item.alphaDependencies.filter((d) => d.startsWith('Alpha:'));
+        const maxApprovedPeers = alphaTokens.reduce(
+          (acc, id) => Math.max(acc, alphaStats.get(id)?.approved.length ?? 0),
+          0
+        );
+        recommendations.push({
+          targetType: 'bravo-surface-local',
+          targetId: item.surfaceId,
+          affectedSurfaceIds: [item.surfaceId],
+          approvedPeerCount: maxApprovedPeers,
+          rejectedCount: 1,
+          driftedCount: item.bucket !== 'clean' ? 1 : 0,
+          recommendation: `Underlying Alpha mother components are healthy (${maxApprovedPeers} approved peer surfaces). Apply local fix to ${item.entryFile} or update surfaceCalibrationOverrides.json for ${item.surfaceId}.`,
+        });
+      }
+    }
+  }
+
+  return recommendations;
 }

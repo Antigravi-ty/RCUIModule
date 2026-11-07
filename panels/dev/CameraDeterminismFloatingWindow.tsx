@@ -15,9 +15,22 @@ import {
   PRE_TRIGGER_FRAME_LIMIT,
   POST_TRIGGER_FRAME_LIMIT,
 } from '../../stores/cameraDeterminismStore';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface CameraDeterminismFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'camera-determinism',
+  title: 'Camera Deterministic Harness',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 460,
+    height: 460,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface CameraDeterminismFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
 
@@ -325,3 +338,5 @@ export const CameraDeterminismFloatingWindow: React.FC<CameraDeterminismFloating
     </div>
   );
 };
+
+export default CameraDeterminismFloatingWindow;

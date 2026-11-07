@@ -1,24 +1,62 @@
 import React, { useState } from 'react';
 import { Cpu, Palette, Sliders } from 'lucide-react';
-import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
-import { PanelFooter } from '../layout/PanelFooter';
-import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
-import { SettingActionRow } from '../compounds/SettingActionRow';
-import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
-import { SettingSliderRow } from '../compounds/SettingSliderRow';
-import { SettingToggleRow } from '../compounds/SettingToggleRow';
-import { BounceSolidSvg } from '../primitives/packagedSvgIcons';
-import { useAppStore } from '../stores/appStore';
-import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
-import { useSettingActionRowStore } from '../stores/settingRowStore';
 import {
   DEFAULT_TRAJECTORY_CONFIG,
   type TrajectoryConfig,
   type TrajectoryUpdateMode,
 } from '../config/trainingDefaults';
+import { SettingActionRow } from '../compounds/SettingActionRow';
+import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
+import { SettingSliderRow } from '../compounds/SettingSliderRow';
+import { SettingToggleRow } from '../compounds/SettingToggleRow';
+import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
+import { PanelFooter } from '../layout/PanelFooter';
+import { resolveCalibratedSurfaceSizing } from '../manifest/surfaceCalibration';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import { SegmentedSwitch } from '../primitives/SegmentedSwitch';
+import { BounceSolidSvg } from '../primitives/packagedSvgIcons';
+import { useAppStore } from '../stores/appStore';
 import { BALL_TRAJECTORY_TUNER_PRESET } from '../stores/devFloatingPresets';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer3BallTrajectoryRecipe',
+  title: 'Ball Trajectory Predictor',
+  subtitle: '3D Predictive Flight Horizon, Dash Geometry, Line Color & WASM Incremental Mode',
+  icon: 'Activity',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 560,
+    height: 520,
+    minHeight: 220,
+    maxHeight: 1080,
+    mode: 'adaptive',
+  },
+  variants: [
+    {
+      variantId: 'user-tier',
+      label: 'User Tier (Locked Thickness)',
+      storeOverrides: {
+        appStore: {
+          developerMode: false,
+        },
+      },
+    },
+    {
+      variantId: 'developer-tier',
+      label: 'Developer Tier (Full Tuner Access)',
+      storeOverrides: {
+        appStore: {
+          developerMode: true,
+        },
+      },
+    },
+  ],
+};
 
 const PRESET_COLOR_MAP: Array<{ value: string; label: string }> = [
   { value: '#000000', label: 'Black' },
@@ -28,25 +66,7 @@ const PRESET_COLOR_MAP: Array<{ value: string; label: string }> = [
   { value: '#39ff14', label: 'Lime' },
 ];
 
-export interface Layer3BallTrajectoryRecipeProps {
-  isLight?: boolean;
-  developerMode?: boolean;
-  onBack?: () => void;
-  onCollapsePreview?: () => void;
-  transparent?: boolean;
-  /** Controlled trajectory configuration object */
-  config?: Partial<TrajectoryConfig>;
-  /** Alias for controlled trajectory configuration object */
-  settings?: Partial<TrajectoryConfig>;
-  /** Initial trajectory configuration for uncontrolled mode */
-  defaultConfig?: Partial<TrajectoryConfig>;
-  /** Alias for defaultConfig */
-  defaultSettings?: Partial<TrajectoryConfig>;
-  /** Callback fired when any trajectory setting changes */
-  onChange?: (next: TrajectoryConfig, patch: Partial<TrajectoryConfig>) => void;
-  /** Alias for onChange */
-  onConfigChange?: (next: TrajectoryConfig, patch: Partial<TrajectoryConfig>) => void;
-}
+export type Layer3BallTrajectoryRecipeProps = StandardSurfaceProps;
 
 /**
  * [Recipe] Layer 3 Ball Trajectory Predictor
@@ -55,70 +75,54 @@ export interface Layer3BallTrajectoryRecipeProps {
  *   `allowUserThicknessEdit` and `allowUserDashEdit` calibrated in `BallTrajectoryTunerFloatingWindow`.
  * - Calculation Mode selects between Continuous Incremental Tail Prediction (600t) and Event Snapshot.
  */
-export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProps> = ({
-  isLight = false,
-  developerMode: propDeveloperMode,
-  onBack: propOnBack,
-  onCollapsePreview: propOnCollapsePreview,
-  transparent = false,
-  config: controlledConfigProp,
-  settings: controlledSettingsProp,
-  defaultConfig,
-  defaultSettings,
-  onChange: propOnChange,
-  onConfigChange,
-}) => {
-  const goBack = useAppStore((s) => s.goBack);
-  const storeDeveloperMode = useAppStore((s) => s.developerMode);
-  const storeTrajectory = useAppStore((s) => s.trajectory);
-  const storeUpdateTrajectory = useAppStore((s) => s.updateTrajectory);
-  const setLivePreviewCollapsed = useAppStore((s) => s.setLivePreviewCollapsed);
+export const Layer3BallTrajectoryRecipe: React.FC<
+  Layer3BallTrajectoryRecipeProps
+> = ({ isLight = false, onBack: propOnBack }) => {
+  const goBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const developerMode = useScopedStore('appStore', useAppStore, (s) => s.developerMode);
+  const storeTrajectory = useScopedStore('appStore', useAppStore, (s) => s.trajectory);
+  const storeUpdateTrajectory = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.updateTrajectory
+  );
+  const setLivePreviewCollapsed = useScopedStore(
+    'appStore',
+    useAppStore,
+    (s) => s.setLivePreviewCollapsed
+  );
 
-  const developerMode = propDeveloperMode ?? storeDeveloperMode;
   const onBack = propOnBack ?? goBack;
-  const onCollapsePreview =
-    propOnCollapsePreview ?? (() => setLivePreviewCollapsed(true));
-  const onChange =
-    propOnChange ??
-    ((_next: TrajectoryConfig, patch: Partial<TrajectoryConfig>) =>
-      storeUpdateTrajectory(patch));
+  const onCollapsePreview = () => setLivePreviewCollapsed(true);
 
-  const sizing = useMenuLayoutStore(
-    (s) => s.panels?.['layer3-ball-trajectory'] ?? DEFAULT_PANEL_SIZING['layer3-ball-trajectory']
+  const calibratedSizing = resolveCalibratedSurfaceSizing(
+    SURFACE_META.id,
+    SURFACE_META.defaultSizing
   );
-  const { rowGap } = useSettingActionRowStore();
-
-  const initialSeed: TrajectoryConfig = {
-    ...DEFAULT_TRAJECTORY_CONFIG,
-    ...defaultSettings,
-    ...defaultConfig,
+  const panelSizingFromStore = useMenuLayoutStore(
+    (s) => s.panels?.['layer3-ball-trajectory']
+  );
+  const sizing = panelSizingFromStore ?? {
+    mode: calibratedSizing.mode === 'fixed' ? ('fixed' as const) : ('auto' as const),
+    width: calibratedSizing.width,
+    targetHeight:
+      typeof calibratedSizing.height === 'number' ? calibratedSizing.height : 520,
+    minHeight: calibratedSizing.minHeight ?? 220,
+    maxHeight: calibratedSizing.maxHeight ?? 1080,
   };
+  const { rowGap } = useScopedStore('settingRowStore', useSettingActionRowStore);
 
-  const [internalConfig, setInternalConfig] = useState<TrajectoryConfig>(initialSeed);
-  const [customHexColor, setCustomHexColor] = useState<string>(() =>
-    initialSeed.color.startsWith('#') ? initialSeed.color : '#ffffff'
-  );
-
-  const hasInitialSeedOverride = Boolean(defaultConfig || defaultSettings);
-  const controlledSource =
-    controlledConfigProp ??
-    controlledSettingsProp ??
-    (hasInitialSeedOverride ? undefined : storeTrajectory);
   const resolved: TrajectoryConfig = {
-    ...internalConfig,
-    ...controlledSource,
+    ...DEFAULT_TRAJECTORY_CONFIG,
+    ...storeTrajectory,
   };
+
+  const [customHexColor, setCustomHexColor] = useState<string>(() =>
+    resolved.color?.startsWith('#') ? resolved.color : '#ffffff'
+  );
 
   const updateConfig = (patch: Partial<TrajectoryConfig>) => {
-    const next: TrajectoryConfig = {
-      ...resolved,
-      ...patch,
-    };
-    if (controlledSource === undefined) {
-      setInternalConfig(next);
-    }
-    onChange?.(next, patch);
-    onConfigChange?.(next, patch);
+    storeUpdateTrajectory(patch);
   };
 
   const enablePredictor = resolved.enabled;
@@ -153,12 +157,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   return (
-    <PanelContainer
-      isLight={isLight}
-      transparent={transparent}
-      sizing={sizing}
-      className="w-full select-none"
-    >
+    <PanelContainer isLight={isLight} sizing={sizing} className="w-full select-none">
       <PanelHeader
         title="BALL TRAJECTORY PREDICTOR"
         onBack={onBack}
@@ -191,7 +190,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
               bordered={false}
               showDescription={false}
               description="Open Ball Trajectory Prediction Line Tuner for WASM incremental tail thresholds, 3D tube shading, spatial depth cues & JSON export"
-              hoverTooltip="Ball Trajectory Prediction Line Tuner (Developer Floating Window): Live telemetry, WASM incremental triggers, 3D volumetric tube shading, bounce markers, ground drop lines, user access locks, and JSON export."
+              hoverTooltip="Ball Trajectory Prediction Line Tuner: Live telemetry, WASM incremental triggers, 3D tube shading, bounce markers, user locks & JSON export."
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
               isLight={isLight}
@@ -423,13 +422,16 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
             icon={Cpu}
             iconColor="text-emerald-400"
             title="Calculation Mode"
-            value={updateMode === 'event-snapshot' ? 'event-snapshot' : 'continuous-incremental'}
+            value={
+              updateMode === 'event-snapshot' ? 'event-snapshot' : 'continuous-incremental'
+            }
             onChange={(v) => {
               const nextMode: TrajectoryUpdateMode =
                 v === 'event-snapshot' ? 'event-snapshot' : 'continuous-incremental';
               updateConfig({
                 updateMode: nextMode,
-                calculationMode: nextMode === 'continuous-incremental' ? 'fast' : 'accurate',
+                calculationMode:
+                  nextMode === 'continuous-incremental' ? 'fast' : 'accurate',
               });
             }}
             layout="inline"
@@ -439,7 +441,7 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
               { value: 'continuous-incremental', label: 'Incremental (600t)' },
               { value: 'event-snapshot', label: 'Snapshot (Hit Only)' },
             ]}
-            hoverDescription="Incremental (600t): Continuously extends the tail to maintain a full 5.0s lookahead at ~1/100th CPU cost, recomputing from scratch only on Car-Ball Hit or deviation. Snapshot: Recomputes only on collision/deviation and shrinks as the ball flies."
+            hoverDescription="Incremental (600t): Extends tail continuously to maintain 5.0s lookahead at ~1/100th CPU cost. Snapshot: Recomputes only on collision or deviation."
             onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -458,3 +460,5 @@ export const Layer3BallTrajectoryRecipe: React.FC<Layer3BallTrajectoryRecipeProp
     </PanelContainer>
   );
 };
+
+export default Layer3BallTrajectoryRecipe;

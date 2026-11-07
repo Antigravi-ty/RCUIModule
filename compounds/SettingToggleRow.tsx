@@ -2,6 +2,8 @@ import React from 'react';
 import { ToggleSwitch, type ToggleVariant } from '../primitives/ToggleSwitch';
 import { SettingActionRow } from './SettingActionRow';
 
+export const ALPHA_COMPONENT_ID = 'Alpha:SettingToggleRow' as const;
+
 export interface SettingToggleRowProps {
   /** Primary row title (alias: title) */
   label?: React.ReactNode;
@@ -106,7 +108,7 @@ export const SettingToggleRow: React.FC<SettingToggleRowProps> = React.memo(({
       className={className}
       bottomSlot={bottomSlot}
       rightSlot={
-        <div className="flex items-center gap-2">
+        <div data-alpha-id={ALPHA_COMPONENT_ID} className="flex items-center gap-2">
           {extraRightSlot}
           <ToggleSwitch
             checked={checked}

@@ -174,6 +174,6 @@ export function exportStandaloneTelemetryZip(): string {
   if (!recorder || recorder.count <= 0) {
     return 'No reconcile/pacing telemetry ticks recorded yet.';
   }
-  (downloadNetworkTelemetryZip as any)(recorder, isLobby ? 'lobby-dump' : 'match-dump');
+  downloadNetworkTelemetryZip(recorder, isLobby ? 'lobby-dump' : 'match-dump');
   return `Exported Reconcile & Pacing Telemetry (${telemetryTicks} ticks).`;
 }

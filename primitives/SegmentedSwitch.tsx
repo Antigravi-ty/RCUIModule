@@ -1,6 +1,10 @@
 import React, { useId } from 'react';
 import { motion } from 'framer-motion';
 import { UI_EASING } from '../tokens/easing';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:SegmentedSwitch' as const;
 
 export interface SegmentedSwitchOption {
   value: string;
@@ -67,6 +71,7 @@ export const SegmentedSwitch: React.FC<SegmentedSwitchProps> = React.memo(({
 }) => {
   const reactId = useId();
   const instanceId = id || reactId;
+  const theme = isLight ? UI_THEME.light : UI_THEME.dark;
 
   // Determine actual distribution
   const resolvedDistribution: SegmentedDistribution =
@@ -89,10 +94,10 @@ export const SegmentedSwitch: React.FC<SegmentedSwitchProps> = React.memo(({
 
   // Rounded rectangle geometry tokens (explicitly avoiding capsule pill shapes)
   const radiusMap: Record<SegmentedRadius, { container: string; item: string }> = {
-    none: { container: 'rounded-none', item: 'rounded-none' },
-    sm: { container: 'rounded-md', item: 'rounded' },
-    md: { container: 'rounded-lg', item: 'rounded-md' },
-    lg: { container: 'rounded-xl', item: 'rounded-lg' },
+    none: { container: UI_RADIUS.none, item: UI_RADIUS.none },
+    sm: { container: 'rounded-md', item: UI_RADIUS.sm },
+    md: { container: UI_RADIUS.md, item: 'rounded-md' },
+    lg: { container: UI_RADIUS.lg, item: UI_RADIUS.md },
   };
 
   const { container: containerRadius, item: itemRadius } = radiusMap[radius] || radiusMap.md;
@@ -125,6 +130,7 @@ export const SegmentedSwitch: React.FC<SegmentedSwitchProps> = React.memo(({
       role="radiogroup"
       aria-label={ariaLabel}
       aria-disabled={disabled}
+      data-alpha-id={ALPHA_COMPONENT_ID}
       className={`${containerLayout} border ${containerRadius} ${sizeClass} select-none ${
         isLight ? 'bg-neutral-200/80 border-neutral-300/80' : 'bg-neutral-950 border-neutral-800'
       } ${disabled ? 'opacity-45 pointer-events-none cursor-not-allowed' : ''} ${className}`}
@@ -143,17 +149,19 @@ export const SegmentedSwitch: React.FC<SegmentedSwitchProps> = React.memo(({
               if (isOptDisabled) return;
               (onValueChange ?? onChange)?.(opt.value);
             }}
-            className={`group relative inline-flex items-center justify-center gap-1.5 ${itemPadding} ${itemRadius} ${getItemLayout()} transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 ${
-              isOptDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-            } ${
+            className={[
+              'group relative inline-flex items-center justify-center gap-1.5 transition-colors outline-none',
+              'focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500',
+              itemPadding,
+              itemRadius,
+              getItemLayout(),
+              isOptDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
               isSelected
-                ? isLight
-                  ? 'text-neutral-900'
-                  : 'text-white'
+                ? theme.textPrimary
                 : isLight
                 ? 'text-neutral-500 hover:text-neutral-900'
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
+                : 'text-neutral-400 hover:text-neutral-200',
+            ].join(' ')}
           >
             {isSelected && (
               <motion.div

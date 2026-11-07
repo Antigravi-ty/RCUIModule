@@ -7,14 +7,45 @@ import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { useSignalingProfileStore } from '../stores/signalingProfileStore';
 import { useAppStore } from '../stores/appStore';
-import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
+import { useScopedStore } from '../stores/storeSnapshotScope';
+import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 
-export interface Layer3DevSelfTestRecipeProps {
-  isLight?: boolean;
-  onBack?: () => void;
-  onNavigateSignalingLab?: () => void;
-  sizing?: PanelSizingConfig;
-}
+export type Layer3DevSelfTestRecipeProps = StandardSurfaceProps;
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'layer3-dev-self-test',
+  title: 'SELF TEST',
+  subtitle: 'Automated Subsystem Self-Test Suites',
+  description:
+    'Automated subsystem self-test suites and developer verification harnesses.',
+  icon: 'bug-play',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: DEFAULT_PANEL_SIZING['layer3-dev-self-test'].width,
+    height: DEFAULT_PANEL_SIZING['layer3-dev-self-test'].targetHeight,
+    minHeight: DEFAULT_PANEL_SIZING['layer3-dev-self-test'].minHeight,
+    maxHeight: DEFAULT_PANEL_SIZING['layer3-dev-self-test'].maxHeight,
+  },
+  variants: [
+    {
+      variantId: 'dev-private',
+      label: 'Dev-Private Source (4-Server Lab Ready)',
+      storeOverrides: {
+        signalingProfileStore: { source: 'dev-private' },
+      },
+    },
+    {
+      variantId: 'public-default',
+      label: 'Public / Bundle Source (Empty State)',
+      storeOverrides: {
+        signalingProfileStore: { source: 'public-default' },
+      },
+    },
+  ],
+};
 
 /**
  * [Recipe] Layer 3 Developer — Self Test (`bug-play`)
@@ -26,22 +57,22 @@ export interface Layer3DevSelfTestRecipeProps {
 export const Layer3DevSelfTestRecipe: React.FC<Layer3DevSelfTestRecipeProps> = ({
   isLight = false,
   onBack: propOnBack,
-  onNavigateSignalingLab: propOnNavigateSignalingLab,
-  sizing: propSizing,
 }) => {
-  const goBack = useAppStore((s) => s.goBack);
-  const navigate = useAppStore((s) => s.navigate);
-  const signalingSource = useSignalingProfileStore((s) => s.source);
+  const goBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const navigate = useScopedStore('appStore', useAppStore, (s) => s.navigate);
+  const signalingSource = useScopedStore(
+    'signalingProfileStore',
+    useSignalingProfileStore,
+    (s) => s.source
+  );
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const onBack = propOnBack ?? goBack;
-  const onNavigateSignalingLab =
-    propOnNavigateSignalingLab ?? (() => navigate('dev-signaling-lab'));
-
-  const storeSizing = useMenuLayoutStore(
-    (s) => s.panels?.['layer3-dev-self-test'] ?? DEFAULT_PANEL_SIZING['layer3-dev-self-test']
+  const sizing = useMenuLayoutStore(
+    (s) =>
+      s.panels?.['layer3-dev-self-test'] ??
+      DEFAULT_PANEL_SIZING['layer3-dev-self-test']
   );
-  const sizing = propSizing ?? storeSizing;
   const { rowGap } = useSettingActionRowStore();
 
   const showSignalingSelfTest = signalingSource === 'dev-private';
@@ -65,7 +96,7 @@ export const Layer3DevSelfTestRecipe: React.FC<Layer3DevSelfTestRecipeProps> = (
               actionLabel="Browse"
               description="4-Server Full-Mesh (emqx_cn, emqx_gb, supabase_jp, supabase_sg) & Dual Edge Bridge Self-Test"
               hoverDescription="Open Layer 4 4-Server Signaling & Dual Edge Bridge Lab: Inspect emqx_cn, emqx_gb, supabase_jp, and supabase_sg physical dir/brg topic isolation, 4-bit connectivity mask, and One-Click Full Diagnostic."
-              onAction={onNavigateSignalingLab}
+              onAction={() => navigate('dev-signaling-lab')}
               onHover={setHoveredDesc}
               onLeave={() => setHoveredDesc(null)}
               isLight={isLight}

@@ -1,5 +1,8 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
+import { UI_RADIUS } from '../tokens/radius';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:InlineErrorNotice' as const;
 
 export interface InlineErrorNoticeProps {
   /** Whether the inline error row is visible. When false, renders null (no reserved blank space). */
@@ -43,8 +46,9 @@ export const InlineErrorNotice: React.FC<InlineErrorNoticeProps> = React.memo(({
     <div
       role="status"
       aria-live="polite"
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-ui-element="inline-error-notice"
-      className={`h-8 px-3 rounded-lg border flex items-center justify-between gap-2 text-xs select-none shrink-0 transition-colors ${
+      className={`h-8 px-3 ${UI_RADIUS.md} border flex items-center justify-between gap-2 text-xs select-none shrink-0 transition-colors ${
         isLight
           ? 'bg-rose-50/90 border-rose-200/90 text-rose-800'
           : 'bg-rose-950/35 border-rose-500/35 text-rose-200'

@@ -8,32 +8,27 @@ export interface BallCameraIndicatorHandle {
 }
 
 export interface BallCameraIndicatorProps {
-  /**  (Ball Cam Active) */
+  /** Whether Ball Camera is currently active */
   active?: boolean;
-  /**  DOM Ref0 React VDOM  */
+  /** High-frequency transient subscription updating DOM refs with zero React VDOM re-renders */
   subscribeBallCam?: (listener: BallCamTransientListener) => () => void;
-  /**  'SPACE' */
+  /** Keycap label such as 'SPACE' */
   shortcut?: string | null;
-  /**  'BALL CAM' */
+  /** Primary title such as 'BALL CAM' */
   label?: string;
-  /**  'TO TOGGLE' */
+  /** Action suffix such as 'TO TOGGLE' */
   actionText?: string;
-  /** / */
+  /** Light/Dark adaptive theme */
   isLight?: boolean;
-  /**  */
+  /** Click callback to toggle Ball Camera */
   onToggle?: () => void;
-  /**  className */
+  /** Optional container className */
   className?: string;
 }
 
 /**
  * BallCameraIndicator
- *  Rocket League  HUD  Transient Ref  Props 
- * 1. 
- * 2. 
- *    -  BALL CAM 
- *    - PRESS [KEY] TO TOGGLE 
- * 3.  `subscribeBallCam`  `ref.setActive()`  DOM  0 React 
+ * Rocket League HUD indicator supporting both declarative props and 0-re-render transient ref updates.
  */
 export const BallCameraIndicator = memo(
   forwardRef<BallCameraIndicatorHandle, BallCameraIndicatorProps>(
@@ -143,6 +138,7 @@ export const BallCameraIndicator = memo(
 
       return (
         <div
+          data-alpha-id="Alpha:BallCameraIndicator"
           data-ui-element="hud-ball-camera-indicator"
           onClick={onToggle}
           className={`select-none pointer-events-auto transition-all cursor-pointer group active:scale-95 inline-flex ${className}`}
@@ -159,7 +155,6 @@ export const BallCameraIndicator = memo(
             </div>
 
             <div className="flex flex-col items-start text-left leading-tight">
-              {/*  BALL CAM */}
               <span ref={titleRef} className={getTitleClass(active)}>
                 {label}
               </span>

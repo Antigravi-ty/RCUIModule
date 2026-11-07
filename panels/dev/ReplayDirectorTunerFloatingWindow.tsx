@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Film, RotateCcw, Download, Check, VolumeX } from 'lucide-react';
-import { DEFAULT_REPLAY_DIRECTOR_FOV_DEG, type ReplayDirectorConfigState } from '../../config/replayDirectorConfig';
+import type {
+  StandardSurfaceProps,
+  SurfaceMeta,
+} from '../../manifest/surfaceMetaTypes';
+import { DEFAULT_REPLAY_DIRECTOR_FOV_DEG } from '../../config/replayDirectorConfig';
 import {
   useReplayDirectorStore,
   getReplayDirectorConfig,
@@ -17,23 +21,54 @@ import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { ReplayDirectorOrientationCard } from './replay-director-tuner/ReplayDirectorOrientationCard';
 import { ReplayDirectorCameraCard } from './replay-director-tuner/ReplayDirectorCameraCard';
 
-export interface ReplayDirectorTunerFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'replay-director-tuner',
+  title: 'Replay Director Camera & Slow-Mo Tuner',
+  subtitle: '.rcgr.gz Goal Replay · 3D Arena Preview · 2-Touch Lookahead',
+  description:
+    '.rcgr.gz Goal Replay container export/import, 3D Arena preview, anomaly peak seek chips & +-15f window.',
+  icon: 'Film',
+  layer: 'floating-dev',
+  menuGroup: 'active-tuners',
+  defaultSizing: {
+    width: 485,
+    height: 640,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+  variants: [
+    {
+      variantId: 'framing',
+      label: 'Corridor & Damping',
+      description: 'Suffix safe-zone, camera elevation, smoothing damping & corridor distances',
+    },
+    {
+      variantId: 'lookahead',
+      label: '2-Touch Lookahead',
+      description: 'Scoring anchors, opponent interceptors & 2-touch anticipation weights',
+    },
+    {
+      variantId: 'slowmo',
+      label: 'Slow-Mo Windows',
+      description: 'Final touch impact slow-mo window & goal-line crossing speed scale',
+    },
+  ],
+};
+
+export interface ReplayDirectorTunerFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
 }
 
 export const ReplayDirectorTunerFloatingWindow: React.FC<ReplayDirectorTunerFloatingWindowProps> = ({
   isLight = false,
+  active = true,
+  activeTab,
+  onTabChange,
 }) => {
   const cfg = useReplayDirectorStore((s) => s.config);
   const [copied, setCopied] = useState(false);
 
-  const handleParamChange = (key: keyof ReplayDirectorConfigState, val: number) => {
-    updateReplayDirectorConfig({ [key]: val });
-    if (key === 'cameraFovDeg') {
-      useAppStore.getState().setFreeCamFov(val);
-    }
-  };
+  if (!active) return null;
 
   const handleMuteSignalAudioChange = (mute: boolean) => {
     const next = Boolean(mute);
@@ -163,7 +198,11 @@ export const ReplayDirectorTunerFloatingWindow: React.FC<ReplayDirectorTunerFloa
       </div>
 
       <ReplayDirectorOrientationCard isLight={isLight} />
-      <ReplayDirectorCameraCard cfg={cfg} onParamChange={handleParamChange} isLight={isLight} />
+      <ReplayDirectorCameraCard
+        isLight={isLight}
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+      />
     </div>
   );
 };

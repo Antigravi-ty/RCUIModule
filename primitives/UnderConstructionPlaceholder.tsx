@@ -1,6 +1,10 @@
 import React from 'react';
 import { Hammer } from 'lucide-react';
 import { Badge } from './Badge';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:UnderConstructionPlaceholder' as const;
 
 export interface UnderConstructionPlaceholderProps {
   title?: string;
@@ -26,14 +30,17 @@ export const UnderConstructionPlaceholder: React.FC<UnderConstructionPlaceholder
   isLight = false,
   className = '',
 }) => {
+  const theme = isLight ? UI_THEME.light : UI_THEME.dark;
+
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       className={`h-full w-full flex flex-col items-center justify-center text-center p-8 select-none ${className}`}
     >
       <div className="flex flex-col items-center max-w-sm gap-3">
         {/* Minimalist Icon Badge Container */}
         <div
-          className={`h-12 w-12 rounded-2xl border flex items-center justify-center transition-colors ${
+          className={`h-12 w-12 ${UI_RADIUS.xl} border flex items-center justify-center transition-colors ${
             isLight
               ? 'bg-neutral-100 border-neutral-300 text-neutral-600 shadow-2xs'
               : 'bg-neutral-800 border-neutral-700 text-neutral-300 shadow-sm'
@@ -50,20 +57,12 @@ export const UnderConstructionPlaceholder: React.FC<UnderConstructionPlaceholder
         )}
 
         {/* Title */}
-        <h3
-          className={`text-sm font-semibold tracking-tight ${
-            isLight ? 'text-neutral-900' : 'text-neutral-100'
-          }`}
-        >
+        <h3 className={`text-sm font-semibold tracking-tight ${theme.textPrimary}`}>
           {title}
         </h3>
 
         {/* Description */}
-        <p
-          className={`text-xs leading-relaxed ${
-            isLight ? 'text-neutral-500' : 'text-neutral-400'
-          }`}
-        >
+        <p className={`text-xs leading-relaxed ${theme.textMuted}`}>
           {description}
         </p>
       </div>

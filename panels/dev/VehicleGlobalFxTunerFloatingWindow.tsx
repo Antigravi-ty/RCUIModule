@@ -38,12 +38,32 @@ import { SurfacesTab } from './vehicle-global-fx-tuner/SurfacesTab';
 import { LampsTab } from './vehicle-global-fx-tuner/LampsTab';
 import { BoostFxTab } from './vehicle-global-fx-tuner/BoostFxTab';
 import { WheelsTab } from './vehicle-global-fx-tuner/WheelsTab';
+import type { SurfaceMeta, StandardSurfaceProps } from '../../manifest/surfaceMetaTypes';
 
-export interface VehicleGlobalFxTunerFloatingWindowProps {
-  isLight?: boolean;
-  activeTab?: VehicleGlobalFxTab;
-  onTabChange?: (tab: VehicleGlobalFxTab) => void;
-  active?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'vehicle-global-fx-tuner',
+  title: 'Vehicle Global FX',
+  layer: 'floating-dev',
+  menuGroup: 'calibrated-presets',
+  icon: 'Palette',
+  defaultSizing: {
+    width: 480,
+    height: 620,
+    minWidth: 360,
+    minHeight: 220,
+    maxHeight: 820,
+    mode: 'adaptive',
+  },
+  variants: [
+    { variantId: 'surfaces', label: 'Surfaces & Paint' },
+    { variantId: 'lamps', label: 'Lamps & Brake' },
+    { variantId: 'wheels', label: 'Wheels' },
+    { variantId: 'boost', label: 'Boost & FX' },
+  ],
+};
+
+export interface VehicleGlobalFxTunerFloatingWindowProps extends StandardSurfaceProps {
+  activeTab?: VehicleGlobalFxTab | string;
 }
 
 export type VehicleGlobalFxTab = 'surfaces' | 'lamps' | 'wheels' | 'boost';
@@ -77,12 +97,12 @@ export const VehicleGlobalFxTunerFloatingWindow: React.FC<VehicleGlobalFxTunerFl
 
   const [internalTab, setInternalTab] = useState<VehicleGlobalFxTab>(() =>
     controlledTab && ['surfaces', 'lamps', 'wheels', 'boost'].includes(controlledTab)
-      ? controlledTab
+      ? (controlledTab as VehicleGlobalFxTab)
       : 'surfaces'
   );
   const activeTab: VehicleGlobalFxTab =
     controlledTab && ['surfaces', 'lamps', 'wheels', 'boost'].includes(controlledTab)
-      ? controlledTab
+      ? (controlledTab as VehicleGlobalFxTab)
       : internalTab;
   const setActiveTab = (nextTab: VehicleGlobalFxTab) => {
     setInternalTab(nextTab);

@@ -51,7 +51,12 @@ export const DriftwoodsPerformanceTab: React.FC<DriftwoodsPerformanceTabProps> =
           <span>BoostPads Pruned &amp; Stadium Fast Diffuse Enabled</span>
         </div>
         <p className={`text-[11px] leading-relaxed ${isLight ? 'text-neutral-600' : 'text-neutral-300'}`}>
-          <code className="font-mono text-emerald-400">BoostPads_Combined_Base</code> (31,248 tris) is purged, stadium meshes default to <code className="font-mono text-emerald-400">Fast Diffuse</code> (while car bodies retain full PBR metallic/clearcoat), and <code className="font-mono text-emerald-400">Woods_Field_Walls_Hexes</code> (8,048 tris) uses 3D GLB geometry with derivative anti-shimmer.
+          <code className="font-mono text-emerald-400">BoostPads_Combined_Base</code> (31,248 tris)
+          is purged, stadium meshes default to{' '}
+          <code className="font-mono text-emerald-400">Fast Diffuse</code> (while car bodies retain
+          full PBR metallic/clearcoat), and{' '}
+          <code className="font-mono text-emerald-400">Woods_Field_Walls_Hexes</code> (8,048 tris)
+          uses 3D GLB geometry with derivative anti-shimmer.
         </p>
       </div>
 

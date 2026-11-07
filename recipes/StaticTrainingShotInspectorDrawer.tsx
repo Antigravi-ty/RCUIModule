@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { useStaticTrainingShotInspectorDrawerStoreBinding } from './hooks/useStaticTrainingStoreBindings';
 import { Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
@@ -15,8 +14,32 @@ import {
   type StaticTrainingShotItem,
 } from './static-training/staticTrainingTypes';
 import { StaticTrainingShotInspectorView } from './static-training/StaticTrainingShotInspectorView';
+import {
+  useStaticTrainingPackStore,
+  getActiveEditItemVariable,
+  mutateActiveEditItemVariable,
+} from '../stores/staticTrainingPackStore';
+import { useStoreSnapshotOverride } from '../stores/storeSnapshotScope';
+import type { SurfaceMeta, StandardSurfaceProps } from '../manifest/surfaceMetaTypes';
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:StaticTrainingShotInspectorDrawer',
+  title: 'Static Training Shot Inspector',
+  layer: 'layer4',
+  menuGroup: 'menu-layer',
+  defaultSizing: { mode: 'fixed', width: 520, height: 680, minHeight: 320, maxHeight: 1080 },
+};
 
 export interface StaticTrainingShotInspectorStateOverride {
+  packTitle?: string;
+  shots?: StaticTrainingShotItem[];
+  onShotsChange?: (shots: StaticTrainingShotItem[]) => void;
+  selectedShotIndex?: number;
+  onSelectedShotIndexChange?: (idx: number) => void;
+  isInspectingShot?: boolean;
+  onInspectingShotChange?: (inspecting: boolean) => void;
+  editSubMode?: EditSubMode;
+  onEditSubModeChange?: (mode: EditSubMode) => void;
   currentShotOverride?: StaticTrainingShotItem | null;
   isDirty?: boolean;
   onMutateCurrentShot?: (updater: (draft: StaticTrainingShotItem) => void) => void;
@@ -27,28 +50,14 @@ export interface StaticTrainingShotInspectorStateOverride {
   onDeleteShot?: (idx: number) => void | Promise<void>;
   onExportSingleShot?: (idx: number) => void;
   onImportSingleShot?: (file: File) => void | Promise<void>;
+  onExitSession?: (action: 'save' | 'ignore') => void | Promise<void>;
 }
 
-export interface StaticTrainingShotInspectorDrawerProps {
-  isLight?: boolean;
+export interface StaticTrainingShotInspectorDrawerProps extends StandardSurfaceProps {
   transparent?: boolean;
   packTitle?: string;
-  /** Controlled or uncontrolled shots list */
-  shots?: StaticTrainingShotItem[];
-  onShotsChange?: (shots: StaticTrainingShotItem[]) => void;
-  /** Controlled or uncontrolled selected shot index */
-  selectedShotIndex?: number;
-  onSelectedShotIndexChange?: (idx: number) => void;
-  /** Controlled or uncontrolled item inspection state (false = full list, true = compressed rail + detail inspector) */
-  isInspectingShot?: boolean;
-  onInspectingShotChange?: (inspecting: boolean) => void;
-  /** Controlled or uncontrolled 3D edit sub-mode */
-  editSubMode?: EditSubMode;
-  onEditSubModeChange?: (mode: EditSubMode) => void;
   /** Callback when user clicks Collapse [TAB] in header */
   onCollapseDrawer?: () => void;
-  /** Callback when user confirms Exit in the double-check dialogue */
-  onExitSession?: (action: 'save' | 'ignore') => void | Promise<void>;
   stateOverride?: StaticTrainingShotInspectorStateOverride;
 }
 
@@ -100,31 +109,75 @@ export function openStaticTrainingExitConfirmDialogue(
  *   Clicking the currently active `#number` in the rail expands back to the full Shot List.
  * - Footer: Displays live hover descriptions from any option or control in the list or detail inspector.
  */
-export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspectorDrawerProps> = (rawProps) => {
-  const {
+export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspectorDrawerProps> = ({
   isLight = false,
   transparent = true,
-  packTitle = 'Aerial Striker Pack',
-  shots: controlledShots,
-  onShotsChange,
-  currentShotOverride,
-  selectedShotIndex: controlledIndex,
-  onSelectedShotIndexChange,
-  isInspectingShot: controlledInspecting,
-  onInspectingShotChange,
-  editSubMode: controlledSubMode,
-  onEditSubModeChange,
-  isDirty: controlledIsDirty,
-  onMutateCurrentShot,
-  onSaveCurrentShot,
-  onAddNewShot,
-  onDuplicateShot,
-  onReorderShot,
-  onDeleteShot,
-  onExportSingleShot,
-  onImportSingleShot,
+  packTitle: propPackTitle,
   onCollapseDrawer,
-} = useStaticTrainingShotInspectorDrawerStoreBinding({ ...rawProps.stateOverride, ...rawProps });
+  stateOverride,
+}) => {
+  const scopeOverride =
+    useStoreSnapshotOverride<StaticTrainingShotInspectorStateOverride>('staticTrainingShotInspector');
+  const ov = { ...scopeOverride, ...stateOverride };
+
+  const activePack = useStaticTrainingPackStore((s) => s.activePack);
+  const storeShotIndex = useStaticTrainingPackStore((s) => s.currentShotIndex);
+  const storeIsEditingItem = useStaticTrainingPackStore((s) => s.isEditingItem);
+  const storeEditSubMode = useStaticTrainingPackStore((s) => s.editSubMode);
+  const editVarVersion = useStaticTrainingPackStore((s) => s.editVarVersion);
+  const enterItemEditMode = useStaticTrainingPackStore((s) => s.enterItemEditMode);
+  const deselectEditShot = useStaticTrainingPackStore((s) => s.deselectEditShot);
+  const setStoreEditSubMode = useStaticTrainingPackStore((s) => s.setEditSubMode);
+  const addNewShot = useStaticTrainingPackStore((s) => s.addNewShot);
+  const duplicateShot = useStaticTrainingPackStore((s) => s.duplicateShot);
+  const deleteShot = useStaticTrainingPackStore((s) => s.deleteShot);
+  const reorderShot = useStaticTrainingPackStore((s) => s.reorderShot);
+  const exportSingleShotJson = useStaticTrainingPackStore((s) => s.exportSingleShotJson);
+  const importSingleShotJson = useStaticTrainingPackStore((s) => s.importSingleShotJson);
+  const isCurrentShotDirty = useStaticTrainingPackStore((s) => s.isCurrentShotDirty);
+  const saveCurrentShotToEditWorkspace = useStaticTrainingPackStore(
+    (s) => s.saveCurrentShotToEditWorkspace
+  );
+  void editVarVersion;
+
+  const packTitle = propPackTitle ?? ov.packTitle ?? activePack?.metadata.title ?? 'Aerial Striker Pack';
+  const controlledShots =
+    ov.shots ?? (activePack?.items && activePack.items.length > 0 ? activePack.items : undefined);
+  const onShotsChange = ov.onShotsChange;
+  const controlledInspecting = ov.isInspectingShot ?? storeIsEditingItem;
+  const currentShotOverride =
+    ov.currentShotOverride !== undefined
+      ? ov.currentShotOverride
+      : controlledInspecting && !ov.shots
+      ? getActiveEditItemVariable()
+      : null;
+  const controlledIndex = ov.selectedShotIndex ?? storeShotIndex;
+  const onSelectedShotIndexChange = (idx: number) => {
+    ov.onSelectedShotIndexChange?.(idx);
+    if (!ov.shots && activePack) enterItemEditMode(idx);
+  };
+  const onInspectingShotChange = (inspecting: boolean) => {
+    ov.onInspectingShotChange?.(inspecting);
+    if (!inspecting && !ov.shots && activePack) void deselectEditShot();
+  };
+  const controlledSubMode = ov.editSubMode ?? storeEditSubMode;
+  const onEditSubModeChange = ov.onEditSubModeChange ?? setStoreEditSubMode;
+  const controlledIsDirty = ov.isDirty ?? (activePack ? isCurrentShotDirty() : undefined);
+
+  const onMutateCurrentShot =
+    ov.onMutateCurrentShot ??
+    (activePack && !ov.shots
+      ? (updater: (draft: StaticTrainingShotItem) => void) => mutateActiveEditItemVariable(updater)
+      : undefined);
+  const onSaveCurrentShot =
+    ov.onSaveCurrentShot ?? (activePack ? saveCurrentShotToEditWorkspace : undefined);
+  const onAddNewShot = ov.onAddNewShot ?? (activePack ? addNewShot : undefined);
+  const onDuplicateShot = ov.onDuplicateShot ?? (activePack ? duplicateShot : undefined);
+  const onReorderShot = ov.onReorderShot ?? (activePack ? reorderShot : undefined);
+  const onDeleteShot = ov.onDeleteShot ?? (activePack ? deleteShot : undefined);
+  const onExportSingleShot = ov.onExportSingleShot ?? (activePack ? exportSingleShotJson : undefined);
+  const onImportSingleShot = ov.onImportSingleShot ?? (activePack ? importSingleShotJson : undefined);
+
   const [internalShots, setInternalShots] = useState<StaticTrainingShotItem[]>(
     INITIAL_TRAINING_SHOTS
   );

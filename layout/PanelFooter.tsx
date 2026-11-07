@@ -67,6 +67,7 @@ export const PanelFooter: React.FC<PanelFooterProps> = ({
     <div
       data-ui-element="panel-footer"
       data-panel-section="footer"
+      data-alpha-id="Alpha:3StagePanelShell"
       style={{
         paddingLeft: hasRightCompartment ? '0px' : `${footerPadX}px`,
         paddingRight: hasRightCompartment ? '0px' : `${footerPadX}px`,

@@ -30,21 +30,28 @@ import {
   updateBallVisualConfig,
 } from '../../../stores/ballVisualStore';
 import { BOTS_LOADOUT_TUNER_PRESET } from '../../../stores/devFloatingPresets';
+import { useScopedStore } from '../../../stores/storeSnapshotScope';
+import type { SurfaceVariantMeta } from '../../../manifest/surfaceMetaTypes';
 import { FloatingWindowCard } from '../components/FloatingWindowCard';
 import { DeveloperProfileExportSection } from '../components/DeveloperProfileExportSection';
 import type { BallOpacityMode } from './GameplayTab';
 
+export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
+  variantId: 'settings:developer',
+  label: '5. Developer Hub',
+  description:
+    'Subsystem Isolation Lab, Active Tuners, Calibrated Presets, Developer Quick Actions, Self Test, Remote Profile Management, Under Development, and Safe Area boundary observer.',
+  storeOverrides: {
+    appStore: {
+      settingsTargetTab: 'developer',
+      developerMode: true,
+    },
+  },
+};
+
 export interface DeveloperTabProps {
   isLight?: boolean;
   onNavigateRoute?: (route: string) => void;
-  onNavigateDevSandboxes?: () => void;
-  onNavigateDevSubsystemIsolation?: () => void;
-  onNavigateDevActiveTuners?: () => void;
-  onNavigateDevCalibratedPresets?: () => void;
-  onNavigateDevQuickActions?: () => void;
-  onNavigateDevSelfTest?: () => void;
-  onNavigateDevUnderDevelopment?: () => void;
-  onNavigateDevRemoteProfile?: () => void;
   onHover?: (desc: string) => void;
   onLeave?: () => void;
 }
@@ -66,31 +73,35 @@ export interface DeveloperTabProps {
 export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   isLight = false,
   onNavigateRoute,
-  onNavigateDevSandboxes,
-  onNavigateDevSubsystemIsolation,
-  onNavigateDevActiveTuners,
-  onNavigateDevCalibratedPresets,
-  onNavigateDevQuickActions,
-  onNavigateDevSelfTest,
-  onNavigateDevUnderDevelopment,
-  onNavigateDevRemoteProfile,
   onHover,
   onLeave,
 }) => {
-  const navigate = useAppStore((s) => s.navigate);
+  const navigate = useScopedStore('appStore', useAppStore, (s) => s.navigate);
   const { showSafeAreaHud } = useViewportStore();
   const setShowSafeAreaHud = viewportStore.setShowSafeAreaHud;
-  const relayMatchPolicy = useSignalingProfileStore((s) => s.relayMatchPolicy);
-  const setRelayMatchPolicy = useSignalingProfileStore((s) => s.setRelayMatchPolicy);
-  const offscreenIndicatorEnabled = useNameTagTunerStore(
+  const relayMatchPolicy = useScopedStore(
+    'signalingProfileStore',
+    useSignalingProfileStore,
+    (s) => s.relayMatchPolicy
+  );
+  const setRelayMatchPolicy = useScopedStore(
+    'signalingProfileStore',
+    useSignalingProfileStore,
+    (s) => s.setRelayMatchPolicy
+  );
+  const offscreenIndicatorEnabled = useScopedStore(
+    'nameTagTunerStore',
+    useNameTagTunerStore,
     (s) => s.config.offscreenIndicatorEnabled
   );
-  const updateNameTagConfig = useNameTagTunerStore((s) => s.updateConfig);
+  const updateNameTagConfig = useScopedStore(
+    'nameTagTunerStore',
+    useNameTagTunerStore,
+    (s) => s.updateConfig
+  );
 
-  const navigateRoute = (route: string, specificCb?: () => void) => {
-    if (specificCb) {
-      specificCb();
-    } else if (onNavigateRoute) {
+  const navigateRoute = (route: string) => {
+    if (onNavigateRoute) {
       onNavigateRoute(route);
     } else {
       navigate(route as Parameters<typeof navigate>[0]);
@@ -129,10 +140,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   } = useSettingActionRowStore();
 
   const handleOpenSandboxes = () => {
-    navigateRoute(
-      'dev-sandboxes',
-      onNavigateDevSubsystemIsolation ?? onNavigateDevSandboxes
-    );
+    navigateRoute('dev-sandboxes');
   };
 
   return (
@@ -165,7 +173,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         actionLabel="Browse"
         description="Vehicle Offsets, Goal Volume, Reachability, Kickoff PPO, Audio & Event & Trigger Rules"
         hoverDescription="Active Tuners: Frequently accessed live calibration tools, floating window spawners, vehicle offsets, reachability, kickoff PPO, advanced audio, and event & trigger rules."
-        onAction={() => navigateRoute('dev-active-tuners', onNavigateDevActiveTuners)}
+        onAction={() => navigateRoute('dev-active-tuners')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -180,9 +188,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         actionLabel="Browse"
         description="Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods, Boost Pad & Name Tag"
         hoverDescription="Calibrated Presets: Archive of completed tuners whose parameters have already been calibrated and solidified (Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods, Boost Pad & Name Tag)."
-        onAction={() =>
-          navigateRoute('dev-calibrated-presets', onNavigateDevCalibratedPresets)
-        }
+        onAction={() => navigateRoute('dev-calibrated-presets')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -228,9 +234,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
             </div>
             <button
               type="button"
-              onClick={() =>
-                navigateRoute('dev-quick-actions', onNavigateDevQuickActions)
-              }
+              onClick={() => navigateRoute('dev-quick-actions')}
               style={{
                 paddingLeft: `${buttonPaddingX}px`,
                 paddingRight: `${buttonPaddingX}px`,
@@ -261,9 +265,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         actionLabel="Browse"
         description="Automated subsystem self-test suites and verification harnesses"
         hoverDescription="Self Test: Browse automated diagnostic and self-test suites available for the active environment."
-        onAction={() =>
-          navigateRoute('dev-self-test', onNavigateDevSelfTest)
-        }
+        onAction={() => navigateRoute('dev-self-test')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -278,9 +280,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         actionLabel="Browse"
         description="Set Others Profile (SETTINGS # alias) & Manage Cloud Accounts (username / password / alias)"
         hoverDescription="Remote Profile Management: Remotely tune another user's settings & active floating windows in real time, or manage plaintext cloud user accounts."
-        onAction={() =>
-          navigateRoute('dev-remote-profile', onNavigateDevRemoteProfile)
-        }
+        onAction={() => navigateRoute('dev-remote-profile')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -369,9 +369,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         }
         description="Unstable staging workspace: Three-Wheeler (Tricycle / Psyclops), Throwback Stadium & Per-Car Boost"
         hoverDescription="Under Development: Unstable staging workspace for early experimental prototypes (Three-Wheeler Tricycle physics, Throwback Stadium 36 CMF & GLB, and Per-Car Boost mechanics)."
-        onAction={() =>
-          navigateRoute('dev-under-development', onNavigateDevUnderDevelopment)
-        }
+        onAction={() => navigateRoute('dev-under-development')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
@@ -388,7 +386,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              navigateRoute('dev-under-development', onNavigateDevUnderDevelopment);
+              navigateRoute('dev-under-development');
             }}
             style={{
               fontSize: `${buttonFontSize}px`,

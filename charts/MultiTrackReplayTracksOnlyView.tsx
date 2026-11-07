@@ -1,4 +1,9 @@
 import React, { useMemo } from 'react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:MultiTrackReplayTracksOnlyView' as const;
+
 export interface ReplayIncidentMarker {
   frameIndex: number;
   type: 'goal' | 'demo' | 'touch' | 'save';
@@ -117,12 +122,13 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-ui-element="chart-multitrack-replay-timeline"
       aria-disabled={isTrackDisabled}
-      className={`p-3 rounded-xl border flex flex-col gap-2 font-mono select-none ${
+      className={`p-3 ${UI_RADIUS.card} border flex flex-col gap-2 font-mono select-none ${
         isLight
-          ? 'bg-neutral-50 border-neutral-200 text-neutral-800'
-          : 'bg-neutral-900/70 border-neutral-800 text-neutral-200'
+          ? `bg-neutral-50 ${UI_THEME.light.border} ${UI_THEME.light.textPrimary}`
+          : `bg-neutral-900/70 ${UI_THEME.dark.border} ${UI_THEME.dark.textPrimary}`
       } ${isTrackDisabled ? 'opacity-60' : ''} ${className}`}
     >
       <div className="flex items-center justify-between gap-2">

@@ -1,54 +1,52 @@
 import React from 'react';
-import { useNameTagTunerStore } from '../../stores/nameTagTunerStore';
-import { useAppStore } from '../../stores/appStore';
-import { useHudStore } from '../../stores/hudStore';
-import {
-  CAR_SLOT_BADGES,
-  NameTagCalibrationSection,
-} from './name-tag-tuner/NameTagCalibrationSection';
+import { NameTagCalibrationSection } from './name-tag-tuner/NameTagCalibrationSection';
 import { NameTagPillGeometryAndPreviewSection } from './name-tag-tuner/NameTagPillGeometryAndPreviewSection';
 import { NameTagCircleIdentitySection } from './name-tag-tuner/NameTagCircleIdentitySection';
 import { NameTagBoostBorderSection } from './name-tag-tuner/NameTagBoostBorderSection';
 import { NameTagOffscreenAndAerialAlertSection } from './name-tag-tuner/NameTagOffscreenAndAerialAlertSection';
 import { NameTagColorsAndNamesSection } from './name-tag-tuner/NameTagColorsAndNamesSection';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface NameTagTunerFloatingWindowProps {
-  isLight?: boolean;
+/**
+ * Self-describing surface metadata for the 3D Nameplate & Off-Screen Indicator Tuner.
+ * Consumed by `import.meta.glob` in `surfaceRegistry.ts` and `floatingWindowRegistry.tsx`.
+ */
+export const SURFACE_META: SurfaceMeta = {
+  id: 'name-tag-tuner',
+  title: '3D Nameplate & Off-Screen Indicator Tuner',
+  layer: 'floating-dev',
+  menuGroup: 'calibrated-presets',
+  defaultSizing: {
+    width: 480,
+    height: 620,
+    minWidth: 460,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+};
+
+export interface NameTagTunerFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
   layout?: 'column' | 'grid';
 }
 
+/**
+ * [Calibrated Preset] 3D Nameplate & Off-Screen Indicator Tuner (`name-tag-tuner`)
+ *
+ * Composes 5 Store-First sections reading directly from `useNameTagTunerStore`,
+ * `useAppStore`, and `useHudStore`:
+ * 1. `NameTagCalibrationSection`: 1-parameter distance scale power-law fit & anchors
+ * 2. `NameTagPillGeometryAndPreviewSection`: 2D SVG pill geometry & live preview
+ * 3. `NameTagBoostBorderSection`: 0–100% perimeter boost track & depletion alert
+ * 4. `NameTagOffscreenAndAerialAlertSection`: off-screen edge chevron & aerial alert
+ * 5. `NameTagColorsAndNamesSection`: team palette, POV vehicle selector & custom names
+ */
 export const NameTagTunerFloatingWindow: React.FC<NameTagTunerFloatingWindowProps> = ({
   isLight = false,
+  active = true,
   layout = 'column',
 }) => {
-  const {
-    config,
-    isTunerArenaActive,
-    activeCameraMode,
-    focusedCarIndex,
-    updateConfig,
-    updatePreviewName,
-    selectPovCar,
-  } = useNameTagTunerStore();
-
-  const isFreeCamApp = useAppStore((state) => state.isFreeCam);
-  const hudCameraMode = useHudStore((state) => state.cameraMode);
-  const hudFocusedCarIndex = useHudStore((state) => state.focusedCarIndex);
-
-  const effectiveCameraMode = isFreeCamApp
-    ? 'free'
-    : activeCameraMode || hudCameraMode || 'pov';
-  const isPovMode =
-    effectiveCameraMode === 'pov' ||
-    effectiveCameraMode === 'wasmPov' ||
-    effectiveCameraMode === 'rearView';
-  const effectiveFocusedCarIndex = isTunerArenaActive
-    ? focusedCarIndex
-    : hudFocusedCarIndex;
-  const focusedSlotCode =
-    CAR_SLOT_BADGES[effectiveFocusedCarIndex]?.slotCode ||
-    `#${effectiveFocusedCarIndex + 1}`;
+  if (!active) return null;
 
   const containerClassName =
     layout === 'grid'
@@ -57,26 +55,25 @@ export const NameTagTunerFloatingWindow: React.FC<NameTagTunerFloatingWindowProp
 
   return (
     <div className={containerClassName}>
+      {/* 1. Distance Scale Power-Law Calibration & Anchor Points */}
       <NameTagCalibrationSection isLight={isLight} />
-      <NameTagCircleIdentitySection
-        isLight={isLight}
-        config={config}
-        updateConfig={updateConfig}
-      />
+
+      {/* 1b. On-Screen Circle Identity & Match Slot Codes */}
+      <NameTagCircleIdentitySection isLight={isLight} />
+
+      {/* 2. Pill Geometry, Typography & Live 2D SVG Preview */}
       <NameTagPillGeometryAndPreviewSection isLight={isLight} />
+
+      {/* 3. Boost Perimeter Border & Low-Boost Alert */}
       <NameTagBoostBorderSection isLight={isLight} />
+
+      {/* 4. Off-Screen Edge Indicator & Aerial Threat Alert */}
       <NameTagOffscreenAndAerialAlertSection isLight={isLight} />
 
-      <NameTagColorsAndNamesSection
-        config={config}
-        isPovMode={isPovMode}
-        effectiveFocusedCarIndex={effectiveFocusedCarIndex}
-        focusedSlotCode={focusedSlotCode}
-        isLight={isLight}
-        updateConfig={updateConfig}
-        updatePreviewName={updatePreviewName}
-        selectPovCar={selectPovCar}
-      />
+      {/* 5. Team Colors, POV Car Selector & Custom Preview Names */}
+      <NameTagColorsAndNamesSection isLight={isLight} />
     </div>
   );
 };
+
+export default NameTagTunerFloatingWindow;

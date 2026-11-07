@@ -1,5 +1,9 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Zap, Volume2, Pause, Play, Trash2 } from 'lucide-react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:EventImpulseScatterChart' as const;
 
 export type CollisionEventType = 'car-ball' | 'car-world' | 'goalpost';
 
@@ -265,11 +269,12 @@ export const EventImpulseScatterChart: React.FC<EventImpulseScatterChartProps> =
   return (
     <div
       ref={containerRef}
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="event-impulse-scatter-chart"
-      className={`p-3 rounded-xl border flex flex-col gap-2.5 select-none transition-colors ${
+      className={`p-3 ${UI_RADIUS.card} border flex flex-col gap-2.5 select-none transition-colors ${
         isLight
-          ? 'bg-white border-neutral-200 text-neutral-800 shadow-2xs'
-          : 'bg-neutral-900/90 border-neutral-800 text-neutral-100'
+          ? `bg-white ${UI_THEME.light.border} ${UI_THEME.light.textPrimary} shadow-2xs`
+          : `bg-neutral-900/90 ${UI_THEME.dark.border} ${UI_THEME.dark.textPrimary}`
       } ${className}`}
     >
       {/* Top Toolbar */}

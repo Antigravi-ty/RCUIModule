@@ -1,5 +1,4 @@
 import React from 'react';
-import { useLayer3SelfTrainingStoreBinding } from './hooks/useLayer3PlayTrainingBindings';
 import {
   Barrel,
   FileVideoCamera,
@@ -7,15 +6,25 @@ import {
   Stone,
   UsersRoundCollaboration,
 } from 'lucide-react';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import { resolveCalibratedSurfaceSizing } from '../manifest/surfaceCalibration';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { MenuContainer } from '../layout/MenuContainer';
 import { MainMenuRow } from '../layout/MainMenuRow';
-import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useAppStore } from '../stores/appStore';
+import { floatingStore } from '../stores/floatingStore';
+import {
+  REPLAY_VIEWER_PRESET,
+  REWINDER_CONFIGURATOR_PRESET,
+} from '../stores/floatingPresets';
 import {
   useMainMenuStyleStore,
   type MainMenuItemSlotId,
 } from '../stores/mainMenuStyleStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useRewinderStore } from '../stores/rewinderStore';
+import { useScopedStore } from '../stores/storeSnapshotScope';
 
 export type SelfTrainingModeId =
   | 'free-play'
@@ -80,12 +89,24 @@ export const SELF_TRAINING_OPTIONS: SelfTrainingOption[] = [
   },
 ];
 
-export interface Layer3SelfTrainingRecipeProps {
-  isLight?: boolean;
-  onSelectMode?: (mode: SelfTrainingModeId) => void;
-  onBack?: () => void;
-  className?: string;
-}
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer3SelfTrainingRecipe',
+  title: 'Self-Training Hub',
+  subtitle: 'Free Play, Static Training Packs, Kickoff Drills & Replay Viewer',
+  description: 'Select a solo training discipline or replay analysis tool.',
+  icon: 'Stone',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 500,
+    height: 460,
+    minHeight: 200,
+    maxHeight: 960,
+    mode: 'adaptive',
+  },
+};
+
+export interface Layer3SelfTrainingRecipeProps extends StandardSurfaceProps {}
 
 /**
  * [Recipe] Layer 3 Self-Training Hub
@@ -95,22 +116,94 @@ export interface Layer3SelfTrainingRecipeProps {
  * 3. Dynamic Training Pack (`UsersRoundCollaboration` / `users-round-collaboration`)
  * 4. Kickoff Training (`Barrel` / `barrel`)
  * 5. Replay Viewer (`FileVideoCamera` / `file-video-camera`)
+ *
+ * Store-First contract (`StandardSurfaceProps` <= 4 props), reading directly from
+ * `useAppStore` and `useRewinderStore` via `useScopedStore`.
  */
-export const Layer3SelfTrainingRecipe: React.FC<Layer3SelfTrainingRecipeProps> = React.memo((rawProps) => {
-  const {
+export const Layer3SelfTrainingRecipe: React.FC<Layer3SelfTrainingRecipeProps> = React.memo(({
   isLight = true,
-  onSelectMode,
-  onBack = () => {},
-  className = '',
-} = useLayer3SelfTrainingStoreBinding(rawProps);
-  const sizing = useMenuLayoutStore((s) => s.panels['layer3-self-training']);
-  const menuStyle = useMainMenuStyleStore();
+  onTabChange,
+  onBack: propOnBack,
+}) => {
+  const storeGoBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const navigate = useScopedStore('appStore', useAppStore, (s) => s.navigate);
+  const closeMenu = useScopedStore('appStore', useAppStore, (s) => s.closeMenu);
+  const setMatchMode = useScopedStore('appStore', useAppStore, (s) => s.setMatchMode);
+  const bridge = useScopedStore('appStore', useAppStore, (s) => s.bridge);
+  const rewinderWindowOpen = useScopedStore(
+    'rewinderStore',
+    useRewinderStore,
+    (s) => s.rewinderWindowOpen
+  );
+
+  const onBack = propOnBack ?? storeGoBack;
+
+  const handleSelectMode = (mode: SelfTrainingModeId) => {
+    if (mode === 'dynamic-training-pack') {
+      return;
+    }
+    if (onTabChange) {
+      onTabChange(mode);
+      return;
+    }
+    if (mode === 'free-play') {
+      setMatchMode('freeplay');
+      closeMenu();
+      bridge.onReturnToFreeplay?.();
+      if (rewinderWindowOpen) {
+        floatingStore.spawnWindow({
+          ...REWINDER_CONFIGURATOR_PRESET,
+          startMinimized: true,
+        });
+      }
+      return;
+    }
+    if (mode === 'static-training-pack') {
+      navigate('static-training-pack');
+      return;
+    }
+    if (mode === 'kickoff-training') {
+      navigate('kickoff-training');
+      return;
+    }
+    if (mode === 'replay-viewer') {
+      setMatchMode('replay-viewer');
+      closeMenu();
+      if (bridge.onStartReplayViewer) {
+        bridge.onStartReplayViewer();
+      } else {
+        floatingStore.spawnWindow({
+          ...REPLAY_VIEWER_PRESET,
+          startMinimized: false,
+        });
+      }
+    }
+  };
+
+  const storeSizing = useScopedStore(
+    'menuLayoutStore',
+    useMenuLayoutStore,
+    (s) => s.panels['layer3-self-training']
+  );
+  const calibratedSizing = resolveCalibratedSurfaceSizing(
+    SURFACE_META.id,
+    SURFACE_META.defaultSizing
+  );
+  const sizing = storeSizing ?? {
+    mode: calibratedSizing.mode === 'fixed' ? 'fixed' : 'auto',
+    width: calibratedSizing.width,
+    targetHeight: typeof calibratedSizing.height === 'number' ? calibratedSizing.height : 460,
+    minHeight: calibratedSizing.minHeight ?? 200,
+    maxHeight: calibratedSizing.maxHeight ?? 960,
+  };
+
+  const menuStyle = useScopedStore('mainMenuStyleStore', useMainMenuStyleStore);
 
   return (
     <PanelContainer
       isLight={isLight}
       sizing={sizing}
-      className={`w-full select-none ${className}`}
+      className="w-full select-none"
     >
       <PanelHeader
         isLight={isLight}
@@ -147,7 +240,7 @@ export const Layer3SelfTrainingRecipe: React.FC<Layer3SelfTrainingRecipeProps> =
               styleParams={menuStyle}
               onClick={() => {
                 if (opt.disabled) return;
-                onSelectMode?.(opt.id);
+                handleSelectMode(opt.id);
               }}
             />
           ))}
@@ -163,3 +256,4 @@ export const Layer3SelfTrainingRecipe: React.FC<Layer3SelfTrainingRecipeProps> =
 });
 
 Layer3SelfTrainingRecipe.displayName = 'Layer3SelfTrainingRecipe';
+export default Layer3SelfTrainingRecipe;

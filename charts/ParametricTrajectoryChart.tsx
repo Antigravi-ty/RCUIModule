@@ -1,5 +1,9 @@
 import React, { useMemo, useId, useState, useRef } from 'react';
 import { TrendingUp, ArrowDown, Clock, MoveVertical } from 'lucide-react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:ParametricTrajectoryChart' as const;
 
 export interface ParametricTrajectoryChartProps {
   p1x: number;
@@ -206,11 +210,12 @@ export const ParametricTrajectoryChart: React.FC<ParametricTrajectoryChartProps>
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="parametric-trajectory-chart"
-      className={`relative w-full rounded-xl border flex flex-col select-none overflow-hidden p-3 gap-2 transition-colors ${
+      className={`relative w-full ${UI_RADIUS.card} border flex flex-col select-none overflow-hidden p-3 gap-2 transition-colors ${
         isLight
-          ? 'bg-white border-neutral-200 text-neutral-800 shadow-2xs'
-          : 'bg-neutral-900/90 border-neutral-800 text-neutral-200'
+          ? `bg-white ${UI_THEME.light.border} ${UI_THEME.light.textPrimary} shadow-2xs`
+          : `bg-neutral-900/90 ${UI_THEME.dark.border} ${UI_THEME.dark.textPrimary}`
       } ${className}`}
     >
       {/* Top Header */}

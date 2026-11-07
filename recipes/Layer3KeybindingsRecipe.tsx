@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { useAppStore } from '../stores/appStore';
 import {
   Keyboard,
   Gamepad2,
@@ -7,188 +6,70 @@ import {
   Check,
   Info,
 } from 'lucide-react';
+import { SettingActionRow } from '../compounds/SettingActionRow';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
-import { SettingActionRow } from '../compounds/SettingActionRow';
+import { resolveCalibratedSurfaceSizing } from '../manifest/surfaceCalibration';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
-import {
-  loadInputBindings,
-  saveInputBindings,
-  createDefaultInputBindings,
-} from '../config/inputBindings';
+import { useScopedStore } from '../stores/storeSnapshotScope';
 import {
   type ActionBinding,
   INITIAL_BINDINGS,
-  GAMEPAD_QUICK_PRESETS,
   type ListeningTarget,
   KeybindingActionRow,
 } from './keybinding/KeybindingActionRow';
 import {
-  useKeybindingCapture,
-} from './keybinding/useKeybindingCapture';
+  ACTION_CATEGORY_MAP,
+  KEYBINDING_CATEGORIES,
+  type KeybindingActionCategory,
+  loadHydratedActionBindings,
+  syncActionBindingsToEngine,
+} from './keybinding/keybindingEngineSync';
+import { useKeybindingCapture } from './keybinding/useKeybindingCapture';
 
-export interface Layer3KeybindingsRecipeProps {
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer3KeybindingsRecipe',
+  title: 'Key Bindings',
+  subtitle: '3-Column Keyboard & Controller Action Mapping Table with Category Filters',
+  icon: 'Keyboard',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 560,
+    height: 560,
+    minHeight: 240,
+    maxHeight: 1120,
+    mode: 'adaptive',
+  },
+  variants: [
+    {
+      variantId: 'all',
+      label: 'All Categories (13 Actions)',
+    },
+    {
+      variantId: 'Driving',
+      label: 'Driving Actions Only',
+    },
+    {
+      variantId: 'Aerial',
+      label: 'Aerial Actions Only',
+    },
+  ],
+};
+
+export type Layer3KeybindingsRecipeProps = StandardSurfaceProps;
+
+export interface ControlsBindingTableProps {
   isLight?: boolean;
-  onBack?: () => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
   onNavigateAdvancedController?: () => void;
-  /** Alias for onNavigateAdvancedController */
-  onNavigateAdvanced?: () => void;
-  /**
-   * If true, renders the full standalone PanelContainer shell with header and footer.
-   * If false, renders the modular 3-column binding table suitable for embedding directly inside Settings.
-   */
-  standalone?: boolean;
-  sizing?: PanelSizingConfig;
+  onHover?: (desc: string | null) => void;
+  onLeave?: () => void;
   className?: string;
-}
-
-const ACTION_CATEGORY_MAP: Record<string, 'Driving' | 'Aerial' | 'Camera' | 'Ball Control' | 'Session'> = {
-  throttle: 'Driving',
-  brake: 'Driving',
-  'steer-left': 'Driving',
-  'steer-right': 'Driving',
-  boost: 'Driving',
-  powerslide: 'Driving',
-  jump: 'Aerial',
-  'air-roll-left': 'Aerial',
-  'air-roll-right': 'Aerial',
-  'ball-cam': 'Camera',
-  'rear-cam': 'Camera',
-  'skip-replay': 'Session',
-  pause: 'Session',
-};
-
-const UI_TO_ENGINE_ACTION_MAP: Record<string, string> = {
-  throttle: 'throttleForward',
-  brake: 'throttleReverse',
-  'steer-left': 'steerLeft',
-  'steer-right': 'steerRight',
-  boost: 'boost',
-  jump: 'jump',
-  powerslide: 'powerslide',
-  'air-roll-left': 'airRollLeft',
-  'air-roll-right': 'airRollRight',
-  'ball-cam': 'ballCam',
-  'rear-cam': 'rearView',
-  'skip-replay': 'skipReplay',
-  pause: 'toggleSettings',
-};
-
-const SHORTCUT_TO_KEY_CODE: Record<string, { kind: 'key'; code: string } | { kind: 'mouse'; button: number }> = {
-  SPACE: { kind: 'key', code: 'Space' },
-  ENTER: { kind: 'key', code: 'Enter' },
-  ESC: { kind: 'key', code: 'Escape' },
-  BKSP: { kind: 'key', code: 'Backspace' },
-  BACKSPACE: { kind: 'key', code: 'Backspace' },
-  TAB: { kind: 'key', code: 'Tab' },
-  SHIFT: { kind: 'key', code: 'ShiftLeft' },
-  CTRL: { kind: 'key', code: 'ControlLeft' },
-  ALT: { kind: 'key', code: 'AltLeft' },
-  CAPS: { kind: 'key', code: 'CapsLock' },
-  UP: { kind: 'key', code: 'ArrowUp' },
-  DOWN: { kind: 'key', code: 'ArrowDown' },
-  LEFT: { kind: 'key', code: 'ArrowLeft' },
-  RIGHT: { kind: 'key', code: 'ArrowRight' },
-  'L-CLICK': { kind: 'mouse', button: 0 },
-  'M-CLICK': { kind: 'mouse', button: 1 },
-  'R-CLICK': { kind: 'mouse', button: 2 },
-};
-
-const SHORTCUT_TO_PAD_BINDING: Record<
-  string,
-  { kind: 'padButton'; index: number } | { kind: 'padAxis'; axis: number; dir: 1 | -1 }
-> = {
-  A: { kind: 'padButton', index: 0 },
-  B: { kind: 'padButton', index: 1 },
-  X: { kind: 'padButton', index: 2 },
-  Y: { kind: 'padButton', index: 3 },
-  LB: { kind: 'padButton', index: 4 },
-  RB: { kind: 'padButton', index: 5 },
-  LT: { kind: 'padButton', index: 6 },
-  RT: { kind: 'padButton', index: 7 },
-  BACK: { kind: 'padButton', index: 8 },
-  START: { kind: 'padButton', index: 9 },
-  LS: { kind: 'padButton', index: 10 },
-  RS: { kind: 'padButton', index: 11 },
-  'D-UP': { kind: 'padButton', index: 12 },
-  'D-DOWN': { kind: 'padButton', index: 13 },
-  'D-LEFT': { kind: 'padButton', index: 14 },
-  'D-RIGHT': { kind: 'padButton', index: 15 },
-  'LS-L': { kind: 'padAxis', axis: 0, dir: -1 },
-  'LS-R': { kind: 'padAxis', axis: 0, dir: 1 },
-};
-
-const UI_KEYBINDINGS_STORAGE_KEY = 'rc_ui_action_bindings_v1';
-
-function shortcutToKeyboardSource(shortcut: string): { kind: 'key'; code: string } | { kind: 'mouse'; button: number } {
-  const upper = shortcut.trim().toUpperCase();
-  if (SHORTCUT_TO_KEY_CODE[upper]) return SHORTCUT_TO_KEY_CODE[upper];
-  if (/^[A-Z]$/.test(upper)) return { kind: 'key', code: `Key${upper}` };
-  if (/^[0-9]$/.test(upper)) return { kind: 'key', code: `Digit${upper}` };
-  return { kind: 'key', code: shortcut };
-}
-
-function loadHydratedActionBindings(): ActionBinding[] {
-  if (typeof window === 'undefined') return INITIAL_BINDINGS;
-  try {
-    const raw = window.localStorage.getItem(UI_KEYBINDINGS_STORAGE_KEY);
-    if (!raw) return INITIAL_BINDINGS;
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return INITIAL_BINDINGS;
-    const byId = new Map<string, ActionBinding>();
-    for (const item of parsed) {
-      if (item && typeof item.id === 'string') {
-        byId.set(item.id, {
-          id: item.id,
-          action: typeof item.action === 'string' ? item.action : item.id,
-          keyboard: Array.isArray(item.keyboard) ? item.keyboard : [],
-          gamepad: Array.isArray(item.gamepad) ? item.gamepad : [],
-        });
-      }
-    }
-    return INITIAL_BINDINGS.map((def) => {
-      const saved = byId.get(def.id);
-      return saved ? { ...def, keyboard: saved.keyboard, gamepad: saved.gamepad } : def;
-    });
-  } catch {
-    return INITIAL_BINDINGS;
-  }
-}
-
-function syncActionBindingsToEngine(uiBindings: ActionBinding[], isReset = false) {
-  try {
-    if (typeof window !== 'undefined') {
-      if (isReset) {
-        window.localStorage.removeItem(UI_KEYBINDINGS_STORAGE_KEY);
-      } else {
-        window.localStorage.setItem(UI_KEYBINDINGS_STORAGE_KEY, JSON.stringify(uiBindings));
-      }
-    }
-    const engineBindings = isReset ? createDefaultInputBindings() : loadInputBindings();
-    if (!isReset) {
-      for (const item of uiBindings) {
-        const engineAct = UI_TO_ENGINE_ACTION_MAP[item.id];
-        if (!engineAct) continue;
-        if (engineBindings.keyboard) {
-          engineBindings.keyboard[engineAct] = item.keyboard
-            .slice(0, 2)
-            .map(shortcutToKeyboardSource);
-        }
-        if (engineBindings.pad) {
-          engineBindings.pad[engineAct] = item.gamepad
-            .map((g) => SHORTCUT_TO_PAD_BINDING[g.trim().toUpperCase()])
-            .filter(Boolean)
-            .slice(0, 2);
-        }
-      }
-    }
-    saveInputBindings(engineBindings);
-    useAppStore.getState().bridge?.onBindingsChange?.(engineBindings);
-  } catch {
-    // Ignore storage errors in restricted environments
-  }
 }
 
 /**
@@ -200,27 +81,35 @@ function syncActionBindingsToEngine(uiBindings: ActionBinding[], isReset = false
  * - Col 2: Keyboard binds (with Lucide Keyboard icon, unlimited binds, hover delete cross, '+' key capture)
  * - Col 3: Controller binds (with Lucide Gamepad2 icon, unlimited binds, hover delete cross, '+' button capture)
  */
-export const ControlsBindingTable: React.FC<{
-  isLight?: boolean;
-  onNavigateAdvancedController?: () => void;
-  onHover?: (desc: string | null) => void;
-  onLeave?: () => void;
-  className?: string;
-}> = ({
+export const ControlsBindingTable: React.FC<ControlsBindingTableProps> = ({
   isLight = false,
+  activeTab,
+  onTabChange,
   onNavigateAdvancedController,
   onHover,
   onLeave,
   className = '',
 }) => {
-  const [bindings, setBindings] = useState<ActionBinding[]>(() => loadHydratedActionBindings());
+  const [bindings, setBindings] = useState<ActionBinding[]>(() =>
+    loadHydratedActionBindings()
+  );
   const [listeningTarget, setListeningTarget] = useState<ListeningTarget | null>(null);
-  const [activeCategory, setActiveCategory] = useState<
-    'All' | 'Driving' | 'Aerial' | 'Camera' | 'Ball Control' | 'Session'
-  >('All');
+  const [internalCategory, setInternalCategory] =
+    useState<KeybindingActionCategory>('All');
   const [confirmReset, setConfirmReset] = useState(false);
   const tableRef = useRef<HTMLDivElement | null>(null);
   const didMountRef = useRef(false);
+
+  const activeCategory: KeybindingActionCategory =
+    activeTab &&
+    (KEYBINDING_CATEGORIES as readonly string[]).includes(activeTab)
+      ? (activeTab as KeybindingActionCategory)
+      : internalCategory;
+
+  const handleSelectCategory = (cat: KeybindingActionCategory) => {
+    setInternalCategory(cat);
+    onTabChange?.(cat);
+  };
 
   useEffect(() => {
     if (!didMountRef.current) {
@@ -233,14 +122,11 @@ export const ControlsBindingTable: React.FC<{
   const {
     rowGap,
     paddingX,
-    paddingY,
-    borderRadius,
-    titleFontSize,
     buttonFontSize,
     buttonPaddingX,
     buttonPaddingY,
     buttonRadius,
-  } = useSettingActionRowStore();
+  } = useScopedStore('settingRowStore', useSettingActionRowStore);
 
   const showFeedback = useCallback(
     (msg: string) => {
@@ -251,7 +137,11 @@ export const ControlsBindingTable: React.FC<{
 
   useKeybindingCapture(listeningTarget, setBindings, setListeningTarget, showFeedback);
 
-  const handleRemoveKey = (actionId: string, kind: 'keyboard' | 'gamepad', keyToRemove: string) => {
+  const handleRemoveKey = (
+    actionId: string,
+    kind: 'keyboard' | 'gamepad',
+    keyToRemove: string
+  ) => {
     setBindings((prev) =>
       prev.map((item) => {
         if (item.id === actionId) {
@@ -302,22 +192,18 @@ export const ControlsBindingTable: React.FC<{
     showFeedback('Restored default keyboard and controller bindings.');
   };
 
-  const categories: Array<'All' | 'Driving' | 'Aerial' | 'Camera' | 'Ball Control' | 'Session'> = [
-    'All',
-    'Driving',
-    'Aerial',
-    'Camera',
-    'Ball Control',
-    'Session',
-  ];
-
   const filteredBindings =
     activeCategory === 'All'
       ? bindings
-      : bindings.filter((b) => (ACTION_CATEGORY_MAP[b.id] ?? 'Session') === activeCategory);
+      : bindings.filter(
+          (b) => (ACTION_CATEGORY_MAP[b.id] ?? 'Session') === activeCategory
+        );
 
   return (
-    <div ref={tableRef} className={`flex flex-col w-full text-xs select-none gap-2 ${className}`}>
+    <div
+      ref={tableRef}
+      className={`flex flex-col w-full text-xs select-none gap-2 ${className}`}
+    >
       {/* Top Entry Row: Advanced Controller Settings -> Configure */}
       <SettingActionRow
         icon={Gamepad2}
@@ -343,13 +229,13 @@ export const ControlsBindingTable: React.FC<{
         }}
         className="flex items-center justify-between w-full"
       >
-        {categories.map((cat) => {
+        {KEYBINDING_CATEGORIES.map((cat) => {
           const active = activeCategory === cat;
           return (
             <button
               key={cat}
               type="button"
-              onClick={() => setActiveCategory(cat)}
+              onClick={() => handleSelectCategory(cat)}
               onMouseEnter={() =>
                 onHover?.(
                   cat === 'All'
@@ -460,10 +346,6 @@ export const ControlsBindingTable: React.FC<{
             key={b.id}
             binding={b}
             isLight={isLight}
-            paddingX={paddingX}
-            paddingY={paddingY}
-            borderRadius={borderRadius}
-            titleFontSize={titleFontSize}
             listeningTarget={listeningTarget}
             onStartListening={setListeningTarget}
             onRemoveKey={handleRemoveKey}
@@ -479,53 +361,43 @@ export const ControlsBindingTable: React.FC<{
 
 /**
  * [Recipe] Layer3KeybindingsRecipe
- * Full-featured Keybinding Panel:
- * - If standalone: wraps the 3-column table inside PanelContainer with standard Header and Footer.
- * - If embedded inside Layer2SettingsRecipe: renders the ControlsBindingTable seamlessly without redundant wrapper.
+ * Full-featured Keybinding Panel conforming to the 4-prop StandardSurfaceProps shell contract.
  */
 export const Layer3KeybindingsRecipe: React.FC<Layer3KeybindingsRecipeProps> = ({
   isLight = false,
+  activeTab,
+  onTabChange,
   onBack: propOnBack,
-  onNavigateAdvancedController: propNavigateAdvCtrl,
-  onNavigateAdvanced,
-  standalone = true,
-  sizing: propSizing,
-  className = '',
 }) => {
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
-  const storeSizing = useMenuLayoutStore(
-    (s) => s.panels?.['layer3-keybindings'] ?? DEFAULT_PANEL_SIZING['layer3-keybindings']
+  const calibratedSizing = resolveCalibratedSurfaceSizing(
+    SURFACE_META.id,
+    SURFACE_META.defaultSizing
   );
-  const sizing = propSizing ?? storeSizing;
-  const storeGoBack = useAppStore((s) => s.goBack);
-  const storeNavigate = useAppStore((s) => s.navigate);
+  const storeSizing = useMenuLayoutStore((s) => s.panels?.['layer3-keybindings']);
+  const sizing = storeSizing ?? {
+    mode: calibratedSizing.mode === 'fixed' ? ('fixed' as const) : ('auto' as const),
+    width: calibratedSizing.width,
+    targetHeight:
+      typeof calibratedSizing.height === 'number' ? calibratedSizing.height : 560,
+    minHeight: calibratedSizing.minHeight ?? 240,
+    maxHeight: calibratedSizing.maxHeight ?? 1120,
+  };
+  const storeGoBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
+  const storeNavigate = useScopedStore('appStore', useAppStore, (s) => s.navigate);
   const onBack = propOnBack ?? storeGoBack;
-  const resolvedNavigateAdvanced = propNavigateAdvCtrl ?? onNavigateAdvanced ?? (() => storeNavigate('controller-settings'));
-
-  if (!standalone) {
-    return (
-      <ControlsBindingTable
-        isLight={isLight}
-        onNavigateAdvancedController={resolvedNavigateAdvanced}
-        onHover={setHoveredDesc}
-        onLeave={() => setHoveredDesc(null)}
-        className={className}
-      />
-    );
-  }
+  const handleNavigateAdvanced = () => storeNavigate('controller-settings');
 
   return (
-    <PanelContainer isLight={isLight} sizing={sizing} className={`w-full ${className}`}>
-      <PanelHeader
-        title="KEY BINDINGS"
-        onBack={onBack}
-        isLight={isLight}
-      />
+    <PanelContainer isLight={isLight} sizing={sizing} className="w-full">
+      <PanelHeader title="KEY BINDINGS" onBack={onBack} isLight={isLight} />
 
       <PanelContent scrollable>
         <ControlsBindingTable
           isLight={isLight}
-          onNavigateAdvancedController={resolvedNavigateAdvanced}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+          onNavigateAdvancedController={handleNavigateAdvanced}
           onHover={setHoveredDesc}
           onLeave={() => setHoveredDesc(null)}
         />
@@ -540,3 +412,5 @@ export const Layer3KeybindingsRecipe: React.FC<Layer3KeybindingsRecipeProps> = (
     </PanelContainer>
   );
 };
+
+export default Layer3KeybindingsRecipe;

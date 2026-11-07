@@ -25,12 +25,36 @@ import { NinetySecMatchBenchPanel } from './subsystem-isolation-lab/NinetySecMat
 import { GoalReplayBenchPanel } from './subsystem-isolation-lab/GoalReplayBenchPanel';
 import { KickoffDuelBenchPanel } from './subsystem-isolation-lab/KickoffDuelBenchPanel';
 import { DemolishRespawnBenchPanel } from './subsystem-isolation-lab/DemolishRespawnBenchPanel';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
-export interface SubsystemIsolationLabFloatingWindowProps {
-  isLight?: boolean;
+export const SURFACE_META: SurfaceMeta = {
+  id: 'subsystem-isolation-lab',
+  title: 'Subsystem Isolation & MVP Lab',
+  subtitle: 'DeveloperLab',
+  description:
+    '7 isolated test benches: Probes, Multi-World Ghost, State Replay, 90s Match, Goal Replay, Kickoff Duel & Demolish Respawn.',
+  icon: 'Layers',
+  layer: 'floating-dev',
+  menuGroup: 'sandboxes',
+  defaultSizing: {
+    width: 470,
+    height: 560,
+    minHeight: 200,
+    mode: 'adaptive',
+  },
+  variants: [
+    { variantId: 'probes', label: '1. Probes' },
+    { variantId: 'multi-ghost', label: '2. Multi Ghost' },
+    { variantId: 'state-replay', label: '3. State Replay' },
+    { variantId: '90s-match', label: '4. 90s Match' },
+    { variantId: 'goal-replay', label: '5. Goal Replay' },
+    { variantId: 'kickoff-duel', label: '6. Kickoff Duel' },
+    { variantId: 'demolish-respawn', label: '7. Demo Respawn' },
+  ],
+};
+
+export interface SubsystemIsolationLabFloatingWindowProps extends StandardSurfaceProps {
   active?: boolean;
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
 }
 
 /**

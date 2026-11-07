@@ -2,6 +2,10 @@ import React from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { lookupLucideIcon } from './iconLookup';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:DualGrabberSlider' as const;
 
 export type DualGrabberColorScheme = 'neutral' | 'amber' | 'orange' | 'emerald' | 'sky' | 'rose';
 export type DualGrabberMode = 'centered-deadband' | 'free-range';
@@ -223,9 +227,11 @@ export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
   };
 
   const resolvedSubtitle = subtitle ?? description;
+  const theme = isLight ? UI_THEME.light : UI_THEME.dark;
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="dual-grabber-slider"
       style={{
         paddingLeft: `${Math.max(0, padX)}px`,
@@ -268,7 +274,7 @@ export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
                 {label}
               </span>
               {shouldShowDomainBadge && resolvedDomainBadge && (
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider font-semibold bg-amber-500/15 border-amber-500/30 text-amber-500">
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 ${UI_RADIUS.sm} border uppercase tracking-wider font-semibold bg-amber-500/15 border-amber-500/30 text-amber-500`}>
                   {resolvedDomainBadge}
                 </span>
               )}
@@ -276,7 +282,7 @@ export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
             {shouldShowDesc && resolvedSubtitle && (
               <span
                 style={{ fontSize: `${resolvedDescFontSize}px` }}
-                className={`mt-0.5 truncate ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}
+                className={`mt-0.5 truncate ${theme.textMuted}`}
               >
                 {resolvedSubtitle}
               </span>
@@ -287,7 +293,7 @@ export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
         {/* Readout Badges */}
         <div className="flex items-center gap-1.5 flex-wrap shrink-0 self-start sm:self-center">
           <span
-            className={`font-mono text-[11px] px-2 py-0.5 rounded border ${
+            className={`font-mono text-[11px] px-2 py-0.5 ${UI_RADIUS.sm} border ${
               isLight
                 ? 'bg-white text-neutral-800 border-neutral-300'
                 : 'bg-neutral-950 text-neutral-200 border-neutral-700'
@@ -296,7 +302,7 @@ export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
             {leftLabel}: <strong className={getAccentTextClass()}>{formatSigned(leftVal, false)}</strong>
           </span>
           <span
-            className={`font-mono text-[11px] px-2 py-0.5 rounded border ${
+            className={`font-mono text-[11px] px-2 py-0.5 ${UI_RADIUS.sm} border ${
               isLight
                 ? 'bg-white text-neutral-800 border-neutral-300'
                 : 'bg-neutral-950 text-neutral-200 border-neutral-700'
@@ -306,7 +312,7 @@ export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
           </span>
           {resolvedWindowBadge && (
             <span
-              className={`font-mono text-[11px] px-2 py-0.5 rounded border font-semibold ${
+              className={`font-mono text-[11px] px-2 py-0.5 ${UI_RADIUS.sm} border font-semibold ${
                 isLight
                   ? 'bg-amber-50 text-amber-900 border-amber-300'
                   : 'bg-amber-950/40 text-amber-300 border-amber-700/50'
@@ -331,7 +337,7 @@ export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
         >
           {/* Base Track */}
           <SliderPrimitive.Track
-            className={`relative grow rounded-full h-2 overflow-hidden ${
+            className={`relative grow ${UI_RADIUS.full} h-2 overflow-hidden ${
               isLight ? 'bg-neutral-200' : 'bg-neutral-800'
             }`}
           >
@@ -347,14 +353,14 @@ export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
 
             {/* Active Range (Deadband / Interval Zone) */}
             <SliderPrimitive.Range
-              className={`absolute h-full rounded-full transition-colors ${getRangeColorClass()}`}
+              className={`absolute h-full ${UI_RADIUS.full} transition-colors ${getRangeColorClass()}`}
             />
           </SliderPrimitive.Track>
 
           {/* Left Thumb */}
           <SliderPrimitive.Thumb
             aria-label={`${leftLabel} thumb`}
-            className={`block h-4 w-4 rounded-full border shadow-sm transition-transform hover:scale-110 outline-none focus-visible:ring-2 focus-visible:ring-amber-500 cursor-grab active:cursor-grabbing ${
+            className={`block h-4 w-4 ${UI_RADIUS.full} border shadow-sm transition-transform hover:scale-110 outline-none focus-visible:ring-2 focus-visible:ring-amber-500 cursor-grab active:cursor-grabbing ${
               isLight ? 'bg-white border-neutral-400' : 'bg-neutral-100 border-neutral-300'
             }`}
           />
@@ -362,7 +368,7 @@ export const DualGrabberSlider: React.FC<DualGrabberSliderProps> = React.memo(({
           {/* Right Thumb */}
           <SliderPrimitive.Thumb
             aria-label={`${rightLabel} thumb`}
-            className={`block h-4 w-4 rounded-full border shadow-sm transition-transform hover:scale-110 outline-none focus-visible:ring-2 focus-visible:ring-amber-500 cursor-grab active:cursor-grabbing ${
+            className={`block h-4 w-4 ${UI_RADIUS.full} border shadow-sm transition-transform hover:scale-110 outline-none focus-visible:ring-2 focus-visible:ring-amber-500 cursor-grab active:cursor-grabbing ${
               isLight ? 'bg-white border-neutral-400' : 'bg-neutral-100 border-neutral-300'
             }`}
           />

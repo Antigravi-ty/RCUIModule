@@ -11,8 +11,11 @@ import {
 import { Card } from '../layout/Card';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
+import type { SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import { resolveCalibratedSurfaceSizing } from '../manifest/surfaceCalibration';
+import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
+import { useStoreSnapshotOverride } from '../stores/storeSnapshotScope';
 import {
   type Layer4DevSignalingLabRecipeProps,
   type Layer4DevSignalingLabStateOverride,
@@ -22,6 +25,23 @@ import { Layer3DevSelfTestRecipe } from './Layer3DevSelfTestRecipe';
 import { useLayer4DevSignalingLabBinding } from './hooks/useLayer4DevSignalingLabBinding';
 import { SignalingLabStatusAndScenariosSection } from './dev/SignalingLabStatusAndScenariosSection';
 import { SignalingLabLiveMonitorsSection } from './dev/SignalingLabLiveMonitorsSection';
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer4DevSignalingLabRecipe',
+  title: '4-Server Signaling & Dual Bridge Lab',
+  subtitle:
+    'Full-mesh EMQX CN/GB + Supabase JP/SG physical dir/brg isolation, 4-bit mask, and 5-layer anti-loop guards',
+  icon: 'wifi',
+  layer: 'layer4',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    mode: 'adaptive',
+    width: 760,
+    height: 680,
+    minHeight: 260,
+    maxHeight: 1120,
+  },
+};
 
 export type {
   CanonicalLabEdgeNodeId,
@@ -45,7 +65,13 @@ export type {
  */
 export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipeProps> = React.memo(
   (rawProps) => {
-    const mergedProps = { ...rawProps.stateOverride, ...rawProps };
+    const scopeOverride =
+      useStoreSnapshotOverride<Layer4DevSignalingLabStateOverride>('signalingLab');
+    const mergedProps = {
+      ...scopeOverride,
+      ...rawProps.stateOverride,
+      ...rawProps,
+    };
     const {
       isDevPrivateSource,
       isLight,
@@ -71,17 +97,26 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
       onRunScenario,
       onClearTraces,
     } = useLayer4DevSignalingLabBinding(mergedProps);
+    const className = rawProps.className ?? '';
 
     const [showEmqxRuleGuide, setShowEmqxRuleGuide] = useState(false);
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
     const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
-    const storeSizing = useMenuLayoutStore(
-      (s) =>
-        s.panels?.['layer4-dev-signaling-lab'] ??
-        DEFAULT_PANEL_SIZING['layer4-dev-signaling-lab']
+    const storeSizing = useMenuLayoutStore((s) => s.panels?.['layer4-dev-signaling-lab']);
+    const calibratedSizing = resolveCalibratedSurfaceSizing(
+      SURFACE_META.id,
+      SURFACE_META.defaultSizing
     );
-    const sizing = propSizing ?? storeSizing;
+    const defaultResolvedSizing = {
+      mode: calibratedSizing.mode === 'fixed' ? ('fixed' as const) : ('auto' as const),
+      width: calibratedSizing.width,
+      targetHeight:
+        typeof calibratedSizing.height === 'number' ? calibratedSizing.height : 680,
+      minHeight: calibratedSizing.minHeight ?? 260,
+      maxHeight: calibratedSizing.maxHeight ?? 1120,
+    };
+    const sizing = propSizing ?? storeSizing ?? defaultResolvedSizing;
 
     if (!isDevPrivateSource) {
       return <Layer3DevSelfTestRecipe isLight={isLight} onBack={onBack} />;
@@ -100,7 +135,11 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
     };
 
     return (
-      <PanelContainer isLight={isLight} sizing={sizing} className="w-full select-none">
+      <PanelContainer
+        isLight={isLight}
+        sizing={sizing}
+        className={`w-full select-none ${className}`}
+      >
         <PanelHeader
           title="4-SERVER SIGNALING & DUAL BRIDGE LAB"
           onBack={onBack}
@@ -307,3 +346,4 @@ export const Layer4DevSignalingLabRecipe: React.FC<Layer4DevSignalingLabRecipePr
 );
 
 Layer4DevSignalingLabRecipe.displayName = 'Layer4DevSignalingLabRecipe';
+export default Layer4DevSignalingLabRecipe;

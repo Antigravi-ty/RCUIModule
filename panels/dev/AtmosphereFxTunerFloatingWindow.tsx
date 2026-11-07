@@ -31,20 +31,53 @@ import {
   getBallVisualConfig,
   updateBallVisualConfig,
   subscribeBallVisualConfig,
+  type BallVisualConfig,
 } from '../../stores/ballVisualStore';
+import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 import { WallPulseTab } from './atmosphere-fx/WallPulseTab';
 import { ShadowsLightTab } from './atmosphere-fx/ShadowsLightTab';
 import { SkyboxTab } from './atmosphere-fx/SkyboxTab';
 import { BallTab } from './atmosphere-fx/BallTab';
 
-export interface AtmosphereFxTunerFloatingWindowProps {
-  isLight?: boolean;
-  activeTab?: AtmosphereFxTab;
-  onTabChange?: (tab: AtmosphereFxTab) => void;
-  active?: boolean;
+export type AtmosphereFxTab = 'wall-pulse' | 'shadows-light' | 'skybox' | 'ball';
+
+const ATMOSPHERE_FX_TAB_IDS: readonly AtmosphereFxTab[] = [
+  'wall-pulse',
+  'shadows-light',
+  'skybox',
+  'ball',
+];
+
+function isAtmosphereFxTab(value: string | undefined): value is AtmosphereFxTab {
+  return Boolean(value && (ATMOSPHERE_FX_TAB_IDS as readonly string[]).includes(value));
 }
 
-export type AtmosphereFxTab = 'wall-pulse' | 'shadows-light' | 'skybox' | 'ball';
+export const SURFACE_META: SurfaceMeta = {
+  id: 'atmosphere-fx-tuner',
+  title: 'Atmosphere & FX Tuner',
+  subtitle: 'Wall & Pulse · Shadows & Light · Skybox · Ball',
+  description:
+    'Wall & Pulse (Cubic-Bezier Fade-Out Curve), Single-Sun Sharp Shadows, Full-Sphere Skybox & 70% Ball.',
+  icon: 'Sun',
+  layer: 'floating-dev',
+  menuGroup: 'calibrated-presets',
+  defaultSizing: {
+    width: 480,
+    height: 580,
+    minHeight: 200,
+    mode: 'fixed',
+  },
+  variants: [
+    { variantId: 'wall-pulse', label: '1. Wall & Pulse' },
+    { variantId: 'shadows-light', label: '2. Shadows & Light' },
+    { variantId: 'skybox', label: '3. Skybox' },
+    { variantId: 'ball', label: '4. Ball' },
+  ],
+};
+
+export interface AtmosphereFxTunerFloatingWindowProps extends StandardSurfaceProps {
+  activeTab?: AtmosphereFxTab | string;
+}
 
 let cachedAtmosphereActiveTab: AtmosphereFxTab = 'wall-pulse';
 
@@ -62,14 +95,11 @@ export const AtmosphereFxTunerFloatingWindow: React.FC<AtmosphereFxTunerFloating
   onTabChange,
 }) => {
   const [internalTab, setActiveTabState] = useState<AtmosphereFxTab>(() =>
-    controlledTab && ['wall-pulse', 'shadows-light', 'skybox', 'ball'].includes(controlledTab)
-      ? controlledTab
-      : cachedAtmosphereActiveTab
+    isAtmosphereFxTab(controlledTab) ? controlledTab : cachedAtmosphereActiveTab
   );
-  const activeTab: AtmosphereFxTab =
-    controlledTab && ['wall-pulse', 'shadows-light', 'skybox', 'ball'].includes(controlledTab)
-      ? controlledTab
-      : internalTab;
+  const activeTab: AtmosphereFxTab = isAtmosphereFxTab(controlledTab)
+    ? controlledTab
+    : internalTab;
   const setActiveTab = (tab: AtmosphereFxTab) => {
     cachedAtmosphereActiveTab = tab;
     setActiveTabState(tab);
@@ -113,7 +143,7 @@ export const AtmosphereFxTunerFloatingWindow: React.FC<AtmosphereFxTunerFloating
   const [ballConfig, setBallConfig] = useState(() => getBallVisualConfig());
 
   React.useEffect(() => {
-    return subscribeBallVisualConfig((next: any) => {
+    return subscribeBallVisualConfig((next: BallVisualConfig) => {
       setBallConfig({ ...next });
     });
   }, []);

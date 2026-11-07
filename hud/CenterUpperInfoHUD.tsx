@@ -8,6 +8,7 @@ import {
   DEFAULT_CENTER_UPPER_TIMING,
   hexToRgba,
   buildOuterGlowTextShadow,
+  buildCenterUpperKineticKeyframes,
   type CenterUpperInfoVariant,
   type WinnerTeamPreset,
   type CenterUpperBlueTeamConfig,
@@ -43,7 +44,19 @@ export {
 
 export const CenterUpperInfoHUD = React.memo(
   forwardRef<CenterUpperInfoHandle, CenterUpperInfoHUDProps>(
-    ({ info = null, glowConfig = DEFAULT_RL_COUNTDOWN_GLOW, winnerBlueConfig = DEFAULT_WINNER_BLUE_TEAM_CONFIG, typographyConfig = DEFAULT_CENTER_UPPER_TYPOGRAPHY, timingConfig = DEFAULT_CENTER_UPPER_TIMING, subscribeCenterInfo, onExpire, className = '' }, ref) => {
+    (
+      {
+        info = null,
+        glowConfig = DEFAULT_RL_COUNTDOWN_GLOW,
+        winnerBlueConfig = DEFAULT_WINNER_BLUE_TEAM_CONFIG,
+        typographyConfig = DEFAULT_CENTER_UPPER_TYPOGRAPHY,
+        timingConfig = DEFAULT_CENTER_UPPER_TIMING,
+        subscribeCenterInfo,
+        onExpire,
+        className = '',
+      },
+      ref
+    ) => {
       const containerRef = useRef<HTMLDivElement | null>(null);
       const innerBoxRef = useRef<HTMLDivElement | null>(null);
       const bloomRef = useRef<HTMLDivElement | null>(null);
@@ -140,7 +153,6 @@ export const CenterUpperInfoHUD = React.memo(
           rootEl.style.opacity = '1';
           innerEl.style.gap = `${resolvedTypo.lineGapPx}px`;
 
-          // 1. Backdrop radial bloom
           const bloomPct = resolvedGlow.backdropBloomPct ?? 0;
           if (bloomPct > 0 && activeMainIntensityPct > 0) {
             const bloomAlpha = Math.min(
@@ -158,8 +170,6 @@ export const CenterUpperInfoHUD = React.memo(
 
           const topStrokeW = resolvedGlow.strokeWidthPx ?? 0;
 
-          // 2. Top Line (JetBrains Mono Regular 400 — e.g. WINNER / ADMIN CONTROL)
-          // Note: Top WINNER color and glow strictly use resolvedGlow so Blue Team overrides never alter WINNER's color
           const hasTopText = Boolean(payload.topText && payload.topText.trim().length > 0);
           if (hasTopText) {
             const topColor = resolvedGlow.topLabelColor || '#FFFFFF';
@@ -177,12 +187,16 @@ export const CenterUpperInfoHUD = React.memo(
                 : '0px';
             topEl.style.color = topColor;
             topEl.style.webkitTextStroke =
-              topStrokeW > 0 ? `${Math.max(0.5, topStrokeW * 0.65)}px ${topGlowColor}` : '0px transparent';
+              topStrokeW > 0
+                ? `${Math.max(0.5, topStrokeW * 0.65)}px ${topGlowColor}`
+                : '0px transparent';
             topEl.style.textShadow = buildOuterGlowTextShadow(
               topGlowColor,
               resolvedGlow.innerBlurPx > 0 ? Math.max(2, resolvedGlow.innerBlurPx * 0.65) : 0,
               resolvedGlow.outerBlurPx > 0 ? Math.max(4, resolvedGlow.outerBlurPx * 0.7) : 0,
-              resolvedGlow.ambientBlurPx > 0 ? Math.max(8, resolvedGlow.ambientBlurPx * 0.65) : 0,
+              resolvedGlow.ambientBlurPx > 0
+                ? Math.max(8, resolvedGlow.ambientBlurPx * 0.65)
+                : 0,
               resolvedGlow.intensityPct * 0.9
             );
           } else {
@@ -190,7 +204,6 @@ export const CenterUpperInfoHUD = React.memo(
             topEl.textContent = '';
           }
 
-          // 3. Main Line (JetBrains Mono Thin 100 — e.g. 3, 2, 1, GO, BLUE TEAM, ORANGE TEAM, MATCH PAUSED)
           mainEl.textContent = forceUppercase
             ? payload.mainText.toUpperCase()
             : payload.mainText;
@@ -217,7 +230,6 @@ export const CenterUpperInfoHUD = React.memo(
             mainEl.style.webkitTextStroke = '0px transparent';
           }
 
-          // 4. Optional Sub-caption (hidden by default unless explicitly non-empty)
           if (payload.subText && payload.subText.trim().length > 0) {
             subEl.style.display = 'inline-flex';
             subEl.textContent = forceUppercase
@@ -231,14 +243,10 @@ export const CenterUpperInfoHUD = React.memo(
             subEl.textContent = '';
           }
 
-          // 5. Kinetic Envelope Animation
-          const entryMs = Math.max(0, resolvedTiming.entryDurationMs);
-          const holdMs = Math.max(entryMs, resolvedTiming.durationMs);
-          const exitMs = Math.max(0, resolvedTiming.exitDurationMs);
-          const totalTimelineMs = Math.max(1, holdMs + exitMs);
-          const entryScale = resolvedTiming.entryScale;
-
           if (typeof rootEl.animate === 'function') {
+            const entryMs = Math.max(0, resolvedTiming.entryDurationMs);
+            const entryScale = resolvedTiming.entryScale;
+
             if (resolvedTiming.persistentInspect) {
               if (animateEntry && entryMs > 0) {
                 activeAnimRef.current = rootEl.animate(
@@ -256,80 +264,11 @@ export const CenterUpperInfoHUD = React.memo(
                 rootEl.style.transform = 'scale3d(1, 1, 1)';
                 rootEl.style.opacity = '1';
               }
-            } else if (animateEntry) {
-              const keyframes: Keyframe[] = [];
-              const entryOffset = entryMs > 0 ? Math.min(1, entryMs / totalTimelineMs) : 0;
-              const holdEndOffset = Math.min(1, holdMs / totalTimelineMs);
-
-              if (entryOffset > 0) {
-                keyframes.push({
-                  offset: 0,
-                  transform: `scale3d(${entryScale}, ${entryScale}, 1)`,
-                  opacity: 1,
-                  easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-                });
-                keyframes.push({
-                  offset: entryOffset,
-                  transform: 'scale3d(1, 1, 1)',
-                  opacity: 1,
-                  easing: 'linear',
-                });
-              } else {
-                keyframes.push({
-                  offset: 0,
-                  transform: 'scale3d(1, 1, 1)',
-                  opacity: 1,
-                  easing: 'linear',
-                });
-              }
-
-              if (exitMs > 0 && holdEndOffset > entryOffset && holdEndOffset < 1) {
-                keyframes.push({
-                  offset: holdEndOffset,
-                  transform: 'scale3d(1, 1, 1)',
-                  opacity: 1,
-                  easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-                });
-              }
-
-              if (exitMs > 0) {
-                keyframes.push({ offset: 1, transform: 'scale3d(1, 1, 1)', opacity: 0 });
-              } else if (entryOffset < 1) {
-                keyframes.push({ offset: 1, transform: 'scale3d(1, 1, 1)', opacity: 1 });
-              }
-
-              activeAnimRef.current = rootEl.animate(keyframes, {
-                duration: totalTimelineMs,
-                easing: 'linear',
-                fill: 'forwards',
-              });
-
-              expireTimerRef.current = window.setTimeout(() => {
-                if (containerRef.current) {
-                  containerRef.current.style.opacity = '0';
-                  containerRef.current.style.visibility = 'hidden';
-                }
-                onExpireRef.current?.();
-              }, totalTimelineMs);
             } else {
-              const holdEndOffset = Math.min(1, holdMs / totalTimelineMs);
-              const keyframes: Keyframe[] = [
-                { offset: 0, transform: 'scale3d(1, 1, 1)', opacity: 1, easing: 'linear' },
-              ];
-              if (exitMs > 0 && holdEndOffset > 0 && holdEndOffset < 1) {
-                keyframes.push({
-                  offset: holdEndOffset,
-                  transform: 'scale3d(1, 1, 1)',
-                  opacity: 1,
-                  easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-                });
-              }
-              keyframes.push({
-                offset: 1,
-                transform: 'scale3d(1, 1, 1)',
-                opacity: exitMs > 0 ? 0 : 1,
-              });
-
+              const { keyframes, totalTimelineMs } = buildCenterUpperKineticKeyframes(
+                resolvedTiming,
+                animateEntry
+              );
               activeAnimRef.current = rootEl.animate(keyframes, {
                 duration: totalTimelineMs,
                 easing: 'linear',
@@ -364,7 +303,9 @@ export const CenterUpperInfoHUD = React.memo(
 
       useEffect(() => {
         const sig = info
-          ? `${info.variant}::${info.winnerTeam ?? ''}::${info.topText ?? ''}::${info.mainText}::${info.triggerKey ?? ''}`
+          ? `${info.variant}::${info.winnerTeam ?? ''}::${info.topText ?? ''}::${
+              info.mainText
+            }::${info.triggerKey ?? ''}`
           : 'null';
         const configSig = JSON.stringify({
           glowConfig,
@@ -384,7 +325,14 @@ export const CenterUpperInfoHUD = React.memo(
         prevTriggerSignatureRef.current = sig;
         prevConfigSignatureRef.current = configSig;
         applyPayloadToDom(info, shouldAnimate);
-      }, [info, glowConfig, winnerBlueConfig, typographyConfig, timingConfig, applyPayloadToDom]);
+      }, [
+        info,
+        glowConfig,
+        winnerBlueConfig,
+        typographyConfig,
+        timingConfig,
+        applyPayloadToDom,
+      ]);
 
       useEffect(() => {
         if (!subscribeCenterInfo) return;
@@ -401,6 +349,7 @@ export const CenterUpperInfoHUD = React.memo(
         <div
           ref={containerRef}
           data-ui-element="hud-center-upper-info"
+          data-alpha-id="Alpha:CenterUpperInfoHUD"
           data-variant={info?.variant ?? 'none'}
           className={`relative w-[10000px] max-w-none flex flex-col items-center justify-center text-center select-none pointer-events-none will-change-transform py-4 ${className}`}
           style={{
@@ -414,14 +363,12 @@ export const CenterUpperInfoHUD = React.memo(
             ref={innerBoxRef}
             className="relative inline-flex flex-col items-center justify-center text-center w-max max-w-none px-8"
           >
-            {/* Soft radial ambient glow behind typography (pure radial-gradient, 0 blur filter) */}
             <div
               ref={bloomRef}
               aria-hidden="true"
               className="absolute -inset-x-12 -inset-y-6 rounded-full pointer-events-none -z-10 transition-opacity duration-150"
             />
 
-            {/* Top Line: JetBrains Mono Regular (400) — e.g. WINNER / SYSTEM STATUS */}
             <div
               ref={topTextRef}
               data-role="center-upper-top-regular"
@@ -435,7 +382,6 @@ export const CenterUpperInfoHUD = React.memo(
               {info?.topText ?? ''}
             </div>
 
-            {/* Primary Line: JetBrains Mono Thin (100) — e.g. 3 / 2 / 1 / GO / BLUE TEAM / ORANGE TEAM / WAITING FOR PLAYERS */}
             <div
               ref={mainTextRef}
               data-role="center-upper-main-thin"
@@ -448,7 +394,6 @@ export const CenterUpperInfoHUD = React.memo(
               {info?.mainText ?? ''}
             </div>
 
-            {/* Optional Sub-caption Pill (hidden by default) */}
             <div
               ref={subTextRef}
               data-role="center-upper-sub-caption"

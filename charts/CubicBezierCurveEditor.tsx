@@ -1,5 +1,9 @@
 import React, { useId, useRef, useState } from 'react';
 import { Spline } from 'lucide-react';
+import { UI_RADIUS } from '../tokens/radius';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:CubicBezierCurveEditor' as const;
 
 export interface CubicBezierValue {
   p1x: number;
@@ -90,7 +94,12 @@ export const CubicBezierCurveEditor: React.FC<CubicBezierCurveEditorProps> = Rea
   const p2Screen = { x: mapX(p2x), y: mapY(p2y) };
   const p3Screen = { x: mapX(1), y: mapY(1) };
 
-  const curvePath = `M ${p0Screen.x.toFixed(1)},${p0Screen.y.toFixed(1)} C ${p1Screen.x.toFixed(1)},${p1Screen.y.toFixed(1)} ${p2Screen.x.toFixed(1)},${p2Screen.y.toFixed(1)} ${p3Screen.x.toFixed(1)},${p3Screen.y.toFixed(1)}`;
+  const curvePath = [
+    `M ${p0Screen.x.toFixed(1)},${p0Screen.y.toFixed(1)}`,
+    `C ${p1Screen.x.toFixed(1)},${p1Screen.y.toFixed(1)}`,
+    `${p2Screen.x.toFixed(1)},${p2Screen.y.toFixed(1)}`,
+    `${p3Screen.x.toFixed(1)},${p3Screen.y.toFixed(1)}`,
+  ].join(' ');
 
   const hasOvershootTop = p1y > 1.0 || p2y > 1.0;
   const hasOvershootBottom = p1y < 0.0 || p2y < 0.0;
@@ -135,11 +144,12 @@ export const CubicBezierCurveEditor: React.FC<CubicBezierCurveEditorProps> = Rea
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       data-component="cubic-bezier-curve-editor"
-      className={`relative w-full rounded-xl border flex flex-col select-none overflow-hidden p-3 gap-2 transition-colors ${
+      className={`relative w-full ${UI_RADIUS.card} border flex flex-col select-none overflow-hidden p-3 gap-2 transition-colors ${
         isLight
-          ? 'bg-white border-neutral-200 text-neutral-800 shadow-2xs'
-          : 'bg-neutral-900/90 border-neutral-800 text-neutral-200'
+          ? `bg-white ${UI_THEME.light.border} ${UI_THEME.light.textPrimary} shadow-2xs`
+          : `bg-neutral-900/90 ${UI_THEME.dark.border} ${UI_THEME.dark.textPrimary}`
       } ${className}`}
     >
       {/* Top Header */}

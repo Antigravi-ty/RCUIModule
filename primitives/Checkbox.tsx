@@ -1,5 +1,8 @@
 import React from 'react';
 import { Check, Minus } from 'lucide-react';
+import { UI_THEME } from '../tokens/colors';
+
+export const ALPHA_COMPONENT_ID = 'Alpha:Checkbox' as const;
 
 export type CheckboxVariant = 'neutral' | 'amber' | 'orange' | 'sky' | 'emerald' | 'rose';
 export type CheckboxIconStyle = 'check' | 'bold-check' | 'dot' | 'minus';
@@ -78,6 +81,7 @@ export const Checkbox: React.FC<CheckboxProps> = React.memo(({
       ? document.documentElement.classList.contains('light') ||
         document.documentElement.dataset.theme === 'light'
       : false;
+  const theme = resolvedIsLight ? UI_THEME.light : UI_THEME.dark;
 
   const boxSizePx =
     typeof size === 'number'
@@ -198,11 +202,16 @@ export const Checkbox: React.FC<CheckboxProps> = React.memo(({
   );
 
   if (!label && !description && !statusText) {
-    return <span className={`inline-flex items-center ${className}`}>{boxElement}</span>;
+    return (
+      <span data-alpha-id={ALPHA_COMPONENT_ID} className={`inline-flex items-center ${className}`}>
+        {boxElement}
+      </span>
+    );
   }
 
   return (
     <div
+      data-alpha-id={ALPHA_COMPONENT_ID}
       onClick={!disabled ? handleToggle : undefined}
       className={`inline-flex items-center gap-2.5 select-none ${
         disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
@@ -211,20 +220,12 @@ export const Checkbox: React.FC<CheckboxProps> = React.memo(({
       {labelPosition === 'left' && (label || description) && (
         <div className="flex flex-col text-right">
           {label && (
-            <span
-              className={`text-xs font-semibold leading-tight ${
-                resolvedIsLight ? 'text-neutral-800' : 'text-neutral-200'
-              }`}
-            >
+            <span className={`text-xs font-semibold leading-tight ${theme.textPrimary}`}>
               {label}
             </span>
           )}
           {description && (
-            <span
-              className={`text-[11px] leading-snug ${
-                resolvedIsLight ? 'text-neutral-500' : 'text-neutral-400'
-              }`}
-            >
+            <span className={`text-[11px] leading-snug ${theme.textMuted}`}>
               {description}
             </span>
           )}
@@ -237,12 +238,8 @@ export const Checkbox: React.FC<CheckboxProps> = React.memo(({
         <span
           className={`text-xs font-mono leading-none transition-colors ${
             checked
-              ? resolvedIsLight
-                ? 'text-neutral-800 font-semibold'
-                : 'text-neutral-200 font-semibold'
-              : resolvedIsLight
-              ? 'text-neutral-400'
-              : 'text-neutral-500'
+              ? `${theme.textPrimary} font-semibold`
+              : theme.textMuted
           }`}
         >
           {statusText}
@@ -252,20 +249,12 @@ export const Checkbox: React.FC<CheckboxProps> = React.memo(({
       {labelPosition === 'right' && (label || description) && (
         <div className="flex flex-col text-left">
           {label && (
-            <span
-              className={`text-xs font-semibold leading-tight ${
-                resolvedIsLight ? 'text-neutral-800' : 'text-neutral-200'
-              }`}
-            >
+            <span className={`text-xs font-semibold leading-tight ${theme.textPrimary}`}>
               {label}
             </span>
           )}
           {description && (
-            <span
-              className={`text-[11px] leading-snug ${
-                resolvedIsLight ? 'text-neutral-500' : 'text-neutral-400'
-              }`}
-            >
+            <span className={`text-[11px] leading-snug ${theme.textMuted}`}>
               {description}
             </span>
           )}

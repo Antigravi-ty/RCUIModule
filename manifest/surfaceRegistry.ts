@@ -2,54 +2,73 @@ import type React from 'react';
 import {
   SURFACE_CALIBRATION_OVERRIDES,
   UI_APPROVAL_LEDGER,
+  buildAlphaBravoRootCauseRecommendations,
+  evaluateSurfaceTriageStatus,
   getSurfaceApprovalRecord,
   getSurfaceCalibrationOverride,
+  getSurfaceVariantApprovalUnit,
   resolveCalibratedDefaultConfig,
   resolveCalibratedSurfaceSizing,
 } from './surfaceCalibration';
 import type {
   DiscoveredSurfaceEntry,
+  RootCauseClusterRecommendation,
   StandardSurfaceProps,
   SurfaceApprovalRecord,
   SurfaceApprovalStatus,
   SurfaceCalibrationLedger,
   SurfaceCalibrationOverride,
+  SurfaceDriftState,
   SurfaceLayerKind,
   SurfaceMenuGroup,
   SurfaceMeta,
   SurfaceSizingMode,
   SurfaceSizingSpec,
+  SurfaceTriageBucket,
+  SurfaceTriageStatus,
+  SurfaceVariantApprovalUnit,
   SurfaceVariantMeta,
+  SurfaceVariantTriageStatus,
   UiApprovalLedger,
 } from './surfaceMetaTypes';
 
 export {
   SURFACE_CALIBRATION_OVERRIDES,
   UI_APPROVAL_LEDGER,
+  buildAlphaBravoRootCauseRecommendations,
+  evaluateSurfaceTriageStatus,
   getSurfaceApprovalRecord,
   getSurfaceCalibrationOverride,
+  getSurfaceVariantApprovalUnit,
   resolveCalibratedDefaultConfig,
   resolveCalibratedSurfaceSizing,
   type DiscoveredSurfaceEntry,
+  type RootCauseClusterRecommendation,
   type StandardSurfaceProps,
   type SurfaceApprovalRecord,
   type SurfaceApprovalStatus,
   type SurfaceCalibrationLedger,
   type SurfaceCalibrationOverride,
+  type SurfaceDriftState,
   type SurfaceLayerKind,
   type SurfaceMenuGroup,
   type SurfaceMeta,
   type SurfaceSizingMode,
   type SurfaceSizingSpec,
+  type SurfaceTriageBucket,
+  type SurfaceTriageStatus,
+  type SurfaceVariantApprovalUnit,
   type SurfaceVariantMeta,
+  type SurfaceVariantTriageStatus,
   type UiApprovalLedger,
 };
 
-interface GlobSurfaceModule {
-  SURFACE_META?: SurfaceMeta;
-  default?: React.ComponentType<StandardSurfaceProps>;
-  [exportName: string]: unknown;
-}
+import {
+  collectDiscoveredEntries,
+  getDiscoveredFloatingSurfaces,
+  getDiscoveredFloatingSurfacesByMenuGroup,
+  type GlobSurfaceModule,
+} from './floatingSurfaceRegistry';
 
 type ImportMetaGlobFn = <T = unknown>(
   pattern: string,
@@ -58,14 +77,6 @@ type ImportMetaGlobFn = <T = unknown>(
 
 const importMetaGlob = (import.meta as unknown as { glob?: ImportMetaGlobFn }).glob;
 
-const floatingWindowModules: Record<string, GlobSurfaceModule> =
-  typeof importMetaGlob === 'function'
-    ? importMetaGlob<GlobSurfaceModule>(
-        '../panels/{user,dev}/*FloatingWindow.tsx',
-        { eager: true }
-      )
-    : {};
-
 const recipeSurfaceModules: Record<string, GlobSurfaceModule> =
   typeof importMetaGlob === 'function'
     ? importMetaGlob<GlobSurfaceModule>('../recipes/Layer*Recipe.tsx', {
@@ -73,55 +84,13 @@ const recipeSurfaceModules: Record<string, GlobSurfaceModule> =
       })
     : {};
 
-function resolveModuleComponent(
-  mod: GlobSurfaceModule
-): React.ComponentType<StandardSurfaceProps> | null {
-  if (typeof mod.default === 'function' || (mod.default && typeof mod.default === 'object')) {
-    return mod.default as React.ComponentType<StandardSurfaceProps>;
-  }
-  for (const [key, value] of Object.entries(mod)) {
-    if (key === 'SURFACE_META') continue;
-    if (
-      (key.endsWith('FloatingWindow') || key.endsWith('Recipe')) &&
-      (typeof value === 'function' || (value && typeof value === 'object'))
-    ) {
-      return value as React.ComponentType<StandardSurfaceProps>;
-    }
-  }
-  return null;
-}
-
-function collectDiscoveredEntries(
-  modulesRecord: Record<string, GlobSurfaceModule>
-): DiscoveredSurfaceEntry[] {
-  const entries: DiscoveredSurfaceEntry[] = [];
-  for (const [modulePath, mod] of Object.entries(modulesRecord)) {
-    if (!mod || !mod.SURFACE_META) continue;
-    const Component = resolveModuleComponent(mod);
-    if (!Component) continue;
-    const meta = mod.SURFACE_META;
-    entries.push({
-      meta,
-      resolvedSizing: resolveCalibratedSurfaceSizing(meta.id, meta.defaultSizing),
-      Component,
-      modulePath,
-    });
-  }
-  return entries.sort((a, b) => a.meta.id.localeCompare(b.meta.id));
-}
-
-const DISCOVERED_FLOATING_SURFACES: DiscoveredSurfaceEntry[] =
-  collectDiscoveredEntries(floatingWindowModules);
-
 const DISCOVERED_RECIPE_SURFACES: DiscoveredSurfaceEntry[] =
   collectDiscoveredEntries(recipeSurfaceModules);
 
-/**
- * Returns all floating window surfaces that declare co-located `export const SURFACE_META`.
- */
-export function getDiscoveredFloatingSurfaces(): DiscoveredSurfaceEntry[] {
-  return DISCOVERED_FLOATING_SURFACES;
-}
+export {
+  getDiscoveredFloatingSurfaces,
+  getDiscoveredFloatingSurfacesByMenuGroup,
+};
 
 /**
  * Returns all menu layer recipe surfaces that declare co-located `export const SURFACE_META`.
@@ -136,7 +105,7 @@ export function getDiscoveredRecipeSurfaces(): DiscoveredSurfaceEntry[] {
 export function getDiscoveredSurfacesByMenuGroup(
   menuGroup: SurfaceMenuGroup
 ): DiscoveredSurfaceEntry[] {
-  return [...DISCOVERED_FLOATING_SURFACES, ...DISCOVERED_RECIPE_SURFACES].filter(
+  return [...getDiscoveredFloatingSurfaces(), ...DISCOVERED_RECIPE_SURFACES].filter(
     (entry) => entry.meta.menuGroup === menuGroup
   );
 }
