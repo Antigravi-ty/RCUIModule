@@ -14,7 +14,7 @@ import {
   resolveActiveBoostFillColor,
   resolveAerialClimbInwardFillFraction,
   resolveUnfilledBaseHexColor,
-} from '../../../config/nameTagOffscreenRenderer';
+} from '../../../config/nameTagColorAndRoiMath';
 import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
 import { useAppStore } from '../../../stores/appStore';
 

@@ -4,10 +4,12 @@ import {
   type NameTagConfig,
 } from './nameTagConfig';
 import {
-  drawOffscreenIndicatorCard2D,
   hexToRgba,
   resolveActiveBoostFillColor,
   resolveUnfilledBaseHexColor,
+} from './nameTagColorAndRoiMath';
+import {
+  drawOffscreenIndicatorCard2D,
   type NameTagOffscreenIndicatorCard2D,
 } from './nameTagOffscreenRenderer';
 

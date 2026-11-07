@@ -1,11 +1,3 @@
-/**
- * StaticTrainingPackStorage.ts
- * Path-keyed IndexedDB Virtual Filesystem (VFS) for Static Training Packs,
- * with strict storage space isolation between Standard Training Packs (`normal` scope in `rc-virtual-fs-db`)
- * and Developer `.RLRCSPack` Training Packs (`dev` scope in `rc-dev-virtual-fs-db`),
- * plus a dedicated Edit-Mode IndexedDB (`rc-static-pack-edit-db`).
- */
-
 import {
   type EditSubMode,
   type StaticTrainingCarConfig,
@@ -77,15 +69,183 @@ export {
   buildEditItemPath,
 };
 
-/**
- * Determines whether a training pack metadata record belongs strictly to the Developer `.RLRCSPack` catalog
- * rather than the normal user Static Training Pack library (`.RCSPack` / `.RCSPackE`).
- */
+export type StaticPackDownCounterOption = 1 | 2 | 3;
+export type StaticPackSessionMode = 'browse' | 'play' | 'edit';
+
+export interface ActiveStaticTrainingPackBundle {
+  uuid: string;
+  title: string;
+  description: string;
+  itemCount: number;
+  metadata: StaticTrainingPackMetadata;
+  items: StaticTrainingShotItem[];
+}
+
+export interface StaticTrainingPackRuntimeHandlers {
+  onShotChanged?: (shotIndex: number) => void;
+  onResetShotRequested?: () => void;
+  onEditVariableMutated?: (draft: StaticTrainingShotItem) => void;
+  onEditSubModeChanged?: (subMode: EditSubMode) => void;
+  onSessionModeChanged?: (mode: StaticPackSessionMode) => void;
+}
+
+export interface StaticTrainingShotActionHelpers {
+  getActiveEditItemVariable: () => StaticTrainingShotItem | null;
+  setActiveEditItemVariable: (item: StaticTrainingShotItem | null) => void;
+  buildActivePackBundle: (
+    metadata: StaticTrainingPackMetadata | null,
+    items: StaticTrainingShotItem[]
+  ) => ActiveStaticTrainingPackBundle | null;
+}
+
+export interface StaticTrainingShotStoreState {
+  initialized: boolean;
+  devInitialized: boolean;
+  isLoading: boolean;
+  storageScope: StaticTrainingPackStorageScope;
+  packs: StaticTrainingPackMetadata[];
+  normalPacks: StaticTrainingPackMetadata[];
+  devPacks: StaticTrainingPackMetadata[];
+  selectedPackUuid: string | null;
+  normalSelectedPackUuid: string | null;
+  devSelectedPackUuid: string | null;
+  sessionMode: StaticPackSessionMode;
+  activePack: ActiveStaticTrainingPackBundle | null;
+  activeItems: StaticTrainingShotItem[];
+  committedSessionItems: StaticTrainingShotItem[];
+  currentShotIndex: number;
+  isEditingItem: boolean;
+  isEdgeInspectorExpanded: boolean;
+  activeEditItemDraft: StaticTrainingShotItem | null;
+  editSubMode: EditSubMode;
+  editVarVersion: number;
+  remainingTimeoutSec: number;
+  isFreeCamTrajectoryTesting: boolean;
+  isTestingSingleShot: boolean;
+  isShotMirrored?: boolean;
+  runtimeHandlers: StaticTrainingPackRuntimeHandlers;
+  setCurrentShotIndex: (index: number) => void;
+  isCurrentShotDirty: () => boolean;
+  saveCurrentShotToEditWorkspace: () => Promise<void>;
+}
+
+export function buildScopePackStatePatch(
+  scope: StaticTrainingPackStorageScope,
+  packs: StaticTrainingPackMetadata[],
+  selectedUuid: string | null,
+  isActiveScope: boolean
+): Partial<StaticTrainingShotStoreState> {
+  return {
+    ...(scope === 'dev'
+      ? { devPacks: packs, devSelectedPackUuid: selectedUuid }
+      : { normalPacks: packs, normalSelectedPackUuid: selectedUuid }),
+    ...(isActiveScope ? { packs, selectedPackUuid: selectedUuid } : {}),
+  };
+}
+
 export function isDevRlRcsPackMetadata(
   meta: Partial<StaticTrainingPackMetadata> | null | undefined
 ): boolean {
   if (!meta) return false;
   return Boolean(meta.isBuiltInDevPack) || meta.sourcePackType === 'RLRCSPack';
+}
+
+function buildPackNodes(
+  metadata: StaticTrainingPackMetadata,
+  items: StaticTrainingShotItem[],
+  scope: StaticTrainingPackStorageScope,
+  metaPathBuilder: (uuid: string, scope: StaticTrainingPackStorageScope) => string,
+  itemPathBuilder: (uuid: string, idx: number, scope: StaticTrainingPackStorageScope) => string
+): VfsNodeRecord[] {
+  const now = Date.now();
+  const category = resolveScopeCategory(scope);
+  const normalizedItems = items.slice(0, MAX_SHOTS_PER_PACK).map((item, idx) => {
+    const cloned = cloneShotItem(item, idx);
+    cloned.index = idx;
+    return cloned;
+  });
+  const updatedMeta: StaticTrainingPackMetadata = {
+    ...metadata,
+    itemCount: normalizedItems.length,
+    updatedAt: now,
+  };
+  return [
+    {
+      path: metaPathBuilder(updatedMeta.uuid, scope),
+      category,
+      uuid: updatedMeta.uuid,
+      nodeType: 'metadata',
+      updatedAt: now,
+      data: updatedMeta as unknown as Record<string, unknown>,
+    },
+    ...normalizedItems.map((it, idx) => ({
+      path: itemPathBuilder(updatedMeta.uuid, idx, scope),
+      category,
+      uuid: updatedMeta.uuid,
+      nodeType: 'item' as const,
+      index: idx,
+      updatedAt: now,
+      data: it as unknown as Record<string, unknown>,
+    })),
+  ];
+}
+
+function buildSingleShotNodes(
+  uuid: string,
+  index: number,
+  item: StaticTrainingShotItem,
+  metadata: StaticTrainingPackMetadata | null | undefined,
+  scope: StaticTrainingPackStorageScope,
+  metaPathBuilder: (uuid: string, scope: StaticTrainingPackStorageScope) => string,
+  itemPathBuilder: (uuid: string, idx: number, scope: StaticTrainingPackStorageScope) => string
+): VfsNodeRecord[] {
+  const now = Date.now();
+  const category = resolveScopeCategory(scope);
+  const cloned = cloneShotItem(item, index);
+  const nodes: VfsNodeRecord[] = [
+    {
+      path: itemPathBuilder(uuid, index, scope),
+      category,
+      uuid,
+      nodeType: 'item',
+      index,
+      updatedAt: now,
+      data: cloned as unknown as Record<string, unknown>,
+    },
+  ];
+  if (metadata) {
+    nodes.push({
+      path: metaPathBuilder(uuid, scope),
+      category,
+      uuid,
+      nodeType: 'metadata',
+      updatedAt: now,
+      data: { ...metadata, updatedAt: now } as unknown as Record<string, unknown>,
+    });
+  }
+  return nodes;
+}
+
+function parsePackRecords(records: VfsNodeRecord[]): {
+  metadata: StaticTrainingPackMetadata | null;
+  items: StaticTrainingShotItem[];
+} {
+  let metadata: StaticTrainingPackMetadata | null = null;
+  const items: StaticTrainingShotItem[] = [];
+  for (const rec of records) {
+    if (rec.nodeType === 'metadata' && rec.data) {
+      metadata = rec.data as unknown as StaticTrainingPackMetadata;
+    } else if (rec.nodeType === 'item' && rec.data) {
+      const rawItem = rec.data as unknown as StaticTrainingShotItem;
+      items.push(cloneShotItem(rawItem, rec.index ?? rawItem.index ?? 0));
+    }
+  }
+  items.sort((a, b) => a.index - b.index);
+  const capped = items.slice(0, MAX_SHOTS_PER_PACK);
+  capped.forEach((it, idx) => {
+    it.index = idx;
+  });
+  return { metadata, items: capped };
 }
 
 export async function clearEditWorkspaceByUuid(
@@ -129,42 +289,7 @@ export async function saveEditWorkspacePackFull(
   scope: StaticTrainingPackStorageScope = 'normal'
 ): Promise<void> {
   await clearEditWorkspaceByUuid(metadata.uuid, scope);
-  const now = Date.now();
-  const category = resolveScopeCategory(scope);
-  const cappedItems = items.slice(0, MAX_SHOTS_PER_PACK);
-  const normalizedItems = cappedItems.map((item, idx) => {
-    const cloned = cloneShotItem(item, idx);
-    cloned.index = idx;
-    return cloned;
-  });
-
-  const updatedMeta: StaticTrainingPackMetadata = {
-    ...metadata,
-    itemCount: normalizedItems.length,
-    updatedAt: now,
-  };
-
-  const nodes: VfsNodeRecord[] = [
-    {
-      path: buildEditMetaPath(updatedMeta.uuid, scope),
-      category,
-      uuid: updatedMeta.uuid,
-      nodeType: 'metadata',
-      updatedAt: now,
-      data: updatedMeta as unknown as Record<string, unknown>,
-    },
-    ...normalizedItems.map((it, idx) => ({
-      path: buildEditItemPath(updatedMeta.uuid, idx, scope),
-      category,
-      uuid: updatedMeta.uuid,
-      nodeType: 'item' as const,
-      index: idx,
-      updatedAt: now,
-      data: it as unknown as Record<string, unknown>,
-    })),
-  ];
-
-  await editVfsPutNodes(nodes);
+  await editVfsPutNodes(buildPackNodes(metadata, items, scope, buildEditMetaPath, buildEditItemPath));
 }
 
 export async function saveSingleEditWorkspaceShotItem(
@@ -174,37 +299,7 @@ export async function saveSingleEditWorkspaceShotItem(
   metadata?: StaticTrainingPackMetadata | null,
   scope: StaticTrainingPackStorageScope = 'normal'
 ): Promise<void> {
-  const now = Date.now();
-  const category = resolveScopeCategory(scope);
-  const cloned = cloneShotItem(item, index);
-  const nodes: VfsNodeRecord[] = [
-    {
-      path: buildEditItemPath(uuid, index, scope),
-      category,
-      uuid,
-      nodeType: 'item',
-      index,
-      updatedAt: now,
-      data: cloned as unknown as Record<string, unknown>,
-    },
-  ];
-
-  if (metadata) {
-    const updatedMeta: StaticTrainingPackMetadata = {
-      ...metadata,
-      updatedAt: now,
-    };
-    nodes.push({
-      path: buildEditMetaPath(uuid, scope),
-      category,
-      uuid,
-      nodeType: 'metadata',
-      updatedAt: now,
-      data: updatedMeta as unknown as Record<string, unknown>,
-    });
-  }
-
-  await editVfsPutNodes(nodes);
+  await editVfsPutNodes(buildSingleShotNodes(uuid, index, item, metadata, scope, buildEditMetaPath, buildEditItemPath));
 }
 
 export async function loadEditWorkspacePackByUuid(
@@ -214,37 +309,9 @@ export async function loadEditWorkspacePackByUuid(
   metadata: StaticTrainingPackMetadata | null;
   items: StaticTrainingShotItem[];
 }> {
-  const records = await editVfsGetByUuid(uuid, scope);
-  let metadata: StaticTrainingPackMetadata | null = null;
-  const items: StaticTrainingShotItem[] = [];
-
-  for (const rec of records) {
-    if (rec.nodeType === 'metadata' && rec.data) {
-      metadata = rec.data as unknown as StaticTrainingPackMetadata;
-    } else if (rec.nodeType === 'item' && rec.data) {
-      const rawItem = rec.data as unknown as StaticTrainingShotItem;
-      items.push(cloneShotItem(rawItem, rec.index ?? rawItem.index ?? 0));
-    }
-  }
-
-  items.sort((a, b) => a.index - b.index);
-  items.forEach((it, idx) => {
-    it.index = idx;
-  });
-
-  return { metadata, items: items.slice(0, MAX_SHOTS_PER_PACK) };
+  return parsePackRecords(await editVfsGetByUuid(uuid, scope));
 }
 
-/* ============================================================================
- * Main Committed VFS Operations (`rc-virtual-fs-db` vs `rc-dev-virtual-fs-db`)
- * ========================================================================== */
-
-/**
- * Lists Static Training Pack metadata records for the requested storage scope (`normal` or `dev`),
- * sorted by updatedAt descending.
- * Automatically purges any legacy Developer `.RLRCSPack` records that were previously written into
- * the normal user database (`rc-virtual-fs-db`), and seeds the default starter pack if `normal` is empty.
- */
 export async function listStaticTrainingPacks(
   scope: StaticTrainingPackStorageScope = 'normal'
 ): Promise<StaticTrainingPackMetadata[]> {
@@ -264,17 +331,14 @@ export async function listStaticTrainingPacks(
         cleanNormalMetas.push(meta);
       }
     }
-    if (leakedDevUuids.length > 0) {
-      for (const devUuid of leakedDevUuids) {
-        await vfsDeleteByUuid(devUuid, 'normal');
-      }
+    for (const devUuid of leakedDevUuids) {
+      await vfsDeleteByUuid(devUuid, 'normal');
     }
     cleanNormalMetas.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
     if (cleanNormalMetas.length > 0) {
       return cleanNormalMetas;
     }
-    const starter = await seedDefaultStarterPack('normal');
-    return [starter];
+    return [await seedDefaultStarterPack('normal')];
   }
 
   return rawMetas.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
@@ -311,80 +375,20 @@ export async function loadStaticTrainingPackByUuid(
 }> {
   let records = await vfsGetByUuid(uuid, scope);
   if (records.length === 0) {
-    const fallbackScope: StaticTrainingPackStorageScope = scope === 'dev' ? 'normal' : 'dev';
-    records = await vfsGetByUuid(uuid, fallbackScope);
+    records = await vfsGetByUuid(uuid, scope === 'dev' ? 'normal' : 'dev');
   }
-  let metadata: StaticTrainingPackMetadata | null = null;
-  const items: StaticTrainingShotItem[] = [];
-
-  for (const rec of records) {
-    if (rec.nodeType === 'metadata' && rec.data) {
-      metadata = rec.data as unknown as StaticTrainingPackMetadata;
-    } else if (rec.nodeType === 'item' && rec.data) {
-      const rawItem = rec.data as unknown as StaticTrainingShotItem;
-      items.push(cloneShotItem(rawItem, rec.index ?? rawItem.index ?? 0));
-    }
-  }
-
-  items.sort((a, b) => a.index - b.index);
-  const capped = items.slice(0, MAX_SHOTS_PER_PACK);
-  capped.forEach((it, idx) => {
-    it.index = idx;
-  });
-
-  return { metadata, items: capped };
+  return parsePackRecords(records);
 }
 
-/**
- * Saves an entire Static Training Pack (metadata + all items, capped at 99) into the scoped IndexedDB VFS.
- */
 export async function saveStaticTrainingPackFull(
   metadata: StaticTrainingPackMetadata,
   items: StaticTrainingShotItem[],
   scope: StaticTrainingPackStorageScope = 'normal'
 ): Promise<void> {
   await vfsDeleteByUuid(metadata.uuid, scope);
-  const now = Date.now();
-  const category = resolveScopeCategory(scope);
-  const cappedItems = items.slice(0, MAX_SHOTS_PER_PACK);
-  const normalizedItems = cappedItems.map((item, idx) => {
-    const cloned = cloneShotItem(item, idx);
-    cloned.index = idx;
-    return cloned;
-  });
-
-  const updatedMeta: StaticTrainingPackMetadata = {
-    ...metadata,
-    itemCount: normalizedItems.length,
-    updatedAt: now,
-  };
-
-  const nodes: VfsNodeRecord[] = [
-    {
-      path: buildMetaPath(updatedMeta.uuid, scope),
-      category,
-      uuid: updatedMeta.uuid,
-      nodeType: 'metadata',
-      updatedAt: now,
-      data: updatedMeta as unknown as Record<string, unknown>,
-    },
-    ...normalizedItems.map((it, idx) => ({
-      path: buildItemPath(updatedMeta.uuid, idx, scope),
-      category,
-      uuid: updatedMeta.uuid,
-      nodeType: 'item' as const,
-      index: idx,
-      updatedAt: now,
-      data: it as unknown as Record<string, unknown>,
-    })),
-  ];
-
-  await vfsPutNodes(nodes, scope);
+  await vfsPutNodes(buildPackNodes(metadata, items, scope, buildMetaPath, buildItemPath), scope);
 }
 
-/**
- * Commits a single edited shot item to the scoped IndexedDB VFS.
- */
 export async function saveSingleStaticTrainingShotItem(
   uuid: string,
   index: number,
@@ -392,37 +396,7 @@ export async function saveSingleStaticTrainingShotItem(
   metadata?: StaticTrainingPackMetadata | null,
   scope: StaticTrainingPackStorageScope = 'normal'
 ): Promise<void> {
-  const now = Date.now();
-  const category = resolveScopeCategory(scope);
-  const cloned = cloneShotItem(item, index);
-  const nodes: VfsNodeRecord[] = [
-    {
-      path: buildItemPath(uuid, index, scope),
-      category,
-      uuid,
-      nodeType: 'item',
-      index,
-      updatedAt: now,
-      data: cloned as unknown as Record<string, unknown>,
-    },
-  ];
-
-  if (metadata) {
-    const updatedMeta: StaticTrainingPackMetadata = {
-      ...metadata,
-      updatedAt: now,
-    };
-    nodes.push({
-      path: buildMetaPath(uuid, scope),
-      category,
-      uuid,
-      nodeType: 'metadata',
-      updatedAt: now,
-      data: updatedMeta as unknown as Record<string, unknown>,
-    });
-  }
-
-  await vfsPutNodes(nodes, scope);
+  await vfsPutNodes(buildSingleShotNodes(uuid, index, item, metadata, scope, buildMetaPath, buildItemPath), scope);
 }
 
 export async function deleteStaticTrainingPackByUuid(
@@ -433,10 +407,6 @@ export async function deleteStaticTrainingPackByUuid(
   await vfsDeleteByUuid(uuid, scope);
 }
 
-/**
- * Imports a `.RCSPack`, `.RCSPackE`, `.RLRCSPack` (Dev Mode only), or `.Tem` (Dev Mode only) file
- * and persists it into the scoped VFS.
- */
 export async function importStaticTrainingPackFromFile(
   file: File,
   scope: StaticTrainingPackStorageScope = 'normal'
@@ -449,9 +419,6 @@ export async function importStaticTrainingPackFromFile(
   return { metadata: { ...metadata, itemCount: capped.length }, items: capped };
 }
 
-/**
- * Batch imports multiple `.Tem` / `.RCSPack` / `.RCSPackE` / `.RLRCSPack` files or `.zip` archives into the scoped VFS.
- */
 export async function importBatchStaticTrainingPacksFromFiles(
   files: File[] | FileList,
   scope: StaticTrainingPackStorageScope = 'normal'
@@ -468,11 +435,6 @@ export async function importBatchStaticTrainingPacksFromFiles(
   return importedMetas;
 }
 
-/**
- * Ensures the Developer Mode (`dev` scope in `rc-dev-virtual-fs-db`) is initialized.
- * Note: The embedded Base64 `.RLRCSPack` catalog was exported to `AllPacks_144_RCSPackE.zip`
- * and removed from the source bundle; packs can be imported on-demand via `.zip` / `.RCSPackE` / `.Tem`.
- */
 export async function ensureBuiltInDevPacksSeeded(_forceReseed = false): Promise<number> {
   return 0;
 }

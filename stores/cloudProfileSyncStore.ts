@@ -29,7 +29,7 @@ import {
   saveAllowRemoteProfileDeployment,
   saveCloudUser,
   saveStoredDevAckState,
-} from './cloudProfileSyncPipeline';
+} from './cloudProfileUserSyncActions';
 
 const initialSavedUser = loadSavedCloudUser();
 const initialDevAck = initialSavedUser ? loadStoredDevAckState(initialSavedUser.userId) : null;

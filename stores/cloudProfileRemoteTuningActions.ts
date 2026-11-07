@@ -250,9 +250,9 @@ export function processWatchedDevSlotUpdate(params: {
   previousAppliedDevSnapshot: ProfileFlatSnapshot | null;
   currentLocalSnapshot: ProfileFlatSnapshot;
   formatCloudCommitHashFn: (hash?: string, rev?: number) => string;
-  evaluateIncomingDevSlotMergeFn: typeof import('./cloudProfileSyncPipeline').evaluateIncomingDevSlotMerge;
-  saveCloudUserFn: typeof import('./cloudProfileSyncPipeline').saveCloudUser;
-  saveStoredDevAckStateFn: typeof import('./cloudProfileSyncPipeline').saveStoredDevAckState;
+  evaluateIncomingDevSlotMergeFn: typeof import('./cloudProfileUserSyncActions').evaluateIncomingDevSlotMerge;
+  saveCloudUserFn: typeof import('./cloudProfileUserSyncActions').saveCloudUser;
+  saveStoredDevAckStateFn: typeof import('./cloudProfileUserSyncActions').saveStoredDevAckState;
 }): {
   mergedSnapshot: ProfileFlatSnapshot;
   patchState: Partial<CloudProfileSyncState>;

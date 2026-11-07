@@ -8,34 +8,11 @@ import {
   type NameTagConfig,
 } from './nameTagConfig';
 import {
-  clampRayToRoiBoundary2D,
-  computeOffscreenRoiBounds2D,
   drawAerialClimbInwardRing2D,
-  drawAerialClimbOuterGlow2D,
   hexToRgba,
-  mixHexColors,
-  parseHexRgb,
   resolveActiveBoostFillColor,
-  resolveAerialClimbInwardFillFraction,
-  resolveCarColorPalette,
   resolveUnfilledBaseHexColor,
-  type NameTagRoiBounds2D,
 } from './nameTagColorAndRoiMath';
-
-export {
-  clampRayToRoiBoundary2D,
-  computeOffscreenRoiBounds2D,
-  drawAerialClimbInwardRing2D,
-  drawAerialClimbOuterGlow2D,
-  hexToRgba,
-  mixHexColors,
-  parseHexRgb,
-  resolveActiveBoostFillColor,
-  resolveAerialClimbInwardFillFraction,
-  resolveCarColorPalette,
-  resolveUnfilledBaseHexColor,
-  type NameTagRoiBounds2D,
-};
 
 export interface NameTagOffscreenIndicatorCard2D {
   carIndex: number;

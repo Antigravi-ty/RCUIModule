@@ -5,11 +5,15 @@
  */
 
 import {
+  type ActiveStaticTrainingPackBundle,
   type ExportRCSPackOptions,
   type StaticTrainingPackMetadata,
   type StaticTrainingPackStorageScope,
+  type StaticTrainingShotActionHelpers,
   type StaticTrainingShotItem,
+  type StaticTrainingShotStoreState,
   MAX_SHOTS_PER_PACK,
+  buildScopePackStatePatch,
   cloneShotItem,
   createDefaultShotItem,
   deleteStaticTrainingPackByUuid,
@@ -23,25 +27,6 @@ import {
   loadStaticTrainingPackByUuid,
   saveStaticTrainingPackFull,
 } from './staticTrainingPackStorage';
-import type {
-  ActiveStaticTrainingPackBundle,
-  StaticTrainingShotActionHelpers,
-  StaticTrainingShotStoreState,
-} from './staticTrainingPackCollectionActions';
-
-export function buildScopePackStatePatch(
-  scope: StaticTrainingPackStorageScope,
-  packs: StaticTrainingPackMetadata[],
-  selectedUuid: string | null,
-  isActiveScope: boolean
-): Partial<StaticTrainingShotStoreState> {
-  return {
-    ...(scope === 'dev'
-      ? { devPacks: packs, devSelectedPackUuid: selectedUuid }
-      : { normalPacks: packs, normalSelectedPackUuid: selectedUuid }),
-    ...(isActiveScope ? { packs, selectedPackUuid: selectedUuid } : {}),
-  };
-}
 
 export function createStaticTrainingPackIoActions<TState extends StaticTrainingShotStoreState>(
   updateStoreState: (

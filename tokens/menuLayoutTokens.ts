@@ -23,156 +23,76 @@ export type PanelHeaderBackBtnRadiusMode =
 
 export type PanelHeaderBackBtnStyle = 'surface' | 'subtle' | 'ghost';
 
-/**
- * Semantic idle background tone of the Back / Right Action buttons in PanelHeader:
- * - 'match-header': Completely unified with the header bar in idle state (transparent bg, not darker than header; highlights only on hover/active)
- * - 'muted-gray': Subtle gray surface fill in idle state, high-contrast on hover
- * - 'elevated': Distinct card/button surface fill in idle state
- */
 export type PanelHeaderBackBtnIdleTone = 'match-header' | 'muted-gray' | 'elevated';
-
-/**
- * Icon transform mode for the Header Right Action button (e.g. Minimize2 icon):
- * - 'none': Default orientation
- * - 'flip-x': Horizontal flip (`scaleX(-1)`)
- * - 'rotate-90': 90-degree clockwise rotation (`rotate(90deg)`)
- */
 export type PanelHeaderRightBtnTransform = 'none' | 'flip-x' | 'rotate-90';
 
 export interface BackBtnResolvedGeometry {
   width: number;
   height: number;
   iconSize: number;
-  /** Top-left concentric radius R_tl = max(0, min(halfDim, R_outer - max(padX, padY))) */
   concentricRadius: number;
-  /** Inner minor radius used for non-corner edges in asymmetric-tl mode */
   innerRadius: number;
-  /** CSS borderRadius value string for Left Back Button (e.g., "16px 0px 0px 0px") */
   borderRadiusCss: string;
-  /** CSS borderRadius value string mirrored for Right Action Button (e.g., "0px 16px 0px 0px") */
   rightBorderRadiusCss: string;
-  /** Numeric summary label for UI badges/inspectors */
   radiusSummary: string;
 }
 
 export interface FloatingShellTokens {
-  /** Floating window outer border-radius in px (default: 16px) */
   floatingOuterRadius: number;
-  /** Stage 1 Floating window header horizontal padding in px (default: 12px) */
   floatingHeaderPaddingX: number;
-  /** Stage 1 Floating window header vertical padding in px (default: 8px) */
   floatingHeaderPaddingY: number;
-  /** Stage 1 Floating window header title font size in px (default: 14px) */
   floatingHeaderTitleFontSize: number;
-  /** Stage 1 Floating window header minimize button width & height in px (default: 22px) */
   floatingHeaderMinimizeBtnSize: number;
-  /** Stage 1 Floating window header minimize button corner radius in px (default: 6px) */
   floatingHeaderMinimizeBtnRadius: number;
-  /** Stage 2 Floating window fallback content body horizontal padding in px (default: 14px) */
   floatingBodyPaddingX: number;
-  /** Stage 2 Floating window fallback content body vertical padding in px (default: 14px) */
   floatingBodyPaddingY: number;
-  /** Stage 3 Floating window footer horizontal padding in px (default: 14px) */
   floatingFooterPaddingX: number;
-  /** Stage 3 Floating window footer vertical padding in px (default: 6px) */
   floatingFooterPaddingY: number;
-  /** Stage 3 Floating window footer right padding when corner resize dragger is visible (default: 24px) */
   floatingFooterCornerReserveRightPx: number;
-  /** Stage 3 Floating window footer font size in px (default: 11px) */
   floatingFooterFontSize: number;
 }
 
 export interface MenuLayoutTokens extends FloatingShellTokens {
-  /** Per-panel independent sizing contracts */
   panels: Record<MenuPanelId, PanelSizingConfig>;
-  /** Vertical margin (top & bottom in px) for MenuDivider (default: 2px) */
   dividerMarginY: number;
-  /** Vertical flex gap (in px) between items inside MenuContainer (default: 4px) */
   menuItemGap: number;
-  /** Vertical padding (top & bottom in px) inside each MenuItem (default: 10px) */
   menuItemPaddingY: number;
-  /** Uniform inner padding (in px) of MenuContainer (default: 4px) */
   menuContainerPadding: number;
-  /** Vertical padding (top & bottom in px) of Layer 1 PanelContent (default: 14px) */
   panelContentPaddingY: number;
-  /** Whether to display the 5th button ("Additional Previews") in Layer 1 Main Menu */
   showAdditionalPreviews: boolean;
-  /** Whether Layer 3 recipes display the inline single-line error notice */
   simulateLayer3Error: boolean;
-
-  // ── Layer 2+ 3-Stage Compound Panel Shell Tokens (Decoupled from Layer 1) ──
-  /** Whether Header, Tabs, Content, and Footer horizontal paddings (X) are locked together */
   lockPanelPaddingX: boolean;
-  /** Header horizontal padding (left & right in px) for Layer 2+ PanelHeader (default: 0px) */
   panelHeaderPaddingX: number;
-  /** Header vertical padding (top & bottom in px) for Layer 2+ PanelHeader (default: 0px) */
   panelHeaderPaddingY: number;
-  /** Header title font size (in px) for Layer 2+ PanelHeader (default: 16px) */
   panelHeaderTitleFontSize: number;
-  /** Whether Back button width and height are locked 1:1 (square) or decoupled (rectangle/pill) */
   lockPanelHeaderBackBtnAspect: boolean;
-  /** Header back button width (in px) for Layer 2+ PanelHeader (default: 42px) */
   panelHeaderBackBtnWidth: number;
-  /** Header back button height (in px) for Layer 2+ PanelHeader (default: 32px) */
   panelHeaderBackBtnHeight: number;
-  /** Legacy alias synced with panelHeaderBackBtnHeight for backward compatibility */
   panelHeaderBackBtnSize: number;
-  /** Whether to show the left arrow icon inside the PanelHeader back button (default: true) */
   panelHeaderBackBtnShowArrow: boolean;
-  /** Whether to show the "BACK" text label inside the PanelHeader back button (default: false) */
   panelHeaderBackBtnShowLabel: boolean;
-  /** Semantic idle color/tone of the back button ('match-header' | 'muted-gray' | 'elevated') */
   panelHeaderBackBtnIdleTone: PanelHeaderBackBtnIdleTone;
-  /** Header back button visual style: 'surface' (bordered button), 'subtle' (translucent borderless), 'ghost' (hover-only) */
   panelHeaderBackBtnStyle: PanelHeaderBackBtnStyle;
-  /**
-   * Header back button border-radius mode:
-   * - 'auto': Uniform Concentric (all 4 corners = R_outer - max(padX, padY))
-   * - 'asymmetric-tl': Asymmetric Corner-Nested (Top-Left = Concentric, TR/BR/BL = panelHeaderBackBtnInnerRadius)
-   * - 'custom': Uniform Custom (all 4 corners = panelHeaderBackBtnRadius)
-   * - 'per-corner': Independent 4 corners (TL / TR / BR / BL)
-   */
   panelHeaderBackBtnRadiusMode: PanelHeaderBackBtnRadiusMode;
-  /** Header back button explicit uniform border-radius in px when mode is 'custom' (default: 7px) */
   panelHeaderBackBtnRadius: number;
-  /** Header back button minor inner radius (in px) for TR/BR/BL when mode is 'asymmetric-tl' (default: 0px) */
   panelHeaderBackBtnInnerRadius: number;
-  /** Independent Top-Left radius in px when mode is 'per-corner' (default: 10px) */
   panelHeaderBackBtnRadiusTL: number;
-  /** Independent Top-Right radius in px when mode is 'per-corner' (default: 6px) */
   panelHeaderBackBtnRadiusTR: number;
-  /** Independent Bottom-Right radius in px when mode is 'per-corner' (default: 6px) */
   panelHeaderBackBtnRadiusBR: number;
-  /** Independent Bottom-Left radius in px when mode is 'per-corner' (default: 6px) */
   panelHeaderBackBtnRadiusBL: number;
-  /** Whether to show the mirrored Right Action Icon button (default icon: Minimize2) on the top-right of PanelHeader */
   panelHeaderShowRightBtn: boolean;
-  /** Icon transform for the Header Right Action button ('none' | 'flip-x' | 'rotate-90', default: 'flip-x') */
   panelHeaderRightBtnTransform: PanelHeaderRightBtnTransform;
-  /** Whether hovering the Header Right Action button expands its label ("Live Preview") inline */
   panelHeaderRightBtnExpandOnHover: boolean;
-  /** Outer PanelContainer border-radius in px used for concentric inner radius calculation (default: 16px) */
   panelOuterRadius: number;
-  /** Header gap (in px) between Back button and Title (default: 10px) */
   panelHeaderGap: number;
-  /** Content body horizontal padding (left & right in px) for Layer 2+ PanelContent (default: 18px) */
   panelBodyPaddingX: number;
-  /** Content body vertical padding (top & bottom in px) for Layer 2+ PanelContent (default: 14px) */
   panelBodyPaddingY: number;
-  /** Footer horizontal padding (left & right in px) for Layer 2+ PanelFooter (default: 18px) */
   panelFooterPaddingX: number;
-  /** Footer vertical padding (top & bottom in px) for Layer 2+ PanelFooter (default: 8px) */
   panelFooterPaddingY: number;
-  /** Footer font size (in px) for Layer 2+ PanelFooter (default: 12px) */
   panelFooterFontSize: number;
-  /** Whether PanelFooter splits out a dedicated right-hand capability/shortcut slot (default: true) */
   panelFooterSplitRight: boolean;
-  /** Whether the PanelFooter right-hand capability slot renders a vertical divider line (`border-l`, default: true) */
   panelFooterRightDivider: boolean;
-  /** Horizontal padding (in px) of the PanelFooter right-hand capability slot (default: 12px) */
   panelFooterRightPaddingX: number;
-
-  // Convenience dimension summaries synced with panels
   layer1Width: number;
   layer1Height: number;
   layer2Width: number;
@@ -238,11 +158,6 @@ export const DEFAULT_PANEL_SHELL_TOKENS = {
   ...DEFAULT_FLOATING_SHELL_TOKENS,
 };
 
-/**
- * Pure geometry resolver for the Layer 2+ PanelHeader Back & Right Action Buttons.
- * Centralizes width/height, icon sizing, and 4-mode border-radius calculation
- * (including mirrored top-right corner geometry) so PanelHeader (L2) and PanelShellTuner (L7) remain 100% decoupled.
- */
 export const resolvePanelHeaderBackBtnGeometry = (
   tokens: Pick<
     MenuLayoutTokens,
@@ -330,6 +245,55 @@ export const resolvePanelHeaderBackBtnGeometry = (
     radiusSummary,
   };
 };
+
+export function resolvePanelHeaderBtnSurfaceClasses(params: {
+  isLight: boolean;
+  disabled?: boolean;
+  idleTone: PanelHeaderBackBtnIdleTone;
+  btnStyle: PanelHeaderBackBtnStyle;
+  isFlushDividerMode: boolean;
+}): string {
+  const { isLight, disabled = false, idleTone, btnStyle, isFlushDividerMode } = params;
+  const borderColorClass = isLight
+    ? 'border-neutral-200/90 hover:border-neutral-300'
+    : 'border-neutral-800/80 hover:border-neutral-700';
+
+  if (disabled) {
+    if (idleTone === 'match-header' || btnStyle === 'ghost') {
+      return `${isLight ? 'text-neutral-300' : 'text-neutral-600'} bg-transparent ${borderColorClass} opacity-50 cursor-not-allowed`;
+    }
+    if (idleTone === 'muted-gray' || btnStyle === 'subtle') {
+      return `${isLight ? 'bg-neutral-200/40 text-neutral-300' : 'bg-neutral-900/50 text-neutral-600'} ${borderColorClass} opacity-50 cursor-not-allowed`;
+    }
+    return `${isLight ? 'bg-white/70 text-neutral-300' : 'bg-neutral-800/50 text-neutral-600'} ${borderColorClass} opacity-50 cursor-not-allowed`;
+  }
+
+  if (idleTone === 'match-header') {
+    return isLight
+      ? `bg-transparent hover:bg-neutral-200/80 active:bg-neutral-300/75 ${borderColorClass} text-neutral-500 hover:text-neutral-950 cursor-pointer`
+      : `bg-transparent hover:bg-neutral-800/85 active:bg-neutral-700/80 ${borderColorClass} text-neutral-400 hover:text-white cursor-pointer`;
+  }
+
+  if (idleTone === 'muted-gray') {
+    if (isFlushDividerMode) {
+      return isLight
+        ? `bg-neutral-200/50 hover:bg-neutral-200/95 active:bg-neutral-300/80 ${borderColorClass} text-neutral-500 hover:text-neutral-950 cursor-pointer`
+        : `bg-neutral-900/65 hover:bg-neutral-800/90 active:bg-neutral-700/85 ${borderColorClass} text-neutral-400 hover:text-white cursor-pointer`;
+    }
+    return isLight
+      ? 'bg-neutral-200/55 hover:bg-white border-neutral-300/75 hover:border-neutral-300 text-neutral-500 hover:text-neutral-950 shadow-2xs active:scale-95 cursor-pointer'
+      : 'bg-neutral-800/55 hover:bg-neutral-700/90 border-neutral-700/50 hover:border-neutral-600 text-neutral-400 hover:text-white shadow-2xs active:scale-95 cursor-pointer';
+  }
+
+  if (isFlushDividerMode) {
+    return isLight
+      ? `bg-white/90 hover:bg-neutral-200/90 active:bg-neutral-300/80 ${borderColorClass} text-neutral-700 hover:text-neutral-950 cursor-pointer`
+      : `bg-neutral-800/80 hover:bg-neutral-700/90 active:bg-neutral-600/80 ${borderColorClass} text-neutral-200 hover:text-white cursor-pointer`;
+  }
+  return isLight
+    ? 'bg-white hover:bg-neutral-100 border-neutral-300/80 text-neutral-700 hover:text-neutral-950 shadow-2xs active:scale-95 cursor-pointer'
+    : 'bg-neutral-800/85 hover:bg-neutral-700/90 border-neutral-700/60 text-neutral-200 hover:text-white shadow-2xs active:scale-95 cursor-pointer';
+}
 
 export const DEFAULT_MENU_LAYOUT_TOKENS: MenuLayoutTokens = {
   panels: DEFAULT_PANEL_SIZING,

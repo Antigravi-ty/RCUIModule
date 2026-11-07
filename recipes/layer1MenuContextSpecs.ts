@@ -1,3 +1,4 @@
+import React from 'react';
 import type { SurfaceVariantMeta } from '../manifest/surfaceMetaTypes';
 import {
   normalizeMainMenuContextMode,
@@ -20,10 +21,6 @@ export type CanonicalLayer1ContextVariation =
   | 'dev-test-lab'
   | 'exp-multi-bots';
 
-/**
- * Includes legacy context variation IDs ('match', 'custom-match-host', 'custom-match-client')
- * so existing callers and URL params remain 100% backwards-compatible.
- */
 export type Layer1ContextVariation =
   | CanonicalLayer1ContextVariation
   | 'match'
@@ -52,9 +49,7 @@ export interface Layer1ContextCustomRowSpec {
   title: string;
   subtitle: string;
   iconType: Layer1CustomRowIconType;
-  /** Semantic color token override (e.g. 'sky' for Host blue, 'amber' for Client orange) */
   iconColorToken?: MainMenuIconColorValue;
-  /** Tailwind text color class for default icon rendering */
   iconColorClass?: string;
   actionType: 'play' | 'manage-room' | 'exp-multi-bots';
 }
@@ -79,15 +74,10 @@ export interface Layer1ContextMeta {
   role?: 'host' | 'client';
   stage?: 'lobby' | 'match';
   description?: string;
-  /** Optional custom action row rendered immediately after Resume */
   customActionRow?: Layer1ContextCustomRowSpec;
-  /** Whether Garage row is available in this context (false during active Online Match) */
   showGarage: boolean;
-  /** Whether Settings row is available in this context */
   showSettings: boolean;
-  /** Whether Restart Match row is available in this context */
   showRestartMatch: boolean;
-  /** Optional bottom Leave / Exit row */
   bottomActionRow?: Layer1ContextBottomRowSpec;
 }
 
@@ -106,13 +96,42 @@ export const LAYER1_CONTEXT_GROUPS: Layer1ContextGroupMeta[] = [
   { id: 'developer', label: 'Developer · Sandboxes', tier: 'developer' },
 ];
 
-/**
- * Decoupled, self-contained specification table for every Layer 1 Main Menu context variation.
- * Each variation defines its own header, rows, icons, and actions independently so modifying
- * one context never causes side effects on any other context.
- */
+const PLAY_CUSTOM_ROW: Layer1ContextCustomRowSpec = {
+  slotId: 'play',
+  title: 'Play',
+  subtitle: 'Single player bot & multiplayer matches',
+  iconType: 'gamepad-2',
+  actionType: 'play',
+};
+
+const LEAVE_ROOM_BOTTOM_ROW: Layer1ContextBottomRowSpec = {
+  slotId: 'leave',
+  title: 'Leave Room',
+  subtitle: 'Disconnect session and return to Free Play',
+  iconColorClass: 'text-rose-400',
+  variant: 'secondary',
+  actionType: 'leave-room',
+};
+
+const LEAVE_MATCH_BOTTOM_ROW: Layer1ContextBottomRowSpec = {
+  slotId: 'leave',
+  title: 'Leave Match',
+  subtitle: 'Abandon match session and return to Free Play',
+  iconColorClass: 'text-rose-400',
+  variant: 'secondary',
+  actionType: 'leave-room',
+};
+
+const makeExitFreeplayBottomRow = (subtitle: string): Layer1ContextBottomRowSpec => ({
+  slotId: 'leave',
+  title: 'Exit to Free Play',
+  subtitle,
+  iconColorClass: 'text-amber-400',
+  variant: 'secondary',
+  actionType: 'return-freeplay',
+});
+
 export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
-  // ── 1. Base: Free Play ──
   {
     id: 'freeplay',
     label: 'Free Play (MENU)',
@@ -122,19 +141,11 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     groupId: 'base',
     groupLabel: 'Base',
     description: 'Base Free Play menu: Resume, Play, Garage, Settings',
-    customActionRow: {
-      slotId: 'play',
-      title: 'Play',
-      subtitle: 'Single player bot & multiplayer matches',
-      iconType: 'gamepad-2',
-      actionType: 'play',
-    },
+    customActionRow: PLAY_CUSTOM_ROW,
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
   },
-
-  // ── 2. Singleplayer: Exhibition (Unified Singleplayer Match) ──
   {
     id: 'exhibition',
     label: 'Exhibition (EXHIBITION)',
@@ -147,17 +158,8 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Exit to Free Play',
-      subtitle: 'Leave Exhibition match and return to Free Play',
-      iconColorClass: 'text-amber-400',
-      variant: 'secondary',
-      actionType: 'return-freeplay',
-    },
+    bottomActionRow: makeExitFreeplayBottomRow('Leave Exhibition match and return to Free Play'),
   },
-
-  // ── 3. Online Match — Lobby Stage (Host & Client) ──
   {
     id: 'match-lobby-host',
     label: 'Match Lobby — Host (MATCH LOBBY)',
@@ -181,14 +183,7 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Leave Room',
-      subtitle: 'Disconnect session and return to Free Play',
-      iconColorClass: 'text-rose-400',
-      variant: 'secondary',
-      actionType: 'leave-room',
-    },
+    bottomActionRow: LEAVE_ROOM_BOTTOM_ROW,
   },
   {
     id: 'match-lobby-client',
@@ -213,17 +208,8 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Leave Room',
-      subtitle: 'Disconnect session and return to Free Play',
-      iconColorClass: 'text-rose-400',
-      variant: 'secondary',
-      actionType: 'leave-room',
-    },
+    bottomActionRow: LEAVE_ROOM_BOTTOM_ROW,
   },
-
-  // ── 4. Online Match — Match Stage (Host & Client · No Garage) ──
   {
     id: 'online-match-host',
     label: 'Online Match — Host (ONLINE MATCH)',
@@ -247,14 +233,7 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: false,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Leave Match',
-      subtitle: 'Abandon match session and return to Free Play',
-      iconColorClass: 'text-rose-400',
-      variant: 'secondary',
-      actionType: 'leave-room',
-    },
+    bottomActionRow: LEAVE_MATCH_BOTTOM_ROW,
   },
   {
     id: 'online-match-client',
@@ -279,17 +258,8 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: false,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Leave Match',
-      subtitle: 'Abandon match session and return to Free Play',
-      iconColorClass: 'text-rose-400',
-      variant: 'secondary',
-      actionType: 'leave-room',
-    },
+    bottomActionRow: LEAVE_MATCH_BOTTOM_ROW,
   },
-
-  // ── 5. Online Warmup (Host = Match Lobby Host; Client = Online Match Client + Garage) ──
   {
     id: 'online-warmup-host',
     label: 'Online Warmup — Host (ONLINE WARMUP)',
@@ -312,14 +282,7 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Leave Room',
-      subtitle: 'Disconnect session and return to Free Play',
-      iconColorClass: 'text-rose-400',
-      variant: 'secondary',
-      actionType: 'leave-room',
-    },
+    bottomActionRow: LEAVE_ROOM_BOTTOM_ROW,
   },
   {
     id: 'online-warmup-client',
@@ -343,17 +306,8 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Leave Room',
-      subtitle: 'Disconnect session and return to Free Play',
-      iconColorClass: 'text-rose-400',
-      variant: 'secondary',
-      actionType: 'leave-room',
-    },
+    bottomActionRow: LEAVE_ROOM_BOTTOM_ROW,
   },
-
-  // ── 6. Solo Training Variants (Kickoff Training / Play Static Training / Edit Training Pack) ──
   {
     id: 'kickoff-training',
     label: 'Kickoff Training (KICKOFF TRAINING)',
@@ -366,14 +320,7 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Exit to Free Play',
-      subtitle: 'Leave Kickoff Training and return to Free Play',
-      iconColorClass: 'text-amber-400',
-      variant: 'secondary',
-      actionType: 'return-freeplay',
-    },
+    bottomActionRow: makeExitFreeplayBottomRow('Leave Kickoff Training and return to Free Play'),
   },
   {
     id: 'static-training-play',
@@ -387,14 +334,7 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Exit to Free Play',
-      subtitle: 'Leave Play Static Training and return to Free Play',
-      iconColorClass: 'text-amber-400',
-      variant: 'secondary',
-      actionType: 'return-freeplay',
-    },
+    bottomActionRow: makeExitFreeplayBottomRow('Leave Play Static Training and return to Free Play'),
   },
   {
     id: 'static-training-edit',
@@ -429,17 +369,8 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Exit to Free Play',
-      subtitle: 'Leave Replay Viewer and return to Free Play',
-      iconColorClass: 'text-amber-400',
-      variant: 'secondary',
-      actionType: 'return-freeplay',
-    },
+    bottomActionRow: makeExitFreeplayBottomRow('Leave Replay Viewer and return to Free Play'),
   },
-
-  // ── 7. Developer-Only Variations ──
   {
     id: 'dev-test-lab',
     label: 'Subsystem Isolation Lab (DEVELOPER TEST LAB)',
@@ -448,24 +379,11 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     headerTitle: 'DEVELOPER TEST LAB',
     groupId: 'developer',
     groupLabel: 'Developer',
-    customActionRow: {
-      slotId: 'play',
-      title: 'Play',
-      subtitle: 'Single player bot & multiplayer matches',
-      iconType: 'gamepad-2',
-      actionType: 'play',
-    },
+    customActionRow: PLAY_CUSTOM_ROW,
     showGarage: true,
     showSettings: true,
     showRestartMatch: false,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Exit to Free Play',
-      subtitle: 'Close Developer Test Lab and return to Free Play',
-      iconColorClass: 'text-amber-400',
-      variant: 'secondary',
-      actionType: 'return-freeplay',
-    },
+    bottomActionRow: makeExitFreeplayBottomRow('Close Developer Test Lab and return to Free Play'),
   },
   {
     id: 'exp-multi-bots',
@@ -487,14 +405,7 @@ export const LAYER1_CONTEXT_VARIATIONS: Layer1ContextMeta[] = [
     showGarage: true,
     showSettings: true,
     showRestartMatch: true,
-    bottomActionRow: {
-      slotId: 'leave',
-      title: 'Exit to Free Play',
-      subtitle: 'Close Experimental Multiple Bots and return to Free Play',
-      iconColorClass: 'text-amber-400',
-      variant: 'secondary',
-      actionType: 'return-freeplay',
-    },
+    bottomActionRow: makeExitFreeplayBottomRow('Close Experimental Multiple Bots and return to Free Play'),
   },
 ];
 
@@ -519,3 +430,97 @@ export const resolveLayer1ContextSpec = (
     LAYER1_CONTEXT_VARIATIONS[0]
   );
 };
+
+export interface Layer1DerivedContextInputs {
+  matchMode?: string;
+  isHosting: boolean;
+  isOnlineMatchRoom: boolean;
+  hasActiveOnlineRoom: boolean;
+  isExhibitionMode: boolean;
+  replayViewerHasLoaded: boolean;
+  staticTrainingSessionMode?: string;
+  hasExtraBottomAction: boolean;
+}
+
+export function deriveLayer1ContextVariation(
+  inputs: Layer1DerivedContextInputs
+): CanonicalLayer1ContextVariation {
+  const {
+    matchMode,
+    isHosting,
+    isOnlineMatchRoom,
+    hasActiveOnlineRoom,
+    isExhibitionMode,
+    replayViewerHasLoaded,
+    staticTrainingSessionMode,
+    hasExtraBottomAction,
+  } = inputs;
+
+  if (matchMode === 'match') {
+    return hasActiveOnlineRoom
+      ? isHosting ? 'online-match-host' : 'online-match-client'
+      : 'exhibition';
+  }
+  if (matchMode === 'dev-test-lab') return 'dev-test-lab';
+  if (matchMode === 'exp-multi-bots') return isExhibitionMode ? 'exhibition' : 'exp-multi-bots';
+  if (matchMode === 'kickoff-training') return 'kickoff-training';
+  if (matchMode === 'replay-viewer' || (matchMode === 'freeplay' && replayViewerHasLoaded)) {
+    return 'replay-viewer';
+  }
+  if (matchMode === 'static-training-pack') {
+    return staticTrainingSessionMode === 'edit' || hasExtraBottomAction
+      ? 'static-training-edit'
+      : 'static-training-play';
+  }
+  if (hasActiveOnlineRoom) {
+    return isOnlineMatchRoom
+      ? isHosting ? 'match-lobby-host' : 'match-lobby-client'
+      : isHosting ? 'online-warmup-host' : 'online-warmup-client';
+  }
+  return 'freeplay';
+}
+
+export function resolveLayer1PowerSaveStatus(powerSave: string): {
+  dotColor: string;
+  powerLabel: string;
+} {
+  if (powerSave === 'extreme' || powerSave === 'freeze') {
+    return { dotColor: 'bg-amber-500 animate-pulse', powerLabel: 'Power Saving: Extreme' };
+  }
+  if (powerSave === '15') {
+    return { dotColor: 'bg-amber-400', powerLabel: 'Power Saving: 15 FPS' };
+  }
+  if (powerSave === 'disable' || powerSave === 'match') {
+    return { dotColor: 'bg-emerald-500', powerLabel: 'Power Saving: Disable' };
+  }
+  return { dotColor: 'bg-emerald-400', powerLabel: 'Power Saving: 30 FPS' };
+}
+
+export type TouchInputAgentOption = 'none' | 'necto' | 'nexto';
+
+export interface Layer1MainMenuBottomActionSpec {
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'danger';
+  onClick: () => void;
+}
+
+export interface Layer1ScopedAppOverrides<TSizing = unknown> {
+  contextVariation?: Layer1ContextVariation;
+  contextMode?: Layer1ContextVariation;
+  backgroundRenderPaused?: boolean;
+  menuPowerSave?: 'extreme' | '15' | '30' | 'disable' | 'freeze' | 'match';
+  extraBottomAction?: Layer1MainMenuBottomActionSpec | React.ReactNode;
+  sizing?: TSizing;
+  onResume?: () => void;
+  onRestartMatch?: () => void;
+  onReturnToFreeplay?: () => void;
+  onNavigatePlay?: () => void;
+  onNavigateGarage?: () => void;
+  onNavigateSettings?: (targetTab?: string) => void;
+  onNavigateManageRoom?: () => void;
+  onNavigateExpMultiBotsConfig?: () => void;
+  onLeaveRoom?: () => void;
+  onExitEditMode?: () => void;
+}
