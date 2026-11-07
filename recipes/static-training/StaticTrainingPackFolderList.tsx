@@ -1,11 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowUpDown, Download, FolderOpen, Search, Target } from 'lucide-react';
-import { Badge } from '../../primitives/Badge';
-import { UI_RADIUS } from '../../tokens/radius';
-import {
-  isVariationMatchingLatestPreset,
-  resolveEffectiveRecommendedVariation,
-} from '../../config/staticTrainingVariationTypes';
+import { ArrowUpDown, Download, FolderOpen, Search } from 'lucide-react';
 import {
   type StaticPackDownCounterOption,
   type StaticPackSortOrder,
@@ -13,20 +7,19 @@ import {
   type TopCategoryFilter,
   PSYONIX_YEARS,
   RANK_SUBFOLDERS,
-  hasAnyRankTag,
-  normalizeRankLabel,
   filterAndSortTrainingPacks,
   computePackCategoryCounts,
   computePsyonixYearCounts,
   computePsyonixMonthsForYear,
   computeRankSubfolderCounts,
 } from './staticTrainingPackFilterLogic';
+import { StaticTrainingPackFolderGroupItem } from './StaticTrainingPackFolderGroupItem';
 
 export type {
   StaticPackDownCounterOption,
   StaticPackSortOrder,
   StaticTrainingPackSummary,
-};
+} from './staticTrainingPackFilterLogic';
 
 export interface StaticTrainingPackFolderListProps {
   isLight: boolean;
@@ -43,6 +36,15 @@ export interface StaticTrainingPackFolderListProps {
     formatOverride?: 'RCSPack' | 'RCSPackE' | 'RLRCSPack'
   ) => void;
 }
+
+const SORT_LABELS: Record<StaticPackSortOrder, string> = {
+  updated: 'Recent',
+  rank: 'Rank',
+  date: 'Date',
+  title: 'A–Z',
+};
+
+const SORT_CYCLE: StaticPackSortOrder[] = ['updated', 'rank', 'date', 'title'];
 
 export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderListProps> = React.memo(
   ({
@@ -109,19 +111,10 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
     };
 
     const cycleSortOrder = () => {
-      const order: StaticPackSortOrder[] = ['updated', 'rank', 'date', 'title'];
-      const next = order[(order.indexOf(sortOrder) + 1) % order.length];
-      setSortOrder(next);
+      setSortOrder(SORT_CYCLE[(SORT_CYCLE.indexOf(sortOrder) + 1) % SORT_CYCLE.length]);
     };
 
-    const sortLabel =
-      sortOrder === 'rank'
-        ? 'Rank'
-        : sortOrder === 'date'
-          ? 'Date'
-          : sortOrder === 'title'
-            ? 'A–Z'
-            : 'Recent';
+    const sortLabel = SORT_LABELS[sortOrder];
 
     const activeFilterSummaryLabel = useMemo(() => {
       if (topCategory === 'Psyonix') {
@@ -138,18 +131,12 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
     const topCategoriesToShow: TopCategoryFilter[] = useMemo(() => {
       if (isDevMode) {
         const base: TopCategoryFilter[] = ['All', 'Kevpert', 'Psyonix', 'Rank', 'Others'];
-        if (categoryCounts.Native > 0) {
-          base.push('Native');
-        }
+        if (categoryCounts.Native > 0) base.push('Native');
         return base;
       }
-      const normalCats: TopCategoryFilter[] = ['All'];
-      if (categoryCounts.Native > 0) normalCats.push('Native');
-      if (categoryCounts.Others > 0) normalCats.push('Others');
-      if (categoryCounts.Kevpert > 0) normalCats.push('Kevpert');
-      if (categoryCounts.Psyonix > 0) normalCats.push('Psyonix');
-      if (categoryCounts.Rank > 0) normalCats.push('Rank');
-      return normalCats;
+      return (['All', 'Native', 'Others', 'Kevpert', 'Psyonix', 'Rank'] as const).filter(
+        (cat) => cat === 'All' || categoryCounts[cat] > 0
+      );
     }, [isDevMode, categoryCounts]);
 
     const getPillClasses = (active: boolean) =>
@@ -162,6 +149,49 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
             ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-700'
             : 'bg-neutral-800/90 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
       }`;
+
+    const exportBtnBase =
+      'flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer';
+    const exportFolderLabel =
+      activeFilterSummaryLabel === 'All' ? 'AllPacks' : activeFilterSummaryLabel;
+
+    const exportOptions: {
+      label: string;
+      editable: boolean;
+      format: 'RCSPack' | 'RCSPackE' | 'RLRCSPack';
+      desc: string;
+      style: string;
+      devOnly?: boolean;
+    }[] = [
+      {
+        label: '.ZIP',
+        editable: false,
+        format: 'RCSPack',
+        desc: `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" as read-only .RCSPack inside a .zip archive.`,
+        style: isLight
+          ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
+          : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200',
+      },
+      {
+        label: '.ZIP(E)',
+        editable: true,
+        format: 'RCSPackE',
+        desc: `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" as editable .RCSPackE inside a .zip archive.`,
+        style: isLight
+          ? 'bg-cyan-50 hover:bg-cyan-100 border-cyan-300 text-cyan-800'
+          : 'bg-cyan-950/50 hover:bg-cyan-900/60 border-cyan-500/40 text-cyan-300',
+      },
+      {
+        label: '.ZIP(RL)',
+        editable: true,
+        format: 'RLRCSPack',
+        desc: `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" as developer .RLRCSPack (with originalDescription) inside a .zip archive.`,
+        style: isLight
+          ? 'bg-purple-50 hover:bg-purple-100 border-purple-300 text-purple-800'
+          : 'bg-purple-950/50 hover:bg-purple-900/60 border-purple-500/40 text-purple-300',
+        devOnly: true,
+      },
+    ];
 
     return (
       <div
@@ -206,87 +236,30 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
               <span>{sortLabel}</span>
             </button>
 
-            {onBatchExportFiltered && filteredAndSortedPacks.length > 0 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onBatchExportFiltered(
-                      filteredAndSortedPacks,
-                      activeFilterSummaryLabel === 'All' ? 'AllPacks' : activeFilterSummaryLabel,
-                      false,
-                      'RCSPack'
-                    )
-                  }
-                  onMouseEnter={() =>
-                    onHoverDesc(
-                      `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" as read-only .RCSPack inside a .zip archive.`
-                    )
-                  }
-                  onMouseLeave={() => onHoverDesc(null)}
-                  className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                    isLight
-                      ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
-                      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-                  }`}
-                >
-                  <Download className="h-2.5 w-2.5" />
-                  <span>.ZIP</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onBatchExportFiltered(
-                      filteredAndSortedPacks,
-                      activeFilterSummaryLabel === 'All' ? 'AllPacks' : activeFilterSummaryLabel,
-                      true,
-                      'RCSPackE'
-                    )
-                  }
-                  onMouseEnter={() =>
-                    onHoverDesc(
-                      `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" as editable .RCSPackE inside a .zip archive.`
-                    )
-                  }
-                  onMouseLeave={() => onHoverDesc(null)}
-                  className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                    isLight
-                      ? 'bg-cyan-50 hover:bg-cyan-100 border-cyan-300 text-cyan-800'
-                      : 'bg-cyan-950/50 hover:bg-cyan-900/60 border-cyan-500/40 text-cyan-300'
-                  }`}
-                >
-                  <Download className="h-2.5 w-2.5" />
-                  <span>.ZIP(E)</span>
-                </button>
-                {isDevMode && (
+            {onBatchExportFiltered &&
+              filteredAndSortedPacks.length > 0 &&
+              exportOptions
+                .filter((opt) => !opt.devOnly || isDevMode)
+                .map((opt) => (
                   <button
+                    key={opt.format}
                     type="button"
                     onClick={() =>
                       onBatchExportFiltered(
                         filteredAndSortedPacks,
-                        activeFilterSummaryLabel === 'All' ? 'AllPacks' : activeFilterSummaryLabel,
-                        true,
-                        'RLRCSPack'
+                        exportFolderLabel,
+                        opt.editable,
+                        opt.format
                       )
                     }
-                    onMouseEnter={() =>
-                      onHoverDesc(
-                        `Batch export all ${filteredAndSortedPacks.length} packs in "${activeFilterSummaryLabel}" as developer .RLRCSPack (with originalDescription) inside a .zip archive.`
-                      )
-                    }
+                    onMouseEnter={() => onHoverDesc(opt.desc)}
                     onMouseLeave={() => onHoverDesc(null)}
-                    className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[9px] font-mono cursor-pointer ${
-                      isLight
-                        ? 'bg-purple-50 hover:bg-purple-100 border-purple-300 text-purple-800'
-                        : 'bg-purple-950/50 hover:bg-purple-900/60 border-purple-500/40 text-purple-300'
-                    }`}
+                    className={`${exportBtnBase} ${opt.style}`}
                   >
                     <Download className="h-2.5 w-2.5" />
-                    <span>.ZIP(RL)</span>
+                    <span>{opt.label}</span>
                   </button>
-                )}
-              </>
-            )}
+                ))}
           </div>
         </div>
 
@@ -408,89 +381,14 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
         </div>
 
         {/* Pack Items List */}
-        <div className="flex flex-col gap-1.5 p-2 overflow-y-auto grow min-h-0">
-          {filteredAndSortedPacks.map((pack) => {
-            const isSelected = pack.uuid === selectedUuid;
-            const effectiveRec = resolveEffectiveRecommendedVariation(
-              pack.recommendedVariation,
-              applyNewKevpertBind
-            );
-            const hasRecommendedVariance = Boolean(effectiveRec);
-            const matchesLatest = isVariationMatchingLatestPreset(effectiveRec);
-            const displayRank = hasAnyRankTag(pack)
-              ? normalizeRankLabel(pack.rankTier) || pack.rankTier
-              : null;
-
-            return (
-              <button
-                key={pack.uuid}
-                type="button"
-                onClick={() => onSelectPack(pack.uuid)}
-                onMouseEnter={() =>
-                  onHoverDesc(
-                    `${pack.title} — ${pack.itemCount} shots (${
-                      pack.description || 'No description'
-                    })`
-                  )
-                }
-                onMouseLeave={() => onHoverDesc(null)}
-                className={`flex flex-col gap-1 p-2 text-left transition-all border cursor-pointer ${UI_RADIUS.md} ${
-                  isSelected
-                    ? isLight
-                      ? 'bg-white border-neutral-900 shadow-xs text-neutral-900'
-                      : 'bg-neutral-800 border-neutral-200 shadow-sm text-white'
-                    : isLight
-                      ? 'bg-white/60 hover:bg-white border-neutral-200/80 text-neutral-800'
-                      : 'bg-neutral-850/60 hover:bg-neutral-800/80 border-neutral-800 text-neutral-200'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-1.5">
-                  <span className="text-xs font-bold truncate">{pack.title}</span>
-                  <Badge
-                    variant={
-                      hasRecommendedVariance
-                        ? matchesLatest
-                          ? 'info'
-                          : 'purple'
-                        : isSelected
-                          ? 'default'
-                          : 'neutral'
-                    }
-                    size="sm"
-                    isLight={isLight}
-                    className="text-[9px] shrink-0"
-                  >
-                    {pack.itemCount} {pack.itemCount === 1 ? 'Shot' : 'Shots'}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={`text-[10px] truncate ${
-                      isLight ? 'text-neutral-500' : 'text-neutral-400'
-                    }`}
-                  >
-                    {pack.description || 'No description'}
-                  </span>
-                  {displayRank && (
-                    <span className="text-[9px] font-mono opacity-65 shrink-0">
-                      {displayRank}
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-
-          {filteredAndSortedPacks.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-8 text-center px-3 opacity-60">
-              <Target className="h-6 w-6 mb-2" />
-              <span className="text-xs font-medium">No Matching Training Packs</span>
-              <span className="text-[10px] mt-0.5">
-                Switch folder tag or import .Tem / .RCSPack / .zip
-              </span>
-            </div>
-          )}
-        </div>
+        <StaticTrainingPackFolderGroupItem
+          isLight={isLight}
+          applyNewKevpertBind={applyNewKevpertBind}
+          packs={filteredAndSortedPacks}
+          selectedUuid={selectedUuid}
+          onSelectPack={onSelectPack}
+          onHoverDesc={onHoverDesc}
+        />
       </div>
     );
   }
