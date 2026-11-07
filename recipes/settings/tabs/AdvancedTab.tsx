@@ -6,9 +6,6 @@ import {
   HatGlasses,
   Router,
   Sliders,
-  CirclePile,
-  ChartNoAxesGantt,
-  Settings2,
   ChevronsLeftRightEllipsis,
 } from 'lucide-react';
 import { SettingActionRow } from '../../../compounds/SettingActionRow';
@@ -16,13 +13,13 @@ import { SettingSegmentedRow } from '../../../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../../../compounds/SettingToggleRow';
 import { SettingDeveloperStatusRow } from '../../../compounds/SettingDeveloperStatusRow';
 import { FloatingWindowCard, type DiagnosticWindowPayload } from '../components/FloatingWindowCard';
-import { DualGrabberSlider } from '../../../primitives/DualGrabberSlider';
 import {
   AudioDebugSection,
   type AudioDebugTelemetryProps,
 } from '../components/AudioDebugSection';
 import { RealisticBgmSection } from '../components/RealisticBgmSection';
 import { SignalingProfileSection } from '../components/SignalingProfileSection';
+import { InputBufferPacingSection } from '../components/InputBufferPacingSection';
 import {
   TelemetryConfigCard,
   DEFAULT_TELEMETRY_CONFIG_STATE,
@@ -39,10 +36,6 @@ import { useAppStore } from '../../../stores/appStore';
 import { useCloudProfileSyncStore } from '../../../stores/cloudProfileSyncStore';
 import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
 import type { NameTagAnonymizeMode } from '../../../config/nameTagConfig';
-import {
-  useSettingsPacingStore,
-  type ClockPacingMode,
-} from '../../../stores/settingsPacingStore';
 import { useScopedStore } from '../../../stores/storeSnapshotScope';
 import type { SurfaceVariantMeta } from '../../../manifest/surfaceMetaTypes';
 
@@ -81,36 +74,14 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   onHover,
   onLeave,
 }) => {
-  const storeDevMode = useScopedStore(
-    'appStore',
-    useAppStore,
-    (s) => s.developerMode
-  );
-  const storeTelemetry = useScopedStore(
-    'appStore',
-    useAppStore,
-    (s) => s.telemetry
-  );
+  const storeDevMode = useScopedStore('appStore', useAppStore, (s) => s.developerMode);
+  const storeTelemetry = useScopedStore('appStore', useAppStore, (s) => s.telemetry);
   const updateStoreTelemetry = useScopedStore(
     'appStore',
     useAppStore,
     (s) => s.updateTelemetry
   );
-  const setAppInputBufferTarget = useScopedStore(
-    'appStore',
-    useAppStore,
-    (s) => s.setInputBufferTarget
-  );
-  const setAppInputBufferThreshold = useScopedStore(
-    'appStore',
-    useAppStore,
-    (s) => s.setInputBufferThreshold
-  );
-  const masterVolume = useScopedStore(
-    'appStore',
-    useAppStore,
-    (s) => s.audio.masterVolume
-  );
+  const masterVolume = useScopedStore('appStore', useAppStore, (s) => s.audio.masterVolume);
 
   const developerMode = propDevMode ?? storeDevMode ?? false;
 
@@ -148,51 +119,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   );
   const anonymizeMode = nameTagConfig.anonymizePlayerNames || 'disabled';
 
-  const clockPacingMode = useScopedStore(
-    'settingsPacingStore',
-    useSettingsPacingStore,
-    (s) => s.clockPacingMode
-  );
-  const inputBufferTarget = useScopedStore(
-    'settingsPacingStore',
-    useSettingsPacingStore,
-    (s) => s.inputBufferTarget
-  );
-  const inputBufferThreshold = useScopedStore(
-    'settingsPacingStore',
-    useSettingsPacingStore,
-    (s) => s.inputBufferThreshold
-  );
-  const setClockPacingMode = useScopedStore(
-    'settingsPacingStore',
-    useSettingsPacingStore,
-    (s) => s.setClockPacingMode
-  );
-  const setInputBufferTarget = useScopedStore(
-    'settingsPacingStore',
-    useSettingsPacingStore,
-    (s) => s.setInputBufferTarget
-  );
-  const setInputBufferThreshold = useScopedStore(
-    'settingsPacingStore',
-    useSettingsPacingStore,
-    (s) => s.setInputBufferThreshold
-  );
-
-  const handleClockPacingModeChange = (next: ClockPacingMode) => {
-    setClockPacingMode(next);
-  };
-
-  const handleInputBufferTargetChange = (next: number) => {
-    setInputBufferTarget(next);
-    setAppInputBufferTarget(next);
-  };
-
-  const handleInputBufferThresholdChange = (next: [number, number]) => {
-    setInputBufferThreshold(next);
-    setAppInputBufferThreshold(next);
-  };
-
   const [internalTelemetry, setInternalTelemetry] = useState<TelemetryConfigState>(() => ({
     ...DEFAULT_TELEMETRY_CONFIG_STATE,
     ...(storeTelemetry as unknown as Partial<TelemetryConfigState>),
@@ -222,7 +148,6 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
   } = useSettingActionRowStore();
 
   const resolvedBordered = storeBordered || advancedBordered;
-  const isCustomPacing = clockPacingMode === 'custom';
 
   const opacityManagerCard = (
     <FloatingWindowCard
@@ -345,92 +270,13 @@ export const AdvancedTab: React.FC<AdvancedTabProps> = ({
         isLight={isLight}
       />
 
-      <SettingSegmentedRow
-        icon={CirclePile}
-        iconName="circle-pile"
-        title="Input Buffer"
-        badge={
-          advancedShowBadges ? (
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider font-semibold bg-amber-500/15 border-amber-500/30 text-amber-400">
-              {clockPacingMode === 'custom' ? 'Custom' : 'GDC Pacing'}
-            </span>
-          ) : undefined
-        }
-        description={
-          clockPacingMode === 'legacy'
-            ? 'Legacy (Fixed 120Hz discrete steps): Automatic target & deadband via Gameplay Experience Priority.'
-            : clockPacingMode === 'sts'
-            ? 'STS (Variable Time Step): 2-tier Schmitt hysteresis fractional clock pacing with automatic parameters.'
-            : clockPacingMode === 'csts'
-            ? 'CSTS (Continuous Variable Time Step): Continuous PD rate control with automatic jitter target boost.'
-            : 'Custom: Manually configure Input Buffer Target (α) and Threshold Tolerance Deadband below (forces Experience Priority to Custom).'
-        }
-        value={clockPacingMode}
-        onChange={(val) => handleClockPacingModeChange(val as ClockPacingMode)}
-        options={[
-          { value: 'legacy', label: 'Legacy' },
-          { value: 'sts', label: 'STS' },
-          { value: 'csts', label: 'CSTS' },
-          { value: 'custom', label: 'Custom' },
-        ]}
+      <InputBufferPacingSection
         bordered={resolvedBordered}
-        hoverDescription="Input Buffer: Select between Legacy, STS, CSTS (automatic parameters driven by Experience Priority), or Custom (reveals manual Input Buffer Target and Threshold Tolerance Deadband controls below and sets Gameplay Experience Priority to Custom)."
-        onHover={(desc) => desc && onHover(desc)}
-        onLeave={onLeave}
+        showBadges={advancedShowBadges}
         isLight={isLight}
+        onHover={onHover}
+        onLeave={onLeave}
       />
-
-      {isCustomPacing && (
-        <>
-          <SettingSegmentedRow
-            icon={ChartNoAxesGantt}
-            iconName="chart-no-axes-gantt"
-            title="Input Buffer Target (α)"
-            badge={
-              advancedShowBadges ? (
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase tracking-wider font-semibold bg-amber-500/15 border-amber-500/30 text-amber-400">
-                  Target: {inputBufferTarget} Frame{inputBufferTarget > 1 ? 's' : ''}
-                </span>
-              ) : undefined
-            }
-            description="Authoritative server queue depth target. Recommended: 3 Frames for WebRTC peer-to-peer matches."
-            value={String(inputBufferTarget)}
-            onChange={(val) => handleInputBufferTargetChange(Number(val))}
-            controlType="dropdown"
-            bordered={resolvedBordered}
-            options={[
-              { value: '1', label: '1 Frame (LAN / 0ms)' },
-              { value: '2', label: '2 Frames (Aggressive)' },
-              { value: '3', label: '3 Frames (Default / Rec.)' },
-              { value: '4', label: '4 Frames (Stable Jitter)' },
-              { value: '5', label: '5 Frames (High Latency)' },
-              { value: '6', label: '6 Frames (Max Buffer)' },
-            ]}
-            hoverDescription="Input Buffer Target (α): Target number of future input frames queued on the authoritative server to absorb packet arrival jitter."
-            onHover={(desc) => desc && onHover(desc)}
-            onLeave={onLeave}
-            isLight={isLight}
-          />
-
-          <DualGrabberSlider
-            icon={Settings2}
-            iconName="settings-2"
-            label="Threshold Tolerance Deadband"
-            subtitle={`Allowed queue jitter around target α (${inputBufferTarget}). Catch-up triggers below, step skip triggers above.`}
-            target={inputBufferTarget}
-            value={inputBufferThreshold}
-            onChange={handleInputBufferThresholdChange}
-            bordered={resolvedBordered}
-            isLight={isLight}
-            onHover={() =>
-              onHover(
-                `Threshold Deadband: Defines the asymmetrical deadband [-α .. +α] around input buffer target α (${inputBufferTarget}).`
-              )
-            }
-            onLeave={onLeave}
-          />
-        </>
-      )}
 
       <FloatingWindowCard
         preset={PERFORMANCE_MONITOR_PRESET}

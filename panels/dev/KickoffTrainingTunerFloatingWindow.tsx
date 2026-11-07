@@ -2,8 +2,6 @@ import React from 'react';
 import {
   RotateCcw,
   Gauge,
-  Eye,
-  Keyboard,
   Sparkles,
   Play,
 } from 'lucide-react';
@@ -16,14 +14,13 @@ import {
   KICKOFF_SPAWNS,
   type KickoffSubMode,
   type KickoffSpeedPreset,
-  type KickoffGhostPlacement,
 } from '../../stores/kickoffTrainingStore';
 import { useAppStore } from '../../stores/appStore';
 import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { SliderControl } from '../../primitives/SliderControl';
-import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
+import { KickoffGhostAndOverlaySection } from './kickoff-training-tuner/KickoffGhostAndOverlaySection';
 
 export const SURFACE_META: SurfaceMeta = {
   id: 'kickoff-training-tuner',
@@ -59,14 +56,9 @@ export const KickoffTrainingTunerFloatingWindow: React.FC<
     realisticWaitTicks,
     ghostPlacement,
     ghostModeEnabled,
-    showGhostCar,
-    showGhostBall,
-    showKeyboardOverlay,
-    showFallingNotes,
     phase,
     episodeTick,
     decisionStep,
-    requiredKeyStr,
     aiTouchTick,
     playerTouchTick,
     lastDeltaTicks,
@@ -75,12 +67,6 @@ export const KickoffTrainingTunerFloatingWindow: React.FC<
     setSpeedPreset,
     setCustomPhysicsRate,
     setRealisticWaitTicks,
-    setGhostPlacement,
-    setGhostModeEnabled,
-    setShowGhostCar,
-    setShowGhostBall,
-    setShowKeyboardOverlay,
-    setShowFallingNotes,
     triggerResetSpawn,
   } = useKickoffTrainingStore();
 
@@ -310,119 +296,7 @@ export const KickoffTrainingTunerFloatingWindow: React.FC<
       </div>
 
       {/* 4. Ghost Placement (Same Position vs Opposite Side), Ghost Mode ON/OFF & Overlay Toggles */}
-      <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Eye className={`h-3.5 w-3.5 ${isLight ? 'text-sky-600' : 'text-sky-400'}`} />
-            <span className="font-semibold text-[11px]">AI Ghost / Solid Opponent & Overlay</span>
-          </div>
-          <span className={`font-mono text-[10px] ${mutedText}`}>
-            Target: {requiredKeyStr}
-          </span>
-        </div>
-
-        {/* AI Spawn Side: Same Position (Default) vs Opposite Side */}
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between text-[10px]">
-            <span className={`font-semibold ${mutedText}`}>AI Spawn Side</span>
-            <span className={`font-mono ${mutedText}`}>
-              {ghostPlacement === 'same'
-                ? ghostModeEnabled
-                  ? 'Same Position (Overlap)'
-                  : `Mirror Partner (${KICKOFF_SPAWNS[spawnIndex]?.shortLabel} ↔ ${KICKOFF_SPAWNS[4 - spawnIndex]?.shortLabel})`
-                : 'Opposite Half (180°)'}
-            </span>
-          </div>
-          <SegmentedSwitch
-            value={ghostPlacement}
-            fullWidth
-            size="sm"
-            isLight={isLight}
-            onValueChange={(val) => setGhostPlacement(val as KickoffGhostPlacement)}
-            options={[
-              { value: 'same', label: 'Same Position' },
-              { value: 'opposite', label: 'Opposite Side' },
-            ]}
-          />
-        </div>
-
-        {/* Ghost Mode ON (Translucent) vs OFF (Solid Physical Collision Car) */}
-        <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${subPanelBg}`}>
-          <div className="flex flex-col min-w-0 pr-2">
-            <span className="text-[11px] font-semibold">
-              {ghostModeEnabled ? 'Ghost Mode (No Collision)' : 'Solid Car Mode (Physical Collision)'}
-            </span>
-            <span className={`text-[9px] leading-snug truncate ${mutedText}`}>
-              {ghostModeEnabled
-                ? 'Translucent ghost car & ball in isolated world'
-                : ghostPlacement === 'opposite'
-                ? '1v1 physical kickoff: block/dunk or test slow kickoff'
-                : 'Same-side physical kickoff (1↔5, 2↔4; pos 3 disabled)'}
-            </span>
-          </div>
-          <ToggleSwitch
-            checked={ghostModeEnabled}
-            onCheckedChange={setGhostModeEnabled}
-            isLight={isLight}
-            variant="neutral"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 pt-0.5">
-          <div
-            className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${subPanelBg} ${
-              !ghostModeEnabled ? 'opacity-50' : ''
-            }`}
-          >
-            <span className="text-[11px] font-medium">Ghost Car Mesh</span>
-            <ToggleSwitch
-              checked={showGhostCar}
-              onCheckedChange={setShowGhostCar}
-              disabled={!ghostModeEnabled}
-              isLight={isLight}
-              variant="neutral"
-            />
-          </div>
-
-          <div
-            className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${subPanelBg} ${
-              !ghostModeEnabled ? 'opacity-50' : ''
-            }`}
-          >
-            <span className="text-[11px] font-medium">Ghost Ball + Trail</span>
-            <ToggleSwitch
-              checked={showGhostBall}
-              onCheckedChange={setShowGhostBall}
-              disabled={!ghostModeEnabled}
-              isLight={isLight}
-              variant="neutral"
-            />
-          </div>
-
-          <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${subPanelBg}`}>
-            <span className="text-[11px] font-medium flex items-center gap-1">
-              <Keyboard className={`h-3 w-3 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-              <span>Key Overlay</span>
-            </span>
-            <ToggleSwitch
-              checked={showKeyboardOverlay}
-              onCheckedChange={setShowKeyboardOverlay}
-              isLight={isLight}
-              variant="neutral"
-            />
-          </div>
-
-          <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${subPanelBg}`}>
-            <span className="text-[11px] font-medium">Falling Notes</span>
-            <ToggleSwitch
-              checked={showFallingNotes}
-              onCheckedChange={setShowFallingNotes}
-              isLight={isLight}
-              variant="neutral"
-            />
-          </div>
-        </div>
-      </div>
+      <KickoffGhostAndOverlaySection isLight={isLight} />
 
       {/* Live First-Touch Benchmark Footer */}
       <div className={`px-3 py-2 rounded-xl border font-mono text-[10px] flex items-center justify-between ${cardBg}`}>

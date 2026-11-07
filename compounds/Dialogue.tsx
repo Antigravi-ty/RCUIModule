@@ -11,8 +11,11 @@ import {
 import { dialogue, useDialogueStack } from './dialogue/dialogueStore';
 import {
   buildCombinedShadow,
-  getLucideIconComponent,
   getToneConfig,
+  resolveDialogueIconNode,
+  resolveDialogueTitleColorClass,
+  resolveDialogueButtonVariantClasses,
+  measureEqualDialogueButtonWidth,
   MONO_FONT_STACK,
   DEFAULT_TITLES
 } from './dialogue/dialogueStyles';
@@ -70,86 +73,27 @@ export const Dialogue: React.FC<DialogueProps> = ({
 
   const toneConfig = getToneConfig(tone, isLight);
   const combinedShadow = buildCombinedShadow(tone, isLight, innerGlowBlur, outerShadowBlur);
-
-  let resolvedIconNode: React.ReactNode = null;
-  if (typeof icon === 'string' && icon.trim()) {
-    const IconComponent = getLucideIconComponent(icon.trim());
-    if (IconComponent) {
-      resolvedIconNode = <IconComponent size={effectiveIconSize} className="shrink-0 transition-all" />;
-    } else {
-      const FallbackIcon = toneConfig.defaultIconComponent;
-      resolvedIconNode = <FallbackIcon size={effectiveIconSize} className="shrink-0 transition-all" />;
-    }
-  } else if (React.isValidElement(icon)) {
-    const iconElement = icon as React.ReactElement<{ size?: number; className?: string }>;
-    resolvedIconNode = React.cloneElement(iconElement, {
-      size: effectiveIconSize,
-      className: `${iconElement.props.className || ''} shrink-0 transition-all`,
-    });
-  } else if (icon) {
-    resolvedIconNode = icon;
-  } else {
-    const DefaultToneIcon = toneConfig.defaultIconComponent;
-    resolvedIconNode = <DefaultToneIcon size={effectiveIconSize} className="shrink-0 transition-all" />;
-  }
-
-  const getTitleColorClass = () => {
-    if (titleColor) return '';
-    switch (titleColorMode) {
-      case 'muted':
-        return theme.textMuted;
-      case 'primary':
-        return theme.textPrimary;
-      case 'tone':
-        if (tone === 'error') return isLight ? 'text-red-600' : 'text-red-400';
-        if (tone === 'orange') return isLight ? 'text-orange-600' : 'text-orange-400';
-        if (tone === 'warning') return isLight ? 'text-yellow-600' : 'text-yellow-400';
-        return theme.textSecondary;
-      case 'content':
-      default:
-        return theme.textSecondary;
-    }
-  };
+  const resolvedIconNode = resolveDialogueIconNode(
+    icon,
+    effectiveIconSize,
+    toneConfig.defaultIconComponent
+  );
+  const titleColorClass = resolveDialogueTitleColorClass(
+    tone,
+    isLight,
+    titleColorMode,
+    titleColor
+  );
 
   useLayoutEffect(() => {
-    if (!containerRef.current) return;
-    const btnElements = containerRef.current.querySelectorAll<HTMLButtonElement>('button[data-dialogue-btn="true"]');
-    if (btnElements.length === 0) return;
-
-    btnElements.forEach((btn) => {
-      btn.style.width = 'auto';
-    });
-
-    let maxW = 0;
-    btnElements.forEach((btn) => {
-      const rect = btn.getBoundingClientRect();
-      if (rect.width > maxW) maxW = rect.width;
-    });
-
-    if (maxW > 0) {
-      setEqualButtonWidth(Math.ceil(Math.max(maxW, 92)));
-    }
+    const measured = measureEqualDialogueButtonWidth(containerRef.current);
+    if (measured !== null) setEqualButtonWidth(measured);
   }, [buttons, isLight, title, content, maxWidth, effectivePaddingX]);
 
   useEffect(() => {
     const handleResize = () => {
-      if (!containerRef.current) return;
-      const btnElements = containerRef.current.querySelectorAll<HTMLButtonElement>('button[data-dialogue-btn="true"]');
-      if (btnElements.length === 0) return;
-
-      btnElements.forEach((btn) => {
-        btn.style.width = 'auto';
-      });
-
-      let maxW = 0;
-      btnElements.forEach((btn) => {
-        const rect = btn.getBoundingClientRect();
-        if (rect.width > maxW) maxW = rect.width;
-      });
-
-      if (maxW > 0) {
-        setEqualButtonWidth(Math.ceil(Math.max(maxW, 92)));
-      }
+      const measured = measureEqualDialogueButtonWidth(containerRef.current);
+      if (measured !== null) setEqualButtonWidth(measured);
     };
 
     window.addEventListener('resize', handleResize);
@@ -163,22 +107,7 @@ export const Dialogue: React.FC<DialogueProps> = ({
   const renderButton = (btn: DialogueButtonConfig, index: number) => {
     const variant: DialogueButtonVariant =
       btn.variant ?? (index === 0 ? toneConfig.defaultButtonVariant : 'outline');
-
-    let variantClasses = '';
-    if (variant === 'primary') {
-      variantClasses = isLight
-        ? 'bg-neutral-900 text-white hover:bg-neutral-800 border-neutral-900 shadow-xs'
-        : 'bg-white text-neutral-950 hover:bg-neutral-100 border-white shadow-xs';
-    } else if (variant === 'danger') {
-      variantClasses = isLight
-        ? 'bg-red-600 text-white hover:bg-red-700 border-red-600 shadow-xs'
-        : 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border-red-500/40 shadow-xs';
-    } else {
-      variantClasses = isLight
-        ? 'bg-transparent text-neutral-800 hover:bg-neutral-100/90 border-neutral-300'
-        : 'bg-transparent text-neutral-200 hover:bg-white/10 border-neutral-700';
-    }
-
+    const variantClasses = resolveDialogueButtonVariantClasses(variant, isLight);
     const isDisabled = Boolean(btn.disabled);
 
     return (
@@ -264,7 +193,7 @@ export const Dialogue: React.FC<DialogueProps> = ({
             fontWeight: Number(titleFontWeight) || 400,
             color: titleColor || undefined,
           }}
-          className={`text-center tracking-tight truncate leading-snug transition-colors ${getTitleColorClass()}`}
+          className={`text-center tracking-tight truncate leading-snug transition-colors ${titleColorClass}`}
         >
           {resolvedTitle}
         </h2>

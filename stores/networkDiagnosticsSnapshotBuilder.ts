@@ -6,12 +6,15 @@ import { computeReconcilerMetricsPatch } from "./networkDiagnosticsReconcilerSyn
 import type {
   NetworkDiagnosticsState,
   NetworkMetrics,
+  ReconcilerDiagnosticsTarget,
+  ReconcilerRawMetricsPayload,
+  TransportChannelDiagnosticsTarget,
 } from "./networkDiagnosticsTypes";
 
 export function buildReconcilerTelemetryPatch(
-  m: any,
-  reconciler: any,
-  ch: any,
+  m: ReconcilerRawMetricsPayload | null | undefined,
+  reconciler: ReconcilerDiagnosticsTarget,
+  ch: (TransportChannelDiagnosticsTarget & NetworkStressChannelTarget) | null | undefined,
   stressSim: NetworkStressSimulator,
   state: NetworkDiagnosticsState,
   nowMs: number = typeof performance !== "undefined" ? performance.now() : Date.now()
@@ -67,8 +70,8 @@ export function applyAsymmetricLatencyAndBuildPatch(
   uplinkMs: number,
   downlinkMs: number,
   stressSim: NetworkStressSimulator,
-  ch: any,
-  reconciler: any,
+  ch: (TransportChannelDiagnosticsTarget & NetworkStressChannelTarget) | null | undefined,
+  reconciler: ReconcilerDiagnosticsTarget | null | undefined,
   currentMetrics: NetworkMetrics
 ): Partial<NetworkMetrics> {
   const upVal = Math.max(0, Math.min(500, Math.round(uplinkMs)));

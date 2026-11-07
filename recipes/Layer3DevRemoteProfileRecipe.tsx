@@ -42,14 +42,8 @@ export const SURFACE_META: SurfaceMeta = {
     maxHeight: DEFAULT_PANEL_SIZING['layer3-dev-remote-profile'].maxHeight,
   },
   variants: [
-    {
-      variantId: 'set-profile',
-      label: 'Set Others Profile',
-    },
-    {
-      variantId: 'manage-accounts',
-      label: 'Manage Accounts',
-    },
+    { variantId: 'set-profile', label: 'Set Others Profile' },
+    { variantId: 'manage-accounts', label: 'Manage Accounts' },
   ],
 };
 
@@ -71,66 +65,21 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
   );
   const panelBodyPaddingX = useMenuLayoutStore((s) => s.panelBodyPaddingX ?? 18);
 
-  const available = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.available
-  );
-  const canManageAccounts = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.canManageAccounts
-  );
-  const accounts = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.accounts
-  );
-  const isLoadingAccounts = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.isLoadingAccounts
-  );
-  const syncStatus = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.syncStatus
-  );
-  const statusMessage = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.statusMessage
-  );
-  const errorMessage = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.errorMessage
-  );
-  const refreshAccounts = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.refreshAccounts
-  );
-  const upsertAccount = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.upsertAccount
-  );
-  const deleteAccount = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.deleteAccount
-  );
-  const startRemoteTuningSession = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.startRemoteTuningSession
-  );
-  const exportRemoteAccountProfileBackup = useScopedStore(
-    'cloudProfileSyncStore',
-    useCloudProfileSyncStore,
-    (s) => s.exportRemoteAccountProfileBackup
-  );
+  const cloudSync = useScopedStore('cloudProfileSyncStore', useCloudProfileSyncStore);
+  const {
+    available,
+    canManageAccounts,
+    accounts,
+    isLoadingAccounts,
+    syncStatus,
+    statusMessage,
+    errorMessage,
+    refreshAccounts,
+    upsertAccount,
+    deleteAccount,
+    startRemoteTuningSession,
+    exportRemoteAccountProfileBackup,
+  } = cloudSync;
 
   const [internalTab, setInternalTab] = useState<DevRemoteProfileTabId>('set-profile');
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
@@ -163,6 +112,18 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
       icon: <Users className="h-3.5 w-3.5" />,
     },
   ];
+
+  const neutralBadgeClass = `font-mono px-1.5 py-0.5 rounded border ${
+    isLight
+      ? 'bg-neutral-100 border-neutral-300 text-neutral-600'
+      : 'bg-neutral-950/70 border-neutral-800 text-neutral-300'
+  }`;
+
+  const actionBtnClass = `px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition active:scale-95 ${
+    isLight
+      ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
+      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
+  }`;
 
   return (
     <PanelContainer isLight={isLight} sizing={sizing} className="w-full">
@@ -201,17 +162,9 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
         ) : activeTab === 'set-profile' ? (
           <div className="flex flex-col gap-2.5 w-full">
             <div className="flex items-center justify-between gap-2">
-              <div
-                className={`text-xs ${
-                  isLight ? 'text-neutral-600' : 'text-neutral-400'
-                }`}
-              >
+              <div className={`text-xs ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
                 Select an account below to sync their latest uploaded profile and enter{' '}
-                <span
-                  className={`font-mono font-bold ${
-                    isLight ? 'text-neutral-900' : 'text-white'
-                  }`}
-                >
+                <span className={`font-mono font-bold ${isLight ? 'text-neutral-900' : 'text-white'}`}>
                   SETTINGS # &lt;alias&gt;
                 </span>{' '}
                 remote tuning mode, or export a JSON backup.
@@ -220,15 +173,9 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
                 type="button"
                 onClick={() => void refreshAccounts()}
                 disabled={isLoadingAccounts}
-                className={`px-2.5 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition active:scale-95 shrink-0 ${
-                  isLight
-                    ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
-                    : 'bg-neutral-800/80 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-                }`}
+                className={`${actionBtnClass} !py-1 shrink-0`}
               >
-                <RefreshCw
-                  className={`h-3.5 w-3.5 ${isLoadingAccounts ? 'animate-spin' : ''}`}
-                />
+                <RefreshCw className={`h-3.5 w-3.5 ${isLoadingAccounts ? 'animate-spin' : ''}`} />
                 <span>Refresh</span>
               </button>
             </div>
@@ -281,31 +228,15 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
                           <span className="font-extrabold text-sm tracking-tight">
                             # {acc.alias || acc.username}
                           </span>
-                          <span
-                            className={`font-mono text-xs px-1.5 py-0.5 rounded border ${
-                              isLight
-                                ? 'bg-neutral-100 border-neutral-300 text-neutral-700'
-                                : 'bg-neutral-950/70 border-neutral-800 text-neutral-300'
-                            }`}
-                            title="Login Username"
-                          >
+                          <span className={`${neutralBadgeClass} text-xs`} title="Login Username">
                             @{acc.username || acc.userId}
                           </span>
-                          <span
-                            className={`font-mono text-[10px] px-1.5 py-0.5 rounded border ${
-                              isLight
-                                ? 'bg-neutral-100 border-neutral-300 text-neutral-500'
-                                : 'bg-neutral-950/60 border-neutral-800 text-neutral-400'
-                            }`}
-                            title="Immutable User ID"
-                          >
+                          <span className={`${neutralBadgeClass} text-[10px]`} title="Immutable User ID">
                             ID: {acc.userId}
                           </span>
                           <span
-                            className={`font-mono text-[11px] px-1.5 py-0.5 rounded border inline-flex items-center gap-1 ${
-                              isLight
-                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-800'
-                                : 'bg-amber-500/10 border-amber-500/25 text-amber-300'
+                            className={`font-mono text-[11px] px-1.5 py-0.5 rounded border inline-flex items-center gap-1 bg-amber-500/10 border-amber-500/30 ${
+                              isLight ? 'text-amber-800' : 'text-amber-300'
                             }`}
                             title="User Multiplayer Display Name Card"
                           >
@@ -347,11 +278,7 @@ export const Layer3DevRemoteProfileRecipe: React.FC<
                           )
                         }
                         onMouseLeave={() => setHoveredDesc(null)}
-                        className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition active:scale-95 ${
-                          isLight
-                            ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
-                            : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-                        }`}
+                        className={actionBtnClass}
                       >
                         <Download className="h-3.5 w-3.5" />
                         <span>Export JSON</span>

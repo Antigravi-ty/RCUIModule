@@ -6,7 +6,6 @@ import {
   EyeOff,
   Trophy,
   Gauge,
-  Compass,
 } from 'lucide-react';
 import {
   useSubsystemIsolationLabStore,
@@ -76,17 +75,6 @@ export const KickoffDuelBenchPanel: React.FC<KickoffDuelBenchPanelProps> = ({
     kickoffDuelAutoCycleAllPairs,
     kickoffDuelSpeedMultiplier,
     kickoffDuelNextoScripted,
-    kickoffDuelPhase,
-    kickoffDuelCurrentTick,
-    kickoffDuelTouchTick,
-    kickoffDuelTouchWinner,
-    kickoffDuelInputsCutOff,
-    kickoffDuelBlueDist,
-    kickoffDuelOrangeDist,
-    kickoffDuelBallPos,
-    kickoffDuelBallVel,
-    kickoffDuelBallSpeed,
-    kickoffDuelBallOutcome,
     kickoffDuelSoloResults,
     setKickoffDuelModels,
     setKickoffDuelSlotIndex,
@@ -374,89 +362,14 @@ export const KickoffDuelBenchPanel: React.FC<KickoffDuelBenchPanelProps> = ({
         </div>
       </div>
 
-      {/* 3. Live Touch Winner, Input Cutoff & Ball Trajectory Telemetry */}
-      <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBg}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Compass className="h-3.5 w-3.5 text-emerald-400" />
-            <span className="font-semibold text-[11px]">
-              Live First-Touch Winner &amp; Post-Cutoff Ball Trajectory
-            </span>
-          </div>
-          <Badge
-            variant={kickoffDuelInputsCutOff ? 'amber' : 'emerald'}
-            size="sm"
-            isLight={isLight}
-            className="font-mono text-[9px]"
-          >
-            {kickoffDuelInputsCutOff ? 'INPUTS CUT OFF (NEUTRAL)' : kickoffDuelPhase}
-          </Badge>
-        </div>
-
-        <div
-          className={`p-2 rounded-lg border grid grid-cols-3 gap-2 font-mono text-[10px] ${subPanelBg}`}
-        >
-          <div className="flex flex-col">
-            <span className={`text-[9px] ${mutedText}`}>FIRST TOUCH WINNER</span>
-            <span
-              className={`font-bold text-xs ${
-                kickoffDuelTouchWinner === 'BLUE'
-                  ? 'text-sky-400'
-                  : kickoffDuelTouchWinner === 'ORANGE'
-                  ? 'text-orange-400'
-                  : kickoffDuelTouchWinner === 'TIE'
-                  ? 'text-amber-400'
-                  : ''
-              }`}
-            >
-              {kickoffDuelTouchWinner === 'BLUE'
-                ? `BLUE (${blueMeta.short})`
-                : kickoffDuelTouchWinner === 'ORANGE'
-                ? `ORANGE (${orangeMeta.short})`
-                : kickoffDuelTouchWinner === 'TIE'
-                ? 'SIMULTANEOUS TIE'
-                : 'PENDING...'}
-            </span>
-            <span className={`text-[9px] ${mutedText}`}>
-              {kickoffDuelTouchTick > 0
-                ? `Frame ${kickoffDuelTouchTick}f (${(kickoffDuelTouchTick / 120).toFixed(2)}s)`
-                : `Elapsed ${kickoffDuelCurrentTick}f`}
-            </span>
-          </div>
-
-          <div className="flex flex-col">
-            <span className={`text-[9px] ${mutedText}`}>DIST AT TOUCH (B / O)</span>
-            <span className="font-bold text-xs">
-              <span className="text-sky-400">{kickoffDuelBlueDist}</span>
-              {' / '}
-              <span className="text-orange-400">{kickoffDuelOrangeDist}</span> uu
-            </span>
-            <span className={`text-[9px] ${mutedText}`}>
-              Δ = {Math.abs(kickoffDuelBlueDist - kickoffDuelOrangeDist)} uu
-            </span>
-          </div>
-
-          <div className="flex flex-col">
-            <span className={`text-[9px] ${mutedText}`}>BALL DIRECTION &amp; SPEED</span>
-            <span
-              className="font-bold text-[10px] truncate text-emerald-400"
-              title={kickoffDuelBallOutcome}
-            >
-              {kickoffDuelBallOutcome}
-            </span>
-            <span className={`text-[9px] ${mutedText}`}>
-              Vy={kickoffDuelBallVel[1]} · Spd={kickoffDuelBallSpeed} · Y={kickoffDuelBallPos[1]}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Action & Channel Diagnostics Exporter */}
+      {/* 3 & 4. Live Touch Telemetry & Action/Channel Diagnostics Exporter */}
       <KickoffDuelDiagnosticsCard
         isLight={isLight}
         cardBg={cardBg}
         subPanelBg={subPanelBg}
         mutedText={mutedText}
+        blueShortName={blueMeta.short}
+        orangeShortName={orangeMeta.short}
       />
 
       {/* 5. Full 10-Pair x 5-Slot Matrix Table (Click any cell to inspect in 3D) */}

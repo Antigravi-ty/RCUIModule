@@ -64,7 +64,6 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
   const [importStatusMsg, setImportStatusMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Refresh live trace What-If evaluation via recorder subscription when inspecting live telemetry
   useEffect(() => {
     if (!active || useImportedSource) return;
     return globalPacingTelemetryRecorder.subscribe(() => {
@@ -81,7 +80,6 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
 
   const windowSamples = Math.max(120, Math.round(windowSeconds * 120));
 
-  // Run counterfactual What-If simulation across the active trace (imported archive or live buffer)
   const simulatedResult = useMemo(() => {
     const sourceTrace = useImportedSource && importedTrace ? importedTrace : globalPacingTelemetryRecorder;
     return simulatePacingOnRecordedTrace(sourceTrace, customParams, 'custom', windowSamples);
@@ -121,7 +119,6 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
 
   return (
     <div className="flex flex-col gap-2 h-full select-none text-xs overflow-y-auto pr-0.5">
-      {/* 1. Top Bar: Mode Status, Trace Source Selector & Import/Export Controls */}
       <div
         className={`p-2 rounded-xl border font-mono flex flex-wrap items-center justify-between gap-2 ${
           isLight ? 'bg-neutral-100 border-neutral-300 text-neutral-800' : 'bg-neutral-850 border-neutral-700 text-neutral-200'
@@ -201,67 +198,56 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
         </div>
       </div>
 
-      {/* 2. Counterfactual What-If Macro Summary Comparison Cards (Recorded Baseline vs Simulated Custom Parameters) */}
       <div className="grid grid-cols-6 gap-1.5 font-mono">
-        <div className={`p-1.5 rounded-xl border flex flex-col ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-850/70 border-neutral-700/70'}`}>
-          <span className="text-[9px] text-neutral-400 uppercase">Sim Starvations</span>
-          <span className={`text-xs font-bold ${(simSummary?.starvationCount ?? 0) === 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {simSummary ? `${simSummary.starvationCount} (${simSummary.starvationPct.toFixed(2)}%)` : '0 (0.00%)'}
-          </span>
-          <span className="text-[9px] text-neutral-500">
-            Rec: {recordedSummary.starvationCount ?? 0} ({(recordedSummary.starvationPct ?? 0).toFixed(1)}%)
-          </span>
-        </div>
-
-        <div className={`p-1.5 rounded-xl border flex flex-col ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-850/70 border-neutral-700/70'}`}>
-          <span className="text-[9px] text-neutral-400 uppercase">Sim Hard Snaps</span>
-          <span className={`text-xs font-bold ${(simSummary?.hardResyncCount ?? 0) === 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
-            {simSummary ? simSummary.hardResyncCount : 0}
-          </span>
-          <span className="text-[9px] text-neutral-500">
-            Rec: {recordedSummary.hardResyncCount ?? 0}
-          </span>
-        </div>
-
-        <div className={`p-1.5 rounded-xl border flex flex-col ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-850/70 border-neutral-700/70'}`}>
-          <span className="text-[9px] text-neutral-400 uppercase">Switches / Min</span>
-          <span className="text-xs font-bold text-amber-400">
-            {simSummary ? simSummary.rateSwitchesPerMin.toFixed(1) : '0.0'}/m
-          </span>
-          <span className="text-[9px] text-neutral-500">
-            Rec: {(recordedSummary.rateSwitchesPerMin ?? 0).toFixed(1)}/m
-          </span>
-        </div>
-
-        <div className={`p-1.5 rounded-xl border flex flex-col ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-850/70 border-neutral-700/70'}`}>
-          <span className="text-[9px] text-neutral-400 uppercase">P95 Buf Error</span>
-          <span className="text-xs font-bold text-sky-400">
-            {simSummary ? simSummary.p95BufferAbsError.toFixed(2) : '0.00'}f
-          </span>
-          <span className="text-[9px] text-neutral-500">
-            Rec: {(recordedSummary.p95BufferAbsError ?? 0).toFixed(2)}f
-          </span>
-        </div>
-
-        <div className={`p-1.5 rounded-xl border flex flex-col ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-850/70 border-neutral-700/70'}`}>
-          <span className="text-[9px] text-neutral-400 uppercase">Rate StdDev</span>
-          <span className="text-xs font-bold text-emerald-400">
-            ±{simSummary ? simSummary.stdPhysicsRateHz.toFixed(2) : '0.00'}Hz
-          </span>
-          <span className="text-[9px] text-neutral-500">
-            Rec: ±{(recordedSummary.stdPhysicsRateHz ?? 0).toFixed(2)}Hz
-          </span>
-        </div>
-
-        <div className={`p-1.5 rounded-xl border flex flex-col ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-850/70 border-neutral-700/70'}`}>
-          <span className="text-[9px] text-neutral-400 uppercase">50/50 Lead Cost</span>
-          <span className="text-xs font-bold text-violet-400">
-            +{simSummary ? simSummary.estimated5050LeadPenaltyMs.toFixed(1) : '0.0'}ms
-          </span>
-          <span className="text-[9px] text-neutral-500">
-            Rec: +{(recordedSummary.estimated5050LeadPenaltyMs ?? 0).toFixed(1)}ms
-          </span>
-        </div>
+        {[
+          {
+            label: 'Sim Starvations',
+            sim: simSummary ? `${simSummary.starvationCount} (${simSummary.starvationPct.toFixed(2)}%)` : '0 (0.00%)',
+            rec: `${recordedSummary.starvationCount ?? 0} (${(recordedSummary.starvationPct ?? 0).toFixed(1)}%)`,
+            cls: (simSummary?.starvationCount ?? 0) === 0 ? 'text-emerald-400' : 'text-rose-400',
+          },
+          {
+            label: 'Sim Hard Snaps',
+            sim: simSummary ? String(simSummary.hardResyncCount) : '0',
+            rec: String(recordedSummary.hardResyncCount ?? 0),
+            cls: (simSummary?.hardResyncCount ?? 0) === 0 ? 'text-emerald-400' : 'text-amber-400',
+          },
+          {
+            label: 'Switches / Min',
+            sim: `${simSummary ? simSummary.rateSwitchesPerMin.toFixed(1) : '0.0'}/m`,
+            rec: `${(recordedSummary.rateSwitchesPerMin ?? 0).toFixed(1)}/m`,
+            cls: 'text-amber-400',
+          },
+          {
+            label: 'P95 Buf Error',
+            sim: `${simSummary ? simSummary.p95BufferAbsError.toFixed(2) : '0.00'}f`,
+            rec: `${(recordedSummary.p95BufferAbsError ?? 0).toFixed(2)}f`,
+            cls: 'text-sky-400',
+          },
+          {
+            label: 'Rate StdDev',
+            sim: `±${simSummary ? simSummary.stdPhysicsRateHz.toFixed(2) : '0.00'}Hz`,
+            rec: `±${(recordedSummary.stdPhysicsRateHz ?? 0).toFixed(2)}Hz`,
+            cls: 'text-emerald-400',
+          },
+          {
+            label: '50/50 Lead Cost',
+            sim: `+${simSummary ? simSummary.estimated5050LeadPenaltyMs.toFixed(1) : '0.0'}ms`,
+            rec: `+${(recordedSummary.estimated5050LeadPenaltyMs ?? 0).toFixed(1)}ms`,
+            cls: 'text-violet-400',
+          },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className={`p-1.5 rounded-xl border flex flex-col ${
+              isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-850/70 border-neutral-700/70'
+            }`}
+          >
+            <span className="text-[9px] text-neutral-400 uppercase">{card.label}</span>
+            <span className={`text-xs font-bold ${card.cls}`}>{card.sim}</span>
+            <span className="text-[9px] text-neutral-500">Rec: {card.rec}</span>
+          </div>
+        ))}
       </div>
 
       {/* 3. 3-Pane Oscilloscope with Real-Time Violet What-If Overlay */}

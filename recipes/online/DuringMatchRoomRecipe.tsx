@@ -2,32 +2,22 @@ import React, { useEffect, useState } from 'react';
 import {
   Bot,
   Eye,
-  Pause,
-  Play,
   User,
   UserRoundX,
 } from 'lucide-react';
-import {
-  DuringMatchClientRejoinControls,
-  type ActiveMatchPlayer,
-} from './DuringMatchClientRejoinControls';
-import {
-  DuringMatchSpectatorsSection,
-  type SpectatorRouteEntry,
-} from './DuringMatchSpectatorsSection';
+import type { ActiveMatchPlayer } from './DuringMatchClientRejoinControls';
 import {
   ClientRoomTopBars,
   OnlineRoomTopStatusBar,
   type SignalingHealthState,
 } from './OnlineRoomTopStatusBar';
-import {
-  DoubleConfirmServerButton,
-  OnlineRoomConfigSummaryCard,
-  type HostMatchBotPolicy,
-  type HostMatchDurationPreset,
-  type HostMatchTeamFormat,
+import type {
+  HostMatchBotPolicy,
+  HostMatchDurationPreset,
+  HostMatchTeamFormat,
 } from './OnlineRoomConfigSummaryCard';
 import type { LobbyTeamAssignment } from './MatchLobbyTeamRosterSection';
+import { DuringMatchRoomControlsSection } from './DuringMatchRoomControlsSection';
 
 
 export interface DuringMatchRoomConfig {
@@ -68,45 +58,6 @@ const INITIAL_MATCH_PLAYERS: ActiveMatchPlayer[] = [
   { id: 'o-2', name: 'FlipReset_Pro', pingMs: 0, pairId: '5E7A', team: 'orange', noInput: true },
 ];
 
-const INITIAL_SPECTATORS: SpectatorRouteEntry[] = [
-  {
-    id: 'spec-1',
-    name: 'Caster_Alpha',
-    pingMs: 19,
-    pairId: '9B2C',
-    fromPlayer: 'OctaneMain_99',
-    isDirectHost: false,
-    isViaLocalClient: true,
-  },
-  {
-    id: 'spec-2',
-    name: 'Scout_Lens',
-    pingMs: 34,
-    pairId: '4D1E',
-    fromPlayer: 'Host (Direct P2P)',
-    isDirectHost: true,
-    isViaLocalClient: false,
-  },
-  {
-    id: 'spec-3',
-    name: 'ReplayWatcher_07',
-    pingMs: 27,
-    pairId: '8A5F',
-    fromPlayer: 'Aerial_Vortex',
-    isDirectHost: false,
-    isViaLocalClient: true,
-  },
-];
-
-/**
- * Decoupled Active Match Admin / Room Info View (`online-match-host` & `online-match-client`):
- * - `PLAYERS IN MATCH`: 2 side-by-side columns (`Blue Team` left | `Orange Team` right).
- *   - Host can toggle `Pair ID` (`Eye`, active by default) and Kick players with icon-only `UserRoundX`.
- *   - Client supports mid-match join / reconnect: select `Blue`, `Auto` (default), or `Orange` to `Join Match`, or select a non-host `No Input` player slot to `Replace & Enter`.
- * - `SPECTATING`:
- *   - Host: Sees total spectators + `from player` route diagnostics, with icon-only `UserRoundX` kick.
- *   - Client: Sees spectators relaying through this client (`SPECTATING VIA YOU`), with icon-only `UserRoundX` remove.
- */
 export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React.memo(({
   role,
   signalingState: controlledSignaling,
@@ -137,11 +88,8 @@ export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React
   const isHost = role === 'host';
   const [internalSignaling, setInternalSignaling] = useState<SignalingHealthState>('green');
   const [internalPlayers, setInternalPlayers] = useState<ActiveMatchPlayer[]>(INITIAL_MATCH_PLAYERS);
-  const [spectators, setSpectators] = useState<SpectatorRouteEntry[]>(INITIAL_SPECTATORS);
-  const [internalPauseRequested, setInternalPauseRequested] = useState<boolean>(false);
   const [showPairId, setShowPairId] = useState<boolean>(isHost);
 
-  // Client mid-match join / reconnect state
   const [internalClientJoinTeam, setInternalClientJoinTeam] = useState<LobbyTeamAssignment>('neutral');
   const clientJoinTeam = controlledLocalTeam ?? internalClientJoinTeam;
   const setClientJoinTeam = (team: LobbyTeamAssignment) => {
@@ -158,7 +106,6 @@ export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React
   const signalingState = controlledSignaling ?? internalSignaling;
   const setSignalingState = setInternalSignaling;
   const players = controlledPlayers ?? internalPlayers;
-  const pauseRequested = controlledPaused ?? internalPauseRequested;
 
   const bluePlayers = players.filter((p) => p.team === 'blue');
   const orangePlayers = players.filter((p) => p.team === 'orange');
@@ -168,21 +115,12 @@ export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React
     (p) => p.id === selectedReplaceId && !p.isHost && p.noInput
   );
 
-  // Client only sees spectators connected through them; Host sees all spectators
-  const visibleSpectators = isHost
-    ? spectators
-    : spectators.filter((s) => s.isViaLocalClient);
-
   const handleRemovePlayer = (id: string) => {
     if (onKickPlayer) {
       onKickPlayer(id);
     } else {
       setInternalPlayers((prev) => prev.filter((p) => p.id !== id));
     }
-  };
-
-  const handleRemoveSpectator = (id: string) => {
-    setSpectators((prev) => prev.filter((s) => s.id !== id));
   };
 
   const renderTeamColumn = (
@@ -404,18 +342,18 @@ export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React
         </div>
       </div>
 
-      {/* 2B. Client Mid-Match Join / Reconnect Controls: Blue | Auto | Orange + Join Match / Replace & Enter */}
-      {!isHost && (
-        <DuringMatchClientRejoinControls
-          selectedReplacePlayer={selectedReplacePlayer}
-          clientJoinTeam={clientJoinTeam}
-          joinedMatchState={joinedMatchState}
-          onSelectTeam={(team) => {
+      <DuringMatchRoomControlsSection
+        isHost={isHost}
+        rejoinState={{
+          selectedReplacePlayer,
+          clientJoinTeam,
+          joinedMatchState,
+          onSelectTeam: (team) => {
             setSelectedReplaceId(null);
             setJoinedMatchState('idle');
             setClientJoinTeam(team);
-          }}
-          onJoinOrReplace={() => {
+          },
+          onJoinOrReplace: () => {
             if (selectedReplacePlayer) {
               setJoinedMatchState((prev) => (prev === 'replaced' ? 'idle' : 'replaced'));
               onSwitchTeam?.(selectedReplacePlayer.team);
@@ -424,77 +362,17 @@ export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React
               onSwitchTeam?.(clientJoinTeam);
             }
             onEnterMatch?.();
-          }}
-          onHoverDesc={onHoverDesc}
-          isLight={isLight}
-        />
-      )}
-
-      {/* 3. SPECTATING Section (Host: All + from player route; Client: Only Spectating via You) */}
-      <DuringMatchSpectatorsSection
-        isHost={isHost}
-        visibleSpectators={visibleSpectators}
-        onRemoveSpectator={handleRemoveSpectator}
-        onHoverDesc={onHoverDesc}
-        isLight={isLight}
-      />
-
-      {/* 4. Read-Only Match Information Card (No Configure / Custom during active match) */}
-      <OnlineRoomConfigSummaryCard
-        title="Match Information"
-        teamFormat={teamFormat}
-        botPolicy={botPolicy}
-        durationPreset={durationPreset}
-        customDurationSeconds={customDurationSeconds}
-        editor={{ editable: false }}
-        onHoverDesc={onHoverDesc}
-        isLight={isLight}
-      />
-
-      {/* 5. Pause Row: Host = Request to Pause (Pause Match); Client = Ask to Pause */}
-      <button
-        type="button"
-        onClick={() => {
-          setInternalPauseRequested((prev) => !prev);
-          onTogglePause?.();
+          },
         }}
-        onMouseEnter={() =>
-          onHoverDesc?.(
-            isHost
-              ? 'Request to Pause: Trigger or resume authoritative match pause.'
-              : 'Ask to Pause: Send a non-authoritative pause request notification to the Host.'
-          )
-        }
-        onMouseLeave={() => onHoverDesc?.(null)}
-        className={`w-full py-2 px-4 rounded-xl border text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer ${
-          pauseRequested
-            ? 'bg-amber-500/20 border-amber-500/45 text-amber-400'
-            : isLight
-            ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
-            : 'bg-neutral-800/90 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-        }`}
-      >
-        {pauseRequested ? (
-          <Play className="h-3.5 w-3.5" />
-        ) : (
-          <Pause className="h-3.5 w-3.5 text-amber-500" />
-        )}
-        <span>
-          {isHost
-            ? pauseRequested
-              ? 'Match Paused · Click to Resume'
-              : 'Request to Pause'
-            : pauseRequested
-            ? 'Pause Requested (Waiting for Host...)'
-            : 'Ask to Pause'}
-        </span>
-      </button>
-
-      {/* 6. Bottom Row: Host = Double-Confirm Shutdown Server; Client = Leave Room */}
-      <DoubleConfirmServerButton
-        label={isHost ? 'Shutdown Server' : 'Leave Room'}
-        requireDoubleConfirm={isHost}
-        onConfirm={onShutdownOrLeave}
+        configSummary={{
+          teamFormat,
+          botPolicy,
+          durationPreset,
+          customDurationSeconds,
+        }}
+        controlledPaused={controlledPaused}
+        onTogglePause={onTogglePause}
+        onShutdownOrLeave={onShutdownOrLeave}
         onHoverDesc={onHoverDesc}
         isLight={isLight}
       />

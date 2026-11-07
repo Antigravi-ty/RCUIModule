@@ -4,10 +4,26 @@ import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { CollapsibleNumberedRailList } from '../compounds/CollapsibleNumberedRailList';
 import { dialogue } from '../compounds/dialogue/dialogueStore';
-import { INITIAL_TRAINING_SHOTS, MAX_SHOTS_PER_PACK, createDefaultShotItem, formatShotSubtitle, type EditSubMode, type StaticTrainingShotItem } from './static-training/staticTrainingTypes';
-import { StaticTrainingCollapseDrawerBtn, cloneShotWithUpdate, duplicateShotInArray, openStaticTrainingEditorHelpDialogue } from './static-training/staticTrainingEditorDialogues';
+import {
+  INITIAL_TRAINING_SHOTS,
+  MAX_SHOTS_PER_PACK,
+  createDefaultShotItem,
+  formatShotSubtitle,
+  type EditSubMode,
+  type StaticTrainingShotItem,
+} from './static-training/staticTrainingTypes';
+import {
+  StaticTrainingCollapseDrawerBtn,
+  cloneShotWithUpdate,
+  duplicateShotInArray,
+  openStaticTrainingEditorHelpDialogue,
+} from './static-training/staticTrainingEditorDialogues';
 import { StaticTrainingShotInspectorView } from './static-training/StaticTrainingShotInspectorView';
-import { useStaticTrainingPackStore, getActiveEditItemVariable, mutateActiveEditItemVariable } from '../stores/staticTrainingPackStore';
+import {
+  useStaticTrainingPackStore,
+  getActiveEditItemVariable,
+  mutateActiveEditItemVariable,
+} from '../stores/staticTrainingPackStore';
 import { useStoreSnapshotOverride } from '../stores/storeSnapshotScope';
 import type { SurfaceMeta, StandardSurfaceProps } from '../manifest/surfaceMetaTypes';
 
@@ -22,24 +38,9 @@ export function openStaticTrainingExitConfirmDialogue(
     maxWidth: 500,
     content: 'Do you want to save your previous edits before exiting Edit Mode?',
     buttons: [
-      {
-        label: 'Save',
-        variant: 'primary',
-        onClick: async () => {
-          await onConfirm?.('save');
-        },
-      },
-      {
-        label: 'Ignore',
-        variant: 'danger',
-        onClick: async () => {
-          await onConfirm?.('ignore');
-        },
-      },
-      {
-        label: 'Cancel',
-        variant: 'outline',
-      },
+      { label: 'Save', variant: 'primary', onClick: async () => { await onConfirm?.('save'); } },
+      { label: 'Ignore', variant: 'danger', onClick: async () => { await onConfirm?.('ignore'); } },
+      { label: 'Cancel', variant: 'outline' },
     ],
   });
 }
@@ -94,24 +95,25 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
     useStoreSnapshotOverride<StaticTrainingShotInspectorStateOverride>('staticTrainingShotInspector');
   const ov = { ...scopeOverride, ...stateOverride };
 
-  const activePack = useStaticTrainingPackStore((s) => s.activePack);
-  const storeShotIndex = useStaticTrainingPackStore((s) => s.currentShotIndex);
-  const storeIsEditingItem = useStaticTrainingPackStore((s) => s.isEditingItem);
-  const storeEditSubMode = useStaticTrainingPackStore((s) => s.editSubMode);
-  const editVarVersion = useStaticTrainingPackStore((s) => s.editVarVersion);
-  const enterItemEditMode = useStaticTrainingPackStore((s) => s.enterItemEditMode);
-  const deselectEditShot = useStaticTrainingPackStore((s) => s.deselectEditShot);
-  const setStoreEditSubMode = useStaticTrainingPackStore((s) => s.setEditSubMode);
-  const addNewShot = useStaticTrainingPackStore((s) => s.addNewShot);
-  const duplicateShot = useStaticTrainingPackStore((s) => s.duplicateShot);
-  const deleteShot = useStaticTrainingPackStore((s) => s.deleteShot);
-  const reorderShot = useStaticTrainingPackStore((s) => s.reorderShot);
-  const exportSingleShotJson = useStaticTrainingPackStore((s) => s.exportSingleShotJson);
-  const importSingleShotJson = useStaticTrainingPackStore((s) => s.importSingleShotJson);
-  const isCurrentShotDirty = useStaticTrainingPackStore((s) => s.isCurrentShotDirty);
-  const saveCurrentShotToEditWorkspace = useStaticTrainingPackStore(
-    (s) => s.saveCurrentShotToEditWorkspace
-  );
+  const packStore = useStaticTrainingPackStore();
+  const {
+    activePack,
+    currentShotIndex: storeShotIndex,
+    isEditingItem: storeIsEditingItem,
+    editSubMode: storeEditSubMode,
+    editVarVersion,
+    enterItemEditMode,
+    deselectEditShot,
+    setEditSubMode: setStoreEditSubMode,
+    addNewShot,
+    duplicateShot,
+    deleteShot,
+    reorderShot,
+    exportSingleShotJson,
+    importSingleShotJson,
+    isCurrentShotDirty,
+    saveCurrentShotToEditWorkspace,
+  } = packStore;
   void editVarVersion;
 
   const packTitle = propPackTitle ?? ov.packTitle ?? activePack?.metadata.title ?? 'Aerial Striker Pack';
@@ -152,9 +154,7 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
   const onExportSingleShot = ov.onExportSingleShot ?? (activePack ? exportSingleShotJson : undefined);
   const onImportSingleShot = ov.onImportSingleShot ?? (activePack ? importSingleShotJson : undefined);
 
-  const [internalShots, setInternalShots] = useState<StaticTrainingShotItem[]>(
-    INITIAL_TRAINING_SHOTS
-  );
+  const [internalShots, setInternalShots] = useState<StaticTrainingShotItem[]>(INITIAL_TRAINING_SHOTS);
   const [internalIndex, setInternalIndex] = useState<number>(0);
   const [internalInspecting, setInternalInspecting] = useState<boolean>(false);
   const [internalSubMode, setInternalSubMode] = useState<EditSubMode>('car-heading');
@@ -191,14 +191,12 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
   const safeIndex = Math.max(0, Math.min(Math.max(0, items.length - 1), selectedIndex));
   const currentShot = currentShotOverride || items[safeIndex] || items[0] || null;
 
-  const handleBackToShotList = () => {
-    setIsInspecting(false);
-    setHoveredDesc('Returned to full Shot List view.');
-  };
+  const fmtNum = (n: number) => `#${String(n + 1).padStart(2, '0')}`;
 
   const handleSelectShot = (idx: number) => {
     if (isInspecting && idx === safeIndex) {
-      handleBackToShotList();
+      setIsInspecting(false);
+      setHoveredDesc('Returned to full Shot List view.');
       return;
     }
     setSelectedIndex(idx);
@@ -212,8 +210,7 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
     }
     if (!currentShot) return;
     const cloned = cloneShotWithUpdate(currentShot, updater);
-    const next = items.map((it, idx) => (idx === safeIndex ? cloned : it));
-    setItems(next);
+    setItems(items.map((it, idx) => (idx === safeIndex ? cloned : it)));
     setInternalIsDirty(true);
   };
 
@@ -222,24 +219,21 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
     const newIdx = items.length;
     if (onAddNewShot) {
       await onAddNewShot();
-      setHoveredDesc(`Created #${String(newIdx + 1).padStart(2, '0')} (Shot ${newIdx + 1}).`);
+      setHoveredDesc(`Created ${fmtNum(newIdx)} (Shot ${newIdx + 1}).`);
       return;
     }
     const newShot = createDefaultShotItem(newIdx);
-    const next = [...items, newShot];
-    setItems(next);
+    setItems([...items, newShot]);
     setSelectedIndex(newIdx);
     setInternalIsDirty(true);
-    setHoveredDesc(`Created #${String(newIdx + 1).padStart(2, '0')} (${newShot.name}).`);
+    setHoveredDesc(`Created ${fmtNum(newIdx)} (${newShot.name}).`);
   };
 
   const handleDuplicateShot = async (idx: number) => {
     if (items.length >= MAX_SHOTS_PER_PACK) return;
     if (onDuplicateShot) {
       await onDuplicateShot(idx);
-      setHoveredDesc(
-        `Duplicated #${String(idx + 1).padStart(2, '0')} -> #${String(idx + 2).padStart(2, '0')}.`
-      );
+      setHoveredDesc(`Duplicated ${fmtNum(idx)} -> ${fmtNum(idx + 1)}.`);
       return;
     }
     const next = duplicateShotInArray(items, idx, currentShot);
@@ -247,9 +241,7 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
     setItems(next);
     setSelectedIndex(idx + 1);
     setInternalIsDirty(true);
-    setHoveredDesc(
-      `Duplicated #${String(idx + 1).padStart(2, '0')} -> #${String(idx + 2).padStart(2, '0')}.`
-    );
+    setHoveredDesc(`Duplicated ${fmtNum(idx)} -> ${fmtNum(idx + 1)}.`);
   };
 
   const handleReorderShot = async (fromIdx: number, toIdx: number) => {
@@ -261,8 +253,7 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
     const copy = [...items];
     const [moved] = copy.splice(fromIdx, 1);
     copy.splice(toIdx, 0, moved);
-    const next = copy.map((it, i) => ({ ...it, index: i }));
-    setItems(next);
+    setItems(copy.map((it, i) => ({ ...it, index: i })));
     setSelectedIndex(toIdx);
     setInternalIsDirty(true);
   };
@@ -271,27 +262,22 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
     if (items.length <= 1) return;
     if (onDeleteShot) {
       await onDeleteShot(idx);
-      setHoveredDesc(`Deleted shot #${String(idx + 1).padStart(2, '0')}.`);
+      setHoveredDesc(`Deleted shot ${fmtNum(idx)}.`);
       return;
     }
-    const next = items
-      .filter((_, i) => i !== idx)
-      .map((it, i) => ({ ...it, index: i }));
-    const nextIdx = Math.max(
-      0,
-      Math.min(next.length - 1, safeIndex >= idx ? safeIndex - 1 : safeIndex)
-    );
+    const next = items.filter((_, i) => i !== idx).map((it, i) => ({ ...it, index: i }));
+    const nextIdx = Math.max(0, Math.min(next.length - 1, safeIndex >= idx ? safeIndex - 1 : safeIndex));
     setItems(next);
     setSelectedIndex(nextIdx);
     setInternalIsDirty(true);
-    setHoveredDesc(`Deleted shot #${String(idx + 1).padStart(2, '0')}.`);
+    setHoveredDesc(`Deleted shot ${fmtNum(idx)}.`);
   };
 
   const handleExportSingleShot = (idx: number) => {
     const target = items[idx];
     if (!target) return;
     onExportSingleShot?.(idx);
-    setHoveredDesc(`Exported #${String(idx + 1).padStart(2, '0')} (${target.name}).json`);
+    setHoveredDesc(`Exported ${fmtNum(idx)} (${target.name}).json`);
   };
 
   const handleImportSingleShot = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -304,15 +290,10 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
       setHoveredDesc(`Imported shot configuration from ${file.name}.`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Invalid JSON';
-      console.error('[StaticTrainingShotInspectorDrawer] Failed to import shot JSON:', err);
       setHoveredDesc(`Failed to import shot JSON: ${msg}`);
     } finally {
       e.target.value = '';
     }
-  };
-
-  const handleShowHelp = () => {
-    openStaticTrainingEditorHelpDialogue();
   };
 
   const railItems = items.map((shot, idx) => {
@@ -326,15 +307,11 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
   });
 
   return (
-    <PanelContainer
-      isLight={isLight}
-      transparent={transparent}
-      className="w-full h-full"
-    >
+    <PanelContainer isLight={isLight} transparent={transparent} className="w-full h-full">
       <PanelHeader
         title={
           isInspecting
-            ? `EDIT SHOT #${String(safeIndex + 1).padStart(2, '0')} · ${currentShot?.name || packTitle}`
+            ? `EDIT SHOT ${fmtNum(safeIndex)} · ${currentShot?.name || packTitle}`
             : `EDIT: ${packTitle}`
         }
         isLight={isLight}
@@ -373,7 +350,7 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
           onSelectItem={handleSelectShot}
           onAddNew={() => void handleAddNewShot()}
           onImport={() => fileInputRef.current?.click()}
-          onShowHelp={handleShowHelp}
+          onShowHelp={() => openStaticTrainingEditorHelpDialogue()}
           onDuplicate={(idx) => void handleDuplicateShot(idx)}
           onReorder={(fromIdx, toIdx) => void handleReorderShot(fromIdx, toIdx)}
           onExportItem={handleExportSingleShot}
