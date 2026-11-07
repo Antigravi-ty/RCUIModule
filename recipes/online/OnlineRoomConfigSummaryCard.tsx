@@ -45,19 +45,27 @@ export const formatMatchDurationLabel = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-export interface OnlineRoomConfigSummaryCardProps {
-  teamFormat: HostMatchTeamFormat;
+export interface OnlineRoomConfigChangeHandlers {
   onChangeTeamFormat?: (v: HostMatchTeamFormat) => void;
-  botPolicy: HostMatchBotPolicy;
   onChangeBotPolicy?: (v: HostMatchBotPolicy) => void;
-  durationPreset: HostMatchDurationPreset;
   onChangeDurationPreset?: (v: HostMatchDurationPreset) => void;
-  customDurationSeconds: number;
   onChangeCustomDurationSeconds?: (v: number) => void;
+}
+
+export interface OnlineRoomConfigEditorControls {
   editable?: boolean;
   isEditing?: boolean;
   onToggleEditing?: () => void;
   onNavigateAdvancedSettings?: () => void;
+}
+
+export interface OnlineRoomConfigSummaryCardProps {
+  teamFormat: HostMatchTeamFormat;
+  botPolicy: HostMatchBotPolicy;
+  durationPreset: HostMatchDurationPreset;
+  customDurationSeconds: number;
+  handlers?: OnlineRoomConfigChangeHandlers;
+  editor?: OnlineRoomConfigEditorControls;
   onHoverDesc?: (desc: string | null) => void;
   title?: string;
   isLight?: boolean;
@@ -70,21 +78,27 @@ export interface OnlineRoomConfigSummaryCardProps {
  */
 export const OnlineRoomConfigSummaryCard: React.FC<OnlineRoomConfigSummaryCardProps> = React.memo(({
   teamFormat,
-  onChangeTeamFormat,
   botPolicy,
-  onChangeBotPolicy,
   durationPreset,
-  onChangeDurationPreset,
   customDurationSeconds,
-  onChangeCustomDurationSeconds,
-  editable = false,
-  isEditing = false,
-  onToggleEditing,
-  onNavigateAdvancedSettings,
+  handlers,
+  editor,
   onHoverDesc,
   title = 'Room Information',
   isLight = false,
 }) => {
+  const {
+    onChangeTeamFormat,
+    onChangeBotPolicy,
+    onChangeDurationPreset,
+    onChangeCustomDurationSeconds,
+  } = handlers ?? {};
+  const {
+    editable = false,
+    isEditing = false,
+    onToggleEditing,
+    onNavigateAdvancedSettings,
+  } = editor ?? {};
   const resolvedDurationSeconds =
     durationPreset === 'custom' ? customDurationSeconds : Number(durationPreset);
   const durationSummaryText = formatMatchDurationLabel(resolvedDurationSeconds);
@@ -391,7 +405,11 @@ export const DoubleConfirmServerButton: React.FC<DoubleConfirmServerButtonProps>
         )
       }
       onMouseLeave={() => onHoverDesc?.(null)}
-      className="w-full py-2.5 px-4 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 border border-rose-500/35 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0"
+      className={[
+        'w-full py-2.5 px-4 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500',
+        'border border-rose-500/35 text-xs font-bold uppercase tracking-wider',
+        'flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0',
+      ].join(' ')}
     >
       <DoorStairwell className="h-4 w-4 shrink-0" />
       <span>{label}</span>

@@ -79,9 +79,15 @@ const importMetaGlob = (import.meta as unknown as { glob?: ImportMetaGlobFn }).g
 
 const recipeSurfaceModules: Record<string, GlobSurfaceModule> =
   typeof importMetaGlob === 'function'
-    ? importMetaGlob<GlobSurfaceModule>('../recipes/Layer*Recipe.tsx', {
-        eager: true,
-      })
+    ? {
+        ...importMetaGlob<GlobSurfaceModule>('../recipes/Layer*Recipe.tsx', {
+          eager: true,
+        }),
+        ...importMetaGlob<GlobSurfaceModule>(
+          '../recipes/StaticTrainingShotInspectorDrawer.tsx',
+          { eager: true }
+        ),
+      }
     : {};
 
 const DISCOVERED_RECIPE_SURFACES: DiscoveredSurfaceEntry[] =

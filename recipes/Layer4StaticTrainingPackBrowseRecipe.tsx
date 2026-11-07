@@ -25,9 +25,9 @@ import {
 } from '../config/staticTrainingVariationTypes';
 import {
   DEFAULT_STATIC_TRAINING_PACKS,
-  decodeRCSPackText,
   generatePackUUID,
   normalizePackSummary,
+  parseStandaloneImportedPackFile,
 } from './static-training/staticTrainingPackFilterLogic';
 
 export const SURFACE_META: SurfaceMeta = {
@@ -375,41 +375,7 @@ export const Layer4StaticTrainingPackBrowseRecipe: React.FC<
         setHoveredDesc(`Imported pack from ${fileList[0].name}`);
       } else {
         const file = fileList[0];
-        if (!isDevMode && /\.(rlrcspack|tem)$/i.test(file.name)) {
-          throw new Error('.RLRCSPack and .Tem packs can only be imported in Developer Mode.');
-        }
-        const text = await decodeRCSPackText(file);
-        const parsed = JSON.parse(text);
-        if (!isDevMode && parsed?.format === 'RLRCSPack') {
-          throw new Error('.RLRCSPack packs can only be imported in Developer Mode.');
-        }
-        const rawMeta = parsed?.metadata || parsed || {};
-        const rawItems = Array.isArray(parsed?.items) ? parsed.items : [];
-        const imported = normalizePackSummary({
-          uuid:
-            typeof rawMeta.uuid === 'string' && rawMeta.uuid.trim()
-              ? rawMeta.uuid.trim()
-              : generatePackUUID(),
-          title:
-            typeof rawMeta.title === 'string' && rawMeta.title.trim()
-              ? rawMeta.title.trim()
-              : file.name.replace(/\.(rcspacke?|rlrcspack|gz|json)$/i, '') || 'Imported Pack',
-          description:
-            typeof rawMeta.description === 'string' ? rawMeta.description : '',
-          itemCount:
-            rawItems.length > 0
-              ? rawItems.length
-              : typeof rawMeta.itemCount === 'number'
-              ? rawMeta.itemCount
-              : 1,
-          sourcePackType: /\.rlrcspack$/i.test(file.name)
-            ? 'RLRCSPack'
-            : /\.rcspacke$/i.test(file.name)
-            ? 'RCSPackE'
-            : 'RCSPack',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
+        const imported = await parseStandaloneImportedPackFile(file, isDevMode);
         setInternalPacks((prev) => [
           imported,
           ...prev.filter((p) => p.uuid !== imported.uuid),

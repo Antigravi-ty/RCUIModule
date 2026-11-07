@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo, useRef } from 'react';
 import type { StandardSurfaceProps } from '../manifest/surfaceMetaTypes';
 
 export type { StandardSurfaceProps };
@@ -72,6 +72,8 @@ export type ZustandStoreHookLike<TState extends object> = {
 /**
  * Evaluates a Zustand selector against the scoped override merged with the live store state
  * when inside `<StoreSnapshotScope>`, or directly invokes `useStoreHook(selector)` when un-scoped.
+ * Caches the merged state and selected slice by `(liveState, scopedPatch, selector)` to guarantee
+ * referential stability for React 19 `useSyncExternalStore`.
  */
 export function useScopedStore<TState extends object, TSlice = TState>(
   storeKey: string,
@@ -79,18 +81,52 @@ export function useScopedStore<TState extends object, TSlice = TState>(
   selector?: (state: TState) => TSlice
 ): TSlice {
   const scopedPatch = useStoreSnapshotOverride<TState>(storeKey);
-  const resolvedSelector =
-    selector ?? ((state: TState) => state as unknown as TSlice);
+  const cacheRef = useRef<{
+    liveState?: TState;
+    scopedPatch?: Partial<TState>;
+    selector?: ((state: TState) => TSlice) | undefined;
+    effectiveState?: TState;
+    hasSlice?: boolean;
+    slice?: TSlice;
+  }>({});
 
   return useStoreHook((liveState: TState) => {
-    if (!scopedPatch) {
-      return resolvedSelector(liveState);
+    const cache = cacheRef.current;
+    let effectiveState = liveState;
+    if (scopedPatch) {
+      if (
+        cache.liveState === liveState &&
+        cache.scopedPatch === scopedPatch &&
+        cache.effectiveState
+      ) {
+        effectiveState = cache.effectiveState;
+      } else {
+        effectiveState = {
+          ...liveState,
+          ...scopedPatch,
+        } as TState;
+      }
     }
-    const effectiveState = {
-      ...liveState,
-      ...scopedPatch,
-    } as TState;
-    return resolvedSelector(effectiveState);
+
+    if (
+      cache.hasSlice &&
+      cache.liveState === liveState &&
+      cache.scopedPatch === scopedPatch &&
+      cache.selector === selector
+    ) {
+      return cache.slice as TSlice;
+    }
+
+    const nextSlice = selector
+      ? selector(effectiveState)
+      : (effectiveState as unknown as TSlice);
+    cache.liveState = liveState;
+    cache.scopedPatch = scopedPatch;
+    cache.selector = selector;
+    cache.effectiveState = effectiveState;
+    cache.hasSlice = true;
+    cache.slice = nextSlice;
+    return nextSlice;
   });
 }
 
@@ -100,9 +136,9 @@ export function useScopedStore<TState extends object, TSlice = TState>(
  * while remaining 100% pass-through in RocketCompanion.
  */
 export function createScopedStoreHook<
-  TStoreHook extends ZustandStoreHookLike<any>
+  TState extends object,
+  TStoreHook extends ZustandStoreHookLike<TState> = ZustandStoreHookLike<TState>
 >(storeKey: string, baseHook: TStoreHook): TStoreHook {
-  type TState = ReturnType<TStoreHook['getState']>;
   const scopedHook = (<TSlice = TState>(
     selector?: (state: TState) => TSlice
   ): TSlice => {

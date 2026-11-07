@@ -16,7 +16,6 @@ export interface NameTagPillRenderCard2D {
   cameraDistanceSq: number;
   viewZDepthUu: number;
   displayText: string;
-  isCircleCard?: boolean;
   centerX: number;
   centerY: number;
   left: number;
@@ -56,150 +55,6 @@ export interface NameTagBallOcclusionProjection2D {
   opacity: number;
 }
 
-export function drawOnScreenCircleCard2D(
-  ctx: CanvasRenderingContext2D,
-  card: NameTagPillRenderCard2D,
-  config: Pick<
-    NameTagConfig,
-    | 'boostIndicatorMode'
-    | 'boostFillOpacity'
-    | 'boostUnfilledBgOpacity'
-    | 'boostShowHorizonLine'
-  > &
-    Partial<
-      Pick<NameTagConfig, 'boostFillColorBlendRatio' | 'boostUnfilledDarkenRatio'>
-    >
-): void {
-  const circleRadiusPx = Math.max(1, Math.min(card.width, card.height) * 0.5);
-  const circleDia = circleRadiusPx * 2;
-  const clampedBoost = Math.max(0, Math.min(1, card.boostFraction));
-  const boostFillAlpha = Math.max(
-    0,
-    Math.min(1, config.boostFillOpacity ?? DEFAULT_NAME_TAG_CONFIG.boostFillOpacity)
-  );
-  const boostFillBlendRatio =
-    config.boostFillColorBlendRatio ??
-    DEFAULT_NAME_TAG_CONFIG.boostFillColorBlendRatio;
-  const unfilledAlpha = Math.max(
-    0,
-    Math.min(
-      1,
-      config.boostUnfilledBgOpacity ?? DEFAULT_NAME_TAG_CONFIG.boostUnfilledBgOpacity
-    )
-  );
-  const unfilledDarkenRatio =
-    config.boostUnfilledDarkenRatio ??
-    DEFAULT_NAME_TAG_CONFIG.boostUnfilledDarkenRatio;
-  const showHorizon =
-    config.boostShowHorizonLine ?? DEFAULT_NAME_TAG_CONFIG.boostShowHorizonLine;
-
-  ctx.save();
-  ctx.globalAlpha = card.opacity;
-
-  const unfilledHex = resolveUnfilledBaseHexColor(
-    card.bgColor,
-    unfilledDarkenRatio
-  );
-  const activeFillHex = resolveActiveBoostFillColor(
-    card.bgColor,
-    card.boostBorderColor,
-    boostFillBlendRatio
-  );
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(card.centerX, card.centerY, circleRadiusPx, 0, Math.PI * 2);
-  ctx.clip();
-
-  if (card.boostBorderVisible) {
-    const fillH = circleDia * clampedBoost;
-    const unfilledH = Math.max(0, circleDia - fillH);
-    const fillTop = card.centerY - circleRadiusPx + unfilledH;
-
-    if (unfilledH > 0.001 && unfilledAlpha > 0.001) {
-      ctx.fillStyle = hexToRgba(unfilledHex, unfilledAlpha);
-      ctx.fillRect(
-        card.centerX - circleRadiusPx,
-        card.centerY - circleRadiusPx,
-        circleDia,
-        unfilledH
-      );
-    }
-
-    if (fillH > 0.001 && boostFillAlpha > 0.001) {
-      ctx.fillStyle = hexToRgba(activeFillHex, boostFillAlpha);
-      ctx.fillRect(card.centerX - circleRadiusPx, fillTop, circleDia, fillH);
-    }
-
-    if (showHorizon && clampedBoost > 0.02 && clampedBoost < 0.98) {
-      ctx.beginPath();
-      ctx.moveTo(card.centerX - circleRadiusPx, fillTop);
-      ctx.lineTo(card.centerX + circleRadiusPx, fillTop);
-      ctx.lineWidth = Math.max(1.25, card.borderW * 0.55);
-      ctx.strokeStyle = card.boostBorderColor;
-      ctx.stroke();
-    }
-  } else {
-    ctx.fillStyle = hexToRgba(card.bgColor, card.bgOpacity);
-    ctx.fillRect(
-      card.centerX - circleRadiusPx,
-      card.centerY - circleRadiusPx,
-      circleDia,
-      circleDia
-    );
-  }
-  ctx.restore();
-
-  if (card.borderW > 0) {
-    ctx.beginPath();
-    ctx.arc(card.centerX, card.centerY, circleRadiusPx, 0, Math.PI * 2);
-    ctx.lineWidth = card.borderW;
-    ctx.strokeStyle = card.borderColor;
-    ctx.stroke();
-
-    if (card.boostBorderVisible && clampedBoost > 0.001) {
-      const outerExtent = circleRadiusPx + card.borderW;
-      const fillH = circleDia * clampedBoost;
-      const fillTop = card.centerY + circleRadiusPx - fillH;
-      const clipTop =
-        clampedBoost >= 0.999 ? card.centerY - outerExtent : fillTop;
-      const clipBottom = card.centerY + outerExtent;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(
-        card.centerX - outerExtent,
-        clipTop,
-        outerExtent * 2,
-        Math.max(0, clipBottom - clipTop)
-      );
-      ctx.clip();
-
-      ctx.beginPath();
-      ctx.arc(card.centerX, card.centerY, circleRadiusPx, 0, Math.PI * 2);
-      ctx.lineWidth = card.borderW;
-      ctx.strokeStyle = card.boostBorderColor;
-      ctx.stroke();
-      ctx.restore();
-    }
-  }
-
-  if (card.displayText) {
-    const fontPx = Math.max(1, card.fontPx);
-    ctx.save();
-    ctx.font = `${card.fontWeight} ${fontPx.toFixed(2)}px ${card.fontFamilyCss}`;
-    ctx.fillStyle = card.textColor;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
-    ctx.shadowBlur = 3;
-    ctx.fillText(card.displayText, card.centerX, card.centerY + fontPx * 0.04);
-    ctx.restore();
-  }
-
-  ctx.restore();
-}
-
 export function drawNameTagPillCard2D(
   ctx: CanvasRenderingContext2D,
   card: NameTagPillRenderCard2D,
@@ -221,10 +76,6 @@ export function drawNameTagPillCard2D(
       >
     >
 ): void {
-  if (card.isCircleCard) {
-    drawOnScreenCircleCard2D(ctx, card, config);
-    return;
-  }
   const mode: NameTagBoostIndicatorMode =
     config.boostIndicatorMode || DEFAULT_NAME_TAG_CONFIG.boostIndicatorMode;
   const clampedBoost = Math.max(0, Math.min(1, card.boostFraction));

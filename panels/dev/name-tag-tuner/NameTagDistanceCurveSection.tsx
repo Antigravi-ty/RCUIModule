@@ -1,5 +1,6 @@
 import React from 'react';
 import { RotateCcw } from 'lucide-react';
+import { resolveNameTagVariantParams } from '../../../config/nameTagConfig';
 import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
 import { SliderControl } from '../../../primitives/SliderControl';
 
@@ -17,7 +18,9 @@ export interface NameTagDistanceCurveSectionProps {
 export const NameTagDistanceCurveSection: React.FC<
   NameTagDistanceCurveSectionProps
 > = ({ isLight = false }) => {
-  const { config, updateConfig, resetConfig } = useNameTagTunerStore();
+  const { config, updateConfig, updateActiveVariant, resetConfig } = useNameTagTunerStore();
+  const isSingleChar = config.cardDisplayMode === 'single-char';
+  const variant = resolveNameTagVariantParams(config, isSingleChar);
 
   const cardBackground = isLight
     ? 'bg-neutral-50/95 border-neutral-200/90 text-neutral-800 shadow-2xs'
@@ -28,7 +31,9 @@ export const NameTagDistanceCurveSection: React.FC<
     <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBackground}`}>
       <div className="flex items-center justify-between">
         <span className="font-bold text-[11px]">
-          Global Distance Scale Curve &amp; Dual-Space Offsets
+          {isSingleChar
+            ? 'Single-Char Distance Scale Curve & Dual-Space Offsets'
+            : 'Standard Pill Distance Scale Curve & Dual-Space Offsets'}
         </span>
         <button
           type="button"
@@ -46,12 +51,12 @@ export const NameTagDistanceCurveSection: React.FC<
         <span className={mutedText}>Depth Metric (Aspect Ratio / Edge Behavior):</span>
         <div className="flex items-center gap-1">
           {(['viewZ', 'euclidean'] as const).map((metric) => {
-            const isSelected = config.depthMetric === metric;
+            const isSelected = variant.depthMetric === metric;
             return (
               <button
                 key={metric}
                 type="button"
-                onClick={() => updateConfig({ depthMetric: metric })}
+                onClick={() => updateActiveVariant({ depthMetric: metric })}
                 className={`px-2 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
                   isSelected
                     ? isLight
@@ -72,12 +77,12 @@ export const NameTagDistanceCurveSection: React.FC<
       <div className="grid grid-cols-4 gap-1">
         {DISTANCE_EXPONENT_PRESETS.map((preset) => {
           const isSelected =
-            Math.abs(config.distanceScaleExponent - preset.value) < 0.005;
+            Math.abs(variant.distanceScaleExponent - preset.value) < 0.005;
           return (
             <button
               key={preset.label}
               type="button"
-              onClick={() => updateConfig({ distanceScaleExponent: preset.value })}
+              onClick={() => updateActiveVariant({ distanceScaleExponent: preset.value })}
               className={`px-1 py-1 rounded border text-[9px] font-mono cursor-pointer truncate transition-colors ${
                 isSelected
                   ? isLight
@@ -107,60 +112,60 @@ export const NameTagDistanceCurveSection: React.FC<
         />
         <SliderControl
           label="Camera Relative Scale"
-          value={config.cameraScaleFactor}
+          value={variant.cameraScaleFactor}
           min={0}
           max={0.3}
           step={0.005}
-          onChange={(nextValue) => updateConfig({ cameraScaleFactor: nextValue })}
+          onChange={(nextValue) => updateActiveVariant({ cameraScaleFactor: nextValue })}
           isLight={isLight}
         />
         <SliderControl
           label="Distance Scale Exponent (gamma)"
-          value={config.distanceScaleExponent}
+          value={variant.distanceScaleExponent}
           min={0.0}
           max={1.5}
           step={0.01}
-          onChange={(nextValue) => updateConfig({ distanceScaleExponent: nextValue })}
+          onChange={(nextValue) => updateActiveVariant({ distanceScaleExponent: nextValue })}
           isLight={isLight}
         />
         <SliderControl
           label="Near Scale Multiplier (500 UU)"
-          value={config.nearScaleMultiplier}
+          value={variant.nearScaleMultiplier}
           min={0.2}
           max={2.5}
           step={0.02}
           unit="x"
-          onChange={(nextValue) => updateConfig({ nearScaleMultiplier: nextValue })}
+          onChange={(nextValue) => updateActiveVariant({ nearScaleMultiplier: nextValue })}
           isLight={isLight}
         />
         <SliderControl
           label="Far Scale Multiplier (9000 UU)"
-          value={config.farScaleMultiplier}
+          value={variant.farScaleMultiplier}
           min={0.2}
           max={2.5}
           step={0.02}
           unit="x"
-          onChange={(nextValue) => updateConfig({ farScaleMultiplier: nextValue })}
+          onChange={(nextValue) => updateActiveVariant({ farScaleMultiplier: nextValue })}
           isLight={isLight}
         />
         <SliderControl
           label="3D World Offset (Car Roof Relative)"
-          value={config.verticalOffsetUu}
+          value={variant.verticalOffsetUu}
           min={0}
           max={360}
           step={2}
           unit="UU"
-          onChange={(nextValue) => updateConfig({ verticalOffsetUu: nextValue })}
+          onChange={(nextValue) => updateActiveVariant({ verticalOffsetUu: nextValue })}
           isLight={isLight}
         />
         <SliderControl
           label="2D Screen Offset (Viewport Relative)"
-          value={config.screenVerticalOffsetPx}
+          value={variant.screenVerticalOffsetPx}
           min={-60}
           max={160}
           step={1}
           unit="px"
-          onChange={(nextValue) => updateConfig({ screenVerticalOffsetPx: nextValue })}
+          onChange={(nextValue) => updateActiveVariant({ screenVerticalOffsetPx: nextValue })}
           isLight={isLight}
         />
       </div>

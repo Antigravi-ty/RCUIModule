@@ -20,7 +20,7 @@ export interface CameraSettingsConfig {
   [key: string]: unknown;
 }
 
-export const DEFAULT_CAMERA_SETTINGS: Readonly<CameraSettingsConfig> = Object.freeze({
+export const DEFAULT_CAMERA_CONFIG: CameraSettingsConfig = {
   cameraShake: false,
   fov: 110,
   distance: 270,
@@ -30,6 +30,10 @@ export const DEFAULT_CAMERA_SETTINGS: Readonly<CameraSettingsConfig> = Object.fr
   swivelSpeed: 10,
   transitionSpeed: 1.9,
   invertSwivel: true,
+};
+
+export const DEFAULT_CAMERA_SETTINGS: Readonly<CameraSettingsConfig> = Object.freeze({
+  ...DEFAULT_CAMERA_CONFIG,
 });
 
 export interface CameraRangeSettingSpec {

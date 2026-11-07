@@ -1,132 +1,41 @@
+/**
+ * nameTagOffscreenRenderer.ts
+ * 2D Canvas renderer for Offscreen Car Indicators (circle + directional arrow + boost fill + aerial alert).
+ */
+
 import {
   DEFAULT_NAME_TAG_CONFIG,
-  DEFAULT_NAME_TAG_DISTINCT_COLORS,
   type NameTagConfig,
 } from './nameTagConfig';
+import {
+  clampRayToRoiBoundary2D,
+  computeOffscreenRoiBounds2D,
+  drawAerialClimbInwardRing2D,
+  drawAerialClimbOuterGlow2D,
+  hexToRgba,
+  mixHexColors,
+  parseHexRgb,
+  resolveActiveBoostFillColor,
+  resolveAerialClimbInwardFillFraction,
+  resolveCarColorPalette,
+  resolveUnfilledBaseHexColor,
+  type NameTagRoiBounds2D,
+} from './nameTagColorAndRoiMath';
 
-export function parseHexRgb(hexColor: string): [number, number, number] {
-  const cleanHex = String(hexColor || '#075985').replace('#', '').trim();
-  const expanded =
-    cleanHex.length === 3
-      ? cleanHex
-          .split('')
-          .map((ch) => ch + ch)
-          .join('')
-      : cleanHex;
-  const numericValue = Number.parseInt(expanded, 16);
-  if (!Number.isFinite(numericValue)) return [12, 45, 72];
-  return [
-    (numericValue >> 16) & 255,
-    (numericValue >> 8) & 255,
-    numericValue & 255,
-  ];
-}
-
-export function hexToRgba(hexColor: string, alpha = 1.0): string {
-  const [r, g, b] = parseHexRgb(hexColor);
-  const clampedAlpha = Math.max(0, Math.min(1, Number(alpha) || 0));
-  return `rgba(${r}, ${g}, ${b}, ${clampedAlpha})`;
-}
-
-export function mixHexColors(hexA: string, hexB: string, weightB = 0.35): string {
-  const [rA, gA, bA] = parseHexRgb(hexA);
-  const [rB, gB, bB] = parseHexRgb(hexB);
-  const t = Math.max(0, Math.min(1, weightB));
-  const r = Math.round(rA + (rB - rA) * t);
-  const g = Math.round(gA + (gB - gA) * t);
-  const b = Math.round(bA + (bB - bA) * t);
-  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
-}
-
-export function resolveActiveBoostFillColor(
-  bgColor: string,
-  boostBorderColor: string,
-  blendRatio = DEFAULT_NAME_TAG_CONFIG.boostFillColorBlendRatio
-): string {
-  const clampedBlend = Math.max(
-    0,
-    Math.min(
-      1,
-      Number.isFinite(Number(blendRatio))
-        ? Number(blendRatio)
-        : DEFAULT_NAME_TAG_CONFIG.boostFillColorBlendRatio
-    )
-  );
-  return mixHexColors(bgColor, boostBorderColor, clampedBlend);
-}
-
-export function resolveUnfilledBaseHexColor(
-  bgColor: string,
-  darkenRatio = DEFAULT_NAME_TAG_CONFIG.boostUnfilledDarkenRatio
-): string {
-  const clampedDarken = Math.max(
-    0,
-    Math.min(
-      1,
-      Number.isFinite(Number(darkenRatio))
-        ? Number(darkenRatio)
-        : DEFAULT_NAME_TAG_CONFIG.boostUnfilledDarkenRatio
-    )
-  );
-  return mixHexColors(bgColor, '#040914', clampedDarken);
-}
-
-export function resolveCarColorPalette(
-  carIndex: number,
-  team: 0 | 1,
-  config: Pick<
-    NameTagConfig,
-    | 'circleColorMode'
-    | 'distinctCarColors'
-    | 'blueBgColor'
-    | 'blueBorderColor'
-    | 'blueTextColor'
-    | 'orangeBgColor'
-    | 'orangeBorderColor'
-    | 'orangeTextColor'
-    | 'boostBorderColorMode'
-    | 'blueBoostBorderColor'
-    | 'orangeBoostBorderColor'
-    | 'sharedBoostBorderColor'
-  >,
-  liveCarColorHex?: string | null
-): {
-  bgColor: string;
-  borderColor: string;
-  textColor: string;
-  boostColor: string;
-} {
-  const isOrange = team === 1;
-  if (config.circleColorMode === 'car-primary') {
-    const slotIdx = Math.max(0, Math.floor(Number(carIndex) || 0)) % 6;
-    const configuredPrimary =
-      (Array.isArray(config.distinctCarColors) && config.distinctCarColors[slotIdx]) ||
-      DEFAULT_NAME_TAG_DISTINCT_COLORS[slotIdx] ||
-      (isOrange ? '#ea580c' : '#0284c7');
-    const primaryHex =
-      typeof liveCarColorHex === 'string' && liveCarColorHex.startsWith('#')
-        ? liveCarColorHex
-        : configuredPrimary;
-    return {
-      bgColor: mixHexColors(primaryHex, '#050b16', 0.36),
-      borderColor: mixHexColors(primaryHex, '#ffffff', 0.42),
-      textColor: '#ffffff',
-      boostColor: '#ffffff',
-    };
-  }
-  const boostColor =
-    config.boostBorderColorMode === 'team'
-      ? isOrange
-        ? config.orangeBoostBorderColor
-        : config.blueBoostBorderColor
-      : config.sharedBoostBorderColor;
-  return {
-    bgColor: isOrange ? config.orangeBgColor : config.blueBgColor,
-    borderColor: isOrange ? config.orangeBorderColor : config.blueBorderColor,
-    textColor: isOrange ? config.orangeTextColor : config.blueTextColor,
-    boostColor,
-  };
-}
+export {
+  clampRayToRoiBoundary2D,
+  computeOffscreenRoiBounds2D,
+  drawAerialClimbInwardRing2D,
+  drawAerialClimbOuterGlow2D,
+  hexToRgba,
+  mixHexColors,
+  parseHexRgb,
+  resolveActiveBoostFillColor,
+  resolveAerialClimbInwardFillFraction,
+  resolveCarColorPalette,
+  resolveUnfilledBaseHexColor,
+  type NameTagRoiBounds2D,
+};
 
 export interface NameTagOffscreenIndicatorCard2D {
   carIndex: number;
@@ -154,173 +63,6 @@ export interface NameTagOffscreenIndicatorCard2D {
   boostFraction: number;
   boostBorderColor: string;
   aerialClimbGlowVisible: boolean;
-}
-
-export interface NameTagRoiBounds2D {
-  minX: number;
-  maxX: number;
-  minY: number;
-  maxY: number;
-}
-
-export function computeOffscreenRoiBounds2D(
-  viewportWidthPx: number,
-  viewportHeightPx: number,
-  config: Pick<
-    NameTagConfig,
-    | 'offscreenCircleRadiusPx'
-    | 'offscreenArrowLengthPx'
-    | 'offscreenArrowGapPx'
-    | 'offscreenRoiAvoidHud'
-    | 'offscreenRoiTopInsetPx'
-    | 'offscreenRoiBottomInsetPx'
-    | 'offscreenRoiSideInsetPx'
-  >
-): NameTagRoiBounds2D {
-  const circleRadius = Math.max(
-    1,
-    Number(config.offscreenCircleRadiusPx) || DEFAULT_NAME_TAG_CONFIG.offscreenCircleRadiusPx
-  );
-  const arrowLen = Math.max(
-    0,
-    Number(config.offscreenArrowLengthPx) ?? DEFAULT_NAME_TAG_CONFIG.offscreenArrowLengthPx
-  );
-  const arrowGap = Math.max(
-    0,
-    Number(config.offscreenArrowGapPx) ?? DEFAULT_NAME_TAG_CONFIG.offscreenArrowGapPx
-  );
-  const extentPad = circleRadius + arrowGap + arrowLen + 8;
-
-  const avoidHud = config.offscreenRoiAvoidHud ?? DEFAULT_NAME_TAG_CONFIG.offscreenRoiAvoidHud;
-  const topInset = avoidHud
-    ? Math.max(extentPad, Number(config.offscreenRoiTopInsetPx) || 72)
-    : extentPad;
-  const bottomInset = avoidHud
-    ? Math.max(extentPad, Number(config.offscreenRoiBottomInsetPx) || 88)
-    : extentPad;
-  const sideInset = avoidHud
-    ? Math.max(extentPad, Number(config.offscreenRoiSideInsetPx) || 56)
-    : extentPad;
-
-  const halfW = viewportWidthPx * 0.5;
-  const halfH = viewportHeightPx * 0.5;
-
-  return {
-    minX: Math.min(halfW - 10, sideInset),
-    maxX: Math.max(halfW + 10, viewportWidthPx - sideInset),
-    minY: Math.min(halfH - 10, topInset),
-    maxY: Math.max(halfH + 10, viewportHeightPx - bottomInset),
-  };
-}
-
-export function clampRayToRoiBoundary2D(
-  dirX: number,
-  dirY: number,
-  viewportWidthPx: number,
-  viewportHeightPx: number,
-  roi: NameTagRoiBounds2D
-): { centerX: number; centerY: number; angleRad: number } {
-  const screenCx = viewportWidthPx * 0.5;
-  const screenCy = viewportHeightPx * 0.5;
-  const len = Math.hypot(dirX, dirY);
-  const nx = len > 1e-5 ? dirX / len : 0;
-  const ny = len > 1e-5 ? dirY / len : -1;
-
-  const maxDx = nx >= 0 ? roi.maxX - screenCx : roi.minX - screenCx;
-  const maxDy = ny >= 0 ? roi.maxY - screenCy : roi.minY - screenCy;
-
-  const tx = Math.abs(nx) > 1e-5 ? Math.abs(maxDx / nx) : Number.POSITIVE_INFINITY;
-  const ty = Math.abs(ny) > 1e-5 ? Math.abs(maxDy / ny) : Number.POSITIVE_INFINITY;
-  const t = Math.min(tx, ty);
-
-  const clampedX = Math.max(
-    roi.minX,
-    Math.min(roi.maxX, screenCx + nx * (Number.isFinite(t) ? t : 0))
-  );
-  const clampedY = Math.max(
-    roi.minY,
-    Math.min(roi.maxY, screenCy + ny * (Number.isFinite(t) ? t : 0))
-  );
-
-  return {
-    centerX: clampedX,
-    centerY: clampedY,
-    angleRad: Math.atan2(ny, nx),
-  };
-}
-
-export function resolveAerialClimbInwardFillFraction(
-  rawGlowRadiusValue: number | undefined
-): number {
-  const numeric = Number.isFinite(Number(rawGlowRadiusValue))
-    ? Number(rawGlowRadiusValue)
-    : DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowRadiusPx;
-  return Math.max(0.08, Math.min(1.0, numeric / 100));
-}
-
-export function drawAerialClimbInwardRing2D(
-  ctx: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-  circleRadiusPx: number,
-  config: Pick<
-    NameTagConfig,
-    'aerialClimbGlowColor' | 'aerialClimbGlowRadiusPx' | 'aerialClimbGlowOpacity'
-  >
-): void {
-  const alertColor =
-    config.aerialClimbGlowColor || DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowColor;
-  const fillFraction = resolveAerialClimbInwardFillFraction(
-    config.aerialClimbGlowRadiusPx
-  );
-  const alertOpacity = Math.max(
-    0.1,
-    Math.min(
-      1.0,
-      Number(config.aerialClimbGlowOpacity) ??
-        DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowOpacity
-    )
-  );
-
-  const innerRadiusPx = Math.max(0, circleRadiusPx * (1 - fillFraction));
-
-  ctx.save();
-  ctx.fillStyle = hexToRgba(alertColor, alertOpacity);
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, circleRadiusPx, 0, Math.PI * 2, false);
-  if (innerRadiusPx > 0.5) {
-    ctx.arc(centerX, centerY, innerRadiusPx, 0, Math.PI * 2, true);
-  }
-  ctx.fill('evenodd');
-  ctx.restore();
-}
-
-export function drawAerialClimbOuterGlow2D(
-  ctx: CanvasRenderingContext2D,
-  config: Pick<
-    NameTagConfig,
-    'aerialClimbGlowColor' | 'aerialClimbGlowRadiusPx' | 'aerialClimbGlowOpacity'
-  >,
-  drawShapePath: () => void,
-  strokeWidthPx = 3
-): void {
-  const glowColor =
-    config.aerialClimbGlowColor || DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowColor;
-  const glowOpacity = Math.max(
-    0.1,
-    Math.min(
-      1.0,
-      Number(config.aerialClimbGlowOpacity) ??
-        DEFAULT_NAME_TAG_CONFIG.aerialClimbGlowOpacity
-    )
-  );
-
-  ctx.save();
-  ctx.strokeStyle = hexToRgba(glowColor, glowOpacity);
-  ctx.lineWidth = Math.max(2, strokeWidthPx);
-  drawShapePath();
-  ctx.stroke();
-  ctx.restore();
 }
 
 export function drawOffscreenIndicatorCard2D(

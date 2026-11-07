@@ -1,18 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Ghost, Play } from 'lucide-react';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
+import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
+import { PanelFooter } from '../layout/PanelFooter';
+import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
+import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { useAppStore } from '../stores/appStore';
+import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { useSignalingProfileStore } from '../stores/signalingProfileStore';
+import {
+  useScopedStore,
+  useStoreSnapshotOverride,
+} from '../stores/storeSnapshotScope';
 import {
   applyConnectivityMaskToRoomCode,
   finalizeHostRoomCode,
   generateRandomRoomCode,
 } from '../config/roomCodeConnectivityCodec';
-import { Ghost, Play } from 'lucide-react';
-import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
-import { PanelFooter } from '../layout/PanelFooter';
-import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
-import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
-import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,
@@ -29,8 +34,7 @@ export interface HostTrainingConfig {
   ghostMode: HostTrainingGhostMode;
 }
 
-export interface Layer3HostTrainingRecipeProps {
-  isLight?: boolean;
+export interface Layer3HostTrainingStateOverride {
   defaultConfig?: Partial<HostTrainingConfig>;
   defaultGhostMode?: HostTrainingGhostMode;
   progressStatus?: CreationProgressStatus;
@@ -38,49 +42,134 @@ export interface Layer3HostTrainingRecipeProps {
   onStartTraining?: (config: HostTrainingConfig) => void;
   onNavigateGarageSync?: () => void;
   onNavigateSignalingConfig?: () => void;
-  onBack?: () => void;
-  className?: string;
 }
+
+export interface Layer3HostTrainingRecipeProps extends StandardSurfaceProps {
+  defaultConfig?: Partial<HostTrainingConfig>;
+  defaultGhostMode?: HostTrainingGhostMode;
+  progressStatus?: CreationProgressStatus;
+  currentStep?: number;
+  className?: string;
+  stateOverride?: Layer3HostTrainingStateOverride;
+}
+
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer3HostTrainingRecipe',
+  title: 'Host Training (Online Training)',
+  subtitle: 'Create shared online co-op training room with ghost collision mode and 5-step initialization',
+  icon: 'Ghost',
+  layer: 'layer3',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 500,
+    height: 420,
+    minHeight: 200,
+    maxHeight: 620,
+    mode: 'adaptive',
+  },
+  variants: [
+    {
+      variantId: 'idle',
+      label: 'Idle Form',
+      description: 'Default host training setup with identity fields and Ghost Mode policy.',
+      entryFile: 'recipes/Layer3HostTrainingRecipe.tsx',
+      storeOverrides: {
+        onlineRoomStore: {
+          defaultGhostMode: 'automatically-enable',
+          progressStatus: 'idle',
+          currentStep: 1,
+        },
+      },
+    },
+    {
+      variantId: 'running-step-3',
+      label: 'Step 3/5 · Registering Training Room',
+      description: 'Registering shared training session code on signaling relay.',
+      entryFile: 'recipes/online/OnlineRoomCreationProgress.tsx',
+      storeOverrides: {
+        onlineRoomStore: {
+          defaultGhostMode: 'automatically-enable',
+          progressStatus: 'running',
+          currentStep: 3,
+        },
+      },
+    },
+    {
+      variantId: 'completed',
+      label: 'Step 5/5 · Training Room Ready',
+      description: 'Shared training session initialized and ready for peers.',
+      entryFile: 'recipes/online/OnlineRoomCreationProgress.tsx',
+      storeOverrides: {
+        onlineRoomStore: {
+          defaultGhostMode: 'manual',
+          progressStatus: 'completed',
+          currentStep: 5,
+        },
+      },
+    },
+    {
+      variantId: 'error-step-3',
+      label: 'Step 3/5 · Error (Signaling Rejected)',
+      description: 'Simulated signaling or registration failure on step 3.',
+      entryFile: 'recipes/online/OnlineRoomCreationProgress.tsx',
+      storeOverrides: {
+        onlineRoomStore: {
+          defaultGhostMode: 'automatically-enable',
+          progressStatus: 'error',
+          currentStep: 3,
+        },
+      },
+    },
+  ],
+};
 
 /**
  * [Recipe] Layer 3 Host Training
- * Simplified online co-op training host setup:
- * 1. Player Name: + "Not you?" (jumps to Garage Sync)
- * 2. Room Code (left half + Randomize) | Lock + Key (right half, placeholder "None")
- * 3. Ghost Mode — inline SegmentedSwitch (Automatically Enable | Manual)
- * 4. Create & Host — 5-step progress bar + primary action button
  */
 export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> = React.memo(({
   isLight = true,
-  defaultConfig,
-  defaultGhostMode,
-  progressStatus: controlledProgressStatus,
-  currentStep: controlledCurrentStep,
-  onStartTraining,
-  onNavigateGarageSync,
-  onNavigateSignalingConfig,
+  defaultConfig: propDefaultConfig,
+  defaultGhostMode: propDefaultGhostMode,
+  progressStatus: propProgressStatus,
+  currentStep: propCurrentStep,
   onBack: propOnBack,
   className = '',
+  stateOverride,
 }) => {
-  const storeGoBack = useAppStore((s) => s.goBack);
-  const navigate = useAppStore((s) => s.navigate);
-  const setSettingsTargetTab = useAppStore((s) => s.setSettingsTargetTab);
-  const setHighlightSetting = useAppStore((s) => s.setHighlightSetting);
+  const appState = useScopedStore('appStore', useAppStore);
+  const scopedRoom = useStoreSnapshotOverride<Layer3HostTrainingStateOverride>('onlineRoomStore');
+  const overrides: Layer3HostTrainingStateOverride = {
+    ...scopedRoom,
+    ...stateOverride,
+  };
+
+  const {
+    goBack: storeGoBack,
+    navigate,
+    setSettingsTargetTab,
+    setHighlightSetting,
+  } = appState;
   const hostMask = useSignalingProfileStore((s) => s.hostMask);
   const verifyRelays = useSignalingProfileStore((s) => s.verifyRelays);
   const onBack = propOnBack ?? storeGoBack;
+
+  const resolvedDefaultConfig = propDefaultConfig ?? overrides.defaultConfig;
+  const resolvedDefaultGhostMode =
+    propDefaultGhostMode ?? overrides.defaultGhostMode ?? resolvedDefaultConfig?.ghostMode ?? 'automatically-enable';
+
   const [playerName, setPlayerName] = useState<string>(
-    defaultConfig?.playerName ?? `Player${Math.floor(1000 + Math.random() * 9000)}`
+    resolvedDefaultConfig?.playerName ?? `Player${Math.floor(1000 + Math.random() * 9000)}`
   );
   const [roomCode, setRoomCode] = useState<string>(
-    defaultConfig?.roomCode ?? ''
+    resolvedDefaultConfig?.roomCode ?? ''
   );
   const [roomKey, setRoomKey] = useState<string>(
-    defaultConfig?.roomKey ?? ''
+    resolvedDefaultConfig?.roomKey ?? ''
   );
-  const [ghostMode, setGhostMode] = useState<HostTrainingGhostMode>(
-    defaultGhostMode ?? defaultConfig?.ghostMode ?? 'automatically-enable'
-  );
+  const [ghostMode, setGhostMode] = useState<HostTrainingGhostMode>(resolvedDefaultGhostMode);
+  useEffect(() => {
+    setGhostMode(resolvedDefaultGhostMode);
+  }, [resolvedDefaultGhostMode]);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
@@ -100,9 +189,10 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
     };
   }, [verifyRelays]);
 
-  // 5-Step Creation Progress State
   const [internalProgressStatus, setProgressStatus] = useState<CreationProgressStatus>('idle');
   const [internalCurrentStep, setCurrentStep] = useState<number>(1);
+  const controlledProgressStatus = propProgressStatus ?? overrides.progressStatus;
+  const controlledCurrentStep = propCurrentStep ?? overrides.currentStep;
   const progressStatus = controlledProgressStatus ?? internalProgressStatus;
   const currentStep = controlledCurrentStep ?? internalCurrentStep;
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -114,9 +204,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
     }
   };
 
-  useEffect(() => {
-    return () => clearStepTimer();
-  }, []);
+  useEffect(() => () => clearStepTimer(), []);
 
   const handleRandomizeCode = () => {
     const code = generateRandomRoomCode(hostMask);
@@ -124,8 +212,8 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   };
 
   const handleSignalingConfigJump = () => {
-    if (onNavigateSignalingConfig) {
-      onNavigateSignalingConfig();
+    if (overrides.onNavigateSignalingConfig) {
+      overrides.onNavigateSignalingConfig();
       return;
     }
     setSettingsTargetTab('advanced');
@@ -155,7 +243,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
         if (next >= 5) {
           clearStepTimer();
           setProgressStatus('completed');
-          onStartTraining?.({
+          overrides.onStartTraining?.({
             playerName: playerName.trim() || `Player${Math.floor(1000 + Math.random() * 9000)}`,
             roomCode: cleanCode,
             roomKey,
@@ -174,11 +262,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
       sizing={sizing}
       className={`w-full select-none ${className}`}
     >
-      <PanelHeader
-        isLight={isLight}
-        title="HOST TRAINING"
-        onBack={onBack}
-      />
+      <PanelHeader isLight={isLight} title="HOST TRAINING" onBack={onBack} />
 
       <PanelContent scrollable={true} className="flex flex-col justify-between gap-4">
         <div
@@ -186,7 +270,6 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
           className="flex flex-col w-full"
           style={{ gap: `${Math.max(8, rowGap)}px` }}
         >
-          {/* 1 & 2. Shared Identity & Room Code / Key */}
           <OnlineRoomIdentityFields
             isLight={isLight}
             identity={{
@@ -199,12 +282,11 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
             }}
             showRandomize={true}
             onRandomizeRoomCode={handleRandomizeCode}
-            onNotYouClick={onNavigateGarageSync ?? (() => navigate('garage'))}
+            onNotYouClick={overrides.onNavigateGarageSync ?? (() => navigate('garage'))}
             onSignalingConfigClick={handleSignalingConfigJump}
             onHoverDesc={setHoveredDesc}
           />
 
-          {/* 3. Ghost Mode (2 Options: Automatically Enable | Manual) */}
           <SettingSegmentedRow
             icon={Ghost}
             iconColor="text-purple-400"

@@ -1,7 +1,7 @@
 import React from 'react';
 import { NameTagCalibrationSection } from './name-tag-tuner/NameTagCalibrationSection';
 import { NameTagPillGeometryAndPreviewSection } from './name-tag-tuner/NameTagPillGeometryAndPreviewSection';
-import { NameTagCircleIdentitySection } from './name-tag-tuner/NameTagCircleIdentitySection';
+import { NameTagSingleCharIndicatorSection } from './name-tag-tuner/NameTagSingleCharIndicatorSection';
 import { NameTagBoostBorderSection } from './name-tag-tuner/NameTagBoostBorderSection';
 import { NameTagOffscreenAndAerialAlertSection } from './name-tag-tuner/NameTagOffscreenAndAerialAlertSection';
 import { NameTagColorsAndNamesSection } from './name-tag-tuner/NameTagColorsAndNamesSection';
@@ -58,8 +58,8 @@ export const NameTagTunerFloatingWindow: React.FC<NameTagTunerFloatingWindowProp
       {/* 1. Distance Scale Power-Law Calibration & Anchor Points */}
       <NameTagCalibrationSection isLight={isLight} />
 
-      {/* 1b. On-Screen Circle Identity & Match Slot Codes */}
-      <NameTagCircleIdentitySection isLight={isLight} />
+      {/* 1b. On-Screen Single-Char Indicator & Match Slot Codes */}
+      <NameTagSingleCharIndicatorSection isLight={isLight} />
 
       {/* 2. Pill Geometry, Typography & Live 2D SVG Preview */}
       <NameTagPillGeometryAndPreviewSection isLight={isLight} />

@@ -443,13 +443,15 @@ export function buildGoalBarrierCmfChunks(
   return chunks;
 }
 
-export const DEFAULT_GOAL_BARRIER_STATE: GoalBarrierPersistedState = {
+export const DEFAULT_GOAL_BARRIER_CONFIG: GoalBarrierPersistedState = {
   enabled: false,
   selectionMode: 'new',
   targetGoal: 'both',
   opacity: 0.55,
   rects: [],
 };
+
+export const DEFAULT_GOAL_BARRIER_STATE: GoalBarrierPersistedState = DEFAULT_GOAL_BARRIER_CONFIG;
 
 export function loadGoalBarrierConfig(): GoalBarrierPersistedState {
   try {

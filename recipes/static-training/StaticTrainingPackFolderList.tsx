@@ -12,18 +12,14 @@ import {
   type StaticTrainingPackSummary,
   type TopCategoryFilter,
   PSYONIX_YEARS,
-  PSYONIX_MONTH_DEFINITIONS,
   RANK_SUBFOLDERS,
-  isKevpertPack,
-  isPsyonixPack,
-  isNativePack,
-  isOthersPack,
   hasAnyRankTag,
-  matchesPsyonixYear,
-  matchesPsyonixYearMonth,
-  matchesRankSubfolder,
   normalizeRankLabel,
   filterAndSortTrainingPacks,
+  computePackCategoryCounts,
+  computePsyonixYearCounts,
+  computePsyonixMonthsForYear,
+  computeRankSubfolderCounts,
 } from './staticTrainingPackFilterLogic';
 
 export type {
@@ -66,69 +62,13 @@ export const StaticTrainingPackFolderList: React.FC<StaticTrainingPackFolderList
     const [sortOrder, setSortOrder] = useState<StaticPackSortOrder>('updated');
     const [searchQuery, setSearchQuery] = useState<string>('');
 
-    const categoryCounts = useMemo(() => {
-      const counts: Record<TopCategoryFilter, number> = {
-        All: packs.length,
-        Kevpert: 0,
-        Psyonix: 0,
-        Rank: 0,
-        Others: 0,
-        Native: 0,
-      };
-      for (const p of packs) {
-        if (isKevpertPack(p)) counts.Kevpert++;
-        if (isPsyonixPack(p)) counts.Psyonix++;
-        if (hasAnyRankTag(p)) counts.Rank++;
-        if (isOthersPack(p)) counts.Others++;
-        if (isNativePack(p)) counts.Native++;
-      }
-      return counts;
-    }, [packs]);
-
-    const psyonixYearCounts = useMemo(() => {
-      const map = new Map<string, number>();
-      for (const yr of PSYONIX_YEARS) map.set(yr, 0);
-      for (const p of packs) {
-        if (!isPsyonixPack(p)) continue;
-        for (const yr of PSYONIX_YEARS) {
-          if (matchesPsyonixYear(p, yr)) {
-            map.set(yr, (map.get(yr) || 0) + 1);
-          }
-        }
-      }
-      return map;
-    }, [packs]);
-
-    const psyonixMonthsForSelectedYear = useMemo(() => {
-      if (selectedPsyonixYear === 'ALL') return [];
-      const results: Array<{ ymTag: string; shortLabel: string; count: number }> = [];
-      for (const def of PSYONIX_MONTH_DEFINITIONS) {
-        const ymTag = `${selectedPsyonixYear}-${def.mm}`;
-        let count = 0;
-        for (const p of packs) {
-          if (isPsyonixPack(p) && matchesPsyonixYearMonth(p, ymTag)) {
-            count++;
-          }
-        }
-        if (count > 0) {
-          results.push({ ymTag, shortLabel: def.shortLabel, count });
-        }
-      }
-      return results;
-    }, [packs, selectedPsyonixYear]);
-
-    const rankCounts = useMemo(() => {
-      const map = new Map<string, number>();
-      for (const r of RANK_SUBFOLDERS) map.set(r, 0);
-      for (const p of packs) {
-        for (const r of RANK_SUBFOLDERS) {
-          if (matchesRankSubfolder(p, r)) {
-            map.set(r, (map.get(r) || 0) + 1);
-          }
-        }
-      }
-      return map;
-    }, [packs]);
+    const categoryCounts = useMemo(() => computePackCategoryCounts(packs), [packs]);
+    const psyonixYearCounts = useMemo(() => computePsyonixYearCounts(packs), [packs]);
+    const psyonixMonthsForSelectedYear = useMemo(
+      () => computePsyonixMonthsForYear(packs, selectedPsyonixYear),
+      [packs, selectedPsyonixYear]
+    );
+    const rankCounts = useMemo(() => computeRankSubfolderCounts(packs), [packs]);
 
     const filteredAndSortedPacks = useMemo(
       () =>

@@ -49,7 +49,7 @@ export interface StaticTrainingQuickVariationToggles {
   enableFToMirror?: boolean;
 }
 
-export const DEFAULT_QUICK_VARIATION_TOGGLES: StaticTrainingQuickVariationToggles = {
+export const DEFAULT_STATIC_TRAINING_VARIATION_CONFIG: StaticTrainingQuickVariationToggles = {
   enableCustomVariationOverride: false,
   applyNewKevpertBind: false,
   moreBoostAmount: 0,
@@ -60,6 +60,9 @@ export const DEFAULT_QUICK_VARIATION_TOGGLES: StaticTrainingQuickVariationToggle
   overrideUnlimitedBoostAs100: true,
   enableFToMirror: true,
 };
+
+export const DEFAULT_QUICK_VARIATION_TOGGLES: StaticTrainingQuickVariationToggles =
+  DEFAULT_STATIC_TRAINING_VARIATION_CONFIG;
 
 export const ZERO_VARIATION_CONFIG: StaticTrainingVariationConfig = {
   presetKey: 'CUSTOM',

@@ -55,9 +55,14 @@ export interface GarageSettingsState {
   carVisual: string;
 }
 
+export const DEFAULT_GARAGE_SETTINGS_CONFIG: GarageSettingsState = {
+  vehiclePreset: 'fennec',
+  carVisual: 'fennec',
+};
+
 export const garageSettingsStore = createLocalStorageStore<GarageSettingsState>(
   STORAGE_KEY_DISPLAY_SETTINGS,
-  () => ({ vehiclePreset: 'fennec', carVisual: 'fennec' }),
+  () => ({ ...DEFAULT_GARAGE_SETTINGS_CONFIG }),
   (target, stored) => {
     target.vehiclePreset = stringOrDefault(
       stored.vehiclePreset || stored.carVisual,

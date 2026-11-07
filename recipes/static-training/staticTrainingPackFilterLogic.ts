@@ -344,3 +344,116 @@ export async function decodeRCSPackText(file: File): Promise<string> {
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return new TextDecoder().decode(bytes);
 }
+
+export async function parseStandaloneImportedPackFile(
+  file: File,
+  isDevMode: boolean
+): Promise<StaticTrainingPackSummary> {
+  if (!isDevMode && /\.(rlrcspack|tem)$/i.test(file.name)) {
+    throw new Error('.RLRCSPack and .Tem packs can only be imported in Developer Mode.');
+  }
+  const text = await decodeRCSPackText(file);
+  const parsed = JSON.parse(text);
+  if (!isDevMode && parsed?.format === 'RLRCSPack') {
+    throw new Error('.RLRCSPack packs can only be imported in Developer Mode.');
+  }
+  const rawMeta = parsed?.metadata || parsed || {};
+  const rawItems = Array.isArray(parsed?.items) ? parsed.items : [];
+  return normalizePackSummary({
+    uuid:
+      typeof rawMeta.uuid === 'string' && rawMeta.uuid.trim()
+        ? rawMeta.uuid.trim()
+        : generatePackUUID(),
+    title:
+      typeof rawMeta.title === 'string' && rawMeta.title.trim()
+        ? rawMeta.title.trim()
+        : file.name.replace(/\.(rcspacke?|rlrcspack|gz|json)$/i, '') || 'Imported Pack',
+    description: typeof rawMeta.description === 'string' ? rawMeta.description : '',
+    itemCount:
+      rawItems.length > 0
+        ? rawItems.length
+        : typeof rawMeta.itemCount === 'number'
+        ? rawMeta.itemCount
+        : 1,
+    sourcePackType: /\.rlrcspack$/i.test(file.name)
+      ? 'RLRCSPack'
+      : /\.rcspacke$/i.test(file.name)
+      ? 'RCSPackE'
+      : 'RCSPack',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+}
+
+export function computePackCategoryCounts(
+  packs: StaticTrainingPackSummary[]
+): Record<TopCategoryFilter, number> {
+  const counts: Record<TopCategoryFilter, number> = {
+    All: packs.length,
+    Kevpert: 0,
+    Psyonix: 0,
+    Rank: 0,
+    Others: 0,
+    Native: 0,
+  };
+  for (const p of packs) {
+    if (isKevpertPack(p)) counts.Kevpert++;
+    if (isPsyonixPack(p)) counts.Psyonix++;
+    if (hasAnyRankTag(p)) counts.Rank++;
+    if (isOthersPack(p)) counts.Others++;
+    if (isNativePack(p)) counts.Native++;
+  }
+  return counts;
+}
+
+export function computePsyonixYearCounts(
+  packs: StaticTrainingPackSummary[]
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const yr of PSYONIX_YEARS) map.set(yr, 0);
+  for (const p of packs) {
+    if (!isPsyonixPack(p)) continue;
+    for (const yr of PSYONIX_YEARS) {
+      if (matchesPsyonixYear(p, yr)) {
+        map.set(yr, (map.get(yr) || 0) + 1);
+      }
+    }
+  }
+  return map;
+}
+
+export function computePsyonixMonthsForYear(
+  packs: StaticTrainingPackSummary[],
+  selectedYear: string
+): Array<{ ymTag: string; shortLabel: string; count: number }> {
+  if (selectedYear === 'ALL') return [];
+  const results: Array<{ ymTag: string; shortLabel: string; count: number }> = [];
+  for (const def of PSYONIX_MONTH_DEFINITIONS) {
+    const ymTag = `${selectedYear}-${def.mm}`;
+    let count = 0;
+    for (const p of packs) {
+      if (isPsyonixPack(p) && matchesPsyonixYearMonth(p, ymTag)) {
+        count++;
+      }
+    }
+    if (count > 0) {
+      results.push({ ymTag, shortLabel: def.shortLabel, count });
+    }
+  }
+  return results;
+}
+
+export function computeRankSubfolderCounts(
+  packs: StaticTrainingPackSummary[]
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const r of RANK_SUBFOLDERS) map.set(r, 0);
+  for (const p of packs) {
+    for (const r of RANK_SUBFOLDERS) {
+      if (matchesRankSubfolder(p, r)) {
+        map.set(r, (map.get(r) || 0) + 1);
+      }
+    }
+  }
+  return map;
+}

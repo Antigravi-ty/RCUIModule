@@ -12,10 +12,10 @@ export interface NameTagOffscreenCurveTunerSectionProps {
 }
 
 const CURVE_EXPONENT_PRESETS = [
-  { label: 'Fast Near (0.45)', exponent: 0.45, desc: 'Shrinks quickly after near threshold' },
+  { label: 'Calibrated (0.45)', exponent: 0.45, desc: 'Calibrated default near falloff' },
   { label: 'Balanced (0.75)', exponent: 0.75, desc: 'Perspective-like non-linear falloff' },
   { label: 'Linear (1.00)', exponent: 1.0, desc: 'Uniform linear size reduction' },
-  { label: 'Calibrated (1.35)', exponent: 1.35, desc: 'Calibrated default mid-field retention' },
+  { label: 'Slow Near (1.35)', exponent: 1.35, desc: 'Retains size longer in mid-field' },
 ];
 
 const EDGE_ANGLE_PRESETS = [
@@ -80,13 +80,9 @@ export const NameTagOffscreenCurveTunerSection: React.FC<NameTagOffscreenCurveTu
           offscreenDistanceNearUu: config.offscreenDistanceNearUu,
           offscreenDistanceFarUu: config.offscreenDistanceFarUu,
           offscreenDistanceCurveExponent: config.offscreenDistanceCurveExponent,
+          anonymizePlayerNames: config.anonymizePlayerNames,
           cardDisplayMode: config.cardDisplayMode,
-          circleLabelMode: config.circleLabelMode,
           circleColorMode: config.circleColorMode,
-          onscreenCircleFixedSize: config.onscreenCircleFixedSize,
-          onscreenCircleRadiusPx: config.onscreenCircleRadiusPx,
-          onscreenCircleFontSizePx: config.onscreenCircleFontSizePx,
-          onscreenCircleBorderWidthPx: config.onscreenCircleBorderWidthPx,
           slotCodes: config.slotCodes,
         },
         null,

@@ -49,20 +49,24 @@ export interface MatchLobbyUtilitiesState {
   onOpenNetHud?: () => void;
 }
 
-export interface MatchLobbyRoomRecipeProps {
-  role: 'host' | 'client';
-  signalingState?: SignalingHealthState;
+export interface MatchLobbyActions {
   onRefreshSignaling?: () => void | Promise<void>;
-  localTeam?: LobbyTeamAssignment;
-  onSwitchTeam?: (team: LobbyTeamAssignment) => void;
-  peers?: LobbyPlayerSlot[];
   onKickPeer?: (peerId: string) => void;
-  roomConfig?: MatchLobbyRoomConfigState;
-  utilities?: MatchLobbyUtilitiesState;
   onStartMatch?: () => void;
   onEnterMatch?: () => void;
   onNavigateAdvancedSettings?: () => void;
   onStopOrLeave?: () => void;
+}
+
+export interface MatchLobbyRoomRecipeProps {
+  role: 'host' | 'client';
+  signalingState?: SignalingHealthState;
+  localTeam?: LobbyTeamAssignment;
+  onSwitchTeam?: (team: LobbyTeamAssignment) => void;
+  peers?: LobbyPlayerSlot[];
+  roomConfig?: MatchLobbyRoomConfigState;
+  utilities?: MatchLobbyUtilitiesState;
+  actions?: MatchLobbyActions;
   onHoverDesc?: (desc: string | null) => void;
   isLight?: boolean;
 }
@@ -84,20 +88,23 @@ const TEAM_SLOTS_PER_SIDE: Record<HostMatchTeamFormat, number> = {
 export const MatchLobbyRoomRecipe: React.FC<MatchLobbyRoomRecipeProps> = React.memo(({
   role,
   signalingState: controlledSignaling,
-  onRefreshSignaling,
   localTeam: controlledLocalTeam,
   onSwitchTeam,
   peers: controlledPeers,
-  onKickPeer,
   roomConfig,
   utilities,
-  onStartMatch,
-  onEnterMatch,
-  onNavigateAdvancedSettings,
-  onStopOrLeave,
+  actions,
   onHoverDesc,
   isLight = false,
 }) => {
+  const {
+    onRefreshSignaling,
+    onKickPeer,
+    onStartMatch,
+    onEnterMatch,
+    onNavigateAdvancedSettings,
+    onStopOrLeave,
+  } = actions ?? {};
   const {
     roomCode = 'RL-8924',
     pairId = '7F3A',
@@ -271,12 +278,14 @@ export const MatchLobbyRoomRecipe: React.FC<MatchLobbyRoomRecipeProps> = React.m
         localTeam={localTeam}
         setLocalTeam={setLocalTeam}
         rosterLayout={rosterLayout}
-        slotsPerSide={slotsPerSide}
-        maxPlayers={maxPlayers}
-        humanCount={allHumans.length}
-        blueRoster={blueRoster}
-        neutralRoster={neutralRoster}
-        orangeRoster={orangeRoster}
+        roster={{
+          slotsPerSide,
+          maxPlayers,
+          humanCount: allHumans.length,
+          blueRoster,
+          neutralRoster,
+          orangeRoster,
+        }}
         onRemovePeer={handleRemovePeer}
         onHoverDesc={onHoverDesc}
       />
@@ -364,17 +373,21 @@ export const MatchLobbyRoomRecipe: React.FC<MatchLobbyRoomRecipeProps> = React.m
       <OnlineRoomConfigSummaryCard
         title="Current Configuration"
         teamFormat={teamFormat}
-        onChangeTeamFormat={setTeamFormat}
         botPolicy={botPolicy}
-        onChangeBotPolicy={setBotPolicy}
         durationPreset={durationPreset}
-        onChangeDurationPreset={setDurationPreset}
         customDurationSeconds={customDurationSeconds}
-        onChangeCustomDurationSeconds={setCustomDurationSeconds}
-        editable={isHost}
-        isEditing={isHost && isEditingConfig}
-        onToggleEditing={isHost ? () => setIsEditingConfig((p) => !p) : undefined}
-        onNavigateAdvancedSettings={isHost ? onNavigateAdvancedSettings : undefined}
+        handlers={{
+          onChangeTeamFormat: setTeamFormat,
+          onChangeBotPolicy: setBotPolicy,
+          onChangeDurationPreset: setDurationPreset,
+          onChangeCustomDurationSeconds: setCustomDurationSeconds,
+        }}
+        editor={{
+          editable: isHost,
+          isEditing: isHost && isEditingConfig,
+          onToggleEditing: isHost ? () => setIsEditingConfig((p) => !p) : undefined,
+          onNavigateAdvancedSettings: isHost ? onNavigateAdvancedSettings : undefined,
+        }}
         onHoverDesc={onHoverDesc}
         isLight={isLight}
       />

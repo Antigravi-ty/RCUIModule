@@ -39,19 +39,23 @@ export interface DuringMatchRoomConfig {
   customDurationSeconds?: number;
 }
 
-export interface DuringMatchRoomRecipeProps {
-  role: 'host' | 'client';
-  signalingState?: SignalingHealthState;
+export interface DuringMatchActions {
   onRefreshSignaling?: () => void | Promise<void>;
-  players?: ActiveMatchPlayer[];
   onKickPlayer?: (id: string) => void;
-  isMatchPaused?: boolean;
   onTogglePause?: () => void;
-  roomConfig?: DuringMatchRoomConfig;
-  localTeam?: LobbyTeamAssignment;
   onSwitchTeam?: (team: LobbyTeamAssignment) => void;
   onEnterMatch?: () => void;
   onShutdownOrLeave?: () => void;
+}
+
+export interface DuringMatchRoomRecipeProps {
+  role: 'host' | 'client';
+  signalingState?: SignalingHealthState;
+  players?: ActiveMatchPlayer[];
+  isMatchPaused?: boolean;
+  roomConfig?: DuringMatchRoomConfig;
+  localTeam?: LobbyTeamAssignment;
+  actions?: DuringMatchActions;
   onHoverDesc?: (desc: string | null) => void;
   isLight?: boolean;
 }
@@ -106,19 +110,22 @@ const INITIAL_SPECTATORS: SpectatorRouteEntry[] = [
 export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React.memo(({
   role,
   signalingState: controlledSignaling,
-  onRefreshSignaling,
   players: controlledPlayers,
-  onKickPlayer,
   isMatchPaused: controlledPaused,
-  onTogglePause,
   roomConfig,
   localTeam: controlledLocalTeam,
-  onSwitchTeam,
-  onEnterMatch,
-  onShutdownOrLeave,
+  actions,
   onHoverDesc,
   isLight = false,
 }) => {
+  const {
+    onRefreshSignaling,
+    onKickPlayer,
+    onTogglePause,
+    onSwitchTeam,
+    onEnterMatch,
+    onShutdownOrLeave,
+  } = actions ?? {};
   const {
     roomCode = 'RL-8924',
     pairId = '7F3A',
@@ -439,7 +446,7 @@ export const DuringMatchRoomRecipe: React.FC<DuringMatchRoomRecipeProps> = React
         botPolicy={botPolicy}
         durationPreset={durationPreset}
         customDurationSeconds={customDurationSeconds}
-        editable={false}
+        editor={{ editable: false }}
         onHoverDesc={onHoverDesc}
         isLight={isLight}
       />

@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { CircleDot, Hash, Palette } from 'lucide-react';
+import { Copy, Hash, HatGlasses, Palette } from 'lucide-react';
 import {
   DEFAULT_NAME_TAG_DISTINCT_COLORS,
   DEFAULT_NAME_TAG_SLOT_CODES,
+  type NameTagAnonymizeMode,
   type NameTagCardDisplayMode,
   type NameTagCircleColorMode,
-  type NameTagCircleLabelMode,
   type NameTagConfig,
 } from '../../../config/nameTagConfig';
 import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
-import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 
-export interface NameTagCircleIdentitySectionProps {
+export interface NameTagSingleCharIndicatorSectionProps {
   isLight?: boolean;
   config?: NameTagConfig;
   updateConfig?: (partial: Partial<NameTagConfig>) => void;
@@ -25,35 +24,40 @@ const CARD_DISPLAY_MODES: Array<{
 }> = [
   {
     id: 'pill',
-    label: 'Horizontal Pill Tag',
-    desc: 'Standard horizontal rounded pill name tag above cars in front of you (defaults to Player Name)',
+    label: 'Standard Pill Tag',
+    desc: 'Edit & preview the Standard Pill parameter set (used for full player usernames)',
   },
   {
-    id: 'circle',
-    label: 'Big Boost Circle Indicator',
-    desc: 'Replace on-screen name tags with a circular boost indicator (defaults to Match Code X/W/E · A/M/Z)',
+    id: 'single-char',
+    label: 'Single-Char Indicator',
+    desc: 'Edit & preview the Single-Char Indicator parameter set (used for anonymized 1-letter slot codes X/W/E · A/M/Z)',
   },
 ];
 
-const CIRCLE_LABEL_MODES: Array<{
-  id: NameTagCircleLabelMode;
+const ANONYMIZE_OPTIONS: Array<{
+  id: NameTagAnonymizeMode;
   label: string;
   desc: string;
 }> = [
   {
-    id: 'slot-code',
-    label: 'Match Code (X/W/E · A/M/Z)',
-    desc: 'Assign each player a fixed 1-letter match code (Team 1: X, W, E · Team 2: A, M, Z)',
+    id: 'disabled',
+    label: 'Disabled',
+    desc: 'Display full player usernames on on-screen name tags',
   },
   {
-    id: 'none',
-    label: 'No Name / Pure Circle',
-    desc: 'Hide usernames completely and show only the boost indicator',
+    id: 'opponents',
+    label: 'Opponents Only',
+    desc: 'Anonymize opponent names to single-char indicators (using Single-Char Indicator parameters)',
   },
   {
-    id: 'name',
-    label: 'Player Name',
-    desc: 'Display truncated player username',
+    id: 'teammates',
+    label: 'Teammates Only',
+    desc: 'Anonymize teammate names to single-char indicators (using Single-Char Indicator parameters)',
+  },
+  {
+    id: 'both',
+    label: 'Both',
+    desc: 'Anonymize all player names to single-char indicators (X/W/E · A/M/Z)',
   },
 ];
 
@@ -74,12 +78,13 @@ const CIRCLE_COLOR_MODES: Array<{
   },
 ];
 
-export const NameTagCircleIdentitySection: React.FC<
-  NameTagCircleIdentitySectionProps
+export const NameTagSingleCharIndicatorSection: React.FC<
+  NameTagSingleCharIndicatorSectionProps
 > = ({ isLight = false, config: propConfig, updateConfig: propUpdateConfig }) => {
   const store = useNameTagTunerStore();
   const config = propConfig ?? store.config;
   const updateConfig = propUpdateConfig ?? store.updateConfig;
+  const copyVariantParameters = store.copyVariantParameters;
 
   const cardBackground = isLight
     ? 'bg-neutral-50/95 border-neutral-200/90 text-neutral-800 shadow-2xs'
@@ -123,27 +128,27 @@ export const NameTagCircleIdentitySection: React.FC<
     updateConfig({ distinctCarColors: next });
   };
 
+  const isSingleCharMode = config.cardDisplayMode === 'single-char';
+
   return (
     <div className={`p-2.5 rounded-xl border flex flex-col gap-2.5 ${cardBackground}`}>
       <div className="flex items-center justify-between gap-2">
         <span className="font-bold text-[11px] flex items-center gap-1.5">
-          <CircleDot
+          <Hash
             className={`h-3.5 w-3.5 ${isLight ? 'text-sky-600' : 'text-sky-400'}`}
           />
           <span>
-            On-Screen Circle Mode &amp; Fixed Match Slot Codes (X/W/E · A/M/Z)
+            On-Screen Single-Char Indicator &amp; Anonymize Player Names (X/W/E · A/M/Z)
           </span>
         </span>
         <div className="flex items-center gap-1.5">
           <span className={`text-[10px] ${mutedText}`}>
-            {config.cardDisplayMode === 'circle'
-              ? 'Big Circle Active'
-              : 'Standard Pill'}
+            {isSingleCharMode ? 'Single-Char Active' : 'Standard Pill'}
           </span>
           <ToggleSwitch
-            checked={config.cardDisplayMode === 'circle'}
+            checked={isSingleCharMode}
             onChange={(checked) =>
-              updateConfig({ cardDisplayMode: checked ? 'circle' : 'pill' })
+              updateConfig({ cardDisplayMode: checked ? 'single-char' : 'pill' })
             }
             isLight={isLight}
           />
@@ -152,7 +157,7 @@ export const NameTagCircleIdentitySection: React.FC<
 
       <div className={`p-2 rounded-lg border flex flex-col gap-2 ${subCardBackground}`}>
         <div className="flex items-center justify-between gap-1.5 text-[10px]">
-          <span className={mutedText}>On-Screen Shape (In Front of You):</span>
+          <span className={mutedText}>Active Tuner Parameter Set (In Front of You):</span>
           <div className="flex items-center gap-1">
             {CARD_DISPLAY_MODES.map((mode) => {
               const isSelected = config.cardDisplayMode === mode.id;
@@ -176,95 +181,63 @@ export const NameTagCircleIdentitySection: React.FC<
                 </button>
               );
             })}
+            <button
+              type="button"
+              title={
+                isSingleCharMode
+                  ? 'Copy Standard Pill parameters into Single-Char Indicator'
+                  : 'Copy Single-Char Indicator parameters into Standard Pill'
+              }
+              onClick={() =>
+                copyVariantParameters(
+                  isSingleCharMode ? 'pill' : 'single-char',
+                  isSingleCharMode ? 'single-char' : 'pill'
+                )
+              }
+              className={`px-1.5 py-0.5 rounded border font-mono flex items-center gap-1 cursor-pointer transition-colors ${
+                isLight
+                  ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
+                  : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
+              }`}
+            >
+              <Copy className="h-2.5 w-2.5" />
+              <span>{isSingleCharMode ? 'Copy Pill → 1-Char' : 'Copy 1-Char → Pill'}</span>
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
-          <div className="flex items-center justify-between text-[10px]">
-            <span
-              className={mutedText}
-              title="When enabled, on-screen circle indicators stay at a fixed pixel radius regardless of 3D camera distance."
-            >
-              Fixed Screen Size (In Front of You)
-            </span>
-            <ToggleSwitch
-              checked={config.onscreenCircleFixedSize}
-              onChange={(nextValue) =>
-                updateConfig({ onscreenCircleFixedSize: nextValue })
-              }
-              isLight={isLight}
-            />
+        <div className="flex items-center justify-between gap-1.5 text-[10px] pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
+          <span className="font-semibold flex items-center gap-1">
+            <HatGlasses className="h-3 w-3 text-sky-500" />
+            <span>Anonymize Player Names:</span>
+          </span>
+          <div className="flex items-center gap-1">
+            {ANONYMIZE_OPTIONS.map((option) => {
+              const isSelected = (config.anonymizePlayerNames || 'disabled') === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  title={option.desc}
+                  onClick={() => updateConfig({ anonymizePlayerNames: option.id })}
+                  className={`px-2 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
+                    isSelected
+                      ? isLight
+                        ? 'bg-sky-500/15 border-sky-500 text-sky-900 font-bold'
+                        : 'bg-sky-500/20 border-sky-400 text-sky-300 font-bold'
+                      : isLight
+                        ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
+                        : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
           </div>
-          <SliderControl
-            label="On-Screen Circle Radius"
-            value={config.onscreenCircleRadiusPx}
-            min={4}
-            max={48}
-            step={1}
-            unit="px"
-            onChange={(nextValue) =>
-              updateConfig({ onscreenCircleRadiusPx: nextValue })
-            }
-            isLight={isLight}
-          />
-          <SliderControl
-            label="On-Screen Circle Font Size"
-            value={config.onscreenCircleFontSizePx}
-            min={12}
-            max={96}
-            step={1}
-            unit="px"
-            onChange={(nextValue) =>
-              updateConfig({ onscreenCircleFontSizePx: nextValue })
-            }
-            isLight={isLight}
-          />
-          <SliderControl
-            label="On-Screen Circle Border Thickness"
-            value={config.onscreenCircleBorderWidthPx}
-            min={0}
-            max={16}
-            step={0.5}
-            unit="px"
-            onChange={(nextValue) =>
-              updateConfig({ onscreenCircleBorderWidthPx: nextValue })
-            }
-            isLight={isLight}
-          />
         </div>
 
         <div className="flex flex-col gap-1.5 pt-1 border-t border-neutral-200/70 dark:border-neutral-800">
-          <div className="flex items-center justify-between gap-1.5 text-[10px]">
-            <span className="font-semibold flex items-center gap-1">
-              <Hash className="h-3 w-3 text-sky-500" />
-              <span>Player Identity Label Mode:</span>
-            </span>
-            <div className="flex items-center gap-1">
-              {CIRCLE_LABEL_MODES.map((option) => {
-                const isSelected = config.circleLabelMode === option.id;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    title={option.desc}
-                    onClick={() => updateConfig({ circleLabelMode: option.id })}
-                    className={`px-2 py-0.5 rounded border font-mono cursor-pointer transition-colors ${
-                      isSelected
-                        ? isLight
-                          ? 'bg-sky-500/15 border-sky-500 text-sky-900 font-bold'
-                          : 'bg-sky-500/20 border-sky-400 text-sky-300 font-bold'
-                        : isLight
-                          ? 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100'
-                          : 'border-neutral-700 text-neutral-400 hover:bg-neutral-800'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           <div className="flex items-center justify-between text-[10px]">
             <span className={mutedText}>
               Also Render Slot Code Inside Off-Screen Circle (Behind You)

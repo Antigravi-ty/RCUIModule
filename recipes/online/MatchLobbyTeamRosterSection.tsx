@@ -22,20 +22,28 @@ const FALLBACK_PAIR_IDS: Record<string, string> = {
   'peer-2': '4D1E',
 };
 
-export interface MatchLobbyTeamRosterSectionProps {
-  isLight: boolean;
-  isHost: boolean;
-  localTeam: LobbyTeamAssignment;
-  setLocalTeam: (team: LobbyTeamAssignment) => void;
-  rosterLayout: 'stacked' | 'columns';
-  showPairId?: boolean;
-  onTogglePairId?: () => void;
+export interface MatchLobbyRosterData {
   slotsPerSide: number;
   maxPlayers: number;
   humanCount: number;
   blueRoster: LobbyPlayerSlot[];
   neutralRoster: LobbyPlayerSlot[];
   orangeRoster: LobbyPlayerSlot[];
+}
+
+export interface MatchLobbyPairIdControls {
+  showPairId?: boolean;
+  onTogglePairId?: () => void;
+}
+
+export interface MatchLobbyTeamRosterSectionProps {
+  isLight: boolean;
+  isHost: boolean;
+  localTeam: LobbyTeamAssignment;
+  setLocalTeam: (team: LobbyTeamAssignment) => void;
+  rosterLayout: 'stacked' | 'columns';
+  roster: MatchLobbyRosterData;
+  pairIdControls?: MatchLobbyPairIdControls;
   onRemovePeer: (peerId: string) => void;
   onHoverDesc?: (desc: string | null) => void;
 }
@@ -47,17 +55,21 @@ export const MatchLobbyTeamRosterSection: React.FC<MatchLobbyTeamRosterSectionPr
     localTeam,
     setLocalTeam,
     rosterLayout,
-    showPairId: controlledShowPairId,
-    onTogglePairId,
-    slotsPerSide,
-    maxPlayers,
-    humanCount,
-    blueRoster,
-    neutralRoster,
-    orangeRoster,
+    roster,
+    pairIdControls,
     onRemovePeer,
     onHoverDesc,
   }) => {
+    const {
+      slotsPerSide,
+      maxPlayers,
+      humanCount,
+      blueRoster,
+      neutralRoster,
+      orangeRoster,
+    } = roster;
+    const controlledShowPairId = pairIdControls?.showPairId;
+    const onTogglePairId = pairIdControls?.onTogglePairId;
     const [internalShowPairId, setInternalShowPairId] = useState<boolean>(isHost);
 
     useEffect(() => {

@@ -126,13 +126,17 @@ export interface VehicleTunerRuntimeFlags {
   [key: string]: unknown;
 }
 
-export const vehicleTunerRuntimeFlags: VehicleTunerRuntimeFlags = {
+export const DEFAULT_VEHICLE_TUNER_FLAGS_CONFIG: VehicleTunerRuntimeFlags = {
   activeVehicleId: 'fennec',
   colorOverride: false,
   forceBoostPreview: false,
   forceBrakeLightPreview: false,
   brakePreviewMode: 'auto',
   showNozzleGizmos: false,
+};
+
+export const vehicleTunerRuntimeFlags: VehicleTunerRuntimeFlags = {
+  ...DEFAULT_VEHICLE_TUNER_FLAGS_CONFIG,
 };
 
 export function getVehicleTunerRuntimeFlags(): VehicleTunerRuntimeFlags {
@@ -314,7 +318,7 @@ export interface AnodizedPaintTuning {
   [key: string]: unknown;
 }
 
-export const anodizedPaintTuning: AnodizedPaintTuning = {
+export const DEFAULT_ANODIZED_PAINT_CONFIG: AnodizedPaintTuning = {
   roughness: 0.04,
   metalness: 0.76,
   clearcoat: 1.0,
@@ -324,6 +328,10 @@ export const anodizedPaintTuning: AnodizedPaintTuning = {
   envMapIntensity: 1.4,
   pearlFresnelPower: 1.35,
   pearlBlendStrength: 0.82,
+};
+
+export const anodizedPaintTuning: AnodizedPaintTuning = {
+  ...DEFAULT_ANODIZED_PAINT_CONFIG,
 };
 
 type AnodizedPaintListener = (patch: Partial<AnodizedPaintTuning>, state: AnodizedPaintTuning) => void;
@@ -378,7 +386,7 @@ export interface BoostParticleRuntimeConfig {
   [key: string]: unknown;
 }
 
-export const boostParticleRuntimeConfig: BoostParticleRuntimeConfig = {
+export const DEFAULT_BOOST_PARTICLE_CONFIG: BoostParticleRuntimeConfig = {
   detailPreset: 'full',
   trailSpawnMultiplier: 1,
   trailLifeMultiplier: 1,
@@ -396,14 +404,45 @@ export const boostParticleRuntimeConfig: BoostParticleRuntimeConfig = {
   bloomEnabled: false,
 };
 
+export const boostParticleRuntimeConfig: BoostParticleRuntimeConfig = {
+  ...DEFAULT_BOOST_PARTICLE_CONFIG,
+};
+
 export function getBoostParticleRuntimeConfig(): BoostParticleRuntimeConfig {
   return { ...boostParticleRuntimeConfig };
 }
 
 const BOOST_PARTICLE_PRESETS: Record<string, Partial<BoostParticleRuntimeConfig>> = {
-  none: { detailPreset: 'none', trailSpawnMultiplier: 0.0, trailLifeMultiplier: 0.5, shortTrailSpawnMultiplier: 0.0, longTrailSpawnMultiplier: 0.0, drivePuffsEnabled: false },
-  low: { detailPreset: 'low', trailSpawnMultiplier: 0.4, trailLifeMultiplier: 0.65, shortTrailSpawnMultiplier: 0.6, shortTrailLifetime: 0.1, shortTrailScaleRefLife: 0.6, longTrailSpawnMultiplier: 0.05, longTrailLifetime: 1.4, drivePuffsEnabled: false },
-  full: { detailPreset: 'full', trailSpawnMultiplier: 1, trailLifeMultiplier: 1, shortTrailSpawnMultiplier: 1, shortTrailLifetime: 0.1, shortTrailScaleRefLife: 0.6, longTrailSpawnMultiplier: 0.1, longTrailLifetime: 2, drivePuffsEnabled: true },
+  none: {
+    detailPreset: 'none',
+    trailSpawnMultiplier: 0.0,
+    trailLifeMultiplier: 0.5,
+    shortTrailSpawnMultiplier: 0.0,
+    longTrailSpawnMultiplier: 0.0,
+    drivePuffsEnabled: false,
+  },
+  low: {
+    detailPreset: 'low',
+    trailSpawnMultiplier: 0.4,
+    trailLifeMultiplier: 0.65,
+    shortTrailSpawnMultiplier: 0.6,
+    shortTrailLifetime: 0.1,
+    shortTrailScaleRefLife: 0.6,
+    longTrailSpawnMultiplier: 0.05,
+    longTrailLifetime: 1.4,
+    drivePuffsEnabled: false,
+  },
+  full: {
+    detailPreset: 'full',
+    trailSpawnMultiplier: 1,
+    trailLifeMultiplier: 1,
+    shortTrailSpawnMultiplier: 1,
+    shortTrailLifetime: 0.1,
+    shortTrailScaleRefLife: 0.6,
+    longTrailSpawnMultiplier: 0.1,
+    longTrailLifetime: 2,
+    drivePuffsEnabled: true,
+  },
 };
 
 export function setBoostParticleRuntimeConfig(

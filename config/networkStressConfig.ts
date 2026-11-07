@@ -211,6 +211,41 @@ export interface NetworkStressSimulatorOptions {
   nowMs?: number;
 }
 
+export const DEFAULT_NETWORK_STRESS_CONFIG = {
+  presetId: 'ideal_lan',
+  extraUplinkMs: 0,
+  extraDownlinkMs: 0,
+  jitterMs: 0,
+  packetLossPct: 0,
+  burstDropEnabled: false,
+  burstPeriodMs: 2000,
+  burstDurationMs: 750,
+};
+
+export interface NetworkStressChannelSimulatorLike {
+  setAsymmetricLatency?: (uplinkMs: number, downlinkMs: number) => void;
+  setJitter?: (jitterMs: number) => void;
+  setBurstDrop?: (periodMs: number, durationMs: number, enabled: boolean) => void;
+  triggerBlackout?: (durationMs: number, nowMs?: number) => void;
+  clearBlackout?: () => void;
+  jitterMs?: number;
+}
+
+export interface NetworkStressChannelTarget extends NetworkStressChannelSimulatorLike {
+  simulator?: NetworkStressChannelSimulatorLike | null;
+  setExtraLatency?: (latencyMs: number) => void;
+  setPacketLossRate?: (lossRate: number) => void;
+  forceDropNextInput?: (count: number) => void;
+  extraUplinkMs?: number;
+  extraDownlinkMs?: number;
+  extraLatencyMs?: number;
+  packetLossRate?: number;
+  simulatedPacketLossPct?: number;
+  burstPeriodMs?: number;
+  burstDurationMs?: number;
+  burstDropEnabled?: boolean;
+}
+
 export class NetworkStressSimulator {
   activePresetId: string;
   extraUplinkMs: number;
@@ -264,7 +299,7 @@ export class NetworkStressSimulator {
 
   applyPreset(
     presetId: string,
-    channel: any = null,
+    channel: NetworkStressChannelTarget | null = null,
     nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
   ): Readonly<NetworkStressPresetSpec> {
     const found =
@@ -297,7 +332,10 @@ export class NetworkStressSimulator {
     return found;
   }
 
-  setStress(params: Partial<NetworkStressSimulatorOptions> = {}, channel: any = null): void {
+  setStress(
+    params: Partial<NetworkStressSimulatorOptions> = {},
+    channel: NetworkStressChannelTarget | null = null
+  ): void {
     if (params.extraLatencyMs !== undefined && params.extraUplinkMs === undefined && params.extraDownlinkMs === undefined) {
       const val = Number(params.extraLatencyMs);
       if (!Number.isFinite(val)) {
@@ -359,7 +397,7 @@ export class NetworkStressSimulator {
     this.syncToChannel(channel);
   }
 
-  syncToChannel(channel: any): void {
+  syncToChannel(channel: NetworkStressChannelTarget | null): void {
     if (!channel) return;
     if (typeof channel.setAsymmetricLatency === 'function') {
       channel.setAsymmetricLatency(this.extraUplinkMs, this.extraDownlinkMs);
@@ -407,7 +445,7 @@ export class NetworkStressSimulator {
 
   triggerBlackout(
     durationMs: number,
-    channel: any = null,
+    channel: NetworkStressChannelTarget | null = null,
     nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
   ): void {
     const dur = Math.max(0, Number(durationMs) || 0);
@@ -424,7 +462,7 @@ export class NetworkStressSimulator {
   }
 
   clearBlackout(
-    channel: any = null,
+    channel: NetworkStressChannelTarget | null = null,
     nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
   ): void {
     this.blackoutStartMs = 0;

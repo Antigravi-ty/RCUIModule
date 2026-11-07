@@ -14,8 +14,74 @@ import type {
   UiApprovalLedger,
 } from './surfaceMetaTypes';
 
-export const SURFACE_CALIBRATION_OVERRIDES: SurfaceCalibrationLedger =
-  (rawCalibrationOverrides as SurfaceCalibrationLedger) ?? {};
+export const SURFACE_CALIBRATION_OVERRIDES: SurfaceCalibrationLedger = {
+  ...((rawCalibrationOverrides as SurfaceCalibrationLedger) ?? {}),
+};
+
+const INITIAL_CALIBRATION_OVERRIDES: SurfaceCalibrationLedger = JSON.parse(
+  JSON.stringify(SURFACE_CALIBRATION_OVERRIDES)
+);
+
+const calibrationListeners = new Set<() => void>();
+
+export function subscribeSurfaceCalibration(listener: () => void): () => void {
+  calibrationListeners.add(listener);
+  return () => {
+    calibrationListeners.delete(listener);
+  };
+}
+
+function notifyCalibrationChanged(): void {
+  for (const listener of calibrationListeners) {
+    listener();
+  }
+}
+
+export function setRuntimeSurfaceCalibrationOverride(
+  surfaceId: string,
+  patch: Partial<SurfaceCalibrationOverride>
+): SurfaceCalibrationOverride {
+  const prev = SURFACE_CALIBRATION_OVERRIDES[surfaceId] ?? {};
+  const next: SurfaceCalibrationOverride = {
+    ...prev,
+    ...patch,
+    defaultConfigOverrides:
+      patch.defaultConfigOverrides !== undefined
+        ? {
+            ...(prev.defaultConfigOverrides ?? {}),
+            ...patch.defaultConfigOverrides,
+          }
+        : prev.defaultConfigOverrides,
+    calibratedAt: new Date().toISOString().slice(0, 10),
+  };
+  SURFACE_CALIBRATION_OVERRIDES[surfaceId] = next;
+  notifyCalibrationChanged();
+  return next;
+}
+
+export function resetRuntimeSurfaceCalibrationOverrides(surfaceId?: string): void {
+  if (surfaceId) {
+    if (INITIAL_CALIBRATION_OVERRIDES[surfaceId]) {
+      SURFACE_CALIBRATION_OVERRIDES[surfaceId] = JSON.parse(
+        JSON.stringify(INITIAL_CALIBRATION_OVERRIDES[surfaceId])
+      );
+    } else {
+      delete SURFACE_CALIBRATION_OVERRIDES[surfaceId];
+    }
+  } else {
+    for (const key of Object.keys(SURFACE_CALIBRATION_OVERRIDES)) {
+      delete SURFACE_CALIBRATION_OVERRIDES[key];
+    }
+    for (const [key, val] of Object.entries(INITIAL_CALIBRATION_OVERRIDES)) {
+      SURFACE_CALIBRATION_OVERRIDES[key] = JSON.parse(JSON.stringify(val));
+    }
+  }
+  notifyCalibrationChanged();
+}
+
+export function exportSurfaceCalibrationOverridesJson(): string {
+  return JSON.stringify(SURFACE_CALIBRATION_OVERRIDES, null, 2);
+}
 
 export const UI_APPROVAL_LEDGER: UiApprovalLedger =
   (rawApprovalLedger as unknown as UiApprovalLedger) ?? {

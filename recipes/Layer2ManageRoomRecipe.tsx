@@ -1,42 +1,52 @@
-import React, { useState } from 'react';
-import {
-  useLayer2ManageRoomBinding,
-  type RoomStateMode,
-  type OnlineSessionContextId,
-} from './hooks/useLayer2ManageRoomBinding';
+import React, { useMemo, useState } from 'react';
+import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
+import { useAppStore } from '../stores/appStore';
+import { useHudStore } from '../stores/hudStore';
+import { floatingStore } from '../stores/floatingStore';
+import { networkDiagnosticsStore, useNetworkDiagnosticsData } from '../stores/networkDiagnosticsStore';
+import { NETWORK_MONITOR_PRESET } from '../stores/floatingPresets';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
+import { useScopedStore, useStoreSnapshotOverride } from '../stores/storeSnapshotScope';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import { MatchLobbyRoomRecipe } from './online/MatchLobbyRoomRecipe';
-import type {
-  LobbyPlayerSlot,
-  LobbyTeamAssignment,
-} from './online/MatchLobbyTeamRosterSection';
+import type { LobbyPlayerSlot, LobbyTeamAssignment } from './online/MatchLobbyTeamRosterSection';
 import { DuringMatchRoomRecipe } from './online/DuringMatchRoomRecipe';
 import type { ActiveMatchPlayer } from './online/DuringMatchClientRejoinControls';
-import {
-  OnlineWarmupRoomRecipe,
-  type WarmupRoomPlayer,
-} from './online/OnlineWarmupRoomRecipe';
+import { OnlineWarmupRoomRecipe, type WarmupRoomPlayer } from './online/OnlineWarmupRoomRecipe';
+import type { HostMatchBotPolicy, HostMatchDurationPreset, HostMatchTeamFormat } from './online/OnlineRoomConfigSummaryCard';
 import type { SignalingHealthState } from './online/OnlineRoomTopStatusBar';
 
-export type {
-  RoomStateMode,
-  OnlineSessionContextId,
+export type RoomStateMode = 'free-play' | 'match';
+export type OnlineSessionContextId =
+  | 'match-lobby-host'
+  | 'match-lobby-client'
+  | 'online-match-host'
+  | 'online-match-client'
+  | 'online-warmup-host'
+  | 'online-warmup-client';
+
+export const FORMAT_TO_GAME_MODE: Record<HostMatchTeamFormat, '1v1' | '2v2' | '3v3'> = {
+  duel: '1v1', doubles: '2v2', standard: '3v3',
+};
+export const GAME_MODE_TO_FORMAT: Record<string, HostMatchTeamFormat> = {
+  '1v1': 'duel', '2v2': 'doubles', '3v3': 'standard',
 };
 
 export interface OnlineRoomControlStateOverride {
+  roomCode?: string;
+  sessionContext?: OnlineSessionContextId;
   signalingState?: SignalingHealthState;
   onRefreshSignaling?: () => void | Promise<void>;
   localTeam?: LobbyTeamAssignment;
   onSwitchTeam?: (team: LobbyTeamAssignment) => void;
-  teamFormat?: 'duel' | 'doubles' | 'standard';
-  onChangeTeamFormat?: (format: 'duel' | 'doubles' | 'standard') => void;
-  botPolicy?: 'none' | 'auto-fill' | 'vs-ai' | 'custom';
-  onChangeBotPolicy?: (policy: 'none' | 'auto-fill' | 'vs-ai' | 'custom') => void;
-  durationPreset?: '90' | '180' | '300' | 'custom';
-  onChangeDurationPreset?: (preset: '90' | '180' | '300' | 'custom') => void;
+  teamFormat?: HostMatchTeamFormat;
+  onChangeTeamFormat?: (format: HostMatchTeamFormat) => void;
+  botPolicy?: HostMatchBotPolicy;
+  onChangeBotPolicy?: (policy: HostMatchBotPolicy) => void;
+  durationPreset?: HostMatchDurationPreset;
+  onChangeDurationPreset?: (preset: HostMatchDurationPreset) => void;
   customDurationSeconds?: number;
   onChangeCustomDurationSeconds?: (seconds: number) => void;
   lobbyPeers?: LobbyPlayerSlot[];
@@ -55,21 +65,18 @@ export interface OnlineRoomControlStateOverride {
   defaultMatchLengthMin?: number;
   onStartState?: (state: RoomStateMode, matchLengthMin: number) => void;
   onSessionContextChange?: (ctx: OnlineSessionContextId) => void;
-}
-
-export interface Layer2ManageRoomRecipeProps extends OnlineRoomControlStateOverride {
-  isLight?: boolean;
-  developerMode?: boolean;
-  roomCode?: string;
-  topSlot?: React.ReactNode;
-  /** Active online session context ('match-lobby-host' | 'match-lobby-client' | 'online-match-host' | 'online-match-client' | 'online-warmup-host' | 'online-warmup-client') */
-  sessionContext?: OnlineSessionContextId;
   onStartMatch?: () => void;
   onEnterMatch?: () => void;
   onNavigateAdvancedSettings?: () => void;
   onOpenNetHud?: () => void;
   onCloseRoom?: () => void;
-  onBack?: () => void;
+}
+
+export interface Layer2ManageRoomRecipeProps extends StandardSurfaceProps {
+  developerMode?: boolean;
+  topSlot?: React.ReactNode;
+  sessionContext?: OnlineSessionContextId;
+  onSessionContextChange?: (ctx: OnlineSessionContextId) => void;
   className?: string;
   stateOverride?: OnlineRoomControlStateOverride;
 }
@@ -147,6 +154,36 @@ export const ONLINE_SESSION_CONTEXT_SPECS: OnlineSessionContextSpec[] = [
   },
 ];
 
+export const SURFACE_META: SurfaceMeta = {
+  id: 'recipe:Layer2ManageRoomRecipe',
+  title: 'Online Room Control Hub',
+  subtitle: '6-state online session control for Match Lobby, During Match, and Online Warmup (Host & Client)',
+  icon: 'Radio',
+  layer: 'layer2',
+  menuGroup: 'menu-layer',
+  defaultSizing: {
+    width: 680,
+    height: 620,
+    minHeight: 420,
+    maxHeight: 740,
+    mode: 'adaptive',
+  },
+  variants: ONLINE_SESSION_CONTEXT_SPECS.map((spec) => ({
+    variantId: spec.id,
+    label: spec.shortLabel,
+    description: spec.footerDefaultDesc,
+    entryFile:
+      spec.stage === 'lobby'
+        ? 'recipes/online/MatchLobbyRoomRecipe.tsx'
+        : spec.stage === 'during-match'
+        ? 'recipes/online/DuringMatchRoomRecipe.tsx'
+        : 'recipes/online/OnlineWarmupRoomRecipe.tsx',
+    storeOverrides: {
+      onlineRoomStore: { sessionContext: spec.id },
+    },
+  })),
+};
+
 export const resolveOnlineSessionContextId = (
   rawCtx?: string | null
 ): OnlineSessionContextId => {
@@ -165,64 +202,218 @@ export const resolveOnlineSessionContextId = (
 
 /**
  * [Recipe] Layer 2 Online Session Manage Room (`Layer2ManageRoomRecipe`)
- * Decoupled router that renders the exact view for each of the 6 online session states:
- * 1. `match-lobby-host` (`MatchLobbyRoomView` role="host")
- * 2. `match-lobby-client` (`MatchLobbyRoomView` role="client")
- * 3. `online-match-host` (`DuringMatchRoomView` role="host")
- * 4. `online-match-client` (`DuringMatchRoomView` role="client")
- * 5. `online-warmup-host` (`OnlineWarmupRoomView` role="host")
- * 6. `online-warmup-client` (`OnlineWarmupRoomView` role="client")
  */
-export const Layer2ManageRoomRecipe: React.FC<Layer2ManageRoomRecipeProps> = React.memo((rawProps) => {
-  const {
-    isLight = true,
-    roomCode = 'RL-8924',
-    signalingState,
-    onRefreshSignaling,
-    localTeam,
-    onSwitchTeam,
-    teamFormat,
-    onChangeTeamFormat,
-    botPolicy,
-    onChangeBotPolicy,
-    durationPreset,
-    onChangeDurationPreset,
-    customDurationSeconds,
-    onChangeCustomDurationSeconds,
-    lobbyPeers,
-    matchPlayers,
-    warmupPlayers,
-    onKickPeer,
-    zeroGProbes,
-    onToggleZeroGProbes,
-    testSfx,
-    onToggleTestSfx,
-    onResetBall,
-    isMatchPaused,
-    onTogglePause,
-    topSlot,
-    sessionContext: controlledContext,
-    onStartMatch,
-    onEnterMatch,
-    onNavigateAdvancedSettings,
-    onOpenNetHud,
-    onCloseRoom,
-    onBack = () => {},
-    className = '',
-  } = useLayer2ManageRoomBinding({ ...rawProps, ...rawProps.stateOverride });
-  const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+export const Layer2ManageRoomRecipe: React.FC<Layer2ManageRoomRecipeProps> = React.memo(({
+  isLight = true,
+  activeTab,
+  onTabChange,
+  onBack: propOnBack,
+  topSlot,
+  sessionContext: propSessionContext,
+  onSessionContextChange,
+  className = '',
+  stateOverride,
+}) => {
+  const appState = useScopedStore('appStore', useAppStore);
+  const scopedRoom = useStoreSnapshotOverride<OnlineRoomControlStateOverride>('onlineRoomStore');
+  const overrides: OnlineRoomControlStateOverride = {
+    ...scopedRoom,
+    ...stateOverride,
+  };
 
-  const activeContextId = controlledContext ?? 'match-lobby-host';
+  const {
+    onlineSession,
+    setOnlineSession,
+    matchMode,
+    setMatchMode,
+    bridge,
+    goBack: storeGoBack,
+    closeMenu,
+    navigate,
+  } = appState;
+  const liveMatchPaused = useHudStore((s) => s.isPaused);
+  const diagData = useNetworkDiagnosticsData();
+
+  const derivedContext: OnlineSessionContextId = useMemo(() => {
+    const isHost = Boolean(onlineSession?.isHosting);
+    if (onlineSession?.roomType === 'warmup') {
+      return isHost ? 'online-warmup-host' : 'online-warmup-client';
+    }
+    if (matchMode === 'match') {
+      return isHost ? 'online-match-host' : 'online-match-client';
+    }
+    return isHost ? 'match-lobby-host' : 'match-lobby-client';
+  }, [onlineSession?.isHosting, onlineSession?.roomType, matchMode]);
+
+  const activeContextId = resolveOnlineSessionContextId(
+    propSessionContext ?? activeTab ?? overrides.sessionContext ?? derivedContext
+  );
   const activeSpec =
     ONLINE_SESSION_CONTEXT_SPECS.find((s) => s.id === activeContextId) ??
     ONLINE_SESSION_CONTEXT_SPECS[0];
+
+  const [fallbackLocalTeam, setFallbackLocalTeam] = useState<LobbyTeamAssignment>('neutral');
+  const localTeam: LobbyTeamAssignment =
+    overrides.localTeam ?? onlineSession?.localTeam ?? fallbackLocalTeam;
+
+  const teamFormat: HostMatchTeamFormat =
+    overrides.teamFormat ??
+    GAME_MODE_TO_FORMAT[onlineSession?.gameMode || '2v2'] ??
+    'doubles';
+  const botPolicy: HostMatchBotPolicy =
+    overrides.botPolicy ??
+    (onlineSession?.botFillMode === 'no_bots'
+      ? 'none'
+      : onlineSession?.botFillMode === 'bots_vs_humans'
+      ? 'vs-ai'
+      : onlineSession?.botFillMode === 'custom'
+      ? 'custom'
+      : 'auto-fill');
+  const rawDurationSec = onlineSession?.matchDurationSeconds ?? 90;
+  const durationPreset: HostMatchDurationPreset =
+    overrides.durationPreset ??
+    (rawDurationSec === 90
+      ? '90'
+      : rawDurationSec === 180
+      ? '180'
+      : rawDurationSec === 300
+      ? '300'
+      : 'custom');
+  const customDurationSeconds = overrides.customDurationSeconds ?? rawDurationSec;
+
+  const handleChangeTeamFormat =
+    overrides.onChangeTeamFormat ??
+    ((fmt: HostMatchTeamFormat) => {
+      const nextGameMode = FORMAT_TO_GAME_MODE[fmt] || '2v2';
+      setOnlineSession({ gameMode: nextGameMode });
+      bridge.onSetOnlineGameMode?.(nextGameMode);
+    });
+
+  const handleChangeBotPolicy =
+    overrides.onChangeBotPolicy ??
+    ((pol: HostMatchBotPolicy) => {
+      const nextBotFill =
+        pol === 'none'
+          ? 'no_bots'
+          : pol === 'vs-ai'
+          ? 'bots_vs_humans'
+          : pol === 'custom'
+          ? 'custom'
+          : 'auto_fill';
+      setOnlineSession({ botFillMode: nextBotFill });
+      bridge.onSetOnlineBotFillMode?.(nextBotFill);
+    });
+
+  const handleChangeDurationPreset =
+    overrides.onChangeDurationPreset ??
+    ((preset: HostMatchDurationPreset) => {
+      if (preset === 'custom') return;
+      const secs = Number(preset) || 300;
+      setOnlineSession({ matchDurationSeconds: secs });
+      bridge.onSetOnlineMatchDuration?.(secs);
+    });
+
+  const handleChangeCustomDurationSeconds =
+    overrides.onChangeCustomDurationSeconds ??
+    ((secs: number) => {
+      const clean = Math.max(0, Math.round(Number(secs) || 0));
+      setOnlineSession({ matchDurationSeconds: clean });
+      bridge.onSetOnlineMatchDuration?.(clean);
+    });
+
+  const handleSwitchTeam =
+    overrides.onSwitchTeam ??
+    ((team: LobbyTeamAssignment) => {
+      setFallbackLocalTeam(team);
+      setOnlineSession({ localTeam: team });
+      const teamCode = team === 'blue' ? 0 : team === 'orange' ? 1 : 2;
+      bridge.onSwitchOnlineRoleTeam?.('player', teamCode);
+    });
+
+  const handleKickPeer =
+    overrides.onKickPeer ??
+    ((peerId: string) => {
+      const found = onlineSession?.connectedPeers?.find(
+        (p) => String(p.id) === peerId || `car-${p.carIndex}` === peerId
+      );
+      if (found && typeof found.carIndex === 'number') {
+        void bridge.onRemovePlayer?.(found.carIndex);
+      }
+    });
+
+  const handleStartMatch =
+    overrides.onStartMatch ??
+    (() => {
+      const targetDuration = onlineSession?.matchDurationSeconds ?? 90;
+      setOnlineSession({
+        roomType: 'match',
+        gameMode: onlineSession?.gameMode || '3v3',
+        botFillMode: onlineSession?.botFillMode || 'auto_fill',
+        matchDurationSeconds: targetDuration,
+      });
+      bridge.onForceStartOnlineMatch?.(targetDuration);
+      closeMenu();
+    });
+
+  const handleEnterMatch =
+    overrides.onEnterMatch ??
+    (() => {
+      if (!onlineSession?.isHosting) {
+        const nextReady = !onlineSession?.isReady;
+        setOnlineSession({ isReady: nextReady });
+        bridge.onSetClientReady?.(nextReady);
+        if (matchMode === 'match') {
+          const targetTeamCode = localTeam === 'orange' ? 1 : localTeam === 'blue' ? 0 : 2;
+          bridge.onSwitchOnlineRoleTeam?.('player', targetTeamCode);
+        }
+      }
+      closeMenu();
+    });
+
+  const handleOpenNetHud =
+    overrides.onOpenNetHud ??
+    (() => {
+      floatingStore.spawnWindow({
+        ...NETWORK_MONITOR_PRESET,
+        startMinimized: false,
+      });
+    });
+
+  const handleCloseRoom =
+    overrides.onCloseRoom ??
+    (() => {
+      if (bridge.onLeaveOnlineServer) {
+        void bridge.onLeaveOnlineServer();
+      }
+      setMatchMode('freeplay');
+    });
+
+  const handleNavigateAdvanced =
+    overrides.onNavigateAdvancedSettings ??
+    (() => {
+      onTabChange?.('exp-multi-bots');
+      navigate('exp-multi-bots');
+    });
+
+  const onBack = propOnBack ?? storeGoBack;
+  const signalingState: SignalingHealthState =
+    overrides.signalingState ?? (onlineSession?.signalingConnected ? 'green' : 'yellow');
+  const onRefreshSignaling =
+    overrides.onRefreshSignaling ?? (() => bridge.onReconnectSignaling?.());
+  const isMatchPaused = overrides.isMatchPaused ?? liveMatchPaused;
+  const onTogglePause =
+    overrides.onTogglePause ?? (() => bridge.onPauseOnlineMatch?.(!isMatchPaused, 3));
+
+  const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+  void onSessionContextChange;
 
   const sizing = useMenuLayoutStore(
     (s) => s.panels?.['layer2-manage-room'] ?? DEFAULT_PANEL_SIZING['layer2-manage-room']
   );
 
+  const rawRoomCode = overrides.roomCode ?? (onlineSession?.roomId || 'RL-8924');
   const resolvedRoomCode =
-    activeSpec.stage === 'warmup' && roomCode === 'RL-8924' ? 'TRN-409' : roomCode;
+    activeSpec.stage === 'warmup' && rawRoomCode === 'RL-8924' ? 'TRN-409' : rawRoomCode;
 
   return (
     <PanelContainer
@@ -243,34 +434,42 @@ export const Layer2ManageRoomRecipe: React.FC<Layer2ManageRoomRecipeProps> = Rea
           <MatchLobbyRoomRecipe
             role={activeSpec.role}
             signalingState={signalingState}
-            onRefreshSignaling={onRefreshSignaling}
             localTeam={localTeam}
-            onSwitchTeam={onSwitchTeam}
-            peers={lobbyPeers}
-            onKickPeer={onKickPeer}
+            onSwitchTeam={handleSwitchTeam}
+            peers={overrides.lobbyPeers}
             roomConfig={{
               roomCode: resolvedRoomCode,
               teamFormat,
-              onChangeTeamFormat,
+              onChangeTeamFormat: handleChangeTeamFormat,
               botPolicy,
-              onChangeBotPolicy,
+              onChangeBotPolicy: handleChangeBotPolicy,
               durationPreset,
-              onChangeDurationPreset,
+              onChangeDurationPreset: handleChangeDurationPreset,
               customDurationSeconds,
-              onChangeCustomDurationSeconds,
+              onChangeCustomDurationSeconds: handleChangeCustomDurationSeconds,
             }}
             utilities={{
-              zeroGProbes,
-              onToggleZeroGProbes,
-              testSfx,
-              onToggleTestSfx,
-              onResetBall,
-              onOpenNetHud,
+              zeroGProbes:
+                overrides.zeroGProbes ?? Boolean(diagData?.metrics?.zeroGFleetEnabled),
+              onToggleZeroGProbes:
+                overrides.onToggleZeroGProbes ??
+                (() => void networkDiagnosticsStore.toggleZeroGFleet()),
+              testSfx:
+                overrides.testSfx ?? Boolean(diagData?.metrics?.testCarAudioEnabled),
+              onToggleTestSfx:
+                overrides.onToggleTestSfx ??
+                (() => networkDiagnosticsStore.toggleTestCarAudio()),
+              onResetBall: overrides.onResetBall ?? (() => bridge.onResetBall?.()),
+              onOpenNetHud: handleOpenNetHud,
             }}
-            onStartMatch={onStartMatch}
-            onEnterMatch={onEnterMatch}
-            onNavigateAdvancedSettings={onNavigateAdvancedSettings}
-            onStopOrLeave={onCloseRoom}
+            actions={{
+              onRefreshSignaling,
+              onKickPeer: handleKickPeer,
+              onStartMatch: handleStartMatch,
+              onEnterMatch: handleEnterMatch,
+              onNavigateAdvancedSettings: handleNavigateAdvanced,
+              onStopOrLeave: handleCloseRoom,
+            }}
             onHoverDesc={setHoveredDesc}
             isLight={isLight}
           />
@@ -280,11 +479,8 @@ export const Layer2ManageRoomRecipe: React.FC<Layer2ManageRoomRecipeProps> = Rea
           <DuringMatchRoomRecipe
             role={activeSpec.role}
             signalingState={signalingState}
-            onRefreshSignaling={onRefreshSignaling}
-            players={matchPlayers}
-            onKickPlayer={onKickPeer}
+            players={overrides.matchPlayers}
             isMatchPaused={isMatchPaused}
-            onTogglePause={onTogglePause}
             roomConfig={{
               roomCode: resolvedRoomCode,
               teamFormat,
@@ -293,9 +489,14 @@ export const Layer2ManageRoomRecipe: React.FC<Layer2ManageRoomRecipeProps> = Rea
               customDurationSeconds,
             }}
             localTeam={localTeam}
-            onSwitchTeam={onSwitchTeam}
-            onEnterMatch={onEnterMatch}
-            onShutdownOrLeave={onCloseRoom}
+            actions={{
+              onRefreshSignaling,
+              onKickPlayer: handleKickPeer,
+              onTogglePause,
+              onSwitchTeam: handleSwitchTeam,
+              onEnterMatch: handleEnterMatch,
+              onShutdownOrLeave: handleCloseRoom,
+            }}
             onHoverDesc={setHoveredDesc}
             isLight={isLight}
           />
@@ -307,9 +508,9 @@ export const Layer2ManageRoomRecipe: React.FC<Layer2ManageRoomRecipeProps> = Rea
             roomCode={resolvedRoomCode}
             signalingState={signalingState}
             onRefreshSignaling={onRefreshSignaling}
-            players={warmupPlayers}
-            onKickPlayer={onKickPeer}
-            onShutdownOrLeave={onCloseRoom}
+            players={overrides.warmupPlayers}
+            onKickPlayer={handleKickPeer}
+            onShutdownOrLeave={handleCloseRoom}
             onHoverDesc={setHoveredDesc}
             isLight={isLight}
           />

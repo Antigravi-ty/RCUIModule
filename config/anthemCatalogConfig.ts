@@ -54,6 +54,12 @@ export interface StoredRandomAnthemPrefs {
   category: string;
 }
 
+export const DEFAULT_ANTHEM_CATALOG_CONFIG = {
+  anthemId: DEFAULT_ANTHEM_ID,
+  randomScope: DEFAULT_RANDOM_ANTHEM_SCOPE,
+  randomCategory: DEFAULT_RANDOM_ANTHEM_CATEGORY,
+};
+
 export const DEFAULT_STORED_RANDOM_ANTHEM_PREFS: StoredRandomAnthemPrefs = Object.freeze({
   scope: DEFAULT_RANDOM_ANTHEM_SCOPE,
   category: DEFAULT_RANDOM_ANTHEM_CATEGORY,

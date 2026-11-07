@@ -31,7 +31,7 @@ export function isDeepEqualJsonValue(a: unknown, b: unknown): boolean {
 
 export function flattenNestedConfigObject(
   prefix: string,
-  obj: Record<string, any> | null | undefined,
+  obj: object | null | undefined,
   target: ProfileFlatSnapshot = {}
 ): ProfileFlatSnapshot {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
@@ -41,7 +41,7 @@ export function flattenNestedConfigObject(
     if (v === undefined || typeof v === 'function') continue;
     const fullKey = prefix ? `${prefix}.${k}` : k;
     if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
-      flattenNestedConfigObject(fullKey, v as Record<string, any>, target);
+      flattenNestedConfigObject(fullKey, v, target);
     } else {
       target[fullKey] = v;
     }
@@ -49,24 +49,24 @@ export function flattenNestedConfigObject(
   return target;
 }
 
-export function unflattenConfigPrefix<T extends Record<string, any>>(
+export function unflattenConfigPrefix<T extends object>(
   snapshot: ProfileFlatSnapshot,
   prefix: string,
   baseDefaults: T
 ): T {
-  const clone: Record<string, any> = JSON.parse(JSON.stringify(baseDefaults));
+  const clone: Record<string, unknown> = JSON.parse(JSON.stringify(baseDefaults));
   const dotPrefix = `${prefix}.`;
 
   for (const [fullKey, val] of Object.entries(snapshot)) {
     if (!fullKey.startsWith(dotPrefix) || val === undefined) continue;
     const pathParts = fullKey.slice(dotPrefix.length).split('.');
-    let cursor = clone;
+    let cursor: Record<string, unknown> = clone;
     for (let i = 0; i < pathParts.length - 1; i++) {
       const part = pathParts[i];
       if (!cursor[part] || typeof cursor[part] !== 'object' || Array.isArray(cursor[part])) {
         cursor[part] = {};
       }
-      cursor = cursor[part];
+      cursor = cursor[part] as Record<string, unknown>;
     }
     cursor[pathParts[pathParts.length - 1]] = val;
   }

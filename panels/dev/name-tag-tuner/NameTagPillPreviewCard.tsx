@@ -6,6 +6,8 @@ import {
   resolveCarSlotCode,
   resolveNameTagCornerRadiusPx,
   resolveNameTagFontFamilyCss,
+  resolveNameTagVariantParams,
+  shouldUseSingleCharIndicator,
 } from '../../../config/nameTagConfig';
 import {
   hexToRgba,
@@ -31,10 +33,8 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
     : 'bg-neutral-850/60 border-neutral-700/60 text-neutral-200';
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
-  const truncatePreview = (rawName: string) =>
-    formatNameTagDisplayText(rawName, config.maxChars);
-
-  const isCircleCard = config.cardDisplayMode === 'circle';
+  const activeVariant = resolveNameTagVariantParams(config, config.cardDisplayMode === 'single-char');
+  const isSingleCharMode = config.cardDisplayMode === 'single-char';
 
   return (
     <div className={`p-2.5 rounded-xl border flex flex-col gap-2 ${cardBackground}`}>
@@ -42,14 +42,13 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
         <span className="font-bold text-[11px] flex items-center gap-1.5">
           <Tag className="h-3.5 w-3.5 text-sky-400" />
           <span>
-            {isCircleCard ? 'On-Screen Circle' : 'Horizontal Pill'} &amp; Off-Screen Preview (
+            {isSingleCharMode ? 'Single-Char Indicator' : 'Horizontal Pill'} &amp; Off-Screen Preview (
             {config.boostIndicatorMode})
           </span>
         </span>
         <span className={`text-[10px] font-mono ${mutedText}`}>
-          {isCircleCard
-            ? `Circle R${config.onscreenCircleRadiusPx}px · Font ${config.onscreenCircleFontSizePx}px · Border ${config.onscreenCircleBorderWidthPx}px`
-            : `${config.pillMinWidth}-${config.pillMaxWidth}x${config.pillHeight}px · R${config.cornerRadius}px · Font ${config.fontSize}px`}
+          {activeVariant.pillMinWidth}-{activeVariant.pillMaxWidth}x{activeVariant.pillHeight}px · R
+          {activeVariant.cornerRadius}px · Font {activeVariant.fontSize}px
         </span>
       </div>
 
@@ -60,9 +59,12 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
             : 'bg-neutral-950/60 border-neutral-800'
         }`}
       >
-        {[0, 1].map((team) => {
+        {([0, 1] as const).map((team) => {
           const isOrange = team === 1;
           const sampleSlotIndex = isOrange ? 3 : 0;
+          const useSingleCharForTeam = shouldUseSingleCharIndicator(config, team, 0);
+          const teamVariant = resolveNameTagVariantParams(config, useSingleCharForTeam);
+
           const backgroundHex = isOrange ? config.orangeBgColor : config.blueBgColor;
           const borderHex = isOrange ? config.orangeBorderColor : config.blueBorderColor;
           const boostBorderHex =
@@ -76,52 +78,30 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
             Math.min(100, config.previewBoostAmounts[sampleSlotIndex] ?? 100)
           );
           const textHex = isOrange ? config.orangeTextColor : config.blueTextColor;
-          const sampleName = truncatePreview(
-            config.previewNames[sampleSlotIndex] || (isOrange ? 'K' : 'AlphaStriker')
+          const sampleName = formatNameTagDisplayText(
+            config.previewNames[sampleSlotIndex] || (isOrange ? 'K' : 'AlphaStriker'),
+            teamVariant.maxChars
           );
-          const slotCode = resolveCarSlotCode(
-            sampleSlotIndex,
-            team as 0 | 1,
-            config.slotCodes
-          );
-          const resolvedLabel =
-            config.circleLabelMode === 'none'
-              ? ''
-              : config.circleLabelMode === 'slot-code'
-                ? slotCode
-                : sampleName;
+          const slotCode = resolveCarSlotCode(sampleSlotIndex, team, config.slotCodes);
+          const resolvedLabel = useSingleCharForTeam ? slotCode : sampleName;
 
-          const adaptiveWidthPx = computeAdaptiveNameTagWidthPx(sampleName, config);
+          const adaptiveWidthPx = computeAdaptiveNameTagWidthPx(resolvedLabel, teamVariant);
           const effectiveRadiusPx = resolveNameTagCornerRadiusPx(
             adaptiveWidthPx,
-            config.pillHeight,
-            config.cornerRadius
+            teamVariant.pillHeight,
+            teamVariant.cornerRadius
           );
           const previewScale = 0.52;
-          const onScreenCircleDiaPx = Math.max(
-            12,
-            Math.round(config.onscreenCircleRadiusPx * 2)
-          );
-          const scaledWidthPx = isCircleCard
-            ? onScreenCircleDiaPx
-            : Math.max(24, Math.round(adaptiveWidthPx * previewScale));
-          const scaledHeightPx = isCircleCard
-            ? onScreenCircleDiaPx
-            : Math.min(64, Math.round(config.pillHeight * previewScale));
-          const scaledBorderPx = isCircleCard
-            ? Math.max(0, config.onscreenCircleBorderWidthPx * 0.28)
-            : Math.max(0, config.borderWidth * previewScale);
-          const scaledRadiusPx = isCircleCard
-            ? Math.round(onScreenCircleDiaPx * 0.5)
-            : Math.round(effectiveRadiusPx * previewScale);
-          const scaledFontPx = isCircleCard
-            ? Math.max(1, Math.round(config.onscreenCircleFontSizePx * 0.28))
-            : Math.max(6, Math.round(config.fontSize * previewScale));
+          const scaledWidthPx = Math.max(24, Math.round(adaptiveWidthPx * previewScale));
+          const scaledHeightPx = Math.min(64, Math.round(teamVariant.pillHeight * previewScale));
+          const scaledBorderPx = Math.max(0, teamVariant.borderWidth * previewScale);
+          const scaledRadiusPx = Math.round(effectiveRadiusPx * previewScale);
+          const scaledFontPx = Math.max(6, Math.round(teamVariant.fontSize * previewScale));
 
           const mode = config.boostIndicatorMode;
           const isFillMode =
             config.boostBorderEnabled &&
-            (isCircleCard || mode === 'bottom-up-fill' || mode === 'left-right-fill');
+            (mode === 'bottom-up-fill' || mode === 'left-right-fill');
           const unfilledHex = resolveUnfilledBaseHexColor(
             backgroundHex,
             config.boostUnfilledDarkenRatio
@@ -133,7 +113,7 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
           );
           const baseBgCss = isFillMode
             ? hexToRgba(unfilledHex, config.boostUnfilledBgOpacity)
-            : hexToRgba(backgroundHex, config.bgOpacity);
+            : hexToRgba(backgroundHex, teamVariant.bgOpacity);
           const circleDiaPx = Math.max(
             10,
             Math.round(Math.min(scaledHeightPx * 0.62, scaledWidthPx * 0.28))
@@ -183,11 +163,11 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                   borderWidth: `${scaledBorderPx}px`,
                   borderStyle: 'solid',
                   borderRadius: `${scaledRadiusPx}px`,
-                  opacity: config.opacity,
+                  opacity: teamVariant.opacity,
                   color: textHex,
                   fontSize: `${scaledFontPx}px`,
-                  fontWeight: config.fontWeight,
-                  fontFamily: resolveNameTagFontFamilyCss(config.fontFamily),
+                  fontWeight: teamVariant.fontWeight,
+                  fontFamily: resolveNameTagFontFamilyCss(teamVariant.fontFamily),
                 }}
                 className="relative flex items-center justify-center px-1 shadow-sm transition-all"
               >
@@ -198,7 +178,7 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                       borderRadius: `${Math.max(0, scaledRadiusPx - scaledBorderPx)}px`,
                     }}
                   >
-                    {isCircleCard || mode === 'bottom-up-fill' ? (
+                    {mode === 'bottom-up-fill' ? (
                       <div
                         style={{
                           position: 'absolute',
@@ -229,9 +209,7 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                 {config.boostBorderEnabled &&
                   scaledBorderPx > 0 &&
                   sampleBoostPct > 0 &&
-                  (isCircleCard ||
-                    mode === 'border-only' ||
-                    mode === 'left-right-fill') && (
+                  (mode === 'border-only' || mode === 'left-right-fill') && (
                     <div
                       style={{
                         position: 'absolute',
@@ -240,42 +218,38 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
                         borderWidth: `${scaledBorderPx}px`,
                         borderStyle: 'solid',
                         borderColor: boostBorderHex,
-                        clipPath: isCircleCard
-                          ? `inset(${100 - sampleBoostPct}% 0 0 0)`
-                          : `inset(0 ${100 - sampleBoostPct}% 0 0)`,
+                        clipPath: `inset(0 ${100 - sampleBoostPct}% 0 0)`,
                         pointerEvents: 'none',
                       }}
                     />
                   )}
 
                 <div className="relative z-10 flex items-center justify-center gap-1 min-w-0 w-full">
-                  {!isCircleCard &&
-                    config.boostBorderEnabled &&
-                    mode === 'sunset-circle' && (
-                      <span
-                        style={{
-                          width: `${circleDiaPx}px`,
-                          height: `${circleDiaPx}px`,
-                          borderColor: sampleBoostPct > 2 ? boostBorderHex : borderHex,
-                          borderWidth: '1.5px',
-                          borderStyle: 'solid',
-                        }}
-                        className="relative rounded-full overflow-hidden shrink-0 bg-slate-950/75"
-                      >
-                        {sampleBoostPct > 0 && (
-                          <span
-                            style={{
-                              position: 'absolute',
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              height: `${sampleBoostPct}%`,
-                              background: `linear-gradient(to top, ${activeFillHex}, ${boostBorderHex})`,
-                            }}
-                          />
-                        )}
-                      </span>
-                    )}
+                  {config.boostBorderEnabled && mode === 'sunset-circle' && (
+                    <span
+                      style={{
+                        width: `${circleDiaPx}px`,
+                        height: `${circleDiaPx}px`,
+                        borderColor: sampleBoostPct > 2 ? boostBorderHex : borderHex,
+                        borderWidth: '1.5px',
+                        borderStyle: 'solid',
+                      }}
+                      className="relative rounded-full overflow-hidden shrink-0 bg-slate-950/75"
+                    >
+                      {sampleBoostPct > 0 && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: `${sampleBoostPct}%`,
+                            background: `linear-gradient(to top, ${activeFillHex}, ${boostBorderHex})`,
+                          }}
+                        />
+                      )}
+                    </span>
+                  )}
                   <span className="whitespace-nowrap truncate">{resolvedLabel}</span>
                 </div>
               </div>
@@ -369,7 +343,7 @@ export const NameTagPillPreviewCard: React.FC<NameTagPillPreviewCardProps> = ({
 
       <div className="flex items-center justify-between gap-2 text-[10px] font-mono px-2 py-1 rounded border bg-emerald-500/10 border-emerald-500/30 text-emerald-400">
         <span>
-          Card Render Scale: <b>{config.cardRenderScale}%</b> (Native Retina Overlay)
+          Card Render Scale: <b>{activeVariant.cardRenderScale}%</b> (Native Retina Overlay)
         </span>
         <span className={mutedText}>
           Off-Screen:{' '}

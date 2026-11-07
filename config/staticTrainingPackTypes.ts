@@ -197,8 +197,20 @@ export function createDefaultShotItem(index = 0): StaticTrainingShotItem {
   };
 }
 
+export type RawShotCarInput = Partial<StaticTrainingCarConfig> & {
+  pos?: [number, number, number] | number[];
+};
+
+export type RawShotBallInput = Partial<StaticTrainingBallConfig> & {
+  pos?: [number, number, number] | number[];
+};
+
 export function cloneShotItem(
-  item: Partial<StaticTrainingShotItem> & { car?: any; ball?: any; editorFreeCam?: any },
+  item: Partial<Omit<StaticTrainingShotItem, 'car' | 'ball' | 'editorFreeCam'>> & {
+    car?: RawShotCarInput | null;
+    ball?: RawShotBallInput | null;
+    editorFreeCam?: Partial<StaticTrainingEditorFreeCam> | null;
+  },
   newIndex?: number
 ): StaticTrainingShotItem {
   const idx = typeof newIndex === 'number' ? newIndex : (item?.index ?? 0);
