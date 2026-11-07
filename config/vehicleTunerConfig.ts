@@ -135,27 +135,27 @@ export const FENNEC_DESCRIPTOR: VehicleDescriptor = {
   wheelAnchors: [
     [48.55, 26.9291, 12.5],
     [48.55, -26.9291, 12.5],
-    [-46.95, 28.1003, 14.0],
-    [-46.95, -28.1003, 14.0],
+    [-36.68, 28.6221, 15.0],
+    [-36.68, -28.6221, 15.0],
   ],
-  suspensionHeights: [12.5, 12.5, 14.0, 14.0],
+  suspensionHeights: [-4.5, -4.5, -2.0, -2.0],
   boostOutlets: [
-    [-62.4896, 10.6, 8.9],
-    [-62.4896, 10.6, -8.9],
+    [-57.97, 10.57, 19.62],
+    [-57.97, 10.57, -19.62],
   ],
   boostNozzleParams: {
-    x: -62.3896,
-    y: 9.0,
-    z: 8.9,
+    x: -57.87,
+    y: 8.97,
+    z: 19.62,
     followChassisOffset: true,
   },
   surfaceMaterials: GLOBAL_VEHICLE_SURFACE_MATERIALS,
   lampsConfig: GLOBAL_VEHICLE_LAMPS_CONFIG,
   colors: {
     default: {
-      primary: 12353792,
-      realisticPrimary: 12353792,
-      pearl: 16722528,
+      primary: 16734742,
+      realisticPrimary: 16555020,
+      pearl: 16724660,
     },
   },
 };
