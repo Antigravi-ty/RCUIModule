@@ -1,462 +1,301 @@
 import { USER_PRESET_WINDOWS, type PresetConfig } from './floatingPresets';
+import {
+  ATMOSPHERE_FX_TABS,
+  BOOST_PAD_TUNER_TABS,
+  DEV_ENTRY_PATHS,
+  DRIFTWOODS_TUNER_TABS,
+  SUBSYSTEM_ISOLATION_LAB_TABS,
+  VEHICLE_GLOBAL_FX_TABS,
+  VEHICLE_OFFSET_TABS,
+  makeDevPreset,
+} from './devFloatingPresetFactory';
 
 // ============================================================================
-// DEVELOPER-ONLY FLOATING WINDOWS (22 Total — Strictly Developer-Only)
+// DEVELOPER-ONLY FLOATING WINDOWS (26 Total — Strictly Developer-Only)
 // ============================================================================
 
-export const DIAGNOSTIC_DUMP_PRESET: PresetConfig = {
+export const DIAGNOSTIC_DUMP_PRESET: PresetConfig = makeDevPreset({
   id: 'diagnostic-dump',
   title: 'Export Diagnostic Dump',
   category: 'DiagnosticDump',
-  width: 480,
-  height: 580,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Live Client Replay, Reconcile & Pacing Telemetry, and Server Replay buffer gauges + one-click .zip dump.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'DiagnosticDumpFloatingWindow',
-  sourcePath: 'panels/dev/DiagnosticDumpFloatingWindow.tsx',
-};
+});
 
-export const STATIC_TRAINING_BALL_CAM_TUNER_PRESET: PresetConfig = {
+export const STATIC_TRAINING_BALL_CAM_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'static-training-ball-cam-tuner',
   title: 'Static Training Ball Camera & Opacity Tuner',
   category: 'TrainingBallCam',
   width: 460,
-  height: 580,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Relative ball camera (Distance, Height, Angle, Lateral Offset) and Edit-Mode 70% Ball Opacity override.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'StaticTrainingBallCamTunerFloatingWindow',
-  sourcePath: 'panels/dev/StaticTrainingBallCamTunerFloatingWindow.tsx',
-};
+});
 
-export const NAME_TAG_TUNER_PRESET: PresetConfig = {
+export const NAME_TAG_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'name-tag-tuner',
   title: 'Multiplayer Name Tag Tuner',
   category: 'NameTagTuner',
-  width: 480,
   height: 620,
   minWidth: 460,
-  minHeight: 200,
   autoFitHeight: true,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: '208x54 horizontal pill name cards, 4 boost progress modes, ball occlusion, and 6-car kickoff arena.',
-  menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  menuEntryPath: DEV_ENTRY_PATHS.CALIBRATED_PRESETS,
   component: 'NameTagTunerFloatingWindow',
-  sourcePath: 'panels/dev/NameTagTunerFloatingWindow.tsx',
-};
+});
 
-export const GOAL_VOLUME_TUNER_PRESET: PresetConfig = {
+export const GOAL_VOLUME_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'goal-volume-tuner',
   title: 'Goal Volume Hitbox Active Tuner',
   category: 'GoalVolumeTuner',
   width: 470,
-  height: 580,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Goal Volume Hitbox 3D wireframe overlay, Standard & Throwback AABB calibration & JSON export.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'GoalVolumeTunerFloatingWindow',
-  sourcePath: 'panels/dev/GoalVolumeTunerFloatingWindow.tsx',
-};
+});
 
-export const REPLAY_DIRECTOR_TUNER_PRESET: PresetConfig = {
+export const REPLAY_DIRECTOR_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'replay-director-tuner',
   title: 'Replay Director Camera & Slow-Mo Tuner',
   category: 'ReplayDirector',
   width: 485,
   height: 640,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: '.rcgr.gz Goal Replay container export/import, 3D Arena preview, anomaly peak seek chips & +-15f window.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'ReplayDirectorTunerFloatingWindow',
-  sourcePath: 'panels/dev/ReplayDirectorTunerFloatingWindow.tsx',
-};
+});
 
-export const REACHABILITY_TUNER_PRESET: PresetConfig = {
+export const REACHABILITY_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'reachability-tuner',
   title: 'Reachability & Intercept Tuner',
   category: 'Reachability',
   width: 470,
   height: 600,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Ground 1s/2s/3s Isochrone LUT (Boost=0), Boost-Driven 3D Horn & Optimal Intercept 3D Cross.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'ReachabilityTunerFloatingWindow',
-  sourcePath: 'panels/dev/ReachabilityTunerFloatingWindow.tsx',
-};
+});
 
-export const BALL_TRAJECTORY_TUNER_PRESET: PresetConfig = {
+export const BALL_TRAJECTORY_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'ball-trajectory-tuner',
   title: 'Ball Trajectory Prediction Line Tuner',
   category: 'BallTrajectory',
-  width: 480,
   height: 640,
   minHeight: 220,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'WASM Incremental Tail Prediction (600t), Car-Ball Hit / Deviation Triggers, 3D Volumetric Shaded Tube, Spatial Depth Cues & JSON Export.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'BallTrajectoryTunerFloatingWindow',
-  sourcePath: 'panels/dev/BallTrajectoryTunerFloatingWindow.tsx',
-};
+});
 
-export const VEHICLE_MODEL_OFFSET_TUNER_PRESET: PresetConfig = {
+export const VEHICLE_MODEL_OFFSET_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'vehicle-model-offset-tuner',
   title: 'Vehicle Model & Offset Tuner',
   category: 'VehicleOffsetTuner',
-  width: 480,
   height: 620,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Per-vehicle Hitbox & Align, Wheel Hub Anchors & Dual Boost Exhaust Nozzle Offsets (Fennec & Insidio).',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'VehicleModelOffsetTunerFloatingWindow',
-  sourcePath: 'panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx',
-  tabs: [
-    { id: 'hitbox', label: '1. Hitbox & Align' },
-    { id: 'wheels', label: '2. Wheel Offsets' },
-    { id: 'boost', label: '3. Boost Nozzles' },
-  ],
-};
+  tabs: VEHICLE_OFFSET_TABS,
+});
 
-export const VEHICLE_GLOBAL_FX_TUNER_PRESET: PresetConfig = {
+export const VEHICLE_GLOBAL_FX_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'vehicle-global-fx-tuner',
   title: 'Vehicle Global Surfaces & FX Tuner',
   category: 'VehicleGlobalFx',
-  width: 480,
   height: 620,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Universal Surfaces & Paint, Head/Brake Lamps, 3-Face Solid Cylinder Wheels & Boost FX.',
-  menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  menuEntryPath: DEV_ENTRY_PATHS.CALIBRATED_PRESETS,
   component: 'VehicleGlobalFxTunerFloatingWindow',
-  sourcePath: 'panels/dev/VehicleGlobalFxTunerFloatingWindow.tsx',
-  tabs: [
-    { id: 'surfaces', label: '1. Surfaces' },
-    { id: 'lamps', label: '2. Lamps' },
-    { id: 'wheels', label: '3. Wheels' },
-    { id: 'boost', label: '4. Boost & FX' },
-  ],
-};
+  tabs: VEHICLE_GLOBAL_FX_TABS,
+});
 
-export const EXPERIMENTAL_MULTI_BOTS_PRESET: PresetConfig = {
+export const EXPERIMENTAL_MULTI_BOTS_PRESET: PresetConfig = makeDevPreset({
   id: 'experimental-multi-bots',
   title: 'Experimental Multiple Bots Mode',
   category: 'ExperimentalBots',
   width: 490,
   height: 620,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Live floating controller for up to 3v3 Native SafeTensors Nexto/Necto POV switching & inference telemetry.',
-  menuEntryPath: 'Settings -> Developer -> Sandboxes',
+  menuEntryPath: DEV_ENTRY_PATHS.SANDBOXES,
   component: 'ExperimentalMultiBotsFloatingWindow',
-  sourcePath: 'panels/dev/ExperimentalMultiBotsFloatingWindow.tsx',
-};
+});
 
-// experimental bot pack #9700488 (RLBot Pack commit #9700488 — 8 native SafeTensors models)
-export const EXPERIMENTAL_BOT_PACK_PRESET: PresetConfig = {
+export const EXPERIMENTAL_BOT_PACK_PRESET: PresetConfig = makeDevPreset({
   id: 'experimental-bot-pack',
   title: 'Experimental Bot Pack #9700488',
   category: 'ExperimentalBots',
   width: 490,
   height: 620,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Live floating controller for Experimental Bot Pack #9700488 (8 native models: Chronos, Dice, Ducky, Fury, Galactus, Kira, Rain, Ripple v1.1).',
-  menuEntryPath: 'Settings -> Developer -> Sandboxes',
+  menuEntryPath: DEV_ENTRY_PATHS.SANDBOXES,
   component: 'ExperimentalBotPackFloatingWindow',
-  sourcePath: 'panels/dev/ExperimentalBotPackFloatingWindow.tsx',
-};
+});
 
-export const ATMOSPHERE_FX_TUNER_PRESET: PresetConfig = {
+export const ATMOSPHERE_FX_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'atmosphere-fx-tuner',
   title: 'Atmosphere & FX Tuner',
   category: 'AtmosphereFx',
-  width: 480,
-  height: 580,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Wall & Pulse (Cubic-Bezier Fade-Out Curve), Single-Sun Sharp Shadows, Full-Sphere Skybox & 70% Ball.',
-  menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  menuEntryPath: DEV_ENTRY_PATHS.CALIBRATED_PRESETS,
   component: 'AtmosphereFxTunerFloatingWindow',
-  sourcePath: 'panels/dev/AtmosphereFxTunerFloatingWindow.tsx',
-  tabs: [
-    { id: 'wall-pulse', label: '1. Wall & Pulse' },
-    { id: 'shadows-light', label: '2. Shadows & Light' },
-    { id: 'skybox', label: '3. Skybox' },
-    { id: 'ball', label: '4. Ball' },
-  ],
-};
+  tabs: ATMOSPHERE_FX_TABS,
+});
 
-export const SUBSYSTEM_ISOLATION_LAB_PRESET: PresetConfig = {
+export const SUBSYSTEM_ISOLATION_LAB_PRESET: PresetConfig = makeDevPreset({
   id: 'subsystem-isolation-lab',
   title: 'Subsystem Isolation & MVP Lab',
   category: 'DeveloperLab',
   width: 470,
   height: 560,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: '7 isolated test benches: Probes, Multi-World Ghost, State Replay, 90s Match, Goal Replay, Kickoff Duel & Demolish Respawn.',
-  menuEntryPath: 'Settings -> Developer -> Sandboxes',
+  menuEntryPath: DEV_ENTRY_PATHS.SANDBOXES,
   component: 'SubsystemIsolationLabFloatingWindow',
-  sourcePath: 'panels/dev/SubsystemIsolationLabFloatingWindow.tsx',
-  tabs: [
-    { id: 'probes', label: '1. Probes' },
-    { id: 'multi-ghost', label: '2. Multi Ghost' },
-    { id: 'state-replay', label: '3. State Replay' },
-    { id: '90s-match', label: '4. 90s Match' },
-    { id: 'goal-replay', label: '5. Goal Replay' },
-    { id: 'kickoff-duel', label: '6. Kickoff Duel' },
-    { id: 'demolish-respawn', label: '7. Demo Respawn' },
-  ],
-};
+  tabs: SUBSYSTEM_ISOLATION_LAB_TABS,
+});
 
-export const KICKOFF_TRAINING_TUNER_PRESET: PresetConfig = {
+export const KICKOFF_TRAINING_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'kickoff-training-tuner',
   title: 'Kickoff Training Tuner (PPO)',
   category: 'Training',
   width: 460,
   height: 595,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Kickoff sub-modes, realistic wait (0.25s steps), N/120 speed & W/S rhythm overlay offset.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'KickoffTrainingTunerFloatingWindow',
-  sourcePath: 'panels/dev/KickoffTrainingTunerFloatingWindow.tsx',
-};
+});
 
-export const EVENT_STREAM_OBSERVER_PRESET: PresetConfig = {
+export const EVENT_STREAM_OBSERVER_PRESET: PresetConfig = makeDevPreset({
   id: 'event-stream-observer',
   title: 'Event Stream Observer',
   category: 'Observer',
   width: 460,
   height: 420,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Real-time physics collision observer, impulse scatter chart & audio threshold visualizer.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'EventStreamObserverFloatingWindow',
-  sourcePath: 'panels/dev/EventStreamObserverFloatingWindow.tsx',
-};
+});
 
-export const DUAL_ARENA_DETERMINISM_HARNESS_PRESET: PresetConfig = {
+export const DUAL_ARENA_DETERMINISM_HARNESS_PRESET: PresetConfig = makeDevPreset({
   id: 'dual-arena-determinism-harness',
   title: 'Dual-Arena Determinism Harness',
   category: 'Determinism',
   width: 440,
   height: 420,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Bit-exact parallel RocketSim physics rollback verification & desync delta monitoring.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'DualArenaDeterminismHarnessFloatingWindow',
-  sourcePath: 'panels/dev/DualArenaDeterminismHarnessFloatingWindow.tsx',
-};
+});
 
-export const CAMERA_DETERMINISM_PRESET: PresetConfig = {
+export const CAMERA_DETERMINISM_PRESET: PresetConfig = makeDevPreset({
   id: 'camera-determinism',
   title: 'Camera Deterministic Harness',
   category: 'CameraDeterminism',
   width: 460,
   height: 460,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Side-by-side comparison between Legacy WASM & Clean JS camera with 600+600f CSV auto-capture.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'CameraDeterminismFloatingWindow',
-  sourcePath: 'panels/dev/CameraDeterminismFloatingWindow.tsx',
-};
+});
 
-export const NETWORK_STRESS_INJECTION_PRESET: PresetConfig = {
+export const NETWORK_STRESS_INJECTION_PRESET: PresetConfig = makeDevPreset({
   id: 'network-stress-injection',
   title: 'Network Stress Injection',
   category: 'NetworkLab',
-  width: 480,
   height: 520,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Asymmetric uplink/downlink delay, jitter, packet loss & burst drop injection + 2-Car 0G probes.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'NetworkStressInjectionFloatingWindow',
-  sourcePath: 'panels/dev/NetworkStressInjectionFloatingWindow.tsx',
-};
+});
 
-export const CLOCK_PACING_TUNER_PRESET: PresetConfig = {
+export const CLOCK_PACING_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'clock-pacing-tuner',
   title: 'Input Buffer & Clock Pacing Tuner',
   category: 'PacingTuner',
   width: 580,
   height: 640,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Low-level STS/CSTS hysteresis, PD gains, RTT bias compensation, trace import & What-If simulator.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'ClockPacingTunerFloatingWindow',
-  sourcePath: 'panels/dev/ClockPacingTunerFloatingWindow.tsx',
-};
+});
 
-export const BOOST_PAD_TUNER_PRESET: PresetConfig = {
+export const BOOST_PAD_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'boost-pad-tuner',
   title: 'Boost Pad Visual Tuner',
   category: 'Graphics',
   width: 460,
   height: 540,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Upward gradient opacity, midpoint falloff curve & Big Pad floating orb geometry.',
-  menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  menuEntryPath: DEV_ENTRY_PATHS.CALIBRATED_PRESETS,
   component: 'BoostPadTunerFloatingWindow',
-  sourcePath: 'panels/dev/BoostPadTunerFloatingWindow.tsx',
-  tabs: [
-    { id: 'shader', label: 'Shader & Orb' }, { id: 'materials', label: 'Materials' },
-    { id: 'rotations', label: 'Rotations' }, { id: 'refill', label: 'Refilling' },
-    { id: 'collect', label: 'Collect FX' },
-  ],
-};
+  tabs: BOOST_PAD_TUNER_TABS,
+});
 
-export const DRIFTWOODS_TUNER_PRESET: PresetConfig = {
+export const DRIFTWOODS_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'driftwoods-tuner',
   title: 'Driftwoods Stadium Tuner',
   category: 'Graphics',
-  width: 480,
   height: 560,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Ground dynamic dual-color UV mask, 8-mesh PBR palette, 0.20 Hex Shield & Lite Lambert mode.',
-  menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  menuEntryPath: DEV_ENTRY_PATHS.CALIBRATED_PRESETS,
   component: 'DriftwoodsTunerFloatingWindow',
-  sourcePath: 'panels/dev/DriftwoodsTunerFloatingWindow.tsx',
-  tabs: [
-    { id: 'ground', label: 'Ground' }, { id: 'surfaces', label: 'Surfaces' },
-    { id: 'transparent', label: 'Transparent' }, { id: 'performance', label: 'Performance' },
-  ],
-};
+  tabs: DRIFTWOODS_TUNER_TABS,
+});
 
-export const SPATIAL_AUDIO_TUNER_PRESET: PresetConfig = {
+export const SPATIAL_AUDIO_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'spatial-audio-tuner',
   title: 'Spatial Audio & Anthem Tuner',
   category: 'AudioTuner',
-  width: 480,
   height: 620,
-  minHeight: 200,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Stadium spatial acoustics (HPF 425Hz, LPF 3500Hz, Wet 69%, 3.0s Decay) & 2.0s directional non-linear transition curve.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'SpatialAudioTunerFloatingWindow',
-  sourcePath: 'panels/dev/SpatialAudioTunerFloatingWindow.tsx',
-};
+});
 
-export const ENGINE_AUDIO_TUNER_PRESET: PresetConfig = {
+export const ENGINE_AUDIO_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'engine-audio-tuner',
   title: 'Engine Audio Tuner (Turtle Modem)',
   category: 'AudioTuner',
   width: 500,
   height: 640,
   minHeight: 220,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Turtle Modem 40-slice granular REV powertrain synthesizer, RPM/gear/reverse physics, backfire pops & Entity Spawn SFX.',
-  menuEntryPath: 'Settings -> Developer -> Active Tuners',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
   component: 'EngineAudioTunerFloatingWindow',
-  sourcePath: 'panels/dev/EngineAudioTunerFloatingWindow.tsx',
-};
+});
 
-export const BOTS_LOADOUT_TUNER_PRESET: PresetConfig = {
+export const BOTS_LOADOUT_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'bots-loadout-tuner',
   title: 'Bots Loadout Tuner',
   category: 'BotsLoadout',
-  width: 480,
-  height: 580,
   minHeight: 220,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Multi-select randomizable Bot Loadout pool (3 GLB models default, Metallic paint, Cartoon boost, Standard boost audio, Random TrainStation anthem).',
-  menuEntryPath: 'Settings -> Developer -> Bots Loadout Tuner',
+  menuEntryPath: DEV_ENTRY_PATHS.BOTS_LOADOUT,
   component: 'BotsLoadoutTunerFloatingWindow',
-  sourcePath: 'panels/dev/BotsLoadoutTunerFloatingWindow.tsx',
-};
+});
 
-export const SUPERSONIC_TRAIL_TUNER_PRESET: PresetConfig = {
+export const SUPERSONIC_TRAIL_TUNER_PRESET: PresetConfig = makeDevPreset({
   id: 'supersonic-trail-tuner',
   title: 'Supersonic Wheel Trail Tuner',
   category: 'SupersonicTrail',
-  width: 480,
   height: 620,
   minHeight: 220,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
-  summary: 'Dual rear-wheel contact trail ribbons (-1t to -30t window, 3-stop White→Pink→Purple Bezier gradient, ground-hinge upright tilt & Force Active toggle).',
-  menuEntryPath: 'Settings -> Developer -> Calibrated Presets',
+  summary: 'Dual rear-wheel contact trail ribbons (-1t to -30t window, 3-stop White->Pink->Purple Bezier gradient, ground-hinge upright tilt & Force Active toggle).',
+  menuEntryPath: DEV_ENTRY_PATHS.CALIBRATED_PRESETS,
   component: 'SupersonicTrailTunerFloatingWindow',
-  sourcePath: 'panels/dev/SupersonicTrailTunerFloatingWindow.tsx',
-};
+});
 
-export const REPLAY_TO_RCS_IMPORTER_PRESET: PresetConfig = {
+export const REPLAY_TO_RCS_IMPORTER_PRESET: PresetConfig = makeDevPreset({
   id: 'replay-to-rcs-importer',
   title: 'Replay to RCS Replay Importer',
   category: 'ReplayImporter',
   width: 495,
   height: 660,
   minHeight: 220,
-  resizable: true,
-  singleton: true,
-  tier: 'developer',
   summary: 'Import raw Rocket League .replay files, upsample 30Hz -> 120Hz via SLERP/Hermite, intervene with Disappear/Trajectory/Nexto/Necto, and export .rcreplay.gz.',
-  menuEntryPath: 'Settings -> Developer -> Sandboxes & Isolation Labs',
+  menuEntryPath: DEV_ENTRY_PATHS.SANDBOXES_AND_LABS,
   component: 'ReplayToRcsImporterFloatingWindow',
-  sourcePath: 'panels/dev/ReplayToRcsImporterFloatingWindow.tsx',
-};
+});
 
 export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   DIAGNOSTIC_DUMP_PRESET,

@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 import {
   DEFAULT_ANTHEM_ID,
   DEFAULT_RANDOM_ANTHEM_SCOPE,
@@ -8,46 +8,31 @@ import {
   saveStoredPlayerAnthem,
   loadStoredRandomAnthemPrefs,
   saveStoredRandomAnthemPrefs,
-} from '../config/anthemCatalogConfig';
+} from "../config/anthemCatalogConfig";
 import {
   DEFAULT_SPATIAL_AUDIO_TUNER_CONFIG,
   type SpatialAudioTunerConfig,
-  type StoredBgmPrefs,
   type BgmSceneConfig,
   loadStoredBgmPrefs,
-  saveStoredBgmPrefs,
   loadStoredSpatialAudioTunerConfig,
   saveStoredSpatialAudioTunerConfig,
-  parseBgmFileMetadata,
-} from '../config/spatialAudioConfig';
-import { audioConfig } from '../config/audioConfig';
-import { updateReplayDirectorConfig } from '../config/replayDirectorConfig';
+} from "../config/spatialAudioConfig";
+import { audioConfig } from "../config/audioConfig";
+import { updateReplayDirectorConfig } from "../config/replayDirectorConfig";
+import {
+  type BgmUploadedTrack,
+  type AnthemPreviewSource,
+  type SpatialAudioRuntimeCallbacks,
+  persistBgmPrefsFromState,
+  parseAndSortUploadedBgmFiles,
+  toggleDeselectedItem,
+  computeUpdatedDeselectedTracks,
+  filterBgmTracksByPrefs,
+} from "./spatialAudioBgmPersistence";
 
-export interface BgmUploadedTrack {
-  id: string;
-  rawName: string;
-  title: string;
-  volume: string | null;
-  trackNum: number | null;
-  file: File;
-}
-
-export type AnthemPreviewSource = 'garage-preview' | 'tuner-audition';
-
-export interface SpatialAudioRuntimeCallbacks {
-  onPreviewAnthem?: (anthemId: string, source?: AnthemPreviewSource) => void;
-  onStopPreviewAnthem?: () => void;
-  onSelectBgmTrack?: (trackId: string) => void;
-  onNextBgmTrack?: () => void;
-  onPrevBgmTrack?: () => void;
-  onToggleBgmPlayPause?: () => void;
-  onBgmPrefsChanged?: () => void;
-  onBgmFilesUploaded?: (tracks: BgmUploadedTrack[]) => void;
-  onTunerConfigChanged?: (config: SpatialAudioTunerConfig) => void;
-}
+export type { BgmUploadedTrack, AnthemPreviewSource, SpatialAudioRuntimeCallbacks };
 
 export interface SpatialAudioStoreState {
-  // 1. Player Anthem State
   selectedAnthem: string;
   randomAnthemScope: RandomAnthemScope;
   randomAnthemCategory: string;
@@ -59,7 +44,6 @@ export interface SpatialAudioStoreState {
   anthemBlend: number;
   isGoalReplaySkipped: boolean;
 
-  // 2. Background Music State
   bgmEnabled: boolean;
   bgmVolume: number;
   bgmScenes: BgmSceneConfig;
@@ -75,13 +59,9 @@ export interface SpatialAudioStoreState {
   bgmLinearPhase: number;
   bgmBlend: number;
 
-  // 3. Spatial Audio Active Tuner State
   tunerConfig: SpatialAudioTunerConfig;
-
-  // 4. Runtime Callbacks
   runtimeCallbacks: SpatialAudioRuntimeCallbacks;
 
-  // Actions — Player Anthem
   setSelectedAnthem: (anthemId: string) => void;
   setRandomAnthemScope: (scope: RandomAnthemScope) => void;
   setRandomAnthemCategory: (category: string) => void;
@@ -93,7 +73,6 @@ export interface SpatialAudioStoreState {
   setAnthemTransitionState: (linearPhase: number, blend: number) => void;
   setGoalReplaySkipped: (skipped: boolean) => void;
 
-  // Actions — Background Music
   setBgmEnabled: (enabled: boolean) => void;
   setBgmVolume: (volume: number) => void;
   setBgmSceneEnabled: (sceneKey: keyof BgmSceneConfig, enabled: boolean) => void;
@@ -116,38 +95,24 @@ export interface SpatialAudioStoreState {
   }) => void;
   setBgmTransitionState: (linearPhase: number, blend: number) => void;
 
-  // Actions — Spatial Audio Tuner
   updateTunerConfig: (patch: Partial<SpatialAudioTunerConfig>) => void;
   resetTunerConfig: () => void;
   hydrateFromStorage: () => void;
 
-  // Actions — Runtime Registration
   registerRuntimeCallbacks: (callbacks: SpatialAudioRuntimeCallbacks) => void;
 }
 
 const initialBgmPrefs = loadStoredBgmPrefs();
 const initialRandomAnthemPrefs = loadStoredRandomAnthemPrefs();
 
-function persistBgmPrefsFromState(state: {
-  realisticBgmEnabled: boolean;
-  bgmCategorizedMode: boolean;
-  bgmDeselectedVolumes: string[];
-  bgmDeselectedTrackNames: string[];
-  bgmVolume: number;
-  bgmScenes: BgmSceneConfig;
-}) {
-  const prefs: StoredBgmPrefs = {
-    realisticBgmEnabled: state.realisticBgmEnabled,
-    categorizedMode: state.bgmCategorizedMode,
-    deselectedVolumes: state.bgmDeselectedVolumes,
-    deselectedTrackNames: state.bgmDeselectedTrackNames,
-    bgmVolume: state.bgmVolume,
-    bgmScenes: state.bgmScenes,
-  };
-  saveStoredBgmPrefs(prefs);
+function syncReplayDirectorMuteSignal(muteSignalAudioInGoalReplay: boolean): void {
+  try {
+    audioConfig.set("muteSignalAudioInGoalReplay", muteSignalAudioInGoalReplay);
+    updateReplayDirectorConfig({ muteSignalAudioInGoalReplay });
+  } catch {
+    // Ignore if unavailable
+  }
 }
-
-const AUDIO_FILE_EXTENSIONS = /\.(mp3|wav|ogg|m4a|flac|aac|opus|webm)$/i;
 
 export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) => ({
   selectedAnthem: loadStoredPlayerAnthem() || DEFAULT_ANTHEM_ID,
@@ -177,20 +142,18 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
   bgmBlend: 1,
 
   tunerConfig: loadStoredSpatialAudioTunerConfig(),
-
   runtimeCallbacks: {},
 
   setSelectedAnthem: (anthemId) => {
-    const normalized = saveStoredPlayerAnthem(anthemId);
-    set({ selectedAnthem: normalized });
+    set({ selectedAnthem: saveStoredPlayerAnthem(anthemId) });
   },
 
   setRandomAnthemScope: (scope) => {
     const saved = saveStoredRandomAnthemPrefs({ scope });
     set({ randomAnthemScope: saved.scope });
     const { previewingAnthemId, previewSource, runtimeCallbacks } = get();
-    if (previewingAnthemId === 'random') {
-      runtimeCallbacks.onPreviewAnthem?.('random', previewSource || 'garage-preview');
+    if (previewingAnthemId === "random") {
+      runtimeCallbacks.onPreviewAnthem?.("random", previewSource || "garage-preview");
     }
   },
 
@@ -198,8 +161,8 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
     const saved = saveStoredRandomAnthemPrefs({ category });
     set({ randomAnthemCategory: saved.category });
     const { previewingAnthemId, previewSource, runtimeCallbacks } = get();
-    if (previewingAnthemId === 'random') {
-      runtimeCallbacks.onPreviewAnthem?.('random', previewSource || 'garage-preview');
+    if (previewingAnthemId === "random") {
+      runtimeCallbacks.onPreviewAnthem?.("random", previewSource || "garage-preview");
     }
   },
 
@@ -210,9 +173,9 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
     get().runtimeCallbacks.onBgmPrefsChanged?.();
   },
 
-  togglePreviewAnthem: (anthemId, source = 'garage-preview') => {
+  togglePreviewAnthem: (anthemId, source = "garage-preview") => {
     const { previewingAnthemId, runtimeCallbacks } = get();
-    if (previewingAnthemId === anthemId || anthemId === 'none') {
+    if (previewingAnthemId === anthemId || anthemId === "none") {
       set({ previewingAnthemId: null, previewSource: null });
       runtimeCallbacks.onStopPreviewAnthem?.();
     } else {
@@ -233,17 +196,12 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
     set({ previewingAnthemId: anthemId, previewSource: anthemId ? source : null });
   },
 
-  setActiveGoalAnthemId: (anthemId) => {
-    set({ activeGoalAnthemId: anthemId });
-  },
+  setActiveGoalAnthemId: (anthemId) => set({ activeGoalAnthemId: anthemId }),
 
-  setAnthemTransitionState: (linearPhase, blend) => {
-    set({ anthemLinearPhase: linearPhase, anthemBlend: blend });
-  },
+  setAnthemTransitionState: (linearPhase, blend) =>
+    set({ anthemLinearPhase: linearPhase, anthemBlend: blend }),
 
-  setGoalReplaySkipped: (skipped) => {
-    set({ isGoalReplaySkipped: skipped });
-  },
+  setGoalReplaySkipped: (skipped) => set({ isGoalReplaySkipped: skipped }),
 
   setBgmEnabled: (enabled) => {
     set({ bgmEnabled: enabled });
@@ -253,8 +211,7 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
   setBgmVolume: (volume) => {
     const clamped = Math.max(0, Math.min(100, Math.round(Number(volume) || 0)));
     set((state) => {
-      const next = { ...state, bgmVolume: clamped };
-      persistBgmPrefsFromState(next);
+      persistBgmPrefsFromState({ ...state, bgmVolume: clamped });
       return { bgmVolume: clamped };
     });
     get().runtimeCallbacks.onBgmPrefsChanged?.();
@@ -262,12 +219,8 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
 
   setBgmSceneEnabled: (sceneKey, enabled) => {
     set((state) => {
-      const nextScenes: BgmSceneConfig = {
-        ...state.bgmScenes,
-        [sceneKey]: Boolean(enabled),
-      };
-      const next = { ...state, bgmScenes: nextScenes };
-      persistBgmPrefsFromState(next);
+      const nextScenes: BgmSceneConfig = { ...state.bgmScenes, [sceneKey]: Boolean(enabled) };
+      persistBgmPrefsFromState({ ...state, bgmScenes: nextScenes });
       return { bgmScenes: nextScenes };
     });
     get().runtimeCallbacks.onBgmPrefsChanged?.();
@@ -279,8 +232,7 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
         ...state.bgmScenes,
         [sceneKey]: !state.bgmScenes[sceneKey],
       };
-      const next = { ...state, bgmScenes: nextScenes };
-      persistBgmPrefsFromState(next);
+      persistBgmPrefsFromState({ ...state, bgmScenes: nextScenes });
       return { bgmScenes: nextScenes };
     });
     get().runtimeCallbacks.onBgmPrefsChanged?.();
@@ -288,8 +240,7 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
 
   setRealisticBgmEnabled: (realistic) => {
     set((state) => {
-      const next = { ...state, realisticBgmEnabled: realistic };
-      persistBgmPrefsFromState(next);
+      persistBgmPrefsFromState({ ...state, realisticBgmEnabled: realistic });
       return { realisticBgmEnabled: realistic };
     });
     get().runtimeCallbacks.onBgmPrefsChanged?.();
@@ -297,67 +248,20 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
 
   setBgmCategorizedMode: (categorized) => {
     set((state) => {
-      const next = { ...state, bgmCategorizedMode: categorized };
-      persistBgmPrefsFromState(next);
+      persistBgmPrefsFromState({ ...state, bgmCategorizedMode: categorized });
       return { bgmCategorizedMode: categorized };
     });
     get().runtimeCallbacks.onBgmPrefsChanged?.();
   },
 
   uploadBgmFiles: (fileList) => {
-    const rawFiles = Array.from<File>(fileList as ArrayLike<File>).filter(
-      (file) => file.type.startsWith('audio/') || AUDIO_FILE_EXTENSIONS.test(file.name)
-    );
-    if (rawFiles.length === 0) return;
-
-    const parsedTracks: BgmUploadedTrack[] = rawFiles.map((file, idx) => {
-      const meta = parseBgmFileMetadata(file.name);
-      const isUncat = meta.vol === 'Uncategorized';
-      return {
-        id: `bgm-${idx}-${file.name}`,
-        rawName: file.name,
-        title: meta.cleanTitle,
-        volume: isUncat ? null : meta.vol,
-        trackNum: isUncat ? null : meta.trackNum,
-        file,
-      };
-    });
-
-    parsedTracks.sort((a, b) => {
-      if (a.volume !== null && b.volume !== null) {
-        if (a.volume !== b.volume) return Number(a.volume) - Number(b.volume);
-        return (a.trackNum ?? 0) - (b.trackNum ?? 0);
-      }
-      if (a.volume !== null) return -1;
-      if (b.volume !== null) return 1;
-      return a.title.localeCompare(b.title);
-    });
-
-    const volumeSet = new Set<string>();
-    let hasUncategorized = false;
-    for (const t of parsedTracks) {
-      if (t.volume !== null) {
-        volumeSet.add(t.volume);
-      } else {
-        hasUncategorized = true;
-      }
-    }
-    const sortedVolumes = Array.from(volumeSet).sort((a, b) => Number(a) - Number(b));
-    if (hasUncategorized) {
-      sortedVolumes.push('uncategorized');
-    }
-
-    const hasCategorizedVolumes = volumeSet.size > 0;
+    const batch = parseAndSortUploadedBgmFiles(fileList);
+    if (!batch) return;
+    const { parsedTracks, sortedVolumes, hasCategorizedVolumes } = batch;
 
     set((state) => {
       const nextCategorizedMode = hasCategorizedVolumes ? state.bgmCategorizedMode : false;
-      const next = {
-        ...state,
-        bgmTracks: parsedTracks,
-        bgmVolumes: sortedVolumes,
-        bgmCategorizedMode: nextCategorizedMode,
-      };
-      persistBgmPrefsFromState(next);
+      persistBgmPrefsFromState({ ...state, bgmCategorizedMode: nextCategorizedMode });
       return {
         bgmTracks: parsedTracks,
         bgmVolumes: sortedVolumes,
@@ -372,12 +276,8 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
 
   toggleBgmVolume: (volumeKey) => {
     set((state) => {
-      const exists = state.bgmDeselectedVolumes.includes(volumeKey);
-      const nextDeselected = exists
-        ? state.bgmDeselectedVolumes.filter((v) => v !== volumeKey)
-        : [...state.bgmDeselectedVolumes, volumeKey];
-      const next = { ...state, bgmDeselectedVolumes: nextDeselected };
-      persistBgmPrefsFromState(next);
+      const nextDeselected = toggleDeselectedItem(state.bgmDeselectedVolumes, volumeKey);
+      persistBgmPrefsFromState({ ...state, bgmDeselectedVolumes: nextDeselected });
       return { bgmDeselectedVolumes: nextDeselected };
     });
     get().runtimeCallbacks.onBgmPrefsChanged?.();
@@ -386,8 +286,7 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
   setAllBgmVolumes: (selected) => {
     set((state) => {
       const nextDeselected = selected ? [] : [...state.bgmVolumes];
-      const next = { ...state, bgmDeselectedVolumes: nextDeselected };
-      persistBgmPrefsFromState(next);
+      persistBgmPrefsFromState({ ...state, bgmDeselectedVolumes: nextDeselected });
       return { bgmDeselectedVolumes: nextDeselected };
     });
     get().runtimeCallbacks.onBgmPrefsChanged?.();
@@ -395,12 +294,8 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
 
   toggleBgmTrack: (rawName) => {
     set((state) => {
-      const exists = state.bgmDeselectedTrackNames.includes(rawName);
-      const nextDeselected = exists
-        ? state.bgmDeselectedTrackNames.filter((n) => n !== rawName)
-        : [...state.bgmDeselectedTrackNames, rawName];
-      const next = { ...state, bgmDeselectedTrackNames: nextDeselected };
-      persistBgmPrefsFromState(next);
+      const nextDeselected = toggleDeselectedItem(state.bgmDeselectedTrackNames, rawName);
+      persistBgmPrefsFromState({ ...state, bgmDeselectedTrackNames: nextDeselected });
       return { bgmDeselectedTrackNames: nextDeselected };
     });
     get().runtimeCallbacks.onBgmPrefsChanged?.();
@@ -408,37 +303,22 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
 
   setAllBgmTracks: (selected, targetRawNames) => {
     set((state) => {
-      const scopeNames = targetRawNames ?? state.bgmTracks.map((t) => t.rawName);
-      const scopeSet = new Set(scopeNames);
-      let nextDeselected: string[];
-      if (selected) {
-        nextDeselected = state.bgmDeselectedTrackNames.filter((n) => !scopeSet.has(n));
-      } else {
-        const union = new Set([...state.bgmDeselectedTrackNames, ...scopeNames]);
-        nextDeselected = Array.from(union);
-      }
-      const next = { ...state, bgmDeselectedTrackNames: nextDeselected };
-      persistBgmPrefsFromState(next);
+      const nextDeselected = computeUpdatedDeselectedTracks(
+        state.bgmDeselectedTrackNames,
+        state.bgmTracks,
+        selected,
+        targetRawNames
+      );
+      persistBgmPrefsFromState({ ...state, bgmDeselectedTrackNames: nextDeselected });
       return { bgmDeselectedTrackNames: nextDeselected };
     });
     get().runtimeCallbacks.onBgmPrefsChanged?.();
   },
 
-  playSpecificBgmTrack: (trackId) => {
-    get().runtimeCallbacks.onSelectBgmTrack?.(trackId);
-  },
-
-  nextBgmTrack: () => {
-    get().runtimeCallbacks.onNextBgmTrack?.();
-  },
-
-  prevBgmTrack: () => {
-    get().runtimeCallbacks.onPrevBgmTrack?.();
-  },
-
-  toggleBgmPlayPause: () => {
-    get().runtimeCallbacks.onToggleBgmPlayPause?.();
-  },
+  playSpecificBgmTrack: (trackId) => get().runtimeCallbacks.onSelectBgmTrack?.(trackId),
+  nextBgmTrack: () => get().runtimeCallbacks.onNextBgmTrack?.(),
+  prevBgmTrack: () => get().runtimeCallbacks.onPrevBgmTrack?.(),
+  toggleBgmPlayPause: () => get().runtimeCallbacks.onToggleBgmPlayPause?.(),
 
   setBgmPlaybackState: (patch) => {
     set((state) => ({
@@ -450,25 +330,13 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
     }));
   },
 
-  setBgmTransitionState: (linearPhase, blend) => {
-    set({ bgmLinearPhase: linearPhase, bgmBlend: blend });
-  },
+  setBgmTransitionState: (linearPhase, blend) =>
+    set({ bgmLinearPhase: linearPhase, bgmBlend: blend }),
 
   updateTunerConfig: (patch) => {
-    const merged: SpatialAudioTunerConfig = {
-      ...get().tunerConfig,
-      ...patch,
-    };
-    const nextConfig = saveStoredSpatialAudioTunerConfig(merged);
-    if (typeof patch.muteSignalAudioInGoalReplay === 'boolean') {
-      try {
-        audioConfig.set('muteSignalAudioInGoalReplay', nextConfig.muteSignalAudioInGoalReplay);
-        updateReplayDirectorConfig({
-          muteSignalAudioInGoalReplay: nextConfig.muteSignalAudioInGoalReplay,
-        });
-      } catch {
-        // Ignore if unavailable
-      }
+    const nextConfig = saveStoredSpatialAudioTunerConfig({ ...get().tunerConfig, ...patch });
+    if (typeof patch.muteSignalAudioInGoalReplay === "boolean") {
+      syncReplayDirectorMuteSignal(nextConfig.muteSignalAudioInGoalReplay);
     }
     set({ tunerConfig: nextConfig });
     get().runtimeCallbacks.onTunerConfigChanged?.(nextConfig);
@@ -477,14 +345,7 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
   resetTunerConfig: () => {
     const nextConfig: SpatialAudioTunerConfig = { ...DEFAULT_SPATIAL_AUDIO_TUNER_CONFIG };
     saveStoredSpatialAudioTunerConfig(nextConfig);
-    try {
-      audioConfig.set('muteSignalAudioInGoalReplay', nextConfig.muteSignalAudioInGoalReplay);
-      updateReplayDirectorConfig({
-        muteSignalAudioInGoalReplay: nextConfig.muteSignalAudioInGoalReplay,
-      });
-    } catch {
-      // Ignore if unavailable
-    }
+    syncReplayDirectorMuteSignal(nextConfig.muteSignalAudioInGoalReplay);
     set({ tunerConfig: nextConfig });
     get().runtimeCallbacks.onTunerConfigChanged?.(nextConfig);
   },
@@ -511,29 +372,14 @@ export const useSpatialAudioStore = create<SpatialAudioStoreState>((set, get) =>
     cb.onTunerConfigChanged?.(tunerConfig);
   },
 
-  registerRuntimeCallbacks: (callbacks) => {
-    set({ runtimeCallbacks: callbacks });
-  },
+  registerRuntimeCallbacks: (callbacks) => set({ runtimeCallbacks: callbacks }),
 }));
 
-/**
- * Helper to compute the active filtered playlist of BGM tracks based on current store preferences.
- */
 export function getFilteredBgmTracks(state: {
   bgmTracks: BgmUploadedTrack[];
   bgmCategorizedMode: boolean;
   bgmDeselectedVolumes: string[];
   bgmDeselectedTrackNames: string[];
 }): BgmUploadedTrack[] {
-  const deselectedVolumes = new Set(state.bgmDeselectedVolumes);
-  const deselectedTracks = new Set(state.bgmDeselectedTrackNames);
-
-  return state.bgmTracks.filter((track) => {
-    if (deselectedTracks.has(track.rawName)) return false;
-    if (state.bgmCategorizedMode) {
-      const volKey = track.volume ?? 'uncategorized';
-      if (deselectedVolumes.has(volKey)) return false;
-    }
-    return true;
-  });
+  return filterBgmTracksByPrefs(state);
 }

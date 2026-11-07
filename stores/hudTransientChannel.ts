@@ -3,61 +3,38 @@
  * Zero-dependency, zero-React-rerender transient pub/sub channel for both 120Hz continuous
  * AND low-frequency discrete HUD metrics & GPU compositor animations.
  */
-import {
-  DEFAULT_DEMO_INDICATOR_CONFIG,
-  DEFAULT_SKIP_INDICATOR_CONFIG,
-  DEFAULT_INITIAL_ROSTER,
-  resolveDemoIndicatorConfig,
-  resolveSkipIndicatorConfig,
-  type SpeedTransientListener,
-  type BoostTransientListener,
-  type BallCamTransientListener,
-  type StepperScoreboardState,
-  type EdgeDemoIndicatorConfig,
-  type EdgeSkipIndicatorConfig,
-  type EdgeRosterHudState,
-  type FlipTransientState,
-  type CompactTelemetryTransientSnapshot,
-  type KickoffTransientFrame,
-  type ReplayBannerTransientState,
-  type TemporalReplayFooterTransientState,
-  type DemolishHourglassTransientState,
-  type PitchMiniMapTransientState,
-  type KickoffCountdownFlashTransientState,
-  type HudTransientChannel,
+import type {
+  SpeedTransientListener,
+  BoostTransientListener,
+  BallCamTransientListener,
+  StepperScoreboardState,
+  EdgeRosterHudState,
+  FlipTransientState,
+  CompactTelemetryTransientSnapshot,
+  KickoffTransientFrame,
+  ReplayBannerTransientState,
+  TemporalReplayFooterTransientState,
+  DemolishHourglassTransientState,
+  PitchMiniMapTransientState,
+  KickoffCountdownFlashTransientState,
+  HudTransientChannel,
 } from './hudTransientTypes';
-
-function createTopic<T extends object>(_topicKey: string, initialState: T) {
-  const listeners = new Set<(state: T) => void>();
-  const state = initialState;
-
-  const notify = () => {
-    for (const fn of listeners) fn(state);
-  };
-
-  const subscribe = (listener: (state: T) => void) => {
-    listeners.add(listener);
-    listener(state);
-    return () => {
-      listeners.delete(listener);
-    };
-  };
-
-  const patchShallow = (patch: Partial<T>): boolean => {
-    let dirty = false;
-    for (const key in patch) {
-      const nextVal = patch[key];
-      if (nextVal !== undefined && state[key] !== nextVal) {
-        state[key] = nextVal as T[Extract<keyof T, string>];
-        dirty = true;
-      }
-    }
-    if (dirty) notify();
-    return dirty;
-  };
-
-  return { state, notify, subscribe, patchShallow };
-}
+import {
+  applyMiniMapBallHitInPlace,
+  applyPlayerSlotPatchInPlace,
+  applyRosterPatchInPlace,
+  buildInitialCountdownFlashState,
+  buildInitialFlipState,
+  buildInitialKickoffFrame,
+  buildInitialMiniMapState,
+  buildInitialReplayBannerState,
+  buildInitialReplayFooterState,
+  buildInitialRespawnTimerState,
+  buildInitialRosterState,
+  buildInitialScoreboardState,
+  buildInitialTelemetrySnapshot,
+  createTopic,
+} from './hudTransientChannelHelpers';
 
 export function createHudTransientChannel(initial?: {
   speed?: number;
@@ -84,116 +61,28 @@ export function createHudTransientChannel(initial?: {
   const boostListeners = new Set<BoostTransientListener>();
   const ballCamListeners = new Set<BallCamTransientListener>();
 
-  const scoreboard = createTopic<StepperScoreboardState>('hud:scoreboard', {
-    leftScore: initial?.scoreboard?.leftScore ?? 2,
-    rightScore: initial?.scoreboard?.rightScore ?? 2,
-    scoreDigits: initial?.scoreboard?.scoreDigits ?? 2,
-    seconds: initial?.scoreboard?.seconds ?? 164,
-    isOvertime: initial?.scoreboard?.isOvertime ?? false,
-    overtimeChinOpen: initial?.scoreboard?.overtimeChinOpen ?? false,
-    overtimeChinText: initial?.scoreboard?.overtimeChinText ?? 'OVERTIME',
-    bestOf: initial?.scoreboard?.bestOf ?? 5,
-    seriesTitle: initial?.scoreboard?.seriesTitle,
-    leftSeriesWins: initial?.scoreboard?.leftSeriesWins ?? 2,
-    rightSeriesWins: initial?.scoreboard?.rightSeriesWins ?? 1,
-    seriesResults: initial?.scoreboard?.seriesResults ?? ['left', 'right', 'left', 'none', 'none'],
-  });
-
-  const roster = createTopic<EdgeRosterHudState>('hud:roster', {
-    viewMode: initial?.roster?.viewMode ?? DEFAULT_INITIAL_ROSTER.viewMode,
-    focusedSlotKey:
-      initial?.roster?.focusedSlotKey !== undefined
-        ? initial.roster.focusedSlotKey
-        : DEFAULT_INITIAL_ROSTER.focusedSlotKey,
-    opponentDemoCompact:
-      initial?.roster?.opponentDemoCompact ?? DEFAULT_INITIAL_ROSTER.opponentDemoCompact ?? true,
-    demoIndicatorConfig: resolveDemoIndicatorConfig(initial?.roster?.demoIndicatorConfig),
-    skipIndicatorConfig: resolveSkipIndicatorConfig(initial?.roster?.skipIndicatorConfig),
-    leftPlayers: (initial?.roster?.leftPlayers ?? DEFAULT_INITIAL_ROSTER.leftPlayers).map((p) => ({
-      ...p,
-    })) as EdgeRosterHudState['leftPlayers'],
-    rightPlayers: (initial?.roster?.rightPlayers ?? DEFAULT_INITIAL_ROSTER.rightPlayers).map(
-      (p) => ({ ...p })
-    ) as EdgeRosterHudState['rightPlayers'],
-  });
-
-  const flip = createTopic<FlipTransientState>('hud:flip', {
-    hasFlip: initial?.flipState?.hasFlip ?? true,
-    status: initial?.flipState?.status ?? 'grounded',
-    remainingSeconds: initial?.flipState?.remainingSeconds ?? 1.25,
-    maxSeconds: initial?.flipState?.maxSeconds ?? 1.25,
-    flipsRemaining: initial?.flipState?.flipsRemaining ?? 1,
-    wheelContacts: initial?.flipState?.wheelContacts ?? [true, true, true, true],
-  });
-
-  const telemetry = createTopic<CompactTelemetryTransientSnapshot>('hud:telemetry', {
-    fps: initial?.telemetry?.fps ?? 120,
-    refreshHz: initial?.telemetry?.refreshHz ?? 120,
-    renderScalePct: initial?.telemetry?.renderScalePct ?? 100,
-    physicsRateHz: initial?.telemetry?.physicsRateHz ?? 120.0,
-    baseLatencyMs: initial?.telemetry?.baseLatencyMs ?? 18,
-    extraLatencyMs: initial?.telemetry?.extraLatencyMs ?? 0,
-  });
-
-  const kickoff = createTopic<KickoffTransientFrame>('hud:kickoff', {
-    episodeTick: initial?.kickoffFrame?.episodeTick ?? 0,
-    countdownRemainingTicks: initial?.kickoffFrame?.countdownRemainingTicks ?? 0,
-    aiTouchTick: initial?.kickoffFrame?.aiTouchTick ?? null,
-    playerTouchTick: initial?.kickoffFrame?.playerTouchTick ?? null,
-    lastDeltaTicks: initial?.kickoffFrame?.lastDeltaTicks ?? null,
-    requiredKeys: initial?.kickoffFrame?.requiredKeys ?? {},
-    playerKeys: initial?.kickoffFrame?.playerKeys ?? {},
-  });
-
-  const replayBanner = createTopic<ReplayBannerTransientState>('hud:replayBanner', {
-    replayProgress: initial?.replayBanner?.replayProgress ?? 0.42,
-    replayFrameIndex: initial?.replayBanner?.replayFrameIndex ?? 151,
-    replayTotalFrames: initial?.replayBanner?.replayTotalFrames ?? 360,
-  });
-
-  const replayFooter = createTopic<TemporalReplayFooterTransientState>('hud:replayFooter', {
-    visible: initial?.replayFooter?.visible ?? true,
-    scorerName: initial?.replayFooter?.scorerName ?? 'Swabbie',
-    goalSpeed: initial?.replayFooter?.goalSpeed ?? '118KPH',
-    assisterName:
-      initial?.replayFooter?.assisterName !== undefined
-        ? initial.replayFooter.assisterName
-        : 'Beast',
-    teamAccentColor: initial?.replayFooter?.teamAccentColor ?? '#edce0b',
-    sideY: initial?.replayFooter?.sideY ?? -16,
-    centerY: initial?.replayFooter?.centerY ?? 47,
-  });
-
-  const respawnTimer = createTopic<DemolishHourglassTransientState>('hud:respawnTimer', {
-    remainingSeconds: initial?.respawnTimer?.remainingSeconds ?? 3.0,
-    totalSeconds: initial?.respawnTimer?.totalSeconds ?? 3.0,
-    active: initial?.respawnTimer?.active ?? true,
-    alwaysVisible: initial?.respawnTimer?.alwaysVisible ?? true,
-  });
-
-  const miniMap = createTopic<PitchMiniMapTransientState>('hud:miniMap', {
-    ballX: initial?.miniMap?.ballX ?? 62,
-    ballY: initial?.miniMap?.ballY ?? 34,
-    ballHitKph: initial?.miniMap?.ballHitKph ?? 114,
-    isFlipped: initial?.miniMap?.isFlipped ?? false,
-    flip180: initial?.miniMap?.flip180 ?? false,
-    ballNormX: initial?.miniMap?.ballNormX ?? 0.36,
-    ballNormY: initial?.miniMap?.ballNormY ?? 0.32,
-    lastHitEvent: initial?.miniMap?.lastHitEvent ?? {
-      id: 1,
-      normX: 0.36,
-      normY: 0.32,
-      speedKph: 102,
-      isMyTeam: true,
-    },
-  });
-
-  const countdownFlash = createTopic<KickoffCountdownFlashTransientState>('hud:countdownFlash', {
-    value: initial?.countdownFlash?.value !== undefined ? initial.countdownFlash.value : 3,
-    digit: initial?.countdownFlash?.digit ?? '4',
-    color: initial?.countdownFlash?.color ?? '#ef4444',
-    sequenceId: initial?.countdownFlash?.sequenceId ?? 1,
-  });
+  const scoreboard = createTopic('hud:scoreboard', buildInitialScoreboardState(initial?.scoreboard));
+  const roster = createTopic('hud:roster', buildInitialRosterState(initial?.roster));
+  const flip = createTopic('hud:flip', buildInitialFlipState(initial?.flipState));
+  const telemetry = createTopic('hud:telemetry', buildInitialTelemetrySnapshot(initial?.telemetry));
+  const kickoff = createTopic('hud:kickoff', buildInitialKickoffFrame(initial?.kickoffFrame));
+  const replayBanner = createTopic(
+    'hud:replayBanner',
+    buildInitialReplayBannerState(initial?.replayBanner)
+  );
+  const replayFooter = createTopic(
+    'hud:replayFooter',
+    buildInitialReplayFooterState(initial?.replayFooter)
+  );
+  const respawnTimer = createTopic(
+    'hud:respawnTimer',
+    buildInitialRespawnTimerState(initial?.respawnTimer)
+  );
+  const miniMap = createTopic('hud:miniMap', buildInitialMiniMapState(initial?.miniMap));
+  const countdownFlash = createTopic(
+    'hud:countdownFlash',
+    buildInitialCountdownFlashState(initial?.countdownFlash)
+  );
 
   const setFlipImpl = (patch: Partial<FlipTransientState>) => {
     const s = flip.state;
@@ -207,7 +96,6 @@ export function createHudTransientChannel(initial?: {
       dirty = true;
     }
     if (patch.remainingSeconds !== undefined) {
-      // 120Hz (1/120s ≈ 0.008333s)  0.001s 0.01s 
       const rounded = Math.max(0, Math.round(patch.remainingSeconds * 1000) / 1000);
       if (Math.abs(rounded - s.remainingSeconds) >= 0.002) {
         s.remainingSeconds = rounded;
@@ -367,56 +255,14 @@ export function createHudTransientChannel(initial?: {
     },
 
     setRoster: (partial: Partial<EdgeRosterHudState>) => {
-      const s = roster.state;
-      if (partial.viewMode !== undefined) s.viewMode = partial.viewMode;
-      if (partial.opponentDemoCompact !== undefined) {
-        s.opponentDemoCompact = partial.opponentDemoCompact;
-      }
-      if (partial.demoIndicatorConfig !== undefined) {
-        s.demoIndicatorConfig = resolveDemoIndicatorConfig(
-          partial.demoIndicatorConfig,
-          resolveDemoIndicatorConfig(s.demoIndicatorConfig)
-        );
-      }
-      if (partial.skipIndicatorConfig !== undefined) {
-        s.skipIndicatorConfig = resolveSkipIndicatorConfig(
-          partial.skipIndicatorConfig,
-          resolveSkipIndicatorConfig(s.skipIndicatorConfig)
-        );
-      }
-      if (partial.focusedSlotKey !== undefined) {
-        s.focusedSlotKey = partial.focusedSlotKey;
-        for (const p of s.leftPlayers) {
-          p.isFocusedPov = partial.focusedSlotKey !== null && p.slotKey === partial.focusedSlotKey;
-        }
-        for (const p of s.rightPlayers) {
-          p.isFocusedPov = partial.focusedSlotKey !== null && p.slotKey === partial.focusedSlotKey;
-        }
-      }
-      if (partial.leftPlayers) s.leftPlayers = partial.leftPlayers;
-      if (partial.rightPlayers) s.rightPlayers = partial.rightPlayers;
+      applyRosterPatchInPlace(roster.state, partial);
       roster.notify();
     },
 
     updatePlayerSlot: (slotKey, patch) => {
-      let slot =
-        roster.state.leftPlayers.find((p) => p.slotKey === slotKey) ??
-        roster.state.rightPlayers.find((p) => p.slotKey === slotKey);
-      if (!slot) {
-        const list = slotKey <= 3 ? roster.state.leftPlayers : roster.state.rightPlayers;
-        slot = list[slotKey <= 3 ? slotKey - 1 : slotKey - 4];
+      if (applyPlayerSlotPatchInPlace(roster.state, slotKey, patch)) {
+        roster.notify();
       }
-      if (!slot) return;
-      let dirty = false;
-      for (const key in patch) {
-        const k = key as keyof typeof patch;
-        const nextVal = patch[k];
-        if (nextVal !== undefined && slot[k] !== nextVal) {
-          (slot as any)[k] = nextVal;
-          dirty = true;
-        }
-      }
-      if (dirty) roster.notify();
     },
 
     setFlip: setFlipImpl,
@@ -458,19 +304,7 @@ export function createHudTransientChannel(initial?: {
     setMiniMapState: setMiniMapImpl,
 
     triggerMiniMapBallHit: (hit) => {
-      const s = miniMap.state;
-      s.ballNormX = hit.normX;
-      s.ballNormY = hit.normY;
-      s.ballX = hit.normX * 100;
-      s.ballY = hit.normY * 100;
-      s.ballHitKph = hit.speedKph;
-      s.lastHitEvent = {
-        id: hit.id ?? Date.now() + Math.random(),
-        normX: hit.normX,
-        normY: hit.normY,
-        speedKph: hit.speedKph,
-        isMyTeam: hit.isMyTeam,
-      };
+      applyMiniMapBallHitInPlace(miniMap.state, hit);
       miniMap.notify();
     },
 

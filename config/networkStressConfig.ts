@@ -2,18 +2,18 @@ export const INPUT_STALE_NEUTRAL_THRESHOLD_MS = 1000;
 export const SESSION_DISCONNECT_THRESHOLD_MS = 30000;
 
 export const CONNECTION_HEALTH_STATES = Object.freeze({
-  HEALTHY: 'HEALTHY',
-  STALE_NEUTRAL: 'STALE_NEUTRAL',
-  DISCONNECTED: 'DISCONNECTED',
+  HEALTHY: "HEALTHY",
+  STALE_NEUTRAL: "STALE_NEUTRAL",
+  DISCONNECTED: "DISCONNECTED",
 });
 
 export type ConnectionHealthState =
   (typeof CONNECTION_HEALTH_STATES)[keyof typeof CONNECTION_HEALTH_STATES];
 
 export const DIAGNOSTIC_VEHICLE_PROFILES = Object.freeze({
-  BOOST_PULSE: 'boost_pulse',
-  QE_ROLL: 'qe_roll',
-  SINE_STEER: 'sine_steer',
+  BOOST_PULSE: "boost_pulse",
+  QE_ROLL: "qe_roll",
+  SINE_STEER: "sine_steer",
 });
 
 export const DEFAULT_DIAGNOSTIC_FLEET = Object.freeze([
@@ -21,7 +21,7 @@ export const DEFAULT_DIAGNOSTIC_FLEET = Object.freeze([
     carIndex: 6,
     team: 0,
     profile: DIAGNOSTIC_VEHICLE_PROFILES.BOOST_PULSE,
-    label: 'Car 6: Gravity Boost Loop (Z0=500 -> Z1=600)',
+    label: "Car 6: Gravity Boost Loop (Z0=500 -> Z1=600)",
     baseAltitudeZ: 500,
     peakAltitudeZ: 600,
     spawnPos: Object.freeze({ x: -2500, y: -400, z: 500 }),
@@ -30,7 +30,7 @@ export const DEFAULT_DIAGNOSTIC_FLEET = Object.freeze([
     carIndex: 7,
     team: 1,
     profile: DIAGNOSTIC_VEHICLE_PROFILES.QE_ROLL,
-    label: 'Car 7: 0G Locked QE Roll (2s Periodic Roll Switch)',
+    label: "Car 7: 0G Locked QE Roll (2s Periodic Roll Switch)",
     spawnPos: Object.freeze({ x: -2500, y: 400, z: 550 }),
   }),
 ]);
@@ -45,79 +45,26 @@ export interface NetworkStressPresetSpec {
   blackoutMs: number;
 }
 
+const makePreset = (
+  id: string,
+  label: string,
+  extraUplinkMs: number,
+  extraDownlinkMs: number,
+  jitterMs: number,
+  packetLossPct: number,
+  blackoutMs = 0
+): Readonly<NetworkStressPresetSpec> =>
+  Object.freeze({ id, label, extraUplinkMs, extraDownlinkMs, jitterMs, packetLossPct, blackoutMs });
+
 export const NETWORK_STRESS_PRESETS: Readonly<Record<string, Readonly<NetworkStressPresetSpec>>> = Object.freeze({
-  IDEAL_LAN: Object.freeze({
-    id: 'ideal_lan',
-    label: 'Ideal LAN (0ms / 0%)',
-    extraUplinkMs: 0,
-    extraDownlinkMs: 0,
-    jitterMs: 0,
-    packetLossPct: 0,
-    blackoutMs: 0,
-  }),
-  WIFI_JITTER: Object.freeze({
-    id: 'wifi_jitter',
-    label: 'Wi-Fi Jitter (↑15/15↓ / 18ms / 1%)',
-    extraUplinkMs: 15,
-    extraDownlinkMs: 15,
-    jitterMs: 18,
-    packetLossPct: 1,
-    blackoutMs: 0,
-  }),
-  ASYMMETRIC_LINK: Object.freeze({
-    id: 'asymmetric_link',
-    label: 'Asymmetric (↑10/40↓ / 6ms / 0.5%)',
-    extraUplinkMs: 10,
-    extraDownlinkMs: 40,
-    jitterMs: 6,
-    packetLossPct: 0.5,
-    blackoutMs: 0,
-  }),
-  CROSS_REGION: Object.freeze({
-    id: 'cross_region',
-    label: 'Cross-Region (↑40/40↓ / 8ms / 0.5%)',
-    extraUplinkMs: 40,
-    extraDownlinkMs: 40,
-    jitterMs: 8,
-    packetLossPct: 0.5,
-    blackoutMs: 0,
-  }),
-  CELLULAR_4G: Object.freeze({
-    id: 'cellular_4g',
-    label: '4G Cellular (↑65/45↓ / 35ms / 5%)',
-    extraUplinkMs: 65,
-    extraDownlinkMs: 45,
-    jitterMs: 35,
-    packetLossPct: 5,
-    blackoutMs: 0,
-  }),
-  SEVERE_SPIKE: Object.freeze({
-    id: 'severe_spike',
-    label: 'Congestion Spike (↑90/90↓ / 60ms / 12%)',
-    extraUplinkMs: 90,
-    extraDownlinkMs: 90,
-    jitterMs: 60,
-    packetLossPct: 12,
-    blackoutMs: 0,
-  }),
-  STALE_1S_PROBE: Object.freeze({
-    id: 'stale_1s_probe',
-    label: '1.2s Blackout (1s Neutral Fallback Probe)',
-    extraUplinkMs: 18,
-    extraDownlinkMs: 18,
-    jitterMs: 5,
-    packetLossPct: 0,
-    blackoutMs: 1200,
-  }),
-  DISCONNECT_30S_PROBE: Object.freeze({
-    id: 'disconnect_30s_probe',
-    label: '30s Timeout Sim (Disconnect Evict Probe)',
-    extraUplinkMs: 18,
-    extraDownlinkMs: 18,
-    jitterMs: 5,
-    packetLossPct: 0,
-    blackoutMs: 30500,
-  }),
+  IDEAL_LAN: makePreset("ideal_lan", "Ideal LAN (0ms / 0%)", 0, 0, 0, 0),
+  WIFI_JITTER: makePreset("wifi_jitter", "Wi-Fi Jitter (↑15/15↓ / 18ms / 1%)", 15, 15, 18, 1),
+  ASYMMETRIC_LINK: makePreset("asymmetric_link", "Asymmetric (↑10/40↓ / 6ms / 0.5%)", 10, 40, 6, 0.5),
+  CROSS_REGION: makePreset("cross_region", "Cross-Region (↑40/40↓ / 8ms / 0.5%)", 40, 40, 8, 0.5),
+  CELLULAR_4G: makePreset("cellular_4g", "4G Cellular (↑65/45↓ / 35ms / 5%)", 65, 45, 35, 5),
+  SEVERE_SPIKE: makePreset("severe_spike", "Congestion Spike (↑90/90↓ / 60ms / 12%)", 90, 90, 60, 12),
+  STALE_1S_PROBE: makePreset("stale_1s_probe", "1.2s Blackout (1s Neutral Fallback Probe)", 18, 18, 5, 0, 1200),
+  DISCONNECT_30S_PROBE: makePreset("disconnect_30s_probe", "30s Timeout Sim (Disconnect Evict Probe)", 18, 18, 5, 0, 30500),
 });
 
 export const NETWORK_STRESS_PRESET_LIST: readonly Readonly<NetworkStressPresetSpec>[] = Object.freeze(
@@ -134,7 +81,7 @@ export interface ConnectionMetricsInput {
 
 export interface ConnectionQualityEvaluation {
   score: number;
-  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  grade: "A" | "B" | "C" | "D" | "F";
   healthState: ConnectionHealthState;
   neutralFallbackActive: boolean;
   disconnectEvicted: boolean;
@@ -159,7 +106,7 @@ export function evaluateConnectionQuality(
   if (healthState === CONNECTION_HEALTH_STATES.DISCONNECTED) {
     return {
       score: 0,
-      grade: 'F',
+      grade: "F",
       healthState,
       neutralFallbackActive: true,
       disconnectEvicted: true,
@@ -178,11 +125,11 @@ export function evaluateConnectionQuality(
   const rawScore = 100 - rttPenalty - jitterPenalty - lossPenalty - errorPenalty - stalePenalty;
   const score = Math.max(0, Math.min(100, Math.round(rawScore)));
 
-  let grade: 'A' | 'B' | 'C' | 'D' | 'F' = 'A';
-  if (score < 40) grade = 'F';
-  else if (score < 58) grade = 'D';
-  else if (score < 74) grade = 'C';
-  else if (score < 88) grade = 'B';
+  let grade: "A" | "B" | "C" | "D" | "F" = "A";
+  if (score < 40) grade = "F";
+  else if (score < 58) grade = "D";
+  else if (score < 74) grade = "C";
+  else if (score < 88) grade = "B";
 
   return {
     score,
@@ -207,7 +154,7 @@ export interface NetworkStressSimulatorOptions {
 }
 
 export const DEFAULT_NETWORK_STRESS_CONFIG = {
-  presetId: 'ideal_lan',
+  presetId: "ideal_lan",
   extraUplinkMs: 0,
   extraDownlinkMs: 0,
   jitterMs: 0,
@@ -241,6 +188,16 @@ export interface NetworkStressChannelTarget extends NetworkStressChannelSimulato
   burstDropEnabled?: boolean;
 }
 
+const getNowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+
+const clampStressValue = (raw: unknown, name: string, max: number, round = true): number => {
+  const val = Number(raw);
+  if (!Number.isFinite(val)) {
+    throw new Error(`[NetworkStressSimulator] Non-finite ${name}: ${raw}`);
+  }
+  return Math.max(0, Math.min(max, round ? Math.round(val) : Number(val.toFixed(1))));
+};
+
 export class NetworkStressSimulator {
   activePresetId: string;
   extraUplinkMs: number;
@@ -269,8 +226,7 @@ export class NetworkStressSimulator {
       Math.min(this.burstPeriodMs - 1, Math.floor(Number(options.burstDurationMs) || 750))
     );
 
-    this.lastPacketTimestampMs =
-      options.nowMs ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    this.lastPacketTimestampMs = options.nowMs ?? getNowMs();
     this.blackoutStartMs = 0;
     this.blackoutUntilMs = 0;
     this.simulatedStaleAgeOffsetMs = 0;
@@ -284,10 +240,8 @@ export class NetworkStressSimulator {
     return Math.round((this.extraUplinkMs + this.extraDownlinkMs) * 0.5);
   }
 
-  recordPacketReceived(nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()): void {
-    if (this.blackoutUntilMs > nowMs) {
-      return;
-    }
+  recordPacketReceived(nowMs = getNowMs()): void {
+    if (this.blackoutUntilMs > nowMs) return;
     this.lastPacketTimestampMs = nowMs;
     this.simulatedStaleAgeOffsetMs = 0;
   }
@@ -295,7 +249,7 @@ export class NetworkStressSimulator {
   applyPreset(
     presetId: string,
     channel: NetworkStressChannelTarget | null = null,
-    nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    nowMs = getNowMs()
   ): Readonly<NetworkStressPresetSpec> {
     const found =
       NETWORK_STRESS_PRESET_LIST.find((p) => p.id === presetId) ||
@@ -332,56 +286,28 @@ export class NetworkStressSimulator {
     channel: NetworkStressChannelTarget | null = null
   ): void {
     if (params.extraLatencyMs !== undefined && params.extraUplinkMs === undefined && params.extraDownlinkMs === undefined) {
-      const val = Number(params.extraLatencyMs);
-      if (!Number.isFinite(val)) {
-        throw new Error(`[NetworkStressSimulator] Non-finite extraLatencyMs: ${params.extraLatencyMs}`);
-      }
-      const clamped = Math.max(0, Math.min(500, Math.round(val)));
+      const clamped = clampStressValue(params.extraLatencyMs, "extraLatencyMs", 500);
       this.extraUplinkMs = clamped;
       this.extraDownlinkMs = clamped;
     }
-
     if (params.extraUplinkMs !== undefined) {
-      const val = Number(params.extraUplinkMs);
-      if (!Number.isFinite(val)) {
-        throw new Error(`[NetworkStressSimulator] Non-finite extraUplinkMs: ${params.extraUplinkMs}`);
-      }
-      this.extraUplinkMs = Math.max(0, Math.min(500, Math.round(val)));
+      this.extraUplinkMs = clampStressValue(params.extraUplinkMs, "extraUplinkMs", 500);
     }
-
     if (params.extraDownlinkMs !== undefined) {
-      const val = Number(params.extraDownlinkMs);
-      if (!Number.isFinite(val)) {
-        throw new Error(`[NetworkStressSimulator] Non-finite extraDownlinkMs: ${params.extraDownlinkMs}`);
-      }
-      this.extraDownlinkMs = Math.max(0, Math.min(500, Math.round(val)));
+      this.extraDownlinkMs = clampStressValue(params.extraDownlinkMs, "extraDownlinkMs", 500);
     }
-
     if (params.jitterMs !== undefined) {
-      const val = Number(params.jitterMs);
-      if (!Number.isFinite(val)) {
-        throw new Error(`[NetworkStressSimulator] Non-finite jitterMs: ${params.jitterMs}`);
-      }
-      this.jitterMs = Math.max(0, Math.min(200, Math.round(val)));
+      this.jitterMs = clampStressValue(params.jitterMs, "jitterMs", 200);
     }
-
     if (params.packetLossPct !== undefined) {
-      const val = Number(params.packetLossPct);
-      if (!Number.isFinite(val)) {
-        throw new Error(`[NetworkStressSimulator] Non-finite packetLossPct: ${params.packetLossPct}`);
-      }
-      this.packetLossPct = Math.max(0, Math.min(100, Number(val.toFixed(1))));
+      this.packetLossPct = clampStressValue(params.packetLossPct, "packetLossPct", 100, false);
     }
-
     if (params.burstDropEnabled !== undefined) {
       this.burstDropEnabled = Boolean(params.burstDropEnabled);
     }
-
     if (params.burstPeriodMs !== undefined) {
-      const val = Math.floor(Number(params.burstPeriodMs) || 2000);
-      this.burstPeriodMs = Math.max(1, val);
+      this.burstPeriodMs = Math.max(1, Math.floor(Number(params.burstPeriodMs) || 2000));
     }
-
     if (params.burstDurationMs !== undefined) {
       const val = Math.floor(Number(params.burstDurationMs) || 0);
       this.burstDurationMs = Math.max(0, Math.min(this.burstPeriodMs - 1, val));
@@ -394,43 +320,42 @@ export class NetworkStressSimulator {
 
   syncToChannel(channel: NetworkStressChannelTarget | null): void {
     if (!channel) return;
-    if (typeof channel.setAsymmetricLatency === 'function') {
+    const sim = channel.simulator;
+    if (typeof channel.setAsymmetricLatency === "function") {
       channel.setAsymmetricLatency(this.extraUplinkMs, this.extraDownlinkMs);
-    } else if (channel.simulator && typeof channel.simulator.setAsymmetricLatency === 'function') {
-      channel.simulator.setAsymmetricLatency(this.extraUplinkMs, this.extraDownlinkMs);
+    } else if (sim && typeof sim.setAsymmetricLatency === "function") {
+      sim.setAsymmetricLatency(this.extraUplinkMs, this.extraDownlinkMs);
     } else {
       channel.extraUplinkMs = this.extraUplinkMs;
       channel.extraDownlinkMs = this.extraDownlinkMs;
-      if (typeof channel.setExtraLatency === 'function') {
+      if (typeof channel.setExtraLatency === "function") {
         channel.setExtraLatency(this.extraLatencyMs);
       } else {
         channel.extraLatencyMs = this.extraLatencyMs;
       }
     }
 
-    if (typeof channel.setJitter === 'function') {
+    if (typeof channel.setJitter === "function") {
       channel.setJitter(this.jitterMs);
-    } else if (channel.simulator && typeof channel.simulator.setJitter === 'function') {
-      channel.simulator.setJitter(this.jitterMs);
+    } else if (sim && typeof sim.setJitter === "function") {
+      sim.setJitter(this.jitterMs);
     } else {
       channel.jitterMs = this.jitterMs;
-      if (channel.simulator) {
-        channel.simulator.jitterMs = this.jitterMs;
-      }
+      if (sim) sim.jitterMs = this.jitterMs;
     }
 
     const lossRate = this.packetLossPct / 100.0;
-    if (typeof channel.setPacketLossRate === 'function') {
+    if (typeof channel.setPacketLossRate === "function") {
       channel.setPacketLossRate(lossRate);
     } else {
       channel.packetLossRate = lossRate;
     }
     channel.simulatedPacketLossPct = this.packetLossPct;
 
-    if (typeof channel.setBurstDrop === 'function') {
+    if (typeof channel.setBurstDrop === "function") {
       channel.setBurstDrop(this.burstPeriodMs, this.burstDurationMs, this.burstDropEnabled);
-    } else if (channel.simulator && typeof channel.simulator.setBurstDrop === 'function') {
-      channel.simulator.setBurstDrop(this.burstPeriodMs, this.burstDurationMs, this.burstDropEnabled);
+    } else if (sim && typeof sim.setBurstDrop === "function") {
+      sim.setBurstDrop(this.burstPeriodMs, this.burstDurationMs, this.burstDropEnabled);
     } else {
       channel.burstPeriodMs = this.burstPeriodMs;
       channel.burstDurationMs = this.burstDurationMs;
@@ -441,14 +366,14 @@ export class NetworkStressSimulator {
   triggerBlackout(
     durationMs: number,
     channel: NetworkStressChannelTarget | null = null,
-    nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    nowMs = getNowMs()
   ): void {
     const dur = Math.max(0, Number(durationMs) || 0);
     this.blackoutStartMs = nowMs;
     this.blackoutUntilMs = nowMs + dur;
 
     const sim = channel?.simulator || channel;
-    if (sim && typeof sim.triggerBlackout === 'function') {
+    if (sim && typeof sim.triggerBlackout === "function") {
       sim.triggerBlackout(dur, nowMs);
     } else if (channel?.forceDropNextInput) {
       const approxPackets = Math.max(1, Math.ceil((dur / 1000) * 120));
@@ -458,7 +383,7 @@ export class NetworkStressSimulator {
 
   clearBlackout(
     channel: NetworkStressChannelTarget | null = null,
-    nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    nowMs = getNowMs()
   ): void {
     this.blackoutStartMs = 0;
     this.blackoutUntilMs = 0;
@@ -466,7 +391,7 @@ export class NetworkStressSimulator {
     this.lastPacketTimestampMs = nowMs;
 
     const sim = channel?.simulator || channel;
-    if (sim && typeof sim.clearBlackout === 'function') {
+    if (sim && typeof sim.clearBlackout === "function") {
       sim.clearBlackout();
     }
     this.syncToChannel(channel);
@@ -474,7 +399,7 @@ export class NetworkStressSimulator {
 
   getHealthSnapshot(
     metrics: ConnectionMetricsInput = {},
-    nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    nowMs = getNowMs()
   ) {
     const isBlackoutActive = this.blackoutUntilMs > nowMs;
     const rawElapsedMs = Math.max(0, nowMs - this.lastPacketTimestampMs);

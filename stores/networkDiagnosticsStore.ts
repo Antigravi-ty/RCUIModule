@@ -1,11 +1,27 @@
-import { useSyncExternalStore } from 'react';
-import { NetworkStressSimulator, NETWORK_STRESS_PRESETS, CONNECTION_HEALTH_STATES } from '../config/networkStressConfig';
-import { DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT, createInitialNetworkDiagnosticsState, type DiagnosticProbeTelemetry, type DiagnosticBufferSnapshot, type DiagnosticDumpExportOptions, type NetworkDiagnosticsBridge, type NetworkMetrics, type NetworkDiagnosticsState } from './networkDiagnosticsTypes';
-import { computeReconcilerMetricsPatch } from './networkDiagnosticsReconcilerSync';
+import { useSyncExternalStore } from "react";
+import {
+  NetworkStressSimulator,
+  NETWORK_STRESS_PRESETS,
+  CONNECTION_HEALTH_STATES,
+} from "../config/networkStressConfig";
+import {
+  createInitialNetworkDiagnosticsState,
+  type DiagnosticProbeTelemetry,
+  type DiagnosticBufferSnapshot,
+  type DiagnosticDumpExportOptions,
+  type NetworkDiagnosticsBridge,
+  type NetworkMetrics,
+  type NetworkDiagnosticsState,
+} from "./networkDiagnosticsTypes";
+import {
+  applyAsymmetricLatencyAndBuildPatch,
+  applyBurstDropParamsAndBuildPatch,
+  buildReconcilerTelemetryPatch,
+} from "./networkDiagnosticsSnapshotBuilder";
 
 export const ZERO_G_ANCHOR_MODES = Object.freeze({
-  Z_HOVER: 'z_hover',
-  ZERO_G_LOCKED: 'zero_g_locked',
+  Z_HOVER: "z_hover",
+  ZERO_G_LOCKED: "zero_g_locked",
 });
 
 export type {
@@ -37,65 +53,21 @@ function attachReconcilerMetricsListener(reconciler: any) {
   if (!reconciler) return;
 
   const updateFn = (m: any) => {
-    const ch = resolveChannel();
-    const nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
-    const incomingServerTick = m?.serverTick ?? state.metrics.serverTick;
-    if (incomingServerTick !== state.metrics.serverTick) {
-      stressSim.recordPacketReceived(nowMs);
-    }
-
-    const rawSample = {
-      ...m,
-      extraUplinkMs: m?.extraUplinkMs ?? ch?.extraUplinkMs ?? stressSim.extraUplinkMs,
-      extraDownlinkMs: m?.extraDownlinkMs ?? ch?.extraDownlinkMs ?? stressSim.extraDownlinkMs,
-      inputBufferSize: m?.inputBufferSize ?? reconciler.metrics?.inputBufferSize,
-      rollbackWindow: m?.rollbackWindow ?? reconciler.history?.length,
-      lastCorrectionDelta: m?.lastCorrectionDelta ?? reconciler.metrics?.lastCorrectionDelta,
-      maxCorrectionDelta: m?.maxCorrectionDelta ?? reconciler.metrics?.maxCorrectionDelta,
-      localCarIndex: reconciler.localCarIndex ?? 0,
-      enableSmoothing: m?.enableSmoothing ?? reconciler.enableSmoothing,
-    };
-
-    const computedPatch = computeReconcilerMetricsPatch(rawSample, ch, state.metrics);
-    const health = stressSim.getHealthSnapshot(
-      {
-        rttMs: computedPatch.rttMs,
-        jitterMs: computedPatch.jitterMs,
-        packetLossPct: computedPatch.packetLossPct,
-        lastErrorUu: computedPatch.lastErrorUu,
-      },
-      nowMs
+    updateMetricsPatch(
+      buildReconcilerTelemetryPatch(m, reconciler, resolveChannel(), stressSim, state)
     );
-
-    let probeTelemetry = state.metrics.probeTelemetry;
-    if (state.metrics.zeroGFleetEnabled && state.bridge.onSampleZeroGFleetTelemetry) {
-      probeTelemetry = state.bridge.onSampleZeroGFleetTelemetry() || [];
-    }
-
-    updateMetricsPatch({
-      ...computedPatch,
-      stressPresetId: health.presetId,
-      impairmentPresetId: health.presetId,
-      qualityScore: health.score,
-      qualityGrade: health.grade,
-      healthState: health.healthState,
-      packetAgeMs: health.packetAgeMs,
-      neutralFallbackActive: health.neutralFallbackActive,
-      disconnectEvicted: health.disconnectEvicted,
-      probeTelemetry,
-    });
   };
 
-  if (typeof reconciler.addMetricsListener === 'function') {
+  if (typeof reconciler.addMetricsListener === "function") {
     reconciler.addMetricsListener(updateFn);
   } else {
     const prev = reconciler.onMetricsUpdated;
     reconciler.onMetricsUpdated = (m: any) => {
-      if (typeof prev === 'function') {
+      if (typeof prev === "function") {
         try {
           prev(m);
         } catch (err) {
-          console.error('[networkDiagnosticsStore] Error in previous reconciler onMetricsUpdated:', err);
+          console.error("[networkDiagnosticsStore] Error in previous reconciler onMetricsUpdated:", err);
         }
       }
       updateFn(m);
@@ -133,9 +105,9 @@ export const networkDiagnosticsStore = {
   setSession: (reconciler: any, channel: any, bridgeOverride?: Partial<NetworkDiagnosticsBridge>) => {
     const isBridgeObject =
       bridgeOverride &&
-      typeof bridgeOverride === 'object' &&
-      !('physics' in bridgeOverride) &&
-      !('arena' in bridgeOverride);
+      typeof bridgeOverride === "object" &&
+      !("physics" in bridgeOverride) &&
+      !("arena" in bridgeOverride);
     state = {
       ...state,
       reconcilerRef: reconciler,
@@ -152,53 +124,16 @@ export const networkDiagnosticsStore = {
   },
 
   setAsymmetricLatency: (uplinkMs: number, downlinkMs: number) => {
-    const upVal = Math.max(0, Math.min(500, Math.round(uplinkMs)));
-    const downVal = Math.max(0, Math.min(500, Math.round(downlinkMs)));
-    const extraRttMs = upVal + downVal;
-    const ch = resolveChannel();
-    stressSim.setStress({ extraUplinkMs: upVal, extraDownlinkMs: downVal }, ch);
-    const reconciler = resolveReconciler();
-    let nextLeadTicks = state.metrics.clientLeadTicks;
-    let nextRttMs = ch ? (ch.rttMs ?? extraRttMs) : extraRttMs;
-    let nextUplinkMs = upVal;
-    let nextDownlinkMs = downVal;
-    if (reconciler) {
-      const breakdown = reconciler._resolveLatencyBreakdown ? reconciler._resolveLatencyBreakdown() : null;
-      const effectiveRtt = breakdown ? breakdown.rttMs : (reconciler._resolveEffectiveRtt ? reconciler._resolveEffectiveRtt() : nextRttMs);
-      nextRttMs = effectiveRtt;
-      nextUplinkMs = breakdown ? breakdown.uplinkMs : Math.max(0, Math.round((effectiveRtt - extraRttMs) * 0.5) + upVal);
-      nextDownlinkMs = breakdown ? breakdown.downlinkMs : Math.max(0, effectiveRtt - nextUplinkMs);
-      nextLeadTicks = reconciler.calculateLeadTicks ? reconciler.calculateLeadTicks(effectiveRtt) : nextLeadTicks;
-      reconciler.leadTicks = nextLeadTicks;
-      if (reconciler.metrics) {
-        reconciler.metrics.leadTicks = nextLeadTicks;
-        reconciler.metrics.rttMs = effectiveRtt;
-        reconciler.metrics.uplinkMs = nextUplinkMs;
-        reconciler.metrics.downlinkMs = nextDownlinkMs;
-        reconciler.metrics.extraUplinkMs = upVal;
-        reconciler.metrics.extraDownlinkMs = downVal;
-        reconciler.metrics.extraRttMs = extraRttMs;
-      }
-      reconciler.notifyMetricsUpdated?.();
-    }
-    const health = stressSim.getHealthSnapshot({
-      rttMs: nextRttMs,
-      jitterMs: state.metrics.jitterMs,
-      packetLossPct: state.metrics.packetLossPct,
-      lastErrorUu: state.metrics.lastErrorUu,
-    });
-    updateMetricsPatch({
-      extraUplinkMs: upVal,
-      extraDownlinkMs: downVal,
-      extraRttMs,
-      extraLatencyMs: Math.round(extraRttMs * 0.5),
-      rttMs: nextRttMs,
-      uplinkMs: nextUplinkMs,
-      downlinkMs: nextDownlinkMs,
-      clientLeadTicks: nextLeadTicks,
-      qualityScore: health.score,
-      qualityGrade: health.grade,
-    });
+    updateMetricsPatch(
+      applyAsymmetricLatencyAndBuildPatch(
+        uplinkMs,
+        downlinkMs,
+        stressSim,
+        resolveChannel(),
+        resolveReconciler(),
+        state.metrics
+      )
+    );
   },
 
   setExtraUplinkLatency: (ms: number) => {
@@ -252,22 +187,16 @@ export const networkDiagnosticsStore = {
 
   setBurstDropEnabled: (enabled: boolean) => {
     const nextEnabled = Boolean(enabled);
-    const safePeriod = Math.max(1, Math.floor(state.metrics.burstPeriodMs || 2000));
-    let safeDuration = Math.max(0, Math.min(safePeriod - 1, Math.floor(state.metrics.burstDurationMs || 0)));
-    if (nextEnabled && safeDuration <= 0) {
-      safeDuration = Math.min(safePeriod - 1, Math.max(1, Math.floor(safePeriod * 0.375)));
-    }
-    const safePct = Math.min(99, Math.floor((safeDuration / safePeriod) * 100));
-    stressSim.setStress(
-      { burstDropEnabled: nextEnabled, burstPeriodMs: safePeriod, burstDurationMs: safeDuration },
-      resolveChannel()
+    updateMetricsPatch(
+      applyBurstDropParamsAndBuildPatch(
+        nextEnabled,
+        state.metrics.burstPeriodMs || 2000,
+        state.metrics.burstDurationMs || 0,
+        stressSim,
+        resolveChannel(),
+        true
+      )
     );
-    updateMetricsPatch({
-      burstDropEnabled: nextEnabled,
-      burstPeriodMs: safePeriod,
-      burstDurationMs: safeDuration,
-      burstDurationPct: safePct,
-    });
     resolveReconciler()?.notifyMetricsUpdated?.();
     return nextEnabled;
   },
@@ -278,49 +207,44 @@ export const networkDiagnosticsStore = {
   },
 
   setBurstPeriodMs: (periodMs: number) => {
-    const safePeriod = Math.max(1, Math.floor(Number(periodMs) || 2000));
-    const safeDuration = Math.max(0, Math.min(safePeriod - 1, Math.floor(state.metrics.burstDurationMs || 0)));
-    const safePct = Math.min(99, Math.floor((safeDuration / safePeriod) * 100));
-    stressSim.setStress(
-      { burstDropEnabled: state.metrics.burstDropEnabled, burstPeriodMs: safePeriod, burstDurationMs: safeDuration },
-      resolveChannel()
+    updateMetricsPatch(
+      applyBurstDropParamsAndBuildPatch(
+        state.metrics.burstDropEnabled,
+        Number(periodMs) || 2000,
+        state.metrics.burstDurationMs || 0,
+        stressSim,
+        resolveChannel()
+      )
     );
-    updateMetricsPatch({
-      burstPeriodMs: safePeriod,
-      burstDurationMs: safeDuration,
-      burstDurationPct: safePct,
-    });
   },
 
   setBurstDurationMs: (durationMs: number) => {
     const safePeriod = Math.max(1, Math.floor(state.metrics.burstPeriodMs || 2000));
     const safeDuration = Math.max(0, Math.min(safePeriod - 1, Math.floor(Number(durationMs) || 0)));
-    const safePct = Math.min(99, Math.floor((safeDuration / safePeriod) * 100));
-    const nextEnabled = safeDuration > 0;
-    stressSim.setStress(
-      { burstDropEnabled: nextEnabled, burstPeriodMs: safePeriod, burstDurationMs: safeDuration },
-      resolveChannel()
+    updateMetricsPatch(
+      applyBurstDropParamsAndBuildPatch(
+        safeDuration > 0,
+        safePeriod,
+        safeDuration,
+        stressSim,
+        resolveChannel()
+      )
     );
-    updateMetricsPatch({
-      burstDropEnabled: nextEnabled,
-      burstDurationMs: safeDuration,
-      burstDurationPct: safePct,
-    });
   },
 
   setBurstDurationPct: (pct: number) => {
     const safePct = Math.max(0, Math.min(99, Math.floor(Number(pct) || 0)));
     const safePeriod = Math.max(1, Math.floor(state.metrics.burstPeriodMs || 2000));
     const safeDuration = Math.max(0, Math.min(safePeriod - 1, Math.floor((safePct / 100) * safePeriod)));
-    const nextEnabled = safeDuration > 0;
-    stressSim.setStress(
-      { burstDropEnabled: nextEnabled, burstPeriodMs: safePeriod, burstDurationMs: safeDuration },
-      resolveChannel()
-    );
     updateMetricsPatch({
-      burstDropEnabled: nextEnabled,
+      ...applyBurstDropParamsAndBuildPatch(
+        safeDuration > 0,
+        safePeriod,
+        safeDuration,
+        stressSim,
+        resolveChannel()
+      ),
       burstDurationPct: safePct,
-      burstDurationMs: safeDuration,
     });
   },
 
@@ -356,7 +280,7 @@ export const networkDiagnosticsStore = {
   setVisualSmoothing: (enabled: boolean) => {
     const reconciler = resolveReconciler();
     if (reconciler) {
-      if (typeof reconciler.setEnableSmoothing === 'function') reconciler.setEnableSmoothing(enabled);
+      if (typeof reconciler.setEnableSmoothing === "function") reconciler.setEnableSmoothing(enabled);
       else reconciler.enableSmoothing = enabled;
     }
     updateMetricsPatch({ visualSmoothing: enabled });
@@ -499,9 +423,9 @@ export const networkDiagnosticsStore = {
 
   copyDiagnostics: () => {
     const text = JSON.stringify(networkDiagnosticsStore.getDiagnosticDump(), null, 2);
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(text).catch((err) => {
-        console.warn('[networkDiagnosticsStore] Failed to copy diagnostics to clipboard:', err);
+        console.warn("[networkDiagnosticsStore] Failed to copy diagnostics to clipboard:", err);
       });
     }
   },

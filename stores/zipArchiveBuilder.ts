@@ -16,7 +16,7 @@ const CRC32_TABLE = (() => {
   return table;
 })();
 
-import type { PacingTelemetryColumns } from './pacingTelemetryRecorder';
+import type { PacingTelemetryColumns } from './pacingTelemetryFormatPipeline';
 
 export function computeZipCrc32(bytes: Uint8Array): number {
   let crc = 0xffffffff;
@@ -183,3 +183,77 @@ export async function extractZipArchiveTextEntries(
   }
   return files;
 }
+
+export function encodeZipStoreArchive(entries: ZipArchiveEntry[]): Uint8Array {
+  const prepared = entries.map((e) => {
+    const nameBytes = encodeUtf8(e.name);
+    const dataBytes = typeof e.data === 'string' ? encodeUtf8(e.data) : e.data;
+    const crc = computeZipCrc32(dataBytes);
+    return { nameBytes, dataBytes, crc };
+  });
+
+  let localTotal = 0;
+  let centralTotal = 0;
+  for (const item of prepared) {
+    localTotal += 30 + item.nameBytes.length + item.dataBytes.length;
+    centralTotal += 46 + item.nameBytes.length;
+  }
+
+  const out = new Uint8Array(localTotal + centralTotal + 22);
+  const view = new DataView(out.buffer);
+  let localOffset = 0;
+  let centralOffset = localTotal;
+
+  for (const item of prepared) {
+    const { nameBytes, dataBytes, crc } = item;
+    const len = dataBytes.length;
+    const itemLocalStart = localOffset;
+
+    view.setUint32(localOffset, 0x04034b50, true);
+    view.setUint16(localOffset + 4, 20, true);
+    view.setUint16(localOffset + 6, 0x0800, true);
+    view.setUint16(localOffset + 8, 0, true);
+    view.setUint16(localOffset + 10, 0, true);
+    view.setUint16(localOffset + 12, 0, true);
+    view.setUint32(localOffset + 14, crc, true);
+    view.setUint32(localOffset + 18, len, true);
+    view.setUint32(localOffset + 22, len, true);
+    view.setUint16(localOffset + 26, nameBytes.length, true);
+    view.setUint16(localOffset + 28, 0, true);
+    out.set(nameBytes, localOffset + 30);
+    out.set(dataBytes, localOffset + 30 + nameBytes.length);
+    localOffset += 30 + nameBytes.length + len;
+
+    view.setUint32(centralOffset, 0x02014b50, true);
+    view.setUint16(centralOffset + 4, 20, true);
+    view.setUint16(centralOffset + 6, 20, true);
+    view.setUint16(centralOffset + 8, 0x0800, true);
+    view.setUint16(centralOffset + 10, 0, true);
+    view.setUint16(centralOffset + 12, 0, true);
+    view.setUint16(centralOffset + 14, 0, true);
+    view.setUint32(centralOffset + 16, crc, true);
+    view.setUint32(centralOffset + 20, len, true);
+    view.setUint32(centralOffset + 24, len, true);
+    view.setUint16(centralOffset + 28, nameBytes.length, true);
+    view.setUint16(centralOffset + 30, 0, true);
+    view.setUint16(centralOffset + 32, 0, true);
+    view.setUint16(centralOffset + 34, 0, true);
+    view.setUint16(centralOffset + 36, 0, true);
+    view.setUint32(centralOffset + 38, 0, true);
+    view.setUint32(centralOffset + 42, itemLocalStart, true);
+    out.set(nameBytes, centralOffset + 46);
+    centralOffset += 46 + nameBytes.length;
+  }
+
+  view.setUint32(centralOffset, 0x06054b50, true);
+  view.setUint16(centralOffset + 4, 0, true);
+  view.setUint16(centralOffset + 6, 0, true);
+  view.setUint16(centralOffset + 8, prepared.length, true);
+  view.setUint16(centralOffset + 10, prepared.length, true);
+  view.setUint32(centralOffset + 12, centralTotal, true);
+  view.setUint32(centralOffset + 16, localTotal, true);
+  view.setUint16(centralOffset + 20, 0, true);
+
+  return out;
+}
+

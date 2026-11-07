@@ -3,6 +3,25 @@
  * High-performance, zero-allocation 20-minute (144,000 ticks @ 120Hz) telemetry evaluator
  * and counterfactual What-If offline pacing simulator.
  */
+import {
+  type PacingControllerState,
+  type PacingControllerStepInput,
+  type PacingControllerParams,
+  type PacingTraceColumnsLike,
+  type PacingTraceSourceLike,
+  type PacingControllerStepResult,
+  numOr,
+  computeTierAndRateStep,
+} from "./pacingControllerStepMath";
+
+export type {
+  PacingControllerState,
+  PacingControllerStepInput,
+  PacingControllerParams,
+  PacingTraceColumnsLike,
+  PacingTraceSourceLike,
+  PacingControllerStepResult,
+};
 
 export const MAX_TELEMETRY_TICKS = 144000; // 20 minutes @ 120Hz
 
@@ -17,90 +36,6 @@ export const TELEMETRY_EVENT_FLAGS = Object.freeze({
   KICKOFF_MASKED: 0x80,
 });
 
-function numOr(val: unknown, fallback: number): number {
-  const n = Number(val);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-export interface PacingControllerState {
-  initialized?: boolean;
-  smoothRttMs?: number;
-  jitterMs?: number;
-  smoothBuffer?: number;
-  prevSmoothBuffer?: number;
-  inFlightBiasTicks?: number;
-  currentTier?: number;
-  dwellTicks?: number;
-  currentRateHz?: number;
-  lastHardResyncMs?: number;
-}
-
-export interface PacingControllerStepInput {
-  nowMs?: number;
-  rawRttMs?: number;
-  rawServerBuffer?: number;
-  packetArrived?: boolean;
-}
-
-export interface PacingControllerParams {
-  rttEwmaAlpha?: number;
-  bufferEwmaAlpha?: number;
-  targetBufferTicks?: number;
-  inFlightCompGain?: number;
-  enableAdaptiveJitterBoost?: boolean;
-  adaptiveJitterGain?: number;
-  maxAdaptiveBoostTicks?: number;
-  deadbandCatchupOffset?: number;
-  deadbandSkipOffset?: number;
-  hardResyncThresholdTicks?: number;
-  hardResyncCooldownMs?: number;
-  enableHardResync?: boolean;
-  rateStepMode?: string;
-  tier1Hz?: number;
-  tier2Hz?: number;
-  tier1EnterError?: number;
-  tier1ExitError?: number;
-  tier2EnterError?: number;
-  tier2ExitError?: number;
-  minDwellTicks?: number;
-  kpHzPerTick?: number;
-  kdHzPerTickVel?: number;
-  maxAdjustHz?: number;
-}
-
-export interface PacingTraceColumnsLike {
-  timeMs?: ArrayLike<number> & { slice?: (start: number, end: number) => ArrayLike<number> };
-  rawRttMs?: ArrayLike<number> & { slice?: (start: number, end: number) => ArrayLike<number> };
-  serverBuffer?: ArrayLike<number>;
-  physicsRateHz?: ArrayLike<number>;
-  targetBuffer?: ArrayLike<number>;
-  eventFlags?: ArrayLike<number>;
-}
-
-export interface PacingTraceSourceLike extends PacingTraceColumnsLike {
-  count?: number;
-  columns?: PacingTraceColumnsLike;
-}
-
-export interface PacingControllerStepResult {
-  physicsRateHz: number;
-  tierState: number;
-  tierSwitched: boolean;
-  effectiveBuffer: number;
-  activeTarget: number;
-  lowerBand: number;
-  upperBand: number;
-  smoothRttMs: number;
-  jitterMs: number;
-  requestHardResync: boolean;
-  requestStepCatchup: boolean;
-  requestStepSkip: boolean;
-}
-
-/**
- * Pure step evaluation of the Clock Pacing Controller (shared between live runtime
- * in ReconciliationTimelineHelper and offline What-If simulation).
- */
 export function evaluatePacingControllerStep(
   state: PacingControllerState,
   input: PacingControllerStepInput,
@@ -136,7 +71,6 @@ export function evaluatePacingControllerStep(
   const smoothRttMs = state.smoothRttMs ?? sampleRtt;
   const jitterMs = state.jitterMs ?? 0;
 
-  // Decay in-flight rate bias over RTT and integrate current clock rate deviation
   const rttSec = Math.max(0.008333, smoothRttMs / 1000.0);
   const decayFactor = Math.exp(-tickDtSec / Math.max(0.016, rttSec));
   const rateDevHz = (state.currentRateHz || 120.0) - 120.0;
@@ -157,10 +91,9 @@ export function evaluatePacingControllerStep(
   const effectiveBuffer = smoothBuffer + state.inFlightBiasTicks * inFlightCompGain;
   const bufferVelTicksPerSec = (smoothBuffer - prevSmoothBuffer) * 120.0;
 
-  // Dynamic target buffer boost under high RTT jitter (when enabled in CSTS / Custom)
   const baseTarget = Math.max(1, Math.min(12, numOr(params.targetBufferTicks, 3)));
   let adaptiveBoost = 0;
-  if (params.enableAdaptiveJitterBoost && mode !== 'legacy' && mode !== 'sts') {
+  if (params.enableAdaptiveJitterBoost && mode !== "legacy" && mode !== "sts") {
     const jitterTicks = jitterMs / (1000.0 / 120.0);
     const gain = Math.max(0, numOr(params.adaptiveJitterGain, 1.25));
     const maxBoost = Math.max(0, numOr(params.maxAdaptiveBoostTicks, 4.0));
@@ -172,7 +105,6 @@ export function evaluatePacingControllerStep(
   const skipOffset = Math.max(0, numOr(params.deadbandSkipOffset, 2));
   const lowerBand = activeTarget + catchupOffset;
   const upperBand = activeTarget + skipOffset;
-
   const bufferError = effectiveBuffer - activeTarget;
 
   let nextRateHz = 120.0;
@@ -199,104 +131,33 @@ export function evaluatePacingControllerStep(
 
   state.dwellTicks = (state.dwellTicks || 0) + 1;
 
-  if (mode === 'legacy') {
+  if (mode === "legacy") {
     nextRateHz = 120.0;
     nextTier = 0;
     if (input.packetArrived && !requestHardResync) {
-      if (rawBuf < lowerBand) {
-        requestStepCatchup = true;
-      } else if (rawBuf > upperBand) {
-        requestStepSkip = true;
-      }
+      if (rawBuf < lowerBand) requestStepCatchup = true;
+      else if (rawBuf > upperBand) requestStepSkip = true;
     }
   } else {
-    const stepMode = mode === 'sts' ? 'discrete_2tier' : (params.rateStepMode || 'continuous_pd');
-    const tier1Hz = Math.max(0, numOr(params.tier1Hz, 1.0));
-    const tier2Hz = Math.max(tier1Hz, numOr(params.tier2Hz, 3.0));
-    const t1Enter = Math.max(0.2, numOr(params.tier1EnterError, 1.0));
-    const t1Exit = Math.max(0.0, Math.min(t1Enter - 0.05, numOr(params.tier1ExitError, 0.4)));
-    const t2Enter = Math.max(t1Enter + 0.2, numOr(params.tier2EnterError, 2.5));
-    const t2Exit = Math.max(t1Exit, Math.min(t2Enter - 0.1, numOr(params.tier2ExitError, 1.3)));
-    const minDwell = Math.max(0, numOr(params.minDwellTicks, 18));
-    const canRelaxTier = state.dwellTicks >= minDwell;
-
-    const absErr = Math.abs(bufferError);
-    const sign = bufferError < 0 ? 1 : -1;
-    const currentTier = state.currentTier ?? 0;
-
-    if (absErr >= t2Enter) {
-      nextTier = 2 * sign;
-    } else if (Math.abs(currentTier) === 2 && Math.sign(currentTier) === sign) {
-      if (absErr <= t2Exit && canRelaxTier) {
-        nextTier = absErr <= t1Exit ? 0 : 1 * sign;
-      } else {
-        nextTier = 2 * sign;
-      }
-    } else if (absErr >= t1Enter) {
-      nextTier = 1 * sign;
-    } else if (Math.abs(currentTier) === 1 && Math.sign(currentTier) === sign) {
-      if (absErr <= t1Exit && canRelaxTier) {
-        nextTier = 0;
-      } else {
-        nextTier = 1 * sign;
-      }
-    } else if (canRelaxTier) {
-      nextTier = 0;
-    }
-
-    if (nextTier !== currentTier) {
-      state.dwellTicks = 0;
-    }
-
-    const isZeroLatencyLocal =
-      sampleRtt === 0 &&
-      smoothRttMs < 0.05 &&
-      jitterMs < 0.05 &&
-      Math.abs(rawBuf - baseTarget) <= 1.5;
-
-    if (isZeroLatencyLocal) {
-      nextTier = 0;
-      nextRateHz = 120.0;
-      state.dwellTicks = 0;
-    } else if (stepMode === 'discrete_2tier') {
-      if (nextTier === 2) nextRateHz = 120.0 + tier2Hz;
-      else if (nextTier === 1) nextRateHz = 120.0 + tier1Hz;
-      else if (nextTier === -1) nextRateHz = 120.0 - tier1Hz;
-      else if (nextTier === -2) nextRateHz = 120.0 - tier2Hz;
-      else nextRateHz = 120.0;
-    } else if (stepMode === 'hybrid' && nextTier === 0) {
-      nextRateHz = 120.0;
-    } else {
-      const kp = Math.max(0.05, numOr(params.kpHzPerTick, 0.85));
-      const kd = Math.max(0.0, numOr(params.kdHzPerTickVel, 0.35));
-      const maxAdj = Math.max(0.5, numOr(params.maxAdjustHz, 6.0));
-
-      let deadbandExcess = 0;
-      let derivativeGate = 1.0;
-      if (effectiveBuffer < lowerBand) {
-        deadbandExcess = effectiveBuffer - lowerBand;
-      } else if (effectiveBuffer > upperBand) {
-        deadbandExcess = effectiveBuffer - upperBand;
-      } else if (Math.abs(bufferError) > t1Enter) {
-        deadbandExcess = (bufferError - Math.sign(bufferError) * t1Exit) * 0.35;
-        derivativeGate = Math.min(
-          1.0,
-          (Math.abs(bufferError) - t1Enter) / Math.max(0.25, t2Enter - t1Enter)
-        );
-      } else {
-        deadbandExcess = 0;
-        derivativeGate = 0;
-      }
-
-      if (deadbandExcess === 0 && derivativeGate === 0) {
-        nextRateHz = 120.0;
-      } else {
-        const rawDeltaHz =
-          -kp * deadbandExcess - kd * derivativeGate * (bufferVelTicksPerSec * 0.08);
-        const clampedDeltaHz = Math.max(-maxAdj, Math.min(maxAdj, rawDeltaHz));
-        nextRateHz = Math.round((120.0 + clampedDeltaHz) * 100) / 100;
-      }
-    }
+    const stepCalc = computeTierAndRateStep({
+      mode,
+      currentTier: state.currentTier ?? 0,
+      dwellTicks: state.dwellTicks,
+      bufferError,
+      effectiveBuffer,
+      lowerBand,
+      upperBand,
+      bufferVelTicksPerSec,
+      sampleRtt,
+      smoothRttMs,
+      jitterMs,
+      rawBuf,
+      baseTarget,
+      params,
+    });
+    nextTier = stepCalc.nextTier;
+    nextRateHz = stepCalc.nextRateHz;
+    state.dwellTicks = stepCalc.nextDwellTicks;
 
     if (input.packetArrived && !requestHardResync && rawBuf <= -2 && effectiveBuffer < lowerBand - 1.5) {
       requestStepCatchup = true;
@@ -333,17 +194,17 @@ export function simulatePacingOnRecordedTrace(
   candidateParamsOrMode?: PacingControllerParams | string,
   maxPreviewSamples = 360
 ) {
-  let candidateMode = 'custom';
+  let candidateMode = "custom";
   let candidateParams: PacingControllerParams = {};
-  if (typeof candidateModeOrParams === 'string') {
+  if (typeof candidateModeOrParams === "string") {
     candidateMode = candidateModeOrParams;
     candidateParams =
-      typeof candidateParamsOrMode === 'object' && candidateParamsOrMode
+      typeof candidateParamsOrMode === "object" && candidateParamsOrMode
         ? candidateParamsOrMode
         : {};
-  } else if (candidateModeOrParams && typeof candidateModeOrParams === 'object') {
+  } else if (candidateModeOrParams && typeof candidateModeOrParams === "object") {
     candidateParams = candidateModeOrParams;
-    if (typeof candidateParamsOrMode === 'string') {
+    if (typeof candidateParamsOrMode === "string") {
       candidateMode = candidateParamsOrMode;
     }
   }
