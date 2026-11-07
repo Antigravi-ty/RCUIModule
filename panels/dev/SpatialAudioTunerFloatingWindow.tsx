@@ -128,32 +128,27 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
             : 'bg-neutral-900/90 border-neutral-800'
         }`}
       >
-        <button
-          type="button"
-          onClick={() => handleSelectTab('distance')}
-          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
-            activeTab === 'distance'
-              ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300'
-              : isLight
-                ? 'text-neutral-600 hover:bg-neutral-200/70'
-                : 'text-neutral-400 hover:text-neutral-200'
-          }`}
-        >
-          3D Distance Profiles &amp; Gizmo
-        </button>
-        <button
-          type="button"
-          onClick={() => handleSelectTab('reverb')}
-          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
-            activeTab === 'reverb'
-              ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300'
-              : isLight
-                ? 'text-neutral-600 hover:bg-neutral-200/70'
-                : 'text-neutral-400 hover:text-neutral-200'
-          }`}
-        >
-          Stadium Reverb &amp; BGM Transition
-        </button>
+        {(
+          [
+            { id: 'distance', label: '3D Distance Profiles & Gizmo' },
+            { id: 'reverb', label: 'Stadium Reverb & BGM Transition' },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => handleSelectTab(tab.id)}
+            className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
+              activeTab === tab.id
+                ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300'
+                : isLight
+                  ? 'text-neutral-600 hover:bg-neutral-200/70'
+                  : 'text-neutral-400 hover:text-neutral-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'distance' ? (
@@ -246,62 +241,30 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <SliderControl
-            editable={true}
-            allowOutOfBoundsInput={false}
-            showStepper={false}
-            colorScheme="amber"
-            label="Bezier P1.x (Normal)"
-            unit=""
-            value={tunerConfig.bzX1}
-            min={0.01}
-            max={0.99}
-            step={0.01}
-            isLight={isLight}
-            onChange={(v) => updateTunerConfig({ bzX1: v })}
-          />
-          <SliderControl
-            editable={true}
-            allowOutOfBoundsInput={false}
-            showStepper={false}
-            colorScheme="amber"
-            label="Bezier P1.y (Normal)"
-            unit=""
-            value={tunerConfig.bzY1}
-            min={0.0}
-            max={1.0}
-            step={0.01}
-            isLight={isLight}
-            onChange={(v) => updateTunerConfig({ bzY1: v })}
-          />
-          <SliderControl
-            editable={true}
-            allowOutOfBoundsInput={false}
-            showStepper={false}
-            colorScheme="amber"
-            label="Bezier P2.x (Spatial)"
-            unit=""
-            value={tunerConfig.bzX2}
-            min={0.01}
-            max={1.0}
-            step={0.01}
-            isLight={isLight}
-            onChange={(v) => updateTunerConfig({ bzX2: v })}
-          />
-          <SliderControl
-            editable={true}
-            allowOutOfBoundsInput={false}
-            showStepper={false}
-            colorScheme="amber"
-            label="Bezier P2.y (Spatial)"
-            unit=""
-            value={tunerConfig.bzY2}
-            min={0.0}
-            max={1.0}
-            step={0.01}
-            isLight={isLight}
-            onChange={(v) => updateTunerConfig({ bzY2: v })}
-          />
+          {(
+            [
+              { key: 'bzX1', label: 'Bezier P1.x (Normal)', min: 0.01, max: 0.99 },
+              { key: 'bzY1', label: 'Bezier P1.y (Normal)', min: 0.0, max: 1.0 },
+              { key: 'bzX2', label: 'Bezier P2.x (Spatial)', min: 0.01, max: 1.0 },
+              { key: 'bzY2', label: 'Bezier P2.y (Spatial)', min: 0.0, max: 1.0 },
+            ] as const
+          ).map((item) => (
+            <SliderControl
+              key={item.key}
+              editable={true}
+              allowOutOfBoundsInput={false}
+              showStepper={false}
+              colorScheme="amber"
+              label={item.label}
+              unit=""
+              value={tunerConfig[item.key]}
+              min={item.min}
+              max={item.max}
+              step={0.01}
+              isLight={isLight}
+              onChange={(v) => updateTunerConfig({ [item.key]: v })}
+            />
+          ))}
         </div>
       </div>
 
@@ -318,79 +281,53 @@ export const SpatialAudioTunerFloatingWindow: React.FC<
           <span>Stadium Filter & Reverb Parameters (spaceaudio/new)</span>
         </div>
 
-        <SliderControl
-          editable={true}
-          allowOutOfBoundsInput={true}
-          showStepper={false}
-          colorScheme="amber"
-          label="Low-Pass Cutoff (Spatial)"
-          unit="Hz"
-          value={tunerConfig.lpfMinFreq}
-          min={400}
-          max={16000}
-          step={50}
-          isLight={isLight}
-          onChange={(v) => updateTunerConfig({ lpfMinFreq: v })}
-        />
-
-        <SliderControl
-          editable={true}
-          allowOutOfBoundsInput={true}
-          showStepper={false}
-          colorScheme="amber"
-          label="High-Pass Cutoff (Spatial)"
-          unit="Hz"
-          value={tunerConfig.hpfMaxFreq}
-          min={20}
-          max={2000}
-          step={25}
-          isLight={isLight}
-          onChange={(v) => updateTunerConfig({ hpfMaxFreq: v })}
-        />
+        {(
+          [
+            { key: 'lpfMinFreq', label: 'Low-Pass Cutoff (Spatial)', min: 400, max: 16000, step: 50 },
+            { key: 'hpfMaxFreq', label: 'High-Pass Cutoff (Spatial)', min: 20, max: 2000, step: 25 },
+          ] as const
+        ).map((item) => (
+          <SliderControl
+            key={item.key}
+            editable={true}
+            allowOutOfBoundsInput={true}
+            showStepper={false}
+            colorScheme="amber"
+            label={item.label}
+            unit="Hz"
+            value={tunerConfig[item.key]}
+            min={item.min}
+            max={item.max}
+            step={item.step}
+            isLight={isLight}
+            onChange={(v) => updateTunerConfig({ [item.key]: v })}
+          />
+        ))}
 
         <div className="grid grid-cols-3 gap-2">
-          <SliderControl
-            editable={true}
-            allowOutOfBoundsInput={false}
-            showStepper={false}
-            colorScheme="amber"
-            label="Wet Mix"
-            unit="%"
-            value={tunerConfig.wetMaxPct}
-            min={0}
-            max={100}
-            step={1}
-            isLight={isLight}
-            onChange={(v) => updateTunerConfig({ wetMaxPct: v })}
-          />
-          <SliderControl
-            editable={true}
-            allowOutOfBoundsInput={true}
-            showStepper={false}
-            colorScheme="amber"
-            label="Decay"
-            unit="s"
-            value={tunerConfig.decaySec}
-            min={0.5}
-            max={6.0}
-            step={0.1}
-            isLight={isLight}
-            onChange={(v) => updateTunerConfig({ decaySec: v })}
-          />
-          <SliderControl
-            editable={true}
-            allowOutOfBoundsInput={true}
-            showStepper={false}
-            colorScheme="amber"
-            label="Wet Boost"
-            unit="x"
-            value={tunerConfig.wetBoost}
-            min={0.5}
-            max={2.5}
-            step={0.05}
-            isLight={isLight}
-            onChange={(v) => updateTunerConfig({ wetBoost: v })}
-          />
+          {(
+            [
+              { key: 'wetMaxPct', label: 'Wet Mix', unit: '%', min: 0, max: 100, step: 1, oob: false },
+              { key: 'decaySec', label: 'Decay', unit: 's', min: 0.5, max: 6.0, step: 0.1, oob: true },
+              { key: 'wetBoost', label: 'Wet Boost', unit: 'x', min: 0.5, max: 2.5, step: 0.05, oob: true },
+            ] as const
+          ).map((item) => (
+            <SliderControl
+              key={item.key}
+              editable={true}
+              allowOutOfBoundsInput={item.oob}
+              showStepper={false}
+              colorScheme="amber"
+              label={item.label}
+              unit={item.unit}
+              value={tunerConfig[item.key]}
+              min={item.min}
+              max={item.max}
+              step={item.step}
+              isLight={isLight}
+              onChange={(v) => updateTunerConfig({ [item.key]: v })}
+            />
+          ))}
         </div>
 
         <div className="flex items-center justify-between pt-1.5 border-t border-neutral-700/30">
