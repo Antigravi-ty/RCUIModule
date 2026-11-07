@@ -2,15 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Download, Copy, Check, RotateCcw, Layers } from 'lucide-react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
-import {
-  AUDIO_ATTENUATION_CATEGORIES,
-  spatialAttenuationProfiles,
-  type AttenuationArchetypeId,
-  type AttenuationCurveType,
-  type AudioAttenuationCategory,
-  type SpatialAttenuationProfile,
-  type SpatialAttenuationProfileMap,
-} from '../../../config/spatialAttenuationProfiles';
+import { AUDIO_ATTENUATION_CATEGORIES } from '../../../config/spatialAttenuationPresets';
+import { spatialAttenuationProfiles, type AttenuationArchetypeId, type AttenuationCurveType, type AudioAttenuationCategory, type SpatialAttenuationProfile, type SpatialAttenuationProfileMap } from '../../../config/spatialAttenuationProfiles';
 import {
   getSpatialAudioVisualizerConfig,
   getSpatialAudioVisualizerTelemetry,

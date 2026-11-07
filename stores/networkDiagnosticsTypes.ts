@@ -203,11 +203,7 @@ export const DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT: DiagnosticBufferSnapshot = {
   serverFrames: 4320,
 };
 
-import {
-  NETWORK_STRESS_PRESETS,
-  CONNECTION_HEALTH_STATES,
-  ZERO_G_ANCHOR_MODES,
-} from '../config/networkStressConfig';
+import { NETWORK_STRESS_PRESETS, CONNECTION_HEALTH_STATES } from '../config/networkStressConfig';
 
 export function createInitialNetworkDiagnosticsState(): NetworkDiagnosticsState {
   return {
@@ -250,7 +246,7 @@ export function createInitialNetworkDiagnosticsState(): NetworkDiagnosticsState 
     neutralFallbackActive: false,
     disconnectEvicted: false,
     zeroGFleetEnabled: false,
-    zeroGAnchorMode: ZERO_G_ANCHOR_MODES.Z_HOVER,
+    zeroGAnchorMode: 'z-hover',
     observationTarget: 0,
     lobbyGhostMode: false,
     testCarAudioEnabled: false,

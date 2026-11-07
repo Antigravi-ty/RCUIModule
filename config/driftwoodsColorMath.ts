@@ -21,7 +21,7 @@ function srgbToLinearChannel(c: number): number {
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
 
-function linearToSrgbChannel(c: number): number {
+export function linearToSrgbChannel(c: number): number {
   const clamped = Math.max(0, Math.min(1, c));
   return clamped <= 0.0031308
     ? 12.92 * clamped
@@ -122,10 +122,6 @@ export function oklchToLinearRgb(l: number, c: number, hDeg: number): LinearRgbC
   };
 }
 
-export function oklchToHex(l: number, c: number, hDeg: number): string {
-  return linearRgbToHex(oklchToLinearRgb(l, c, hDeg));
-}
-
 export function hexToOklch(hex: string): OklchColor {
   const { L, a, b } = hexToOklab(hex);
   const C = Math.sqrt(a * a + b * b);
@@ -138,38 +134,4 @@ export function hexToOklch(hex: string): OklchColor {
   };
 }
 
-export function setHexOklchLightness(hex: string, targetL: number): string {
-  const { c, h } = hexToOklch(hex);
-  return oklchToHex(targetL, c, h);
-}
-
-/**
- * Perceptually mixes a decal color over the turf base color in Oklab space at the given opacity,
- * returning both linear RGB (for Three.js Color / shaders) and 8-bit sRGB bytes (for RGBA DataTexture baking).
- */
-export function mixDecalOverBaseOklab(
-  baseHex: string,
-  decalHex: string,
-  opacity: number
-): { linear: LinearRgbColor; srgbBytes: [number, number, number]; hex: string } {
-  const baseLab = hexToOklab(baseHex);
-  const decalLab = hexToOklab(decalHex);
-  const t = Math.max(0, Math.min(1, Number.isFinite(opacity) ? opacity : 1));
-  const L = baseLab.L + (decalLab.L - baseLab.L) * t;
-  const a = baseLab.a + (decalLab.a - baseLab.a) * t;
-  const b = baseLab.b + (decalLab.b - baseLab.b) * t;
-  const C = Math.sqrt(a * a + b * b);
-  let H = (Math.atan2(b, a) * 180) / Math.PI;
-  if (H < 0) H += 360;
-  const linear = oklchToLinearRgb(L, C, H);
-  const sr = Math.max(0, Math.min(255, Math.round(linearToSrgbChannel(linear.r) * 255)));
-  const sg = Math.max(0, Math.min(255, Math.round(linearToSrgbChannel(linear.g) * 255)));
-  const sb = Math.max(0, Math.min(255, Math.round(linearToSrgbChannel(linear.b) * 255)));
-  const hex =
-    '#' +
-    sr.toString(16).padStart(2, '0') +
-    sg.toString(16).padStart(2, '0') +
-    sb.toString(16).padStart(2, '0');
-  return { linear, srgbBytes: [sr, sg, sb], hex };
-}
 

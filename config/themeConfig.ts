@@ -9,7 +9,7 @@ export type GameThemeId = 'realistic' | 'arcade';
 export const THEMES: readonly GameThemeId[] = Object.freeze(['realistic', 'arcade']);
 export const DEFAULT_THEME: GameThemeId = 'arcade';
 export const THEME_STORAGE_KEY = STORAGE_KEYS.GAME_THEME;
-export { UI_THEME_STORAGE_KEY };
+
 
 export const themeSettingsStore = createLocalStorageStore<{ theme: GameThemeId }>(
   THEME_STORAGE_KEY,

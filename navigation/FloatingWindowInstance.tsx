@@ -11,10 +11,8 @@ import {
 import { getFloatingWindowIcon } from './FloatingWindowIcon';
 import { CornerCurvedDragger } from './CornerCurvedDragger';
 import type { ContainerBounds } from './floatingWindowGeometry';
-import {
-  useFloatingWindowDragResize,
-  OUTER_RADIUS,
-} from './useFloatingWindowDragResize';
+import { useFloatingWindowDragResize } from './useFloatingWindowDragResize';
+import { OUTER_RADIUS } from './floatingWindowGeometry';
 
 export interface FloatingWindowRenderContext {
   isLight: boolean;

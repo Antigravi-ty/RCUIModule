@@ -1,46 +1,7 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
-import {
-  DEFAULT_RL_COUNTDOWN_GLOW,
-  DEFAULT_WINNER_BLUE_TEAM_CONFIG,
-  DEFAULT_WINNER_BLUE_GLOW,
-  DEFAULT_WINNER_ORANGE_GLOW,
-  DEFAULT_CENTER_UPPER_TYPOGRAPHY,
-  DEFAULT_CENTER_UPPER_TIMING,
-  hexToRgba,
-  buildOuterGlowTextShadow,
-  buildCenterUpperKineticKeyframes,
-  type CenterUpperInfoVariant,
-  type WinnerTeamPreset,
-  type CenterUpperBlueTeamConfig,
-  type CenterUpperGlowConfig,
-  type CenterUpperTypographyConfig,
-  type CenterUpperTimingConfig,
-  type CenterUpperInfoPayload,
-  type CenterUpperInfoListener,
-  type CenterUpperInfoHandle,
-  type CenterUpperInfoHUDProps,
-} from './centerUpperInfoDefaults';
+import { DEFAULT_RL_COUNTDOWN_GLOW, DEFAULT_WINNER_BLUE_TEAM_CONFIG, DEFAULT_CENTER_UPPER_TYPOGRAPHY, DEFAULT_CENTER_UPPER_TIMING, hexToRgba, buildOuterGlowTextShadow, buildCenterUpperKineticKeyframes, type CenterUpperInfoVariant, type WinnerTeamPreset, type CenterUpperBlueTeamConfig, type CenterUpperGlowConfig, type CenterUpperTypographyConfig, type CenterUpperTimingConfig, type CenterUpperInfoPayload, type CenterUpperInfoListener, type CenterUpperInfoHandle, type CenterUpperInfoHUDProps } from './centerUpperInfoDefaults';
 
-export {
-  DEFAULT_RL_COUNTDOWN_GLOW,
-  DEFAULT_WINNER_BLUE_TEAM_CONFIG,
-  DEFAULT_WINNER_BLUE_GLOW,
-  DEFAULT_WINNER_ORANGE_GLOW,
-  DEFAULT_CENTER_UPPER_TYPOGRAPHY,
-  DEFAULT_CENTER_UPPER_TIMING,
-  hexToRgba,
-  buildOuterGlowTextShadow,
-  type CenterUpperInfoVariant,
-  type WinnerTeamPreset,
-  type CenterUpperBlueTeamConfig,
-  type CenterUpperGlowConfig,
-  type CenterUpperTypographyConfig,
-  type CenterUpperTimingConfig,
-  type CenterUpperInfoPayload,
-  type CenterUpperInfoListener,
-  type CenterUpperInfoHandle,
-  type CenterUpperInfoHUDProps,
-};
+export type { CenterUpperInfoVariant, WinnerTeamPreset, CenterUpperBlueTeamConfig, CenterUpperGlowConfig, CenterUpperTypographyConfig, CenterUpperTimingConfig, CenterUpperInfoPayload, CenterUpperInfoListener, CenterUpperInfoHandle, CenterUpperInfoHUDProps };
 
 export const CenterUpperInfoHUD = React.memo(
   forwardRef<CenterUpperInfoHandle, CenterUpperInfoHUDProps>(

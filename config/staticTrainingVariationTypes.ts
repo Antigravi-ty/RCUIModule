@@ -4,18 +4,9 @@
  * Static Training Packs (`RLRCSPack` / `RCSPack` / `RCSPackE`).
  */
 
-import {
-  type KevpertPresetKey,
-  type StaticTrainingVariationConfig,
-  KEVPERT_PRESET_KEYS,
-  KEVPERT_LATEST_PRESETS,
-  KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE,
-  isVariationMatchingLatestPreset,
-  resolveEffectiveRecommendedVariation,
-} from './kevpertVariationPresets';
+import { type KevpertPresetKey, type StaticTrainingVariationConfig, KEVPERT_LATEST_PRESETS, KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE } from './kevpertVariationPresets';
 
 export type { KevpertPresetKey, StaticTrainingVariationConfig };
-export { KEVPERT_PRESET_KEYS };
 
 export interface StaticTrainingQuickVariationToggles {
   /** Master switch to override pack's recommended variation with custom/preset variation */
@@ -81,12 +72,73 @@ export const ZERO_VARIATION_CONFIG: StaticTrainingVariationConfig = {
   forceUnlimitedBoost: false,
 };
 
-export {
-  KEVPERT_LATEST_PRESETS,
-  KEVPERT_PACK_VIDEO_VARIATIONS_BY_CODE,
-  isVariationMatchingLatestPreset,
-  resolveEffectiveRecommendedVariation,
-};
+function tupleEquals(
+  a: [number, number] | null | undefined,
+  b: [number, number] | null | undefined
+): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return Math.abs(a[0] - b[0]) < 1e-4 && Math.abs(a[1] - b[1]) < 1e-4;
+}
+
+/**
+ * Checks whether a variation config matches the latest Kevpert preset for its F-key.
+ */
+export function isVariationMatchingLatestPreset(
+  variation: StaticTrainingVariationConfig | null | undefined
+): boolean {
+  if (
+    !variation ||
+    !variation.presetKey ||
+    variation.presetKey === 'custom' ||
+    variation.presetKey === 'CUSTOM'
+  ) {
+    return false;
+  }
+  const latest = KEVPERT_LATEST_PRESETS[variation.presetKey as KevpertPresetKey];
+  if (!latest) return false;
+
+  return (
+    tupleEquals(variation.ballSpeedModifierPct, latest.ballSpeedModifierPct) &&
+    tupleEquals(variation.ballLocationModifierXY, latest.ballLocationModifierXY) &&
+    tupleEquals(variation.ballHeightModifierZ, latest.ballHeightModifierZ) &&
+    tupleEquals(variation.ballRotationModifierDeg, latest.ballRotationModifierDeg) &&
+    tupleEquals(variation.ballSpinModifier, latest.ballSpinModifier) &&
+    tupleEquals(variation.vehicleSpeedRange, latest.vehicleSpeedRange) &&
+    tupleEquals(variation.vehicleLocationModifier, latest.vehicleLocationModifier) &&
+    tupleEquals(variation.vehicleRotationModifierDeg, latest.vehicleRotationModifierDeg) &&
+    variation.boostLimitOverride === latest.boostLimitOverride
+  );
+}
+
+/**
+ * Resolves the effective recommended variation for a pack given the user's
+ * `applyNewKevpertBind` toggle:
+ * - false (default / OFF): uses the pack's historical video description spec (`variation`)
+ * - true (ON): upgrades to the latest Kevpert F-key preset (`KEVPERT_LATEST_PRESETS[presetKey]`)
+ */
+export function resolveEffectiveRecommendedVariation(
+  variation: StaticTrainingVariationConfig | null | undefined,
+  applyNewKevpertBind = false
+): StaticTrainingVariationConfig | null {
+  if (!variation) return null;
+  if (
+    applyNewKevpertBind &&
+    variation.presetKey &&
+    variation.presetKey !== 'custom' &&
+    variation.presetKey !== 'CUSTOM' &&
+    KEVPERT_LATEST_PRESETS[variation.presetKey as KevpertPresetKey]
+  ) {
+    const latest = KEVPERT_LATEST_PRESETS[variation.presetKey as KevpertPresetKey];
+    const lbl = `Kevpert ${variation.presetKey} (Latest)`;
+    return {
+      ...latest,
+      label: lbl,
+      presetLabel: lbl,
+    };
+  }
+  return variation;
+}
 
 export function cloneVariationConfig(
   cfg: Partial<StaticTrainingVariationConfig> | null | undefined

@@ -16,14 +16,10 @@ import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { TunerPrecisionContext } from '../../primitives/PrecisionDigitPicker';
 import { useReferenceOverlayStore } from '../../stores/referenceOverlayStore';
-import { HITBOX_PRESETS, type HitboxPresetSpec } from '../../config/vehicleConstants';
-import {
-  FENNEC_DESCRIPTOR,
-  INSIDIO_DESCRIPTOR,
-  RYZA_DESCRIPTOR,
-  getVehicleDescriptor,
-  type VehicleDescriptor,
-} from '../../config/vehicleTunerConfig';
+import { HITBOX_PRESETS } from '../../config/vehiclePresets';
+import { type HitboxPresetSpec } from '../../config/vehicleConstants';
+import { FENNEC_DESCRIPTOR, getVehicleDescriptor, type VehicleDescriptor } from '../../config/vehicleTunerConfig';
+import { INSIDIO_DESCRIPTOR, RYZA_DESCRIPTOR } from '../../config/vehicleDescriptorsConfig';
 import {
   getVehicleTunerRuntimeFlags,
   setVehicleTunerRuntimeFlags,

@@ -25,10 +25,7 @@ import {
   type SignalingRelayMatchPolicyMode,
 } from '../../../stores/signalingProfileStore';
 import { useViewportStore, viewportStore } from '../../../stores/viewportStore';
-import {
-  getBallVisualConfig,
-  updateBallVisualConfig,
-} from '../../../stores/ballVisualStore';
+import { getBallVisualConfig, updateBallVisualConfig } from '../../../config/ballVisualConfig';
 import { BOTS_LOADOUT_TUNER_PRESET } from '../../../stores/devFloatingPresets';
 import { useScopedStore } from '../../../stores/storeSnapshotScope';
 import type { SurfaceVariantMeta } from '../../../manifest/surfaceMetaTypes';

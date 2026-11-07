@@ -21,7 +21,7 @@ import {
   parseBgmFileMetadata,
 } from '../config/spatialAudioConfig';
 import { audioConfig } from '../config/audioConfig';
-import { updateReplayDirectorConfig } from './replayDirectorStore';
+import { updateReplayDirectorConfig } from '../config/replayDirectorConfig';
 
 export interface BgmUploadedTrack {
   id: string;

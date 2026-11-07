@@ -9,12 +9,8 @@ import {
   Pause,
   Radio,
 } from 'lucide-react';
-import {
-  useCameraDeterminismData,
-  cameraDeterminismStore,
-  PRE_TRIGGER_FRAME_LIMIT,
-  POST_TRIGGER_FRAME_LIMIT,
-} from '../../stores/cameraDeterminismStore';
+import { useCameraDeterminismData, cameraDeterminismStore } from '../../stores/cameraDeterminismStore';
+import { PRE_TRIGGER_FRAME_LIMIT, POST_TRIGGER_FRAME_LIMIT } from '../../config/cameraDefaults';
 import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 
 export const SURFACE_META: SurfaceMeta = {

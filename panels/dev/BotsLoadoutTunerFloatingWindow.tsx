@@ -17,17 +17,8 @@ import type {
 } from '../../manifest/surfaceMetaTypes';
 import { Badge } from '../../primitives/Badge';
 import { useBotsLoadoutStore } from '../../stores/botsLoadoutStore';
-import {
-  CAR_VISUAL_CATALOG,
-  PAINT_FINISH_CATALOG,
-  BOOST_VISUAL_CATALOG,
-  BOOST_AUDIO_CATALOG,
-  ALL_BOT_ANTHEM_CATEGORIES,
-  type BotPaintFinishOption,
-  type BotBoostVisualOption,
-  type BotBoostAudioOption,
-  type BotAnthemCategoryOption,
-} from '../../config/botsLoadoutConfig';
+import { CAR_VISUAL_CATALOG } from '../../config/vehicleConstants';
+import { PAINT_FINISH_CATALOG, BOOST_VISUAL_CATALOG, BOOST_AUDIO_CATALOG, ALL_BOT_ANTHEM_CATEGORIES, type BotPaintFinishOption, type BotBoostVisualOption, type BotBoostAudioOption, type BotAnthemCategoryOption } from '../../config/botsLoadoutConfig';
 
 export const SURFACE_META: SurfaceMeta = {
   id: 'bots-loadout-tuner',

@@ -69,7 +69,7 @@ export interface OnlineRoomControlStateOverride {
   onEnterMatch?: () => void;
   onNavigateAdvancedSettings?: () => void;
   onOpenNetHud?: () => void;
-  onCloseRoom?: () => void;
+  onCloseRoom?: () => void | Promise<void>;
 }
 
 export interface Layer2ManageRoomRecipeProps extends StandardSurfaceProps {
@@ -77,6 +77,7 @@ export interface Layer2ManageRoomRecipeProps extends StandardSurfaceProps {
   topSlot?: React.ReactNode;
   sessionContext?: OnlineSessionContextId;
   onSessionContextChange?: (ctx: OnlineSessionContextId) => void;
+  onCloseRoom?: () => void | Promise<void>;
   className?: string;
   stateOverride?: OnlineRoomControlStateOverride;
 }
@@ -208,6 +209,7 @@ export const Layer2ManageRoomRecipe: React.FC<Layer2ManageRoomRecipeProps> = Rea
   activeTab,
   onTabChange,
   onBack: propOnBack,
+  onCloseRoom: propOnCloseRoom,
   topSlot,
   sessionContext: propSessionContext,
   onSessionContextChange,
@@ -380,6 +382,7 @@ export const Layer2ManageRoomRecipe: React.FC<Layer2ManageRoomRecipeProps> = Rea
     });
 
   const handleCloseRoom =
+    propOnCloseRoom ??
     overrides.onCloseRoom ??
     (() => {
       if (bridge.onLeaveOnlineServer) {

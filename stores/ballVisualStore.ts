@@ -1,3 +1,9 @@
+/**
+ * Ball Visual Opacity & Indicator Ring Store (`useBallVisualStore`)
+ *
+ * Bridges `ballVisualConfig` with Zustand reactive state and cross-client
+ * `syncBridge` persistence for both RCUITuner and RocketCompanion hosts.
+ */
 import { create } from 'zustand';
 import {
   type BallVisualApplier,
@@ -5,7 +11,6 @@ import {
   type BallVisualListener,
   DEFAULT_BALL_VISUAL_CONFIG,
   getBallVisualConfig,
-  registerBallVisualApplier,
   sanitizeBallVisualConfig,
   setTemporaryBallOpacityOverride,
   subscribeBallVisualConfig,
@@ -13,17 +18,7 @@ import {
 } from '../config/ballVisualConfig';
 import { syncBridge } from './syncBridge';
 
-export {
-  type BallVisualApplier,
-  type BallVisualConfig,
-  type BallVisualListener,
-  DEFAULT_BALL_VISUAL_CONFIG,
-  getBallVisualConfig,
-  registerBallVisualApplier,
-  setTemporaryBallOpacityOverride,
-  subscribeBallVisualConfig,
-  updateBallVisualConfig,
-};
+export type { BallVisualApplier, BallVisualConfig, BallVisualListener };
 
 const BALL_VISUAL_SYNC_KEY = 'store:ballVisual:v1';
 

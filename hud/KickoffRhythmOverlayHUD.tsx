@@ -26,11 +26,7 @@ export type {
   KickoffSubMode,
   KickoffEpisodePhase,
 };
-export {
-  KICKOFF_RHYTHM_KEY_ORDER,
-  DEFAULT_KICKOFF_SPAWNS,
-  DEFAULT_KICKOFF_NOTE_BARS,
-};
+
 
 export interface KickoffRhythmOverlayHandle {
   /** Imperatively push a 120Hz frame update with zero React re-renders */

@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-07T05:06:37.608Z",
-  "templateHash": "3e42a9731b72da90",
+  "updatedAt": "2026-11-07T08:22:44.424Z",
+  "templateHash": "2457f99820e9a4a6",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/AtmosphereFxTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "4c30b2aba2a67fbc",
       "visualAstHash": "d6f60fcd86e91c31",
       "fileVisualHashes": {
@@ -32,6 +32,7 @@
         "src/ui-core/config/atmosphereFxConfig.ts",
         "src/ui-core/config/ballVisualConfig.ts",
         "src/ui-core/config/skyboxConfig.ts",
+        "src/ui-core/config/skyboxPresets.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/ballVisualStore.ts",
         "src/ui-core/stores/underlineTabsStore.ts",
@@ -50,6 +51,7 @@
         "src/ui-core/config/atmosphereFxConfig.ts",
         "src/ui-core/config/ballVisualConfig.ts",
         "src/ui-core/config/skyboxConfig.ts",
+        "src/ui-core/config/skyboxPresets.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/ballVisualStore.ts",
         "src/ui-core/stores/underlineTabsStore.ts",
@@ -140,6 +142,7 @@
             "Alpha:ToggleSwitch",
             "Alpha:TunerControls",
             "src/ui-core/config/skyboxConfig.ts",
+            "src/ui-core/config/skyboxPresets.ts",
             "src/ui-core/tokens/colors.ts",
             "src/ui-core/tokens/easing.ts",
             "src/ui-core/tokens/radius.ts"
@@ -177,7 +180,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/BallTrajectoryTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "907d8eddac60d606",
       "visualAstHash": "52c3ad009fb0a97e",
       "fileVisualHashes": {
@@ -219,7 +222,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/BoostPadTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "7d31cbfd742a38a1",
       "visualAstHash": "b79e3083411c297a",
       "fileVisualHashes": {
@@ -374,7 +377,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/BotsLoadoutTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "8e919636d75cfb25",
       "visualAstHash": "2f9918ae8c788f9b",
       "fileVisualHashes": {
@@ -383,6 +386,7 @@
       },
       "alphaDeps": [
         "src/ui-core/config/botsLoadoutConfig.ts",
+        "src/ui-core/config/vehicleConstants.ts",
         "src/ui-core/stores/botsLoadoutStore.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
@@ -390,6 +394,7 @@
       "alphaDependencies": [
         "Alpha:Badge",
         "src/ui-core/config/botsLoadoutConfig.ts",
+        "src/ui-core/config/vehicleConstants.ts",
         "src/ui-core/stores/botsLoadoutStore.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
@@ -400,16 +405,18 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/CameraDeterminismFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "9474f36e9d01e6e7",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "5ea584e33b786434",
       "visualAstHash": "cbb5a30bb1f9d831",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/CameraDeterminismFloatingWindow.tsx": "81d5d807c50bc2b9"
       },
       "alphaDeps": [
+        "src/ui-core/config/cameraDefaults.ts",
         "src/ui-core/stores/cameraDeterminismStore.ts"
       ],
       "alphaDependencies": [
+        "src/ui-core/config/cameraDefaults.ts",
         "src/ui-core/stores/cameraDeterminismStore.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.299Z"
@@ -418,8 +425,8 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ClockPacingTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "36e1bcf523de3194",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "71b414486d1e04a3",
       "visualAstHash": "739b98d51b1ece74",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/ClockPacingTunerFloatingWindow.tsx": "5cc0fbc4cd09c1d1",
@@ -430,6 +437,8 @@
       },
       "alphaDeps": [
         "src/ui-core/config/clockPacingConfig.ts",
+        "src/ui-core/config/clockPacingPresets.ts",
+        "src/ui-core/config/pacingControllerEvaluator.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/pacingTelemetryExporter.ts",
         "src/ui-core/stores/pacingTelemetryRecorder.ts",
@@ -440,6 +449,8 @@
         "Alpha:PrecisionDigitPicker",
         "Alpha:SliderControl",
         "src/ui-core/config/clockPacingConfig.ts",
+        "src/ui-core/config/clockPacingPresets.ts",
+        "src/ui-core/config/pacingControllerEvaluator.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/pacingTelemetryExporter.ts",
         "src/ui-core/stores/pacingTelemetryRecorder.ts",
@@ -452,7 +463,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/DiagnosticDumpFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "4e240e37e606a907",
       "visualAstHash": "aa6824e02ddbbe09",
       "fileVisualHashes": {
@@ -477,8 +488,8 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/DriftwoodsTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "1b6cfdeb6b1d1732",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "bfb2d335ccbd0998",
       "visualAstHash": "481fc5667686f988",
       "fileVisualHashes": {
         "src/ui-core/charts/CubicBezierCurveEditor.tsx": "c901cf971ecd4e7a",
@@ -495,6 +506,7 @@
         "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c"
       },
       "alphaDeps": [
+        "src/ui-core/config/driftwoodsColorMath.ts",
         "src/ui-core/config/driftwoodsConfig.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/tokens/colors.ts",
@@ -504,6 +516,7 @@
         "Alpha:CubicBezierCurveEditor",
         "Alpha:PrecisionDigitPicker",
         "Alpha:TunerControls",
+        "src/ui-core/config/driftwoodsColorMath.ts",
         "src/ui-core/config/driftwoodsConfig.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/tokens/colors.ts",
@@ -529,6 +542,7 @@
           "alphaDependencies": [
             "Alpha:PrecisionDigitPicker",
             "Alpha:TunerControls",
+            "src/ui-core/config/driftwoodsColorMath.ts",
             "src/ui-core/config/driftwoodsConfig.ts",
             "src/ui-core/tokens/colors.ts",
             "src/ui-core/tokens/radius.ts"
@@ -604,7 +618,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/DualArenaDeterminismHarnessFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "30dcdba53d9771f1",
       "visualAstHash": "961844163a06f4f5",
       "fileVisualHashes": {
@@ -632,7 +646,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/EngineAudioTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "d34ea9f596d36744",
       "visualAstHash": "38e52994eeac140d",
       "fileVisualHashes": {
@@ -676,7 +690,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/EventStreamObserverFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "fed079cdf3cd87dc",
       "visualAstHash": "c2639afec827abae",
       "fileVisualHashes": {
@@ -704,7 +718,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ExperimentalBotPackFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "f379ca38446c387f",
       "visualAstHash": "c59a8def1d48f4a8",
       "fileVisualHashes": {
@@ -746,7 +760,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ExperimentalMultiBotsFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "94bf2be7ff79c2f3",
       "visualAstHash": "d455b55799242301",
       "fileVisualHashes": {
@@ -788,7 +802,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/GoalVolumeTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "1fe137d423191c7f",
       "visualAstHash": "f33235c57eda85ad",
       "fileVisualHashes": {
@@ -830,7 +844,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/KickoffTrainingTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "eacb5966ec46b965",
       "visualAstHash": "5715c5e08340e90e",
       "fileVisualHashes": {
@@ -872,8 +886,8 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/NameTagTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "3d81187ada54c89d",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "6aef8b136fc755ce",
       "visualAstHash": "9c4ed0dfa4cb6ec2",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/NameTagTunerFloatingWindow.tsx": "da07c75b91eb8a5a",
@@ -895,10 +909,10 @@
         "src/ui-core/primitives/ToggleSwitch.tsx": "6cc1ee7e1446f982"
       },
       "alphaDeps": [
+        "src/ui-core/config/ballVisualConfig.ts",
+        "src/ui-core/config/nameTagColorAndRoiMath.ts",
         "src/ui-core/config/nameTagConfig.ts",
-        "src/ui-core/config/nameTagOffscreenRenderer.ts",
         "src/ui-core/stores/appStore.ts",
-        "src/ui-core/stores/ballVisualStore.ts",
         "src/ui-core/stores/hudStore.ts",
         "src/ui-core/stores/nameTagTunerStore.ts",
         "src/ui-core/tokens/colors.ts",
@@ -912,10 +926,10 @@
         "Alpha:PrecisionDigitPicker",
         "Alpha:SliderControl",
         "Alpha:ToggleSwitch",
+        "src/ui-core/config/ballVisualConfig.ts",
+        "src/ui-core/config/nameTagColorAndRoiMath.ts",
         "src/ui-core/config/nameTagConfig.ts",
-        "src/ui-core/config/nameTagOffscreenRenderer.ts",
         "src/ui-core/stores/appStore.ts",
-        "src/ui-core/stores/ballVisualStore.ts",
         "src/ui-core/stores/hudStore.ts",
         "src/ui-core/stores/nameTagTunerStore.ts",
         "src/ui-core/tokens/colors.ts",
@@ -929,8 +943,8 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/NetworkStressInjectionFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "5efebc2711d75bd6",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "459c5a471e5f27a5",
       "visualAstHash": "2032ebd4b70be541",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/NetworkStressInjectionFloatingWindow.tsx": "75dd7b36d1c27cd2",
@@ -939,6 +953,7 @@
         "src/ui-core/primitives/SliderControl.tsx": "6bb73313d44a2563"
       },
       "alphaDeps": [
+        "src/ui-core/config/networkStressConfig.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/networkDiagnosticsStore.ts",
         "src/ui-core/tokens/colors.ts",
@@ -947,6 +962,7 @@
       "alphaDependencies": [
         "Alpha:PrecisionDigitPicker",
         "Alpha:SliderControl",
+        "src/ui-core/config/networkStressConfig.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/networkDiagnosticsStore.ts",
         "src/ui-core/tokens/colors.ts",
@@ -958,7 +974,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ReachabilityTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "1c2debf53c1632d7",
       "visualAstHash": "0a2b85e86ba0ff84",
       "fileVisualHashes": {
@@ -990,8 +1006,8 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ReplayDirectorTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "742e7ba481186886",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "65e8675fbab612d2",
       "visualAstHash": "2db8e862dfd0b1e1",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/ReplayDirectorTunerFloatingWindow.tsx": "650fad1e0281a342",
@@ -1049,7 +1065,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/ReplayToRcsImporterFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "f4fbf92f6b9e39d4",
       "visualAstHash": "ab68e514f87fbaf4",
       "fileVisualHashes": {
@@ -1102,8 +1118,8 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/SpatialAudioTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "425f06812ec0e69a",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "0b34c0d1815dbbf0",
       "visualAstHash": "d7d3c1142c9da456",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/SpatialAudioCurveCard.tsx": "d3b06c2a11caa0be",
@@ -1116,6 +1132,7 @@
         "src/ui-core/primitives/ToggleSwitch.tsx": "6cc1ee7e1446f982"
       },
       "alphaDeps": [
+        "src/ui-core/config/spatialAttenuationPresets.ts",
         "src/ui-core/config/spatialAttenuationProfiles.ts",
         "src/ui-core/config/spatialAudioConfig.ts",
         "src/ui-core/config/spatialAudioVisualizerConfig.ts",
@@ -1129,6 +1146,7 @@
         "Alpha:PrecisionDigitPicker",
         "Alpha:SliderControl",
         "Alpha:ToggleSwitch",
+        "src/ui-core/config/spatialAttenuationPresets.ts",
         "src/ui-core/config/spatialAttenuationProfiles.ts",
         "src/ui-core/config/spatialAudioConfig.ts",
         "src/ui-core/config/spatialAudioVisualizerConfig.ts",
@@ -1144,7 +1162,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/StaticTrainingBallCamTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "0772f59669b5f8de",
       "visualAstHash": "f367d47577a7f5d2",
       "fileVisualHashes": {
@@ -1175,7 +1193,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/SubsystemIsolationLabFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "f4586ec17a530a10",
       "visualAstHash": "43c7728e678bb15e",
       "fileVisualHashes": {
@@ -1466,7 +1484,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/SupersonicTrailTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "696726b1aa09cb20",
       "visualAstHash": "9457895651ebc1d7",
       "fileVisualHashes": {
@@ -1506,7 +1524,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/VehicleGlobalFxTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "c0eeb08563f2ba79",
       "visualAstHash": "e1841ba94c7b3f31",
       "fileVisualHashes": {
@@ -1659,7 +1677,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "0330b3335b0c7247",
       "visualAstHash": "7adc2848cc1e9e02",
       "fileVisualHashes": {
@@ -1678,6 +1696,7 @@
       },
       "alphaDeps": [
         "src/ui-core/config/vehicleConstants.ts",
+        "src/ui-core/config/vehicleDescriptorsConfig.ts",
         "src/ui-core/config/vehiclePresets.ts",
         "src/ui-core/config/vehicleTunerConfig.ts",
         "src/ui-core/stores/appStore.ts",
@@ -1695,6 +1714,7 @@
         "Alpha:ToggleSwitch",
         "Alpha:UnderlineTabs",
         "src/ui-core/config/vehicleConstants.ts",
+        "src/ui-core/config/vehicleDescriptorsConfig.ts",
         "src/ui-core/config/vehiclePresets.ts",
         "src/ui-core/config/vehicleTunerConfig.ts",
         "src/ui-core/stores/appStore.ts",
@@ -1785,7 +1805,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/FloatingWindowOpacityFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "35f8c0e8af799514",
       "visualAstHash": "bad945e93f99d0b0",
       "fileVisualHashes": {
@@ -1823,7 +1843,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/GoalBarrierConfiguratorFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "ad161c390800d49f",
       "visualAstHash": "289ed370039477a3",
       "fileVisualHashes": {
@@ -1874,7 +1894,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/NetworkMonitorFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "8219045b73515a19",
       "visualAstHash": "b03d3e40fb349adf",
       "fileVisualHashes": {
@@ -1916,7 +1936,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/PerformanceMonitorFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "7592caf2be029766",
       "visualAstHash": "a839b35bbac6513a",
       "fileVisualHashes": {
@@ -1948,7 +1968,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/ReplayViewerFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "7b6231112a37c2bb",
       "visualAstHash": "0a92ebd85ce86d9f",
       "fileVisualHashes": {
@@ -2004,7 +2024,7 @@
       "status": "approved",
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/user/RewinderConfiguratorFloatingWindow.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "8d61d3c52007541a",
       "visualAstHash": "80eb1b66daf9c2aa",
       "fileVisualHashes": {
@@ -2054,11 +2074,11 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer1MainMenuRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "edfac0ccfd125efc",
-      "visualAstHash": "b51a889117ee5074",
+      "visualAstHash": "9cc9ceb5ae2b4994",
       "fileVisualHashes": {
-        "src/ui-core/recipes/Layer1MainMenuRecipe.tsx": "5484c66a59f8b4da",
+        "src/ui-core/recipes/Layer1MainMenuRecipe.tsx": "65e44403455fb454",
         "src/ui-core/recipes/layer1MenuContextSpecs.ts": "97fb5231729fca59"
       },
       "alphaDeps": [
@@ -2098,7 +2118,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2GarageRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "e3f1d86b3b796df3",
       "visualAstHash": "a318ee59ed51850c",
       "fileVisualHashes": {
@@ -2330,9 +2350,9 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2ManageRoomRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "6ba234bdc0f6afc2",
-      "visualAstHash": "c8dfa0148581ac3b",
+      "visualAstHash": "c467cb1668966984",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -2346,7 +2366,7 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer2ManageRoomRecipe.tsx": "9c59dae0de2b0171",
+        "src/ui-core/recipes/Layer2ManageRoomRecipe.tsx": "9993f7dd9f3fd069",
         "src/ui-core/recipes/online/DuringMatchClientRejoinControls.tsx": "3d0aec2ad564011f",
         "src/ui-core/recipes/online/DuringMatchRoomRecipe.tsx": "263e7e4558865060",
         "src/ui-core/recipes/online/DuringMatchSpectatorsSection.tsx": "24563a1d4d356bac",
@@ -2399,7 +2419,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2PlayRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "6d9c49f28f35fbd3",
       "visualAstHash": "002bdf23eee893f0",
       "fileVisualHashes": {
@@ -2427,8 +2447,8 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer2SettingsRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "7b8082da9b47aebe",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "60cb58649d565733",
       "visualAstHash": "4585b1046c3a2418",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
@@ -2464,10 +2484,10 @@
         "src/ui-core/recipes/settings/tabs/GameplayTab.tsx": "6096ad8a687c2fe2"
       },
       "alphaDeps": [
+        "src/ui-core/config/ballVisualConfig.ts",
         "src/ui-core/config/uiConfig.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
-        "src/ui-core/stores/ballVisualStore.ts",
         "src/ui-core/stores/cloudProfileSyncStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
         "src/ui-core/stores/floatingPresets.ts",
@@ -2505,10 +2525,10 @@
         "Alpha:TelemetryConfigCard",
         "Alpha:ToggleSwitch",
         "Alpha:UnderlineTabs",
+        "src/ui-core/config/ballVisualConfig.ts",
         "src/ui-core/config/uiConfig.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
-        "src/ui-core/stores/ballVisualStore.ts",
         "src/ui-core/stores/cloudProfileSyncStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
         "src/ui-core/stores/floatingPresets.ts",
@@ -2736,8 +2756,8 @@
             "Alpha:SettingSegmentedRow",
             "Alpha:SettingToggleRow",
             "Alpha:ToggleSwitch",
+            "src/ui-core/config/ballVisualConfig.ts",
             "src/ui-core/stores/appStore.ts",
-            "src/ui-core/stores/ballVisualStore.ts",
             "src/ui-core/stores/devFloatingPresets.ts",
             "src/ui-core/stores/floatingStore.ts",
             "src/ui-core/stores/nameTagTunerStore.ts",
@@ -2759,8 +2779,8 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3AcousticsEqualizerRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "d2783b70ce532eba",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "c2b761f861afa58f",
       "visualAstHash": "c7cd32d4c596bd6e",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
@@ -2818,7 +2838,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3BallTrajectoryRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "2df8312e9052bf71",
       "visualAstHash": "acea3aad8c7982fb",
       "fileVisualHashes": {
@@ -2884,7 +2904,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3CameraRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "04745b4b38f05597",
       "visualAstHash": "97dcd155b024e480",
       "fileVisualHashes": {
@@ -2937,7 +2957,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3CustomPlayRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "5f216c80ce57246c",
       "visualAstHash": "99d7f0a9c319173b",
       "fileVisualHashes": {
@@ -2972,8 +2992,8 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevActiveTunersRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "5f04dc35d921652f",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "d610ef72b013d73c",
       "visualAstHash": "626b22fd49a28db4",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
@@ -3046,7 +3066,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevCalibratedPresetsRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "0585e8ee18b660dc",
       "visualAstHash": "7490ac2c56f81024",
       "fileVisualHashes": {
@@ -3095,7 +3115,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevQuickActionsRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "8d5e42d1cc746f3f",
       "visualAstHash": "f40ee44d20e1af60",
       "fileVisualHashes": {
@@ -3155,7 +3175,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevRemoteProfileRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "df90151a9b924b2c",
       "visualAstHash": "b2de0b0a032f620f",
       "fileVisualHashes": {
@@ -3201,7 +3221,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevSandboxesRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "21d1b3ba939c368d",
       "visualAstHash": "9cc1430a3d2b505d",
       "fileVisualHashes": {
@@ -3248,7 +3268,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevSelfTestRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "40b6d55a6f2b813f",
       "visualAstHash": "fb4c3a4a4d1910d0",
       "fileVisualHashes": {
@@ -3285,7 +3305,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevUnderDevelopmentRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "5ad5ff2551ca2fda",
       "visualAstHash": "b43e85b7316ee436",
       "fileVisualHashes": {
@@ -3337,7 +3357,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3ExhibitionRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "6c30431c8ce4c7b3",
       "visualAstHash": "16e6a405cab364f6",
       "fileVisualHashes": {
@@ -3384,7 +3404,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3ExpBotPackRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "1d86633295fb2fca",
       "visualAstHash": "afc314405562c2bf",
       "fileVisualHashes": {
@@ -3439,7 +3459,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3ExpMultiBotsRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "3cfe4a1cb538b042",
       "visualAstHash": "8c117cff47471e3c",
       "fileVisualHashes": {
@@ -3494,9 +3514,9 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3HostMatchRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "6f024f6bdbb3a433",
-      "visualAstHash": "17719db39a18059f",
+      "visualAstHash": "585bfd3bd3052a89",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -3513,7 +3533,7 @@
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
-        "src/ui-core/recipes/Layer2ManageRoomRecipe.tsx": "9c59dae0de2b0171",
+        "src/ui-core/recipes/Layer2ManageRoomRecipe.tsx": "9993f7dd9f3fd069",
         "src/ui-core/recipes/Layer3HostMatchRecipe.tsx": "4bfd78374a67d88d",
         "src/ui-core/recipes/online/DuringMatchClientRejoinControls.tsx": "3d0aec2ad564011f",
         "src/ui-core/recipes/online/DuringMatchRoomRecipe.tsx": "263e7e4558865060",
@@ -3521,11 +3541,10 @@
         "src/ui-core/recipes/online/MatchLobbyRoomRecipe.tsx": "2f13f9480c8527bf",
         "src/ui-core/recipes/online/MatchLobbyTeamRosterSection.tsx": "59f225a6fbdc5b83",
         "src/ui-core/recipes/online/OnlineRoomConfigSummaryCard.tsx": "b81b837bc91e33b7",
-        "src/ui-core/recipes/online/OnlineRoomCreationProgress.tsx": "a33f92c81a936ed1",
+        "src/ui-core/recipes/online/OnlineRoomCreationProgress.tsx": "b2f20a6a9cf92e37",
         "src/ui-core/recipes/online/OnlineRoomIdentityFields.tsx": "26ebcf5db2345216",
         "src/ui-core/recipes/online/OnlineRoomTopStatusBar.tsx": "ca4208b31a9287a5",
-        "src/ui-core/recipes/online/OnlineWarmupRoomRecipe.tsx": "bd4747c4157413a8",
-        "src/ui-core/recipes/online/onlineRoomErrorNotification.tsx": "5d2118389e9d2d62"
+        "src/ui-core/recipes/online/OnlineWarmupRoomRecipe.tsx": "bd4747c4157413a8"
       },
       "alphaDeps": [
         "src/ui-core/config/roomCodeConnectivityCodec.ts",
@@ -3579,9 +3598,9 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3HostTrainingRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "f1381289d716a044",
-      "visualAstHash": "23527e37f6bdb47d",
+      "visualAstHash": "67e51b6a57f6f787",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -3595,9 +3614,8 @@
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
         "src/ui-core/recipes/Layer3HostTrainingRecipe.tsx": "2122766763cd5fa5",
-        "src/ui-core/recipes/online/OnlineRoomCreationProgress.tsx": "a33f92c81a936ed1",
-        "src/ui-core/recipes/online/OnlineRoomIdentityFields.tsx": "26ebcf5db2345216",
-        "src/ui-core/recipes/online/onlineRoomErrorNotification.tsx": "5d2118389e9d2d62"
+        "src/ui-core/recipes/online/OnlineRoomCreationProgress.tsx": "b2f20a6a9cf92e37",
+        "src/ui-core/recipes/online/OnlineRoomIdentityFields.tsx": "26ebcf5db2345216"
       },
       "alphaDeps": [
         "src/ui-core/config/roomCodeConnectivityCodec.ts",
@@ -3635,9 +3653,9 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3JoinRoomRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "5e2a18cfb00307fe",
-      "visualAstHash": "0d9cf63bca04e746",
+      "visualAstHash": "b6f704fbf66185b4",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
         "src/ui-core/compounds/SettingToggleRow.tsx": "669bb1048d2574c6",
@@ -3650,9 +3668,8 @@
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
         "src/ui-core/recipes/Layer3JoinRoomRecipe.tsx": "c32509063745f5d5",
-        "src/ui-core/recipes/online/OnlineRoomCreationProgress.tsx": "a33f92c81a936ed1",
-        "src/ui-core/recipes/online/OnlineRoomIdentityFields.tsx": "26ebcf5db2345216",
-        "src/ui-core/recipes/online/onlineRoomErrorNotification.tsx": "5d2118389e9d2d62"
+        "src/ui-core/recipes/online/OnlineRoomCreationProgress.tsx": "b2f20a6a9cf92e37",
+        "src/ui-core/recipes/online/OnlineRoomIdentityFields.tsx": "26ebcf5db2345216"
       },
       "alphaDeps": [
         "src/ui-core/config/roomCodeConnectivityCodec.ts",
@@ -3691,9 +3708,9 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3KeybindingsRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "f421cfd058595cbe",
-      "visualAstHash": "0cefcdc1aae5f453",
+      "visualAstHash": "8278525a3fd3b1ae",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
         "src/ui-core/primitives/KeycapBadge.tsx": "50693226896bfa19",
@@ -3703,10 +3720,11 @@
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "bb0f7fb2ab362e85",
         "src/ui-core/recipes/Layer3KeybindingsRecipe.tsx": "97c860f1ddb95e17",
         "src/ui-core/recipes/keybinding/KeybindingActionRow.tsx": "ba452f205795f3cb",
-        "src/ui-core/recipes/keybinding/keybindingEngineSync.ts": "3cd36b47c50dfe80",
+        "src/ui-core/recipes/keybinding/keybindingEngineSync.ts": "1be27c719f230f96",
         "src/ui-core/recipes/keybinding/useKeybindingCapture.ts": "f2ca1baa775e0f2a"
       },
       "alphaDeps": [
+        "src/ui-core/config/inputBindingValidators.ts",
         "src/ui-core/config/inputBindings.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
@@ -3721,6 +3739,7 @@
         "Alpha:3StagePanelShell",
         "Alpha:KeycapBadge",
         "Alpha:SettingActionRow",
+        "src/ui-core/config/inputBindingValidators.ts",
         "src/ui-core/config/inputBindings.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
@@ -3737,7 +3756,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3KickoffTrainingRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "834b458b43904fb4",
       "visualAstHash": "a908b9bf321b5865",
       "fileVisualHashes": {
@@ -3797,7 +3816,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3SelfTrainingRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "b6e9f3cf7b994c50",
       "visualAstHash": "13cb6233e91b3ad7",
       "fileVisualHashes": {
@@ -3832,7 +3851,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3TrainingConfigRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "c66d324580f75be1",
       "visualAstHash": "c70d8debf3a2290e",
       "fileVisualHashes": {
@@ -3894,8 +3913,8 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4AdvancedAudioRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "c1feff711f84cec7",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "c6c0739d1a73d69e",
       "visualAstHash": "3890652e848cf4fe",
       "fileVisualHashes": {
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -3910,6 +3929,7 @@
       },
       "alphaDeps": [
         "src/ui-core/config/audioConfig.ts",
+        "src/ui-core/config/audioDetailCatalog.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
@@ -3926,6 +3946,7 @@
         "Alpha:SettingSliderRow",
         "Alpha:SliderControl",
         "src/ui-core/config/audioConfig.ts",
+        "src/ui-core/config/audioDetailCatalog.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
@@ -3940,7 +3961,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4ControllerSettingsRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "85fd8345038e4c01",
       "visualAstHash": "2ec51cdf7bda936d",
       "fileVisualHashes": {
@@ -3964,6 +3985,7 @@
         "src/ui-core/recipes/controller/deadzoneCanvasRenderer.ts": "f596ca272b9d9a53"
       },
       "alphaDeps": [
+        "src/ui-core/config/inputBindingValidators.ts",
         "src/ui-core/config/inputBindings.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
@@ -3987,6 +4009,7 @@
         "Alpha:SettingToggleRow",
         "Alpha:SliderControl",
         "Alpha:ToggleSwitch",
+        "src/ui-core/config/inputBindingValidators.ts",
         "src/ui-core/config/inputBindings.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
@@ -4004,7 +4027,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "a5059fbf191dba74",
       "visualAstHash": "dd5283f6f7395211",
       "fileVisualHashes": {
@@ -4050,8 +4073,8 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4EventTriggerRulesRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
-      "sizingAndConfigHash": "d08450e9a7d53b58",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "fd1b4252d199af1e",
       "visualAstHash": "e04beff76718fc77",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
@@ -4072,6 +4095,7 @@
       },
       "alphaDeps": [
         "src/ui-core/config/audioConfig.ts",
+        "src/ui-core/config/audioConstants.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
@@ -4094,6 +4118,7 @@
         "Alpha:SliderControl",
         "Alpha:ToggleSwitch",
         "src/ui-core/config/audioConfig.ts",
+        "src/ui-core/config/audioConstants.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
@@ -4109,7 +4134,7 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer4StaticTrainingPackBrowseRecipe.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "54863cc250de063a",
       "visualAstHash": "48d92c232dedd405",
       "fileVisualHashes": {
@@ -4130,8 +4155,9 @@
         "src/ui-core/recipes/static-training/staticTrainingPackFilterLogic.ts": "654c806faecfe875"
       },
       "alphaDeps": [
+        "src/ui-core/config/kevpertVariationPresets.ts",
         "src/ui-core/config/staticTrainingVariationTypes.ts",
-        "src/ui-core/config/temTrainingPackParser.ts",
+        "src/ui-core/config/temMetadataAndTagClassifier.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
@@ -4151,8 +4177,9 @@
         "Alpha:KeycapBadge",
         "Alpha:SegmentedSwitch",
         "Alpha:ToggleSwitch",
+        "src/ui-core/config/kevpertVariationPresets.ts",
         "src/ui-core/config/staticTrainingVariationTypes.ts",
-        "src/ui-core/config/temTrainingPackParser.ts",
+        "src/ui-core/config/temMetadataAndTagClassifier.ts",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/devFloatingPresets.ts",
@@ -4171,20 +4198,20 @@
       "status": "approved",
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/StaticTrainingShotInspectorDrawer.tsx",
-      "templateHash": "3e42a9731b72da90",
+      "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "6a142e31bb28a877",
-      "visualAstHash": "e17c6ae07df1ee8f",
+      "visualAstHash": "5dcf23bd6e19360e",
       "fileVisualHashes": {
         "src/ui-core/compounds/CollapsibleNumberedRailList.tsx": "bc9d0f1c9d33ebb8",
         "src/ui-core/compounds/dialogue/dialogueStore.ts": "b0987bc553ea677a",
         "src/ui-core/compounds/dialogue/dialogueTypes.ts": "2493994aa372f1da",
         "src/ui-core/primitives/KeycapBadge.tsx": "50693226896bfa19",
         "src/ui-core/primitives/ToggleSwitch.tsx": "6cc1ee7e1446f982",
-        "src/ui-core/recipes/StaticTrainingShotInspectorDrawer.tsx": "1e109b37b2ca39ce",
+        "src/ui-core/recipes/StaticTrainingShotInspectorDrawer.tsx": "70c1f15c4acf6279",
         "src/ui-core/recipes/static-training/CompactNumberSlider.tsx": "423fd60473f8ad0f",
         "src/ui-core/recipes/static-training/StaticTrainingAdvancedParamsSection.tsx": "f61326d1b499e857",
         "src/ui-core/recipes/static-training/StaticTrainingShotInspectorView.tsx": "6bdd2707c8677cc5",
-        "src/ui-core/recipes/static-training/staticTrainingEditorDialogues.tsx": "0f7baf621fd35e25",
+        "src/ui-core/recipes/static-training/staticTrainingEditorDialogues.tsx": "23879ebad56857ca",
         "src/ui-core/recipes/static-training/staticTrainingTypes.ts": "9563b100c00fa2ae"
       },
       "alphaDeps": [

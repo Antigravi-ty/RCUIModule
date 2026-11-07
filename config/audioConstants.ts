@@ -1,18 +1,8 @@
 import { STORAGE_KEYS } from './storageHelpers';
 import staticAudioConfig from './audioConfig.json' with { type: 'json' };
-import {
-  ADVANCED_AUDIO_CATEGORIES,
-  ADVANCED_AUDIO_DETAIL_CATALOG,
-  type AdvancedAudioCategoryItem,
-  type AdvancedAudioDetailItem,
-} from './audioDetailCatalog';
+import { ADVANCED_AUDIO_CATEGORIES, ADVANCED_AUDIO_DETAIL_CATALOG, type AdvancedAudioCategoryItem, type AdvancedAudioDetailItem } from './audioDetailCatalog';
 
-export {
-  ADVANCED_AUDIO_CATEGORIES,
-  ADVANCED_AUDIO_DETAIL_CATALOG,
-  type AdvancedAudioCategoryItem,
-  type AdvancedAudioDetailItem,
-};
+export type { AdvancedAudioCategoryItem, AdvancedAudioDetailItem };
 
 // Audio Asset Definitions (100% Unified under /assets/audio/)
 export const BALL_HIT_AUDIO_FILES = Object.freeze([
@@ -265,9 +255,9 @@ export const DEFAULT_AUDIO_CONFIG: Readonly<AudioConfigSettings> = Object.freeze
   ...staticAudioConfig,
   carBallSoundMode: 'vehicle_body',
   carCarSoundMode: 'vehicle_detail',
-  boostStartVariation: DEFAULT_BOOST_VARIATION,
-  boostLoopVariation: DEFAULT_BOOST_VARIATION,
-  boostEndVariation: DEFAULT_BOOST_VARIATION,
+  boostStartVariation: 'rush',
+  boostLoopVariation: 'rush',
+  boostEndVariation: 'rush',
   spatialAudio: true,
   spatialPanningModel: 'equalpower',
   dynamicRangeProfile: 'dynamic',

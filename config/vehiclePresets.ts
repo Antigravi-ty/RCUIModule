@@ -4,39 +4,79 @@
  * Decoupled from UI layer to eliminate inverted dependencies.
  */
 
-import {
-  STORAGE_KEYS,
-  safeStorage,
-  createLocalStorageStore,
-  stringOrDefault
-} from './storageHelpers';
-import {
-  HITBOX_PRESETS,
-  CAR_VISUAL_IDS,
-  CAR_VISUAL_OPTIONS,
-  CAR_VISUAL_CATALOG,
-  HITBOX_INDEX_TO_ID,
-  normalizeVisualId,
-  encodeVisualIdIndex,
-  decodeVisualIdIndex,
-  resolveHitboxIndex,
-  decodeHitboxIndex
-} from './vehicleConstants';
+import { STORAGE_KEYS, safeStorage, createLocalStorageStore, stringOrDefault } from './storageHelpers';
+import { CAR_VISUAL_IDS, SHORT_VISUAL_ALIAS_MAP, type HitboxPresetSpec } from './vehicleConstants';
 
-export {
-  HITBOX_PRESETS,
-  CAR_VISUAL_IDS,
-  CAR_VISUAL_OPTIONS,
-  CAR_VISUAL_CATALOG,
-  HITBOX_INDEX_TO_ID,
-  normalizeVisualId,
-  encodeVisualIdIndex,
-  decodeVisualIdIndex,
-  resolveHitboxIndex,
-  decodeHitboxIndex,
-};
-import { hasVehicleDescriptor } from './vehicleTunerConfig';
-export { hasVehicleDescriptor };
+export const HITBOX_PRESETS: Readonly<Record<string, Readonly<HitboxPresetSpec>>> = Object.freeze({
+  'hitbox-octane': Object.freeze({
+    index: 0,
+    id: 'hitbox-octane',
+    name: 'Octane',
+    length: 120.507,
+    width: 86.6994,
+    height: 38.6591,
+    forward: 13.8757,
+    up: 20.755,
+  }),
+  'hitbox-dominus': Object.freeze({
+    index: 1,
+    id: 'hitbox-dominus',
+    name: 'Dominus',
+    length: 130.427,
+    width: 85.7799,
+    height: 33.8,
+    forward: 9.0,
+    up: 15.75,
+  }),
+  'hitbox-plank': Object.freeze({
+    index: 2,
+    id: 'hitbox-plank',
+    name: 'Batmobile (Plank)',
+    length: 131.32,
+    width: 87.1704,
+    height: 31.8944,
+    forward: 9.00857,
+    up: 12.0942,
+  }),
+  'hitbox-breakout': Object.freeze({
+    index: 3,
+    id: 'hitbox-breakout',
+    name: 'Breakout',
+    length: 133.992,
+    width: 83.021,
+    height: 32.8,
+    forward: 12.5,
+    up: 11.75,
+  }),
+  'hitbox-hybrid': Object.freeze({
+    index: 4,
+    id: 'hitbox-hybrid',
+    name: 'Hybrid',
+    length: 129.519,
+    width: 84.6879,
+    height: 36.6591,
+    forward: 13.8757,
+    up: 20.755,
+  }),
+  'hitbox-merc': Object.freeze({
+    index: 5,
+    id: 'hitbox-merc',
+    name: 'Merc',
+    length: 123.22,
+    width: 79.2103,
+    height: 44.1591,
+    forward: 11.3757,
+    up: 21.505,
+  }),
+});
+
+export function normalizeVisualId(visualId: unknown): string {
+  if (!visualId) return 'fennec';
+  const raw = String(visualId).toLowerCase().trim();
+  if (CAR_VISUAL_IDS.includes(raw)) return raw;
+  if (SHORT_VISUAL_ALIAS_MAP[raw]) return SHORT_VISUAL_ALIAS_MAP[raw];
+  return 'fennec';
+}
 
 export const STORAGE_KEY_DISPLAY_SETTINGS = STORAGE_KEYS.DISPLAY_SETTINGS;
 export const COLOR_PREFS_KEY = STORAGE_KEYS.COLOR_PREFS;

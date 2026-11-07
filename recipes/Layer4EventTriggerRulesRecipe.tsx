@@ -11,14 +11,8 @@ import {
   Terminal,
   Filter,
 } from 'lucide-react';
-import {
-  audioConfig,
-  CONSOLE_LOG_EVENT_CATALOG,
-  selectAllEventLogs,
-  deselectAllEventLogs,
-  setEventLogFilterItem,
-  createDefaultLogEventFilter,
-} from '../config/audioConfig';
+import { audioConfig, selectAllEventLogs, deselectAllEventLogs, setEventLogFilterItem } from '../config/audioConfig';
+import { CONSOLE_LOG_EVENT_CATALOG, createDefaultLogEventFilter } from '../config/audioConstants';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSliderRow } from '../compounds/SettingSliderRow';

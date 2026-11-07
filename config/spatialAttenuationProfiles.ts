@@ -11,33 +11,9 @@ import {
   booleanOrDefault,
   stringOrDefault,
 } from './storageHelpers';
-import {
-  ALLOWED_CURVE_TYPES,
-  AUDIO_ATTENUATION_CATEGORIES,
-  DEFAULT_BEZIER_POINTS,
-  DEFAULT_SPATIAL_ATTENUATION_CONFIG,
-  DEFAULT_SPATIAL_ATTENUATION_PROFILES,
-  type AttenuationArchetypeId,
-  type AttenuationBezierPoints,
-  type AttenuationCurveType,
-  type AudioAttenuationCategory,
-  type SpatialAttenuationProfile,
-  type SpatialAttenuationProfileMap,
-} from './spatialAttenuationPresets';
+import { ALLOWED_CURVE_TYPES, AUDIO_ATTENUATION_CATEGORIES, DEFAULT_SPATIAL_ATTENUATION_PROFILES, type AttenuationArchetypeId, type AttenuationBezierPoints, type AttenuationCurveType, type AudioAttenuationCategory, type SpatialAttenuationProfile, type SpatialAttenuationProfileMap } from './spatialAttenuationPresets';
 
-export {
-  ALLOWED_CURVE_TYPES,
-  AUDIO_ATTENUATION_CATEGORIES,
-  DEFAULT_BEZIER_POINTS,
-  DEFAULT_SPATIAL_ATTENUATION_CONFIG,
-  DEFAULT_SPATIAL_ATTENUATION_PROFILES,
-  type AttenuationArchetypeId,
-  type AttenuationBezierPoints,
-  type AttenuationCurveType,
-  type AudioAttenuationCategory,
-  type SpatialAttenuationProfile,
-  type SpatialAttenuationProfileMap,
-};
+export type { AttenuationArchetypeId, AttenuationBezierPoints, AttenuationCurveType, AudioAttenuationCategory, SpatialAttenuationProfile, SpatialAttenuationProfileMap };
 
 export function sanitizeSpatialAttenuationProfile(
   raw: unknown,

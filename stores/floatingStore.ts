@@ -1,29 +1,19 @@
 import { useSyncExternalStore } from 'react';
 import type { PresetConfig } from './floatingPresets';
-import {
-  type FloatingStorePersistenceHooks,
-  type FloatingWindowConfig,
-  type FloatingWindowItem,
-  type FloatingWindowState,
-  type FlyingGhostState,
-  DEFAULT_FLOATING_STATE,
-  configureFloatingStorePersistence,
-  normalizeFloatingState,
-  notifySavedFloatingOpacity,
-  reduceCompleteFlight,
-  reduceSpawnWindow,
-  reduceSpawnWithFlight,
-} from './floatingWindowStateReducers';
+import { type FloatingStorePersistenceHooks, type FloatingWindowConfig, type FloatingWindowItem, type FloatingWindowState, type FlyingGhostState, DEFAULT_FLOATING_STATE, setFloatingStorePersistenceHooks, normalizeFloatingState, notifySavedFloatingOpacity, reduceCompleteFlight, reduceSpawnWindow, reduceSpawnWithFlight } from './floatingWindowStateReducers';
 import { syncBridge as crossClientSync } from './syncBridge';
 
-export {
-  type FloatingStorePersistenceHooks,
-  type FloatingWindowConfig,
-  type FloatingWindowItem,
-  type FloatingWindowState,
-  type FlyingGhostState,
-  configureFloatingStorePersistence,
+export type {
+  FloatingStorePersistenceHooks,
+  FloatingWindowConfig,
+  FloatingWindowItem,
+  FloatingWindowState,
+  FlyingGhostState,
 };
+
+export function configureFloatingStorePersistence(hooks: FloatingStorePersistenceHooks): void {
+  setFloatingStorePersistenceHooks(hooks);
+}
 
 export function createFloatingStore(syncKey: string) {
   let state: FloatingWindowState = normalizeFloatingState(

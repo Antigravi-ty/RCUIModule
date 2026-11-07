@@ -1,7 +1,4 @@
-import {
-  isDeepEqualJsonValue,
-  normalizeCloudUsername,
-} from '../config/cloudProfileMergePipeline';
+import { isDeepEqualJsonValue, normalizeCloudUsername } from '../config/cloudProfileMergePipeline';
 import type {
   ActiveRemoteTuningSession,
   CloudManagedAccountItem,
@@ -11,12 +8,7 @@ import type {
 } from '../config/cloudProfileSyncTypes';
 import { useAppStore } from './appStore';
 import { collectUnifiedProfileSnapshot } from './cloudProfileSnapshotCollector';
-import {
-  buildUpdatedIndexAfterRemotePush,
-  evaluateRemoteTuningSessionFromRecord,
-  performLocalUserBackupExport,
-  performRemoteAccountBackupExport,
-} from './cloudProfileSyncPipeline';
+import { buildUpdatedIndexAfterRemotePush, evaluateRemoteTuningSessionFromRecord, performLocalUserBackupExport, performRemoteAccountBackupExport } from './cloudProfileSyncPipeline';
 
 export async function executeUpsertCloudAccount(params: {
   bridge: CloudProfileSyncBridgeCallbacks;
@@ -250,9 +242,9 @@ export function processWatchedDevSlotUpdate(params: {
   previousAppliedDevSnapshot: ProfileFlatSnapshot | null;
   currentLocalSnapshot: ProfileFlatSnapshot;
   formatCloudCommitHashFn: (hash?: string, rev?: number) => string;
-  evaluateIncomingDevSlotMergeFn: typeof import('./cloudProfileSyncPipeline').evaluateIncomingDevSlotMerge;
-  saveCloudUserFn: typeof import('./cloudProfileSyncPipeline').saveCloudUser;
-  saveStoredDevAckStateFn: typeof import('./cloudProfileSyncPipeline').saveStoredDevAckState;
+  evaluateIncomingDevSlotMergeFn: typeof import('./cloudProfileUserSyncActions').evaluateIncomingDevSlotMerge;
+  saveCloudUserFn: typeof import('./cloudProfileUserSyncActions').saveCloudUser;
+  saveStoredDevAckStateFn: typeof import('./cloudProfileUserSyncActions').saveStoredDevAckState;
 }): {
   mergedSnapshot: ProfileFlatSnapshot;
   patchState: Partial<CloudProfileSyncState>;

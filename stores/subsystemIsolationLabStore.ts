@@ -3,7 +3,7 @@ import {
   INITIAL_SOLO_RESULTS,
   PRECOMPUTED_MATRIX_RESULTS,
 } from '../config/kickoffDuelConfig';
-import { updateReplayDirectorConfig } from './replayDirectorStore';
+import { updateReplayDirectorConfig } from '../config/replayDirectorConfig';
 import { audioConfig } from '../config/audioConfig';
 
 import {

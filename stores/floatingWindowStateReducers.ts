@@ -14,7 +14,7 @@ export interface FloatingStorePersistenceHooks {
 
 let persistenceHooks: FloatingStorePersistenceHooks = {};
 
-export function configureFloatingStorePersistence(hooks: FloatingStorePersistenceHooks): void {
+export function setFloatingStorePersistenceHooks(hooks: FloatingStorePersistenceHooks): void {
   persistenceHooks = { ...persistenceHooks, ...hooks };
 }
 

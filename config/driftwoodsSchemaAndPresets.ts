@@ -1,11 +1,7 @@
 /**
  * driftwoodsSchemaAndPresets.ts
- * Schema definitions, Q1 manifest constants, default configuration, and built-in presets
- * for the Driftwoods stadium.
+ * Schema definitions for the Driftwoods stadium.
  */
-
-import defaultConfigJson from './driftwoods.default.json' with { type: 'json' };
-import groundQ1ManifestJson from './groundQ1Manifest.json' with { type: 'json' };
 
 export type DriftwoodsGroundTextureMode = 'original' | 'q1-7gray';
 
@@ -63,29 +59,6 @@ export interface DriftwoodsQ1Manifest {
   };
   layers: DriftwoodsQ1LayerSpec[];
 }
-
-export const GROUND_Q1_MANIFEST: DriftwoodsQ1Manifest =
-  groundQ1ManifestJson as unknown as DriftwoodsQ1Manifest;
-
-export const DEFAULT_Q1_LAYER_COLORS: DriftwoodsQ1LayerColors = {
-  L0: '#1b4a00',
-  L1: '#ffffff',
-  L2: '#ffffff',
-  L3: '#ffffff',
-  L4: '#454545',
-  L5: '#ffffff',
-  L6: '#f87171',
-};
-
-export const DEFAULT_Q1_LAYER_OPACITIES: DriftwoodsQ1LayerOpacities = {
-  L0: 1.0,
-  L1: 0.5,
-  L2: 0.4,
-  L3: 0.5,
-  L4: 0.3,
-  L5: 0.7,
-  L6: 0.3,
-};
 
 export interface DriftwoodsLayerConfig {
   color: string;
@@ -196,5 +169,3 @@ export interface DriftwoodsPreset {
   config: DriftwoodsTunerConfig;
 }
 
-export const DEFAULT_DRIFTWOODS_CONFIG: DriftwoodsTunerConfig =
-  defaultConfigJson as DriftwoodsTunerConfig;

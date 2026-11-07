@@ -4,13 +4,6 @@ export const STORAGE_KEY_INPUT_BINDINGS = STORAGE_KEYS.INPUT_BINDINGS;
 export const STORAGE_KEY_CONTROLLER_SELECTION = STORAGE_KEYS.CONTROLLER_SELECTION;
 export const STORAGE_KEY_TOUCH_SETTINGS = STORAGE_KEYS.TOUCH_SETTINGS;
 
-export const BALL_CONTROL_MODES: readonly string[] = Object.freeze([
-  'takePossession',
-  'startDribble',
-  'passBall',
-  'launchBall',
-]);
-
 export const CAMERA_LOOK_ACTIONS: readonly string[] = Object.freeze([
   'cameraLeft',
   'cameraRight',
@@ -33,6 +26,95 @@ export interface InputActionSpec {
   analog: boolean;
   note: string;
 }
+
+export const ACTION_LABELS_BY_ID: Readonly<Record<string, string>> = Object.freeze({
+  throttleForward: 'Throttle',
+  throttleReverse: 'Reverse',
+  steerLeft: 'Steer Left',
+  steerRight: 'Steer Right',
+  boost: 'Boost',
+  jump: 'Jump',
+  powerslide: 'Powerslide',
+  airRoll: 'Free Air Roll',
+  airRollLeft: 'Air Roll Left',
+  airRollRight: 'Air Roll Right',
+  ballCam: 'Ball Cam',
+  rearView: 'Rear View',
+  cameraLeft: 'Look Left',
+  cameraRight: 'Look Right',
+  cameraUp: 'Look Up',
+  cameraDown: 'Look Down',
+  resetShot: 'Reset Shot',
+  takePossession: 'Take Possession',
+  startDribble: 'Start Dribble',
+  passBall: 'Pass Ball',
+  launchBall: 'Launch Ball',
+  skipReplay: 'Skip Goal Replay',
+  toggleSettings: 'Menu / Cursor',
+});
+
+export const KEY_DISPLAY_NAMES: Readonly<Record<string, string>> = Object.freeze({
+  Space: 'Space',
+  Escape: 'Esc',
+  Backspace: 'Backspace',
+  Enter: 'Enter',
+  Tab: 'Tab',
+  ShiftLeft: 'L Shift',
+  ShiftRight: 'R Shift',
+  ControlLeft: 'L Ctrl',
+  ControlRight: 'R Ctrl',
+  AltLeft: 'L Alt',
+  AltRight: 'R Alt',
+  ArrowUp: 'Up',
+  ArrowDown: 'Down',
+  ArrowLeft: 'Left',
+  ArrowRight: 'Right',
+  CapsLock: 'Caps',
+  Backquote: '`',
+  Minus: '-',
+  Equal: '=',
+  BracketLeft: '[',
+  BracketRight: ']',
+  Backslash: '\\',
+  Semicolon: ';',
+  Quote: "'",
+  Comma: ',',
+  Period: '.',
+  Slash: '/',
+});
+
+export const MOUSE_BUTTON_NAMES: Readonly<Record<number, string>> = Object.freeze({
+  0: 'L Mouse',
+  1: 'M Mouse',
+  2: 'R Mouse',
+  3: 'Mouse 4',
+  4: 'Mouse 5',
+});
+
+export const XBOX_BUTTON_NAMES: readonly string[] = Object.freeze([
+  'A', 'B', 'X', 'Y',
+  'LB', 'RB', 'LT', 'RT',
+  'View', 'Menu',
+  'L Stick', 'R Stick',
+  'D-Up', 'D-Down', 'D-Left', 'D-Right',
+  'Guide',
+]);
+
+export const PLAYSTATION_BUTTON_NAMES: readonly string[] = Object.freeze([
+  'Cross', 'Circle', 'Square', 'Triangle',
+  'L1', 'R1', 'L2', 'R2',
+  'Share', 'Options',
+  'L3', 'R3',
+  'D-Up', 'D-Down', 'D-Left', 'D-Right',
+  'PS',
+]);
+
+export const AXIS_NAMES: readonly string[] = Object.freeze([
+  'L Stick X',
+  'L Stick Y',
+  'R Stick X',
+  'R Stick Y',
+]);
 
 export const INPUT_ACTIONS: readonly InputActionSpec[] = Object.freeze([
   {
@@ -196,69 +278,6 @@ export const INPUT_ACTIONS: readonly InputActionSpec[] = Object.freeze([
     analog: false,
     note: 'Browser keys/mouse: show the cursor or return to play. Controller: open settings.',
   },
-]);
-
-export const KEY_DISPLAY_NAMES: Readonly<Record<string, string>> = Object.freeze({
-  Space: 'Space',
-  Escape: 'Esc',
-  Backspace: 'Backspace',
-  Enter: 'Enter',
-  Tab: 'Tab',
-  ShiftLeft: 'L Shift',
-  ShiftRight: 'R Shift',
-  ControlLeft: 'L Ctrl',
-  ControlRight: 'R Ctrl',
-  AltLeft: 'L Alt',
-  AltRight: 'R Alt',
-  ArrowUp: 'Up',
-  ArrowDown: 'Down',
-  ArrowLeft: 'Left',
-  ArrowRight: 'Right',
-  CapsLock: 'Caps',
-  Backquote: '`',
-  Minus: '-',
-  Equal: '=',
-  BracketLeft: '[',
-  BracketRight: ']',
-  Backslash: '\\',
-  Semicolon: ';',
-  Quote: "'",
-  Comma: ',',
-  Period: '.',
-  Slash: '/',
-});
-
-export const MOUSE_BUTTON_NAMES: Readonly<Record<number, string>> = Object.freeze({
-  0: 'L Mouse',
-  1: 'M Mouse',
-  2: 'R Mouse',
-  3: 'Mouse 4',
-  4: 'Mouse 5',
-});
-
-export const XBOX_BUTTON_NAMES: readonly string[] = Object.freeze([
-  'A', 'B', 'X', 'Y',
-  'LB', 'RB', 'LT', 'RT',
-  'View', 'Menu',
-  'L Stick', 'R Stick',
-  'D-Up', 'D-Down', 'D-Left', 'D-Right',
-  'Guide',
-]);
-
-export const PLAYSTATION_BUTTON_NAMES: readonly string[] = Object.freeze([
-  'Cross', 'Circle', 'Square', 'Triangle',
-  'L1', 'R1', 'L2', 'R2',
-  'Share', 'Options',
-  'L3', 'R3',
-  'D-Up', 'D-Down', 'D-Left', 'D-Right',
-  'PS',
-]);
-
-export const AXIS_NAMES: readonly string[] = Object.freeze([
-  'L Stick X',
-  'L Stick Y',
-  'R Stick X',
-  'R Stick Y',
 ]);
 
 export const TRIGGER_ANALOG_THRESHOLD = 0.5;

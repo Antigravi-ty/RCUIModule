@@ -1,10 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import {
-  CAMERA_SOURCE_MODES,
-  CAMERA_CAPTURE_STATES,
-  PRE_TRIGGER_FRAME_LIMIT,
-  POST_TRIGGER_FRAME_LIMIT,
-} from '../config/cameraDefaults';
+import { CAMERA_SOURCE_MODES, CAMERA_CAPTURE_STATES } from '../config/cameraDefaults';
 import { useQuickNotificationStore } from './quickNotificationStore';
 import { createExternalStore } from './createExternalStore';
 
@@ -241,9 +236,4 @@ export const useCameraDeterminismData = () => {
   );
 };
 
-export {
-  CAMERA_SOURCE_MODES,
-  CAMERA_CAPTURE_STATES,
-  PRE_TRIGGER_FRAME_LIMIT,
-  POST_TRIGGER_FRAME_LIMIT,
-};
+

@@ -1,18 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  type TakeoverVignetteRenderMode,
-  type TakeoverVignetteCurve,
-  type TakeoverVignetteConfig,
-  type VignetteAxisGeometry,
-  DEFAULT_TAKEOVER_VIGNETTE,
-  parseHexToRgbTuple,
-  formatVignetteEndpointRgba,
-  evaluateCubicBezierAtX,
-  computeVignetteAxisOffsets,
-  buildTakeoverVignetteGradient,
-  VIGNETTE_LUT_SIZE,
-  buildBezierLut,
-} from './takeoverVignetteMath';
+import { type TakeoverVignetteRenderMode, type TakeoverVignetteCurve, type TakeoverVignetteConfig, type VignetteAxisGeometry, parseHexToRgbTuple, computeVignetteAxisOffsets, VIGNETTE_LUT_SIZE, buildBezierLut } from './takeoverVignetteMath';
 
 export type {
   TakeoverVignetteRenderMode,
@@ -20,14 +7,7 @@ export type {
   TakeoverVignetteConfig,
   VignetteAxisGeometry,
 };
-export {
-  DEFAULT_TAKEOVER_VIGNETTE,
-  parseHexToRgbTuple,
-  formatVignetteEndpointRgba,
-  evaluateCubicBezierAtX,
-  computeVignetteAxisOffsets,
-  buildTakeoverVignetteGradient,
-};
+
 
 export interface TakeoverVignetteOverlayProps {
   config: TakeoverVignetteConfig;

@@ -1,14 +1,6 @@
-import {
-  type StaticTrainingPackMetadata,
-  MAX_SHOTS_PER_PACK,
-  generateUUID,
-  createDefaultShotItem,
-  cloneShotItem,
-  saveEditWorkspacePackFull,
-  saveSingleEditWorkspaceShotItem,
-  exportSingleShotItemToJson,
-  parseSingleShotItemFromJsonFile,
-} from './staticTrainingPackStorage';
+import { type StaticTrainingPackMetadata, saveEditWorkspacePackFull, saveSingleEditWorkspaceShotItem } from './staticTrainingPackStorage';
+import { MAX_SHOTS_PER_PACK, generateUUID, createDefaultShotItem, cloneShotItem } from '../config/staticTrainingPackTypes';
+import { exportSingleShotItemToJson, parseSingleShotItemFromJsonFile } from '../config/staticTrainingPackCodec';
 import { floatingStore } from './floatingStore';
 import {
   createStaticTrainingPackCollectionActions,

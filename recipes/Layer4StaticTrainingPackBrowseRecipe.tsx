@@ -16,13 +16,8 @@ import {
 import { StaticTrainingPackToolbar } from './static-training/StaticTrainingPackToolbar';
 import { StaticTrainingPackMetadataInspector } from './static-training/StaticTrainingPackMetadataInspector';
 import { StaticTrainingVariationsModal } from './static-training/StaticTrainingVariationsModal';
-import {
-  DEFAULT_QUICK_VARIATION_TOGGLES,
-  KEVPERT_LATEST_PRESETS,
-  type KevpertPresetKey,
-  type StaticTrainingQuickVariationToggles,
-  type StaticTrainingVariationConfig,
-} from '../config/staticTrainingVariationTypes';
+import { DEFAULT_QUICK_VARIATION_TOGGLES, type KevpertPresetKey, type StaticTrainingQuickVariationToggles, type StaticTrainingVariationConfig } from '../config/staticTrainingVariationTypes';
+import { KEVPERT_LATEST_PRESETS } from '../config/kevpertVariationPresets';
 import {
   DEFAULT_STATIC_TRAINING_PACKS,
   generatePackUUID,

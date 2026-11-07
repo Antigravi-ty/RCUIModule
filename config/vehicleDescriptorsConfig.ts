@@ -76,7 +76,124 @@ export interface VehicleDescriptor {
   [key: string]: unknown;
 }
 
-export const GLOBAL_VEHICLE_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {
+export interface WheelModifierConfig {
+  mode: string;
+  width: number;
+  radiusScale: number;
+  verticalOffsetY: number;
+  outerRimRadiusPct: number;
+  outerColor: string;
+  innerColor: string;
+  treadColor: string;
+  treadShaderMode: string;
+  treadRoughness: number;
+  treadMetalness: number;
+  sideShaderMode: string;
+  sideRoughness: number;
+  sideMetalness: number;
+  innerRimFollowsOuter: boolean;
+  innerRimRadiusPct: number;
+  innerRimColor: string;
+  innerRimShaderMode: string;
+  innerRimRoughness: number;
+  innerRimMetalness: number;
+  innerShaderMode: string;
+  innerRoughness: number;
+  innerMetalness: number;
+  shaderMode: string;
+  roughness: number;
+  metalness: number;
+  [key: string]: unknown;
+}
+
+export function normalizeWheelModifierPatch(
+  patch: Partial<WheelModifierConfig>,
+  current: WheelModifierConfig
+): Partial<WheelModifierConfig> {
+  const nextConfig: Partial<WheelModifierConfig> = { ...patch };
+
+  if (nextConfig.innerColor !== undefined && nextConfig.treadColor === undefined) {
+    nextConfig.treadColor = nextConfig.innerColor;
+  } else if (nextConfig.treadColor !== undefined && nextConfig.innerColor === undefined) {
+    nextConfig.innerColor = nextConfig.treadColor;
+  }
+
+  if (nextConfig.innerShaderMode !== undefined && nextConfig.treadShaderMode === undefined) {
+    nextConfig.treadShaderMode = nextConfig.innerShaderMode;
+  } else if (nextConfig.treadShaderMode !== undefined && nextConfig.innerShaderMode === undefined) {
+    nextConfig.innerShaderMode = nextConfig.treadShaderMode;
+  }
+
+  if (nextConfig.innerRoughness !== undefined && nextConfig.treadRoughness === undefined) {
+    nextConfig.treadRoughness = nextConfig.innerRoughness;
+  } else if (nextConfig.treadRoughness !== undefined && nextConfig.innerRoughness === undefined) {
+    nextConfig.innerRoughness = nextConfig.treadRoughness;
+  }
+
+  if (nextConfig.innerMetalness !== undefined && nextConfig.treadMetalness === undefined) {
+    nextConfig.treadMetalness = nextConfig.innerMetalness;
+  } else if (nextConfig.treadMetalness !== undefined && nextConfig.innerMetalness === undefined) {
+    nextConfig.innerMetalness = nextConfig.treadMetalness;
+  }
+
+  const hasExplicitSurfaceFields =
+    nextConfig.treadShaderMode !== undefined ||
+    nextConfig.sideShaderMode !== undefined ||
+    nextConfig.innerShaderMode !== undefined ||
+    nextConfig.innerRimShaderMode !== undefined ||
+    nextConfig.treadRoughness !== undefined ||
+    nextConfig.sideRoughness !== undefined ||
+    nextConfig.innerRoughness !== undefined ||
+    nextConfig.innerRimRoughness !== undefined ||
+    nextConfig.treadMetalness !== undefined ||
+    nextConfig.sideMetalness !== undefined ||
+    nextConfig.innerMetalness !== undefined ||
+    nextConfig.innerRimMetalness !== undefined;
+
+  if (!hasExplicitSurfaceFields) {
+    if (nextConfig.shaderMode !== undefined) {
+      nextConfig.treadShaderMode = nextConfig.shaderMode;
+      nextConfig.sideShaderMode = nextConfig.shaderMode;
+      nextConfig.innerShaderMode = nextConfig.shaderMode;
+      nextConfig.innerRimShaderMode = nextConfig.shaderMode;
+    }
+    if (nextConfig.roughness !== undefined) {
+      nextConfig.treadRoughness = nextConfig.roughness;
+      nextConfig.sideRoughness = nextConfig.roughness;
+      nextConfig.innerRoughness = nextConfig.roughness;
+      nextConfig.innerRimRoughness = nextConfig.roughness;
+    }
+    if (nextConfig.metalness !== undefined) {
+      nextConfig.treadMetalness = nextConfig.metalness;
+      nextConfig.sideMetalness = nextConfig.metalness;
+      nextConfig.innerMetalness = nextConfig.metalness;
+      nextConfig.innerRimMetalness = nextConfig.metalness;
+    }
+  }
+
+  const shouldInnerFollowOuter =
+    nextConfig.innerRimFollowsOuter !== undefined
+      ? Boolean(nextConfig.innerRimFollowsOuter)
+      : Boolean(current.innerRimFollowsOuter ?? true);
+
+  if (shouldInnerFollowOuter) {
+    const targetPct = nextConfig.outerRimRadiusPct ?? current.outerRimRadiusPct ?? 80;
+    const targetColor = nextConfig.outerColor ?? current.outerColor ?? '#737373';
+    const targetShader = nextConfig.sideShaderMode ?? current.sideShaderMode ?? 'standard';
+    const targetRoughness = nextConfig.sideRoughness ?? current.sideRoughness ?? 0.5;
+    const targetMetalness = nextConfig.sideMetalness ?? current.sideMetalness ?? 0.7;
+
+    if (nextConfig.innerRimRadiusPct === undefined) nextConfig.innerRimRadiusPct = targetPct;
+    if (nextConfig.innerRimColor === undefined) nextConfig.innerRimColor = targetColor;
+    if (nextConfig.innerRimShaderMode === undefined) nextConfig.innerRimShaderMode = targetShader;
+    if (nextConfig.innerRimRoughness === undefined) nextConfig.innerRimRoughness = targetRoughness;
+    if (nextConfig.innerRimMetalness === undefined) nextConfig.innerRimMetalness = targetMetalness;
+  }
+
+  return nextConfig;
+}
+
+const DEFAULT_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {
   body: {
     slotName: 'body',
     label: 'Body Shell (body)',
@@ -155,7 +272,7 @@ export const GLOBAL_VEHICLE_SURFACE_MATERIALS: Record<string, VehicleSurfaceMate
   },
 };
 
-export const GLOBAL_VEHICLE_LAMPS_CONFIG: VehicleLampsConfig = {
+const DEFAULT_LAMPS_CONFIG: VehicleLampsConfig = {
   frontColor: '#ffefd5',
   frontIntensity: 1,
   frontToneMapped: false,
@@ -166,62 +283,6 @@ export const GLOBAL_VEHICLE_LAMPS_CONFIG: VehicleLampsConfig = {
   brakeMinSpeed: 30,
   brakeDecelEpsilon: 0.25,
   tailToneMapped: false,
-};
-
-export const FENNEC_DESCRIPTOR: VehicleDescriptor = {
-  id: 'fennec',
-  name: 'Fennec',
-  hitboxPreset: 'hitbox-octane',
-  modelUrl: '/assets/vehicles/Fennec.glb',
-  rawBounds: {
-    min: [-62.3896, -13.8302, -35.7124],
-    max: [78.0319, 33.4147, 35.7124],
-    length: 140.4215,
-    height: 47.2449,
-    width: 71.4248,
-    center: [7.8212, 9.7923, 0],
-    roofTopY: 33.4147,
-    rlHitboxTopY: 38.8346,
-  },
-  alignment: {
-    scale: 1.0,
-    scaleX: 1.0,
-    scaleY: 1.0,
-    scaleZ: 1.0,
-    centerOffset: [-0.1, 1.6, 0],
-  },
-  wheelNames: [
-    'wheel-front-right',
-    'wheel-front-left',
-    'wheel-rear-right',
-    'wheel-rear-left',
-  ],
-  wheelAnchors: [
-    [48.55, 26.9291, 12.5],
-    [48.55, -26.9291, 12.5],
-    [-36.68, 28.6221, 15.0],
-    [-36.68, -28.6221, 15.0],
-  ],
-  suspensionHeights: [-4.5, -4.5, -2.0, -2.0],
-  boostOutlets: [
-    [-57.97, 10.57, 19.62],
-    [-57.97, 10.57, -19.62],
-  ],
-  boostNozzleParams: {
-    x: -57.87,
-    y: 8.97,
-    z: 19.62,
-    followChassisOffset: true,
-  },
-  surfaceMaterials: GLOBAL_VEHICLE_SURFACE_MATERIALS,
-  lampsConfig: GLOBAL_VEHICLE_LAMPS_CONFIG,
-  colors: {
-    default: {
-      primary: 16734742,
-      realisticPrimary: 16555020,
-      pearl: 16724660,
-    },
-  },
 };
 
 export const INSIDIO_DESCRIPTOR: VehicleDescriptor = {
@@ -269,8 +330,8 @@ export const INSIDIO_DESCRIPTOR: VehicleDescriptor = {
     z: 20.4278,
     followChassisOffset: true,
   },
-  surfaceMaterials: GLOBAL_VEHICLE_SURFACE_MATERIALS,
-  lampsConfig: GLOBAL_VEHICLE_LAMPS_CONFIG,
+  surfaceMaterials: DEFAULT_SURFACE_MATERIALS,
+  lampsConfig: DEFAULT_LAMPS_CONFIG,
   colors: {
     default: {
       primary: 3115263,
@@ -325,8 +386,8 @@ export const RYZA_DESCRIPTOR: VehicleDescriptor = {
     z: 10.0,
     followChassisOffset: true,
   },
-  surfaceMaterials: GLOBAL_VEHICLE_SURFACE_MATERIALS,
-  lampsConfig: GLOBAL_VEHICLE_LAMPS_CONFIG,
+  surfaceMaterials: DEFAULT_SURFACE_MATERIALS,
+  lampsConfig: DEFAULT_LAMPS_CONFIG,
   colors: {
     default: {
       primary: 16734742,

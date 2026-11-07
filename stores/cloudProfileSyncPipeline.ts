@@ -4,40 +4,13 @@
  * and re-exports of user sync pipeline helpers for `cloudProfileSyncStore`.
  */
 
-import {
-  exportManagedAccountBackup,
-  exportUserBackupFromLoggedInState,
-} from '../config/cloudProfileBackupExporter';
-import {
-  computeCommitHashSync,
-  computeProfileThreeWayMerge,
-  formatCloudCommitHash,
-  normalizeCloudUsername,
-} from '../config/cloudProfileMergePipeline';
-import {
-  type ActiveRemoteTuningSession,
-  type CloudFetchedUserCompleteRecord,
-  type CloudManagedAccountItem,
-  type CloudProfileSyncBridgeCallbacks,
-  type LoggedInCloudUser,
-  type ProfileFlatSnapshot,
-} from '../config/cloudProfileSyncTypes';
+import { exportManagedAccountBackup, exportUserBackupFromLoggedInState } from '../config/cloudProfileBackupExporter';
+import { computeCommitHashSync, computeProfileThreeWayMerge, formatCloudCommitHash, normalizeCloudUsername } from '../config/cloudProfileMergePipeline';
+import { type ActiveRemoteTuningSession, type CloudFetchedUserCompleteRecord, type CloudManagedAccountItem, type CloudProfileSyncBridgeCallbacks, type LoggedInCloudUser, type ProfileFlatSnapshot } from '../config/cloudProfileSyncTypes';
 
-export {
-  type EvaluatedCloudLoginMerge,
-  type StoredDevAckState,
-  buildResolvedConflictsSnapshot,
-  evaluateIncomingDevSlotMerge,
-  evaluateRecordMergeOnLogin,
-  executeUserCloudLoginAndMerge,
-  executeUserCloudProfilePush,
-  loadAllowRemoteProfileDeployment,
-  loadSavedCloudUser,
-  loadStoredDevAckState,
-  saveAllowRemoteProfileDeployment,
-  saveCloudUser,
-  saveStoredDevAckState,
-  shouldApplyIncomingDevSlot,
+export type {
+  EvaluatedCloudLoginMerge,
+  StoredDevAckState,
 } from './cloudProfileUserSyncActions';
 
 export function buildUpdatedIndexAfterRemotePush(params: {

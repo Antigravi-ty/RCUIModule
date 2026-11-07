@@ -4,30 +4,69 @@
  * and converted TEM bundle ingestion for `staticTrainingPackStore`.
  */
 
-import {
-  type ExportRCSPackOptions,
-  type StaticTrainingPackMetadata,
-  type StaticTrainingPackStorageScope,
-  type StaticTrainingShotItem,
-  MAX_SHOTS_PER_PACK,
-  cloneShotItem,
-  createDefaultShotItem,
-  deleteStaticTrainingPackByUuid,
-  ensureBuiltInDevPacksSeeded,
-  exportBatchStaticTrainingPacksZip,
-  exportStaticTrainingPackRCSPack,
-  generateUUID,
-  importBatchStaticTrainingPacksFromFiles,
-  importStaticTrainingPackFromFile,
-  listStaticTrainingPacks,
-  loadStaticTrainingPackByUuid,
-  saveStaticTrainingPackFull,
-} from './staticTrainingPackStorage';
-import type {
-  ActiveStaticTrainingPackBundle,
-  StaticTrainingShotActionHelpers,
-  StaticTrainingShotStoreState,
-} from './staticTrainingPackCollectionActions';
+import { type EditSubMode, type ExportRCSPackOptions, type StaticTrainingPackMetadata, type StaticTrainingPackStorageScope, type StaticTrainingShotItem, deleteStaticTrainingPackByUuid, ensureBuiltInDevPacksSeeded, importBatchStaticTrainingPacksFromFiles, importStaticTrainingPackFromFile, listStaticTrainingPacks, loadStaticTrainingPackByUuid, saveStaticTrainingPackFull } from './staticTrainingPackStorage';
+import { MAX_SHOTS_PER_PACK, cloneShotItem, createDefaultShotItem, generateUUID } from '../config/staticTrainingPackTypes';
+import { exportBatchStaticTrainingPacksZip, exportStaticTrainingPackRCSPack } from '../config/staticTrainingPackCodec';
+
+export type StaticPackDownCounterOption = 1 | 2 | 3;
+export type StaticPackSessionMode = 'browse' | 'play' | 'edit';
+
+export interface ActiveStaticTrainingPackBundle {
+  uuid: string;
+  title: string;
+  description: string;
+  itemCount: number;
+  metadata: StaticTrainingPackMetadata;
+  items: StaticTrainingShotItem[];
+}
+
+export interface StaticTrainingPackRuntimeHandlers {
+  onShotChanged?: (shotIndex: number) => void;
+  onResetShotRequested?: () => void;
+  onEditVariableMutated?: (draft: StaticTrainingShotItem) => void;
+  onEditSubModeChanged?: (subMode: EditSubMode) => void;
+  onSessionModeChanged?: (mode: StaticPackSessionMode) => void;
+}
+
+export interface StaticTrainingShotActionHelpers {
+  getActiveEditItemVariable: () => StaticTrainingShotItem | null;
+  setActiveEditItemVariable: (item: StaticTrainingShotItem | null) => void;
+  buildActivePackBundle: (
+    metadata: StaticTrainingPackMetadata | null,
+    items: StaticTrainingShotItem[]
+  ) => ActiveStaticTrainingPackBundle | null;
+}
+
+export interface StaticTrainingShotStoreState {
+  initialized: boolean;
+  devInitialized: boolean;
+  isLoading: boolean;
+  storageScope: StaticTrainingPackStorageScope;
+  packs: StaticTrainingPackMetadata[];
+  normalPacks: StaticTrainingPackMetadata[];
+  devPacks: StaticTrainingPackMetadata[];
+  selectedPackUuid: string | null;
+  normalSelectedPackUuid: string | null;
+  devSelectedPackUuid: string | null;
+  sessionMode: StaticPackSessionMode;
+  activePack: ActiveStaticTrainingPackBundle | null;
+  activeItems: StaticTrainingShotItem[];
+  committedSessionItems: StaticTrainingShotItem[];
+  currentShotIndex: number;
+  isEditingItem: boolean;
+  isEdgeInspectorExpanded: boolean;
+  activeEditItemDraft: StaticTrainingShotItem | null;
+  editSubMode: EditSubMode;
+  editVarVersion: number;
+  remainingTimeoutSec: number;
+  isFreeCamTrajectoryTesting: boolean;
+  isTestingSingleShot: boolean;
+  isShotMirrored?: boolean;
+  runtimeHandlers: StaticTrainingPackRuntimeHandlers;
+  setCurrentShotIndex: (index: number) => void;
+  isCurrentShotDirty: () => boolean;
+  saveCurrentShotToEditWorkspace: () => Promise<void>;
+}
 
 export function buildScopePackStatePatch(
   scope: StaticTrainingPackStorageScope,

@@ -16,19 +16,9 @@ import {
   ReplaySkipCheckSvg,
   buildSvgDropShadowFilter,
 } from '../primitives/svg/packagedSvgDefinitions';
-import {
-  KEY_BADGE_WIDTH_PX,
-  DEMO_EXTEND_PX,
-  CARD_ROW_PITCH_PX,
-  MAX_TEAM_SLOTS,
-  computeSlotRanksForRoster,
-  updateSkipBadgeDom,
-  updateDemolishedReadoutDom,
-  mergeRosterSidePlayers,
-  updateSlotCardSurfaceAndBarDom,
-} from './edgePlayerSlotMath';
+import { KEY_BADGE_WIDTH_PX, computeSlotRanksForRoster, updateSkipBadgeDom, updateDemolishedReadoutDom, mergeRosterSidePlayers, updateSlotCardSurfaceAndBarDom } from './edgePlayerSlotMath';
 
-export { KEY_BADGE_WIDTH_PX, DEMO_EXTEND_PX, CARD_ROW_PITCH_PX, MAX_TEAM_SLOTS };
+
 
 export interface EdgePlayerSlotCardHandle {
   setRoster: (roster: EdgeRosterHudState) => void;

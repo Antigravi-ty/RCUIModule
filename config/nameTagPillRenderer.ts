@@ -1,15 +1,6 @@
-import {
-  DEFAULT_NAME_TAG_CONFIG,
-  type NameTagBoostIndicatorMode,
-  type NameTagConfig,
-} from './nameTagConfig';
-import {
-  drawOffscreenIndicatorCard2D,
-  hexToRgba,
-  resolveActiveBoostFillColor,
-  resolveUnfilledBaseHexColor,
-  type NameTagOffscreenIndicatorCard2D,
-} from './nameTagOffscreenRenderer';
+import { DEFAULT_NAME_TAG_CONFIG, type NameTagBoostIndicatorMode, type NameTagConfig } from './nameTagConfig';
+import { hexToRgba, resolveActiveBoostFillColor, resolveUnfilledBaseHexColor } from './nameTagColorAndRoiMath';
+import { drawOffscreenIndicatorCard2D, type NameTagOffscreenIndicatorCard2D } from './nameTagOffscreenRenderer';
 
 export interface NameTagPillRenderCard2D {
   carIndex: number;

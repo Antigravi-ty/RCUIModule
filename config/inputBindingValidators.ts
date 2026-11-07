@@ -1,12 +1,5 @@
 import { isPlainObject } from './storageHelpers';
-import {
-  INPUT_ACTIONS,
-  KEY_DISPLAY_NAMES,
-  MOUSE_BUTTON_NAMES,
-  XBOX_BUTTON_NAMES,
-  PLAYSTATION_BUTTON_NAMES,
-  AXIS_NAMES,
-} from './inputConstants';
+import { ACTION_LABELS_BY_ID, KEY_DISPLAY_NAMES, MOUSE_BUTTON_NAMES, XBOX_BUTTON_NAMES, PLAYSTATION_BUTTON_NAMES, AXIS_NAMES } from './inputConstants';
 
 export type KeyboardInputBindingItem =
   | { kind: 'key'; code: string }
@@ -255,7 +248,6 @@ export function formatBindingDisplayName(
 }
 
 export function getActionLabel(actionId: string): string {
-  const found = INPUT_ACTIONS.find((a: { id?: string }) => a.id === actionId);
-  return found ? found.label : actionId;
+  return ACTION_LABELS_BY_ID[actionId] ?? actionId;
 }
 

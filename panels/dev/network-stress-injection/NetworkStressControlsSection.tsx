@@ -1,10 +1,7 @@
 import React from 'react';
 import { Zap, Eye, RotateCcw, Bug, Activity } from 'lucide-react';
-import {
-  useNetworkDiagnosticsData,
-  networkDiagnosticsStore,
-  NETWORK_STRESS_PRESET_LIST,
-} from '../../../stores/networkDiagnosticsStore';
+import { useNetworkDiagnosticsData, networkDiagnosticsStore } from '../../../stores/networkDiagnosticsStore';
+import { NETWORK_STRESS_PRESET_LIST } from '../../../config/networkStressConfig';
 import { SliderControl } from '../../../primitives/SliderControl';
 
 export interface NetworkStressControlsSectionProps {

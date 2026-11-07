@@ -1,7 +1,77 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MorphContainerContext } from '../layout/Panel';
-import { LivePreviewDock } from './LivePreviewDock';
+import { Eye } from 'lucide-react';
+import { KeycapBadge } from '../primitives/KeycapBadge';
+
+export interface LivePreviewDockProps {
+  isLight?: boolean;
+  isHovered?: boolean;
+  isVisible?: boolean;
+  isPillHovered?: boolean;
+  isPillContentVisible?: boolean;
+  onExpand?: () => void;
+  shortcut?: string;
+}
+
+export const LivePreviewDock: React.FC<LivePreviewDockProps> = ({
+  isLight = false,
+  isHovered,
+  isVisible,
+  isPillHovered = false,
+  isPillContentVisible = true,
+  onExpand,
+  shortcut = 'TAB',
+}) => {
+  const effectiveHovered = isHovered ?? isPillHovered;
+  const effectiveVisible = isVisible ?? isPillContentVisible;
+  return (
+    <button
+      type="button"
+      onClick={onExpand}
+      data-ui-element="live-preview-dock-pill"
+      className={`w-full h-full flex flex-col items-center justify-between py-3.5 px-1.5 cursor-pointer select-none transition-opacity duration-150 ${
+        effectiveVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+      title={`Click or press ${shortcut} to expand inspector`}
+    >
+      <div
+        className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+          effectiveHovered
+            ? isLight
+              ? 'bg-sky-500 text-white'
+              : 'bg-sky-500 text-white'
+            : isLight
+            ? 'bg-neutral-200/80 text-neutral-700'
+            : 'bg-neutral-800 text-neutral-300'
+        }`}
+      >
+        <Eye className="w-3.5 h-3.5" />
+      </div>
+
+      <span
+        className={`text-[10px] font-bold uppercase tracking-[0.18em] [writing-mode:vertical-rl] rotate-180 transition-colors ${
+          isPillHovered
+            ? isLight
+              ? 'text-sky-600'
+              : 'text-sky-400'
+            : isLight
+            ? 'text-neutral-600'
+            : 'text-neutral-400'
+        }`}
+      >
+        LIVE PREVIEW
+      </span>
+
+      <KeycapBadge
+        shortcut={shortcut}
+        size="sm"
+        isLight={isLight}
+        className="!px-1 !py-0.5 !text-[9px] !min-w-[28px]"
+      />
+    </button>
+  );
+};
 
 export interface MorphingStageShellProps {
   isLight?: boolean;

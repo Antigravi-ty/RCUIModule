@@ -1,39 +1,54 @@
 import { safeStorage } from './storageHelpers';
-import {
-  CONSOLE_LOG_EVENT_CATALOG,
-  BOOST_AUDIO_VARIATIONS,
-  DEFAULT_BOOST_VARIATION,
-  ADVANCED_AUDIO_CATEGORIES,
-  ADVANCED_AUDIO_DETAIL_CATALOG,
-  createDefaultLogEventFilter,
-  clamp01,
-  clampVolume,
-  dbToLinear,
-  AUDIO_SETTINGS_KEY,
-  AUDIO_SETTINGS_CHANGED_EVENT,
-  DEFAULT_AUDIO_CONFIG,
-  DEFAULT_AUDIO_SETTINGS,
-  type AudioConfigSettings,
-  type DynamicRangeProfileId,
-} from './audioConstants';
+import { ADVANCED_AUDIO_DETAIL_CATALOG } from './audioDetailCatalog';
+import { CONSOLE_LOG_EVENT_CATALOG, createDefaultLogEventFilter, clamp01, clampVolume, dbToLinear, AUDIO_SETTINGS_KEY, AUDIO_SETTINGS_CHANGED_EVENT, DEFAULT_AUDIO_CONFIG, type AudioConfigSettings, type DynamicRangeProfileId } from './audioConstants';
 
-export {
-  CONSOLE_LOG_EVENT_CATALOG,
-  BOOST_AUDIO_VARIATIONS,
-  DEFAULT_BOOST_VARIATION,
-  ADVANCED_AUDIO_CATEGORIES,
-  ADVANCED_AUDIO_DETAIL_CATALOG,
-  createDefaultLogEventFilter,
-  clamp01,
-  clampVolume,
-  dbToLinear,
-  AUDIO_SETTINGS_KEY,
-  AUDIO_SETTINGS_CHANGED_EVENT,
-  DEFAULT_AUDIO_CONFIG,
-  DEFAULT_AUDIO_SETTINGS,
-  type AudioConfigSettings,
-  type DynamicRangeProfileId,
-};
+export type { AudioConfigSettings, DynamicRangeProfileId };
+
+export const DEFAULT_BOOST_VARIATION = 'rush';
+
+export interface BoostAudioVariationSpec {
+  id: string;
+  label: string;
+  start: string;
+  loop: string;
+  end: string;
+  desc?: string;
+}
+
+export const BOOST_AUDIO_VARIATIONS: readonly BoostAudioVariationSpec[] = Object.freeze([
+  {
+    id: 'rush',
+    label: 'Gold Rush (Alpha)',
+    start: '/assets/audio/boost/rush/start.m4a',
+    loop: '/assets/audio/boost/rush/loop.m4a',
+    end: '/assets/audio/boost/rush/release.m4a',
+    desc: 'Crisp high-frequency turbine whistle + warm low-end roar',
+  },
+  {
+    id: 'standard',
+    label: 'Standard',
+    start: '/assets/audio/boost/standard/start.m4a',
+    loop: '/assets/audio/boost/standard/loop.m4a',
+    end: '/assets/audio/boost/standard/release.m4a',
+    desc: 'Balanced classic rocket thruster combustion',
+  },
+  {
+    id: 'flamethrower',
+    label: 'Flamethrower',
+    start: '/assets/audio/boost/flamethrower/start.m4a',
+    loop: '/assets/audio/boost/flamethrower/loop.m4a',
+    end: '/assets/audio/boost/flamethrower/end.m4a',
+    desc: 'Smooth pressurized gas hiss with soft sub-bass',
+  },
+  {
+    id: 'plasma',
+    label: 'Plasma',
+    start: '/assets/audio/boost/plasma/start.m4a',
+    loop: '/assets/audio/boost/plasma/loop.m4a',
+    end: '/assets/audio/boost/plasma/end.m4a',
+    desc: 'Clean sci-fi electromagnetic hum + subtle crackle',
+  },
+]);
 
 export type AudioConfigSubscriber = (config: AudioConfigSettings) => void;
 

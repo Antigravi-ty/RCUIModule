@@ -1,15 +1,5 @@
 import type React from 'react';
-import {
-  SURFACE_CALIBRATION_OVERRIDES,
-  UI_APPROVAL_LEDGER,
-  buildAlphaBravoRootCauseRecommendations,
-  evaluateSurfaceTriageStatus,
-  getSurfaceApprovalRecord,
-  getSurfaceCalibrationOverride,
-  getSurfaceVariantApprovalUnit,
-  resolveCalibratedDefaultConfig,
-  resolveCalibratedSurfaceSizing,
-} from './surfaceCalibration';
+
 import type {
   DiscoveredSurfaceEntry,
   RootCauseClusterRecommendation,
@@ -32,43 +22,9 @@ import type {
   UiApprovalLedger,
 } from './surfaceMetaTypes';
 
-export {
-  SURFACE_CALIBRATION_OVERRIDES,
-  UI_APPROVAL_LEDGER,
-  buildAlphaBravoRootCauseRecommendations,
-  evaluateSurfaceTriageStatus,
-  getSurfaceApprovalRecord,
-  getSurfaceCalibrationOverride,
-  getSurfaceVariantApprovalUnit,
-  resolveCalibratedDefaultConfig,
-  resolveCalibratedSurfaceSizing,
-  type DiscoveredSurfaceEntry,
-  type RootCauseClusterRecommendation,
-  type StandardSurfaceProps,
-  type SurfaceApprovalRecord,
-  type SurfaceApprovalStatus,
-  type SurfaceCalibrationLedger,
-  type SurfaceCalibrationOverride,
-  type SurfaceDriftState,
-  type SurfaceLayerKind,
-  type SurfaceMenuGroup,
-  type SurfaceMeta,
-  type SurfaceSizingMode,
-  type SurfaceSizingSpec,
-  type SurfaceTriageBucket,
-  type SurfaceTriageStatus,
-  type SurfaceVariantApprovalUnit,
-  type SurfaceVariantMeta,
-  type SurfaceVariantTriageStatus,
-  type UiApprovalLedger,
-};
+export type { DiscoveredSurfaceEntry, RootCauseClusterRecommendation, StandardSurfaceProps, SurfaceApprovalRecord, SurfaceApprovalStatus, SurfaceCalibrationLedger, SurfaceCalibrationOverride, SurfaceDriftState, SurfaceLayerKind, SurfaceMenuGroup, SurfaceMeta, SurfaceSizingMode, SurfaceSizingSpec, SurfaceTriageBucket, SurfaceTriageStatus, SurfaceVariantApprovalUnit, SurfaceVariantMeta, SurfaceVariantTriageStatus, UiApprovalLedger };
 
-import {
-  collectDiscoveredEntries,
-  getDiscoveredFloatingSurfaces,
-  getDiscoveredFloatingSurfacesByMenuGroup,
-  type GlobSurfaceModule,
-} from './floatingSurfaceRegistry';
+import { collectDiscoveredEntries, getDiscoveredFloatingSurfaces, type GlobSurfaceModule } from './floatingSurfaceRegistry';
 
 type ImportMetaGlobFn = <T = unknown>(
   pattern: string,
@@ -93,10 +49,7 @@ const recipeSurfaceModules: Record<string, GlobSurfaceModule> =
 const DISCOVERED_RECIPE_SURFACES: DiscoveredSurfaceEntry[] =
   collectDiscoveredEntries(recipeSurfaceModules);
 
-export {
-  getDiscoveredFloatingSurfaces,
-  getDiscoveredFloatingSurfacesByMenuGroup,
-};
+
 
 /**
  * Returns all menu layer recipe surfaces that declare co-located `export const SURFACE_META`.

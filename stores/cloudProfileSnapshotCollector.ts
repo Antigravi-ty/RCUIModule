@@ -14,7 +14,8 @@ import {
   unflattenConfigPrefix,
 } from '../config/cloudProfileMergePipeline';
 import { type ProfileFlatSnapshot } from '../config/cloudProfileSyncTypes';
-import { ALLOWED_CLOCK_PACING_PRIORITIES, type ClockPacingPriority } from '../config/clockPacingConfig';
+import { ALLOWED_CLOCK_PACING_PRIORITIES } from '../config/clockPacingPresets';
+import { type ClockPacingPriority } from '../config/clockPacingConfig';
 import { loadStoredBotsLoadoutConfig } from '../config/botsLoadoutConfig';
 import { loadInputBindings } from '../config/inputBindings';
 import { spatialAttenuationProfiles } from '../config/spatialAttenuationProfiles';

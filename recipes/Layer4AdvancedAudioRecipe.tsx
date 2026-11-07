@@ -1,13 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  audioConfig,
-  ADVANCED_AUDIO_CATEGORIES,
-  ADVANCED_AUDIO_DETAIL_CATALOG,
-  exportAudioSettingsJson,
-  resetAllAudioDetailVolumes,
-  previewAudioDetailItem,
-  stopAudioDetailPreview,
-} from '../config/audioConfig';
+import { audioConfig, exportAudioSettingsJson, resetAllAudioDetailVolumes, previewAudioDetailItem, stopAudioDetailPreview } from '../config/audioConfig';
+import { ADVANCED_AUDIO_CATEGORIES, ADVANCED_AUDIO_DETAIL_CATALOG } from '../config/audioDetailCatalog';
 import { Card } from '../layout/Card';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';

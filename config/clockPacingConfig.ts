@@ -12,33 +12,9 @@ import {
   clampNumberOrDefault,
   stringOrDefault,
 } from './storageHelpers';
-import {
-  ALLOWED_CLOCK_PACING_MODES,
-  ALLOWED_CLOCK_PACING_PRIORITIES,
-  ALLOWED_RATE_STEP_MODES,
-  CLOCK_PACING_PRIORITY_PRESETS,
-  DEFAULT_CLOCK_PACING_CONFIG,
-  DEFAULT_CLOCK_PACING_PARAMS,
-  type ClockPacingMode,
-  type ClockPacingParams,
-  type ClockPacingPriority,
-  type ClockPacingPriorityDescriptor,
-  type ClockRateStepMode,
-} from './clockPacingPresets';
+import { ALLOWED_CLOCK_PACING_MODES, ALLOWED_CLOCK_PACING_PRIORITIES, ALLOWED_RATE_STEP_MODES, CLOCK_PACING_PRIORITY_PRESETS, DEFAULT_CLOCK_PACING_PARAMS, type ClockPacingMode, type ClockPacingParams, type ClockPacingPriority, type ClockPacingPriorityDescriptor, type ClockRateStepMode } from './clockPacingPresets';
 
-export {
-  ALLOWED_CLOCK_PACING_MODES,
-  ALLOWED_CLOCK_PACING_PRIORITIES,
-  ALLOWED_RATE_STEP_MODES,
-  CLOCK_PACING_PRIORITY_PRESETS,
-  DEFAULT_CLOCK_PACING_CONFIG,
-  DEFAULT_CLOCK_PACING_PARAMS,
-  type ClockPacingMode,
-  type ClockPacingParams,
-  type ClockPacingPriority,
-  type ClockPacingPriorityDescriptor,
-  type ClockRateStepMode,
-};
+export type { ClockPacingMode, ClockPacingParams, ClockPacingPriority, ClockPacingPriorityDescriptor, ClockRateStepMode };
 
 export function sanitizeClockPacingParams(
   raw: unknown,

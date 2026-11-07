@@ -5,13 +5,8 @@ import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { TunerColorRow } from '../../../compounds/TunerControls';
 import { SkyboxAuxLayersCard } from './SkyboxAuxLayersCard';
 import { SkyboxLowerHemisphereSection } from './SkyboxLowerHemisphereSection';
-import {
-  DEFAULT_SKYBOX_CONFIG,
-  HEMISPHERE_SKYBOX_PRESETS,
-  FULL_SPHERE_SKYBOX_PRESETS,
-  getPresetsByCategory,
-  resolveSkyboxPreset,
-} from '../../../config/skyboxConfig';
+import { DEFAULT_SKYBOX_CONFIG, resolveSkyboxPreset } from '../../../config/skyboxConfig';
+import { HEMISPHERE_SKYBOX_PRESETS, FULL_SPHERE_SKYBOX_PRESETS, getPresetsByCategory } from '../../../config/skyboxPresets';
 
 export interface SkyboxTabProps {
   skyboxConfig: typeof DEFAULT_SKYBOX_CONFIG;

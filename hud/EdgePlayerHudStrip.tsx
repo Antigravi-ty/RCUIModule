@@ -12,7 +12,7 @@ import {
   type EdgePlayerSlotCardHandle,
 } from './EdgePlayerSlotCard';
 
-export { EdgePlayerSlotCard, type EdgePlayerSlotCardHandle };
+export type { EdgePlayerSlotCardHandle };
 
 export interface EdgePlayerHudStripHandle {
   /** Imperatively push roster state to DOM refs with zero React re-renders */

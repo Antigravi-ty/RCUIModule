@@ -3,35 +3,31 @@
  * Pure skybox defaults, normalization, and runtime configuration state.
  */
 
-import {
-  SKYBOX_TEXTURE_PATH,
-  CORONA_TEXTURE_PATH,
-  SUN_GLOW_TEXTURE_PATH,
-  CLOUD_OVERLAY_TEXTURE_PATH,
-  OOB_NORMAL_TEXTURE_PATH,
-  type SkyboxCategory,
-  type SkyboxPresetSpec,
-  HEMISPHERE_SKYBOX_PRESETS,
-  FULL_SPHERE_SKYBOX_PRESETS,
-  SKYBOX_PRESETS,
-  getPresetsByCategory,
-  resolveSkyboxPreset,
-} from './skyboxPresets';
+import { type SkyboxCategory, type SkyboxPresetSpec, HEMISPHERE_SKYBOX_PRESETS, FULL_SPHERE_SKYBOX_PRESETS, SKYBOX_PRESETS } from './skyboxPresets';
 
-export {
-  SKYBOX_TEXTURE_PATH,
-  CORONA_TEXTURE_PATH,
-  SUN_GLOW_TEXTURE_PATH,
-  CLOUD_OVERLAY_TEXTURE_PATH,
-  OOB_NORMAL_TEXTURE_PATH,
-  type SkyboxCategory,
-  type SkyboxPresetSpec,
-  HEMISPHERE_SKYBOX_PRESETS,
-  FULL_SPHERE_SKYBOX_PRESETS,
-  SKYBOX_PRESETS,
-  getPresetsByCategory,
-  resolveSkyboxPreset,
-};
+export type { SkyboxCategory, SkyboxPresetSpec };
+
+export const SKYBOX_TEXTURE_PATH = '/assets/arena/Woods_Sky_D.webp';
+export const CORONA_TEXTURE_PATH = '/assets/arena/skyboxes/Corona_Sun01_D.webp';
+export const SUN_GLOW_TEXTURE_PATH = '/assets/arena/skyboxes/Sun_Glow_001_D.webp';
+export const CLOUD_OVERLAY_TEXTURE_PATH = '/assets/arena/skyboxes/ForbiddenTemple_Beach_Clouds_01.webp';
+export const OOB_NORMAL_TEXTURE_PATH = '/assets/arena/skyboxes/OOB_PlanetClouds_N3.png';
+
+export function resolveSkyboxPreset(
+  presetIdOrPath: string | null | undefined,
+  preferredCategory: SkyboxCategory | string | null = null
+): SkyboxPresetSpec {
+  if (presetIdOrPath) {
+    const found = SKYBOX_PRESETS.find(
+      (p) => p.id === presetIdOrPath || p.path === presetIdOrPath
+    );
+    if (found) return found;
+  }
+  if (preferredCategory === 'full-sphere') {
+    return FULL_SPHERE_SKYBOX_PRESETS[3] || FULL_SPHERE_SKYBOX_PRESETS[0];
+  }
+  return HEMISPHERE_SKYBOX_PRESETS[4] || HEMISPHERE_SKYBOX_PRESETS[0];
+}
 
 export interface SkyboxConfig {
   enabled: boolean;

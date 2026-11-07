@@ -1,20 +1,7 @@
 import React from 'react';
 import { Tag } from 'lucide-react';
-import {
-  computeAdaptiveNameTagWidthPx,
-  formatNameTagDisplayText,
-  resolveCarSlotCode,
-  resolveNameTagCornerRadiusPx,
-  resolveNameTagFontFamilyCss,
-  resolveNameTagVariantParams,
-  shouldUseSingleCharIndicator,
-} from '../../../config/nameTagConfig';
-import {
-  hexToRgba,
-  resolveActiveBoostFillColor,
-  resolveAerialClimbInwardFillFraction,
-  resolveUnfilledBaseHexColor,
-} from '../../../config/nameTagOffscreenRenderer';
+import { computeAdaptiveNameTagWidthPx, formatNameTagDisplayText, resolveCarSlotCode, resolveNameTagCornerRadiusPx, resolveNameTagFontFamilyCss, resolveNameTagVariantParams, shouldUseSingleCharIndicator } from '../../../config/nameTagConfig';
+import { hexToRgba, resolveActiveBoostFillColor, resolveAerialClimbInwardFillFraction, resolveUnfilledBaseHexColor } from '../../../config/nameTagColorAndRoiMath';
 import { useNameTagTunerStore } from '../../../stores/nameTagTunerStore';
 import { useAppStore } from '../../../stores/appStore';
 

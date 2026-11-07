@@ -4,25 +4,11 @@
  * batch .zip import/export, and single-shot .json codec.
  */
 
-import {
-  type StaticTrainingPackMetadata,
-  type StaticTrainingShotItem,
-  type StaticTrainingPackFormatType,
-  type RCSPackArchive,
-  generateUUID,
-  createDefaultShotItem,
-  cloneShotItem,
-  cloneVariationConfig,
-} from './staticTrainingPackTypes';
-import {
-  isTemBinaryPayload,
-  convertTemFileToRCSPackBundle,
-  parseTemBinaryBytes,
-  convertParsedTemToRCSPackBundle,
-  derivePackTagsAndMetadata,
-  type ParsedTemTrainingPack,
-  type TemToRCSPackConversionResult,
-} from './temTrainingPackParser';
+import { type StaticTrainingPackMetadata, type StaticTrainingShotItem, type StaticTrainingPackFormatType, type RCSPackArchive, generateUUID, createDefaultShotItem, cloneShotItem } from './staticTrainingPackTypes';
+import { cloneVariationConfig } from './staticTrainingVariationTypes';
+import { isTemBinaryPayload, parseTemBinaryBytes } from './temPropertyDeserializer';
+import { convertParsedTemToRCSPackBundle, type ParsedTemTrainingPack, type TemToRCSPackConversionResult } from './temTrainingPackParser';
+import { derivePackTagsAndMetadata } from './temMetadataAndTagClassifier';
 import { resolveRecommendedVariationForPack } from './staticTrainingVariationTypes';
 import {
   isZipBinaryPayload,
@@ -31,18 +17,7 @@ import {
   type ZipEntryFile,
 } from './staticTrainingZipCodec';
 
-export {
-  isTemBinaryPayload,
-  convertTemFileToRCSPackBundle,
-  parseTemBinaryBytes,
-  convertParsedTemToRCSPackBundle,
-  isZipBinaryPayload,
-  extractFilesFromZipBytes,
-  createZipArchiveBytes,
-  type ParsedTemTrainingPack,
-  type TemToRCSPackConversionResult,
-  type ZipEntryFile,
-};
+export type { ParsedTemTrainingPack, TemToRCSPackConversionResult, ZipEntryFile };
 
 export interface ExportRCSPackOptions {
   /**

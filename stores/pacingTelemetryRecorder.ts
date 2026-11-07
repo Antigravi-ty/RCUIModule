@@ -1,16 +1,6 @@
-import {
-  MAX_TELEMETRY_TICKS,
-  TELEMETRY_EVENT_FLAGS,
-  evaluatePacingControllerStep,
-  simulatePacingOnRecordedTrace,
-} from '../config/pacingControllerEvaluator';
+import { TELEMETRY_EVENT_FLAGS } from '../config/pacingControllerEvaluator';
 
-export {
-  MAX_TELEMETRY_TICKS,
-  TELEMETRY_EVENT_FLAGS,
-  evaluatePacingControllerStep,
-  simulatePacingOnRecordedTrace,
-};
+export const MAX_TELEMETRY_TICKS = 144000; // 20 minutes @ 120Hz
 
 export interface PacingTelemetryTickSample {
   nowMs?: number;

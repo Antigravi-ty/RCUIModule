@@ -3,39 +3,158 @@
  * 2D Canvas renderer for Offscreen Car Indicators (circle + directional arrow + boost fill + aerial alert).
  */
 
-import {
-  DEFAULT_NAME_TAG_CONFIG,
-  type NameTagConfig,
-} from './nameTagConfig';
-import {
-  clampRayToRoiBoundary2D,
-  computeOffscreenRoiBounds2D,
-  drawAerialClimbInwardRing2D,
-  drawAerialClimbOuterGlow2D,
-  hexToRgba,
-  mixHexColors,
-  parseHexRgb,
-  resolveActiveBoostFillColor,
-  resolveAerialClimbInwardFillFraction,
-  resolveCarColorPalette,
-  resolveUnfilledBaseHexColor,
-  type NameTagRoiBounds2D,
-} from './nameTagColorAndRoiMath';
+import { DEFAULT_NAME_TAG_CONFIG, DEFAULT_NAME_TAG_DISTINCT_COLORS, type NameTagConfig } from './nameTagConfig';
+import { drawAerialClimbInwardRing2D, drawAerialClimbOuterGlow2D, hexToRgba, mixHexColors, resolveActiveBoostFillColor, resolveUnfilledBaseHexColor } from './nameTagColorAndRoiMath';
 
-export {
-  clampRayToRoiBoundary2D,
-  computeOffscreenRoiBounds2D,
-  drawAerialClimbInwardRing2D,
-  drawAerialClimbOuterGlow2D,
-  hexToRgba,
-  mixHexColors,
-  parseHexRgb,
-  resolveActiveBoostFillColor,
-  resolveAerialClimbInwardFillFraction,
-  resolveCarColorPalette,
-  resolveUnfilledBaseHexColor,
-  type NameTagRoiBounds2D,
-};
+export interface NameTagRoiBounds2D {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+export function resolveCarColorPalette(
+  carIndex: number,
+  team: 0 | 1,
+  config: Pick<
+    NameTagConfig,
+    | 'circleColorMode'
+    | 'distinctCarColors'
+    | 'blueBgColor'
+    | 'blueBorderColor'
+    | 'blueTextColor'
+    | 'orangeBgColor'
+    | 'orangeBorderColor'
+    | 'orangeTextColor'
+    | 'boostBorderColorMode'
+    | 'blueBoostBorderColor'
+    | 'orangeBoostBorderColor'
+    | 'sharedBoostBorderColor'
+  >,
+  liveCarColorHex?: string | null
+): {
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+  boostColor: string;
+} {
+  const isOrange = team === 1;
+  if (config.circleColorMode === 'car-primary') {
+    const slotIdx = Math.max(0, Math.floor(Number(carIndex) || 0)) % 6;
+    const configuredPrimary =
+      (Array.isArray(config.distinctCarColors) && config.distinctCarColors[slotIdx]) ||
+      DEFAULT_NAME_TAG_DISTINCT_COLORS[slotIdx] ||
+      (isOrange ? '#ea580c' : '#0284c7');
+    const primaryHex =
+      typeof liveCarColorHex === 'string' && liveCarColorHex.startsWith('#')
+        ? liveCarColorHex
+        : configuredPrimary;
+    return {
+      bgColor: mixHexColors(primaryHex, '#050b16', 0.36),
+      borderColor: mixHexColors(primaryHex, '#ffffff', 0.42),
+      textColor: '#ffffff',
+      boostColor: '#ffffff',
+    };
+  }
+  const boostColor =
+    config.boostBorderColorMode === 'team'
+      ? isOrange
+        ? config.orangeBoostBorderColor
+        : config.blueBoostBorderColor
+      : config.sharedBoostBorderColor;
+  return {
+    bgColor: isOrange ? config.orangeBgColor : config.blueBgColor,
+    borderColor: isOrange ? config.orangeBorderColor : config.blueBorderColor,
+    textColor: isOrange ? config.orangeTextColor : config.blueTextColor,
+    boostColor,
+  };
+}
+
+export function computeOffscreenRoiBounds2D(
+  viewportWidthPx: number,
+  viewportHeightPx: number,
+  config: Pick<
+    NameTagConfig,
+    | 'offscreenCircleRadiusPx'
+    | 'offscreenArrowLengthPx'
+    | 'offscreenArrowGapPx'
+    | 'offscreenRoiAvoidHud'
+    | 'offscreenRoiTopInsetPx'
+    | 'offscreenRoiBottomInsetPx'
+    | 'offscreenRoiSideInsetPx'
+  >
+): NameTagRoiBounds2D {
+  const circleRadius = Math.max(
+    1,
+    Number(config.offscreenCircleRadiusPx) || DEFAULT_NAME_TAG_CONFIG.offscreenCircleRadiusPx
+  );
+  const arrowLen = Math.max(
+    0,
+    Number(config.offscreenArrowLengthPx) ?? DEFAULT_NAME_TAG_CONFIG.offscreenArrowLengthPx
+  );
+  const arrowGap = Math.max(
+    0,
+    Number(config.offscreenArrowGapPx) ?? DEFAULT_NAME_TAG_CONFIG.offscreenArrowGapPx
+  );
+  const extentPad = circleRadius + arrowGap + arrowLen + 8;
+
+  const avoidHud = config.offscreenRoiAvoidHud ?? DEFAULT_NAME_TAG_CONFIG.offscreenRoiAvoidHud;
+  const topInset = avoidHud
+    ? Math.max(extentPad, Number(config.offscreenRoiTopInsetPx) || 72)
+    : extentPad;
+  const bottomInset = avoidHud
+    ? Math.max(extentPad, Number(config.offscreenRoiBottomInsetPx) || 88)
+    : extentPad;
+  const sideInset = avoidHud
+    ? Math.max(extentPad, Number(config.offscreenRoiSideInsetPx) || 56)
+    : extentPad;
+
+  const halfW = viewportWidthPx * 0.5;
+  const halfH = viewportHeightPx * 0.5;
+
+  return {
+    minX: Math.min(halfW - 10, sideInset),
+    maxX: Math.max(halfW + 10, viewportWidthPx - sideInset),
+    minY: Math.min(halfH - 10, topInset),
+    maxY: Math.max(halfH + 10, viewportHeightPx - bottomInset),
+  };
+}
+
+export function clampRayToRoiBoundary2D(
+  dirX: number,
+  dirY: number,
+  viewportWidthPx: number,
+  viewportHeightPx: number,
+  roi: NameTagRoiBounds2D
+): { centerX: number; centerY: number; angleRad: number } {
+  const screenCx = viewportWidthPx * 0.5;
+  const screenCy = viewportHeightPx * 0.5;
+  const len = Math.hypot(dirX, dirY);
+  const nx = len > 1e-5 ? dirX / len : 0;
+  const ny = len > 1e-5 ? dirY / len : -1;
+
+  const maxDx = nx >= 0 ? roi.maxX - screenCx : roi.minX - screenCx;
+  const maxDy = ny >= 0 ? roi.maxY - screenCy : roi.minY - screenCy;
+
+  const tx = Math.abs(nx) > 1e-5 ? Math.abs(maxDx / nx) : Number.POSITIVE_INFINITY;
+  const ty = Math.abs(ny) > 1e-5 ? Math.abs(maxDy / ny) : Number.POSITIVE_INFINITY;
+  const t = Math.min(tx, ty);
+
+  const clampedX = Math.max(
+    roi.minX,
+    Math.min(roi.maxX, screenCx + nx * (Number.isFinite(t) ? t : 0))
+  );
+  const clampedY = Math.max(
+    roi.minY,
+    Math.min(roi.maxY, screenCy + ny * (Number.isFinite(t) ? t : 0))
+  );
+
+  return {
+    centerX: clampedX,
+    centerY: clampedY,
+    angleRad: Math.atan2(ny, nx),
+  };
+}
 
 export interface NameTagOffscreenIndicatorCard2D {
   carIndex: number;

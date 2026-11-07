@@ -1,4 +1,4 @@
-import { RANK_ORDER_MAP } from '../../config/temTrainingPackParser';
+import { RANK_ORDER_MAP } from '../../config/temMetadataAndTagClassifier';
 import type { StaticTrainingVariationConfig } from '../../config/staticTrainingVariationTypes';
 
 export type StaticPackDownCounterOption = 1 | 2 | 3;

@@ -315,4 +315,4 @@ export function rollRandomBotLoadout(
   return result;
 }
 
-export { CAR_VISUAL_CATALOG };
+

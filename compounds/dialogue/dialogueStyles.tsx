@@ -73,7 +73,7 @@ export const buildCombinedShadow = (
   return parts.length > 0 ? parts.join(', ') : 'none';
 };
 
-export const getLucideIconComponent = (name: string): React.ComponentType<any> | null =>
+export const getLucideIconComponent = (name: string) =>
   lookupLucideIcon(name);
 
 /**

@@ -3,12 +3,6 @@
  * Pure skybox texture paths, preset definitions, and lookup helpers.
  */
 
-export const SKYBOX_TEXTURE_PATH = '/assets/arena/Woods_Sky_D.webp';
-export const CORONA_TEXTURE_PATH = '/assets/arena/skyboxes/Corona_Sun01_D.webp';
-export const SUN_GLOW_TEXTURE_PATH = '/assets/arena/skyboxes/Sun_Glow_001_D.webp';
-export const CLOUD_OVERLAY_TEXTURE_PATH = '/assets/arena/skyboxes/ForbiddenTemple_Beach_Clouds_01.webp';
-export const OOB_NORMAL_TEXTURE_PATH = '/assets/arena/skyboxes/OOB_PlanetClouds_N3.png';
-
 export type SkyboxCategory = 'hemisphere' | 'full-sphere';
 
 export interface SkyboxPresetSpec {

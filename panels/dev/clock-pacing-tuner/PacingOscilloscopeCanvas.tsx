@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  globalPacingTelemetryRecorder,
-  TELEMETRY_EVENT_FLAGS,
-} from '../../../stores/pacingTelemetryRecorder';
+import { globalPacingTelemetryRecorder } from '../../../stores/pacingTelemetryRecorder';
+import { TELEMETRY_EVENT_FLAGS } from '../../../config/pacingControllerEvaluator';
 
 export interface PacingOscilloscopeCanvasProps {
   height?: number;

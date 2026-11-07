@@ -1,8 +1,5 @@
-import {
-  loadInputBindings,
-  saveInputBindings,
-  createDefaultInputBindings,
-} from '../../config/inputBindings';
+import { loadInputBindings, saveInputBindings } from '../../config/inputBindings';
+import { createDefaultInputBindings } from '../../config/inputBindingValidators';
 import { useAppStore } from '../../stores/appStore';
 import {
   type ActionBinding,

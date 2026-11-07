@@ -24,10 +24,8 @@ import {
   GoalReplayHudOverlay,
   useGoalReplayAndTakeoverHudState,
 } from './GoalReplayHudOverlay';
-import {
-  TakeoverVignetteOverlay,
-  DEFAULT_TAKEOVER_VIGNETTE,
-} from './TakeoverVignetteOverlay';
+import { TakeoverVignetteOverlay } from './TakeoverVignetteOverlay';
+import { DEFAULT_TAKEOVER_VIGNETTE } from './takeoverVignetteMath';
 import { CenterUpperInfoHUD } from './CenterUpperInfoHUD';
 import {
   DEFAULT_RL_COUNTDOWN_GLOW,

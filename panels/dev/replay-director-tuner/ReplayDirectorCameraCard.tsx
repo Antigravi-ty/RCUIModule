@@ -5,10 +5,8 @@ import {
   DEFAULT_REPLAY_DIRECTOR_CONFIG,
   DEFAULT_REPLAY_DIRECTOR_FOV_DEG,
 } from '../../../config/replayDirectorConfig';
-import {
-  useReplayDirectorStore,
-  updateReplayDirectorConfig,
-} from '../../../stores/replayDirectorStore';
+import { useReplayDirectorStore } from '../../../stores/replayDirectorStore';
+import { updateReplayDirectorConfig } from '../../../config/replayDirectorConfig';
 import { useAppStore } from '../../../stores/appStore';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { UnderlineTabs } from '../../../primitives/UnderlineTabs';

@@ -1,40 +1,11 @@
 import { createStaticTrainingShotActions } from './staticTrainingShotActions';
 import { create } from 'zustand';
-import {
-  type StaticTrainingPackMetadata,
-  type StaticTrainingShotItem,
-  type EditSubMode,
-  type ExportRCSPackOptions,
-  type StaticTrainingPackStorageScope,
-  EDIT_SUB_MODES_ORDER,
-  MAX_SHOTS_PER_PACK,
-  cloneShotItem,
-  areShotItemsEqual,
-  areShotListsEqual,
-} from './staticTrainingPackStorage';
-import {
-  type StaticTrainingVariationConfig,
-  type StaticTrainingQuickVariationToggles,
-  type KevpertPresetKey,
-  DEFAULT_QUICK_VARIATION_TOGGLES,
-  KEVPERT_LATEST_PRESETS,
-  cloneVariationConfig,
-} from '../config/staticTrainingVariationTypes';
+import { type StaticTrainingPackMetadata, type StaticTrainingShotItem, type EditSubMode, type ExportRCSPackOptions, type StaticTrainingPackStorageScope } from './staticTrainingPackStorage';
+import { EDIT_SUB_MODES_ORDER, cloneShotItem } from '../config/staticTrainingPackTypes';
+import { type StaticTrainingVariationConfig, type StaticTrainingQuickVariationToggles, type KevpertPresetKey, DEFAULT_QUICK_VARIATION_TOGGLES, cloneVariationConfig } from '../config/staticTrainingVariationTypes';
+import { KEVPERT_LATEST_PRESETS } from '../config/kevpertVariationPresets';
 
-export {
-  type StaticTrainingPackMetadata,
-  type StaticTrainingShotItem,
-  type EditSubMode,
-  type ExportRCSPackOptions,
-  type StaticTrainingPackStorageScope,
-  type StaticTrainingVariationConfig,
-  type StaticTrainingQuickVariationToggles,
-  type KevpertPresetKey,
-  MAX_SHOTS_PER_PACK,
-  KEVPERT_LATEST_PRESETS,
-  areShotItemsEqual,
-  areShotListsEqual,
-};
+export type { StaticTrainingPackMetadata, StaticTrainingShotItem, EditSubMode, ExportRCSPackOptions, StaticTrainingPackStorageScope, StaticTrainingVariationConfig, StaticTrainingQuickVariationToggles, KevpertPresetKey };
 export type StaticPackDownCounterOption = 1 | 2 | 3;
 export type StaticPackSessionMode = 'browse' | 'play' | 'edit';
 

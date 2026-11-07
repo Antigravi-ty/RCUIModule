@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Router, Wifi, Copy, Check, ShieldAlert, Orbit, Ghost } from 'lucide-react';
-import {
-  useNetworkDiagnosticsData,
-  networkDiagnosticsStore,
-  CONNECTION_HEALTH_STATES,
-  ZERO_G_ANCHOR_MODES,
-} from '../../stores/networkDiagnosticsStore';
+import { useNetworkDiagnosticsData, networkDiagnosticsStore, ZERO_G_ANCHOR_MODES } from '../../stores/networkDiagnosticsStore';
+import { CONNECTION_HEALTH_STATES } from '../../config/networkStressConfig';
 import { NetworkStressControlsSection } from './network-stress-injection/NetworkStressControlsSection';
 import { useAppStore } from '../../stores/appStore';
 import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';

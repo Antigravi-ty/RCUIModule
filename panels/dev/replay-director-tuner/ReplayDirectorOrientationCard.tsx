@@ -6,15 +6,8 @@ import {
   Crosshair,
   Upload,
 } from 'lucide-react';
-import {
-  getReplayDirectorConfig,
-  getActiveReplayTimelineController,
-  subscribeActiveReplayTimelineController,
-  subscribeReplayDirectorConfig,
-  exportActiveReplayDirectorDiagnosticPattern,
-  importActiveReplayDirectorDiagnosticPattern,
-  buildActiveReplayDirectorWindowDiagnostic,
-} from '../../../stores/replayDirectorStore';
+import { getReplayDirectorConfig, subscribeReplayDirectorConfig } from '../../../config/replayDirectorConfig';
+import { getActiveReplayTimelineController, subscribeActiveReplayTimelineController, exportActiveReplayDirectorDiagnosticPattern, importActiveReplayDirectorDiagnosticPattern, buildActiveReplayDirectorWindowDiagnostic } from '../../../stores/replayDirectorStore';
 import { useHudStore } from '../../../stores/hudStore';
 import { useAppStore } from '../../../stores/appStore';
 import { useSubsystemIsolationLabStore } from '../../../stores/subsystemIsolationLabStore';

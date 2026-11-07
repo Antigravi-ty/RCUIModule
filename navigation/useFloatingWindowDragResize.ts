@@ -1,33 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { FloatingWindowItem } from '../stores/floatingStore';
 import { PRESET_WINDOWS } from '../stores/devFloatingPresets';
-import {
-  CONTAINER_MARGIN,
-  DEFAULT_MIN_WINDOW_HEIGHT,
-  DEFAULT_MIN_WINDOW_WIDTH,
-  MIN_NON_RESIZABLE_HEIGHT,
-  OUTER_RADIUS,
-  computeInitialDesiredAnchor,
-  resolveAutoFittedDesiredAnchor,
-  resolveClampedWindowGeometry,
-  resolveResizedWindowAnchor,
-  resolveSyncedDesiredSize,
-  resolveWindowSizeLimits,
-  type ContainerBounds,
-  type WindowRect,
-} from './floatingWindowGeometry';
+import { CONTAINER_MARGIN, DEFAULT_MIN_WINDOW_WIDTH, computeInitialDesiredAnchor, resolveAutoFittedDesiredAnchor, resolveClampedWindowGeometry, resolveResizedWindowAnchor, resolveSyncedDesiredSize, resolveWindowSizeLimits, type ContainerBounds, type WindowRect } from './floatingWindowGeometry';
 import {
   measureIntrinsicMinWidth,
   SCROLLBAR_GUTTER_RESERVE_PX,
 } from './floatingWindowMinWidth';
 
-export {
-  CONTAINER_MARGIN,
-  DEFAULT_MIN_WINDOW_HEIGHT,
-  DEFAULT_MIN_WINDOW_WIDTH,
-  MIN_NON_RESIZABLE_HEIGHT,
-  OUTER_RADIUS,
-};
+
 
 export interface UseFloatingWindowDragResizeOptions {
   item: FloatingWindowItem;

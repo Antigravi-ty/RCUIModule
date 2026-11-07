@@ -2,32 +2,47 @@ import React, { useState, useRef } from 'react';
 import { Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
-import { KeycapBadge } from '../primitives/KeycapBadge';
 import { CollapsibleNumberedRailList } from '../compounds/CollapsibleNumberedRailList';
-import {
-  INITIAL_TRAINING_SHOTS,
-  MAX_SHOTS_PER_PACK,
-  createDefaultShotItem,
-  formatShotSubtitle,
-  type EditSubMode,
-  type StaticTrainingShotItem,
-} from './static-training/staticTrainingTypes';
-import {
-  cloneShotWithUpdate,
-  duplicateShotInArray,
-  openStaticTrainingEditorHelpDialogue,
-  openStaticTrainingExitConfirmDialogue,
-} from './static-training/staticTrainingEditorDialogues';
+import { dialogue } from '../compounds/dialogue/dialogueStore';
+import { INITIAL_TRAINING_SHOTS, MAX_SHOTS_PER_PACK, createDefaultShotItem, formatShotSubtitle, type EditSubMode, type StaticTrainingShotItem } from './static-training/staticTrainingTypes';
+import { StaticTrainingCollapseDrawerBtn, cloneShotWithUpdate, duplicateShotInArray, openStaticTrainingEditorHelpDialogue } from './static-training/staticTrainingEditorDialogues';
 import { StaticTrainingShotInspectorView } from './static-training/StaticTrainingShotInspectorView';
-import {
-  useStaticTrainingPackStore,
-  getActiveEditItemVariable,
-  mutateActiveEditItemVariable,
-} from '../stores/staticTrainingPackStore';
+import { useStaticTrainingPackStore, getActiveEditItemVariable, mutateActiveEditItemVariable } from '../stores/staticTrainingPackStore';
 import { useStoreSnapshotOverride } from '../stores/storeSnapshotScope';
 import type { SurfaceMeta, StandardSurfaceProps } from '../manifest/surfaceMetaTypes';
 
-export { openStaticTrainingExitConfirmDialogue };
+export function openStaticTrainingExitConfirmDialogue(
+  onConfirm?: (action: 'save' | 'ignore') => void | Promise<void>
+): void {
+  dialogue.show({
+    id: 'static-training-exit-edit-confirm',
+    title: 'EXIT EDIT MODE',
+    tone: 'warning',
+    icon: 'triangle-alert',
+    maxWidth: 500,
+    content: 'Do you want to save your previous edits before exiting Edit Mode?',
+    buttons: [
+      {
+        label: 'Save',
+        variant: 'primary',
+        onClick: async () => {
+          await onConfirm?.('save');
+        },
+      },
+      {
+        label: 'Ignore',
+        variant: 'danger',
+        onClick: async () => {
+          await onConfirm?.('ignore');
+        },
+      },
+      {
+        label: 'Cancel',
+        variant: 'outline',
+      },
+    ],
+  });
+}
 
 export const SURFACE_META: SurfaceMeta = {
   id: 'recipe:StaticTrainingShotInspectorDrawer',
@@ -68,17 +83,6 @@ export interface StaticTrainingShotInspectorDrawerProps extends StandardSurfaceP
   stateOverride?: StaticTrainingShotInspectorStateOverride;
 }
 
-/**
- * [L6 Recipe] StaticTrainingShotInspectorDrawer
- *
- * Specialized inner content drawer for Static Training Pack Edit Mode (Six Echo / 6E):
- * - Header Left: Clean title (no Back button — clicking the active `#number` in the rail toggles between Full Shot List and Detail Rail).
- * - Header Right: Only `Collapse [TAB]` button (`Exit Edit Mode` lives inside the decoupled `[ESC]` Main Menu).
- * - Body: `CollapsibleNumberedRailList` — clicking a shot compresses the list from right to left into a narrow `#01..#99` rail,
- *   morphs the 4 top action buttons into compact `+` (black) and `?` (orange) icons, and slides in `StaticTrainingShotInspectorView`.
- *   Clicking the currently active `#number` in the rail expands back to the full Shot List.
- * - Footer: Displays live hover descriptions from any option or control in the list or detail inspector.
- */
 export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspectorDrawerProps> = ({
   isLight = false,
   transparent = true,
@@ -327,7 +331,6 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
       transparent={transparent}
       className="w-full h-full"
     >
-      {/* Slim Top Header: Left = Clean title (no Back button), Right = Collapse [TAB] */}
       <PanelHeader
         title={
           isInspecting
@@ -339,36 +342,11 @@ export const StaticTrainingShotInspectorDrawer: React.FC<StaticTrainingShotInspe
         titleClassName="!text-xs !font-bold tracking-wider"
         rightElement={
           onCollapseDrawer ? (
-            <button
-              type="button"
-              data-header-button="collapse-tab"
-              onClick={onCollapseDrawer}
-              onMouseEnter={() =>
-                setHoveredDesc(
-                  'Press TAB or click to collapse Edge Inspector Drawer to the side pill without darkening the 3D arena.'
-                )
-              }
-              onMouseLeave={() => setHoveredDesc(null)}
-              className={`h-7 flex items-center gap-1.5 pl-2.5 pr-[3px] py-[3px] rounded-lg border text-xs transition-colors cursor-pointer select-none active:scale-95 ${
-                isLight
-                  ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800 shadow-2xs'
-                  : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200 shadow-2xs'
-              }`}
-            >
-              <span
-                className={`text-[11px] font-sans font-medium leading-none ${
-                  isLight ? 'text-neutral-700' : 'text-neutral-300'
-                }`}
-              >
-                Collapse
-              </span>
-              <KeycapBadge
-                shortcut="TAB"
-                size="sm"
-                isLight={isLight}
-                className="h-5 !min-h-[20px] !py-0 !px-1.5 !rounded-[5px]"
-              />
-            </button>
+            <StaticTrainingCollapseDrawerBtn
+              isLight={isLight}
+              onCollapseDrawer={onCollapseDrawer}
+              onHoverDesc={setHoveredDesc}
+            />
           ) : undefined
         }
       />

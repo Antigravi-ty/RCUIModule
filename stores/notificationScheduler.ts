@@ -58,10 +58,11 @@ export const triggerFatalSchemaError = (message: string): never => {
  * Strict Runtime Validation for Notification Push Options.
  * Prohibits silent fallbacks. Throws and dispatches fatal schema error event on violation.
  */
-export const validateNotificationOptions = (config: any): void => {
-  if (!config || typeof config !== 'object') {
+export const validateNotificationOptions = (rawConfig: unknown): void => {
+  if (!rawConfig || typeof rawConfig !== 'object') {
     triggerFatalSchemaError('Notification configuration must be a valid non-null object.');
   }
+  const config = rawConfig as Record<string, any>;
 
   if ('durationMs' in config) {
     triggerFatalSchemaError(

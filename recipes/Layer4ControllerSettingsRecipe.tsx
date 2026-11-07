@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Gamepad2 } from 'lucide-react';
-import {
-  loadInputBindings,
-  saveInputBindings,
-  resetAxisBindings,
-  getSelectedController,
-  setSelectedController,
-  getConnectedGamepads,
-} from '../config/inputBindings';
+import { loadInputBindings, saveInputBindings, getSelectedController, setSelectedController, getConnectedGamepads } from '../config/inputBindings';
+import { resetAxisBindings } from '../config/inputBindingValidators';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { Badge } from '../primitives/Badge';

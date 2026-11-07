@@ -4,11 +4,8 @@ import { UI_RADIUS } from '../tokens/radius';
 import { getSurfaceCalibrationOverride } from '../manifest/surfaceCalibration';
 import { useCloudProfileSyncStore } from '../stores/cloudProfileSyncStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import {
-  resolvePanelHeaderBackBtnGeometry,
-  type PanelSizingConfig,
-  type PanelSizingMode,
-} from '../tokens/menuLayoutTokens';
+import { resolvePanelHeaderBackBtnGeometry, type PanelSizingConfig, type PanelSizingMode } from '../tokens/menuLayoutTokens';
+import { resolvePanelHeaderBtnSurfaceClasses, resolvePanelContainerSizingAndStyle } from './PanelFooter';
 
 export const MorphContainerContext = createContext<boolean>(false);
 export const useInMorphContainer = () => useContext(MorphContainerContext);
@@ -18,19 +15,12 @@ const PanelSizingModeContext = createContext<PanelSizingMode>('fixed');
 export interface PanelHeaderProps {
   title: string;
   onBack?: () => void;
-  /** Keep the Back button permanently mounted in the header but disabled (prevents header height shift between root and detail views) */
   backDisabled?: boolean;
-  /** Custom right-side element. If omitted, the standardized Right Action Button can be rendered via `onRightAction` or `showRightAction`. */
   rightElement?: React.ReactNode;
-  /** Callback when the standardized top-right action button (e.g. Live Preview / Minimize) is clicked */
   onRightAction?: () => void;
-  /** Explicitly show or hide the standardized top-right action button (defaults to true when `onRightAction` is provided) */
   showRightAction?: boolean;
-  /** Custom icon for the standardized top-right action button (defaults to Lucide `<Minimize2 />`) */
   rightActionIcon?: React.ReactNode;
-  /** Hover label for the standardized top-right action button (defaults to `'Live Preview'`) */
   rightActionLabel?: string;
-  /** Optional hover callback so hovering the top-right action button can also update PanelFooter's hoveredDescription */
   onRightActionHoverChange?: (hovered: boolean) => void;
   isLight?: boolean;
   className?: string;
@@ -38,11 +28,6 @@ export interface PanelHeaderProps {
   style?: React.CSSProperties;
 }
 
-/**
- * 3-Stage Compound Panel Header (Layer 2+ Standard Shell)
- * Driven by L0 `useMenuLayoutStore` tokens and pure geometry resolver `resolvePanelHeaderBackBtnGeometry`
- * so tuning in L2/L6 immediately updates all Layer 2–4 recipes and L7 sandboxes with zero coupling.
- */
 export const PanelHeader: React.FC<PanelHeaderProps> = ({
   title,
   onBack,
@@ -102,47 +87,14 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   const rightBorderStructureClass =
     backBtnStyle === 'surface' ? (isFlushDividerMode ? 'border-0 border-l' : 'border') : 'border-0';
 
-  const getBtnSurfaceClasses = (disabled = false) => {
-    const borderColorClass = isLight
-      ? 'border-neutral-200/90 hover:border-neutral-300'
-      : 'border-neutral-800/80 hover:border-neutral-700';
-
-    if (disabled) {
-      if (backBtnIdleTone === 'match-header' || backBtnStyle === 'ghost') {
-        return `${isLight ? 'text-neutral-300' : 'text-neutral-600'} bg-transparent ${borderColorClass} opacity-50 cursor-not-allowed`;
-      }
-      if (backBtnIdleTone === 'muted-gray' || backBtnStyle === 'subtle') {
-        return `${isLight ? 'bg-neutral-200/40 text-neutral-300' : 'bg-neutral-900/50 text-neutral-600'} ${borderColorClass} opacity-50 cursor-not-allowed`;
-      }
-      return `${isLight ? 'bg-white/70 text-neutral-300' : 'bg-neutral-800/50 text-neutral-600'} ${borderColorClass} opacity-50 cursor-not-allowed`;
-    }
-
-    if (backBtnIdleTone === 'match-header') {
-      return isLight
-        ? `bg-transparent hover:bg-neutral-200/80 active:bg-neutral-300/75 ${borderColorClass} text-neutral-500 hover:text-neutral-950 cursor-pointer`
-        : `bg-transparent hover:bg-neutral-800/85 active:bg-neutral-700/80 ${borderColorClass} text-neutral-400 hover:text-white cursor-pointer`;
-    }
-
-    if (backBtnIdleTone === 'muted-gray') {
-      if (isFlushDividerMode) {
-        return isLight
-          ? `bg-neutral-200/50 hover:bg-neutral-200/95 active:bg-neutral-300/80 ${borderColorClass} text-neutral-500 hover:text-neutral-950 cursor-pointer`
-          : `bg-neutral-900/65 hover:bg-neutral-800/90 active:bg-neutral-700/85 ${borderColorClass} text-neutral-400 hover:text-white cursor-pointer`;
-      }
-      return isLight
-        ? 'bg-neutral-200/55 hover:bg-white border-neutral-300/75 hover:border-neutral-300 text-neutral-500 hover:text-neutral-950 shadow-2xs active:scale-95 cursor-pointer'
-        : 'bg-neutral-800/55 hover:bg-neutral-700/90 border-neutral-700/50 hover:border-neutral-600 text-neutral-400 hover:text-white shadow-2xs active:scale-95 cursor-pointer';
-    }
-
-    if (isFlushDividerMode) {
-      return isLight
-        ? `bg-white/90 hover:bg-neutral-200/90 active:bg-neutral-300/80 ${borderColorClass} text-neutral-700 hover:text-neutral-950 cursor-pointer`
-        : `bg-neutral-800/80 hover:bg-neutral-700/90 active:bg-neutral-600/80 ${borderColorClass} text-neutral-200 hover:text-white cursor-pointer`;
-    }
-    return isLight
-      ? 'bg-white hover:bg-neutral-100 border-neutral-300/80 text-neutral-700 hover:text-neutral-950 shadow-2xs active:scale-95 cursor-pointer'
-      : 'bg-neutral-800/85 hover:bg-neutral-700/90 border-neutral-700/60 text-neutral-200 hover:text-white shadow-2xs active:scale-95 cursor-pointer';
-  };
+  const getBtnSurfaceClasses = (disabled = false) =>
+    resolvePanelHeaderBtnSurfaceClasses({
+      isLight,
+      disabled,
+      backBtnIdleTone,
+      backBtnStyle,
+      isFlushDividerMode,
+    });
 
   const minHeaderHeight = btnGeom.height + headerPadY * 2;
   const labelFontSize = Math.max(10, Math.min(13, Math.round(btnGeom.height * 0.36)));
@@ -162,9 +114,9 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
 
   const isRightExpanded = rightHovered && rightBtnExpandOnHover;
 
-  const remoteLogoutSurfaceClasses = isLight
-    ? 'bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border-rose-500/35 hover:border-rose-500/50 text-rose-600 hover:text-rose-700 cursor-pointer'
-    : 'bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border-rose-500/35 hover:border-rose-500/50 text-rose-400 hover:text-rose-300 cursor-pointer';
+  const remoteLogoutSurfaceClasses =
+    'bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border-rose-500/35 hover:border-rose-500/50 cursor-pointer ' +
+    (isLight ? 'text-rose-600 hover:text-rose-700' : 'text-rose-400 hover:text-rose-300');
 
   const effectiveRightLabel = isRemoteSessionActive
     ? `Exit #${activeRemoteSession?.alias || activeRemoteSession?.userId}`
@@ -385,22 +337,13 @@ export interface PanelContainerProps {
   isLight?: boolean;
   className?: string;
   transparent?: boolean;
-  /** Optional surface ID to automatically merge `surfaceCalibrationOverrides.json` sizing overrides */
   surfaceId?: string;
-  /** Unified per-panel sizing contract ('auto' clamping vs 'fixed' height) */
   sizing?: PanelSizingConfig;
-  /** Legacy / explicit outer container height (in px or CSS string) when rendered standalone outside MorphContainer */
   height?: number | string;
-  /** Legacy / explicit outer container max-width (in px or CSS string) */
   width?: number | string;
   style?: React.CSSProperties;
 }
 
-/**
- * PanelContainer
- * Shell wrapping the 3-stage panel hierarchy (Header -> Content -> Footer).
- * Supports dual sizing modes ('auto' content-fit with min/max clamping vs 'fixed' targetHeight with viewport fallback).
- */
 export const PanelContainer: React.FC<PanelContainerProps> = ({
   children,
   isLight = false,
@@ -420,64 +363,22 @@ export const PanelContainer: React.FC<PanelContainerProps> = ({
       getSurfaceCalibrationOverride(`recipe:${surfaceId}`)
     : undefined;
 
-  const effectiveSizing: PanelSizingConfig | undefined =
-    sizing && calibratedOverride
-      ? {
-          ...sizing,
-          ...(calibratedOverride.width !== undefined
-            ? { width: calibratedOverride.width }
-            : {}),
-          ...(typeof calibratedOverride.height === 'number'
-            ? { targetHeight: calibratedOverride.height }
-            : {}),
-          ...(calibratedOverride.minHeight !== undefined
-            ? { minHeight: calibratedOverride.minHeight }
-            : {}),
-          ...(calibratedOverride.maxHeight !== undefined
-            ? { maxHeight: calibratedOverride.maxHeight }
-            : {}),
-          ...(calibratedOverride.mode !== undefined
-            ? { mode: calibratedOverride.mode === 'adaptive' ? 'auto' : 'fixed' }
-            : {}),
-        }
-      : sizing;
-
-  const effectiveClassName = isTransparent
-    ? className
-        .replace(/shadow-\[[^\]]+\]/g, '')
-        .replace(/\bshadow(-\w+)?\b/g, '')
-        .trim()
-    : className;
-
-  const effectiveWidth =
-    effectiveSizing?.width ?? calibratedOverride?.width ?? width;
-  const resolvedMaxWidth =
-    !inMorphContainer && effectiveWidth !== undefined
-      ? typeof effectiveWidth === 'number'
-        ? `${effectiveWidth}px`
-        : effectiveWidth
-      : undefined;
-
-  const sizingMode: PanelSizingMode = effectiveSizing?.mode ?? 'fixed';
-
-  // Compute standalone container height constraints when outside MorphContainer
-  const standaloneSizingStyle: React.CSSProperties = {};
-  if (!inMorphContainer) {
-    if (effectiveSizing) {
-      if (effectiveSizing.mode === 'auto') {
-        standaloneSizingStyle.height = 'auto';
-        standaloneSizingStyle.minHeight = `min(${effectiveSizing.minHeight}px, var(--avail-h, 100vh))`;
-        standaloneSizingStyle.maxHeight = `min(${effectiveSizing.maxHeight}px, var(--avail-h, 100vh))`;
-      } else {
-        standaloneSizingStyle.height = `min(${effectiveSizing.targetHeight}px, var(--avail-h, 100vh))`;
-        standaloneSizingStyle.maxHeight = `min(${effectiveSizing.targetHeight}px, var(--avail-h, 100vh))`;
-      }
-    } else if (height !== undefined) {
-      const hStr = typeof height === 'number' ? `${height}px` : height;
-      standaloneSizingStyle.height = `min(${hStr}, var(--avail-h, 100vh))`;
-      standaloneSizingStyle.maxHeight = `min(${hStr}, var(--avail-h, 100vh))`;
-    }
-  }
+  const {
+    effectiveSizing,
+    effectiveClassName,
+    resolvedMaxWidth,
+    sizingMode,
+    standaloneSizingStyle,
+  } = resolvePanelContainerSizingAndStyle({
+    inMorphContainer,
+    isTransparent,
+    className,
+    surfaceId,
+    sizing,
+    height,
+    width,
+    calibratedOverride,
+  });
 
   const panelOuterRadius = useMenuLayoutStore((s) => s.panelOuterRadius);
 

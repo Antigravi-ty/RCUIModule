@@ -1,42 +1,21 @@
 import { useSyncExternalStore } from 'react';
-import {
-  NetworkStressSimulator,
-  NETWORK_STRESS_PRESETS,
-  NETWORK_STRESS_PRESET_LIST,
-  CONNECTION_HEALTH_STATES,
-  ZERO_G_ANCHOR_MODES,
-} from '../config/networkStressConfig';
-
-export {
-  NETWORK_STRESS_PRESETS,
-  NETWORK_STRESS_PRESET_LIST,
-  CONNECTION_HEALTH_STATES,
-  ZERO_G_ANCHOR_MODES,
-};
-
-import {
-  DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT,
-  createInitialNetworkDiagnosticsState,
-  type DiagnosticProbeTelemetry,
-  type DiagnosticBufferSnapshot,
-  type DiagnosticDumpExportOptions,
-  type NetworkDiagnosticsBridge,
-  type NetworkMetrics,
-  type NetworkDiagnosticsState,
-} from './networkDiagnosticsTypes';
-
-export {
-  DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT,
-  createInitialNetworkDiagnosticsState,
-  type DiagnosticProbeTelemetry,
-  type DiagnosticBufferSnapshot,
-  type DiagnosticDumpExportOptions,
-  type NetworkDiagnosticsBridge,
-  type NetworkMetrics,
-  type NetworkDiagnosticsState,
-};
-
+import { NetworkStressSimulator, NETWORK_STRESS_PRESETS, CONNECTION_HEALTH_STATES } from '../config/networkStressConfig';
+import { DEFAULT_DIAGNOSTIC_BUFFER_SNAPSHOT, createInitialNetworkDiagnosticsState, type DiagnosticProbeTelemetry, type DiagnosticBufferSnapshot, type DiagnosticDumpExportOptions, type NetworkDiagnosticsBridge, type NetworkMetrics, type NetworkDiagnosticsState } from './networkDiagnosticsTypes';
 import { computeReconcilerMetricsPatch } from './networkDiagnosticsReconcilerSync';
+
+export const ZERO_G_ANCHOR_MODES = Object.freeze({
+  Z_HOVER: 'z_hover',
+  ZERO_G_LOCKED: 'zero_g_locked',
+});
+
+export type {
+  DiagnosticProbeTelemetry,
+  DiagnosticBufferSnapshot,
+  DiagnosticDumpExportOptions,
+  NetworkDiagnosticsBridge,
+  NetworkMetrics,
+  NetworkDiagnosticsState,
+};
 
 const stressSim = new NetworkStressSimulator();
 

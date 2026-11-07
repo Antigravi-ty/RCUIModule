@@ -1,43 +1,44 @@
 import React from 'react';
 import { dialogue } from '../../compounds/dialogue/dialogueStore';
+import { KeycapBadge } from '../../primitives/KeycapBadge';
 import type { StaticTrainingShotItem } from './staticTrainingTypes';
 
-/**
- * Standalone helper to spawn the Exit Edit Mode confirmation dialogue (`Save / Ignore / Cancel`).
- * Triggered from the independent Main Menu (`ESC`) rather than coupling an Exit button into the Edge Inspector header.
- */
-export function openStaticTrainingExitConfirmDialogue(
-  onConfirm?: (action: 'save' | 'ignore') => void | Promise<void>
-): void {
-  dialogue.show({
-    id: 'static-training-exit-edit-confirm',
-    title: 'EXIT EDIT MODE',
-    tone: 'warning',
-    icon: 'triangle-alert',
-    maxWidth: 500,
-    content: 'Do you want to save your previous edits before exiting Edit Mode?',
-    buttons: [
-      {
-        label: 'Save',
-        variant: 'primary',
-        onClick: async () => {
-          await onConfirm?.('save');
-        },
-      },
-      {
-        label: 'Ignore',
-        variant: 'danger',
-        onClick: async () => {
-          await onConfirm?.('ignore');
-        },
-      },
-      {
-        label: 'Cancel',
-        variant: 'outline',
-      },
-    ],
-  });
-}
+export const StaticTrainingCollapseDrawerBtn: React.FC<{
+  isLight: boolean;
+  onCollapseDrawer: () => void;
+  onHoverDesc: (desc: string | null) => void;
+}> = ({ isLight, onCollapseDrawer, onHoverDesc }) => (
+  <button
+    type="button"
+    data-header-button="collapse-tab"
+    onClick={onCollapseDrawer}
+    onMouseEnter={() =>
+      onHoverDesc(
+        'Press TAB or click to collapse Edge Inspector Drawer to the side pill without darkening the 3D arena.'
+      )
+    }
+    onMouseLeave={() => onHoverDesc(null)}
+    className={`h-7 flex items-center gap-1.5 pl-2.5 pr-[3px] py-[3px] rounded-lg border text-xs transition-colors cursor-pointer select-none active:scale-95 ${
+      isLight
+        ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800 shadow-2xs'
+        : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200 shadow-2xs'
+    }`}
+  >
+    <span
+      className={`text-[11px] font-sans font-medium leading-none ${
+        isLight ? 'text-neutral-700' : 'text-neutral-300'
+      }`}
+    >
+      Collapse
+    </span>
+    <KeycapBadge
+      shortcut="TAB"
+      size="sm"
+      isLight={isLight}
+      className="h-5 !min-h-[20px] !py-0 !px-1.5 !rounded-[5px]"
+    />
+  </button>
+);
 
 /**
  * Spawns the Static Training Pack 3D Editor keyboard & camera shortcuts help modal.

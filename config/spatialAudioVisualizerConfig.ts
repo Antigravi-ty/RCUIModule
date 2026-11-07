@@ -5,12 +5,8 @@
  */
 
 import { solveCubicBezier } from './spatialAudioConfig';
-import {
-  AUDIO_ATTENUATION_CATEGORIES,
-  getSpatialAttenuationProfile,
-  type AudioAttenuationCategory,
-  type SpatialAttenuationProfile,
-} from './spatialAttenuationProfiles';
+import { AUDIO_ATTENUATION_CATEGORIES } from './spatialAttenuationPresets';
+import { getSpatialAttenuationProfile, type AudioAttenuationCategory, type SpatialAttenuationProfile } from './spatialAttenuationProfiles';
 import {
   booleanOrDefault,
   clampNumberOrDefault,

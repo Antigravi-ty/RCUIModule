@@ -26,13 +26,8 @@ import {
   getSkyboxConfig,
   updateSkyboxConfig,
 } from '../../config/skyboxConfig';
-import {
-  DEFAULT_BALL_VISUAL_CONFIG,
-  getBallVisualConfig,
-  updateBallVisualConfig,
-  subscribeBallVisualConfig,
-  type BallVisualConfig,
-} from '../../stores/ballVisualStore';
+import { DEFAULT_BALL_VISUAL_CONFIG, getBallVisualConfig, updateBallVisualConfig, subscribeBallVisualConfig } from '../../config/ballVisualConfig';
+import { type BallVisualConfig } from '../../stores/ballVisualStore';
 import type { StandardSurfaceProps, SurfaceMeta } from '../../manifest/surfaceMetaTypes';
 import { WallPulseTab } from './atmosphere-fx/WallPulseTab';
 import { ShadowsLightTab } from './atmosphere-fx/ShadowsLightTab';

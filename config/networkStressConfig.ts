@@ -10,11 +10,6 @@ export const CONNECTION_HEALTH_STATES = Object.freeze({
 export type ConnectionHealthState =
   (typeof CONNECTION_HEALTH_STATES)[keyof typeof CONNECTION_HEALTH_STATES];
 
-export const ZERO_G_ANCHOR_MODES = Object.freeze({
-  Z_HOVER: 'z_hover',
-  ZERO_G_LOCKED: 'zero_g_locked',
-});
-
 export const DIAGNOSTIC_VEHICLE_PROFILES = Object.freeze({
   BOOST_PULSE: 'boost_pulse',
   QE_ROLL: 'qe_roll',

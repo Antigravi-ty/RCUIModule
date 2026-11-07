@@ -9,42 +9,9 @@ import {
   type CenterUpperTypographyConfig,
   type CenterUpperTimingConfig,
 } from './centerUpperInfoDefaults';
-import {
-  type TakeoverCountdownStep,
-  type TakeoverSignal,
-  type TakeoverTeamSide,
-  type TakeoverLayoutConfig,
-  type TakeoverTopLabelStyleConfig,
-  type TakeoverGlowConfig,
-  type TakeoverHudPayload,
-  type TakeoverCountdownHandle,
-  type TakeoverCountdownHUDProps,
-  DEFAULT_TAKEOVER_TOP_LABEL_STYLE,
-  DEFAULT_TAKEOVER_GLOW,
-  DEFAULT_TAKEOVER_TYPOGRAPHY,
-  DEFAULT_TAKEOVER_TIMING,
-  DEFAULT_TAKEOVER_LAYOUT,
-  resolveTakeoverTopLabelVisuals,
-  applyTakeoverDomStyles,
-} from './takeoverCountdownDefaults';
+import { type TakeoverCountdownStep, type TakeoverSignal, type TakeoverTeamSide, type TakeoverLayoutConfig, type TakeoverTopLabelStyleConfig, type TakeoverGlowConfig, type TakeoverHudPayload, type TakeoverCountdownHandle, type TakeoverCountdownHUDProps, DEFAULT_TAKEOVER_TOP_LABEL_STYLE, DEFAULT_TAKEOVER_GLOW, DEFAULT_TAKEOVER_TYPOGRAPHY, DEFAULT_TAKEOVER_TIMING, applyTakeoverDomStyles } from './takeoverCountdownDefaults';
 
-export {
-  type TakeoverCountdownStep,
-  type TakeoverSignal,
-  type TakeoverTeamSide,
-  type TakeoverLayoutConfig,
-  type TakeoverTopLabelStyleConfig,
-  type TakeoverGlowConfig,
-  type TakeoverHudPayload,
-  type TakeoverCountdownHandle,
-  type TakeoverCountdownHUDProps,
-  DEFAULT_TAKEOVER_TOP_LABEL_STYLE,
-  DEFAULT_TAKEOVER_GLOW,
-  DEFAULT_TAKEOVER_TYPOGRAPHY,
-  DEFAULT_TAKEOVER_TIMING,
-  DEFAULT_TAKEOVER_LAYOUT,
-  resolveTakeoverTopLabelVisuals,
-};
+export type { TakeoverCountdownStep, TakeoverSignal, TakeoverTeamSide, TakeoverLayoutConfig, TakeoverTopLabelStyleConfig, TakeoverGlowConfig, TakeoverHudPayload, TakeoverCountdownHandle, TakeoverCountdownHUDProps };
 
 /**
  * TakeoverCountdownHUD

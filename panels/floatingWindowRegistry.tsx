@@ -1,12 +1,9 @@
 import React from 'react';
-import {
-  getDiscoveredFloatingSurfaces,
-  type StandardSurfaceProps,
-  type SurfaceMeta,
-} from '../manifest/surfaceRegistry';
-import { StoreSnapshotScope } from '../stores/storeSnapshotScope';
+import { getDiscoveredFloatingSurfaces } from '../manifest/floatingSurfaceRegistry';
+import { type StandardSurfaceProps, type SurfaceMeta } from '../manifest/surfaceRegistry';
 
-export { getDiscoveredFloatingSurfaces, StoreSnapshotScope };
+
+
 
 export type FloatingWindowHeaderTab = string;
 

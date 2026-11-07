@@ -18,69 +18,6 @@ export interface HitboxPresetSpec {
   up: number;
 }
 
-export const HITBOX_PRESETS: Readonly<Record<string, Readonly<HitboxPresetSpec>>> = Object.freeze({
-  'hitbox-octane': Object.freeze({
-    index: 0,
-    id: 'hitbox-octane',
-    name: 'Octane',
-    length: 120.507,
-    width: 86.6994,
-    height: 38.6591,
-    forward: 13.8757,
-    up: 20.755
-  }),
-  'hitbox-dominus': Object.freeze({
-    index: 1,
-    id: 'hitbox-dominus',
-    name: 'Dominus',
-    length: 130.427,
-    width: 85.7799,
-    height: 33.80,
-    forward: 9.00,
-    up: 15.75
-  }),
-  'hitbox-plank': Object.freeze({
-    index: 2,
-    id: 'hitbox-plank',
-    name: 'Batmobile (Plank)',
-    length: 131.32,
-    width: 87.1704,
-    height: 31.8944,
-    forward: 9.00857,
-    up: 12.0942
-  }),
-  'hitbox-breakout': Object.freeze({
-    index: 3,
-    id: 'hitbox-breakout',
-    name: 'Breakout',
-    length: 133.992,
-    width: 83.021,
-    height: 32.80,
-    forward: 12.50,
-    up: 11.75
-  }),
-  'hitbox-hybrid': Object.freeze({
-    index: 4,
-    id: 'hitbox-hybrid',
-    name: 'Hybrid',
-    length: 129.519,
-    width: 84.6879,
-    height: 36.6591,
-    forward: 13.8757,
-    up: 20.755
-  }),
-  'hitbox-merc': Object.freeze({
-    index: 5,
-    id: 'hitbox-merc',
-    name: 'Merc',
-    length: 123.22,
-    width: 79.2103,
-    height: 44.1591,
-    forward: 11.3757,
-    up: 21.505
-  })
-});
-
 /**
  * Ordered by C++ WASM hitbox index (0..5):
  * 0: Octane, 1: Dominus, 2: Plank, 3: Breakout, 4: Hybrid, 5: Merc
@@ -153,7 +90,6 @@ export function normalizeVisualId(visualId: unknown): string {
   const raw = String(visualId).toLowerCase().trim();
   if (CAR_VISUAL_IDS.includes(raw)) return raw;
   if (SHORT_VISUAL_ALIAS_MAP[raw]) return SHORT_VISUAL_ALIAS_MAP[raw];
-  console.warn(`[vehicleConstants:Fallback] Unknown visualId "${visualId}", falling back to "fennec".`);
   return 'fennec';
 }
 
@@ -162,7 +98,6 @@ export function encodeVisualIdIndex(visualId: unknown): number {
     if (visualId >= 0 && visualId < CAR_VISUAL_IDS.length) {
       return visualId;
     }
-    console.warn(`[vehicleConstants:Fallback] Out-of-range visualIndex ${visualId}, falling back to 0 ("fennec").`);
     return 0;
   }
   const canonical = normalizeVisualId(visualId);
@@ -181,7 +116,6 @@ export function decodeVisualIdIndex(index: unknown): string {
   if (Number.isInteger(idx) && idx >= 0 && idx < CAR_VISUAL_IDS.length) {
     return CAR_VISUAL_IDS[idx];
   }
-  console.warn(`[vehicleConstants:Fallback] Out-of-range visualIndex ${index} during decode, falling back to "fennec".`);
   return 'fennec';
 }
 
@@ -193,7 +127,6 @@ export function resolveHitboxIndex(hitboxOrVisual: unknown): number {
     if (hitboxOrVisual >= 0 && hitboxOrVisual <= 6) {
       return hitboxOrVisual;
     }
-    console.warn(`[vehicleConstants:Fallback] Out-of-range hitboxIndex ${hitboxOrVisual}, falling back to 0 (Octane).`);
     return 0;
   }
   if (!hitboxOrVisual) return 0;
@@ -205,7 +138,6 @@ export function resolveHitboxIndex(hitboxOrVisual: unknown): number {
   if (lower.includes('hybrid') || lower.includes('insidio')) return 4;
   if (lower.includes('merc')) return 5;
   if (lower.includes('octane') || lower.includes('fennec') || lower.includes('ryza') || lower === 'default') return 0;
-  console.warn(`[vehicleConstants:Fallback] Unknown hitbox type "${hitboxOrVisual}", falling back to 0 (Octane).`);
   return 0;
 }
 
@@ -214,7 +146,6 @@ export function decodeHitboxIndex(hitboxIndex: unknown): string {
   if (Number.isInteger(idx) && idx >= 0 && idx < HITBOX_INDEX_TO_ID.length) {
     return HITBOX_INDEX_TO_ID[idx];
   }
-  console.warn(`[vehicleConstants:Fallback] Out-of-range hitboxIndex ${hitboxIndex} during decode, falling back to "hitbox-octane".`);
   return 'hitbox-octane';
 }
 
@@ -223,10 +154,6 @@ export const encodeHitboxIdIndex = resolveHitboxIndex;
 export function resolveVehicleHitboxId(hitboxOrVisual: unknown): string {
   return decodeHitboxIndex(resolveHitboxIndex(hitboxOrVisual));
 }
-
-export const VEHICLE_HITBOX_ARCHETYPES = Object.freeze(
-  HITBOX_INDEX_TO_ID.map((id) => HITBOX_PRESETS[id])
-);
 
 export function encodeRoleIndex(role: unknown): number {
   if (role === 'spectator' || role === PLAYER_ROLE_CODES.SPECTATOR || role === 1) {

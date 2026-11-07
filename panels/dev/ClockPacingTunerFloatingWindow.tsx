@@ -9,16 +9,11 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import {
-  CLOCK_PACING_PRIORITY_PRESETS,
-  type ClockPacingPriority,
-  type ClockPacingParams,
-} from '../../config/clockPacingConfig';
+import { CLOCK_PACING_PRIORITY_PRESETS } from '../../config/clockPacingPresets';
+import { type ClockPacingPriority, type ClockPacingParams } from '../../config/clockPacingConfig';
 import { PacingOscilloscopeCanvas } from './clock-pacing-tuner/PacingOscilloscopeCanvas';
-import {
-  globalPacingTelemetryRecorder,
-  simulatePacingOnRecordedTrace,
-} from '../../stores/pacingTelemetryRecorder';
+import { globalPacingTelemetryRecorder } from '../../stores/pacingTelemetryRecorder';
+import { simulatePacingOnRecordedTrace } from '../../config/pacingControllerEvaluator';
 import {
   downloadNetworkTelemetryZip,
   parseImportedTelemetryFile,

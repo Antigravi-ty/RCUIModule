@@ -1,19 +1,7 @@
 import React from 'react';
 import { Link2, Unlink2, RotateCcw } from 'lucide-react';
-import {
-  DEFAULT_Q1_LAYER_COLORS,
-  DEFAULT_Q1_LAYER_OPACITIES,
-  GROUND_Q1_MANIFEST,
-  hexToOklch,
-  mixDecalOverBaseOklab,
-  oklchToHex,
-  setHexOklchLightness,
-  type DriftwoodsGroundConfig,
-  type DriftwoodsGroundTextureMode,
-  type DriftwoodsQ1LayerColors,
-  type DriftwoodsQ1LayerId,
-  type DriftwoodsQ1LayerOpacities,
-} from '../../../config/driftwoodsConfig';
+import { DEFAULT_Q1_LAYER_COLORS, DEFAULT_Q1_LAYER_OPACITIES, GROUND_Q1_MANIFEST, mixDecalOverBaseOklab, oklchToHex, setHexOklchLightness, type DriftwoodsGroundConfig, type DriftwoodsGroundTextureMode, type DriftwoodsQ1LayerColors, type DriftwoodsQ1LayerId, type DriftwoodsQ1LayerOpacities } from '../../../config/driftwoodsConfig';
+import { hexToOklch } from '../../../config/driftwoodsColorMath';
 import {
   TunerRow,
   TunerColorRow,

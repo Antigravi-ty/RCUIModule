@@ -52,12 +52,9 @@ export interface StaticTrainingCarConfig {
   unlimitedBoost: boolean;
 }
 
-import {
-  type StaticTrainingVariationConfig,
-  cloneVariationConfig,
-} from './staticTrainingVariationTypes';
+import type { StaticTrainingVariationConfig } from './staticTrainingVariationTypes';
 
-export { type StaticTrainingVariationConfig, cloneVariationConfig };
+export type { StaticTrainingVariationConfig };
 
 export interface StaticTrainingEditorFreeCam {
   /** World position in RocketSim / Unreal UU: [x, y, z] */

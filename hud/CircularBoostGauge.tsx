@@ -1,15 +1,7 @@
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { BoostTransientListener } from '../stores/hudTransientTypes';
 import { useBoostGaugeStore } from '../stores/boostGaugeStore';
-import {
-  type BoostColorScheme,
-  type BoostColorMode,
-  type BoostThemeOverride,
-  type BoostSegmentColorInfo,
-  getBoostSegmentColor,
-  STEP_12_TIER_PRESETS,
-  resolveBoostVisualColors,
-} from './boostGaugeConfig';
+import { type BoostColorScheme, type BoostColorMode, type BoostThemeOverride, type BoostSegmentColorInfo, getBoostSegmentColor, resolveBoostVisualColors } from './boostGaugeConfig';
 
 export type {
   BoostColorScheme,
@@ -17,7 +9,7 @@ export type {
   BoostThemeOverride,
   BoostSegmentColorInfo,
 };
-export { getBoostSegmentColor, STEP_12_TIER_PRESETS };
+
 
 export interface CircularBoostGaugeHandle {
   /** Imperatively update boost amount (0~100) and unlimited state at 120Hz+ with zero React re-renders */

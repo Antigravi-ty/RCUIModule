@@ -3,26 +3,161 @@
  * Pure configuration data, descriptors, and runtime tuning state for vehicles, wheels, anodized paint, and boost particles.
  */
 
-import {
-  GLOBAL_VEHICLE_SURFACE_MATERIALS,
-  GLOBAL_VEHICLE_LAMPS_CONFIG,
-  FENNEC_DESCRIPTOR,
-  INSIDIO_DESCRIPTOR,
-  RYZA_DESCRIPTOR,
-  type VehicleSurfaceMaterialSlot,
-  type VehicleLampsConfig,
-  type VehicleDescriptor,
-} from './vehicleDescriptorsConfig';
+import { INSIDIO_DESCRIPTOR, RYZA_DESCRIPTOR, normalizeWheelModifierPatch, type VehicleSurfaceMaterialSlot, type VehicleLampsConfig, type VehicleDescriptor, type WheelModifierConfig } from './vehicleDescriptorsConfig';
 
-export {
-  GLOBAL_VEHICLE_SURFACE_MATERIALS,
-  GLOBAL_VEHICLE_LAMPS_CONFIG,
-  FENNEC_DESCRIPTOR,
-  INSIDIO_DESCRIPTOR,
-  RYZA_DESCRIPTOR,
-  type VehicleSurfaceMaterialSlot,
-  type VehicleLampsConfig,
-  type VehicleDescriptor,
+export type {
+  VehicleSurfaceMaterialSlot,
+  VehicleLampsConfig,
+  VehicleDescriptor,
+  WheelModifierConfig,
+};
+
+export const GLOBAL_VEHICLE_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {
+  body: {
+    slotName: 'body',
+    label: 'Body Shell (body)',
+    mode: 'standard',
+    color: '#bc8100',
+    pearlColor: '#ff2a60',
+    metalness: 0.7,
+    roughness: 0.45,
+    clearcoat: 1,
+    clearcoatRoughness: 0.11,
+    sheen: 0.7,
+    envMapIntensity: 1,
+    toonSteps: 4,
+    toonShadowMin: 0.11,
+    toonHighlightMax: 1,
+    toonSmooth: false,
+    glbDefaultMetalness: 0,
+    glbDefaultRoughness: 0.5,
+  },
+  window: {
+    slotName: 'window',
+    label: 'Windshield & Glass (window)',
+    mode: 'standard',
+    color: '#727272',
+    pearlColor: '#243044',
+    metalness: 1,
+    roughness: 0,
+    clearcoat: 0.9,
+    clearcoatRoughness: 0.1,
+    sheen: 0.2,
+    envMapIntensity: 1,
+    toonSteps: 3,
+    toonShadowMin: 0.08,
+    toonHighlightMax: 0.85,
+    toonSmooth: false,
+    glbDefaultMetalness: 0,
+    glbDefaultRoughness: 0.5,
+  },
+  border: {
+    slotName: 'border',
+    label: 'Trim & Chassis Skirt (border)',
+    mode: 'standard',
+    color: '#262626',
+    pearlColor: '#282e38',
+    metalness: 0,
+    roughness: 0.7,
+    clearcoat: 0,
+    clearcoatRoughness: 0.3,
+    sheen: 0.1,
+    envMapIntensity: 0.9,
+    toonSteps: 3,
+    toonShadowMin: 0.1,
+    toonHighlightMax: 0.8,
+    toonSmooth: false,
+    glbDefaultMetalness: 0,
+    glbDefaultRoughness: 0.5,
+  },
+  metal: {
+    slotName: 'metal',
+    label: 'Rear Exhaust & Trim Metal (metal)',
+    mode: 'standard',
+    color: '#c9c9c9',
+    pearlColor: '#6d788a',
+    metalness: 1,
+    roughness: 0.5,
+    clearcoat: 0.3,
+    clearcoatRoughness: 0.2,
+    sheen: 0.1,
+    envMapIntensity: 1,
+    toonSteps: 4,
+    toonShadowMin: 0.15,
+    toonHighlightMax: 1,
+    toonSmooth: false,
+    glbDefaultMetalness: 0,
+    glbDefaultRoughness: 0.5,
+  },
+};
+
+export const GLOBAL_VEHICLE_LAMPS_CONFIG: VehicleLampsConfig = {
+  frontColor: '#ffefd5',
+  frontIntensity: 1,
+  frontToneMapped: false,
+  tailIdleColor: '#5c0a0a',
+  tailIdleIntensity: 0.85,
+  brakeColor: '#ff2200',
+  brakeIntensity: 1,
+  brakeMinSpeed: 30,
+  brakeDecelEpsilon: 0.25,
+  tailToneMapped: false,
+};
+
+export const FENNEC_DESCRIPTOR: VehicleDescriptor = {
+  id: 'fennec',
+  name: 'Fennec',
+  hitboxPreset: 'hitbox-octane',
+  modelUrl: '/assets/vehicles/Fennec.glb',
+  rawBounds: {
+    min: [-62.3896, -13.8302, -35.7124],
+    max: [78.0319, 33.4147, 35.7124],
+    length: 140.4215,
+    height: 47.2449,
+    width: 71.4248,
+    center: [7.8212, 9.7923, 0],
+    roofTopY: 33.4147,
+    rlHitboxTopY: 38.8346,
+  },
+  alignment: {
+    scale: 1.0,
+    scaleX: 1.0,
+    scaleY: 1.0,
+    scaleZ: 1.0,
+    centerOffset: [-0.1, 1.6, 0],
+  },
+  wheelNames: [
+    'wheel-front-right',
+    'wheel-front-left',
+    'wheel-rear-right',
+    'wheel-rear-left',
+  ],
+  wheelAnchors: [
+    [48.55, 26.9291, 12.5],
+    [48.55, -26.9291, 12.5],
+    [-46.95, 28.1003, 14.0],
+    [-46.95, -28.1003, 14.0],
+  ],
+  suspensionHeights: [12.5, 12.5, 14.0, 14.0],
+  boostOutlets: [
+    [-62.4896, 10.6, 8.9],
+    [-62.4896, 10.6, -8.9],
+  ],
+  boostNozzleParams: {
+    x: -62.3896,
+    y: 9.0,
+    z: 8.9,
+    followChassisOffset: true,
+  },
+  surfaceMaterials: GLOBAL_VEHICLE_SURFACE_MATERIALS,
+  lampsConfig: GLOBAL_VEHICLE_LAMPS_CONFIG,
+  colors: {
+    default: {
+      primary: 12353792,
+      realisticPrimary: 12353792,
+      pearl: 16722528,
+    },
+  },
 };
 
 export const DEFAULT_TEAM_COLORS = [3111891, 13857839];
@@ -150,36 +285,6 @@ export function setVehicleTunerRuntimeFlags(
   return getVehicleTunerRuntimeFlags();
 }
 
-export interface WheelModifierConfig {
-  mode: string;
-  width: number;
-  radiusScale: number;
-  verticalOffsetY: number;
-  outerRimRadiusPct: number;
-  outerColor: string;
-  innerColor: string;
-  treadColor: string;
-  treadShaderMode: string;
-  treadRoughness: number;
-  treadMetalness: number;
-  sideShaderMode: string;
-  sideRoughness: number;
-  sideMetalness: number;
-  innerRimFollowsOuter: boolean;
-  innerRimRadiusPct: number;
-  innerRimColor: string;
-  innerRimShaderMode: string;
-  innerRimRoughness: number;
-  innerRimMetalness: number;
-  innerShaderMode: string;
-  innerRoughness: number;
-  innerMetalness: number;
-  shaderMode: string;
-  roughness: number;
-  metalness: number;
-  [key: string]: unknown;
-}
-
 export const DEFAULT_WHEEL_MODIFIER_CONFIG: WheelModifierConfig = {
   mode: 'solid-cylinder',
   width: 6,
@@ -221,87 +326,10 @@ export function setWheelModifierConfig(
   patch: Partial<WheelModifierConfig> = {}
 ): WheelModifierConfig {
   if (!patch) return getWheelModifierConfig();
-  const nextConfig: Partial<WheelModifierConfig> = { ...patch };
-
-  if (nextConfig.innerColor !== undefined && nextConfig.treadColor === undefined) {
-    nextConfig.treadColor = nextConfig.innerColor;
-  } else if (nextConfig.treadColor !== undefined && nextConfig.innerColor === undefined) {
-    nextConfig.innerColor = nextConfig.treadColor;
-  }
-
-  if (nextConfig.innerShaderMode !== undefined && nextConfig.treadShaderMode === undefined) {
-    nextConfig.treadShaderMode = nextConfig.innerShaderMode;
-  } else if (nextConfig.treadShaderMode !== undefined && nextConfig.innerShaderMode === undefined) {
-    nextConfig.innerShaderMode = nextConfig.treadShaderMode;
-  }
-
-  if (nextConfig.innerRoughness !== undefined && nextConfig.treadRoughness === undefined) {
-    nextConfig.treadRoughness = nextConfig.innerRoughness;
-  } else if (nextConfig.treadRoughness !== undefined && nextConfig.innerRoughness === undefined) {
-    nextConfig.innerRoughness = nextConfig.treadRoughness;
-  }
-
-  if (nextConfig.innerMetalness !== undefined && nextConfig.treadMetalness === undefined) {
-    nextConfig.treadMetalness = nextConfig.innerMetalness;
-  } else if (nextConfig.treadMetalness !== undefined && nextConfig.innerMetalness === undefined) {
-    nextConfig.innerMetalness = nextConfig.treadMetalness;
-  }
-
-  const hasExplicitSurfaceFields =
-    nextConfig.treadShaderMode !== undefined ||
-    nextConfig.sideShaderMode !== undefined ||
-    nextConfig.innerShaderMode !== undefined ||
-    nextConfig.innerRimShaderMode !== undefined ||
-    nextConfig.treadRoughness !== undefined ||
-    nextConfig.sideRoughness !== undefined ||
-    nextConfig.innerRoughness !== undefined ||
-    nextConfig.innerRimRoughness !== undefined ||
-    nextConfig.treadMetalness !== undefined ||
-    nextConfig.sideMetalness !== undefined ||
-    nextConfig.innerMetalness !== undefined ||
-    nextConfig.innerRimMetalness !== undefined;
-
-  if (!hasExplicitSurfaceFields) {
-    if (nextConfig.shaderMode !== undefined) {
-      nextConfig.treadShaderMode = nextConfig.shaderMode;
-      nextConfig.sideShaderMode = nextConfig.shaderMode;
-      nextConfig.innerShaderMode = nextConfig.shaderMode;
-      nextConfig.innerRimShaderMode = nextConfig.shaderMode;
-    }
-    if (nextConfig.roughness !== undefined) {
-      nextConfig.treadRoughness = nextConfig.roughness;
-      nextConfig.sideRoughness = nextConfig.roughness;
-      nextConfig.innerRoughness = nextConfig.roughness;
-      nextConfig.innerRimRoughness = nextConfig.roughness;
-    }
-    if (nextConfig.metalness !== undefined) {
-      nextConfig.treadMetalness = nextConfig.metalness;
-      nextConfig.sideMetalness = nextConfig.metalness;
-      nextConfig.innerMetalness = nextConfig.metalness;
-      nextConfig.innerRimMetalness = nextConfig.metalness;
-    }
-  }
-
-  const shouldInnerFollowOuter =
-    nextConfig.innerRimFollowsOuter !== undefined
-      ? Boolean(nextConfig.innerRimFollowsOuter)
-      : Boolean(wheelModifierRuntimeConfig.innerRimFollowsOuter ?? true);
-
-  if (shouldInnerFollowOuter) {
-    const targetPct = nextConfig.outerRimRadiusPct ?? wheelModifierRuntimeConfig.outerRimRadiusPct ?? 80;
-    const targetColor = nextConfig.outerColor ?? wheelModifierRuntimeConfig.outerColor ?? '#737373';
-    const targetShader = nextConfig.sideShaderMode ?? wheelModifierRuntimeConfig.sideShaderMode ?? 'standard';
-    const targetRoughness = nextConfig.sideRoughness ?? wheelModifierRuntimeConfig.sideRoughness ?? 0.5;
-    const targetMetalness = nextConfig.sideMetalness ?? wheelModifierRuntimeConfig.sideMetalness ?? 0.7;
-
-    if (nextConfig.innerRimRadiusPct === undefined) nextConfig.innerRimRadiusPct = targetPct;
-    if (nextConfig.innerRimColor === undefined) nextConfig.innerRimColor = targetColor;
-    if (nextConfig.innerRimShaderMode === undefined) nextConfig.innerRimShaderMode = targetShader;
-    if (nextConfig.innerRimRoughness === undefined) nextConfig.innerRimRoughness = targetRoughness;
-    if (nextConfig.innerRimMetalness === undefined) nextConfig.innerRimMetalness = targetMetalness;
-  }
-
-  Object.assign(wheelModifierRuntimeConfig, nextConfig);
+  Object.assign(
+    wheelModifierRuntimeConfig,
+    normalizeWheelModifierPatch(patch, wheelModifierRuntimeConfig)
+  );
   return getWheelModifierConfig();
 }
 

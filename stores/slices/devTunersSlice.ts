@@ -9,18 +9,8 @@ import {
   type DriftwoodsTunerConfig,
 } from '../../config/driftwoodsConfig';
 import { STORAGE_KEYS, safeStorage } from '../../config/storageHelpers';
-import {
-  type ClockPacingMode,
-  type ClockPacingPriority,
-  type ClockPacingParams,
-  DEFAULT_CLOCK_PACING_PARAMS,
-  CLOCK_PACING_PRIORITY_PRESETS,
-  resolveEffectiveClockPacingParams,
-  saveCustomClockPacingParams,
-  getInitialClockPacingMode,
-  getInitialClockPacingPriority,
-  getInitialCustomClockPacingParams,
-} from '../../config/clockPacingConfig';
+import { type ClockPacingMode, type ClockPacingPriority, type ClockPacingParams, resolveEffectiveClockPacingParams, saveCustomClockPacingParams, getInitialClockPacingMode, getInitialClockPacingPriority, getInitialCustomClockPacingParams } from '../../config/clockPacingConfig';
+import { DEFAULT_CLOCK_PACING_PARAMS, CLOCK_PACING_PRIORITY_PRESETS } from '../../config/clockPacingPresets';
 import {
   DEFAULT_BOOST_PAD_TUNER_CONFIG,
   getInitialDeveloperMode,

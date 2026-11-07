@@ -1,14 +1,7 @@
 import React from 'react';
 import { Compass, Lock, RotateCcw, Sliders, Sparkles, X } from 'lucide-react';
-import {
-  type StaticTrainingVariationConfig,
-  type StaticTrainingQuickVariationToggles,
-  type KevpertPresetKey,
-  KEVPERT_PRESET_KEYS,
-  KEVPERT_LATEST_PRESETS,
-  DEFAULT_QUICK_VARIATION_TOGGLES,
-  resolveEffectiveRecommendedVariation,
-} from '../../config/staticTrainingVariationTypes';
+import { type StaticTrainingVariationConfig, type StaticTrainingQuickVariationToggles, type KevpertPresetKey, DEFAULT_QUICK_VARIATION_TOGGLES, resolveEffectiveRecommendedVariation } from '../../config/staticTrainingVariationTypes';
+import { KEVPERT_PRESET_KEYS, KEVPERT_LATEST_PRESETS } from '../../config/kevpertVariationPresets';
 import { StaticTrainingQuickTogglesSection } from './StaticTrainingQuickTogglesSection';
 import { StaticTrainingVariationSlidersGrid } from './StaticTrainingVariationSlidersGrid';
 import { floatingStore } from '../../stores/floatingStore';

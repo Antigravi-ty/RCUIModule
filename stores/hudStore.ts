@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { formatBindingDisplayName, loadInputBindings } from '../config/inputBindings';
+import { formatBindingDisplayName } from '../config/inputBindingValidators';
+import { loadInputBindings } from '../config/inputBindings';
 import type { InputBindingsConfig } from '../config/inputBindingValidators';
 import { globalHudTransientChannel } from './hudTransientChannel';
 import type { MatchHudChoreographySignal } from './hudTransientTypes';

@@ -5,12 +5,8 @@ import type {
   SurfaceMeta,
 } from '../../manifest/surfaceMetaTypes';
 import { DEFAULT_REPLAY_DIRECTOR_FOV_DEG } from '../../config/replayDirectorConfig';
-import {
-  useReplayDirectorStore,
-  getReplayDirectorConfig,
-  updateReplayDirectorConfig,
-  resetReplayDirectorConfig,
-} from '../../stores/replayDirectorStore';
+import { useReplayDirectorStore } from '../../stores/replayDirectorStore';
+import { getReplayDirectorConfig, updateReplayDirectorConfig, resetReplayDirectorConfig } from '../../config/replayDirectorConfig';
 import { audioConfig } from '../../config/audioConfig';
 import { useAppStore } from '../../stores/appStore';
 import { useSubsystemIsolationLabStore } from '../../stores/subsystemIsolationLabStore';

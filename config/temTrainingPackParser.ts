@@ -17,44 +17,10 @@ import {
   cloneShotItem,
 } from './staticTrainingPackTypes';
 import { resolveRecommendedVariationForPack } from './staticTrainingVariationTypes';
-import {
-  type TemSaveDataEnvelope,
-  type TemObjectTypeEntry,
-  type TemObjectRecord,
-  type TemEnrichedArchetype,
-  type TemRoundRecord,
-  type ParsedTemTrainingPack,
-  type ParsedTemDocument,
-  uruToDegrees,
-  uruToRadians,
-  enrichTemArchetype,
-  isTemBinaryPayload,
-  parseTemBinaryBytes,
-} from './temPropertyDeserializer';
-import {
-  RANK_ORDER_MAP,
-  extractEpochMs,
-  isDefaultRlEditorFreeCam,
-  derivePackTagsAndMetadata,
-} from './temMetadataAndTagClassifier';
+import { type TemSaveDataEnvelope, type TemObjectTypeEntry, type TemObjectRecord, type TemEnrichedArchetype, type TemRoundRecord, type ParsedTemTrainingPack, type ParsedTemDocument, uruToDegrees, uruToRadians, parseTemBinaryBytes } from './temPropertyDeserializer';
+import { extractEpochMs, isDefaultRlEditorFreeCam, derivePackTagsAndMetadata } from './temMetadataAndTagClassifier';
 
-export {
-  type TemSaveDataEnvelope,
-  type TemObjectTypeEntry,
-  type TemObjectRecord,
-  type TemEnrichedArchetype,
-  type TemRoundRecord,
-  type ParsedTemTrainingPack,
-  type ParsedTemDocument,
-  uruToDegrees,
-  uruToRadians,
-  enrichTemArchetype,
-  isTemBinaryPayload,
-  parseTemBinaryBytes,
-  RANK_ORDER_MAP,
-  isDefaultRlEditorFreeCam,
-  derivePackTagsAndMetadata,
-};
+export type { TemSaveDataEnvelope, TemObjectTypeEntry, TemObjectRecord, TemEnrichedArchetype, TemRoundRecord, ParsedTemTrainingPack, ParsedTemDocument };
 
 const CAR_GROUND_SETTLE_THRESHOLD_Z = 45.0;
 const CAR_GROUND_DEFAULT_Z = 17.05;

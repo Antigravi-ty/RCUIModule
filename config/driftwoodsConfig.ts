@@ -4,66 +4,99 @@
  * for the Driftwoods stadium.
  */
 
+import defaultConfigJson from './driftwoods.default.json' with { type: 'json' };
+import groundQ1ManifestJson from './groundQ1Manifest.json' with { type: 'json' };
 import presetsJson from './driftwoods.presets.json' with { type: 'json' };
-import {
-  type OklchColor,
-  type OklabColor,
-  type LinearRgbColor,
-  hexToLinearRgb,
-  linearRgbToHex,
-  hexToOklab,
-  oklabToLinearRgb,
-  oklchToLinearRgb,
-  oklchToHex,
-  hexToOklch,
-  setHexOklchLightness,
-  mixDecalOverBaseOklab,
-} from './driftwoodsColorMath';
-import {
-  DEFAULT_DRIFTWOODS_CONFIG,
-  DEFAULT_Q1_LAYER_COLORS,
-  DEFAULT_Q1_LAYER_OPACITIES,
-  GROUND_Q1_MANIFEST,
-  type DriftwoodsGroundConfig,
-  type DriftwoodsGroundTextureMode,
-  type DriftwoodsLayerConfig,
-  type DriftwoodsPreset,
-  type DriftwoodsQ1LayerColors,
-  type DriftwoodsQ1LayerId,
-  type DriftwoodsQ1LayerOpacities,
-  type DriftwoodsQ1LayerSpec,
-  type DriftwoodsQ1Manifest,
-  type DriftwoodsTunerConfig,
+import { type OklchColor, type OklabColor, type LinearRgbColor, linearToSrgbChannel, linearRgbToHex, hexToOklab, oklchToLinearRgb, hexToOklch } from './driftwoodsColorMath';
+import type {
+  DriftwoodsGroundConfig,
+  DriftwoodsGroundTextureMode,
+  DriftwoodsLayerConfig,
+  DriftwoodsPreset,
+  DriftwoodsQ1LayerColors,
+  DriftwoodsQ1LayerId,
+  DriftwoodsQ1LayerOpacities,
+  DriftwoodsQ1LayerSpec,
+  DriftwoodsQ1Manifest,
+  DriftwoodsTunerConfig,
 } from './driftwoodsSchemaAndPresets';
 
-export {
-  type OklchColor,
-  type OklabColor,
-  type LinearRgbColor,
-  hexToLinearRgb,
-  linearRgbToHex,
-  hexToOklab,
-  oklabToLinearRgb,
-  oklchToLinearRgb,
-  oklchToHex,
-  hexToOklch,
-  setHexOklchLightness,
-  mixDecalOverBaseOklab,
-  DEFAULT_DRIFTWOODS_CONFIG,
-  DEFAULT_Q1_LAYER_COLORS,
-  DEFAULT_Q1_LAYER_OPACITIES,
-  GROUND_Q1_MANIFEST,
-  type DriftwoodsGroundConfig,
-  type DriftwoodsGroundTextureMode,
-  type DriftwoodsLayerConfig,
-  type DriftwoodsPreset,
-  type DriftwoodsQ1LayerColors,
-  type DriftwoodsQ1LayerId,
-  type DriftwoodsQ1LayerOpacities,
-  type DriftwoodsQ1LayerSpec,
-  type DriftwoodsQ1Manifest,
-  type DriftwoodsTunerConfig,
+export type {
+  OklchColor,
+  OklabColor,
+  LinearRgbColor,
+  DriftwoodsGroundConfig,
+  DriftwoodsGroundTextureMode,
+  DriftwoodsLayerConfig,
+  DriftwoodsPreset,
+  DriftwoodsQ1LayerColors,
+  DriftwoodsQ1LayerId,
+  DriftwoodsQ1LayerOpacities,
+  DriftwoodsQ1LayerSpec,
+  DriftwoodsQ1Manifest,
+  DriftwoodsTunerConfig,
 };
+
+export const GROUND_Q1_MANIFEST: DriftwoodsQ1Manifest =
+  groundQ1ManifestJson as unknown as DriftwoodsQ1Manifest;
+
+export const DEFAULT_Q1_LAYER_COLORS: DriftwoodsQ1LayerColors = {
+  L0: '#1b4a00',
+  L1: '#ffffff',
+  L2: '#ffffff',
+  L3: '#ffffff',
+  L4: '#454545',
+  L5: '#ffffff',
+  L6: '#f87171',
+};
+
+export const DEFAULT_Q1_LAYER_OPACITIES: DriftwoodsQ1LayerOpacities = {
+  L0: 1.0,
+  L1: 0.5,
+  L2: 0.4,
+  L3: 0.5,
+  L4: 0.3,
+  L5: 0.7,
+  L6: 0.3,
+};
+
+export const DEFAULT_DRIFTWOODS_CONFIG: DriftwoodsTunerConfig =
+  defaultConfigJson as DriftwoodsTunerConfig;
+
+export function oklchToHex(l: number, c: number, hDeg: number): string {
+  return linearRgbToHex(oklchToLinearRgb(l, c, hDeg));
+}
+
+export function setHexOklchLightness(hex: string, targetL: number): string {
+  const { c, h } = hexToOklch(hex);
+  return oklchToHex(targetL, c, h);
+}
+
+export function mixDecalOverBaseOklab(
+  baseHex: string,
+  decalHex: string,
+  opacity: number
+): { linear: LinearRgbColor; srgbBytes: [number, number, number]; hex: string } {
+  const baseLab = hexToOklab(baseHex);
+  const decalLab = hexToOklab(decalHex);
+  const t = Math.max(0, Math.min(1, Number.isFinite(opacity) ? opacity : 1));
+  const L = baseLab.L + (decalLab.L - baseLab.L) * t;
+  const a = baseLab.a + (decalLab.a - baseLab.a) * t;
+  const b = baseLab.b + (decalLab.b - baseLab.b) * t;
+  const C = Math.sqrt(a * a + b * b);
+  let H = (Math.atan2(b, a) * 180) / Math.PI;
+  if (H < 0) H += 360;
+  const linear = oklchToLinearRgb(L, C, H);
+  const sr = Math.max(0, Math.min(255, Math.round(linearToSrgbChannel(linear.r) * 255)));
+  const sg = Math.max(0, Math.min(255, Math.round(linearToSrgbChannel(linear.g) * 255)));
+  const sb = Math.max(0, Math.min(255, Math.round(linearToSrgbChannel(linear.b) * 255)));
+  const hex =
+    '#' +
+    sr.toString(16).padStart(2, '0') +
+    sg.toString(16).padStart(2, '0') +
+    sb.toString(16).padStart(2, '0');
+  return { linear, srgbBytes: [sr, sg, sb], hex };
+}
 
 export function cloneDriftwoodsConfig(
   config: DriftwoodsTunerConfig = DEFAULT_DRIFTWOODS_CONFIG
@@ -86,6 +119,8 @@ export function mergeDriftwoodsConfig(
   };
   const baseRampsUpperOuter = base.rampsUpperOuter || DEFAULT_DRIFTWOODS_CONFIG.rampsUpperOuter;
   const baseGoalPostsGlow = base.goalPostsGlow || DEFAULT_DRIFTWOODS_CONFIG.goalPostsGlow;
+  const pg: Partial<DriftwoodsGroundConfig> = patch.ground || {};
+  const bg = base.ground;
 
   return {
     ...base,
@@ -103,163 +138,69 @@ export function mergeDriftwoodsConfig(
     goalMaskBezierP1Y: patch.goalMaskBezierP1Y ?? base.goalMaskBezierP1Y ?? 0.0,
     goalMaskBezierP2X: patch.goalMaskBezierP2X ?? base.goalMaskBezierP2X ?? 0.58,
     goalMaskBezierP2Y: patch.goalMaskBezierP2Y ?? base.goalMaskBezierP2Y ?? 1.0,
-    ground: patch.ground
-      ? {
-          ...base.ground,
-          ...patch.ground,
-          textureMode: patch.ground.textureMode ?? base.ground.textureMode ?? 'q1-7gray',
-          lineOpacity: patch.ground.lineOpacity ?? base.ground.lineOpacity ?? 0.85,
-          q1Colors: {
-            ...baseQ1Colors,
-            ...(patch.ground.q1Colors || {}),
-          },
-          q1Opacities: {
-            ...baseQ1Opacities,
-            ...(patch.ground.q1Opacities || {}),
-          },
-          l4UseTeamColor: patch.ground.l4UseTeamColor ?? base.ground.l4UseTeamColor ?? true,
-          l5UseTeamColor: patch.ground.l5UseTeamColor ?? base.ground.l5UseTeamColor ?? true,
-          l6UseTeamColor: patch.ground.l6UseTeamColor ?? base.ground.l6UseTeamColor ?? true,
-          oklchSyncEnabled: patch.ground.oklchSyncEnabled ?? base.ground.oklchSyncEnabled ?? true,
-          oklchMarkingsLightness:
-            patch.ground.oklchMarkingsLightness ?? base.ground.oklchMarkingsLightness ?? 0.96,
-          oklchTeamLightness:
-            patch.ground.oklchTeamLightness ?? base.ground.oklchTeamLightness ?? 0.7,
-          oklchGoalLightness:
-            patch.ground.oklchGoalLightness ?? base.ground.oklchGoalLightness ?? 0.582,
-          oklchGoalPostsGlowLightness:
-            patch.ground.oklchGoalPostsGlowLightness ??
-            base.ground.oklchGoalPostsGlowLightness ??
-            0.65,
-          oklchRampsUpperOuterLightness:
-            patch.ground.oklchRampsUpperOuterLightness ??
-            base.ground.oklchRampsUpperOuterLightness ??
-            0.5,
-          oklchHexLightness:
-            patch.ground.oklchHexLightness ?? base.ground.oklchHexLightness ?? 0.65,
-          oklchTeamChroma: patch.ground.oklchTeamChroma ?? base.ground.oklchTeamChroma ?? 0.19,
-          oklchBlueHue: patch.ground.oklchBlueHue ?? base.ground.oklchBlueHue ?? 250,
-          oklchOrangeHue: patch.ground.oklchOrangeHue ?? base.ground.oklchOrangeHue ?? 45,
-          oklchGroundIndependentCH:
-            patch.ground.oklchGroundIndependentCH ?? base.ground.oklchGroundIndependentCH ?? false,
-          oklchGroundChroma:
-            patch.ground.oklchGroundChroma ?? base.ground.oklchGroundChroma ?? 0.19,
-          oklchGroundBlueHue:
-            patch.ground.oklchGroundBlueHue ?? base.ground.oklchGroundBlueHue ?? 250,
-          oklchGroundOrangeHue:
-            patch.ground.oklchGroundOrangeHue ?? base.ground.oklchGroundOrangeHue ?? 45,
-          oklchGoalIndependentCH:
-            patch.ground.oklchGoalIndependentCH ?? base.ground.oklchGoalIndependentCH ?? false,
-          oklchGoalChroma: patch.ground.oklchGoalChroma ?? base.ground.oklchGoalChroma ?? 0.19,
-          oklchGoalBlueHue: patch.ground.oklchGoalBlueHue ?? base.ground.oklchGoalBlueHue ?? 250,
-          oklchGoalOrangeHue:
-            patch.ground.oklchGoalOrangeHue ?? base.ground.oklchGoalOrangeHue ?? 45,
-          oklchGoalPostsGlowIndependentCH:
-            patch.ground.oklchGoalPostsGlowIndependentCH ??
-            base.ground.oklchGoalPostsGlowIndependentCH ??
-            false,
-          oklchGoalPostsGlowChroma:
-            patch.ground.oklchGoalPostsGlowChroma ??
-            base.ground.oklchGoalPostsGlowChroma ??
-            0.19,
-          oklchGoalPostsGlowBlueHue:
-            patch.ground.oklchGoalPostsGlowBlueHue ??
-            base.ground.oklchGoalPostsGlowBlueHue ??
-            250,
-          oklchGoalPostsGlowOrangeHue:
-            patch.ground.oklchGoalPostsGlowOrangeHue ??
-            base.ground.oklchGoalPostsGlowOrangeHue ??
-            45,
-          oklchRampsUpperOuterIndependentCH:
-            patch.ground.oklchRampsUpperOuterIndependentCH ??
-            base.ground.oklchRampsUpperOuterIndependentCH ??
-            true,
-          oklchRampsUpperOuterChroma:
-            patch.ground.oklchRampsUpperOuterChroma ??
-            base.ground.oklchRampsUpperOuterChroma ??
-            0.1,
-          oklchRampsUpperOuterBlueHue:
-            patch.ground.oklchRampsUpperOuterBlueHue ??
-            base.ground.oklchRampsUpperOuterBlueHue ??
-            250,
-          oklchRampsUpperOuterOrangeHue:
-            patch.ground.oklchRampsUpperOuterOrangeHue ??
-            base.ground.oklchRampsUpperOuterOrangeHue ??
-            45,
-          oklchHexIndependentCH:
-            patch.ground.oklchHexIndependentCH ?? base.ground.oklchHexIndependentCH ?? true,
-          oklchHexChroma: patch.ground.oklchHexChroma ?? base.ground.oklchHexChroma ?? 0.32,
-          oklchHexBlueHue: patch.ground.oklchHexBlueHue ?? base.ground.oklchHexBlueHue ?? 250,
-          oklchHexOrangeHue: patch.ground.oklchHexOrangeHue ?? base.ground.oklchHexOrangeHue ?? 45,
-          blueTeamLineColor:
-            patch.ground.blueTeamLineColor ?? base.ground.blueTeamLineColor ?? '#3fa3ff',
-          orangeTeamLineColor:
-            patch.ground.orangeTeamLineColor ?? base.ground.orangeTeamLineColor ?? '#fa6e1d',
-          q1ScaleX: patch.ground.q1ScaleX ?? base.ground.q1ScaleX ?? 1,
-          q1ScaleY: patch.ground.q1ScaleY ?? base.ground.q1ScaleY ?? 1,
-          q1OffsetX: patch.ground.q1OffsetX ?? base.ground.q1OffsetX ?? 0,
-          q1OffsetY: patch.ground.q1OffsetY ?? base.ground.q1OffsetY ?? 0,
-          anisotropy: patch.ground.anisotropy ?? base.ground.anisotropy ?? 4,
-          lineThreshold: patch.ground.lineThreshold ?? base.ground.lineThreshold ?? 0.35,
-          lineSmoothness: patch.ground.lineSmoothness ?? base.ground.lineSmoothness ?? 0.15,
-          originalLineThreshold:
-            patch.ground.originalLineThreshold ?? base.ground.originalLineThreshold ?? 0.0921,
-          originalLineSmoothness:
-            patch.ground.originalLineSmoothness ?? base.ground.originalLineSmoothness ?? 0.0364,
-        }
-      : {
-          ...base.ground,
-          textureMode: base.ground.textureMode ?? 'q1-7gray',
-          lineOpacity: base.ground.lineOpacity ?? 0.85,
-          q1Colors: baseQ1Colors,
-          q1Opacities: baseQ1Opacities,
-          l4UseTeamColor: base.ground.l4UseTeamColor ?? true,
-          l5UseTeamColor: base.ground.l5UseTeamColor ?? true,
-          l6UseTeamColor: base.ground.l6UseTeamColor ?? true,
-          oklchSyncEnabled: base.ground.oklchSyncEnabled ?? true,
-          oklchMarkingsLightness: base.ground.oklchMarkingsLightness ?? 0.96,
-          oklchTeamLightness: base.ground.oklchTeamLightness ?? 0.7,
-          oklchGoalLightness: base.ground.oklchGoalLightness ?? 0.582,
-          oklchGoalPostsGlowLightness: base.ground.oklchGoalPostsGlowLightness ?? 0.65,
-          oklchRampsUpperOuterLightness: base.ground.oklchRampsUpperOuterLightness ?? 0.5,
-          oklchHexLightness: base.ground.oklchHexLightness ?? 0.65,
-          oklchTeamChroma: base.ground.oklchTeamChroma ?? 0.19,
-          oklchBlueHue: base.ground.oklchBlueHue ?? 250,
-          oklchOrangeHue: base.ground.oklchOrangeHue ?? 45,
-          oklchGroundIndependentCH: base.ground.oklchGroundIndependentCH ?? false,
-          oklchGroundChroma: base.ground.oklchGroundChroma ?? 0.19,
-          oklchGroundBlueHue: base.ground.oklchGroundBlueHue ?? 250,
-          oklchGroundOrangeHue: base.ground.oklchGroundOrangeHue ?? 45,
-          oklchGoalIndependentCH: base.ground.oklchGoalIndependentCH ?? false,
-          oklchGoalChroma: base.ground.oklchGoalChroma ?? 0.19,
-          oklchGoalBlueHue: base.ground.oklchGoalBlueHue ?? 250,
-          oklchGoalOrangeHue: base.ground.oklchGoalOrangeHue ?? 45,
-          oklchGoalPostsGlowIndependentCH:
-            base.ground.oklchGoalPostsGlowIndependentCH ?? false,
-          oklchGoalPostsGlowChroma: base.ground.oklchGoalPostsGlowChroma ?? 0.19,
-          oklchGoalPostsGlowBlueHue: base.ground.oklchGoalPostsGlowBlueHue ?? 250,
-          oklchGoalPostsGlowOrangeHue: base.ground.oklchGoalPostsGlowOrangeHue ?? 45,
-          oklchRampsUpperOuterIndependentCH:
-            base.ground.oklchRampsUpperOuterIndependentCH ?? true,
-          oklchRampsUpperOuterChroma: base.ground.oklchRampsUpperOuterChroma ?? 0.1,
-          oklchRampsUpperOuterBlueHue: base.ground.oklchRampsUpperOuterBlueHue ?? 250,
-          oklchRampsUpperOuterOrangeHue: base.ground.oklchRampsUpperOuterOrangeHue ?? 45,
-          oklchHexIndependentCH: base.ground.oklchHexIndependentCH ?? true,
-          oklchHexChroma: base.ground.oklchHexChroma ?? 0.32,
-          oklchHexBlueHue: base.ground.oklchHexBlueHue ?? 250,
-          oklchHexOrangeHue: base.ground.oklchHexOrangeHue ?? 45,
-          blueTeamLineColor: base.ground.blueTeamLineColor ?? '#3fa3ff',
-          orangeTeamLineColor: base.ground.orangeTeamLineColor ?? '#fa6e1d',
-          q1ScaleX: base.ground.q1ScaleX ?? 1,
-          q1ScaleY: base.ground.q1ScaleY ?? 1,
-          q1OffsetX: base.ground.q1OffsetX ?? 0,
-          q1OffsetY: base.ground.q1OffsetY ?? 0,
-          anisotropy: base.ground.anisotropy ?? 4,
-          lineThreshold: base.ground.lineThreshold ?? 0.35,
-          lineSmoothness: base.ground.lineSmoothness ?? 0.15,
-          originalLineThreshold: base.ground.originalLineThreshold ?? 0.0921,
-          originalLineSmoothness: base.ground.originalLineSmoothness ?? 0.0364,
-        },
+    ground: {
+      ...bg,
+      ...pg,
+      textureMode: pg.textureMode ?? bg.textureMode ?? 'q1-7gray',
+      lineOpacity: pg.lineOpacity ?? bg.lineOpacity ?? 0.85,
+      q1Colors: { ...baseQ1Colors, ...(pg.q1Colors || {}) },
+      q1Opacities: { ...baseQ1Opacities, ...(pg.q1Opacities || {}) },
+      l4UseTeamColor: pg.l4UseTeamColor ?? bg.l4UseTeamColor ?? true,
+      l5UseTeamColor: pg.l5UseTeamColor ?? bg.l5UseTeamColor ?? true,
+      l6UseTeamColor: pg.l6UseTeamColor ?? bg.l6UseTeamColor ?? true,
+      oklchSyncEnabled: pg.oklchSyncEnabled ?? bg.oklchSyncEnabled ?? true,
+      oklchMarkingsLightness: pg.oklchMarkingsLightness ?? bg.oklchMarkingsLightness ?? 0.96,
+      oklchTeamLightness: pg.oklchTeamLightness ?? bg.oklchTeamLightness ?? 0.7,
+      oklchGoalLightness: pg.oklchGoalLightness ?? bg.oklchGoalLightness ?? 0.582,
+      oklchGoalPostsGlowLightness:
+        pg.oklchGoalPostsGlowLightness ?? bg.oklchGoalPostsGlowLightness ?? 0.65,
+      oklchRampsUpperOuterLightness:
+        pg.oklchRampsUpperOuterLightness ?? bg.oklchRampsUpperOuterLightness ?? 0.5,
+      oklchHexLightness: pg.oklchHexLightness ?? bg.oklchHexLightness ?? 0.65,
+      oklchTeamChroma: pg.oklchTeamChroma ?? bg.oklchTeamChroma ?? 0.19,
+      oklchBlueHue: pg.oklchBlueHue ?? bg.oklchBlueHue ?? 250,
+      oklchOrangeHue: pg.oklchOrangeHue ?? bg.oklchOrangeHue ?? 45,
+      oklchGroundIndependentCH:
+        pg.oklchGroundIndependentCH ?? bg.oklchGroundIndependentCH ?? false,
+      oklchGroundChroma: pg.oklchGroundChroma ?? bg.oklchGroundChroma ?? 0.19,
+      oklchGroundBlueHue: pg.oklchGroundBlueHue ?? bg.oklchGroundBlueHue ?? 250,
+      oklchGroundOrangeHue: pg.oklchGroundOrangeHue ?? bg.oklchGroundOrangeHue ?? 45,
+      oklchGoalIndependentCH: pg.oklchGoalIndependentCH ?? bg.oklchGoalIndependentCH ?? false,
+      oklchGoalChroma: pg.oklchGoalChroma ?? bg.oklchGoalChroma ?? 0.19,
+      oklchGoalBlueHue: pg.oklchGoalBlueHue ?? bg.oklchGoalBlueHue ?? 250,
+      oklchGoalOrangeHue: pg.oklchGoalOrangeHue ?? bg.oklchGoalOrangeHue ?? 45,
+      oklchGoalPostsGlowIndependentCH:
+        pg.oklchGoalPostsGlowIndependentCH ?? bg.oklchGoalPostsGlowIndependentCH ?? false,
+      oklchGoalPostsGlowChroma:
+        pg.oklchGoalPostsGlowChroma ?? bg.oklchGoalPostsGlowChroma ?? 0.19,
+      oklchGoalPostsGlowBlueHue:
+        pg.oklchGoalPostsGlowBlueHue ?? bg.oklchGoalPostsGlowBlueHue ?? 250,
+      oklchGoalPostsGlowOrangeHue:
+        pg.oklchGoalPostsGlowOrangeHue ?? bg.oklchGoalPostsGlowOrangeHue ?? 45,
+      oklchRampsUpperOuterIndependentCH:
+        pg.oklchRampsUpperOuterIndependentCH ?? bg.oklchRampsUpperOuterIndependentCH ?? true,
+      oklchRampsUpperOuterChroma:
+        pg.oklchRampsUpperOuterChroma ?? bg.oklchRampsUpperOuterChroma ?? 0.1,
+      oklchRampsUpperOuterBlueHue:
+        pg.oklchRampsUpperOuterBlueHue ?? bg.oklchRampsUpperOuterBlueHue ?? 250,
+      oklchRampsUpperOuterOrangeHue:
+        pg.oklchRampsUpperOuterOrangeHue ?? bg.oklchRampsUpperOuterOrangeHue ?? 45,
+      oklchHexIndependentCH: pg.oklchHexIndependentCH ?? bg.oklchHexIndependentCH ?? true,
+      oklchHexChroma: pg.oklchHexChroma ?? bg.oklchHexChroma ?? 0.32,
+      oklchHexBlueHue: pg.oklchHexBlueHue ?? bg.oklchHexBlueHue ?? 250,
+      oklchHexOrangeHue: pg.oklchHexOrangeHue ?? bg.oklchHexOrangeHue ?? 45,
+      blueTeamLineColor: pg.blueTeamLineColor ?? bg.blueTeamLineColor ?? '#3fa3ff',
+      orangeTeamLineColor: pg.orangeTeamLineColor ?? bg.orangeTeamLineColor ?? '#fa6e1d',
+      q1ScaleX: pg.q1ScaleX ?? bg.q1ScaleX ?? 1,
+      q1ScaleY: pg.q1ScaleY ?? bg.q1ScaleY ?? 1,
+      q1OffsetX: pg.q1OffsetX ?? bg.q1OffsetX ?? 0,
+      q1OffsetY: pg.q1OffsetY ?? bg.q1OffsetY ?? 0,
+      anisotropy: pg.anisotropy ?? bg.anisotropy ?? 4,
+      lineThreshold: pg.lineThreshold ?? bg.lineThreshold ?? 0.35,
+      lineSmoothness: pg.lineSmoothness ?? bg.lineSmoothness ?? 0.15,
+      originalLineThreshold: pg.originalLineThreshold ?? bg.originalLineThreshold ?? 0.0921,
+      originalLineSmoothness: pg.originalLineSmoothness ?? bg.originalLineSmoothness ?? 0.0364,
+    },
     ramps: patch.ramps ? { ...base.ramps, ...patch.ramps } : { ...base.ramps },
     rampsUpperOuter: patch.rampsUpperOuter
       ? {

@@ -1,80 +1,13 @@
-import {
-  createLocalStorageStore,
-  isPlainObject,
-  clampNumberOrDefault,
-  booleanOrDefault,
-  filterArraySlice,
-} from './storageHelpers';
-import {
-  STORAGE_KEY_INPUT_BINDINGS,
-  STORAGE_KEY_CONTROLLER_SELECTION,
-  STORAGE_KEY_TOUCH_SETTINGS,
-  BALL_CONTROL_MODES,
-  CAMERA_LOOK_ACTIONS,
-  ACTION_GROUPS,
-  INPUT_ACTIONS,
-  KEY_DISPLAY_NAMES,
-  MOUSE_BUTTON_NAMES,
-  XBOX_BUTTON_NAMES,
-  PLAYSTATION_BUTTON_NAMES,
-  AXIS_NAMES,
-  TRIGGER_ANALOG_THRESHOLD,
-  ACTIVITY_EPSILON,
-  CAMERA_LOOK_DEADZONE,
-} from './inputConstants';
-import {
-  createDefaultKeyboardBindings,
-  createDefaultGamepadBindings,
-  createDefaultInputBindings,
-  areBindingsEqual,
-  getBindingCategory,
-  validateBinding,
-  assignBinding,
-  removeBinding,
-  resetDeviceBindings,
-  resetAxisBindings,
-  formatKeyDisplayName,
-  formatAxisName,
-  formatAxisDirectionName,
-  detectControllerType,
-  formatBindingDisplayName,
-  getActionLabel,
-  type InputBindingItem,
-} from './inputBindingValidators';
+import { createLocalStorageStore, isPlainObject, clampNumberOrDefault, booleanOrDefault, filterArraySlice } from './storageHelpers';
+import { STORAGE_KEY_INPUT_BINDINGS, STORAGE_KEY_CONTROLLER_SELECTION, STORAGE_KEY_TOUCH_SETTINGS, CAMERA_LOOK_ACTIONS, INPUT_ACTIONS } from './inputConstants';
+import { createDefaultInputBindings, areBindingsEqual, getBindingCategory, validateBinding, detectControllerType, type InputBindingItem } from './inputBindingValidators';
 
-export {
-  STORAGE_KEY_INPUT_BINDINGS,
-  STORAGE_KEY_CONTROLLER_SELECTION,
-  STORAGE_KEY_TOUCH_SETTINGS,
-  BALL_CONTROL_MODES,
-  CAMERA_LOOK_ACTIONS,
-  ACTION_GROUPS,
-  INPUT_ACTIONS,
-  KEY_DISPLAY_NAMES,
-  MOUSE_BUTTON_NAMES,
-  XBOX_BUTTON_NAMES,
-  PLAYSTATION_BUTTON_NAMES,
-  AXIS_NAMES,
-  TRIGGER_ANALOG_THRESHOLD,
-  ACTIVITY_EPSILON,
-  CAMERA_LOOK_DEADZONE,
-  createDefaultKeyboardBindings,
-  createDefaultGamepadBindings,
-  createDefaultInputBindings,
-  areBindingsEqual,
-  getBindingCategory,
-  validateBinding,
-  assignBinding,
-  removeBinding,
-  resetDeviceBindings,
-  resetAxisBindings,
-  formatKeyDisplayName,
-  formatAxisName,
-  formatAxisDirectionName,
-  detectControllerType,
-  formatBindingDisplayName,
-  getActionLabel,
-};
+export const BALL_CONTROL_MODES: readonly string[] = Object.freeze([
+  'takePossession',
+  'startDribble',
+  'passBall',
+  'launchBall',
+]);
 
 export interface AxisBindingConfig {
   axis: number;
