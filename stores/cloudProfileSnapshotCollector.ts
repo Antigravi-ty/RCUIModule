@@ -31,7 +31,11 @@ import { useBotsLoadoutStore } from './botsLoadoutStore';
 import { PRESET_WINDOWS } from './devFloatingPresets';
 import { floatingStore } from './floatingStore';
 import { useKickoffTrainingStore } from './kickoffTrainingStore';
-import { getNameTagConfig, updateNameTagConfig } from './nameTagTunerStore';
+import {
+  getNameTagConfig,
+  subscribeNameTagConfig,
+  updateNameTagConfig,
+} from './nameTagTunerStore';
 import { useSpatialAudioStore } from './spatialAudioStore';
 import { useStaticTrainingBallCamTunerStore } from './staticTrainingBallCamTunerStore';
 import { viewportStore } from './viewportStore';
@@ -333,6 +337,7 @@ export function attachUnifiedProfileChangeSubscription(listener: () => void): vo
   useBotsLoadoutStore.subscribe(listener);
   useKickoffTrainingStore.subscribe(listener);
   useStaticTrainingBallCamTunerStore.subscribe(listener);
+  subscribeNameTagConfig(listener);
   spatialAttenuationProfiles.subscribe(listener);
   safeStorage.subscribe((key) => {
     if (SYNCABLE_EXTRA_STORAGE_KEY_SET.has(key)) {

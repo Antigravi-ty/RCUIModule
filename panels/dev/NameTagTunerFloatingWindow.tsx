@@ -7,7 +7,7 @@ import {
   NameTagCalibrationSection,
 } from './name-tag-tuner/NameTagCalibrationSection';
 import { NameTagPillGeometryAndPreviewSection } from './name-tag-tuner/NameTagPillGeometryAndPreviewSection';
-import { NameTagCircleIdentitySection } from './name-tag-tuner/NameTagCircleIdentitySection';
+import { NameTagSingleCharIndicatorSection } from './name-tag-tuner/NameTagSingleCharIndicatorSection';
 import { NameTagBoostBorderSection } from './name-tag-tuner/NameTagBoostBorderSection';
 import { NameTagOffscreenAndAerialAlertSection } from './name-tag-tuner/NameTagOffscreenAndAerialAlertSection';
 import { NameTagColorsAndNamesSection } from './name-tag-tuner/NameTagColorsAndNamesSection';
@@ -58,7 +58,7 @@ export const NameTagTunerFloatingWindow: React.FC<NameTagTunerFloatingWindowProp
   return (
     <div className={containerClassName}>
       <NameTagCalibrationSection isLight={isLight} />
-      <NameTagCircleIdentitySection
+      <NameTagSingleCharIndicatorSection
         isLight={isLight}
         config={config}
         updateConfig={updateConfig}

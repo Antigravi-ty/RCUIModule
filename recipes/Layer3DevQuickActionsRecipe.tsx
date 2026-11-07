@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, CircleDot, Compass, Flame, Info, Tag, Users, Zap } from 'lucide-react';
+import { Box, Compass, Flame, Hash, HatGlasses, Info, Tag, Users } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
@@ -13,7 +13,7 @@ import {
   activateNameTagOffscreenForDeveloperMode,
   useNameTagTunerStore,
 } from '../stores/nameTagTunerStore';
-import type { NameTagBoostBorderAudience } from '../config/nameTagConfig';
+import type { NameTagAnonymizeMode, NameTagBoostBorderAudience } from '../config/nameTagConfig';
 import { DEFAULT_PANEL_SIZING, type PanelSizingConfig } from '../tokens/menuLayoutTokens';
 
 export interface Layer3DevQuickActionsRecipeProps {
@@ -22,12 +22,6 @@ export interface Layer3DevQuickActionsRecipeProps {
   sizing?: PanelSizingConfig;
 }
 
-/**
- * [Recipe] Layer 3 Developer — Developer Quick Actions (`zap`)
- * Quick-access toggles for developer features that auto-activate when Developer Mode is enabled
- * (such as the Off-Screen Edge Indicator) and can also be deployed to non-developer accounts
- * via Remote Profile Management (Cloud Profile Sync).
- */
 export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipeProps> = ({
   isLight = false,
   onBack: propOnBack,
@@ -78,16 +72,39 @@ export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipePr
             isLight={isLight}
           />
 
-          {/* 2. On-Screen Circle Name Tag Mode (X/W/E · A/M/Z) */}
+          {/* 2. On-Screen Single-Char Indicator (X/W/E · A/M/Z) */}
           <SettingToggleRow
-            icon={CircleDot}
-            title="On-Screen Circle Name Tag Mode (X/W/E · A/M/Z)"
-            description="Replace horizontal name tag pills with fixed-size boost circles & 1-letter match slot codes"
-            checked={config.cardDisplayMode === 'circle'}
+            icon={Hash}
+            iconName="hash"
+            title="On-Screen Single-Char Indicator (X/W/E · A/M/Z)"
+            description="Switch on-screen cards & active tuner profile to Single-Char Indicator (1-letter match slot codes)"
+            checked={config.cardDisplayMode === 'single-char'}
             onChange={(checked) =>
-              updateConfig({ cardDisplayMode: checked ? 'circle' : 'pill' })
+              updateConfig({ cardDisplayMode: checked ? 'single-char' : 'pill' })
             }
-            hoverDescription="On-Screen Circle Name Tag Mode: Replaces all on-screen name cards with circular boost indicators and fixed match slot codes (Team 1: X, W, E · Team 2: A, M, Z)."
+            hoverDescription="On-Screen Single-Char Indicator: Switches on-screen cards and the Name Tag Tuner editing profile to the Single-Char Indicator variant (Team 1: X, W, E · Team 2: A, M, Z)."
+            onHover={(desc) => desc && setHoveredDesc(desc)}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 2b. Anonymize Player Names */}
+          <SettingSegmentedRow
+            icon={HatGlasses}
+            iconName="hat-glasses"
+            title="Anonymize Player Names"
+            description="Disabled (default) · Opponents Only · Teammates Only · Both"
+            value={config.anonymizePlayerNames || 'disabled'}
+            onChange={(val) =>
+              updateConfig({ anonymizePlayerNames: val as NameTagAnonymizeMode })
+            }
+            options={[
+              { value: 'disabled', label: 'Disabled' },
+              { value: 'opponents', label: 'Opponents Only' },
+              { value: 'teammates', label: 'Teammates Only' },
+              { value: 'both', label: 'Both' },
+            ]}
+            hoverDescription="Anonymize Player Names: Selectively replace opponent, teammate, or all player names with single-char slot indicators (X/W/E · A/M/Z) rendered with the Single-Char Indicator parameter set."
             onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
@@ -149,8 +166,8 @@ export const Layer3DevQuickActionsRecipe: React.FC<Layer3DevQuickActionsRecipePr
             iconColor="text-sky-400"
             badge="Calibrated · 5 Tabs"
             badgeClass="bg-sky-500/15 border-sky-500/30 text-sky-400"
-            description="Open full Multiplayer Name Tag Tuner floating window to inspect or fine-tune pill, boost, off-screen ROI, and 3D scaling"
-            hoverTooltip="Multiplayer Name Tag Tuner: Spawn floating window for full Name Tag & Off-Screen Indicator calibration."
+            description="Open full Multiplayer Name Tag Tuner floating window to inspect or fine-tune pill, single-char indicator, boost, off-screen ROI, and 3D scaling"
+            hoverTooltip="Multiplayer Name Tag Tuner: Spawn floating window for full Name Tag & Single-Char Indicator calibration."
             onHover={(desc) => setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}

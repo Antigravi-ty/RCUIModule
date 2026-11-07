@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Play, Shuffle, XCircle, Eye, Copy, Check, Sliders, Sparkles } from 'lucide-react';
-import { formatNameTagDisplayText, type NameTagTelemetrySnapshot } from '../../../config/nameTagConfig';
+import {
+  formatNameTagDisplayText,
+  resolveNameTagVariantParams,
+  type NameTagTelemetrySnapshot,
+} from '../../../config/nameTagConfig';
 import {
   computeFittedParametersFromSamples,
   getNameTagTelemetrySnapshot,
@@ -73,16 +77,18 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
   const effFocusedIdx = isTunerArenaActive ? focusedCarIndex : hudFocusedCarIndex;
   const focusedSlotCode = CAR_SLOT_BADGES[effFocusedIdx]?.slotCode || `#${effFocusedIdx + 1}`;
 
+  const isSingleChar = config.cardDisplayMode === 'single-char';
+  const activeVariant = resolveNameTagVariantParams(config, isSingleChar);
   const calibIdx = Math.max(0, Math.min(5, selectedCalibrationCarIndex || 0));
   const calibSlot = CAR_SLOT_BADGES[calibIdx] || CAR_SLOT_BADGES[0];
-  const carOverride = config.carOverrides?.[calibIdx] || {
+  const carOverride = activeVariant.carOverrides?.[calibIdx] || {
     enabled: false,
     scaleMultiplier: 1.0,
-    worldOffsetUu: config.verticalOffsetUu,
-    screenOffsetPx: config.screenVerticalOffsetPx,
+    worldOffsetUu: activeVariant.verticalOffsetUu,
+    screenOffsetPx: activeVariant.screenVerticalOffsetPx,
   };
   const carTel = telemetry.cars?.find((c) => c.carIndex === calibIdx) || null;
-  const enabledOverrideCount = (config.carOverrides || []).filter((c) => c?.enabled).length;
+  const enabledOverrideCount = (activeVariant.carOverrides || []).filter((c) => c?.enabled).length;
   const fitted = computeFittedParametersFromSamples();
 
   const cardBg = isLight
@@ -95,14 +101,14 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
     ? 'bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700'
     : 'bg-neutral-900/70 hover:bg-neutral-800 border-neutral-700/70 text-neutral-300';
 
-  const trunc = (rawName: string) => formatNameTagDisplayText(rawName, config.maxChars);
+  const trunc = (rawName: string) => formatNameTagDisplayText(rawName, activeVariant.maxChars);
 
   const handleCopyCalibrationJson = async () => {
     const jsonText = exportCalibrationJson();
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) await navigator.clipboard.writeText(jsonText);
     } catch {
-      // Ignore clipboard errors
+      // Ignore
     }
     setCopiedStatus('copied');
     window.setTimeout(() => setCopiedStatus('idle'), 2200);
@@ -115,9 +121,7 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
           <div className="flex items-center gap-1.5 min-w-0">
             <span className={`h-2 w-2 rounded-full shrink-0 ${isTunerArenaActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
             <span className="font-bold text-xs truncate">
-              {isTunerArenaActive
-                ? `6-Car Kickoff Arena Active (Formation #${kickoffPermutationIndex + 1})`
-                : 'Stadium Evaluation Standby (Calibrated Preset)'}
+              {isTunerArenaActive ? `6-Car Kickoff Arena Active (Formation #${kickoffPermutationIndex + 1})` : 'Stadium Evaluation Standby (Calibrated Preset)'}
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -191,7 +195,7 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
         <div className="flex items-center justify-between gap-2">
           <span className="font-bold text-[11px] flex items-center gap-1.5">
             <Sliders className="h-3.5 w-3.5 text-emerald-500" />
-            <span>Per-Car Independent Calibration &amp; Export</span>
+            <span>Per-Car Calibration ({isSingleChar ? 'Single-Char' : 'Standard Pill'})</span>
           </span>
           <div className="flex items-center gap-1.5">
             {enabledOverrideCount > 0 && (
@@ -208,17 +212,7 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
                   : 'bg-sky-500/15 border-sky-500/40 text-sky-400 hover:bg-sky-500/25'
               }`}
             >
-              {copiedStatus === 'copied' ? (
-                <>
-                  <Check className="h-3 w-3" />
-                  <span>Copied JSON!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3 w-3" />
-                  <span>Copy Calibration JSON</span>
-                </>
-              )}
+              {copiedStatus === 'copied' ? <><Check className="h-3 w-3" /><span>Copied JSON!</span></> : <><Copy className="h-3 w-3" /><span>Copy Calibration JSON</span></>}
             </button>
           </div>
         </div>
@@ -226,7 +220,7 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
         <div className="grid grid-cols-6 gap-1">
           {CAR_SLOT_BADGES.map((slot) => {
             const isTarget = calibIdx === slot.index;
-            const hasOverride = Boolean(config.carOverrides?.[slot.index]?.enabled);
+            const hasOverride = Boolean(activeVariant.carOverrides?.[slot.index]?.enabled);
             const tel = telemetry.cars?.find((c) => c.carIndex === slot.index);
             return (
               <button
@@ -235,11 +229,7 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
                 onClick={() => selectCalibrationCar(slot.index)}
                 title={`Select ${slot.slotCode} for independent calibration`}
                 className={`px-1 py-1 rounded-lg border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                  isTarget
-                    ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400 font-bold'
-                    : hasOverride
-                      ? 'bg-amber-500/15 border-amber-500/50 text-amber-400'
-                      : slotInactive
+                  isTarget ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400 font-bold' : hasOverride ? 'bg-amber-500/15 border-amber-500/50 text-amber-400' : slotInactive
                 }`}
               >
                 <div className="flex items-center gap-1">
@@ -282,9 +272,7 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
               <div><span className={muted}>Total Y: </span><span>{Math.round(carTel.totalWorldVerticalOffsetUu)} UU</span></div>
             </div>
           ) : (
-            <div className={`text-[10px] font-mono ${muted}`}>
-              Enter the 6-Car Arena to stream live distance, depth, and screen pixel telemetry.
-            </div>
+            <div className={`text-[10px] font-mono ${muted}`}>Enter the 6-Car Arena to stream live distance, depth, and screen pixel telemetry.</div>
           )}
 
           <SliderControl
@@ -320,7 +308,7 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
 
           <div className={`flex items-center justify-between gap-2 pt-1 border-t ${divider}`}>
             <span className={`text-[10px] font-mono ${muted} truncate`}>
-              Fit Preview: Scale {fitted.cameraScaleFactor} · γ={fitted.distanceScaleExponent} · World {fitted.verticalOffsetUu}UU · Screen {fitted.screenVerticalOffsetPx}px
+              Fit: Scale {fitted.cameraScaleFactor} · γ={fitted.distanceScaleExponent} · World {fitted.verticalOffsetUu}UU · Screen {fitted.screenVerticalOffsetPx}px
             </span>
             <button
               type="button"
@@ -328,7 +316,7 @@ export const NameTagCalibrationSection: React.FC<NameTagCalibrationSectionProps>
               className="px-2 py-0.5 rounded border text-[10px] font-mono font-semibold flex items-center gap-1 shrink-0 cursor-pointer border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400"
             >
               <Sparkles className="h-3 w-3" />
-              <span>Apply Fit to Global</span>
+              <span>Apply Fit</span>
             </button>
           </div>
         </div>

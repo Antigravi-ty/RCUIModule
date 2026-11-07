@@ -5,7 +5,9 @@ import {
   DEFAULT_RUNTIME_SYNC_SNAPSHOT,
   KICKOFF_PERMUTATION_COUNT,
   NAME_TAG_REFERENCE_DEPTH_UU,
+  resolveNameTagVariantParams,
   type NameTagAerialClimbTriggerMode,
+  type NameTagAnonymizeMode,
   type NameTagBoostBorderAudience,
   type NameTagBoostBorderColorMode,
   type NameTagBoostBorderOverride,
@@ -14,7 +16,6 @@ import {
   type NameTagCarOverride,
   type NameTagCardDisplayMode,
   type NameTagCircleColorMode,
-  type NameTagCircleLabelMode,
   type NameTagConfig,
   type NameTagFittedParameters,
   type NameTagFontFamily,
@@ -35,6 +36,9 @@ export const sanitizeBoostIndicatorMode = (raw: unknown, fb: NameTagBoostIndicat
 export const sanitizeAerialClimbTriggerMode = (raw: unknown, fb: NameTagAerialClimbTriggerMode): NameTagAerialClimbTriggerMode =>
   raw === 'double-jump' || raw === 'hold-jump-pitch' || raw === 'either' || raw === 'both' ? raw : fb;
 
+export const sanitizeAnonymizeMode = (raw: unknown, fb: NameTagAnonymizeMode): NameTagAnonymizeMode =>
+  raw === 'disabled' || raw === 'opponents' || raw === 'teammates' || raw === 'both' ? raw : fb;
+
 function num(raw: unknown, fallback: number, round = false): number {
   if (raw === undefined || raw === null || raw === '') return fallback;
   const parsed = Number(raw);
@@ -46,6 +50,14 @@ function num(raw: unknown, fallback: number, round = false): number {
 }
 
 const b = (val: unknown, fb: boolean): boolean => (typeof val === 'boolean' ? val : fb);
+
+const sanitizeFontFamily = (raw: unknown, fb: NameTagFontFamily): NameTagFontFamily =>
+  raw === 'jetbrains-mono' || raw === 'sf-mono' || raw === 'archivo' ? raw : fb;
+
+const sanitizeFontWeight = (raw: unknown, fb: NameTagFontWeight): NameTagFontWeight => {
+  const wNum = Number(raw) as NameTagFontWeight;
+  return wNum === 400 || wNum === 500 || wNum === 600 || wNum === 700 ? wNum : fb;
+};
 
 export function sanitizeCarOverride(
   raw: Partial<NameTagCarOverride> | null | undefined,
@@ -78,11 +90,14 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
 
   const rawScale = num(s.cardRenderScale, D.cardRenderScale);
   out.cardRenderScale = Math.round(rawScale > 0 && rawScale <= 4 ? rawScale * 100 : rawScale);
-  out.fontFamily =
-    s.fontFamily === 'jetbrains-mono' || s.fontFamily === 'sf-mono' || s.fontFamily === 'archivo' ? s.fontFamily : D.fontFamily;
-  const wNum = Number(s.fontWeight) as NameTagFontWeight;
-  out.fontWeight = wNum === 400 || wNum === 500 || wNum === 600 || wNum === 700 ? wNum : D.fontWeight;
+  out.fontFamily = sanitizeFontFamily(s.fontFamily, D.fontFamily);
+  out.fontWeight = sanitizeFontWeight(s.fontWeight, D.fontWeight);
   out.depthMetric = s.depthMetric === 'euclidean' ? 'euclidean' : 'viewZ';
+
+  out.singleCharFontFamily = sanitizeFontFamily(s.singleCharFontFamily, D.singleCharFontFamily);
+  out.singleCharFontWeight = sanitizeFontWeight(s.singleCharFontWeight, D.singleCharFontWeight);
+  out.singleCharDepthMetric = s.singleCharDepthMetric === 'euclidean' ? 'euclidean' : 'viewZ';
+
   out.boostBorderColorMode =
     s.boostBorderColorMode === 'shared' || s.boostBorderColorMode === 'team'
       ? (s.boostBorderColorMode as NameTagBoostBorderColorMode)
@@ -94,14 +109,10 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
   out.aerialClimbAlertAudience = sanitizeBoostBorderAudience(s.aerialClimbAlertAudience, D.aerialClimbAlertAudience);
   out.aerialClimbTriggerMode = sanitizeAerialClimbTriggerMode(s.aerialClimbTriggerMode, D.aerialClimbTriggerMode);
 
+  out.anonymizePlayerNames = sanitizeAnonymizeMode(s.anonymizePlayerNames, D.anonymizePlayerNames);
   const cardDisplayMode: NameTagCardDisplayMode =
-    s.cardDisplayMode === 'circle' || s.cardDisplayMode === 'pill' ? s.cardDisplayMode : D.cardDisplayMode;
+    s.cardDisplayMode === 'single-char' || s.cardDisplayMode === 'pill' ? s.cardDisplayMode : D.cardDisplayMode;
   out.cardDisplayMode = cardDisplayMode;
-  const defaultLabel: NameTagCircleLabelMode = cardDisplayMode === 'circle' ? 'slot-code' : 'name';
-  out.circleLabelMode =
-    s.circleLabelMode === 'slot-code' || s.circleLabelMode === 'none' || s.circleLabelMode === 'name'
-      ? s.circleLabelMode
-      : defaultLabel;
   out.circleColorMode =
     s.circleColorMode === 'car-primary' || s.circleColorMode === 'team'
       ? (s.circleColorMode as NameTagCircleColorMode)
@@ -129,16 +140,19 @@ export function sanitizeConfig(raw: Partial<NameTagConfig> | null | undefined): 
       out.screenVerticalOffsetPx as number
     )
   );
+  out.singleCharCarOverrides = Array.from({ length: 6 }, (_, i) =>
+    sanitizeCarOverride(
+      Array.isArray(s.singleCharCarOverrides) ? s.singleCharCarOverrides[i] : null,
+      out.singleCharVerticalOffsetUu as number,
+      out.singleCharScreenVerticalOffsetPx as number
+    )
+  );
 
   return out as unknown as NameTagConfig;
 }
 
 export function mergeNameTagConfigPatch(currentConfig: NameTagConfig, patch: Partial<NameTagConfig>): NameTagConfig {
-  const merged: Partial<NameTagConfig> = { ...currentConfig, ...patch };
-  if (patch.cardDisplayMode !== undefined && patch.circleLabelMode === undefined) {
-    merged.circleLabelMode = patch.cardDisplayMode === 'circle' ? 'slot-code' : 'name';
-  }
-  return sanitizeConfig(merged);
+  return sanitizeConfig({ ...currentConfig, ...patch });
 }
 
 export function sanitizeRuntimeSyncSnapshot(raw: Partial<NameTagRuntimeSyncSnapshot> | null | undefined): NameTagRuntimeSyncSnapshot {
@@ -173,31 +187,33 @@ export function sanitizeRuntimeSyncSnapshot(raw: Partial<NameTagRuntimeSyncSnaps
 }
 
 export function computeFittedParametersFromSamples(config: NameTagConfig, snapshot: NameTagTelemetrySnapshot): NameTagFittedParameters {
+  const isSingleChar = config.cardDisplayMode === 'single-char';
+  const variant = resolveNameTagVariantParams(config, isSingleChar);
   const cars = snapshot.cars || [];
-  const enabledSamples = cars.filter((c) => c.visible && c.activeDepthUu > 10 && config.carOverrides[c.carIndex]?.enabled);
+  const enabledSamples = cars.filter((c) => c.visible && c.activeDepthUu > 10 && variant.carOverrides[c.carIndex]?.enabled);
   const samples = enabledSamples.length > 0 ? enabledSamples : cars.filter((c) => c.visible && c.activeDepthUu > 10);
 
   if (samples.length === 0) {
     return {
       sampleCount: 0,
-      cameraScaleFactor: config.cameraScaleFactor,
-      distanceScaleExponent: config.distanceScaleExponent,
-      nearScaleMultiplier: config.nearScaleMultiplier,
-      farScaleMultiplier: config.farScaleMultiplier,
-      verticalOffsetUu: config.verticalOffsetUu,
-      screenVerticalOffsetPx: config.screenVerticalOffsetPx,
+      cameraScaleFactor: variant.cameraScaleFactor,
+      distanceScaleExponent: variant.distanceScaleExponent,
+      nearScaleMultiplier: variant.nearScaleMultiplier,
+      farScaleMultiplier: variant.farScaleMultiplier,
+      verticalOffsetUu: variant.verticalOffsetUu,
+      screenVerticalOffsetPx: variant.screenVerticalOffsetPx,
     };
   }
   if (samples.length === 1) {
     const sample = samples[0];
-    const override = config.carOverrides[sample.carIndex];
+    const override = variant.carOverrides[sample.carIndex];
     const mult = override?.enabled ? override.scaleMultiplier : 1.0;
     return {
       sampleCount: 1,
-      cameraScaleFactor: Number((config.cameraScaleFactor * mult).toFixed(4)),
-      distanceScaleExponent: config.distanceScaleExponent,
-      nearScaleMultiplier: config.nearScaleMultiplier,
-      farScaleMultiplier: config.farScaleMultiplier,
+      cameraScaleFactor: Number((variant.cameraScaleFactor * mult).toFixed(4)),
+      distanceScaleExponent: variant.distanceScaleExponent,
+      nearScaleMultiplier: variant.nearScaleMultiplier,
+      farScaleMultiplier: variant.farScaleMultiplier,
       verticalOffsetUu: Math.round(sample.effectiveWorldOffsetUu),
       screenVerticalOffsetPx: Math.round(sample.effectiveScreenOffsetPx),
     };
@@ -213,7 +229,7 @@ export function computeFittedParametersFromSamples(config: NameTagConfig, snapsh
     const depth = Math.max(50, sample.activeDepthUu);
     xs.push(Math.log(depth / NAME_TAG_REFERENCE_DEPTH_UU));
     const scaleAtDepth =
-      config.cameraScaleFactor * Math.pow(depth / NAME_TAG_REFERENCE_DEPTH_UU, config.distanceScaleExponent) * sample.effectiveScaleMultiplier;
+      variant.cameraScaleFactor * Math.pow(depth / NAME_TAG_REFERENCE_DEPTH_UU, variant.distanceScaleExponent) * sample.effectiveScaleMultiplier;
     ys.push(Math.log(Math.max(0.001, scaleAtDepth)));
     depthRatios.push((2 * depth * tanHalfFov) / 1080);
     totalWorldOffsets.push(sample.totalWorldVerticalOffsetUu);
@@ -230,7 +246,7 @@ export function computeFittedParametersFromSamples(config: NameTagConfig, snapsh
     denXX += dx * dx;
   }
 
-  const fittedExponent = denXX > 1e-4 ? numXY / denXX : config.distanceScaleExponent;
+  const fittedExponent = denXX > 1e-4 ? numXY / denXX : variant.distanceScaleExponent;
   const fittedScaleFactor = denXX > 1e-4 ? Math.exp(meanY - fittedExponent * meanX) : Math.exp(meanY);
   const meanD = depthRatios.reduce((a, c) => a + c, 0) / n;
   const meanO = totalWorldOffsets.reduce((a, c) => a + c, 0) / n;
@@ -242,8 +258,8 @@ export function computeFittedParametersFromSamples(config: NameTagConfig, snapsh
     denDD += dd * dd;
   }
 
-  const fittedScreenOffsetPx = denDD > 1e-4 ? Math.round(numDO / denDD) : config.screenVerticalOffsetPx;
-  const fittedWorldOffsetUu = denDD > 1e-4 ? Math.round(meanO - fittedScreenOffsetPx * meanD) : config.verticalOffsetUu;
+  const fittedScreenOffsetPx = denDD > 1e-4 ? Math.round(numDO / denDD) : variant.screenVerticalOffsetPx;
+  const fittedWorldOffsetUu = denDD > 1e-4 ? Math.round(meanO - fittedScreenOffsetPx * meanD) : variant.verticalOffsetUu;
 
   return {
     sampleCount: samples.length,
@@ -262,7 +278,17 @@ export function buildNameTagCalibrationExportPayload(
   kickoffPermutationIndex: number
 ) {
   const fittedRecommendation = computeFittedParametersFromSamples(config, snapshot);
-  const { previewNames: _pn, previewBoostAmounts: _pb, previewAerialClimbingFlags: _pa, carOverrides: _co, enabled: _en, ...globalConfig } = config;
+  const isSingleChar = config.cardDisplayMode === 'single-char';
+  const activeOverrides = isSingleChar ? config.singleCharCarOverrides : config.carOverrides;
+  const {
+    previewNames: _pn,
+    previewBoostAmounts: _pb,
+    previewAerialClimbingFlags: _pa,
+    carOverrides: _co,
+    singleCharCarOverrides: _sco,
+    enabled: _en,
+    ...globalConfig
+  } = config;
   return {
     schema: 'rc_name_tag_calibration_v1',
     exportedAt: new Date().toISOString(),
@@ -294,7 +320,7 @@ export function buildNameTagCalibrationExportPayload(
       isOffscreen: car.isOffscreen ?? false,
       isDoubleJumpedAndClimbing: car.isDoubleJumpedAndClimbing ?? false,
       aerialClimbTriggerReason: car.aerialClimbTriggerReason ?? 'none',
-      override: config.carOverrides[car.carIndex] || null,
+      override: activeOverrides[car.carIndex] || null,
       telemetry: {
         carWorldPos: car.carWorldPos,
         anchorWorldPos: car.anchorWorldPos,

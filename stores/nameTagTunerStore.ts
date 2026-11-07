@@ -4,15 +4,19 @@ import {
   DEFAULT_RUNTIME_SYNC_SNAPSHOT,
   KICKOFF_PERMUTATION_COUNT,
   NAME_TAG_STORAGE_KEY,
+  createDefaultCarOverride,
+  mapVariantPatchToConfigPatch,
+  resolveNameTagVariantParams,
   type NameTagBoostBorderOverride,
   type NameTagCameraMode,
   type NameTagCarOverride,
+  type NameTagCardDisplayMode,
+  type NameTagCardVariantParams,
   type NameTagConfig,
   type NameTagFittedParameters,
   type NameTagRuntimeState,
   type NameTagRuntimeSyncSnapshot,
   type NameTagTelemetrySnapshot,
-  createDefaultCarOverride,
 } from '../config/nameTagConfig';
 import {
   buildNameTagCalibrationExportPayload as buildExportPayload,
@@ -22,11 +26,7 @@ import {
   sanitizeConfig,
   sanitizeRuntimeSyncSnapshot,
 } from '../config/nameTagCalibrationMath';
-import {
-  safeLocalStorageGet,
-  safeLocalStorageSet,
-  safeStorage,
-} from '../config/storageHelpers';
+import { safeLocalStorageGet, safeLocalStorageSet, safeStorage } from '../config/storageHelpers';
 import { getInitialDeveloperMode } from '../config/uiConfig';
 import { syncBridge } from './syncBridge';
 
@@ -34,6 +34,7 @@ export type {
   NameTagBoostBorderOverride,
   NameTagCameraMode,
   NameTagCarOverride,
+  NameTagCardVariantParams,
   NameTagConfig,
   NameTagFittedParameters,
   NameTagRuntimeState,
@@ -50,61 +51,31 @@ function loadSavedNameTagConfig(): NameTagConfig {
   const isDevMode = getInitialDeveloperMode();
   try {
     const raw = safeLocalStorageGet(NAME_TAG_STORAGE_KEY);
-    if (!raw) {
-      return sanitizeConfig({
-        ...DEFAULT_NAME_TAG_CONFIG,
-        offscreenIndicatorEnabled: isDevMode,
-      });
-    }
-    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    const sanitized = sanitizeConfig(parsed);
-    if (
-      isDevMode &&
-      !sanitized.offscreenIndicatorEnabled &&
-      safeLocalStorageGet(DEV_OFFSCREEN_MANUAL_OFF_KEY) !== '1'
-    ) {
+    if (!raw) return sanitizeConfig({ ...DEFAULT_NAME_TAG_CONFIG, offscreenIndicatorEnabled: isDevMode });
+    const sanitized = sanitizeConfig(typeof raw === 'string' ? JSON.parse(raw) : raw);
+    if (isDevMode && !sanitized.offscreenIndicatorEnabled && safeLocalStorageGet(DEV_OFFSCREEN_MANUAL_OFF_KEY) !== '1') {
       return { ...sanitized, offscreenIndicatorEnabled: true };
     }
     return sanitized;
   } catch {
-    return sanitizeConfig({
-      ...DEFAULT_NAME_TAG_CONFIG,
-      offscreenIndicatorEnabled: isDevMode,
-    });
+    return sanitizeConfig({ ...DEFAULT_NAME_TAG_CONFIG, offscreenIndicatorEnabled: isDevMode });
   }
 }
 
 function persistNameTagConfig(config: NameTagConfig, broadcast = true): void {
   try {
     safeLocalStorageSet(NAME_TAG_STORAGE_KEY, JSON.stringify(config));
-  } catch {
-    // Ignore storage errors
-  }
-  if (broadcast && !syncBridge.isApplyingRemote()) {
-    syncBridge.set(CONFIG_SYNC_KEY, config);
-  }
+  } catch {}
+  if (broadcast && !syncBridge.isApplyingRemote()) syncBridge.set(CONFIG_SYNC_KEY, config);
 }
 
-let currentConfig: NameTagConfig = sanitizeConfig(
-  syncBridge.get<NameTagConfig>(CONFIG_SYNC_KEY, loadSavedNameTagConfig())
-);
-
-const initialRuntimeSync = sanitizeRuntimeSyncSnapshot(
-  syncBridge.get<NameTagRuntimeSyncSnapshot>(
-    RUNTIME_SYNC_KEY,
-    DEFAULT_RUNTIME_SYNC_SNAPSHOT
-  )
-);
+let currentConfig: NameTagConfig = sanitizeConfig(syncBridge.get<NameTagConfig>(CONFIG_SYNC_KEY, loadSavedNameTagConfig()));
+const initialRuntimeSync = sanitizeRuntimeSyncSnapshot(syncBridge.get<NameTagRuntimeSyncSnapshot>(RUNTIME_SYNC_KEY, DEFAULT_RUNTIME_SYNC_SNAPSHOT));
 
 let runtimeState: NameTagRuntimeState = {
-  isTunerArenaActive: initialRuntimeSync.isTunerArenaActive,
+  ...initialRuntimeSync,
   isMultiplayerOrMultiCarMode: false,
-  kickoffPermutationIndex: initialRuntimeSync.kickoffPermutationIndex,
-  activeCameraMode: initialRuntimeSync.activeCameraMode,
-  focusedCarIndex: initialRuntimeSync.focusedCarIndex,
-  selectedCalibrationCarIndex: initialRuntimeSync.selectedCalibrationCarIndex,
   carEntries: [],
-  boostBorderOverride: initialRuntimeSync.boostBorderOverride,
   onEnterTunerArena: null,
   onExitTunerArena: null,
   onReshuffleKickoffPositions: null,
@@ -127,44 +98,27 @@ const DEFAULT_TELEMETRY_SNAPSHOT: NameTagTelemetrySnapshot = {
   cars: [],
 };
 
-let latestTelemetrySnapshot: NameTagTelemetrySnapshot =
-  syncBridge.get<NameTagTelemetrySnapshot>(
-    TELEMETRY_SYNC_KEY,
-    DEFAULT_TELEMETRY_SNAPSHOT
-  );
-
+let latestTelemetrySnapshot: NameTagTelemetrySnapshot = syncBridge.get<NameTagTelemetrySnapshot>(TELEMETRY_SYNC_KEY, DEFAULT_TELEMETRY_SNAPSHOT);
 const configListeners = new Set<() => void>();
 const telemetryListeners = new Set<(snapshot: NameTagTelemetrySnapshot) => void>();
 
-function extractRuntimeSyncSnapshot(
-  state: NameTagRuntimeState
-): NameTagRuntimeSyncSnapshot {
+function extractRuntimeSyncSnapshot(s: NameTagRuntimeState): NameTagRuntimeSyncSnapshot {
   return {
-    isTunerArenaActive: state.isTunerArenaActive,
-    kickoffPermutationIndex: state.kickoffPermutationIndex,
-    activeCameraMode: state.activeCameraMode,
-    focusedCarIndex: state.focusedCarIndex,
-    selectedCalibrationCarIndex: state.selectedCalibrationCarIndex,
-    boostBorderOverride: state.boostBorderOverride,
+    isTunerArenaActive: s.isTunerArenaActive,
+    kickoffPermutationIndex: s.kickoffPermutationIndex,
+    activeCameraMode: s.activeCameraMode,
+    focusedCarIndex: s.focusedCarIndex,
+    selectedCalibrationCarIndex: s.selectedCalibrationCarIndex,
+    boostBorderOverride: s.boostBorderOverride,
   };
 }
 
 export function notifyNameTagListeners(): void {
-  useNameTagTunerStore.setState({
-    config: currentConfig,
-    isTunerArenaActive: runtimeState.isTunerArenaActive,
-    kickoffPermutationIndex: runtimeState.kickoffPermutationIndex,
-    activeCameraMode: runtimeState.activeCameraMode,
-    focusedCarIndex: runtimeState.focusedCarIndex,
-    selectedCalibrationCarIndex: runtimeState.selectedCalibrationCarIndex,
-    boostBorderOverride: runtimeState.boostBorderOverride,
-  });
+  useNameTagTunerStore.setState({ config: currentConfig, ...extractRuntimeSyncSnapshot(runtimeState) });
   for (const listener of configListeners) {
     try {
       listener();
-    } catch {
-      // Ignore listener errors
-    }
+    } catch {}
   }
 }
 
@@ -176,20 +130,10 @@ export function updateNameTagConfig(
   patch: Partial<NameTagConfig>,
   options?: { fromCloudSync?: boolean; fromDevAutoActivate?: boolean }
 ): NameTagConfig {
-  if (
-    typeof patch.offscreenIndicatorEnabled === 'boolean' &&
-    !options?.fromCloudSync &&
-    !options?.fromDevAutoActivate &&
-    !syncBridge.isApplyingRemote()
-  ) {
+  if (typeof patch.offscreenIndicatorEnabled === 'boolean' && !options?.fromCloudSync && !options?.fromDevAutoActivate && !syncBridge.isApplyingRemote()) {
     try {
-      safeLocalStorageSet(
-        DEV_OFFSCREEN_MANUAL_OFF_KEY,
-        patch.offscreenIndicatorEnabled ? '0' : '1'
-      );
-    } catch {
-      // Ignore storage errors
-    }
+      safeLocalStorageSet(DEV_OFFSCREEN_MANUAL_OFF_KEY, patch.offscreenIndicatorEnabled ? '0' : '1');
+    } catch {}
   }
   currentConfig = mergeNameTagConfigPatch(currentConfig, patch);
   persistNameTagConfig(currentConfig, true);
@@ -197,64 +141,48 @@ export function updateNameTagConfig(
   return currentConfig;
 }
 
-export function activateNameTagOffscreenForDeveloperMode(): void {
-  if (safeLocalStorageGet(DEV_OFFSCREEN_MANUAL_OFF_KEY) === '1') return;
-  if (!currentConfig.offscreenIndicatorEnabled) {
-    updateNameTagConfig(
-      { offscreenIndicatorEnabled: true },
-      { fromDevAutoActivate: true }
-    );
-  }
+export function updateActiveNameTagVariant(patch: Partial<NameTagCardVariantParams>): NameTagConfig {
+  return updateNameTagConfig(mapVariantPatchToConfigPatch(currentConfig.cardDisplayMode === 'single-char', patch));
 }
 
-export function updateNameTagCarOverride(
-  carIndex: number,
-  patch: Partial<NameTagCarOverride>
-): NameTagConfig {
-  const nextOverrides = currentConfig.carOverrides.map((entry, idx) =>
-    idx === carIndex
-      ? sanitizeCarOverride(
-          { ...entry, ...patch },
-          currentConfig.verticalOffsetUu,
-          currentConfig.screenVerticalOffsetPx
-        )
-      : entry
+export function copyNameTagVariantParameters(fromMode: NameTagCardDisplayMode, toMode: NameTagCardDisplayMode): NameTagConfig {
+  const source = resolveNameTagVariantParams(currentConfig, fromMode === 'single-char');
+  return updateNameTagConfig(
+    mapVariantPatchToConfigPatch(toMode === 'single-char', { ...source, carOverrides: source.carOverrides.map((ov) => ({ ...ov })) })
   );
-  return updateNameTagConfig({ carOverrides: nextOverrides });
+}
+
+export function activateNameTagOffscreenForDeveloperMode(): void {
+  if (safeLocalStorageGet(DEV_OFFSCREEN_MANUAL_OFF_KEY) === '1') return;
+  if (!currentConfig.offscreenIndicatorEnabled) updateNameTagConfig({ offscreenIndicatorEnabled: true }, { fromDevAutoActivate: true });
+}
+
+export function updateNameTagCarOverride(carIndex: number, patch: Partial<NameTagCarOverride>): NameTagConfig {
+  const isSingleChar = currentConfig.cardDisplayMode === 'single-char';
+  const v = resolveNameTagVariantParams(currentConfig, isSingleChar);
+  const next = v.carOverrides.map((e, i) => (i === carIndex ? sanitizeCarOverride({ ...e, ...patch }, v.verticalOffsetUu, v.screenVerticalOffsetPx) : e));
+  return updateNameTagConfig(mapVariantPatchToConfigPatch(isSingleChar, { carOverrides: next }));
 }
 
 export function resetNameTagCarOverride(carIndex: number): NameTagConfig {
-  const nextOverrides = currentConfig.carOverrides.map((entry, idx) =>
-    idx === carIndex
-      ? createDefaultCarOverride(
-          currentConfig.verticalOffsetUu,
-          currentConfig.screenVerticalOffsetPx
-        )
-      : entry
-  );
-  return updateNameTagConfig({ carOverrides: nextOverrides });
+  const isSingleChar = currentConfig.cardDisplayMode === 'single-char';
+  const v = resolveNameTagVariantParams(currentConfig, isSingleChar);
+  const next = v.carOverrides.map((e, i) => (i === carIndex ? createDefaultCarOverride(v.verticalOffsetUu, v.screenVerticalOffsetPx) : e));
+  return updateNameTagConfig(mapVariantPatchToConfigPatch(isSingleChar, { carOverrides: next }));
 }
 
 export function resetAllNameTagCarOverrides(): NameTagConfig {
-  const nextOverrides = Array.from({ length: 6 }, () =>
-    createDefaultCarOverride(
-      currentConfig.verticalOffsetUu,
-      currentConfig.screenVerticalOffsetPx
-    )
-  );
-  return updateNameTagConfig({ carOverrides: nextOverrides });
+  const isSingleChar = currentConfig.cardDisplayMode === 'single-char';
+  const v = resolveNameTagVariantParams(currentConfig, isSingleChar);
+  const next = Array.from({ length: 6 }, () => createDefaultCarOverride(v.verticalOffsetUu, v.screenVerticalOffsetPx));
+  return updateNameTagConfig(mapVariantPatchToConfigPatch(isSingleChar, { carOverrides: next }));
 }
 
 export function resetNameTagConfig(): NameTagConfig {
   try {
     safeLocalStorageSet(DEV_OFFSCREEN_MANUAL_OFF_KEY, '0');
-  } catch {
-    // Ignore storage errors
-  }
-  currentConfig = sanitizeConfig({
-    ...DEFAULT_NAME_TAG_CONFIG,
-    offscreenIndicatorEnabled: getInitialDeveloperMode(),
-  });
+  } catch {}
+  currentConfig = sanitizeConfig({ ...DEFAULT_NAME_TAG_CONFIG, offscreenIndicatorEnabled: getInitialDeveloperMode() });
   persistNameTagConfig(currentConfig, true);
   notifyNameTagListeners();
   return currentConfig;
@@ -269,37 +197,26 @@ export function getNameTagRuntimeState(): NameTagRuntimeState {
   return runtimeState;
 }
 
-export function setNameTagRuntimeState(
-  patch: Partial<NameTagRuntimeState>
-): NameTagRuntimeState {
-  const prevSync = extractRuntimeSyncSnapshot(runtimeState);
+export function setNameTagRuntimeState(patch: Partial<NameTagRuntimeState>): NameTagRuntimeState {
+  const prev = extractRuntimeSyncSnapshot(runtimeState);
   runtimeState = { ...runtimeState, ...patch };
-  const nextSync = sanitizeRuntimeSyncSnapshot(extractRuntimeSyncSnapshot(runtimeState));
-  runtimeState = { ...runtimeState, ...nextSync };
-
-  const syncChanged =
-    prevSync.isTunerArenaActive !== nextSync.isTunerArenaActive ||
-    prevSync.kickoffPermutationIndex !== nextSync.kickoffPermutationIndex ||
-    prevSync.activeCameraMode !== nextSync.activeCameraMode ||
-    prevSync.focusedCarIndex !== nextSync.focusedCarIndex ||
-    prevSync.selectedCalibrationCarIndex !== nextSync.selectedCalibrationCarIndex ||
-    prevSync.boostBorderOverride !== nextSync.boostBorderOverride;
-
-  if (syncChanged && !syncBridge.isApplyingRemote()) {
-    syncBridge.set(RUNTIME_SYNC_KEY, nextSync);
-  }
+  const next = sanitizeRuntimeSyncSnapshot(extractRuntimeSyncSnapshot(runtimeState));
+  runtimeState = { ...runtimeState, ...next };
+  const changed =
+    prev.isTunerArenaActive !== next.isTunerArenaActive ||
+    prev.kickoffPermutationIndex !== next.kickoffPermutationIndex ||
+    prev.activeCameraMode !== next.activeCameraMode ||
+    prev.focusedCarIndex !== next.focusedCarIndex ||
+    prev.selectedCalibrationCarIndex !== next.selectedCalibrationCarIndex ||
+    prev.boostBorderOverride !== next.boostBorderOverride;
+  if (changed && !syncBridge.isApplyingRemote()) syncBridge.set(RUNTIME_SYNC_KEY, next);
   notifyNameTagListeners();
   return runtimeState;
 }
 
-export function setNameTagTelemetrySnapshot(
-  snapshot: NameTagTelemetrySnapshot,
-  broadcast = true
-): void {
+export function setNameTagTelemetrySnapshot(snapshot: NameTagTelemetrySnapshot, broadcast = true): void {
   latestTelemetrySnapshot = snapshot;
-  if (broadcast && !syncBridge.isApplyingRemote()) {
-    syncBridge.set(TELEMETRY_SYNC_KEY, snapshot);
-  }
+  if (broadcast && !syncBridge.isApplyingRemote()) syncBridge.set(TELEMETRY_SYNC_KEY, snapshot);
   for (const listener of telemetryListeners) listener(snapshot);
 }
 
@@ -307,9 +224,7 @@ export function getNameTagTelemetrySnapshot(): NameTagTelemetrySnapshot {
   return latestTelemetrySnapshot;
 }
 
-export function subscribeNameTagTelemetry(
-  listener: (snapshot: NameTagTelemetrySnapshot) => void
-): () => void {
+export function subscribeNameTagTelemetry(listener: (snapshot: NameTagTelemetrySnapshot) => void): () => void {
   telemetryListeners.add(listener);
   return () => telemetryListeners.delete(listener);
 }
@@ -319,27 +234,24 @@ export function computeFittedParametersFromSamples(): NameTagFittedParameters {
 }
 
 export function applyFittedParametersFromCarOverrides(): NameTagConfig {
-  const fitted = computeFittedParametersFromSamples();
-  const nextOverrides = Array.from({ length: 6 }, () =>
-    createDefaultCarOverride(fitted.verticalOffsetUu, fitted.screenVerticalOffsetPx)
+  const f = computeFittedParametersFromSamples();
+  const isSingleChar = currentConfig.cardDisplayMode === 'single-char';
+  const next = Array.from({ length: 6 }, () => createDefaultCarOverride(f.verticalOffsetUu, f.screenVerticalOffsetPx));
+  return updateNameTagConfig(
+    mapVariantPatchToConfigPatch(isSingleChar, {
+      cameraScaleFactor: f.cameraScaleFactor,
+      distanceScaleExponent: f.distanceScaleExponent,
+      nearScaleMultiplier: f.nearScaleMultiplier,
+      farScaleMultiplier: f.farScaleMultiplier,
+      verticalOffsetUu: f.verticalOffsetUu,
+      screenVerticalOffsetPx: f.screenVerticalOffsetPx,
+      carOverrides: next,
+    })
   );
-  return updateNameTagConfig({
-    cameraScaleFactor: fitted.cameraScaleFactor,
-    distanceScaleExponent: fitted.distanceScaleExponent,
-    nearScaleMultiplier: fitted.nearScaleMultiplier,
-    farScaleMultiplier: fitted.farScaleMultiplier,
-    verticalOffsetUu: fitted.verticalOffsetUu,
-    screenVerticalOffsetPx: fitted.screenVerticalOffsetPx,
-    carOverrides: nextOverrides,
-  });
 }
 
 export function buildNameTagCalibrationExportPayload() {
-  return buildExportPayload(
-    getNameTagConfig(),
-    getNameTagTelemetrySnapshot(),
-    runtimeState.kickoffPermutationIndex
-  );
+  return buildExportPayload(getNameTagConfig(), getNameTagTelemetrySnapshot(), runtimeState.kickoffPermutationIndex);
 }
 
 export interface NameTagTunerStoreState {
@@ -351,6 +263,8 @@ export interface NameTagTunerStoreState {
   selectedCalibrationCarIndex: number;
   boostBorderOverride: NameTagBoostBorderOverride;
   updateConfig: (patch: Partial<NameTagConfig>) => void;
+  updateActiveVariant: (patch: Partial<NameTagCardVariantParams>) => void;
+  copyVariantParameters: (fromMode: NameTagCardDisplayMode, toMode: NameTagCardDisplayMode) => void;
   updatePreviewName: (index: number, name: string) => void;
   updatePreviewBoostAmount: (index: number, boostAmount: number) => void;
   updatePreviewAerialClimbingFlag: (index: number, climbing: boolean) => void;
@@ -371,48 +285,35 @@ export interface NameTagTunerStoreState {
 
 export const useNameTagTunerStore = create<NameTagTunerStoreState>((_set, get) => ({
   config: currentConfig,
-  isTunerArenaActive: runtimeState.isTunerArenaActive,
-  kickoffPermutationIndex: runtimeState.kickoffPermutationIndex,
-  activeCameraMode: runtimeState.activeCameraMode,
-  focusedCarIndex: runtimeState.focusedCarIndex,
-  selectedCalibrationCarIndex: runtimeState.selectedCalibrationCarIndex,
-  boostBorderOverride: runtimeState.boostBorderOverride,
+  ...extractRuntimeSyncSnapshot(runtimeState),
   updateConfig: (patch) => updateNameTagConfig(patch),
+  updateActiveVariant: (patch) => updateActiveNameTagVariant(patch),
+  copyVariantParameters: (fromMode, toMode) => copyNameTagVariantParameters(fromMode, toMode),
   updatePreviewName: (index, name) => {
-    const nextNames = [...get().config.previewNames];
-    if (index >= 0 && index < 6) nextNames[index] = name;
-    updateNameTagConfig({ previewNames: nextNames });
+    const next = [...get().config.previewNames];
+    if (index >= 0 && index < 6) next[index] = name;
+    updateNameTagConfig({ previewNames: next });
   },
   updatePreviewBoostAmount: (index, boostAmount) => {
-    const nextBoosts = [...get().config.previewBoostAmounts];
-    if (index >= 0 && index < 6) {
-      nextBoosts[index] = Math.max(0, Math.min(100, Math.round(Number(boostAmount) || 0)));
-    }
-    updateNameTagConfig({ previewBoostAmounts: nextBoosts });
+    const next = [...get().config.previewBoostAmounts];
+    if (index >= 0 && index < 6) next[index] = Math.max(0, Math.min(100, Math.round(Number(boostAmount) || 0)));
+    updateNameTagConfig({ previewBoostAmounts: next });
   },
   updatePreviewAerialClimbingFlag: (index, climbing) => {
-    const nextFlags = [...(get().config.previewAerialClimbingFlags || [])];
-    if (index >= 0 && index < 6) nextFlags[index] = Boolean(climbing);
-    updateNameTagConfig({ previewAerialClimbingFlags: nextFlags });
+    const next = [...(get().config.previewAerialClimbingFlags || [])];
+    if (index >= 0 && index < 6) next[index] = Boolean(climbing);
+    updateNameTagConfig({ previewAerialClimbingFlags: next });
   },
   setBoostBorderOverride: (override) => setNameTagRuntimeState({ boostBorderOverride: override }),
-  selectCalibrationCar: (carIndex) => {
-    const clampedIndex = Math.max(0, Math.min(5, Math.round(Number(carIndex) || 0)));
-    setNameTagRuntimeState({ selectedCalibrationCarIndex: clampedIndex });
-  },
+  selectCalibrationCar: (carIndex) => setNameTagRuntimeState({ selectedCalibrationCarIndex: Math.max(0, Math.min(5, Math.round(Number(carIndex) || 0))) }),
   updateCarOverride: (carIndex, patch) => updateNameTagCarOverride(carIndex, patch),
   resetCarOverride: (carIndex) => resetNameTagCarOverride(carIndex),
   resetAllCarOverrides: () => resetAllNameTagCarOverrides(),
   applyFittedFromCarOverrides: () => applyFittedParametersFromCarOverrides(),
-  exportCalibrationJson: () =>
-    JSON.stringify(buildNameTagCalibrationExportPayload(), null, 2),
+  exportCalibrationJson: () => JSON.stringify(buildNameTagCalibrationExportPayload(), null, 2),
   resetConfig: () => resetNameTagConfig(),
   enterTunerArenaAndSpawnSixCars: () => {
-    setNameTagRuntimeState({
-      isTunerArenaActive: true,
-      activeCameraMode: 'pov',
-      focusedCarIndex: 0,
-    });
+    setNameTagRuntimeState({ isTunerArenaActive: true, activeCameraMode: 'pov', focusedCarIndex: 0 });
     runtimeState.onEnterTunerArena?.();
   },
   exitTunerArena: () => {
@@ -420,22 +321,14 @@ export const useNameTagTunerStore = create<NameTagTunerStoreState>((_set, get) =
     runtimeState.onExitTunerArena?.();
   },
   reshuffleKickoffPositions: () => {
-    const nextIndex =
-      (runtimeState.kickoffPermutationIndex + 1) % KICKOFF_PERMUTATION_COUNT;
-    setNameTagRuntimeState({
-      isTunerArenaActive: true,
-      kickoffPermutationIndex: nextIndex,
-    });
+    const nextIndex = (runtimeState.kickoffPermutationIndex + 1) % KICKOFF_PERMUTATION_COUNT;
+    setNameTagRuntimeState({ isTunerArenaActive: true, kickoffPermutationIndex: nextIndex });
     runtimeState.onReshuffleKickoffPositions?.();
   },
   selectPovCar: (carIndex) => {
-    const clampedIndex = Math.max(0, Math.min(5, Math.round(Number(carIndex) || 0)));
-    setNameTagRuntimeState({
-      isTunerArenaActive: true,
-      activeCameraMode: 'pov',
-      focusedCarIndex: clampedIndex,
-    });
-    runtimeState.onSelectPovCar?.(clampedIndex);
+    const idx = Math.max(0, Math.min(5, Math.round(Number(carIndex) || 0)));
+    setNameTagRuntimeState({ isTunerArenaActive: true, activeCameraMode: 'pov', focusedCarIndex: idx });
+    runtimeState.onSelectPovCar?.(idx);
   },
   focusFreeCamOverview: () => {
     setNameTagRuntimeState({ isTunerArenaActive: true, activeCameraMode: 'free' });
