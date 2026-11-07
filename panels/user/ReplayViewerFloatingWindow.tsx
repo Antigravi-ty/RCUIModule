@@ -1,13 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import {
-  Upload,
-  Loader2,
-  ClockCheck,
-  Play,
-  Pause,
-  Rewind,
-  FastForward,
-} from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Play, Pause, Rewind, FastForward } from 'lucide-react';
 import {
   MultiTrackReplayTimeline,
   DEFAULT_REPLAY_INCIDENT_MARKERS,
@@ -23,13 +15,13 @@ import {
   type ReplayDownCounterOption,
 } from '../../stores/replayViewerStore';
 import { quickNotification } from '../../stores/quickNotificationStore';
-import { triggerReplayFilePicker } from './replayFilePicker';
 import {
   ReplayViewerTransportBar,
   type PlaybackSpeedPreset,
   type DownCounterOption,
   type ReplayViewerState,
 } from './ReplayViewerTransportBar';
+import { ReplayViewerLoadActionsHeader } from './replay-viewer/ReplayViewerLoadActionsHeader';
 
 export type {
   PlaybackSpeedPreset,
@@ -134,7 +126,6 @@ export const ReplayViewerFloatingWindow: React.FC<
     [rawSignalMarkers]
   );
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [clipIndex, setClipIndex] = useState<number>(0);
   const activeClip = RECENT_CLIPS[clipIndex];
 
@@ -239,88 +230,37 @@ export const ReplayViewerFloatingWindow: React.FC<
 
   const backToReplayDisabled = controlsDisabled || !isIntervening;
 
+  const bindPushHandlers = (startFn?: () => void, stopFn?: () => void) =>
+    controlsDisabled || !hasRuntimeHandlers
+      ? {}
+      : {
+          onMouseDown: () => startFn?.(),
+          onMouseUp: () => stopFn?.(),
+          onMouseLeave: () => stopFn?.(),
+          onTouchStart: () => startFn?.(),
+          onTouchEnd: () => stopFn?.(),
+        };
+
   return (
     <div className="p-3.5 flex flex-col gap-3 text-xs select-none">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".rcreplay,.rcreplay.gz,.rcgr,.rcgr.gz,.json,.gz,application/gzip,application/x-gzip,application/json"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          e.target.value = '';
-          if (file) {
-            runtimeHandlers.onUploadReplayFile?.(file);
+      <ReplayViewerLoadActionsHeader
+        isLight={isLight}
+        isLoadingReplay={Boolean(isLoadingReplay)}
+        loadRecentDisabled={loadRecentDisabled}
+        hasRuntimeHandlers={hasRuntimeHandlers}
+        onUploadFile={(file) => runtimeHandlers.onUploadReplayFile?.(file)}
+        onLoadRecent={() => {
+          if (hasRuntimeHandlers) {
+            runtimeHandlers.onLoadRetainedMatchReplay?.();
+          } else {
+            const nextIdx = (clipIndex + 1) % RECENT_CLIPS.length;
+            setClipIndex(nextIdx);
+            setInternalCursorFrame(360);
+            setInternalIsIntervening(false);
+            quickNotification.info(`Loaded recent replay: ${RECENT_CLIPS[nextIdx].name}`);
           }
         }}
       />
-      {/* 1. Top Row: 2 Buttons — Load Replay Files (Black Primary + Upload icon) & Load Recent (clock-check icon) */}
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          disabled={Boolean(isLoadingReplay)}
-          onClick={() => {
-            if (isLoadingReplay) return;
-            if (hasRuntimeHandlers) {
-              triggerReplayFilePicker((file) => {
-                runtimeHandlers.onUploadReplayFile?.(file);
-              });
-            } else {
-              quickNotification.info('Open local .rcreplay file picker.');
-            }
-          }}
-          className={`py-2 px-3 rounded-xl font-bold text-xs inline-flex items-center justify-center gap-1.5 transition-all shadow-xs ${
-            isLoadingReplay
-              ? isLight
-                ? 'bg-neutral-800 text-white/80 border border-neutral-800 cursor-wait'
-                : 'bg-neutral-200 text-neutral-950/80 border border-neutral-200 cursor-wait'
-              : isLight
-              ? 'bg-neutral-900 hover:bg-neutral-800 text-white border border-neutral-900 cursor-pointer active:scale-[0.985]'
-              : 'bg-white hover:bg-neutral-200 text-neutral-950 border border-white cursor-pointer active:scale-[0.985]'
-          }`}
-        >
-          {isLoadingReplay ? (
-            <>
-              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-              <span>Loading Replay...</span>
-            </>
-          ) : (
-            <>
-              <Upload className="h-3.5 w-3.5 shrink-0" />
-              <span>Load Replay Files</span>
-            </>
-          )}
-        </button>
-
-        <button
-          type="button"
-          disabled={loadRecentDisabled}
-          onClick={() => {
-            if (loadRecentDisabled) return;
-            if (hasRuntimeHandlers) {
-              runtimeHandlers.onLoadRetainedMatchReplay?.();
-            } else {
-              const nextIdx = (clipIndex + 1) % RECENT_CLIPS.length;
-              setClipIndex(nextIdx);
-              setInternalCursorFrame(360);
-              setInternalIsIntervening(false);
-              quickNotification.info(`Loaded recent replay: ${RECENT_CLIPS[nextIdx].name}`);
-            }
-          }}
-          className={`py-2 px-3 rounded-xl border font-semibold text-xs inline-flex items-center justify-center gap-1.5 transition-all ${
-            loadRecentDisabled
-              ? isLight
-                ? 'bg-neutral-100 border-neutral-200 text-neutral-400 opacity-45 cursor-not-allowed pointer-events-none'
-                : 'bg-neutral-800/50 border-neutral-800 text-neutral-500 opacity-45 cursor-not-allowed pointer-events-none'
-              : isLight
-              ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800 cursor-pointer active:scale-95'
-              : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200 cursor-pointer active:scale-95'
-          }`}
-        >
-          <ClockCheck className="h-3.5 w-3.5 shrink-0" />
-          <span>Load Recent</span>
-        </button>
-      </div>
 
       {/* 2. L5 MultiTrackReplayTimeline (File Name, Frame Readout & 3 Synchronized Tracks) */}
       <MultiTrackReplayTimeline
@@ -384,31 +324,10 @@ export const ReplayViewerFloatingWindow: React.FC<
               handleStep(-Math.max(1, Math.round(effectiveSpeedPct / 100)));
             }
           }}
-          onMouseDown={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushBackwardStart?.()
-          }
-          onMouseUp={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushBackwardStop?.()
-          }
-          onMouseLeave={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushBackwardStop?.()
-          }
-          onTouchStart={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushBackwardStart?.()
-          }
-          onTouchEnd={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushBackwardStop?.()
-          }
+          {...bindPushHandlers(
+            runtimeHandlers.onPushBackwardStart,
+            runtimeHandlers.onPushBackwardStop
+          )}
           className={compactBtnClass}
           title="Rewind (Hotkey: [)"
         >
@@ -425,31 +344,10 @@ export const ReplayViewerFloatingWindow: React.FC<
               handleStep(Math.max(1, Math.round(effectiveSpeedPct / 100)));
             }
           }}
-          onMouseDown={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushForwardStart?.()
-          }
-          onMouseUp={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushForwardStop?.()
-          }
-          onMouseLeave={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushForwardStop?.()
-          }
-          onTouchStart={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushForwardStart?.()
-          }
-          onTouchEnd={
-            controlsDisabled || !hasRuntimeHandlers
-              ? undefined
-              : () => runtimeHandlers.onPushForwardStop?.()
-          }
+          {...bindPushHandlers(
+            runtimeHandlers.onPushForwardStart,
+            runtimeHandlers.onPushForwardStop
+          )}
           className={compactBtnClass}
           title="Forward (Hotkey: ])"
         >
@@ -468,12 +366,8 @@ export const ReplayViewerFloatingWindow: React.FC<
         downCounter={downCounter}
         clampedCursor={clampedCursor}
         cursorSec={cursorSec}
-        onPresetSelect={(nextPreset) => {
-          setFlowPreset(nextPreset);
-        }}
-        onCustomSpeedSelect={(nextPct) => {
-          setCustomFlowPct(nextPct);
-        }}
+        onPresetSelect={(nextPreset) => setFlowPreset(nextPreset)}
+        onCustomSpeedSelect={(nextPct) => setCustomFlowPct(nextPct)}
         onInterveneClick={() => {
           if (controlsDisabled) return;
           if (hasRuntimeHandlers) {

@@ -3,7 +3,14 @@ import { Download, Copy, Check, RotateCcw, Layers } from 'lucide-react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { AUDIO_ATTENUATION_CATEGORIES } from '../../../config/spatialAttenuationPresets';
-import { spatialAttenuationProfiles, type AttenuationArchetypeId, type AttenuationCurveType, type AudioAttenuationCategory, type SpatialAttenuationProfile, type SpatialAttenuationProfileMap } from '../../../config/spatialAttenuationProfiles';
+import {
+  spatialAttenuationProfiles,
+  type AttenuationArchetypeId,
+  type AttenuationCurveType,
+  type AudioAttenuationCategory,
+  type SpatialAttenuationProfile,
+  type SpatialAttenuationProfileMap,
+} from '../../../config/spatialAttenuationProfiles';
 import {
   getSpatialAudioVisualizerConfig,
   getSpatialAudioVisualizerTelemetry,
@@ -37,6 +44,18 @@ const CURVE_TYPES: { id: AttenuationCurveType; label: string }[] = [
   { id: 'inverse', label: 'Inverse Hyperbolic' },
 ];
 
+const BEZIER_FIELDS: ReadonlyArray<{
+  key: 'x1' | 'y1' | 'x2' | 'y2';
+  label: string;
+  min: number;
+  max: number;
+}> = [
+  { key: 'x1', label: 'Bezier P1.x', min: 0.01, max: 0.99 },
+  { key: 'y1', label: 'Bezier P1.y', min: 0.0, max: 1.0 },
+  { key: 'x2', label: 'Bezier P2.x', min: 0.01, max: 0.99 },
+  { key: 'y2', label: 'Bezier P2.y', min: 0.0, max: 1.0 },
+];
+
 export const DistanceAttenuationTunerTab: React.FC<
   DistanceAttenuationTunerTabProps
 > = ({ isLight }) => {
@@ -52,15 +71,9 @@ export const DistanceAttenuationTunerTab: React.FC<
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const unsubProfiles = spatialAttenuationProfiles.subscribe((next) => {
-      setProfiles({ ...next });
-    });
-    const unsubViz = subscribeSpatialAudioVisualizerConfig((next) => {
-      setVizConfig(next);
-    });
-    const unsubTelemetry = subscribeSpatialAudioVisualizerTelemetry((next) => {
-      setTelemetry(next);
-    });
+    const unsubProfiles = spatialAttenuationProfiles.subscribe((next) => setProfiles({ ...next }));
+    const unsubViz = subscribeSpatialAudioVisualizerConfig(setVizConfig);
+    const unsubTelemetry = subscribeSpatialAudioVisualizerTelemetry(setTelemetry);
     return () => {
       unsubProfiles();
       unsubViz();
@@ -72,19 +85,13 @@ export const DistanceAttenuationTunerTab: React.FC<
   const activeProfile: SpatialAttenuationProfile =
     profiles[activeCategory] || spatialAttenuationProfiles.getProfile(activeCategory);
 
-  const handleSelectCategory = (cat: AudioAttenuationCategory) => {
-    updateSpatialAudioVisualizerConfig({ activeCategory: cat });
-  };
-
   const handleUpdateProfile = (patch: Partial<SpatialAttenuationProfile>) => {
     spatialAttenuationProfiles.updateProfile(activeCategory, patch);
   };
 
   const handleCopyAllJson = () => {
     const json = spatialAttenuationProfiles.exportJson();
-    if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(json).catch(() => {});
-    }
+    navigator?.clipboard?.writeText?.(json).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };
@@ -107,6 +114,15 @@ export const DistanceAttenuationTunerTab: React.FC<
   const isBezier =
     activeProfile.curveType === 'custom-bezier' || activeProfile.curveType === 'bezier';
 
+  const cardBg = isLight
+    ? 'bg-neutral-100/80 border-neutral-200'
+    : 'bg-neutral-900/75 border-neutral-800';
+  const resetBtnClass = `flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
+    isLight
+      ? 'bg-neutral-100 border-neutral-300 text-neutral-600 hover:bg-neutral-200'
+      : 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:text-neutral-200'
+  }`;
+
   return (
     <div className="flex flex-col gap-2.5 text-xs select-none">
       {/* 1. 3D Arena Visualizer & Anchor Controls */}
@@ -118,13 +134,7 @@ export const DistanceAttenuationTunerTab: React.FC<
       />
 
       {/* 2. Acoustic Category Selector */}
-      <div
-        className={`flex flex-col gap-1.5 p-2.5 rounded-xl border ${
-          isLight
-            ? 'bg-neutral-100/80 border-neutral-200'
-            : 'bg-neutral-900/75 border-neutral-800'
-        }`}
-      >
+      <div className={`flex flex-col gap-1.5 p-2.5 rounded-xl border ${cardBg}`}>
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold flex items-center gap-1.5">
             <Layers className="w-3.5 h-3.5 text-amber-400" />
@@ -143,7 +153,7 @@ export const DistanceAttenuationTunerTab: React.FC<
               <button
                 key={cat}
                 type="button"
-                onClick={() => handleSelectCategory(cat)}
+                onClick={() => updateSpatialAudioVisualizerConfig({ activeCategory: cat })}
                 className={`flex items-center justify-between px-2 py-1 rounded-lg text-[10px] border transition-colors cursor-pointer ${
                   isSelected
                     ? 'bg-amber-500/20 border-amber-500/60 text-amber-300 font-semibold'
@@ -171,14 +181,7 @@ export const DistanceAttenuationTunerTab: React.FC<
       />
 
       {/* 4. Curve Mathematical Model & Radius Parameters */}
-      <div
-        className={`flex flex-col gap-2 p-2.5 rounded-xl border ${
-          isLight
-            ? 'bg-neutral-100/80 border-neutral-200'
-            : 'bg-neutral-900/75 border-neutral-800'
-        }`}
-      >
-        {/* Curve Type Pills */}
+      <div className={`flex flex-col gap-2 p-2.5 rounded-xl border ${cardBg}`}>
         <div className="grid grid-cols-5 gap-1">
           {CURVE_TYPES.map((ct) => {
             const selected =
@@ -285,78 +288,27 @@ export const DistanceAttenuationTunerTab: React.FC<
 
         {isBezier && (
           <div className="grid grid-cols-2 gap-2">
-            <SliderControl
-              editable={true}
-              allowOutOfBoundsInput={false}
-              showStepper={false}
-              colorScheme="amber"
-              label="Bezier P1.x"
-              unit=""
-              value={activeProfile.bezierPoints.x1}
-              min={0.01}
-              max={0.99}
-              step={0.01}
-              isLight={isLight}
-              onChange={(x1) =>
-                handleUpdateProfile({
-                  bezierPoints: { ...activeProfile.bezierPoints, x1 },
-                })
-              }
-            />
-            <SliderControl
-              editable={true}
-              allowOutOfBoundsInput={false}
-              showStepper={false}
-              colorScheme="amber"
-              label="Bezier P1.y"
-              unit=""
-              value={activeProfile.bezierPoints.y1}
-              min={0.0}
-              max={1.0}
-              step={0.01}
-              isLight={isLight}
-              onChange={(y1) =>
-                handleUpdateProfile({
-                  bezierPoints: { ...activeProfile.bezierPoints, y1 },
-                })
-              }
-            />
-            <SliderControl
-              editable={true}
-              allowOutOfBoundsInput={false}
-              showStepper={false}
-              colorScheme="amber"
-              label="Bezier P2.x"
-              unit=""
-              value={activeProfile.bezierPoints.x2}
-              min={0.01}
-              max={0.99}
-              step={0.01}
-              isLight={isLight}
-              onChange={(x2) =>
-                handleUpdateProfile({
-                  bezierPoints: { ...activeProfile.bezierPoints, x2 },
-                })
-              }
-            />
-            <SliderControl
-              editable={true}
-              allowOutOfBoundsInput={false}
-              showStepper={false}
-              colorScheme="amber"
-              label="Bezier P2.y"
-              unit=""
-              value={activeProfile.bezierPoints.y2}
-              min={0.0}
-              max={1.0}
-              step={0.01}
-              isLight={isLight}
-              onChange={(y2) =>
-                handleUpdateProfile({
-                  bezierPoints: { ...activeProfile.bezierPoints, y2 },
-                })
-              }
-            />
+            {BEZIER_FIELDS.map((bf) => (
+              <SliderControl
+                key={bf.key}
+                editable={true}
+                allowOutOfBoundsInput={false}
+                showStepper={false}
+                colorScheme="amber"
+                label={bf.label}
+                unit=""
+                value={activeProfile.bezierPoints[bf.key]}
+                min={bf.min}
+                max={bf.max}
+                step={0.01}
+                isLight={isLight}
+                onChange={(val) =>
+                  handleUpdateProfile({
+                    bezierPoints: { ...activeProfile.bezierPoints, [bf.key]: val },
+                  })
+                }
+              />
+            ))}
           </div>
         )}
 
@@ -365,19 +317,13 @@ export const DistanceAttenuationTunerTab: React.FC<
             <span className="font-semibold text-[11px] truncate">
               Hard Distance Culling Beyond R_max
             </span>
-            <span
-              className={`text-[10px] truncate ${
-                isLight ? 'text-neutral-500' : 'text-neutral-400'
-              }`}
-            >
+            <span className={`text-[10px] truncate ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>
               Skip voice slot allocation &amp; force 0.0 gain when Dist &ge; R_max and G_min = 0
             </span>
           </div>
           <ToggleSwitch
             checked={activeProfile.cullBeyondMax}
-            onCheckedChange={(cullBeyondMax) =>
-              handleUpdateProfile({ cullBeyondMax })
-            }
+            onCheckedChange={(cullBeyondMax) => handleUpdateProfile({ cullBeyondMax })}
             isLight={isLight}
             variant="amber"
           />
@@ -427,11 +373,7 @@ export const DistanceAttenuationTunerTab: React.FC<
           <button
             type="button"
             onClick={() => spatialAttenuationProfiles.resetProfile(activeCategory)}
-            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
-              isLight
-                ? 'bg-neutral-100 border-neutral-300 text-neutral-600 hover:bg-neutral-200'
-                : 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:text-neutral-200'
-            }`}
+            className={resetBtnClass}
           >
             <RotateCcw className="w-3 h-3" />
             <span>Reset Category</span>
@@ -440,11 +382,7 @@ export const DistanceAttenuationTunerTab: React.FC<
           <button
             type="button"
             onClick={() => spatialAttenuationProfiles.resetAll()}
-            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
-              isLight
-                ? 'bg-neutral-100 border-neutral-300 text-neutral-600 hover:bg-neutral-200'
-                : 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:text-neutral-200'
-            }`}
+            className={resetBtnClass}
           >
             <span>Reset All</span>
           </button>
