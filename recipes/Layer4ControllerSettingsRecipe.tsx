@@ -1,24 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Gamepad2 } from 'lucide-react';
-import { loadInputBindings, saveInputBindings, getSelectedController, setSelectedController, getConnectedGamepads } from '../config/inputBindings';
+import {
+  loadInputBindings,
+  saveInputBindings,
+  getSelectedController,
+  setSelectedController,
+  getConnectedGamepads,
+} from '../config/inputBindings';
 import { resetAxisBindings } from '../config/inputBindingValidators';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { Badge } from '../primitives/Badge';
 import { DropdownMenu } from '../compounds/DropdownMenu';
 import { SettingActionRow } from '../compounds/SettingActionRow';
-import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
-import { SettingToggleRow } from '../compounds/SettingToggleRow';
-import { SettingSliderRow } from '../compounds/SettingSliderRow';
 import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import { resolveCalibratedSurfaceSizing } from '../manifest/surfaceCalibration';
 import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { useStoreSnapshotOverride } from '../stores/storeSnapshotScope';
-import type { StickAxisOption } from './controller/deadzoneCanvasRenderer';
-import type { ControllerDeadzoneRenderConfig } from './controller/ControllerDeadzoneVisualizer';
-import { ControllerVisualizerOptionsSection } from './controller/ControllerVisualizerOptionsSection';
+import {
+  ControllerDeadzoneAndVibrationSection,
+  type ControllerAxesConfig,
+} from './layer-sections/ControllerDeadzoneAndVibrationSection';
+
+export type { ControllerAxesConfig } from './layer-sections/ControllerDeadzoneAndVibrationSection';
 
 export const SURFACE_META: SurfaceMeta = {
   id: 'recipe:Layer4ControllerSettingsRecipe',
@@ -38,14 +44,6 @@ export const SURFACE_META: SurfaceMeta = {
 
 export type AirRollConflictMode = 'override' | 'cancel';
 export type AnalogCurveShape = 'linear' | 'precision-s' | 'aggressive';
-
-export interface ControllerAxesConfig {
-  steer: { axis: number; invert: boolean };
-  pitch: { axis: number; invert: boolean };
-  deadzone: number;          // 0.00..0.50, step 0.01, default 0.12
-  dodgeDeadzone?: number;    // 0.10..0.95, step 0.01, default 0.70
-  triggerThreshold: number;  // 0.05..0.95, step 0.05, default 0.15
-}
 
 export const DEFAULT_CONTROLLER_AXES_CONFIG: ControllerAxesConfig = {
   steer: { axis: 0, invert: false },
@@ -70,27 +68,6 @@ export interface Layer4ControllerSettingsRecipeProps extends StandardSurfaceProp
   stateOverride?: Layer4ControllerSettingsStateOverride;
   className?: string;
 }
-
-const AXIS_INDEX_TO_ROLE: Record<number, StickAxisOption> = {
-  0: 'left-x',
-  1: 'left-y',
-  2: 'right-x',
-  3: 'right-y',
-};
-
-const ROLE_TO_AXIS_INDEX: Record<StickAxisOption, number> = {
-  'left-x': 0,
-  'left-y': 1,
-  'right-x': 2,
-  'right-y': 3,
-};
-
-const STICK_AXIS_OPTIONS: Array<{ value: StickAxisOption; label: string }> = [
-  { value: 'left-x', label: 'Left Stick X' },
-  { value: 'left-y', label: 'Left Stick Y' },
-  { value: 'right-x', label: 'Right Stick X' },
-  { value: 'right-y', label: 'Right Stick Y' },
-];
 
 export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRecipeProps> =
   React.memo(({ isLight = false, developerMode = false, onBack, stateOverride, className = '' }) => {
@@ -200,34 +177,9 @@ export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRe
       bridge.onBindingsChange?.(nextBindings);
     };
 
-    const steerAxisRole: StickAxisOption =
-      AXIS_INDEX_TO_ROLE[resolvedConfig.steer.axis] ?? 'left-x';
-    const invertSteerAxis = resolvedConfig.steer.invert;
-    const pitchAxisRole: StickAxisOption =
-      AXIS_INDEX_TO_ROLE[resolvedConfig.pitch.axis] ?? 'left-y';
-    const invertPitchAxis = resolvedConfig.pitch.invert;
-    const stickDeadzone = resolvedConfig.deadzone;
-    const dodgeDeadzone =
-      resolvedConfig.dodgeDeadzone ?? DEFAULT_CONTROLLER_AXES_CONFIG.dodgeDeadzone ?? 0.70;
-    const triggerThreshold = resolvedConfig.triggerThreshold;
-
-    const [renderConfig, setRenderConfig] = useState<ControllerDeadzoneRenderConfig>({
-      showCircularOverlay: true,
-      maxDiagonal: 0.77,
-      altArrow: false,
-      antiAliasing: '4x',
-    });
-
-    const handleRenderConfigChange = useCallback(
-      (patch: Partial<ControllerDeadzoneRenderConfig>) => {
-        setRenderConfig((prev) => ({ ...prev, ...patch }));
-      },
-      []
-    );
-
     const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
-    const handleResetToDefault = () => {
+    const handleResetAxesToDefault = () => {
       const defaults: ControllerAxesConfig = {
         steer: { ...DEFAULT_CONTROLLER_AXES_CONFIG.steer },
         pitch: { ...DEFAULT_CONTROLLER_AXES_CONFIG.pitch },
@@ -236,12 +188,6 @@ export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRe
         triggerThreshold: DEFAULT_CONTROLLER_AXES_CONFIG.triggerThreshold,
       };
       setDodgeDeadzoneLocal(defaults.dodgeDeadzone ?? 0.70);
-      setRenderConfig({
-        showCircularOverlay: true,
-        maxDiagonal: 0.77,
-        altArrow: false,
-        antiAliasing: '4x',
-      });
       if (ov.onReset) {
         ov.onReset(defaults);
         return;
@@ -323,7 +269,6 @@ export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRe
             className="flex flex-col w-full"
             style={{ gap: `${rowGap}px` }}
           >
-            {/* 1. Controller Input Device (Green Controller icon + status Badge + DropdownMenu) */}
             <SettingActionRow
               icon={Gamepad2}
               iconColor="text-emerald-500"
@@ -363,156 +308,14 @@ export const Layer4ControllerSettingsRecipe: React.FC<Layer4ControllerSettingsRe
               }
             />
 
-            {/* 2. Steer / Yaw Axis (4 axes DropdownMenu) */}
-            <SettingSegmentedRow
-              title="Steer / Yaw Axis"
-              controlType="dropdown"
-              value={steerAxisRole}
-              onChange={(val) =>
-                updateConfig({
-                  steer: {
-                    ...resolvedConfig.steer,
-                    axis: ROLE_TO_AXIS_INDEX[val as StickAxisOption] ?? 0,
-                  },
-                })
-              }
-              options={STICK_AXIS_OPTIONS}
-              bordered={false}
-              showDescription={false}
-              hoverDescription="Select which analog stick axis controls horizontal vehicle steering and aerial yaw."
-              onHover={(desc) => desc && setHoveredDesc(desc)}
-              onLeave={() => setHoveredDesc(null)}
-              isLight={isLight}
-            />
-
-            {/* 3. Invert Steer Axis (ToggleSwitch) */}
-            <SettingToggleRow
-              title="Invert Steer Axis"
-              checked={invertSteerAxis}
-              onChange={(invert) =>
-                updateConfig({
-                  steer: { ...resolvedConfig.steer, invert },
-                })
-              }
-              bordered={false}
-              showDescription={false}
-              hoverDescription="Reverse horizontal steering and yaw axis polarity."
-              onHover={(desc) => desc && setHoveredDesc(desc)}
-              onLeave={() => setHoveredDesc(null)}
-              isLight={isLight}
-            />
-
-            {/* 4. Pitch (Tilt) Axis (4 axes DropdownMenu) */}
-            <SettingSegmentedRow
-              title="Pitch (Tilt) Axis"
-              controlType="dropdown"
-              value={pitchAxisRole}
-              onChange={(val) =>
-                updateConfig({
-                  pitch: {
-                    ...resolvedConfig.pitch,
-                    axis: ROLE_TO_AXIS_INDEX[val as StickAxisOption] ?? 1,
-                  },
-                })
-              }
-              options={STICK_AXIS_OPTIONS}
-              bordered={false}
-              showDescription={false}
-              hoverDescription="Select which analog stick axis controls vertical aerial pitch (tilt) and dodge forward/back."
-              onHover={(desc) => desc && setHoveredDesc(desc)}
-              onLeave={() => setHoveredDesc(null)}
-              isLight={isLight}
-            />
-
-            {/* 5. Invert Pitch Axis (ToggleSwitch) */}
-            <SettingToggleRow
-              title="Invert Pitch Axis"
-              checked={invertPitchAxis}
-              onChange={(invert) =>
-                updateConfig({
-                  pitch: { ...resolvedConfig.pitch, invert },
-                })
-              }
-              bordered={false}
-              showDescription={false}
-              hoverDescription="Reverse vertical aerial pitch (tilt) axis polarity."
-              onHover={(desc) => desc && setHoveredDesc(desc)}
-              onLeave={() => setHoveredDesc(null)}
-              isLight={isLight}
-            />
-
-            {/* 6. Deadzone */}
-            <SettingSliderRow
-              title="Deadzone"
-              min={0.0}
-              max={0.5}
-              step={0.01}
-              value={stickDeadzone}
-              onChange={(deadzone) => updateConfig({ deadzone })}
-              layout="inline"
-              bordered={false}
-              showDescription={false}
-              developerMode={developerMode}
-              hoverDescription="Axial cross deadzone threshold (0.00 to 0.50) filtering center thumbstick drift."
-              onHover={(desc) => desc && setHoveredDesc(desc)}
-              onLeave={() => setHoveredDesc(null)}
-              isLight={isLight}
-            />
-
-            {/* 7. Dodge Deadzone */}
-            <SettingSliderRow
-              title="Dodge Deadzone"
-              min={0.1}
-              max={0.95}
-              step={0.01}
-              value={dodgeDeadzone}
-              onChange={(nextDodgeDeadzone) => updateConfig({ dodgeDeadzone: nextDodgeDeadzone })}
-              layout="inline"
-              bordered={false}
-              showDescription={false}
-              developerMode={developerMode}
-              hoverDescription="Minimum stick deflection required to trigger a directional dodge instead of a double jump (0.10 to 0.95)."
-              onHover={(desc) => desc && setHoveredDesc(desc)}
-              onLeave={() => setHoveredDesc(null)}
-              isLight={isLight}
-            />
-
-            {/* 8. Trigger Threshold */}
-            <SettingSliderRow
-              title="Trigger Threshold"
-              min={0.05}
-              max={0.95}
-              step={0.05}
-              value={triggerThreshold}
-              onChange={(nextTriggerThreshold) =>
-                updateConfig({ triggerThreshold: nextTriggerThreshold })
-              }
-              layout="inline"
-              bordered={false}
-              showDescription={false}
-              developerMode={developerMode}
-              hoverDescription="Minimum L2/R2 analog trigger depression required to register throttle or reverse input (0.05 to 0.95)."
-              onHover={(desc) => desc && setHoveredDesc(desc)}
-              onLeave={() => setHoveredDesc(null)}
-              isLight={isLight}
-            />
-
-            <ControllerVisualizerOptionsSection
-              controllerState={{
-                stickDeadzone,
-                dodgeDeadzone,
-                steerAxisRole,
-                invertSteerAxis,
-                pitchAxisRole,
-                invertPitchAxis,
-                selectedGamepadIndex,
-              }}
-              renderConfig={renderConfig}
-              onRenderConfigChange={handleRenderConfigChange}
+            <ControllerDeadzoneAndVibrationSection
+              resolvedConfig={resolvedConfig}
+              updateConfig={updateConfig}
+              selectedGamepadIndex={selectedGamepadIndex}
               developerMode={developerMode}
               isLight={isLight}
               onHoverDesc={setHoveredDesc}
-              onResetToDefault={handleResetToDefault}
+              onResetAxesToDefault={handleResetAxesToDefault}
             />
           </div>
         </PanelContent>

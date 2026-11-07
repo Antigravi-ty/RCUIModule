@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play } from 'lucide-react';
 import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
-import { InlineErrorNotice } from '../primitives/InlineErrorNotice';
 import { useAppStore } from '../stores/appStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
-import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { useSignalingProfileStore } from '../stores/signalingProfileStore';
 import {
   useScopedStore,
@@ -25,40 +22,28 @@ import {
   FORMAT_TO_GAME_MODE,
   GAME_MODE_TO_FORMAT,
 } from './Layer2ManageRoomRecipe';
-import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
-  OnlineRoomCreationProgress,
   dispatchOnlineRoomErrorNotification,
   type CreationProgressStatus,
-  type CreationStepSpec,
 } from './online/OnlineRoomCreationProgress';
-import {
-  OnlineRoomConfigSummaryCard,
-  type HostMatchBotPolicy,
-  type HostMatchConfig,
-  type HostMatchDurationPreset,
-  type HostMatchTeamFormat,
+import type {
+  HostMatchBotPolicy,
+  HostMatchConfig,
+  HostMatchDurationPreset,
+  HostMatchTeamFormat,
 } from './online/OnlineRoomConfigSummaryCard';
+import {
+  HostMatchMutatorAndRelaySection,
+  type Layer3HostMatchStateOverride,
+} from './layer-sections/HostMatchMutatorAndRelaySection';
 
-export interface Layer3HostMatchStateOverride {
-  roomType?: 'match' | 'warmup';
-  title?: string;
-  defaultEditingConfig?: boolean;
-  config?: Partial<HostMatchConfig>;
-  defaultConfig?: Partial<HostMatchConfig>;
-  onChange?: (next: HostMatchConfig, patch: Partial<HostMatchConfig>) => void;
-  onStartHost?: (config: HostMatchConfig) => void;
-  progressStatus?: CreationProgressStatus;
-  currentStep?: number;
-  steps?: CreationStepSpec[];
-  onProgressStatusChange?: (status: CreationProgressStatus) => void;
-  onCurrentStepChange?: (step: number) => void;
-  onRetryHost?: () => void;
-  onCancelHost?: () => void;
-  onNavigateGarageSync?: () => void;
-  onNavigateSignalingConfig?: () => void;
-  onNavigateAdvancedSettings?: () => void;
-}
+export type {
+  HostMatchBotPolicy,
+  HostMatchConfig,
+  HostMatchDurationPreset,
+  HostMatchTeamFormat,
+  Layer3HostMatchStateOverride,
+};
 
 export interface Layer3HostMatchRecipeProps extends StandardSurfaceProps {
   developerMode?: boolean;
@@ -165,11 +150,8 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
 
   const {
     goBack: storeGoBack,
-    navigate,
     closeMenu,
     setMatchMode,
-    setSettingsTargetTab,
-    setHighlightSetting,
     onlineSession,
     setOnlineSession,
     bridge,
@@ -177,9 +159,8 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
 
   const hostMask = useSignalingProfileStore((s) => s.hostMask);
   const verifyRelays = useSignalingProfileStore((s) => s.verifyRelays);
-  const { panels, simulateLayer3Error, setToken } = useMenuLayoutStore();
+  const { panels, setToken } = useMenuLayoutStore();
   const sizing = panels['layer3-host-match'];
-  const { paddingX } = useSettingActionRowStore();
 
   const resolvedRoomType: 'match' | 'warmup' =
     propRoomType ??
@@ -262,10 +243,6 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
     customDurationSeconds,
   } = resolvedConfig;
 
-  const [isEditingConfig, setIsEditingConfig] = useState<boolean>(defaultEditingConfig);
-  useEffect(() => {
-    setIsEditingConfig(Boolean(defaultEditingConfig));
-  }, [defaultEditingConfig]);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
   const [internalProgressStatus, setInternalProgressStatus] =
@@ -403,18 +380,6 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
     }, 520);
   };
 
-  const handleNavigateGarageSync =
-    overrides.onNavigateGarageSync ?? (() => navigate('garage'));
-  const handleNavigateSignalingConfig =
-    overrides.onNavigateSignalingConfig ??
-    (() => {
-      setSettingsTargetTab('advanced');
-      setHighlightSetting('signaling-credential-bundle');
-      navigate('settings');
-    });
-  const handleNavigateAdvancedSettings =
-    overrides.onNavigateAdvancedSettings ?? (() => navigate('exp-multi-bots'));
-
   return (
     <PanelContainer isLight={isLight} sizing={sizing} className="w-full select-none">
       <PanelHeader
@@ -424,109 +389,32 @@ export const Layer3HostMatchRecipe: React.FC<Layer3HostMatchRecipeProps> = React
       />
 
       <PanelContent scrollable={true} className="flex flex-col justify-between gap-3">
-        <div data-layout="host-match-list" className="flex flex-col w-full gap-3">
-          <OnlineRoomIdentityFields
-            identity={{
-              playerName,
-              onPlayerNameChange: (val) => updateConfig({ playerName: val }),
-              roomCode,
-              onRoomCodeChange: (val) => updateConfig({ roomCode: val }),
-              roomKey,
-              onRoomKeyChange: (val) => updateConfig({ roomKey: val }),
-            }}
-            showRandomize={true}
-            onNotYouClick={handleNavigateGarageSync}
-            onSignalingConfigClick={handleNavigateSignalingConfig}
-            onHoverDesc={setHoveredDesc}
-            isLight={isLight}
-          />
-
-          <div
-            style={{
-              marginLeft: `${Math.max(0, paddingX)}px`,
-              marginRight: `${Math.max(0, paddingX)}px`,
-            }}
-            data-ui-element="host-match-current-config-box"
-          >
-            <OnlineRoomConfigSummaryCard
-              title="Current Configuration"
-              teamFormat={teamFormat}
-              botPolicy={botPolicy}
-              durationPreset={durationPreset}
-              customDurationSeconds={customDurationSeconds}
-              handlers={{
-                onChangeTeamFormat: (val) => updateConfig({ teamFormat: val }),
-                onChangeBotPolicy: (val) => updateConfig({ botPolicy: val }),
-                onChangeDurationPreset: (val) => updateConfig({ durationPreset: val }),
-                onChangeCustomDurationSeconds: (val) =>
-                  updateConfig({ customDurationSeconds: val }),
-              }}
-              editor={{
-                editable: true,
-                isEditing: isEditingConfig,
-                onToggleEditing: () => setIsEditingConfig((prev) => !prev),
-                onNavigateAdvancedSettings: handleNavigateAdvancedSettings,
-              }}
-              onHoverDesc={setHoveredDesc}
-              isLight={isLight}
-            />
-          </div>
-        </div>
-
-        <div
-          style={{
-            paddingLeft: `${Math.max(0, paddingX)}px`,
-            paddingRight: `${Math.max(0, paddingX)}px`,
+        <HostMatchMutatorAndRelaySection
+          resolvedConfig={resolvedConfig}
+          updateConfig={updateConfig}
+          defaultEditingConfig={defaultEditingConfig}
+          overrides={overrides}
+          progress={{
+            progressStatus,
+            currentStep,
+            steps: overrides.steps,
+            onLaunchSequence: startStepSequence,
+            onRetrySequence: () => {
+              overrides.onRetryHost?.();
+              startStepSequence(false);
+            },
+            onCancelSequence: () => {
+              clearStepTimer();
+              setProgressStatus('idle');
+              setCurrentStep(1);
+              setToken('simulateLayer3Error', false);
+              bridge.onLeaveOnlineServer?.();
+              overrides.onCancelHost?.();
+            },
           }}
-          className="flex flex-col gap-2 shrink-0 pt-1"
-        >
-          {progressStatus !== 'idle' && (
-            <OnlineRoomCreationProgress
-              currentStep={currentStep}
-              totalSteps={overrides.steps?.length ?? 5}
-              steps={overrides.steps}
-              status={progressStatus}
-              onRetry={() => {
-                overrides.onRetryHost?.();
-                startStepSequence(false);
-              }}
-              onCancel={() => {
-                clearStepTimer();
-                setProgressStatus('idle');
-                setCurrentStep(1);
-                setToken('simulateLayer3Error', false);
-                bridge.onLeaveOnlineServer?.();
-                overrides.onCancelHost?.();
-              }}
-              isLight={isLight}
-            />
-          )}
-
-          {simulateLayer3Error && <InlineErrorNotice isLight={isLight} />}
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => startStepSequence(simulateLayer3Error)}
-              onMouseEnter={() =>
-                setHoveredDesc(
-                  'Create & Host: Launch the 5-step room initialization sequence (Authority -> Signaling -> Room Code -> ICE -> Lobby).'
-                )
-              }
-              onMouseLeave={() => setHoveredDesc(null)}
-              className="flex-1 py-2.5 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0"
-            >
-              <Play className="h-3.5 w-3.5 fill-current" />
-              <span>
-                {progressStatus === 'running'
-                  ? `Creating Room (${currentStep}/5)...`
-                  : progressStatus === 'completed'
-                  ? 'Room Created · Restart Sequence'
-                  : 'Create & Host'}
-              </span>
-            </button>
-          </div>
-        </div>
+          onHoverDesc={setHoveredDesc}
+          isLight={isLight}
+        />
       </PanelContent>
 
       <PanelFooter
