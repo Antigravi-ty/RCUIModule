@@ -39,6 +39,30 @@ export const DEFAULT_GRAPHICS_CONFIG: GraphicsConfig = {
 
 const FPS_PRESET_VALUES = new Set([30, 60, 75, 90, 120, 240]);
 
+const FPS_TARGET_OPTIONS = [
+  { value: '30', label: '30' },
+  { value: '60', label: '60' },
+  { value: '75', label: '75' },
+  { value: '90', label: '90' },
+  { value: '120', label: '120' },
+  { value: '240', label: '240' },
+  { value: 'custom', label: 'Custom' },
+  { value: 'unlimited', label: 'Unlimited' },
+];
+
+const POWER_SAVE_OPTIONS = [
+  { value: 'extreme', label: 'Extreme' },
+  { value: '15', label: '15 FPS' },
+  { value: '30', label: '30 FPS' },
+  { value: 'disable', label: 'Disable' },
+];
+
+const normalizePowerSave = (val?: MenuPowerSaveOption): 'extreme' | '15' | '30' | 'disable' => {
+  if (val === 'freeze' || val === 'extreme') return 'extreme';
+  if (val === 'match' || val === 'disable') return 'disable';
+  return val === '15' ? '15' : '30';
+};
+
 export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
   variantId: 'settings:display',
   label: '3. Display & Graphics',
@@ -60,18 +84,6 @@ export interface DisplayTabProps {
   onLeave: () => void;
 }
 
-/**
- * [Layer 2 Settings -> Display Tab]
- * Updated Display settings:
- * 1. `UI Scaling` — Uses shared `SettingPresetCustomRow` (`100%`, `125%`, `150%`, `Custom`) with live slide-reveal / morph-pill / popover-scrub / below-row variations.
- * 2. `Safe Area Margin` — Uneditable readout + draggable slider (`-5%` to `+10%`).
- *    (`Observe Safe Area Boundary` has been relocated to Developer Settings.)
- * 3. `Theme Mode` — Leading `Palette` (`palette`) icon, with `Moon` + `Dark Mode` and `Sun` + `Light Mode` icons inside the segmented options.
- *    (`Show Stadium Exterior Details` and `Frame Rate Limit` toggle have been removed.)
- * 4. `FPS Target` — Single long segmented control (`30`, `60`, `75`, `90`, `120`, `240`, `Custom`, `Unlimited`).
- * 5. `Power Saving` — Leading `BatteryCharging` (`battery-charging`) icon, options: `Extreme` (replaces Freeze), `15 FPS`, `30 FPS`, `Disable` (follows FPS Target).
- * 6. `Render Scale` — Uses the exact same shared `SettingPresetCustomRow` (`25%`, `50%`, `75%`, `Custom`) as `UI Scaling`.
- */
 export const DisplayTab: React.FC<DisplayTabProps> = ({
   isLight = false,
   developerMode = false,
@@ -87,31 +99,16 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
     useAppStore,
     (s) => s.updateGraphics
   );
-  const storeRenderScale = useScopedStore(
-    'appStore',
-    useAppStore,
-    (s) => s.renderScale
-  );
-  const setStoreRenderScale = useScopedStore(
-    'appStore',
-    useAppStore,
-    (s) => s.setRenderScale
-  );
-  const highlightSetting = useScopedStore(
-    'appStore',
-    useAppStore,
-    (s) => s.highlightSetting
-  );
+  const storeRenderScale = useScopedStore('appStore', useAppStore, (s) => s.renderScale);
+  const setStoreRenderScale = useScopedStore('appStore', useAppStore, (s) => s.setRenderScale);
+  const highlightSetting = useScopedStore('appStore', useAppStore, (s) => s.highlightSetting);
   const onClearHighlight = useScopedStore(
     'appStore',
     useAppStore,
     (s) => s.clearHighlightSetting
   );
 
-  const {
-    renderScale: uiScale = 100,
-    safeAreaMargin = 0,
-  } = useViewportStore();
+  const { renderScale: uiScale = 100, safeAreaMargin = 0 } = useViewportStore();
   const setUiScale = viewportStore.setRenderScale;
   const setSafeAreaMargin = viewportStore.setSafeAreaMargin;
 
@@ -122,10 +119,7 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
 
   useEffect(() => {
     const handleResize = () => {
-      setWindowDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
+      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -137,38 +131,30 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
     safeAreaMargin
   );
 
-  const normalizePowerSave = (val?: MenuPowerSaveOption): 'extreme' | '15' | '30' | 'disable' => {
-    if (val === 'freeze' || val === 'extreme') return 'extreme';
-    if (val === 'match' || val === 'disable') return 'disable';
-    if (val === '15') return '15';
-    return '30';
-  };
-
   const [internalGraphics, setInternalGraphics] = useState<GraphicsConfig>(() => ({
     ...DEFAULT_GRAPHICS_CONFIG,
-    renderScale: storeRenderScale ?? storeGraphics.renderScale ?? DEFAULT_GRAPHICS_CONFIG.renderScale,
+    renderScale:
+      storeRenderScale ?? storeGraphics.renderScale ?? DEFAULT_GRAPHICS_CONFIG.renderScale,
     limitFps: storeGraphics.limitFps,
     maxFps: storeGraphics.maxFps,
     menuPowerSave: normalizePowerSave(storeGraphics.menuPowerSave),
   }));
 
   const [internalFpsSelection, setInternalFpsSelection] = useState<string>(() => {
-    const initLimit = storeGraphics.limitFps;
-    const initMax = storeGraphics.maxFps;
-    if (initLimit === false) return 'unlimited';
-    if (initMax !== undefined) {
-      return FPS_PRESET_VALUES.has(initMax) ? String(initMax) : 'custom';
+    if (storeGraphics.limitFps === false) return 'unlimited';
+    if (storeGraphics.maxFps !== undefined) {
+      return FPS_PRESET_VALUES.has(storeGraphics.maxFps)
+        ? String(storeGraphics.maxFps)
+        : 'custom';
     }
     return '120';
   });
 
-  const [internalCustomFps, setInternalCustomFps] = useState<number>(() => {
-    const initMax = storeGraphics.maxFps;
-    if (initMax !== undefined && !FPS_PRESET_VALUES.has(initMax)) {
-      return initMax;
-    }
-    return 144;
-  });
+  const [internalCustomFps, setInternalCustomFps] = useState<number>(() =>
+    storeGraphics.maxFps !== undefined && !FPS_PRESET_VALUES.has(storeGraphics.maxFps)
+      ? storeGraphics.maxFps
+      : 144
+  );
 
   const resolvedLimitFps =
     propGraphicsConfig?.limitFps ?? storeGraphics.limitFps ?? internalGraphics.limitFps;
@@ -176,30 +162,33 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
     propGraphicsConfig?.maxFps ?? storeGraphics.maxFps ?? internalGraphics.maxFps;
   const resolvedRenderScale =
     propGraphicsConfig?.renderScale ?? storeRenderScale ?? internalGraphics.renderScale;
-  const rawPowerSave =
-    propGraphicsConfig?.menuPowerSave ?? storeGraphics.menuPowerSave ?? internalGraphics.menuPowerSave;
-  const powerSaveValue = normalizePowerSave(rawPowerSave);
+  const powerSaveValue = normalizePowerSave(
+    propGraphicsConfig?.menuPowerSave ??
+      storeGraphics.menuPowerSave ??
+      internalGraphics.menuPowerSave
+  );
 
   const customFps =
     propGraphicsConfig?.maxFps !== undefined && !FPS_PRESET_VALUES.has(propGraphicsConfig.maxFps)
       ? propGraphicsConfig.maxFps
       : internalCustomFps;
 
-  const fpsSelection = (() => {
-    if (!resolvedLimitFps) return 'unlimited';
-    if (internalFpsSelection === 'custom' && resolvedMaxFps === customFps) return 'custom';
-    return FPS_PRESET_VALUES.has(resolvedMaxFps) ? String(resolvedMaxFps) : 'custom';
-  })();
+  const fpsSelection = !resolvedLimitFps
+    ? 'unlimited'
+    : internalFpsSelection === 'custom' && resolvedMaxFps === customFps
+    ? 'custom'
+    : FPS_PRESET_VALUES.has(resolvedMaxFps)
+    ? String(resolvedMaxFps)
+    : 'custom';
 
   const emitGraphicsPatch = (patch: Partial<GraphicsConfig>) => {
-    const currentFull: GraphicsConfig = {
+    setInternalGraphics({
       renderScale: resolvedRenderScale,
       limitFps: resolvedLimitFps,
       maxFps: resolvedMaxFps,
       menuPowerSave: powerSaveValue,
-    };
-    const nextConfig: GraphicsConfig = { ...currentFull, ...patch };
-    setInternalGraphics(nextConfig);
+      ...patch,
+    });
   };
 
   const handleFpsPresetChange = (preset: string) => {
@@ -207,13 +196,10 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
     if (preset === 'unlimited') {
       updateStoreGraphics({ limitFps: false });
       emitGraphicsPatch({ limitFps: false });
-    } else if (preset === 'custom') {
-      updateStoreGraphics({ limitFps: true, maxFps: customFps });
-      emitGraphicsPatch({ limitFps: true, maxFps: customFps });
     } else {
-      const numericFps = Number(preset);
-      updateStoreGraphics({ limitFps: true, maxFps: numericFps });
-      emitGraphicsPatch({ limitFps: true, maxFps: numericFps });
+      const targetFps = preset === 'custom' ? customFps : Number(preset);
+      updateStoreGraphics({ limitFps: true, maxFps: targetFps });
+      emitGraphicsPatch({ limitFps: true, maxFps: targetFps });
     }
   };
 
@@ -224,16 +210,26 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
     emitGraphicsPatch({ limitFps: true, maxFps: nextFps });
   };
 
+  const [pulsingPowerSave, setPulsingPowerSave] = useState(
+    highlightSetting === 'menu-power-save'
+  );
+
+  useEffect(() => {
+    if (highlightSetting === 'menu-power-save') {
+      setPulsingPowerSave(true);
+      const timer = setTimeout(() => {
+        setPulsingPowerSave(false);
+        onClearHighlight?.();
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightSetting, onClearHighlight]);
+
   const handlePowerSaveChange = (val: string) => {
     const next = val as 'extreme' | '15' | '30' | 'disable';
     setPulsingPowerSave(false);
     onClearHighlight?.();
-    const mapped =
-      next === 'extreme'
-        ? 'freeze'
-        : next === 'disable'
-        ? 'match'
-        : next;
+    const mapped = next === 'extreme' ? 'freeze' : next === 'disable' ? 'match' : next;
     updateStoreGraphics({ menuPowerSave: mapped });
     emitGraphicsPatch({ menuPowerSave: next });
   };
@@ -251,26 +247,12 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
 
   const { rowGap } = useSettingActionRowStore();
 
-  const [pulsingPowerSave, setPulsingPowerSave] = useState(highlightSetting === 'menu-power-save');
-
-  useEffect(() => {
-    if (highlightSetting === 'menu-power-save') {
-      setPulsingPowerSave(true);
-      const timer = setTimeout(() => {
-        setPulsingPowerSave(false);
-        onClearHighlight?.();
-      }, 3500);
-      return () => clearTimeout(timer);
-    }
-  }, [highlightSetting, onClearHighlight]);
-
   return (
     <div
       data-layout="display-settings-list"
       className="flex flex-col w-full"
       style={{ gap: `${rowGap}px` }}
     >
-      {/* 1. UI Scaling (Shared SettingPresetCustomRow: 100%, 125%, 150%, Custom) */}
       <SettingPresetCustomRow
         icon={Maximize2}
         label="UI Scaling"
@@ -306,7 +288,6 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 2. Safe Area Margin Slider */}
       <SettingSliderRow
         icon={Scan}
         label="Safe Area Margin"
@@ -324,7 +305,6 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 3. Theme Mode (Icon: Palette 'palette', options with leading Moon / Sun icons) */}
       <SettingSegmentedRow
         icon={Palette}
         iconName="palette"
@@ -333,16 +313,8 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
         value={storeTheme}
         onChange={(val) => setStoreTheme(val as 'dark' | 'light')}
         options={[
-          {
-            value: 'dark',
-            label: 'Dark Mode',
-            icon: <Moon className="h-3.5 w-3.5" />,
-          },
-          {
-            value: 'light',
-            label: 'Light Mode',
-            icon: <Sun className="h-3.5 w-3.5" />,
-          },
+          { value: 'dark', label: 'Dark Mode', icon: <Moon className="h-3.5 w-3.5" /> },
+          { value: 'light', label: 'Light Mode', icon: <Sun className="h-3.5 w-3.5" /> },
         ]}
         hoverDescription="Switches user interface appearance between Dark Mode and Light Mode."
         onHover={(desc) => desc && onHover(desc)}
@@ -350,23 +322,13 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 4. FPS Target (Long Segmented Control: 30, 60, 75, 90, 120, 240, Custom, Unlimited) */}
       <SettingSegmentedRow
         icon={Gauge}
         label="FPS Target"
         subtitle="Target maximum frame rate cap or Unlimited"
         value={fpsSelection}
         onChange={handleFpsPresetChange}
-        options={[
-          { value: '30', label: '30' },
-          { value: '60', label: '60' },
-          { value: '75', label: '75' },
-          { value: '90', label: '90' },
-          { value: '120', label: '120' },
-          { value: '240', label: '240' },
-          { value: 'custom', label: 'Custom' },
-          { value: 'unlimited', label: 'Unlimited' },
-        ]}
+        options={FPS_TARGET_OPTIONS}
         hoverDescription="Select a frame rate target (30, 60, 75, 90, 120, 240), Custom for fine control, or Unlimited to uncap frame rate."
         onHover={(desc) => desc && onHover(desc)}
         onLeave={onLeave}
@@ -391,7 +353,6 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
         />
       )}
 
-      {/* 5. Power Saving (Renamed from Menu Power Save, icon: BatteryCharging 'battery-charging', options: Extreme, 15 FPS, 30 FPS, Disable) */}
       <div
         className={`transition-all duration-300 rounded-lg ${
           pulsingPowerSave
@@ -406,12 +367,7 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
           subtitle="3D scene render behavior while menus are open or window is unfocused (Disable follows FPS Target)"
           value={powerSaveValue}
           onChange={handlePowerSaveChange}
-          options={[
-            { value: 'extreme', label: 'Extreme' },
-            { value: '15', label: '15 FPS' },
-            { value: '30', label: '30 FPS' },
-            { value: 'disable', label: 'Disable' },
-          ]}
+          options={POWER_SAVE_OPTIONS}
           hoverDescription="Controls 3D rendering while menus are open, window is unfocused, or minimized: Minimized windows always pause GPU rendering; Extreme freezes 3D rendering in menus and caps unfocused visible windows to 30 FPS; 15/30 FPS throttles render rate; Disable follows your FPS Target."
           onHover={(desc) => desc && onHover(desc)}
           onLeave={onLeave}
@@ -419,7 +375,6 @@ export const DisplayTab: React.FC<DisplayTabProps> = ({
         />
       </div>
 
-      {/* 6. Render Scale (Uses shared SettingPresetCustomRow: 25%, 50%, 75%, Custom — automatically syncs variations with UI Scaling) */}
       <SettingPresetCustomRow
         icon={Monitor}
         label="Render Scale"

@@ -53,20 +53,76 @@ export interface DeveloperTabProps {
   onLeave?: () => void;
 }
 
-/**
- * [Layer 2] Developer Settings Tab
- * Streamlined single-line rows matching the RCUIModule visual rhythm:
- * 1. `Sandboxes` (`package-open` icon, `Browse →`) — directly opens the isolated subsystem selection list (01–07 including Experimental Multiple Bots)
- * 2. `Active Tuners` (`sliders` icon, `Browse →`) — active calibration tools, floating tuners, Advanced Audio & Event & Trigger Rules
- * 3. `Calibrated Presets` (`book-check` icon, `Browse →`) — tuners whose baseline parameters have been calibrated and solidified
- * 3.5 `Developer Quick Actions` (`zap` icon, inline `Off-Screen` toggle + `Browse →`) — placed below Calibrated Presets and above Self Test; auto-enables Off-Screen Indicator when Developer Mode is enabled
- * 4. `Self Test` (`bug-play` icon, `Browse →`) — developer self-test suites (4-Server Signaling & Bridge Lab when loaded in dev mode)
- * 5. `Remote Profile Management` (`user-cog` icon, `Browse →`) — Set Others Profile (`SETTINGS # <alias>`) & Manage Accounts
- * 6. `Bots Loadout Tuner` (`bot` icon, `Spawn`) — floating window for multi-select bot loadout pools (Car GLB models, Paint, Boost Trail, Boost Audio, Anthem)
- * 7. `Ball Opacity` (`circle-dot` icon) — single-line 70% / 100% / Custom segmented switch
- * 8. `Observe Safe Area Boundary` (`scan` icon) — single-line toggle switch
- * 9. `Under Development` (`alert-triangle` icon, `Browse →`, placed at the very bottom in red/rose with extra top spacing `underDevelopmentTopMargin`)
- */
+const DEV_NAV_ROWS: readonly {
+  route: string;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  iconName: string;
+  iconColor: string;
+  title: string;
+  description: string;
+  hoverDescription: string;
+  group: 'top' | 'mid';
+}[] = [
+  {
+    route: 'dev-sandboxes',
+    icon: PackageOpen,
+    iconName: 'package-open',
+    iconColor: 'text-amber-400',
+    title: 'Sandboxes',
+    description: 'Subsystem Isolation & MVP Lab (01–07) and Experimental Multiple Bots Mode',
+    hoverDescription:
+      'Sandboxes: Choose which isolated subsystem or sandbox scene (Probes, Multi-World Ghost, State Replay, 90s Match, Goal Replay, Kickoff Duel, Demolish Respawn, or Experimental Multiple Bots) you want to test.',
+    group: 'top',
+  },
+  {
+    route: 'dev-active-tuners',
+    icon: Sliders,
+    iconName: 'sliders',
+    iconColor: 'text-sky-400',
+    title: 'Active Tuners',
+    description:
+      'Vehicle Offsets, Goal Volume, Reachability, Kickoff PPO, Audio & Event & Trigger Rules',
+    hoverDescription:
+      'Active Tuners: Frequently accessed live calibration tools, floating window spawners, vehicle offsets, reachability, kickoff PPO, advanced audio, and event & trigger rules.',
+    group: 'top',
+  },
+  {
+    route: 'dev-calibrated-presets',
+    icon: BookCheck,
+    iconName: 'book-check',
+    iconColor: 'text-emerald-400',
+    title: 'Calibrated Presets',
+    description:
+      'Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods, Boost Pad & Name Tag',
+    hoverDescription:
+      'Calibrated Presets: Archive of completed tuners whose parameters have already been calibrated and solidified (Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods, Boost Pad & Name Tag).',
+    group: 'top',
+  },
+  {
+    route: 'dev-self-test',
+    icon: BugPlay,
+    iconName: 'bug-play',
+    iconColor: 'text-cyan-400',
+    title: 'Self Test',
+    description: 'Automated subsystem self-test suites and verification harnesses',
+    hoverDescription:
+      'Self Test: Browse automated diagnostic and self-test suites available for the active environment.',
+    group: 'mid',
+  },
+  {
+    route: 'dev-remote-profile',
+    icon: UserCog,
+    iconName: 'user-cog',
+    iconColor: 'text-violet-400',
+    title: 'Remote Profile Management',
+    description:
+      'Set Others Profile (SETTINGS # alias) & Manage Cloud Accounts (username / password / alias)',
+    hoverDescription:
+      "Remote Profile Management: Remotely tune another user's settings & active floating windows in real time, or manage plaintext cloud user accounts.",
+    group: 'mid',
+  },
+];
+
 export const DeveloperTab: React.FC<DeveloperTabProps> = ({
   isLight = false,
   onNavigateRoute,
@@ -122,10 +178,6 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
     }
   };
 
-  const handleObserveSafeAreaChange = (checked: boolean) => {
-    setShowSafeAreaHud(checked);
-  };
-
   const {
     rowGap,
     buttonFontSize,
@@ -136,9 +188,31 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
     underDevelopmentTopMargin,
   } = useSettingActionRowStore();
 
-  const handleOpenSandboxes = () => {
-    navigateRoute('dev-sandboxes');
+  const btnStyle: React.CSSProperties = {
+    fontSize: `${buttonFontSize}px`,
+    paddingLeft: `${buttonPaddingX}px`,
+    paddingRight: `${buttonPaddingX}px`,
+    paddingTop: `${buttonPaddingY}px`,
+    paddingBottom: `${buttonPaddingY}px`,
+    borderRadius: `${Math.max(0, buttonRadius)}px`,
   };
+
+  const renderNavRow = (row: (typeof DEV_NAV_ROWS)[number]) => (
+    <SettingActionRow
+      key={row.route}
+      icon={row.icon}
+      iconName={row.iconName}
+      iconColor={row.iconColor}
+      title={row.title}
+      actionLabel="Browse"
+      description={row.description}
+      hoverDescription={row.hoverDescription}
+      onAction={() => navigateRoute(row.route)}
+      onHover={onHover}
+      onLeave={onLeave}
+      isLight={isLight}
+    />
+  );
 
   return (
     <div
@@ -146,52 +220,8 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
       className="flex flex-col w-full"
       style={{ gap: `${rowGap}px` }}
     >
-      {/* 1. Sandboxes (Directly opens Subsystem Isolation & Multi-Bots Selection) */}
-      <SettingActionRow
-        icon={PackageOpen}
-        iconName="package-open"
-        iconColor="text-amber-400"
-        title="Sandboxes"
-        actionLabel="Browse"
-        description="Subsystem Isolation & MVP Lab (01–07) and Experimental Multiple Bots Mode"
-        hoverDescription="Sandboxes: Choose which isolated subsystem or sandbox scene (Probes, Multi-World Ghost, State Replay, 90s Match, Goal Replay, Kickoff Duel, Demolish Respawn, or Experimental Multiple Bots) you want to test."
-        onAction={handleOpenSandboxes}
-        onHover={onHover}
-        onLeave={onLeave}
-        isLight={isLight}
-      />
+      {DEV_NAV_ROWS.filter((r) => r.group === 'top').map(renderNavRow)}
 
-      {/* 2. Active Tuners */}
-      <SettingActionRow
-        icon={Sliders}
-        iconName="sliders"
-        iconColor="text-sky-400"
-        title="Active Tuners"
-        actionLabel="Browse"
-        description="Vehicle Offsets, Goal Volume, Reachability, Kickoff PPO, Audio & Event & Trigger Rules"
-        hoverDescription="Active Tuners: Frequently accessed live calibration tools, floating window spawners, vehicle offsets, reachability, kickoff PPO, advanced audio, and event & trigger rules."
-        onAction={() => navigateRoute('dev-active-tuners')}
-        onHover={onHover}
-        onLeave={onLeave}
-        isLight={isLight}
-      />
-
-      {/* 3. Calibrated Presets */}
-      <SettingActionRow
-        icon={BookCheck}
-        iconName="book-check"
-        iconColor="text-emerald-400"
-        title="Calibrated Presets"
-        actionLabel="Browse"
-        description="Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods, Boost Pad & Name Tag"
-        hoverDescription="Calibrated Presets: Archive of completed tuners whose parameters have already been calibrated and solidified (Atmosphere & FX, Vehicle Global Surfaces, Supersonic Wheel Trail, Driftwoods, Boost Pad & Name Tag)."
-        onAction={() => navigateRoute('dev-calibrated-presets')}
-        onHover={onHover}
-        onLeave={onLeave}
-        isLight={isLight}
-      />
-
-      {/* 3.5. Developer Quick Actions (placed below Calibrated Presets and above Self Test) */}
       <SettingActionRow
         icon={Zap}
         iconName="zap"
@@ -204,10 +234,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         isLight={isLight}
         rightSlot={
           <div className="flex items-center gap-2.5 shrink-0">
-            <div
-              className="flex items-center gap-1.5"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
               <span
                 className={`text-[10px] font-mono uppercase tracking-wider ${
                   offscreenIndicatorEnabled
@@ -223,23 +250,14 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
               </span>
               <ToggleSwitch
                 checked={offscreenIndicatorEnabled}
-                onChange={(checked) =>
-                  updateNameTagConfig({ offscreenIndicatorEnabled: checked })
-                }
+                onChange={(checked) => updateNameTagConfig({ offscreenIndicatorEnabled: checked })}
                 isLight={isLight}
               />
             </div>
             <button
               type="button"
               onClick={() => navigateRoute('dev-quick-actions')}
-              style={{
-                paddingLeft: `${buttonPaddingX}px`,
-                paddingRight: `${buttonPaddingX}px`,
-                paddingTop: `${buttonPaddingY}px`,
-                paddingBottom: `${buttonPaddingY}px`,
-                borderRadius: `${buttonRadius}px`,
-                fontSize: `${buttonFontSize}px`,
-              }}
+              style={btnStyle}
               className={`flex items-center gap-2 font-bold uppercase tracking-wider transition-all border shrink-0 whitespace-nowrap leading-none cursor-pointer ${
                 isLight
                   ? 'bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 border-sky-500/30 hover:border-sky-500/50'
@@ -253,37 +271,8 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         }
       />
 
-      {/* 3a. Self Test */}
-      <SettingActionRow
-        icon={BugPlay}
-        iconName="bug-play"
-        iconColor="text-cyan-400"
-        title="Self Test"
-        actionLabel="Browse"
-        description="Automated subsystem self-test suites and verification harnesses"
-        hoverDescription="Self Test: Browse automated diagnostic and self-test suites available for the active environment."
-        onAction={() => navigateRoute('dev-self-test')}
-        onHover={onHover}
-        onLeave={onLeave}
-        isLight={isLight}
-      />
+      {DEV_NAV_ROWS.filter((r) => r.group === 'mid').map(renderNavRow)}
 
-      {/* 3b. Remote Profile Management (Set Others Profile & Manage Accounts) */}
-      <SettingActionRow
-        icon={UserCog}
-        iconName="user-cog"
-        iconColor="text-violet-400"
-        title="Remote Profile Management"
-        actionLabel="Browse"
-        description="Set Others Profile (SETTINGS # alias) & Manage Cloud Accounts (username / password / alias)"
-        hoverDescription="Remote Profile Management: Remotely tune another user's settings & active floating windows in real time, or manage plaintext cloud user accounts."
-        onAction={() => navigateRoute('dev-remote-profile')}
-        onHover={onHover}
-        onLeave={onLeave}
-        isLight={isLight}
-      />
-
-      {/* 3c. Bots Loadout Tuner Floating Window */}
       <FloatingWindowCard
         preset={BOTS_LOADOUT_TUNER_PRESET}
         icon={Bot}
@@ -297,7 +286,6 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 4. Ball Opacity (70% / 100% / Custom) */}
       <SettingSegmentedRow
         icon={CircleDot}
         iconName="circle-dot"
@@ -316,21 +304,19 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 5. Observe Safe Area Boundary */}
       <SettingToggleRow
         icon={Scan}
         iconName="scan"
         title="Observe Safe Area Boundary"
         description="Display green safe area outline, 18:9 canonical zone, and floating telemetry calibration pill"
         checked={showSafeAreaHud}
-        onChange={handleObserveSafeAreaChange}
+        onChange={setShowSafeAreaHud}
         hoverDescription="Observe Safe Area Boundary: Displays boundary guides and bottom telemetry pill to observe and calibrate UI scaling and bezel margins in real-time."
         onHover={(desc) => desc && onHover?.(desc)}
         onLeave={onLeave}
         isLight={isLight}
       />
 
-      {/* 5a. Signaling Match Relay Policy */}
       <SettingSegmentedRow
         icon={Radio}
         iconName="radio"
@@ -348,31 +334,19 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
         isLight={isLight}
       />
 
-      {/* 5b. Export Time-Bound .rctbnspib Credential Bundle */}
-      <DeveloperProfileExportSection
-        onHover={onHover}
-        onLeave={onLeave}
-        isLight={isLight}
-      />
+      <DeveloperProfileExportSection onHover={onHover} onLeave={onLeave} isLight={isLight} />
 
-      {/* 6. Under Development (Moved to the very bottom, styled in red/rose with configurable top spacing) */}
       <SettingActionRow
         icon={AlertTriangle}
         iconColor={isLight ? 'text-rose-600' : 'text-rose-400'}
-        title={
-          <span className={isLight ? 'text-rose-700' : 'text-rose-400'}>
-            Under Development
-          </span>
-        }
+        title={<span className={isLight ? 'text-rose-700' : 'text-rose-400'}>Under Development</span>}
         description="Unstable staging workspace: Three-Wheeler (Tricycle / Psyclops), Throwback Stadium & Per-Car Boost"
         hoverDescription="Under Development: Unstable staging workspace for early experimental prototypes (Three-Wheeler Tricycle physics, Throwback Stadium 36 CMF & GLB, and Per-Car Boost mechanics)."
         onAction={() => navigateRoute('dev-under-development')}
         onHover={onHover}
         onLeave={onLeave}
         isLight={isLight}
-        style={{
-          marginTop: `${Math.max(0, underDevelopmentTopMargin)}px`,
-        }}
+        style={{ marginTop: `${Math.max(0, underDevelopmentTopMargin)}px` }}
         className={
           isLight
             ? '!bg-rose-500/[0.06] hover:!bg-rose-500/[0.12] !border-rose-500/25'
@@ -385,14 +359,7 @@ export const DeveloperTab: React.FC<DeveloperTabProps> = ({
               e.stopPropagation();
               navigateRoute('dev-under-development');
             }}
-            style={{
-              fontSize: `${buttonFontSize}px`,
-              paddingLeft: `${buttonPaddingX}px`,
-              paddingRight: `${buttonPaddingX}px`,
-              paddingTop: `${buttonPaddingY}px`,
-              paddingBottom: `${buttonPaddingY}px`,
-              borderRadius: `${Math.max(0, buttonRadius)}px`,
-            }}
+            style={btnStyle}
             className={`shrink-0 font-semibold border transition-all duration-150 cursor-pointer inline-flex items-center gap-1.5 leading-tight active:scale-95 whitespace-nowrap ${
               isLight
                 ? 'bg-rose-500/15 hover:bg-rose-500/25 border-rose-500/35 text-rose-700'
