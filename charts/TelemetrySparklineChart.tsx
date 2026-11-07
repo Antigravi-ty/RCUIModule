@@ -6,7 +6,6 @@ import React, {
   forwardRef,
   useCallback,
 } from 'react';
-import { Activity, Pause, Play, RotateCcw } from 'lucide-react';
 import { UI_RADIUS } from '../tokens/radius';
 import { UI_THEME } from '../tokens/colors';
 import { TelemetryRingBuffer, TelemetryComputedStats } from './telemetryRingBuffer';
@@ -16,6 +15,10 @@ import {
   type TelemetryPhaseItem,
   type TelemetrySparklineFooterHandle,
 } from './TelemetrySparklineFooter';
+import {
+  TelemetrySparklineEmbeddedControlBar,
+  TelemetrySparklineHeaderBar,
+} from './TelemetrySparklineHeaderBar';
 
 export const ALPHA_COMPONENT_ID = 'Alpha:TelemetrySparklineChart' as const;
 
@@ -27,9 +30,14 @@ export interface TelemetrySparklineChartHandle {
   getRingBuffer: () => TelemetryRingBuffer;
 }
 
-export interface TelemetrySparklineChartProps {
+export interface TelemetryChartSurfaceBase {
+  isLight?: boolean;
+  className?: string;
+  variant?: 'card' | 'embedded';
+}
+
+export interface TelemetrySparklineChartProps extends TelemetryChartSurfaceBase {
   ringBuffer?: TelemetryRingBuffer;
-  history?: number[];
   budgetMs?: number;
   refreshHz?: number;
   unit?: string;
@@ -40,17 +48,13 @@ export interface TelemetrySparklineChartProps {
   isFrozen?: boolean;
   onFreezeToggle?: (isFrozen: boolean) => void;
   onReset?: () => void;
-  variant?: 'card' | 'embedded';
-  isLight?: boolean;
-  className?: string;
 }
 
 export const TelemetrySparklineChart = React.memo(
   forwardRef<TelemetrySparklineChartHandle, TelemetrySparklineChartProps>(
-    (
-      {
+    (props, ref) => {
+      const {
         ringBuffer: externalRingBuffer,
-        history,
         budgetMs = 8.33,
         refreshHz = 120,
         unit = 'ms',
@@ -64,9 +68,8 @@ export const TelemetrySparklineChart = React.memo(
         variant = 'card',
         isLight = false,
         className = '',
-      },
-      ref
-    ) => {
+      } = props;
+
       const compact = variant === 'embedded';
       const canvasRef = useRef<HTMLCanvasElement | null>(null);
       const containerRef = useRef<HTMLDivElement | null>(null);
@@ -85,7 +88,7 @@ export const TelemetrySparklineChart = React.memo(
 
       const internalRingBufferRef = useRef<TelemetryRingBuffer | null>(null);
       if (!internalRingBufferRef.current) {
-        internalRingBufferRef.current = new TelemetryRingBuffer(240, history);
+        internalRingBufferRef.current = new TelemetryRingBuffer(240);
       }
       const activeRingBuffer = externalRingBuffer ?? internalRingBufferRef.current;
 
@@ -93,13 +96,6 @@ export const TelemetrySparklineChart = React.memo(
         if (controlledIsFrozen === undefined) return;
         setFrozenSnapshot(controlledIsFrozen ? activeRingBuffer.snapshot() : null);
       }, [controlledIsFrozen, activeRingBuffer]);
-
-      useEffect(() => {
-        if (!externalRingBuffer && history && history.length > 0) {
-          internalRingBufferRef.current!.clear();
-          internalRingBufferRef.current!.pushBatch(history);
-        }
-      }, [externalRingBuffer, history]);
 
       const currentValRef = useRef<HTMLSpanElement | null>(null);
       const fpsValRef = useRef<HTMLSpanElement | null>(null);
@@ -187,7 +183,7 @@ export const TelemetrySparklineChart = React.memo(
         syncDomReadouts(stats);
       }, [
         activeRingBuffer, frozenSnapshot, getSampleCount, getSampleAt,
-        canvasWidth, height, budgetMs, refreshHz, unit, isLight, hoverIndex, isFrozen, syncDomReadouts, history,
+        canvasWidth, height, budgetMs, refreshHz, unit, isLight, hoverIndex, isFrozen, syncDomReadouts,
       ]);
 
       const liveOptsRef = useRef({ canvasWidth, height, budgetMs, refreshHz, unit, isLight, hoverIndex, isFrozen });
@@ -263,7 +259,6 @@ export const TelemetrySparklineChart = React.memo(
         hoverIndex !== null && hoverIndex >= 0 && hoverIndex < count
           ? getSampleAt(hoverIndex)
           : null;
-      const inspectedDelta = inspectedValue !== null ? inspectedValue - budgetMs : null;
       const initialStats = activeRingBuffer.computeStats(
         budgetMs,
         refreshHz,
@@ -306,76 +301,20 @@ export const TelemetrySparklineChart = React.memo(
           } ${className}`}
         >
           {!isEmbedded && (
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 font-mono text-xs font-bold">
-                <Activity className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span>{title}</span>
-                {isFrozen && (
-                  <span className="px-1.5 py-0.2 rounded text-[9px] bg-amber-500/20 text-amber-500 border border-amber-500/30 uppercase">
-                    Snapshot Frozen
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 font-mono">
-                {inspectedValue !== null ? (
-                  <div
-                    className={`px-2 py-0.5 ${UI_RADIUS.badge} border text-[11px] flex items-center gap-1.5 ${
-                      inspectedValue > budgetMs * 1.02
-                        ? 'bg-rose-500/15 text-rose-500 border-rose-500/30 font-bold'
-                        : isLight
-                        ? 'bg-neutral-100 text-neutral-800 border-neutral-300'
-                        : 'bg-neutral-800 text-neutral-200 border-neutral-700'
-                    }`}
-                  >
-                    <span>Sample #{hoverIndex}:</span>
-                    <strong>
-                      {inspectedValue.toFixed(2)}
-                      {unit}
-                    </strong>
-                    <span className="text-[10px] opacity-80">
-                      ({inspectedDelta! >= 0 ? `+${inspectedDelta!.toFixed(2)}` : inspectedDelta!.toFixed(2)}
-                      {unit})
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-baseline gap-1">
-                    <span
-                      ref={currentValRef}
-                      className="text-sm font-bold text-amber-500 tabular-nums"
-                    >
-                      {initialStats.currentMs.toFixed(2)}
-                    </span>
-                    <span className="text-[10px] text-neutral-400">{unit}</span>
-                    {showFpsReadout && (
-                      <span ref={fpsValRef} className="text-[10px] text-neutral-500 tabular-nums">
-                        ({initialStats.fps} fps)
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={toggleFreeze}
-                  title={isFrozen ? 'Resume live telemetry stream' : 'Freeze frame history to inspect spikes'}
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 ${UI_RADIUS.button} border text-[10px] font-semibold cursor-pointer transition-colors ${
-                    isFrozen
-                      ? 'bg-amber-500 text-neutral-950 border-amber-400 font-bold'
-                      : isLight
-                      ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-700'
-                      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
-                  }`}
-                >
-                  {isFrozen ? (
-                    <Play className="h-2.5 w-2.5 fill-current" />
-                  ) : (
-                    <Pause className="h-2.5 w-2.5" />
-                  )}
-                  <span>{isFrozen ? 'Resume' : 'Freeze'}</span>
-                </button>
-              </div>
-            </div>
+            <TelemetrySparklineHeaderBar
+              title={title}
+              isFrozen={isFrozen}
+              inspectedValue={inspectedValue}
+              hoverIndex={hoverIndex}
+              budgetMs={budgetMs}
+              unit={unit}
+              showFpsReadout={showFpsReadout}
+              initialStats={initialStats}
+              currentValRef={currentValRef}
+              fpsValRef={fpsValRef}
+              isLight={isLight}
+              onToggleFreeze={toggleFreeze}
+            />
           )}
 
           <div
@@ -395,51 +334,15 @@ export const TelemetrySparklineChart = React.memo(
           </div>
 
           {isEmbedded && (
-            <div className="flex items-center justify-between gap-2 font-mono text-[11px]">
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={toggleFreeze}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 ${UI_RADIUS.button} border text-[10px] font-semibold cursor-pointer transition-colors ${
-                    isFrozen
-                      ? 'bg-amber-500 text-neutral-950 border-amber-400 font-bold'
-                      : isLight
-                      ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-700'
-                      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-                  }`}
-                >
-                  {isFrozen ? (
-                    <Play className="h-3 w-3 fill-current" />
-                  ) : (
-                    <Pause className="h-3 w-3" />
-                  )}
-                  <span>{isFrozen ? 'Resume' : 'Freeze'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 ${UI_RADIUS.button} border text-[10px] font-semibold cursor-pointer transition-colors ${
-                    isLight
-                      ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-700'
-                      : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-                  }`}
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  <span>Reset</span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-neutral-400">Average:</span>
-                <span className="font-bold text-amber-500 tabular-nums">
-                  {avgMs.toFixed(2)} {unit}
-                </span>
-                <span className="text-[10px] opacity-65 tabular-nums">
-                  ({avgMs > 0.1 ? Math.min(999, Math.round(1000 / avgMs)) : refreshHz} fps)
-                </span>
-              </div>
-            </div>
+            <TelemetrySparklineEmbeddedControlBar
+              isFrozen={isFrozen}
+              avgMs={avgMs}
+              unit={unit}
+              refreshHz={refreshHz}
+              isLight={isLight}
+              onToggleFreeze={toggleFreeze}
+              onReset={handleReset}
+            />
           )}
 
           <TelemetrySparklineFooter

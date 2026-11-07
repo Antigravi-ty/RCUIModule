@@ -11,6 +11,7 @@ import {
   type ReplayIncidentMarker,
   type ReplaySignalMarker,
 } from './MultiTrackReplayTracksOnlyView';
+import { ReplayTimelineMarkersAndRuler } from './ReplayTimelineMarkersAndRuler';
 
 export const ALPHA_COMPONENT_ID = 'Alpha:MultiTrackReplayTimeline' as const;
 
@@ -40,38 +41,34 @@ export interface MultiTrackReplayTimelineProps {
   fileName?: string;
   totalFrames?: number;
   cursorFrame?: number;
-  initialCursorFrame?: number;
   isIntervening?: boolean;
   incidentMarkers?: ReplayIncidentMarker[];
   signalMarkers?: ReplaySignalMarker[];
   variant?: 'card' | 'tracks-only';
   disabled?: boolean;
   onSeekFrame?: (frameIndex: number) => void;
-  onResumeFromCursor?: (cursorFrame: number, downCounterSec: ReplayDownCounterSec) => void;
   isLight?: boolean;
   className?: string;
 }
 
 export const MultiTrackReplayTimeline = React.memo(
   forwardRef<MultiTrackReplayTimelineHandle, MultiTrackReplayTimelineProps>(
-    (
-      {
+    (props, ref) => {
+      const {
         fileName = 'match_2026_finals_ot.rcreplay.gz',
         totalFrames = 1440,
         cursorFrame: controlledCursorFrame,
-        initialCursorFrame = 540,
         isIntervening = false,
         incidentMarkers = DEFAULT_REPLAY_INCIDENT_MARKERS,
         signalMarkers = DEFAULT_REPLAY_SIGNAL_MARKERS,
         variant = 'card',
         disabled = false,
         onSeekFrame,
-        onResumeFromCursor,
         isLight = true,
         className = '',
-      },
-      ref
-    ) => {
+      } = props;
+      const initialCursorFrame = 540;
+
       const [isPlaying, setIsPlaying] = useState(false);
       const [downCounterSec, setDownCounterSec] = useState<ReplayDownCounterSec>(0);
       const [flowPreset, setFlowPreset] = useState<ReplayFlowPresetId>('100');
@@ -149,9 +146,6 @@ export const MultiTrackReplayTimeline = React.memo(
         onSeekFrame?.(next);
       };
 
-      const trackBgClass = isLight ? 'bg-neutral-200/90' : 'bg-neutral-800/95';
-      const cursorLineClass = isLight ? 'bg-neutral-900' : 'bg-white';
-
       if (isTracksOnly) {
         return (
           <MultiTrackReplayTracksOnlyView
@@ -200,104 +194,21 @@ export const MultiTrackReplayTimeline = React.memo(
             </div>
           </div>
 
-          <div
-            className={`p-3 ${UI_RADIUS.card} border font-mono text-[10px] flex flex-col gap-2.5 ${
-              isLight ? 'bg-neutral-50 border-neutral-200 text-neutral-700' : 'bg-neutral-950/80 border-neutral-800 text-neutral-300'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span>Playhead: <b ref={cursorTextRef}>Frame #{effectiveInitialFrame}</b></span>
-              <span className="text-emerald-500 font-semibold">
-                Takeover Preroll: -{downCounterSec + 1}s ({(downCounterSec + 1) * 120}f)
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between text-[9.5px] opacity-80">
-                <span>Track A · Physics State + Player Input</span>
-                <span>{totalFrames} frames (120Hz)</span>
-              </div>
-              <div
-                onClick={handleTrackSeek}
-                className={`w-full h-3 ${UI_RADIUS.full} overflow-hidden cursor-pointer relative ${trackBgClass}`}
-                title="Click anywhere on Track A to seek frame"
-              >
-                <div
-                  ref={trackAFillRef}
-                  className="h-full bg-amber-500"
-                  style={{ width: `${(effectiveInitialFrame / Math.max(1, totalFrames - 1)) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between text-[9.5px] opacity-80">
-                <span>Track B · Arena Incidents (Touch / Demo / Save / Goal)</span>
-                <span>{incidentMarkers.length} events</span>
-              </div>
-              <div
-                onClick={handleTrackSeek}
-                className={`w-full h-3 ${UI_RADIUS.full} overflow-hidden cursor-pointer relative ${trackBgClass}`}
-              >
-                {incidentMarkers.map((m, idx) => {
-                  const leftPct = (m.frameIndex / Math.max(1, totalFrames - 1)) * 100;
-                  const colorCls =
-                    m.type === 'goal'
-                      ? 'bg-emerald-500 w-1.5 z-10'
-                      : m.type === 'demo'
-                      ? 'bg-rose-500 w-1'
-                      : m.type === 'save'
-                      ? 'bg-sky-500 w-1'
-                      : 'bg-amber-500 w-0.5';
-                  return (
-                    <div
-                      key={`${m.frameIndex}-${idx}`}
-                      style={{ left: `${leftPct}%` }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        applyCursorToDom(m.frameIndex);
-                        onSeekFrame?.(m.frameIndex);
-                      }}
-                      className={`absolute top-0 bottom-0 ${colorCls}`}
-                      title={`${m.label} @ #${m.frameIndex}`}
-                    />
-                  );
-                })}
-                <div ref={trackBCursorRef} className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`} />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between text-[9.5px] opacity-80">
-                <span>Track C · Match Signals (Kickoff / Score / Boundary)</span>
-                <span>{signalMarkers.length} signals</span>
-              </div>
-              <div
-                onClick={handleTrackSeek}
-                className={`w-full h-3 ${UI_RADIUS.full} overflow-hidden cursor-pointer relative ${trackBgClass}`}
-              >
-                {signalMarkers.map((s, idx) => {
-                  const leftPct = (s.frameIndex / Math.max(1, totalFrames - 1)) * 100;
-                  const colorCls =
-                    s.type === 'score' ? 'bg-emerald-500 w-1.5' : s.type === 'end' ? 'bg-violet-500 w-1' : 'bg-sky-500 w-1';
-                  return (
-                    <div
-                      key={`${s.frameIndex}-${idx}`}
-                      style={{ left: `${leftPct}%` }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        applyCursorToDom(s.frameIndex);
-                        onSeekFrame?.(s.frameIndex);
-                      }}
-                      className={`absolute top-0 bottom-0 ${colorCls}`}
-                      title={`${s.label} @ #${s.frameIndex}`}
-                    />
-                  );
-                })}
-                <div ref={trackCCursorRef} className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`} />
-              </div>
-            </div>
-          </div>
+          <ReplayTimelineMarkersAndRuler
+            totalFrames={totalFrames}
+            effectiveInitialFrame={effectiveInitialFrame}
+            downCounterSec={downCounterSec}
+            incidentMarkers={incidentMarkers}
+            signalMarkers={signalMarkers}
+            cursorTextRef={cursorTextRef}
+            trackRefs={{ trackAFillRef, trackBCursorRef, trackCCursorRef }}
+            isLight={isLight}
+            onTrackSeek={handleTrackSeek}
+            onMarkerSelect={(frameIndex) => {
+              applyCursorToDom(frameIndex);
+              onSeekFrame?.(frameIndex);
+            }}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="flex items-center gap-1.5">
@@ -368,15 +279,6 @@ export const MultiTrackReplayTimeline = React.memo(
                     { value: 'custom', label: 'Custom' },
                   ]}
                 />
-                {onResumeFromCursor && (
-                  <button
-                    type="button"
-                    onClick={() => onResumeFromCursor(cursorFrameRef.current, downCounterSec)}
-                    className={`px-2.5 py-1 ${UI_RADIUS.button} bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 text-[11px] font-bold cursor-pointer`}
-                  >
-                    Resume Here [G]
-                  </button>
-                )}
               </div>
             </div>
 

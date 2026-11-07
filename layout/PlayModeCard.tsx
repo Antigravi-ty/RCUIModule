@@ -1,30 +1,32 @@
 import React, { useState } from 'react';
 import { Badge } from '../primitives/Badge';
+import { type PlayCardIconColorValue } from '../tokens/colors';
 import {
-  resolvePlayCardIconColorClass,
-  resolvePlayCardIconHex,
-  isCustomPlayCardColor,
-  type PlayCardIconColorValue,
-} from '../tokens/colors';
-import {
-  DEFAULT_PLAY_CARD_STYLE_PARAMS,
-  DEFAULT_CARD_ICON_COLORS,
   type PlayCardStyleParams,
   type PlayCardStyleVariant,
-  type PlayModeCardId,
 } from '../stores/playCardStyleStore';
+import {
+  resolvePlayCardVisualState,
+  renderClonedPlayCardIcon,
+  getPlayCardWatermarkPositionStyle,
+  getPlayCardMonoContainerAlignmentClass,
+} from './playModeCardHelpers';
 
-export interface PlayModeCardProps {
+export interface PlayModeCardBase {
   id: string;
   title: string;
   subtitle: string;
-  badge?: string;
-  badgeVariant?: 'primary' | 'warning' | 'success' | 'neutral' | 'amber';
   icon: React.ReactNode;
-  /** Optional explicit per-card icon color token or custom RGB/Hex override */
-  iconColorToken?: PlayCardIconColorValue;
   isLight?: boolean;
   disabled?: boolean;
+  className?: string;
+}
+
+export interface PlayModeCardProps extends PlayModeCardBase {
+  badge?: string;
+  badgeVariant?: 'primary' | 'warning' | 'success' | 'neutral' | 'amber';
+  /** Optional explicit per-card icon color token or custom RGB/Hex override */
+  iconColorToken?: PlayCardIconColorValue;
   /** Style variant override (defaults to styleParams.variant or 'mono-giant-watermark') */
   variant?: PlayCardStyleVariant;
   /** Optional granular style parameters (pure props-driven, zero store coupling) */
@@ -32,7 +34,6 @@ export interface PlayModeCardProps {
   onClick?: (id: string) => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
-  className?: string;
 }
 
 /**
@@ -42,170 +43,36 @@ export interface PlayModeCardProps {
  * 2. 'icon-title-inline': Row 1 [Left Icon + Right Title (No Badge)] -> Row 2 [Description]
  * 3. 'mono-giant-watermark': Large JetBrains Mono title + Giant background watermark icon (~30% opacity)
  */
-export const PlayModeCard: React.FC<PlayModeCardProps> = React.memo(({
-  id,
-  title,
-  subtitle,
-  badge,
-  badgeVariant = 'primary',
-  icon,
-  iconColorToken,
-  isLight = false,
-  disabled = false,
-  variant: variantOverride,
-  styleParams,
-  onClick,
-  onMouseEnter,
-  onMouseLeave,
-  className = '',
-}) => {
+export const PlayModeCard: React.FC<PlayModeCardProps> = React.memo((props) => {
+  const {
+    id,
+    title,
+    subtitle,
+    badge,
+    badgeVariant = 'primary',
+    icon,
+    iconColorToken,
+    isLight = false,
+    disabled = false,
+    variant: variantOverride,
+    styleParams,
+    onClick,
+    onMouseEnter,
+    onMouseLeave,
+    className = '',
+  } = props;
   const [isHovered, setIsHovered] = useState(false);
 
-  const cfg: PlayCardStyleParams = {
-    ...DEFAULT_PLAY_CARD_STYLE_PARAMS,
-    ...(styleParams || {}),
-    cardIconColors: {
-      ...DEFAULT_CARD_ICON_COLORS,
-      ...(styleParams?.cardIconColors || {}),
-    },
-  };
-  const activeVariant: PlayCardStyleVariant = variantOverride ?? cfg.variant;
-
-  const normalizedCardKey = (id === 'online-training' ? 'host-training' : id) as PlayModeCardId;
-  const resolvedCardColorValue: PlayCardIconColorValue | undefined =
-    iconColorToken ?? cfg.cardIconColors?.[normalizedCardKey];
-  const isCustomColor = isCustomPlayCardColor(resolvedCardColorValue);
-  const perCardColorClass = resolvePlayCardIconColorClass(resolvedCardColorValue, isLight);
-  const perCardCustomCssColor = isCustomColor
-    ? resolvePlayCardIconHex(resolvedCardColorValue, isLight)
-    : undefined;
-
-  const renderClonedIcon = (
-    node: React.ReactNode,
-    sizePx: number,
-    strokeWidth: number,
-    overrideColorClass?: string,
-    overrideCssColor?: string
-  ) => {
-    if (!React.isValidElement(node)) return node;
-    const el = node as React.ReactElement<{
-      className?: string;
-      size?: number;
-      width?: number;
-      height?: number;
-      strokeWidth?: number;
-      style?: React.CSSProperties;
-    }>;
-    const origClass = el.props.className || '';
-    // Strip fixed h-X w-X classes so explicit pixel dimensions take effect cleanly
-    const strippedClass = origClass
-      .replace(/\bh-\d+(?:\.\d+)?\b/g, '')
-      .replace(/\bw-\d+(?:\.\d+)?\b/g, '')
-      .trim();
-    const shouldStripColorClasses = Boolean(overrideColorClass || overrideCssColor);
-    const colorProcessedClass = shouldStripColorClasses
-      ? (
-          strippedClass.replace(/\b(?:dark:)?text-[a-z]+-\d+\b/g, '').trim() +
-          (overrideColorClass ? ` ${overrideColorClass}` : '')
-        ).trim()
-      : strippedClass;
-
-    return React.cloneElement(el, {
-      size: sizePx,
-      width: sizePx,
-      height: sizePx,
-      strokeWidth,
-      className: `shrink-0 transition-transform duration-200 ${colorProcessedClass}`.trim(),
-      style: {
-        ...(el.props.style || {}),
-        width: `${sizePx}px`,
-        height: `${sizePx}px`,
-        ...(overrideCssColor ? { color: overrideCssColor } : {}),
-      },
-    });
-  };
-
-  const clampClass =
-    cfg.descLineClamp === 1
-      ? 'line-clamp-1'
-      : cfg.descLineClamp === 2
-      ? 'line-clamp-2'
-      : cfg.descLineClamp === 3
-      ? 'line-clamp-3'
-      : '';
-
-  const titleFontFamily = cfg.titleUseMonoFont ? 'var(--font-jetbrains)' : 'var(--font-apple)';
-
-  // Watermark positioning for Style 3
-  const getWatermarkPositionStyle = (): React.CSSProperties => {
-    const ox = cfg.watermarkOffsetXPx;
-    const oy = cfg.watermarkOffsetYPx;
-    const scale = isHovered ? cfg.watermarkHoverScale : 1;
-    const rot = cfg.watermarkRotateDeg;
-
-    switch (cfg.watermarkAnchor) {
-      case 'center':
-        return {
-          left: `calc(50% + ${ox}px)`,
-          top: `calc(50% + ${oy}px)`,
-          transform: `translate(-50%, -50%) rotate(${rot}deg) scale(${scale})`,
-        };
-      case 'right-center':
-        return {
-          right: `${-ox}px`,
-          top: `calc(50% + ${oy}px)`,
-          transform: `translateY(-50%) rotate(${rot}deg) scale(${scale})`,
-        };
-      case 'top-right':
-        return {
-          right: `${-ox}px`,
-          top: `${-oy}px`,
-          transform: `rotate(${rot}deg) scale(${scale})`,
-        };
-      case 'bottom-left':
-        return {
-          left: `${-ox}px`,
-          bottom: `${-oy}px`,
-          transform: `rotate(${rot}deg) scale(${scale})`,
-        };
-      case 'bottom-right':
-      default:
-        return {
-          right: `${-ox}px`,
-          bottom: `${-oy}px`,
-          transform: `rotate(${rot}deg) scale(${scale})`,
-        };
-    }
-  };
-
-  const watermarkColorOverride =
-    cfg.watermarkColorMode === 'amber'
-      ? 'text-amber-500'
-      : cfg.watermarkColorMode === 'neutral'
-      ? isLight
-        ? 'text-neutral-500'
-        : 'text-neutral-300'
-      : perCardColorClass;
-
-  const watermarkCssColorOverride =
-    cfg.watermarkColorMode === 'mode-accent' ? perCardCustomCssColor : undefined;
-
-  // Title alignment classes for Style 3
-  const getMonoContainerAlignmentClass = (): string => {
-    switch (cfg.monoTitleAnchor) {
-      case 'center':
-        return 'items-center justify-center text-center';
-      case 'bottom-left':
-        return 'items-start justify-end text-left';
-      case 'top-left':
-        return 'items-start justify-start text-left';
-      case 'bottom-right':
-        return 'items-end justify-end text-right';
-      case 'center-left':
-      default:
-        return 'items-start justify-center text-left';
-    }
-  };
+  const {
+    cfg,
+    activeVariant,
+    perCardColorClass,
+    perCardCustomCssColor,
+    clampClass,
+    titleFontFamily,
+    watermarkColorOverride,
+    watermarkCssColorOverride,
+  } = resolvePlayCardVisualState(id, iconColorToken, isLight, variantOverride, styleParams);
 
   return (
     <button
@@ -260,7 +127,7 @@ export const PlayModeCard: React.FC<PlayModeCardProps> = React.memo(({
                     : 'bg-neutral-900 border-neutral-700/80 group-hover:border-amber-500/50'
                 }`}
               >
-                {renderClonedIcon(
+                {renderClonedPlayCardIcon(
                   icon,
                   cfg.iconSizePx,
                   cfg.iconStrokeWidth,
@@ -270,7 +137,7 @@ export const PlayModeCard: React.FC<PlayModeCardProps> = React.memo(({
               </div>
             ) : (
               <div className="flex items-center justify-center shrink-0">
-                {renderClonedIcon(
+                {renderClonedPlayCardIcon(
                   icon,
                   cfg.iconSizePx,
                   cfg.iconStrokeWidth,
@@ -339,7 +206,7 @@ export const PlayModeCard: React.FC<PlayModeCardProps> = React.memo(({
                     : 'bg-neutral-900 border-neutral-700/80 group-hover:border-amber-500/50'
                 }`}
               >
-                {renderClonedIcon(
+                {renderClonedPlayCardIcon(
                   icon,
                   cfg.iconSizePx,
                   cfg.iconStrokeWidth,
@@ -349,7 +216,7 @@ export const PlayModeCard: React.FC<PlayModeCardProps> = React.memo(({
               </div>
             ) : (
               <div className="flex items-center justify-center shrink-0">
-                {renderClonedIcon(
+                {renderClonedPlayCardIcon(
                   icon,
                   cfg.iconSizePx,
                   cfg.iconStrokeWidth,
@@ -394,13 +261,13 @@ export const PlayModeCard: React.FC<PlayModeCardProps> = React.memo(({
           <div
             aria-hidden="true"
             style={{
-              ...getWatermarkPositionStyle(),
+              ...getPlayCardWatermarkPositionStyle(cfg, isHovered),
               opacity:
                 (isHovered ? cfg.watermarkHoverOpacityPct : cfg.watermarkOpacityPct) / 100,
             }}
             className="absolute pointer-events-none select-none z-0 transition-all duration-200 ease-out"
           >
-            {renderClonedIcon(
+            {renderClonedPlayCardIcon(
               icon,
               cfg.watermarkSizePx,
               cfg.watermarkStrokeWidth,
@@ -420,7 +287,9 @@ export const PlayModeCard: React.FC<PlayModeCardProps> = React.memo(({
 
           {/* Foreground Large JetBrains Mono Title & Optional Subtitle */}
           <div
-            className={`relative z-10 flex flex-col flex-1 w-full ${getMonoContainerAlignmentClass()}`}
+            className={`relative z-10 flex flex-col flex-1 w-full ${getPlayCardMonoContainerAlignmentClass(
+              cfg.monoTitleAnchor
+            )}`}
           >
             <span
               style={{

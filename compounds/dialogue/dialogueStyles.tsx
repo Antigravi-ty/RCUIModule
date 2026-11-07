@@ -8,7 +8,8 @@ import {
   X 
 } from 'lucide-react';
 import { lookupLucideIcon } from '../../primitives/iconLookup';
-import { DialogueTone, DialogueButtonVariant } from './dialogueTypes';
+import { UI_THEME } from '../../tokens/colors';
+import { DialogueTone, DialogueButtonVariant, DialogueProps } from './dialogueTypes';
 
 export const buildCombinedShadow = (
   tone: DialogueTone,
@@ -125,6 +126,86 @@ export const getToneConfig = (tone: DialogueTone, isLight: boolean) => {
   }
 };
 
+export const resolveDialogueIconNode = (
+  icon: React.ReactNode | string | undefined,
+  effectiveIconSize: number,
+  DefaultToneIcon: React.ComponentType<{ size?: number; className?: string }>
+): React.ReactNode => {
+  if (typeof icon === 'string' && icon.trim()) {
+    const IconComponent = getLucideIconComponent(icon.trim()) || DefaultToneIcon;
+    return <IconComponent size={effectiveIconSize} className="shrink-0 transition-all" />;
+  }
+  if (React.isValidElement(icon)) {
+    const iconElement = icon as React.ReactElement<{ size?: number; className?: string }>;
+    return React.cloneElement(iconElement, {
+      size: effectiveIconSize,
+      className: `${iconElement.props.className || ''} shrink-0 transition-all`,
+    });
+  }
+  if (icon) return icon;
+  return <DefaultToneIcon size={effectiveIconSize} className="shrink-0 transition-all" />;
+};
+
+export const resolveDialogueTitleColorClass = (
+  tone: DialogueTone,
+  isLight: boolean,
+  titleColorMode: NonNullable<DialogueProps['titleColorMode']>,
+  titleColor?: string
+): string => {
+  if (titleColor) return '';
+  const theme = isLight ? UI_THEME.light : UI_THEME.dark;
+  switch (titleColorMode) {
+    case 'muted':
+      return theme.textMuted;
+    case 'primary':
+      return theme.textPrimary;
+    case 'tone':
+      if (tone === 'error') return isLight ? 'text-red-600' : 'text-red-400';
+      if (tone === 'orange') return isLight ? 'text-orange-600' : 'text-orange-400';
+      if (tone === 'warning') return isLight ? 'text-yellow-600' : 'text-yellow-400';
+      return theme.textSecondary;
+    case 'content':
+    default:
+      return theme.textSecondary;
+  }
+};
+
+export const resolveDialogueButtonVariantClasses = (
+  variant: DialogueButtonVariant,
+  isLight: boolean
+): string => {
+  if (variant === 'primary') {
+    return isLight
+      ? 'bg-neutral-900 text-white hover:bg-neutral-800 border-neutral-900 shadow-xs'
+      : 'bg-white text-neutral-950 hover:bg-neutral-100 border-white shadow-xs';
+  }
+  if (variant === 'danger') {
+    return isLight
+      ? 'bg-red-600 text-white hover:bg-red-700 border-red-600 shadow-xs'
+      : 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border-red-500/40 shadow-xs';
+  }
+  return isLight
+    ? 'bg-transparent text-neutral-800 hover:bg-neutral-100/90 border-neutral-300'
+    : 'bg-transparent text-neutral-200 hover:bg-white/10 border-neutral-700';
+};
+
+export const measureEqualDialogueButtonWidth = (
+  container: HTMLElement | null
+): number | null => {
+  if (!container) return null;
+  const btnElements = container.querySelectorAll<HTMLButtonElement>('button[data-dialogue-btn="true"]');
+  if (btnElements.length === 0) return null;
+  btnElements.forEach((btn) => {
+    btn.style.width = 'auto';
+  });
+  let maxW = 0;
+  btnElements.forEach((btn) => {
+    const rect = btn.getBoundingClientRect();
+    if (rect.width > maxW) maxW = rect.width;
+  });
+  return maxW > 0 ? Math.ceil(Math.max(maxW, 92)) : null;
+};
+
 export const MONO_FONT_STACK = "'SF Mono', 'JetBrains Mono', ui-monospace, Menlo, Monaco, Consolas, monospace";
 
 export const DEFAULT_TITLES: Record<DialogueTone, string> = {
@@ -133,8 +214,3 @@ export const DEFAULT_TITLES: Record<DialogueTone, string> = {
   orange: 'ALERT',
   info: 'INFO',
 };
-
-/**
- * Standardized Dialogue Presentation Component
- * Title represents the level attribute (e.g. FATAL ERROR, ERROR, WARNING, ALERT, INFO)
- */
