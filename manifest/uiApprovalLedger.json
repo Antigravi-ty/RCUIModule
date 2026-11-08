@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-07T14:16:03.819Z",
+  "updatedAt": "2026-11-08T08:31:23.408Z",
   "templateHash": "2457f99820e9a4a6",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -378,16 +378,15 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/BotsLoadoutTunerFloatingWindow.tsx",
       "templateHash": "2457f99820e9a4a6",
-      "sizingAndConfigHash": "280414c11bbde28b",
-      "visualAstHash": "8a44c0cc5ed6f779",
+      "sizingAndConfigHash": "8eb5647b26709198",
+      "visualAstHash": "288f9ed044cc30ae",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/BotsLoadoutTunerFloatingWindow.tsx": "4c01126ea3ff7c8f",
-        "src/ui-core/panels/dev/bots-loadout-tuner/BotsCarModelPoolSection.tsx": "7c1ea41f020f3ae9",
+        "src/ui-core/panels/dev/bots-loadout-tuner/BotsCarModelPoolSection.tsx": "a6da7a484a4bee6a",
         "src/ui-core/primitives/Badge.tsx": "2c13f7eccf5b1baf"
       },
       "alphaDeps": [
         "src/ui-core/config/botsLoadoutConfig.ts",
-        "src/ui-core/config/vehicleConstants.ts",
         "src/ui-core/stores/botsLoadoutStore.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
@@ -395,7 +394,6 @@
       "alphaDependencies": [
         "Alpha:Badge",
         "src/ui-core/config/botsLoadoutConfig.ts",
-        "src/ui-core/config/vehicleConstants.ts",
         "src/ui-core/stores/botsLoadoutStore.ts",
         "src/ui-core/tokens/radius.ts",
         "src/ui-core/tokens/spacing.ts"
@@ -1689,16 +1687,17 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx",
       "templateHash": "2457f99820e9a4a6",
-      "sizingAndConfigHash": "8be03926829ed41e",
-      "visualAstHash": "34237df7385a2ba7",
+      "sizingAndConfigHash": "4516a9a72983df55",
+      "visualAstHash": "87f379751fc30544",
       "fileVisualHashes": {
         "src/ui-core/compounds/CameraSwivelSimulatorCard.tsx": "accb6b2600f083a2",
-        "src/ui-core/panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx": "d791e8ef2fd8cfa9",
+        "src/ui-core/panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx": "8278137f5f4d0161",
         "src/ui-core/panels/dev/vehicle-model-offset-tuner/BoostNozzlesTab.tsx": "5e94d4e61ae405a2",
-        "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx": "20c514b361dce9b9",
+        "src/ui-core/panels/dev/vehicle-model-offset-tuner/CustomGlbImportCard.tsx": "aa7d078545998c78",
+        "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx": "05d5652500970b96",
         "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayCard.tsx": "fadbad62da56e9fe",
         "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayTransformSliders.tsx": "7a8e4e52a3577624",
-        "src/ui-core/panels/dev/vehicle-model-offset-tuner/VehicleOffsetFooterActions.tsx": "0e11850f1bfda2f0",
+        "src/ui-core/panels/dev/vehicle-model-offset-tuner/VehicleOffsetFooterActions.tsx": "8846056ec69d47d2",
         "src/ui-core/panels/dev/vehicle-model-offset-tuner/WheelOffsetsTab.tsx": "eac96cb5bb0a51b3",
         "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c",
         "src/ui-core/primitives/SegmentedSwitch.tsx": "46135c4b0e6e9b46",
@@ -1709,6 +1708,7 @@
       "alphaDeps": [
         "src/ui-core/config/vehicleConstants.ts",
         "src/ui-core/config/vehicleDescriptorsConfig.ts",
+        "src/ui-core/config/vehicleExtendedDescriptorsConfig.ts",
         "src/ui-core/config/vehiclePresets.ts",
         "src/ui-core/config/vehicleTunerConfig.ts",
         "src/ui-core/stores/appStore.ts",
@@ -1727,6 +1727,7 @@
         "Alpha:UnderlineTabs",
         "src/ui-core/config/vehicleConstants.ts",
         "src/ui-core/config/vehicleDescriptorsConfig.ts",
+        "src/ui-core/config/vehicleExtendedDescriptorsConfig.ts",
         "src/ui-core/config/vehiclePresets.ts",
         "src/ui-core/config/vehicleTunerConfig.ts",
         "src/ui-core/stores/appStore.ts",
@@ -1743,10 +1744,10 @@
           "label": "Hitbox Align",
           "entryFile": "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx",
           "status": "approved",
-          "visualAstHash": "5860e72489c61f60",
+          "visualAstHash": "81f7559cc3e382a1",
           "fileVisualHashes": {
             "src/ui-core/compounds/CameraSwivelSimulatorCard.tsx": "accb6b2600f083a2",
-            "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx": "20c514b361dce9b9",
+            "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx": "05d5652500970b96",
             "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayCard.tsx": "fadbad62da56e9fe",
             "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayTransformSliders.tsx": "7a8e4e52a3577624",
             "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c",
@@ -2144,7 +2145,7 @@
       "entryFile": "src/ui-core/recipes/Layer2GarageRecipe.tsx",
       "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "e3f1d86b3b796df3",
-      "visualAstHash": "cae04435fc785771",
+      "visualAstHash": "9bde664a732dd06e",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -2170,7 +2171,7 @@
         "src/ui-core/recipes/garage/GarageLoadoutTab.tsx": "656b14c55c4248e3",
         "src/ui-core/recipes/garage/GaragePaintTab.tsx": "81a4d88780c73e46",
         "src/ui-core/recipes/garage/GarageSyncTab.tsx": "8d15d0866dd4bf1f",
-        "src/ui-core/recipes/garage/garageConstants.ts": "2cb065ac329ef45c"
+        "src/ui-core/recipes/garage/garageConstants.ts": "5d69b7c0489113d1"
       },
       "alphaDeps": [
         "src/ui-core/config/anthemCatalogConfig.ts",
@@ -2222,11 +2223,11 @@
           "label": "Car",
           "entryFile": "src/ui-core/recipes/garage/GarageCarTab.tsx",
           "status": "approved",
-          "visualAstHash": "72576a90340b5030",
+          "visualAstHash": "eab03ef6f499c98c",
           "fileVisualHashes": {
             "src/ui-core/primitives/Badge.tsx": "2c13f7eccf5b1baf",
             "src/ui-core/recipes/garage/GarageCarTab.tsx": "c06be88adfd634e6",
-            "src/ui-core/recipes/garage/garageConstants.ts": "2cb065ac329ef45c"
+            "src/ui-core/recipes/garage/garageConstants.ts": "5d69b7c0489113d1"
           },
           "alphaDependencies": [
             "Alpha:Badge",
@@ -2244,7 +2245,7 @@
           "label": "Paint",
           "entryFile": "src/ui-core/recipes/garage/GaragePaintTab.tsx",
           "status": "approved",
-          "visualAstHash": "20d16c4b5ad6aae5",
+          "visualAstHash": "1db15f25a834e9fb",
           "fileVisualHashes": {
             "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
             "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -2258,7 +2259,7 @@
             "src/ui-core/primitives/svg/packagedSvgHudAndDevicePaths.ts": "e891e97816c8dc85",
             "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "9d023a002c2be660",
             "src/ui-core/recipes/garage/GaragePaintTab.tsx": "81a4d88780c73e46",
-            "src/ui-core/recipes/garage/garageConstants.ts": "2cb065ac329ef45c"
+            "src/ui-core/recipes/garage/garageConstants.ts": "5d69b7c0489113d1"
           },
           "alphaDependencies": [
             "Alpha:Badge",
@@ -2381,7 +2382,7 @@
       "entryFile": "src/ui-core/recipes/Layer2ManageRoomRecipe.tsx",
       "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "6ba234bdc0f6afc2",
-      "visualAstHash": "b0fbaffdf2da0760",
+      "visualAstHash": "13110fac3fbf6145",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -2407,8 +2408,8 @@
         "src/ui-core/recipes/online/MatchLobbyTeamRosterSection.tsx": "59f225a6fbdc5b83",
         "src/ui-core/recipes/online/OnlineRoomConfigSummaryCard.tsx": "b81b837bc91e33b7",
         "src/ui-core/recipes/online/OnlineRoomTopStatusBar.tsx": "ca4208b31a9287a5",
-        "src/ui-core/recipes/online/OnlineWarmupRoomRecipe.tsx": "9f1381b79fd73fff",
-        "src/ui-core/recipes/online/OnlineWarmupTelemetryAndReadySection.tsx": "07274b9dfafe60ad"
+        "src/ui-core/recipes/online/OnlineWarmupRoomRecipe.tsx": "462f7fe7506a5a4a",
+        "src/ui-core/recipes/online/OnlineWarmupTelemetryAndReadySection.tsx": "830f3e871ce4e62a"
       },
       "alphaDeps": [
         "src/ui-core/stores/appStore.ts",
@@ -3329,16 +3330,22 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3DevSelfTestRecipe.tsx",
       "templateHash": "2457f99820e9a4a6",
-      "sizingAndConfigHash": "40b6d55a6f2b813f",
-      "visualAstHash": "f6703ea9f4c42fd0",
+      "sizingAndConfigHash": "b1b470ffd8bba21c",
+      "visualAstHash": "6c094ebd9849d6cd",
       "fileVisualHashes": {
+        "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
+        "src/ui-core/compounds/SettingSegmentedRow.tsx": "00ee79256475926e",
+        "src/ui-core/compounds/SettingToggleRow.tsx": "669bb1048d2574c6",
+        "src/ui-core/primitives/SegmentedSwitch.tsx": "46135c4b0e6e9b46",
+        "src/ui-core/primitives/ToggleSwitch.tsx": "6cc1ee7e1446f982",
         "src/ui-core/primitives/iconLookup.tsx": "ba4e39322774a6f4",
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgHudAndDevicePaths.ts": "e891e97816c8dc85",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "9d023a002c2be660",
-        "src/ui-core/recipes/Layer3DevSelfTestRecipe.tsx": "3a80cbcb5497496e"
+        "src/ui-core/recipes/Layer3DevSelfTestRecipe.tsx": "feba4dcf00c1c68b",
+        "src/ui-core/recipes/layer-sections/DevScenarioRunnerSection.tsx": "c0c07365b125e7cf"
       },
       "alphaDeps": [
         "src/ui-core/stores/appStore.ts",
@@ -3347,18 +3354,27 @@
         "src/ui-core/stores/signalingProfileStore.ts",
         "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/colors.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts"
+        "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/menuLayoutTokens.ts",
+        "src/ui-core/tokens/radius.ts"
       ],
       "alphaDependencies": [
         "Alpha:3StagePanelShell",
+        "Alpha:DropdownMenu",
+        "Alpha:SegmentedSwitch",
         "Alpha:SettingActionRow",
+        "Alpha:SettingSegmentedRow",
+        "Alpha:SettingToggleRow",
+        "Alpha:ToggleSwitch",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/settingRowStore.ts",
         "src/ui-core/stores/signalingProfileStore.ts",
         "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/colors.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts"
+        "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/menuLayoutTokens.ts",
+        "src/ui-core/tokens/radius.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.384Z"
     },
@@ -3579,7 +3595,7 @@
       "entryFile": "src/ui-core/recipes/Layer3HostMatchRecipe.tsx",
       "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "6f024f6bdbb3a433",
-      "visualAstHash": "4cca63017567dfdd",
+      "visualAstHash": "40757d0123ff2c64",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -3612,8 +3628,8 @@
         "src/ui-core/recipes/online/OnlineRoomCreationProgress.tsx": "b2f20a6a9cf92e37",
         "src/ui-core/recipes/online/OnlineRoomIdentityFields.tsx": "26ebcf5db2345216",
         "src/ui-core/recipes/online/OnlineRoomTopStatusBar.tsx": "ca4208b31a9287a5",
-        "src/ui-core/recipes/online/OnlineWarmupRoomRecipe.tsx": "9f1381b79fd73fff",
-        "src/ui-core/recipes/online/OnlineWarmupTelemetryAndReadySection.tsx": "07274b9dfafe60ad"
+        "src/ui-core/recipes/online/OnlineWarmupRoomRecipe.tsx": "462f7fe7506a5a4a",
+        "src/ui-core/recipes/online/OnlineWarmupTelemetryAndReadySection.tsx": "830f3e871ce4e62a"
       },
       "alphaDeps": [
         "src/ui-core/config/roomCodeConnectivityCodec.ts",
@@ -3668,7 +3684,7 @@
       "surfaceKind": "menu-recipe",
       "entryFile": "src/ui-core/recipes/Layer3HostTrainingRecipe.tsx",
       "templateHash": "2457f99820e9a4a6",
-      "sizingAndConfigHash": "f1381289d716a044",
+      "sizingAndConfigHash": "850b8554cd0b4c07",
       "visualAstHash": "68f57e01fdc7dcee",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
@@ -3689,6 +3705,7 @@
       },
       "alphaDeps": [
         "src/ui-core/config/roomCodeConnectivityCodec.ts",
+        "src/ui-core/config/vehiclePresets.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/quickNotificationStore.ts",
@@ -3707,6 +3724,7 @@
         "Alpha:SettingActionRow",
         "Alpha:SettingSegmentedRow",
         "src/ui-core/config/roomCodeConnectivityCodec.ts",
+        "src/ui-core/config/vehiclePresets.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
         "src/ui-core/stores/quickNotificationStore.ts",
@@ -3926,7 +3944,7 @@
       "entryFile": "src/ui-core/recipes/Layer3TrainingConfigRecipe.tsx",
       "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "c66d324580f75be1",
-      "visualAstHash": "a5809128b7f80106",
+      "visualAstHash": "eaee795f77d38229",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -3940,7 +3958,7 @@
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgHudAndDevicePaths.ts": "e891e97816c8dc85",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "9d023a002c2be660",
-        "src/ui-core/recipes/Layer3TrainingConfigRecipe.tsx": "e6c06c3f6f8637ba",
+        "src/ui-core/recipes/Layer3TrainingConfigRecipe.tsx": "aefe4176712596c4",
         "src/ui-core/recipes/settings/components/FloatingWindowCard.tsx": "24594fbe7a613278"
       },
       "alphaDeps": [
@@ -4107,21 +4125,27 @@
       "entryFile": "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx",
       "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "a5059fbf191dba74",
-      "visualAstHash": "10045257441ae5e7",
+      "visualAstHash": "9759790d11579a84",
       "fileVisualHashes": {
+        "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
+        "src/ui-core/compounds/SettingSegmentedRow.tsx": "00ee79256475926e",
+        "src/ui-core/compounds/SettingToggleRow.tsx": "669bb1048d2574c6",
+        "src/ui-core/primitives/SegmentedSwitch.tsx": "46135c4b0e6e9b46",
+        "src/ui-core/primitives/ToggleSwitch.tsx": "6cc1ee7e1446f982",
         "src/ui-core/primitives/iconLookup.tsx": "ba4e39322774a6f4",
         "src/ui-core/primitives/packagedSvgIcons.tsx": "6623090ad9b995d2",
         "src/ui-core/primitives/svg/packagedSvgDefinitions.ts": "2df475eed918a3e8",
         "src/ui-core/primitives/svg/packagedSvgHudAndDevicePaths.ts": "e891e97816c8dc85",
         "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "9d023a002c2be660",
-        "src/ui-core/recipes/Layer3DevSelfTestRecipe.tsx": "3a80cbcb5497496e",
+        "src/ui-core/recipes/Layer3DevSelfTestRecipe.tsx": "feba4dcf00c1c68b",
         "src/ui-core/recipes/Layer4DevSignalingLabRecipe.tsx": "f145a172407a7914",
         "src/ui-core/recipes/dev/DevSignalingRelayStatusGrid.tsx": "d789fcf19dbd63a2",
         "src/ui-core/recipes/dev/SignalingLabLiveMonitorsSection.tsx": "bd63bfac2252368a",
         "src/ui-core/recipes/dev/SignalingLabStatusAndScenariosSection.tsx": "1f19d609198435bf",
         "src/ui-core/recipes/dev/signalingLabTypes.ts": "d2665f2ce8eba9de",
-        "src/ui-core/recipes/hooks/useLayer4DevSignalingLabBinding.ts": "9550a51efa37d898"
+        "src/ui-core/recipes/hooks/useLayer4DevSignalingLabBinding.ts": "9550a51efa37d898",
+        "src/ui-core/recipes/layer-sections/DevScenarioRunnerSection.tsx": "c0c07365b125e7cf"
       },
       "alphaDeps": [
         "src/ui-core/manifest/surfaceCalibration.ts",
@@ -4131,12 +4155,19 @@
         "src/ui-core/stores/signalingProfileStore.ts",
         "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/colors.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts"
+        "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/menuLayoutTokens.ts",
+        "src/ui-core/tokens/radius.ts"
       ],
       "alphaDependencies": [
         "Alpha:3StagePanelShell",
         "Alpha:Card",
+        "Alpha:DropdownMenu",
+        "Alpha:SegmentedSwitch",
         "Alpha:SettingActionRow",
+        "Alpha:SettingSegmentedRow",
+        "Alpha:SettingToggleRow",
+        "Alpha:ToggleSwitch",
         "src/ui-core/manifest/surfaceCalibration.ts",
         "src/ui-core/stores/appStore.ts",
         "src/ui-core/stores/menuLayoutStore.ts",
@@ -4144,7 +4175,9 @@
         "src/ui-core/stores/signalingProfileStore.ts",
         "src/ui-core/stores/storeSnapshotScope.tsx",
         "src/ui-core/tokens/colors.ts",
-        "src/ui-core/tokens/menuLayoutTokens.ts"
+        "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/menuLayoutTokens.ts",
+        "src/ui-core/tokens/radius.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.414Z"
     },
