@@ -106,8 +106,7 @@ export const PLAY_MODES: PlayModeDef[] = [
       'Host Training: Shared multiplayer free play arena without regulation timer.',
     icon: <BookOpen className="h-5 w-5 text-sky-500" />,
     category: 'Training',
-    badge: 'Coming Soon',
-    disabled: true,
+    badge: 'Co-Op Warmup',
   },
   {
     id: 'advanced',
@@ -203,6 +202,7 @@ export const Layer2PlayRecipe: React.FC<Layer2PlayRecipeProps> = ({
     } else if (modeId === 'self-training') {
       navigate('self-training');
     } else if (modeId === 'online-training') {
+      useAppStore.getState().setOnlineSession({ roomType: 'warmup', gameMode: '3v3' });
       navigate('host-training');
     } else if (modeId === 'advanced') {
       navigate('custom-play');

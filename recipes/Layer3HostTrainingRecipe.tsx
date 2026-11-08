@@ -18,6 +18,11 @@ import {
   finalizeHostRoomCode,
   generateRandomRoomCode,
 } from '../config/roomCodeConnectivityCodec';
+import {
+  generateDefaultPlayerName,
+  loadStoredPlayerName,
+  saveStoredPlayerName,
+} from '../config/vehiclePresets';
 import { OnlineRoomIdentityFields } from './online/OnlineRoomIdentityFields';
 import {
   OnlineRoomCreationProgress,
@@ -146,6 +151,11 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   const {
     goBack: storeGoBack,
     navigate,
+    closeMenu,
+    setMatchMode,
+    onlineSession,
+    setOnlineSession,
+    bridge,
     setSettingsTargetTab,
     setHighlightSetting,
   } = appState;
@@ -157,14 +167,17 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   const resolvedDefaultGhostMode =
     propDefaultGhostMode ?? overrides.defaultGhostMode ?? resolvedDefaultConfig?.ghostMode ?? 'automatically-enable';
 
-  const [playerName, setPlayerName] = useState<string>(
-    resolvedDefaultConfig?.playerName ?? `Player${Math.floor(1000 + Math.random() * 9000)}`
+  const [playerName, setPlayerName] = useState<string>(() =>
+    resolvedDefaultConfig?.playerName ??
+      (onlineSession?.playerName && onlineSession.playerName !== 'Host'
+        ? onlineSession.playerName
+        : loadStoredPlayerName())
   );
   const [roomCode, setRoomCode] = useState<string>(
-    resolvedDefaultConfig?.roomCode ?? ''
+    resolvedDefaultConfig?.roomCode ?? onlineSession?.roomId ?? ''
   );
   const [roomKey, setRoomKey] = useState<string>(
-    resolvedDefaultConfig?.roomKey ?? ''
+    resolvedDefaultConfig?.roomKey ?? onlineSession?.password ?? ''
   );
   const [ghostMode, setGhostMode] = useState<HostTrainingGhostMode>(resolvedDefaultGhostMode);
   useEffect(() => {
@@ -221,10 +234,64 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
     navigate('settings');
   };
 
+  const commitTrainingHostLaunch = (cleanCode: string) => {
+    const cleanName = playerName.trim() || generateDefaultPlayerName();
+    saveStoredPlayerName(cleanName);
+    const finalConfig: HostTrainingConfig = {
+      playerName: cleanName,
+      roomCode: cleanCode,
+      roomKey,
+      ghostMode,
+    };
+
+    setOnlineSession({
+      playerName: cleanName,
+      roomId: cleanCode,
+      password: roomKey || undefined,
+      roomType: 'warmup',
+      gameMode: '3v3',
+      botFillMode: 'no_bots',
+      matchDurationSeconds: 0,
+    });
+
+    if (overrides.onStartTraining) {
+      overrides.onStartTraining(finalConfig);
+      return;
+    }
+
+    if (bridge.onHostOnlineWarmup) {
+      void bridge
+        .onHostOnlineWarmup({
+          roomId: cleanCode,
+          password: roomKey || undefined,
+          playerName: cleanName,
+          roomType: 'warmup',
+          gameMode: '3v3',
+          botFillMode: 'no_bots',
+          durationSeconds: 0,
+          lobbyMode: false,
+          ghostMode,
+        })
+        .then((ok) => {
+          if (ok) {
+            setMatchMode('online-warmup');
+            closeMenu();
+          } else {
+            setProgressStatus('error');
+          }
+        });
+    }
+  };
+
   const startStepSequence = (willFail: boolean) => {
     clearStepTimer();
     const cleanCode = finalizeHostRoomCode(roomCode, hostMask);
     setRoomCode(cleanCode);
+
+    if (controlledProgressStatus !== undefined) {
+      commitTrainingHostLaunch(cleanCode);
+      return;
+    }
 
     setToken('simulateLayer3Error', false);
     setCurrentStep(1);
@@ -243,12 +310,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
         if (next >= 5) {
           clearStepTimer();
           setProgressStatus('completed');
-          overrides.onStartTraining?.({
-            playerName: playerName.trim() || `Player${Math.floor(1000 + Math.random() * 9000)}`,
-            roomCode: cleanCode,
-            roomKey,
-            ghostMode,
-          });
+          commitTrainingHostLaunch(cleanCode);
           return 5;
         }
         return next;

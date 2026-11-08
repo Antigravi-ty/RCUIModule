@@ -362,6 +362,7 @@ export const ManageRoomRosterAndActionsSection: React.FC<
           onRefreshSignaling={onRefreshSignaling}
           players={overrides.warmupPlayers}
           onKickPlayer={handleKickPeer}
+          onExportTrainingReplay={() => bridge.onExportOnlineTrainingReplay?.(60)}
           onShutdownOrLeave={handleCloseRoom}
           onHoverDesc={onHoverDesc}
           isLight={isLight}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Zap, Shield, History, CircleSlash2, FlipHorizontal2, Info } from 'lucide-react';
+import { Zap, Shield, History, CircleSlash2, FlipHorizontal2, Download, Info } from 'lucide-react';
 import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import {
   resolveCalibratedDefaultConfig,
@@ -7,6 +7,7 @@ import {
 } from '../manifest/surfaceCalibration';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
+import { SettingActionRow } from '../compounds/SettingActionRow';
 import { SettingSegmentedRow } from '../compounds/SettingSegmentedRow';
 import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
@@ -91,9 +92,10 @@ export interface Layer3TrainingConfigRecipeProps extends StandardSurfaceProps {}
  *   1. Boost: Inline SegmentedSwitch (Unlimited | Standard)
  *   2. Disable Goal Reset: ToggleSwitch
  *   3. Rewinder Configurator: FloatingWindowCard spawner
+ *   4. Export Recent Replay (60s): Manual .rcreplay.gz highlight export (or hotkey F8)
  * - Training Scope (Free Play, Static Training Pack & Kickoff Training):
- *   4. Enable F to Mirror: ToggleSwitch (default ON)
- *   5. Goal Barrier Configurator: FloatingWindowCard spawner
+ *   5. Enable F to Mirror: ToggleSwitch (default ON)
+ *   6. Goal Barrier Configurator: FloatingWindowCard spawner
  *
  * Store-First contract (`StandardSurfaceProps` <= 4 props), reading directly from
  * `useAppStore` and `useStaticTrainingPackStore` via `useScopedStore`.
@@ -105,6 +107,7 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
   const goBack = useScopedStore('appStore', useAppStore, (s) => s.goBack);
   const storeGameplay = useScopedStore('appStore', useAppStore, (s) => s.gameplay);
   const storeUpdateGameplay = useScopedStore('appStore', useAppStore, (s) => s.updateGameplay);
+  const bridge = useScopedStore('appStore', useAppStore, (s) => s.bridge);
   const packEnableFToMirror = useScopedStore(
     'staticTrainingPackStore',
     useStaticTrainingPackStore,
@@ -142,6 +145,7 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
 
   const { rowGap } = useScopedStore('settingRowStore', useSettingActionRowStore);
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
+  const [exportStatusLabel, setExportStatusLabel] = useState<string | null>(null);
 
   const unlimitedBoost =
     storeGameplay?.unlimitedBoost ?? calibratedDefaults.unlimitedBoost;
@@ -163,6 +167,19 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
   const handleSetEnableFToMirror = (next: boolean) => {
     storeUpdateGameplay({ enableFToMirror: next });
     setPackVariationToggles({ enableFToMirror: next });
+  };
+
+  const handleExportRecentReplay = () => {
+    const res = bridge?.onExportRecentTrainingReplay?.(60);
+    if (res && typeof (res as Promise<boolean>).then === 'function') {
+      void (res as Promise<boolean>).then((ok) => {
+        setExportStatusLabel(ok ? 'Exported' : 'Buffer Empty');
+        setTimeout(() => setExportStatusLabel(null), 2200);
+      });
+    } else {
+      setExportStatusLabel(res ? 'Exported' : 'Buffer Empty');
+      setTimeout(() => setExportStatusLabel(null), 2200);
+    }
   };
 
   const boostValue = unlimitedBoost ? 'unlimited' : 'standard';
@@ -237,6 +254,23 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
             bordered={false}
             showDescription={false}
             hoverTooltip="Free Play Only: Spawn the Rewinder Configurator floating window to record, scrub, rewind, and resume Free Play state history with hotkeys (O / P / [ / ] / G)."
+            onHover={setHoveredDesc}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 4. Manual Highlight Replay Export (Recent 60s FIFO Ring Buffer) */}
+          <SettingActionRow
+            icon={Download}
+            iconName="download"
+            iconColor="text-emerald-400"
+            title="Export Recent Replay (60s)"
+            actionLabel={exportStatusLabel ?? 'Export (F8)'}
+            showButtonArrow={false}
+            bordered={false}
+            showDescription={false}
+            onAction={handleExportRecentReplay}
+            hoverDescription="Free Play Only: Export the last 60 seconds of Free Play FIFO ring buffer frames to a compressed .rcreplay.gz file (Hotkey: F8)."
             onHover={setHoveredDesc}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}

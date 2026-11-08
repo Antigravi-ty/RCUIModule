@@ -30,6 +30,7 @@ export interface OnlineWarmupRoomRecipeProps {
   players?: WarmupRoomPlayer[];
   onKickPlayer?: (id: string) => void;
   onOpenAdvancedManagement?: () => void;
+  onExportTrainingReplay?: () => Promise<boolean> | boolean | void;
   onShutdownOrLeave?: () => void;
   onHoverDesc?: (desc: string | null) => void;
   isLight?: boolean;
@@ -51,6 +52,7 @@ export const OnlineWarmupRoomRecipe: React.FC<OnlineWarmupRoomRecipeProps> = Rea
   players: controlledPlayers,
   onKickPlayer,
   onOpenAdvancedManagement,
+  onExportTrainingReplay,
   onShutdownOrLeave,
   onHoverDesc,
   isLight = false,
@@ -216,6 +218,7 @@ export const OnlineWarmupRoomRecipe: React.FC<OnlineWarmupRoomRecipeProps> = Rea
       <OnlineWarmupTelemetryAndReadySection
         isHost={isHost}
         onOpenAdvancedManagement={onOpenAdvancedManagement}
+        onExportTrainingReplay={onExportTrainingReplay}
         onShutdownOrLeave={onShutdownOrLeave}
         onHoverDesc={onHoverDesc}
         isLight={isLight}

@@ -202,6 +202,7 @@ export interface AppState {
       botFillMode?: 'no_bots' | 'auto_fill' | 'bots_vs_humans' | 'custom';
       durationSeconds?: number;
       lobbyMode?: boolean;
+      ghostMode?: 'automatically-enable' | 'manual';
     }) => Promise<boolean>;
     onJoinOnlineWarmup?: (opts: { roomId: string; password?: string; playerName: string }) => Promise<boolean>;
     onApprovePendingPeer?: (peerId: string) => void;
@@ -221,6 +222,8 @@ export interface AppState {
     onReturnToOnlineLobby?: () => Promise<void> | void;
     onPauseOnlineMatch?: (pause: boolean, resumeCountdownSeconds?: number) => void;
     onResetBall?: () => void;
+    onExportRecentTrainingReplay?: (durationSeconds?: number) => Promise<boolean> | boolean;
+    onExportOnlineTrainingReplay?: (durationSeconds?: number) => Promise<boolean> | boolean;
     onCameraChange?: (config: CameraConfig) => void;
     onGraphicsChange?: (config: GraphicsConfig) => void;
     onAudioChange?: (config: AudioConfig) => void;

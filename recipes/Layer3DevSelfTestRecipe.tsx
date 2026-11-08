@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { BugPlay, GraphStar, Info } from 'lucide-react';
+import { GraphStar, Info } from 'lucide-react';
 import { PanelContainer, PanelHeader, PanelContent } from '../layout/Panel';
 import { PanelFooter } from '../layout/PanelFooter';
 import { SettingActionRow } from '../compounds/SettingActionRow';
+import { DevScenarioRunnerSection } from './layer-sections/DevScenarioRunnerSection';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
 import { useSignalingProfileStore } from '../stores/signalingProfileStore';
@@ -16,9 +17,9 @@ export type Layer3DevSelfTestRecipeProps = StandardSurfaceProps;
 export const SURFACE_META: SurfaceMeta = {
   id: 'layer3-dev-self-test',
   title: 'SELF TEST',
-  subtitle: 'Automated Subsystem Self-Test Suites',
+  subtitle: 'Automated Subsystem Self-Test Suites & Scenario Runner',
   description:
-    'Automated subsystem self-test suites and developer verification harnesses.',
+    'Automated subsystem self-test suites, VirtualClock fast-forward scenario runner, and Golden Baseline verification harnesses.',
   icon: 'bug-play',
   layer: 'layer3',
   menuGroup: 'menu-layer',
@@ -32,14 +33,14 @@ export const SURFACE_META: SurfaceMeta = {
   variants: [
     {
       variantId: 'dev-private',
-      label: 'Dev-Private Source (4-Server Lab Ready)',
+      label: 'Dev-Private Source (4-Server Lab + Scenario Runner)',
       storeOverrides: {
         signalingProfileStore: { source: 'dev-private' },
       },
     },
     {
       variantId: 'public-default',
-      label: 'Public / Bundle Source (Empty State)',
+      label: 'Public / Bundle Source (Scenario Runner Ready)',
       storeOverrides: {
         signalingProfileStore: { source: 'public-default' },
       },
@@ -49,10 +50,9 @@ export const SURFACE_META: SurfaceMeta = {
 
 /**
  * [Recipe] Layer 3 Developer — Self Test (`bug-play`)
- * Displays automated self-test suites when the corresponding developer data source is active.
- * - `4-Server Signaling & Bridge Lab` is shown ONLY when `source === 'dev-private'`.
- * - When using an imported bundle (`imported-bundle`) or public/custom service, signaling lab
- *   data is hidden and this view renders a clean empty state.
+ * Permanently mounts the `window.__rcScenarioDriver` VirtualClock Scenario Runner
+ * (suite/script selection, 1x/10x/20x/50x speed control, Golden diff audit, and JSON export),
+ * alongside the `4-Server Signaling & Bridge Lab` when `source === 'dev-private'`.
  */
 export const Layer3DevSelfTestRecipe: React.FC<Layer3DevSelfTestRecipeProps> = ({
   isLight = false,
@@ -63,7 +63,7 @@ export const Layer3DevSelfTestRecipe: React.FC<Layer3DevSelfTestRecipeProps> = (
   const signalingSource = useScopedStore(
     'signalingProfileStore',
     useSignalingProfileStore,
-    (s) => s.source
+    (s) => s.source,
   );
   const [hoveredDesc, setHoveredDesc] = useState<string | null>(null);
 
@@ -71,23 +71,22 @@ export const Layer3DevSelfTestRecipe: React.FC<Layer3DevSelfTestRecipeProps> = (
   const sizing = useMenuLayoutStore(
     (s) =>
       s.panels?.['layer3-dev-self-test'] ??
-      DEFAULT_PANEL_SIZING['layer3-dev-self-test']
+      DEFAULT_PANEL_SIZING['layer3-dev-self-test'],
   );
   const { rowGap } = useSettingActionRowStore();
-
   const showSignalingSelfTest = signalingSource === 'dev-private';
 
   return (
-    <PanelContainer isLight={isLight} sizing={sizing} className="w-full">
+    <PanelContainer isLight={isLight} sizing={sizing} className="w-full select-none">
       <PanelHeader title="SELF TEST" onBack={onBack} isLight={isLight} />
 
       <PanelContent scrollable>
         <div
           data-layout="dev-self-test-list"
           className="flex flex-col w-full"
-          style={{ gap: `${rowGap}px` }}
+          style={{ gap: `${Math.max(6, rowGap)}px` }}
         >
-          {showSignalingSelfTest ? (
+          {showSignalingSelfTest && (
             <SettingActionRow
               icon={GraphStar}
               iconName="graph-star"
@@ -101,18 +100,9 @@ export const Layer3DevSelfTestRecipe: React.FC<Layer3DevSelfTestRecipeProps> = (
               onLeave={() => setHoveredDesc(null)}
               isLight={isLight}
             />
-          ) : (
-            <div
-              className={`flex flex-col items-center justify-center py-12 px-4 rounded-xl border text-center select-none ${
-                isLight
-                  ? 'bg-neutral-100/60 border-neutral-200/80 text-neutral-500'
-                  : 'bg-white/[0.03] border-white/[0.07] text-neutral-400'
-              }`}
-            >
-              <BugPlay className="h-7 w-7 mb-2 opacity-40" />
-              <span className="text-xs font-semibold">No Self-Test Suites Available</span>
-            </div>
           )}
+
+          <DevScenarioRunnerSection isLight={isLight} onHoverDesc={setHoveredDesc} />
         </div>
       </PanelContent>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Download,
   Eye,
   Ghost,
   Radio,
@@ -35,6 +36,7 @@ const INITIAL_WARMUP_SPECTATORS: SpectatorRouteEntry[] = [
 export interface OnlineWarmupTelemetryAndReadySectionProps {
   isHost: boolean;
   onOpenAdvancedManagement?: () => void;
+  onExportTrainingReplay?: () => Promise<boolean> | boolean | void;
   onShutdownOrLeave?: () => void;
   onHoverDesc?: (desc: string | null) => void;
   isLight?: boolean;
@@ -45,6 +47,7 @@ export const OnlineWarmupTelemetryAndReadySection: React.FC<
 > = React.memo(({
   isHost,
   onOpenAdvancedManagement,
+  onExportTrainingReplay,
   onShutdownOrLeave,
   onHoverDesc,
   isLight = false,
@@ -55,6 +58,7 @@ export const OnlineWarmupTelemetryAndReadySection: React.FC<
   const [showAdvancedWindow, setShowAdvancedWindow] = useState<boolean>(false);
   const [clientGhostMode, setClientGhostMode] = useState<boolean>(true);
   const [modificationRequested, setModificationRequested] = useState<boolean>(false);
+  const [exportStatusLabel, setExportStatusLabel] = useState<string | null>(null);
 
   const visibleSpectators = isHost
     ? spectators
@@ -62,6 +66,19 @@ export const OnlineWarmupTelemetryAndReadySection: React.FC<
 
   const handleRemoveSpectator = (id: string) => {
     setSpectators((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const handleTriggerReplayExport = () => {
+    const res = onExportTrainingReplay?.();
+    if (res && typeof (res as Promise<boolean>).then === 'function') {
+      void (res as Promise<boolean>).then((ok) => {
+        setExportStatusLabel(ok ? 'Replay Exported' : 'Replay Export Triggered');
+        setTimeout(() => setExportStatusLabel(null), 2200);
+      });
+    } else {
+      setExportStatusLabel('Replay Export Triggered');
+      setTimeout(() => setExportStatusLabel(null), 2200);
+    }
   };
 
   return (
@@ -166,6 +183,28 @@ export const OnlineWarmupTelemetryAndReadySection: React.FC<
           )}
         </div>
       </div>
+
+      {/* 3b. Manual Online Training Replay Export (60s FIFO Ring Buffer) */}
+      <button
+        type="button"
+        onClick={handleTriggerReplayExport}
+        onMouseEnter={() =>
+          onHoverDesc?.(
+            'Export Training Replay (60s): Export recent online co-op training frames from the FIFO ring buffer to .rcreplay.gz (Hotkey: F8).'
+          )
+        }
+        onMouseLeave={() => onHoverDesc?.(null)}
+        className={`w-full py-2 px-4 rounded-xl border text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+          exportStatusLabel
+            ? 'bg-emerald-500/20 border-emerald-500/45 text-emerald-400'
+            : isLight
+            ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-800'
+            : 'bg-neutral-800/90 hover:bg-neutral-700 border-neutral-700 text-neutral-100'
+        }`}
+      >
+        <Download className="h-3.5 w-3.5 text-emerald-400" />
+        <span>{exportStatusLabel ?? 'Export Training Replay (60s · F8)'}</span>
+      </button>
 
       {/* 4. Host vs Client Bottom Section */}
       {isHost ? (
