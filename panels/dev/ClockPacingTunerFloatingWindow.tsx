@@ -86,9 +86,12 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
   }, [importedTrace, useImportedSource, customParams, simRefreshTick, windowSamples]);
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+    const inputEl = e.currentTarget;
+    const file = inputEl.files?.[0];
+    if (!file) {
+      inputEl.value = '';
+      return;
+    }
     try {
       const normalized = await parseImportedTelemetryFile(file);
       setImportedTelemetryPayload(normalized);
@@ -100,6 +103,8 @@ export const ClockPacingTunerFloatingWindow: React.FC<ClockPacingTunerFloatingWi
     } catch (err) {
       console.warn('[ClockPacingTunerFloatingWindow] Failed to parse imported telemetry file:', err);
       setImportStatusMsg('Failed to parse telemetry file (.zip/.json/.csv)');
+    } finally {
+      inputEl.value = '';
     }
   };
 

@@ -382,6 +382,11 @@ export const VEHICLE_ALIGN_PRESET_OPTIONS: readonly VehicleAlignPresetOption[] =
     description: 'Normalizes arbitrary GLB units to ~140 UU length and centers on active hitbox',
   },
   {
+    id: 'keep',
+    label: 'Keep Current Offsets (Mesh Only)',
+    description: 'Preserves active hitbox, chassis offsets, wheel anchors, and boost nozzles on re-upload',
+  },
+  {
     id: 'fennec',
     label: 'Fennec (Octane, 1 UU)',
     description: 'Applies Fennec native UU scale (1x) and calibrated Octane offsets',

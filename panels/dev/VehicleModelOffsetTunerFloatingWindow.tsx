@@ -140,8 +140,12 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
       fileName,
       alignPreset
     )) as ImportedGlbReportSummary | undefined;
-    const desc = getVehicleDescriptor(vehicleId);
-    notifyAndRefresh(vehicleId as CustomVehicleId, desc?.hitboxPreset);
+    const resolvedId = ((res?.vehicleId || vehicleId) as CustomVehicleId) || selectedCar;
+    if (activeCar !== resolvedId) {
+      handleSelectVehicle(resolvedId);
+    }
+    const desc = getVehicleDescriptor(resolvedId);
+    notifyAndRefresh(resolvedId, desc?.hitboxPreset);
     return res || null;
   };
 

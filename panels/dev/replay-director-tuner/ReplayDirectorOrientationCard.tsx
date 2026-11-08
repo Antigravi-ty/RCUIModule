@@ -115,9 +115,12 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
   };
 
   const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+    const inputEl = e.currentTarget;
+    const file = inputEl.files?.[0];
+    if (!file) {
+      inputEl.value = '';
+      return;
+    }
     try {
       const parsed = await importActiveReplayDirectorDiagnosticPattern(file, {
         fileName: file.name,
@@ -135,6 +138,8 @@ export const ReplayDirectorOrientationCard: React.FC<ReplayDirectorOrientationCa
       setTickRevision((r) => r + 1);
     } catch (err) {
       console.warn('[ReplayDirectorTuner] Failed to read imported replay file:', err);
+    } finally {
+      inputEl.value = '';
     }
   };
 
