@@ -252,6 +252,13 @@ export interface AppState {
     onSkyboxConfigChange?: (config: SkyboxConfig) => void;
     onBallVisualConfigChange?: (config: BallVisualConfig) => void;
     onCustomVehicleTunerChange?: (vehicleId: string, hitboxPreset?: string) => void;
+    onImportCustomVehicleGlb?: (
+      vehicleId: string,
+      arrayBuffer: ArrayBuffer,
+      fileName?: string,
+      alignPreset?: string,
+    ) => Promise<unknown>;
+    onApplyVehicleAlignPreset?: (vehicleId: string, alignPreset: string) => boolean;
     onUnderDevelopmentChange?: (config: UnderDevelopmentConfig, patch: Partial<UnderDevelopmentConfig>) => Promise<void> | void;
   };
   setBridge: (bridge: Partial<AppState['bridge']>) => void;

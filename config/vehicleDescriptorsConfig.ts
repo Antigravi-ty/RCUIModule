@@ -37,6 +37,8 @@ export interface VehicleDescriptor {
   aliases?: string[];
   hitboxPreset: string;
   modelUrl: string;
+  unitScale?: number;
+  threeWheels?: boolean;
   rawBounds: {
     min: [number, number, number];
     max: [number, number, number];
@@ -193,7 +195,7 @@ export function normalizeWheelModifierPatch(
   return nextConfig;
 }
 
-const DEFAULT_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {
+export const DEFAULT_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {
   body: {
     slotName: 'body',
     label: 'Body Shell (body)',
@@ -251,6 +253,25 @@ const DEFAULT_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {
     glbDefaultMetalness: 0,
     glbDefaultRoughness: 0.5,
   },
+  bottom: {
+    slotName: 'bottom',
+    label: 'Chassis Underbody (bottom)',
+    mode: 'standard',
+    color: '#1f2328',
+    pearlColor: '#1f2328',
+    metalness: 0.1,
+    roughness: 0.75,
+    clearcoat: 0,
+    clearcoatRoughness: 0.3,
+    sheen: 0.1,
+    envMapIntensity: 0.8,
+    toonSteps: 3,
+    toonShadowMin: 0.1,
+    toonHighlightMax: 0.8,
+    toonSmooth: false,
+    glbDefaultMetalness: 0,
+    glbDefaultRoughness: 0.5,
+  },
   metal: {
     slotName: 'metal',
     label: 'Rear Exhaust & Trim Metal (metal)',
@@ -272,7 +293,7 @@ const DEFAULT_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {
   },
 };
 
-const DEFAULT_LAMPS_CONFIG: VehicleLampsConfig = {
+export const DEFAULT_LAMPS_CONFIG: VehicleLampsConfig = {
   frontColor: '#ffefd5',
   frontIntensity: 1,
   frontToneMapped: false,
@@ -290,6 +311,7 @@ export const INSIDIO_DESCRIPTOR: VehicleDescriptor = {
   name: 'Insidio',
   hitboxPreset: 'hitbox-hybrid',
   modelUrl: '/assets/vehicles/Insidio.glb',
+  unitScale: 1,
   rawBounds: {
     min: [-59.8536, -10.7404, -39.3438],
     max: [79.8535, 31.1743, 39.3438],
@@ -346,6 +368,7 @@ export const RYZA_DESCRIPTOR: VehicleDescriptor = {
   name: 'Ryza',
   hitboxPreset: 'hitbox-octane',
   modelUrl: '/assets/vehicles/Ryza.glb',
+  unitScale: 100,
   rawBounds: {
     min: [-63.7602, -12.6091, -38.4309],
     max: [78.9037, 37.3574, 38.4309],

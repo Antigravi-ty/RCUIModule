@@ -1,19 +1,20 @@
-// 1. Car Tab: 8 vehicles following RocketCompanion's canonical chassis list
+// 1. Car Tab: Canonical GLB vehicles replacing legacy whitebox placeholders
 export interface CarDef {
   id: string;
   name: string;
-  hitbox: 'Octane' | 'Dominus' | 'Breakout' | 'Plank' | 'Hybrid' | 'Merc';
+  hitbox: 'Octane' | 'Dominus' | 'Breakout' | 'Plank' | 'Hybrid' | 'Merc' | 'Octane (Three-Wheeler)';
 }
 
 export const CARS: CarDef[] = [
   { id: 'fennec', name: 'Fennec', hitbox: 'Octane' },
   { id: 'insidio', name: 'Insidio', hitbox: 'Hybrid' },
   { id: 'ryza', name: 'Ryza', hitbox: 'Octane' },
-  { id: 'hitbox-octane', name: 'Octane (Whitebox)', hitbox: 'Octane' },
-  { id: 'hitbox-dominus', name: 'Dominus (Whitebox)', hitbox: 'Dominus' },
-  { id: 'hitbox-breakout', name: 'Breakout (Whitebox)', hitbox: 'Breakout' },
-  { id: 'hitbox-plank', name: 'Plank (Whitebox)', hitbox: 'Plank' },
-  { id: 'hitbox-merc', name: 'Merc (Whitebox)', hitbox: 'Merc' },
+  { id: 'dominus', name: 'Dominus', hitbox: 'Dominus' },
+  { id: 'breakout-mini', name: 'Breakout', hitbox: 'Breakout' },
+  { id: 'sentinel', name: 'Sentinel', hitbox: 'Plank' },
+  { id: 'merc', name: 'Merc', hitbox: 'Merc' },
+  { id: 'trioctane', name: 'TriOctane4', hitbox: 'Octane' },
+  { id: 'trioctane-threewheel', name: 'TriOctane3', hitbox: 'Octane (Three-Wheeler)' },
 ];
 
 // 2. Paint / Colour Tab: Compact numeric color ID (uint8, extensible up to 20 per team) for P2P bandwidth efficiency

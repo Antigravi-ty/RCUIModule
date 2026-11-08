@@ -52,7 +52,7 @@ export const BOOST_AUDIO_CATALOG: readonly { id: BotBoostAudioOption; name: stri
 ];
 
 export interface BotsLoadoutConfig {
-  /** Multi-select vehicle visual IDs (8 catalog models; default: the 3 GLB models) */
+  /** Multi-select vehicle visual IDs (7 standard car presets across 6 hitboxes; excludes player-only TriOctane variants) */
   visualIds: string[];
   /** Multi-select paint finishes (default: ['metallic']) */
   paintFinishes: BotPaintFinishOption[];
@@ -76,14 +76,16 @@ export interface RolledBotLoadout {
   colorHex?: string;
 }
 
+export const BOT_VISUAL_CATALOG = Object.freeze(
+  CAR_VISUAL_CATALOG.filter((c) => !c.playerOnly)
+);
+
 export const ALL_BOT_VISUAL_IDS: readonly string[] = Object.freeze(
-  CAR_VISUAL_CATALOG.map((c: { id: string }) => c.id)
+  BOT_VISUAL_CATALOG.map((c) => c.id)
 );
 
 export const DEFAULT_GLB_BOT_VISUAL_IDS: readonly string[] = Object.freeze(
-  CAR_VISUAL_CATALOG.filter((c: { isPreset?: boolean }) => !c.isPreset).map(
-    (c: { id: string }) => c.id
-  )
+  BOT_VISUAL_CATALOG.filter((c) => !c.isPreset).map((c) => c.id)
 );
 
 export const ALL_BOT_PAINT_FINISHES: readonly BotPaintFinishOption[] = Object.freeze([

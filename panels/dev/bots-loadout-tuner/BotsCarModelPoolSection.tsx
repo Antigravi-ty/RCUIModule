@@ -1,7 +1,7 @@
 import React from 'react';
 import { Car, Check } from 'lucide-react';
 import { useBotsLoadoutStore } from '../../../stores/botsLoadoutStore';
-import { CAR_VISUAL_CATALOG } from '../../../config/vehicleConstants';
+import { BOT_VISUAL_CATALOG } from '../../../config/botsLoadoutConfig';
 
 export interface BotsCarModelPoolSectionProps {
   isLight?: boolean;
@@ -26,22 +26,11 @@ export const BotsCarModelPoolSection: React.FC<BotsCarModelPoolSectionProps> = (
         <div className="flex items-center gap-1.5">
           <Car className="w-3.5 h-3.5 text-sky-400" />
           <span className="font-semibold text-[11px]">
-            1. Car Model Pool ({visualIds.length} / {CAR_VISUAL_CATALOG.length}{' '}
+            1. Car Model Pool ({visualIds.length} / {BOT_VISUAL_CATALOG.length}{' '}
             Selected)
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setVisualIdsPreset('glb')}
-            className={`px-2 py-0.5 rounded text-[10px] font-mono border cursor-pointer transition-colors ${
-              isLight
-                ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
-                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
-            }`}
-          >
-            GLB Models (3)
-          </button>
           <button
             type="button"
             onClick={() => setVisualIdsPreset('all')}
@@ -51,13 +40,13 @@ export const BotsCarModelPoolSection: React.FC<BotsCarModelPoolSectionProps> = (
                 : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
             }`}
           >
-            All (8)
+            All (7)
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-        {CAR_VISUAL_CATALOG.map(
+        {BOT_VISUAL_CATALOG.map(
           (car: {
             id: string;
             label: string;
