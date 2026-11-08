@@ -18,6 +18,7 @@ import {
   FENNEC_DESCRIPTOR,
   GLOBAL_VEHICLE_SURFACE_MATERIALS,
   GLOBAL_VEHICLE_LAMPS_CONFIG,
+  hasVehicleDescriptor,
 } from '../../config/vehicleTunerConfig';
 import {
   getVehicleTunerRuntimeFlags,
@@ -117,7 +118,7 @@ export const VehicleGlobalFxTunerFloatingWindow: React.FC<VehicleGlobalFxTunerFl
   const [particleConfig, setParticleConfig] = useState(() => getBoostParticleRuntimeConfig());
   const [wheelConfig, setWheelConfig] = useState(() => getWheelModifierConfig());
 
-  const targetCarId = activeCar === 'insidio' ? 'insidio' : activeCar === 'ryza' ? 'ryza' : 'fennec';
+  const targetCarId = hasVehicleDescriptor(activeCar) ? activeCar : 'fennec';
   const sharedDescriptorProxy = {
     ...FENNEC_DESCRIPTOR,
     surfaceMaterials: GLOBAL_VEHICLE_SURFACE_MATERIALS,

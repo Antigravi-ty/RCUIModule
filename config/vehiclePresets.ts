@@ -5,7 +5,7 @@
  */
 
 import { STORAGE_KEYS, safeStorage, createLocalStorageStore, stringOrDefault } from './storageHelpers';
-import { CAR_VISUAL_IDS, SHORT_VISUAL_ALIAS_MAP, type HitboxPresetSpec } from './vehicleConstants';
+import { CAR_VISUAL_IDS, type HitboxPresetSpec } from './vehicleConstants';
 
 export const HITBOX_PRESETS: Readonly<Record<string, Readonly<HitboxPresetSpec>>> = Object.freeze({
   'hitbox-octane': Object.freeze({
@@ -69,14 +69,6 @@ export const HITBOX_PRESETS: Readonly<Record<string, Readonly<HitboxPresetSpec>>
     up: 21.505,
   }),
 });
-
-export function normalizeVisualId(visualId: unknown): string {
-  if (!visualId) return 'fennec';
-  const raw = String(visualId).toLowerCase().trim();
-  if (CAR_VISUAL_IDS.includes(raw)) return raw;
-  if (SHORT_VISUAL_ALIAS_MAP[raw]) return SHORT_VISUAL_ALIAS_MAP[raw];
-  return 'fennec';
-}
 
 export const STORAGE_KEY_DISPLAY_SETTINGS = STORAGE_KEYS.DISPLAY_SETTINGS;
 export const COLOR_PREFS_KEY = STORAGE_KEYS.COLOR_PREFS;

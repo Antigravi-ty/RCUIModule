@@ -117,6 +117,14 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  React.useEffect(() => {
+    if (activeCar && hasVehicleDescriptor(activeCar) && activeCar !== selectedCar) {
+      setSelectedCar(activeCar as CustomVehicleId);
+      const nextFlags = setVehicleTunerRuntimeFlags({ activeVehicleId: activeCar });
+      setRuntimeFlagsState(nextFlags);
+    }
+  }, [activeCar, selectedCar]);
+
   const handleSelectVehicle = (carId: CustomVehicleId) => {
     if (!carId) return;
     setSelectedCar(carId);
