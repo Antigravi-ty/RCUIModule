@@ -1,5 +1,5 @@
 import React from 'react';
-import { CircleDot, Disc, Palette, Sliders } from 'lucide-react';
+import { CircleDot, Disc, Palette } from 'lucide-react';
 import {
   setDemolishShockwaveConfig,
   type DemolishColorKey,
@@ -7,6 +7,7 @@ import {
   type DemolishOuterRadiusKey,
   type DemolishShockwaveConfig,
 } from '../../../config/demolishShockwaveConfig';
+import { DemolishShockwaveOpacityAndFeatherCard } from './DemolishShockwaveOpacityAndFeatherCard';
 
 export interface DemolishShockwaveTracksSectionProps {
   config: DemolishShockwaveConfig;
@@ -48,7 +49,10 @@ export const DemolishShockwaveTracksSection: React.FC<
     : 'bg-neutral-950 border-neutral-700 text-neutral-100';
   const mutedText = isLight ? 'text-neutral-500' : 'text-neutral-400';
 
-  const updateOuterKey = (index: 0 | 1 | 2 | 3, patch: Partial<DemolishOuterRadiusKey>) => {
+  const updateOuterKey = (
+    index: 0 | 1 | 2 | 3,
+    patch: Partial<DemolishOuterRadiusKey>
+  ) => {
     const next: [
       DemolishOuterRadiusKey,
       DemolishOuterRadiusKey,
@@ -63,13 +67,21 @@ export const DemolishShockwaveTracksSection: React.FC<
     next[index] = {
       ...next[index],
       ...patch,
-      t: index === 0 ? 0.0 : index === 3 ? 1.0 : Math.max(0.01, Math.min(0.99, patch.t ?? next[index].t)),
+      t:
+        index === 0
+          ? 0.0
+          : index === 3
+            ? 1.0
+            : Math.max(0.01, Math.min(0.99, patch.t ?? next[index].t)),
       size: Math.max(1, Math.min(1200, patch.size ?? next[index].size)),
     };
     setDemolishShockwaveConfig({ outerKeys: next });
   };
 
-  const updateInnerKey = (index: 0 | 1 | 2 | 3, patch: Partial<DemolishInnerHoleKey>) => {
+  const updateInnerKey = (
+    index: 0 | 1 | 2 | 3,
+    patch: Partial<DemolishInnerHoleKey>
+  ) => {
     const next: [
       DemolishInnerHoleKey,
       DemolishInnerHoleKey,
@@ -84,13 +96,24 @@ export const DemolishShockwaveTracksSection: React.FC<
     next[index] = {
       ...next[index],
       ...patch,
-      t: index === 0 ? 0.0 : index === 3 ? 1.0 : Math.max(0.01, Math.min(0.99, patch.t ?? next[index].t)),
-      innerHole: Math.max(0, Math.min(100, patch.innerHole ?? next[index].innerHole)),
+      t:
+        index === 0
+          ? 0.0
+          : index === 3
+            ? 1.0
+            : Math.max(0.01, Math.min(0.99, patch.t ?? next[index].t)),
+      innerHole: Math.max(
+        0,
+        Math.min(100, patch.innerHole ?? next[index].innerHole)
+      ),
     };
     setDemolishShockwaveConfig({ innerKeys: next });
   };
 
-  const updateColorKey = (index: 0 | 1 | 2 | 3 | 4 | 5, patch: Partial<DemolishColorKey>) => {
+  const updateColorKey = (
+    index: 0 | 1 | 2 | 3 | 4 | 5,
+    patch: Partial<DemolishColorKey>
+  ) => {
     const next: [
       DemolishColorKey,
       DemolishColorKey,
@@ -133,14 +156,19 @@ export const DemolishShockwaveTracksSection: React.FC<
               [ Outer Radius (Instant Burst -&gt; Slow Expansion) ]
             </span>
           </div>
-          <span className={`text-[10px] font-mono ${mutedText}`}>Smoothstep Track</span>
+          <span className={`text-[10px] font-mono ${mutedText}`}>
+            Smoothstep Track
+          </span>
         </div>
 
         {([0, 1, 2, 3] as const).map((idx) => {
           const keyItem = config.outerKeys[idx];
           const isFixedEndpoint = idx === 0 || idx === 3;
           return (
-            <div key={idx} className="flex items-center justify-between gap-2 text-[11px]">
+            <div
+              key={idx}
+              className="flex items-center justify-between gap-2 text-[11px]"
+            >
               <span className="w-36 truncate">{OUTER_KEY_LABELS[idx]}</span>
               <div className="flex items-center gap-1">
                 <span className={`text-[10px] font-mono ${mutedText}`}>t=</span>
@@ -156,7 +184,9 @@ export const DemolishShockwaveTracksSection: React.FC<
                     max={0.99}
                     value={keyItem.t}
                     onChange={(e) =>
-                      updateOuterKey(idx, { t: parseFloat(e.target.value) || 0 })
+                      updateOuterKey(idx, {
+                        t: parseFloat(e.target.value) || 0,
+                      })
                     }
                     className={`w-14 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
                   />
@@ -170,7 +200,9 @@ export const DemolishShockwaveTracksSection: React.FC<
                   max={1200}
                   value={keyItem.size}
                   onChange={(e) =>
-                    updateOuterKey(idx, { size: parseFloat(e.target.value) || 1 })
+                    updateOuterKey(idx, {
+                      size: parseFloat(e.target.value) || 1,
+                    })
                   }
                   className={`w-16 px-1.5 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
                 />
@@ -191,7 +223,10 @@ export const DemolishShockwaveTracksSection: React.FC<
               value={config.worldScale}
               onChange={(e) =>
                 setDemolishShockwaveConfig({
-                  worldScale: Math.max(0.2, Math.min(4.0, parseFloat(e.target.value) || 1.0)),
+                  worldScale: Math.max(
+                    0.2,
+                    Math.min(4.0, parseFloat(e.target.value) || 1.0)
+                  ),
                 })
               }
               className={`w-14 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
@@ -207,7 +242,10 @@ export const DemolishShockwaveTracksSection: React.FC<
               value={config.verticalOffsetUu}
               onChange={(e) =>
                 setDemolishShockwaveConfig({
-                  verticalOffsetUu: Math.max(-100, Math.min(300, parseFloat(e.target.value) || 0)),
+                  verticalOffsetUu: Math.max(
+                    -100,
+                    Math.min(300, parseFloat(e.target.value) || 0)
+                  ),
                 })
               }
               className={`w-14 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
@@ -231,7 +269,10 @@ export const DemolishShockwaveTracksSection: React.FC<
           const keyItem = config.innerKeys[idx];
           const isFixedEndpoint = idx === 0 || idx === 3;
           return (
-            <div key={idx} className="flex items-center justify-between gap-2 text-[11px]">
+            <div
+              key={idx}
+              className="flex items-center justify-between gap-2 text-[11px]"
+            >
               <span className="w-36 truncate">{INNER_KEY_LABELS[idx]}</span>
               <div className="flex items-center gap-1">
                 <span className={`text-[10px] font-mono ${mutedText}`}>t=</span>
@@ -247,7 +288,9 @@ export const DemolishShockwaveTracksSection: React.FC<
                     max={0.99}
                     value={keyItem.t}
                     onChange={(e) =>
-                      updateInnerKey(idx, { t: parseFloat(e.target.value) || 0 })
+                      updateInnerKey(idx, {
+                        t: parseFloat(e.target.value) || 0,
+                      })
                     }
                     className={`w-14 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
                   />
@@ -261,7 +304,9 @@ export const DemolishShockwaveTracksSection: React.FC<
                   max={100}
                   value={keyItem.innerHole}
                   onChange={(e) =>
-                    updateInnerKey(idx, { innerHole: parseFloat(e.target.value) || 0 })
+                    updateInnerKey(idx, {
+                      innerHole: parseFloat(e.target.value) || 0,
+                    })
                   }
                   className={`w-16 px-1.5 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
                 />
@@ -288,7 +333,9 @@ export const DemolishShockwaveTracksSection: React.FC<
         >
           <div
             className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 shadow-[0_0_4px_#10b981]"
-            style={{ left: `${Math.min(100, Math.max(0, normT * 100)).toFixed(1)}%` }}
+            style={{
+              left: `${Math.min(100, Math.max(0, normT * 100)).toFixed(1)}%`,
+            }}
           />
         </div>
 
@@ -296,7 +343,10 @@ export const DemolishShockwaveTracksSection: React.FC<
           const keyItem = config.colorKeys[idx];
           const isFixedEndpoint = idx === 0 || idx === 5;
           return (
-            <div key={idx} className="flex items-center justify-between gap-2 text-[11px]">
+            <div
+              key={idx}
+              className="flex items-center justify-between gap-2 text-[11px]"
+            >
               <span className="w-40 truncate">{COLOR_KEY_LABELS[idx]}</span>
               <div className="flex items-center gap-1">
                 <span className={`text-[10px] font-mono ${mutedText}`}>t=</span>
@@ -312,7 +362,9 @@ export const DemolishShockwaveTracksSection: React.FC<
                     max={0.99}
                     value={keyItem.t}
                     onChange={(e) =>
-                      updateColorKey(idx, { t: parseFloat(e.target.value) || 0 })
+                      updateColorKey(idx, {
+                        t: parseFloat(e.target.value) || 0,
+                      })
                     }
                     className={`w-14 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
                   />
@@ -325,7 +377,9 @@ export const DemolishShockwaveTracksSection: React.FC<
                 <input
                   type="color"
                   value={keyItem.color}
-                  onChange={(e) => updateColorKey(idx, { color: e.target.value })}
+                  onChange={(e) =>
+                    updateColorKey(idx, { color: e.target.value })
+                  }
                   className="w-7 h-5 rounded border border-neutral-600 bg-transparent cursor-pointer"
                 />
               </div>
@@ -334,97 +388,11 @@ export const DemolishShockwaveTracksSection: React.FC<
         })}
       </div>
 
-      <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 ${cardBg}`}>
-        <div className="flex items-center gap-1.5">
-          <Sliders className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-          <span className="font-semibold text-[11px]">
-            [ Radial Feather, Burst Glow &amp; Tail Opacity Fade ]
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 text-[10px]">
-          <label className="flex items-center justify-between gap-1">
-            <span className={mutedText}>Inner Feather %:</span>
-            <input
-              type="number"
-              step={1}
-              min={1}
-              max={45}
-              value={config.featherPct}
-              onChange={(e) =>
-                setDemolishShockwaveConfig({
-                  featherPct: Math.max(1, Math.min(45, parseFloat(e.target.value) || 12)),
-                })
-              }
-              className={`w-14 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-1">
-            <span className={mutedText}>Outer Feather %:</span>
-            <input
-              type="number"
-              step={1}
-              min={1}
-              max={25}
-              value={config.outerFeatherPct}
-              onChange={(e) =>
-                setDemolishShockwaveConfig({
-                  outerFeatherPct: Math.max(1, Math.min(25, parseFloat(e.target.value) || 6)),
-                })
-              }
-              className={`w-14 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-1">
-            <span className={mutedText}>Glow End (t):</span>
-            <input
-              type="number"
-              step={0.02}
-              min={0.05}
-              max={0.9}
-              value={config.glowEndNormT}
-              onChange={(e) =>
-                setDemolishShockwaveConfig({
-                  glowEndNormT: Math.max(0.05, Math.min(0.9, parseFloat(e.target.value) || 0.35)),
-                })
-              }
-              className={`w-14 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-1">
-            <span className={mutedText}>Glow Strength:</span>
-            <input
-              type="number"
-              step={0.05}
-              min={0}
-              max={3.0}
-              value={config.glowStrength}
-              onChange={(e) =>
-                setDemolishShockwaveConfig({
-                  glowStrength: Math.max(0, Math.min(3.0, parseFloat(e.target.value) || 0)),
-                })
-              }
-              className={`w-14 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-1 col-span-2">
-            <span className={mutedText}>Tail Smoke Opacity Fade Start (t):</span>
-            <input
-              type="number"
-              step={0.02}
-              min={0.2}
-              max={0.98}
-              value={config.fadeStartNormT}
-              onChange={(e) =>
-                setDemolishShockwaveConfig({
-                  fadeStartNormT: Math.max(0.2, Math.min(0.98, parseFloat(e.target.value) || 0.75)),
-                })
-              }
-              className={`w-16 px-1 py-0.5 rounded border font-mono text-right text-[11px] ${inputCls}`}
-            />
-          </label>
-        </div>
-      </div>
+      <DemolishShockwaveOpacityAndFeatherCard
+        config={config}
+        normT={normT}
+        isLight={isLight}
+      />
     </div>
   );
 };
