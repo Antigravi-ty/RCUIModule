@@ -8,6 +8,7 @@ import {
 import { useReferenceOverlayStore } from '../../../stores/referenceOverlayStore';
 import {
   FENNEC_DESCRIPTOR,
+  getAllVehicleDescriptors,
   type VehicleDescriptor,
 } from '../../../config/vehicleTunerConfig';
 import {
@@ -23,7 +24,7 @@ import {
   TRIOCTANE_THREEWHEEL_DESCRIPTOR,
 } from '../../../config/vehicleExtendedDescriptorsConfig';
 
-export type CustomVehicleId =
+export type BuiltInVehicleId =
   | 'fennec'
   | 'insidio'
   | 'ryza'
@@ -34,7 +35,16 @@ export type CustomVehicleId =
   | 'trioctane'
   | 'trioctane-threewheel';
 
-export const TUNER_VEHICLE_OPTIONS: ReadonlyArray<{ value: CustomVehicleId; label: string }> = [
+export type CustomVehicleId = BuiltInVehicleId | (string & {});
+
+export interface TunerVehicleOption {
+  value: CustomVehicleId;
+  label: string;
+  isImported?: boolean;
+  fileName?: string;
+}
+
+export const TUNER_VEHICLE_OPTIONS: ReadonlyArray<TunerVehicleOption> = [
   { value: 'fennec', label: 'Fennec' },
   { value: 'insidio', label: 'Insidio' },
   { value: 'ryza', label: 'Ryza' },
@@ -45,6 +55,18 @@ export const TUNER_VEHICLE_OPTIONS: ReadonlyArray<{ value: CustomVehicleId; labe
   { value: 'trioctane', label: 'TriOctane4' },
   { value: 'trioctane-threewheel', label: 'TriOctane3' },
 ];
+
+const BUILT_IN_VEHICLE_ID_SET = new Set<string>(TUNER_VEHICLE_OPTIONS.map((o) => o.value));
+
+export function isBuiltInTunerVehicleId(vehicleId: string): boolean {
+  return BUILT_IN_VEHICLE_ID_SET.has(String(vehicleId || '').toLowerCase().trim());
+}
+
+const importedTunerVehicleOptions: TunerVehicleOption[] = [];
+
+export function getTunerVehicleOptions(): ReadonlyArray<TunerVehicleOption> {
+  return [...TUNER_VEHICLE_OPTIONS, ...importedTunerVehicleOptions];
+}
 
 const pickVehicleOffsets = (d: VehicleDescriptor) => ({
   hitboxPreset: d.hitboxPreset,
@@ -57,7 +79,7 @@ const pickVehicleOffsets = (d: VehicleDescriptor) => ({
 });
 
 export const INITIAL_VEHICLE_OFFSET_SNAPSHOT: Record<
-  CustomVehicleId,
+  string,
   ReturnType<typeof pickVehicleOffsets>
 > = JSON.parse(
   JSON.stringify({
@@ -73,22 +95,39 @@ export const INITIAL_VEHICLE_OFFSET_SNAPSHOT: Record<
   })
 );
 
-export const buildVehicleOffsetsExportJson = () => ({
-  version: 'vehicle-model-offset-tuner-v1',
-  exportedAt: new Date().toISOString(),
-  referenceOverlayProfiles: useReferenceOverlayStore.getState().exportProfilesJson(),
-  vehicles: {
-    fennec: pickVehicleOffsets(FENNEC_DESCRIPTOR),
-    insidio: pickVehicleOffsets(INSIDIO_DESCRIPTOR),
-    ryza: pickVehicleOffsets(RYZA_DESCRIPTOR),
-    dominus: pickVehicleOffsets(DOMINUS_DESCRIPTOR),
-    'breakout-mini': pickVehicleOffsets(BREAKOUT_MINI_DESCRIPTOR),
-    sentinel: pickVehicleOffsets(SENTINEL_DESCRIPTOR),
-    merc: pickVehicleOffsets(MERC_DESCRIPTOR),
-    trioctane: pickVehicleOffsets(TRIOCTANE_DESCRIPTOR),
-    'trioctane-threewheel': pickVehicleOffsets(TRIOCTANE_THREEWHEEL_DESCRIPTOR),
-  },
-});
+export function registerImportedTunerVehicleOption(
+  descriptor: VehicleDescriptor,
+  fileName?: string
+): TunerVehicleOption {
+  const id = descriptor.id;
+  INITIAL_VEHICLE_OFFSET_SNAPSHOT[id] = JSON.parse(JSON.stringify(pickVehicleOffsets(descriptor)));
+  const entry: TunerVehicleOption = {
+    value: id,
+    label: descriptor.name || id,
+    isImported: true,
+    fileName,
+  };
+  const existingIdx = importedTunerVehicleOptions.findIndex((o) => o.value === id);
+  if (existingIdx >= 0) {
+    importedTunerVehicleOptions[existingIdx] = entry;
+  } else {
+    importedTunerVehicleOptions.push(entry);
+  }
+  return entry;
+}
+
+export const buildVehicleOffsetsExportJson = () => {
+  const vehicles: Record<string, ReturnType<typeof pickVehicleOffsets>> = {};
+  for (const desc of getAllVehicleDescriptors()) {
+    vehicles[desc.id] = pickVehicleOffsets(desc);
+  }
+  return {
+    version: 'vehicle-model-offset-tuner-v1',
+    exportedAt: new Date().toISOString(),
+    referenceOverlayProfiles: useReferenceOverlayStore.getState().exportProfilesJson(),
+    vehicles,
+  };
+};
 
 export interface VehicleOffsetFooterActionsProps {
   selectedCar: CustomVehicleId;

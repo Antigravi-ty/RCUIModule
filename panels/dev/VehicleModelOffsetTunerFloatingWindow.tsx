@@ -6,18 +6,19 @@ import {
   Disc,
 } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { garageSettingsStore } from '../../config/vehiclePresets';
+import { garageSettingsStore, HITBOX_PRESETS } from '../../config/vehiclePresets';
 import { UnderlineTabs, type TabItem } from '../../primitives/UnderlineTabs';
-import { SegmentedSwitch } from '../../primitives/SegmentedSwitch';
 import { ToggleSwitch } from '../../primitives/ToggleSwitch';
 import { TunerPrecisionContext } from '../../primitives/PrecisionDigitPicker';
-import { HITBOX_PRESETS } from '../../config/vehiclePresets';
 import { type HitboxPresetSpec } from '../../config/vehicleConstants';
-import { FENNEC_DESCRIPTOR, getVehicleDescriptor, type VehicleDescriptor } from '../../config/vehicleTunerConfig';
 import {
+  FENNEC_DESCRIPTOR,
+  getVehicleDescriptor,
+  hasVehicleDescriptor,
   getVehicleTunerRuntimeFlags,
   setVehicleTunerRuntimeFlags,
   recomputeDescriptorBoostOutlets,
+  type VehicleDescriptor,
 } from '../../config/vehicleTunerConfig';
 import { HitboxAlignTab } from './vehicle-model-offset-tuner/HitboxAlignTab';
 import { BoostNozzlesTab } from './vehicle-model-offset-tuner/BoostNozzlesTab';
@@ -28,7 +29,9 @@ import {
 } from './vehicle-model-offset-tuner/CustomGlbImportCard';
 import {
   INITIAL_VEHICLE_OFFSET_SNAPSHOT,
-  TUNER_VEHICLE_OPTIONS,
+  getTunerVehicleOptions,
+  isBuiltInTunerVehicleId,
+  registerImportedTunerVehicleOption,
   VehicleOffsetFooterActions,
   type CustomVehicleId,
 } from './vehicle-model-offset-tuner/VehicleOffsetFooterActions';
@@ -43,9 +46,9 @@ export const SURFACE_META: SurfaceMeta = {
   menuGroup: 'active-tuners',
   icon: 'Car',
   defaultSizing: {
-    width: 480,
+    width: 540,
     height: 620,
-    minWidth: 360,
+    minWidth: 340,
     minHeight: 220,
     maxHeight: 820,
     mode: 'adaptive',
@@ -63,8 +66,6 @@ export interface VehicleModelOffsetTunerFloatingWindowProps extends StandardSurf
 
 export type VehicleTunerTab = 'hitbox' | 'wheels' | 'boost';
 
-const VALID_CUSTOM_VEHICLE_IDS = new Set<string>(TUNER_VEHICLE_OPTIONS.map((o) => o.value));
-
 export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetTunerFloatingWindowProps> = ({
   isLight = false,
   activeTab: controlledTab,
@@ -79,7 +80,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   const setPrecisionStep = useAppStore((s) => s.setPrecisionStep);
 
   const [selectedCar, setSelectedCar] = useState<CustomVehicleId>(() =>
-    VALID_CUSTOM_VEHICLE_IDS.has(activeCar) ? (activeCar as CustomVehicleId) : 'fennec'
+    hasVehicleDescriptor(activeCar) ? (activeCar as CustomVehicleId) : 'fennec'
   );
   const [internalTab, setInternalTab] = useState<VehicleTunerTab>(() =>
     controlledTab && ['hitbox', 'wheels', 'boost'].includes(controlledTab)
@@ -97,6 +98,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   const [, setRevision] = useState(0);
   const [runtimeFlags, setRuntimeFlagsState] = useState(() => getVehicleTunerRuntimeFlags());
 
+  const vehicleOptions = getTunerVehicleOptions();
   const descriptor: VehicleDescriptor = getVehicleDescriptor(selectedCar) || FENNEC_DESCRIPTOR;
   const hitboxSpec: HitboxPresetSpec =
     HITBOX_PRESETS[descriptor.hitboxPreset] || HITBOX_PRESETS['hitbox-octane'];
@@ -116,14 +118,17 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   }, []);
 
   const handleSelectVehicle = (carId: CustomVehicleId) => {
+    if (!carId) return;
     setSelectedCar(carId);
     const nextFlags = setVehicleTunerRuntimeFlags({ activeVehicleId: carId });
     setRuntimeFlagsState(nextFlags);
     setActiveCar(carId);
-    try {
-      garageSettingsStore.save({ vehiclePreset: carId, carVisual: carId });
-    } catch (err) {
-      console.warn('[VehicleModelOffsetTuner] Failed to persist selected vehicle to garageSettingsStore:', err);
+    if (isBuiltInTunerVehicleId(carId)) {
+      try {
+        garageSettingsStore.save({ vehiclePreset: carId, carVisual: carId });
+      } catch (err) {
+        console.warn('[VehicleModelOffsetTuner] Failed to persist selected vehicle to garageSettingsStore:', err);
+      }
     }
     bridge.onVehicleChange?.(carId);
   };
@@ -140,8 +145,15 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
       fileName,
       alignPreset
     )) as ImportedGlbReportSummary | undefined;
-    const desc = getVehicleDescriptor(vehicleId);
-    notifyAndRefresh(vehicleId as CustomVehicleId, desc?.hitboxPreset);
+    const importedId = (res?.vehicleId || vehicleId) as CustomVehicleId;
+    const desc = getVehicleDescriptor(importedId);
+    if (desc) {
+      registerImportedTunerVehicleOption(desc, res?.fileName || fileName);
+      handleSelectVehicle(desc.id);
+      notifyAndRefresh(desc.id, desc.hitboxPreset);
+    } else {
+      notifyAndRefresh(selectedCar);
+    }
     return res || null;
   };
 
@@ -231,7 +243,9 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   };
 
   const handleResetVehicle = () => {
-    const snap = JSON.parse(JSON.stringify(INITIAL_VEHICLE_OFFSET_SNAPSHOT[selectedCar]));
+    const initialSnap = INITIAL_VEHICLE_OFFSET_SNAPSHOT[selectedCar];
+    if (!initialSnap) return;
+    const snap = JSON.parse(JSON.stringify(initialSnap));
     Object.assign(descriptor, snap);
     notifyAndRefresh(selectedCar, descriptor.hitboxPreset);
   };
@@ -251,35 +265,53 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
       <div className="flex flex-col gap-2.5 text-xs select-none" data-ui-element="vehicle-tuner-window">
         {/* Top Chassis Selector & Spatial Debug Switches */}
         <div className={cardClass}>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="font-bold text-[11px] uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
-              <Car className="h-3.5 w-3.5" />
-              Target Vehicle Model (Per-Model Offsets)
+              <Car className="h-3.5 w-3.5 shrink-0" />
+              <span>Target Vehicle Model ({vehicleOptions.length})</span>
             </span>
             <span className="text-[10px] font-mono opacity-75">
-              Equipped: <strong>{activeCar}</strong>
+              Equipped: <strong>{descriptor.name}</strong>
             </span>
           </div>
 
-          <div className="flex flex-col gap-1" role="group" aria-label="Target Vehicle Model">
-            {[0, 3, 6].map((startIdx) => {
-              const rowOptions = TUNER_VEHICLE_OPTIONS.slice(startIdx, startIdx + 3);
-              const rowHasSelected = rowOptions.some((opt) => opt.value === selectedCar);
+          <div
+            className="flex flex-wrap gap-1"
+            role="radiogroup"
+            aria-label="Target Vehicle Model"
+          >
+            {vehicleOptions.map((opt) => {
+              const isSelected = selectedCar === opt.value;
               return (
-                <SegmentedSwitch
-                  key={startIdx}
-                  options={rowOptions.map((opt) => ({ id: opt.value, label: opt.label }))}
-                  value={rowHasSelected ? selectedCar : '__none__'}
-                  onChange={(val) => handleSelectVehicle(val as CustomVehicleId)}
-                  isLight={isLight}
-                  size="sm"
-                />
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  title={opt.isImported ? `Imported GLB: ${opt.fileName || opt.label}` : opt.label}
+                  onClick={() => handleSelectVehicle(opt.value)}
+                  className={`px-2 py-1 rounded-md border text-[11px] font-semibold leading-tight whitespace-nowrap cursor-pointer transition-colors flex-auto text-center ${
+                    isSelected
+                      ? isLight
+                        ? 'bg-amber-500 border-amber-600 text-white shadow-xs'
+                        : 'bg-amber-500/25 border-amber-400 text-amber-200 shadow-xs'
+                      : opt.isImported
+                      ? isLight
+                        ? 'bg-sky-50 hover:bg-sky-100 border-sky-300 text-sky-800'
+                        : 'bg-sky-950/50 hover:bg-sky-900/60 border-sky-500/40 text-sky-200'
+                      : isLight
+                      ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
+                      : 'bg-neutral-900/80 hover:bg-neutral-800 border-neutral-700/80 text-neutral-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
               );
             })}
           </div>
 
-          <div className="grid grid-cols-3 gap-1.5 pt-0.5">
-            <div className="flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
+            <div className="flex-1 min-w-[115px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
               <span className="text-[10px] font-medium">Hitbox Wire</span>
               <ToggleSwitch
                 checked={Boolean(gameplay.showAllCarHitboxes || gameplay.showCarHitbox)}
@@ -289,7 +321,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
                 isLight={isLight}
               />
             </div>
-            <div className="flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
+            <div className="flex-1 min-w-[115px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
               <span className="text-[10px] font-medium">Nozzle Gizmos</span>
               <ToggleSwitch
                 checked={runtimeFlags.showNozzleGizmos}
@@ -297,7 +329,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
                 isLight={isLight}
               />
             </div>
-            <div className="flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
+            <div className="flex-1 min-w-[115px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
               <span className="text-[10px] font-medium">Force Boost</span>
               <ToggleSwitch
                 checked={runtimeFlags.forceBoostPreview}

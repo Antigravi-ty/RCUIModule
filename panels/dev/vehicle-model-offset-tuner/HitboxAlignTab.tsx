@@ -1,6 +1,5 @@
 import React from 'react';
 import { ArrowDownToLine, Crosshair } from 'lucide-react';
-import { SegmentedSwitch } from '../../../primitives/SegmentedSwitch';
 import { SliderControl } from '../../../primitives/SliderControl';
 import {
   PrecisionDigitPicker,
@@ -10,6 +9,15 @@ import { ReferenceOverlayCard } from './ReferenceOverlayCard';
 import { CameraSwivelSimulatorCard } from '../../../compounds/CameraSwivelSimulatorCard';
 import type { VehicleDescriptor } from '../../../config/vehicleTunerConfig';
 import type { CustomVehicleId } from './VehicleOffsetFooterActions';
+
+const HITBOX_PRESET_BUTTONS: ReadonlyArray<{ value: string; label: string }> = [
+  { value: 'hitbox-octane', label: 'Octane' },
+  { value: 'hitbox-hybrid', label: 'Hybrid' },
+  { value: 'hitbox-dominus', label: 'Dominus' },
+  { value: 'hitbox-breakout', label: 'Breakout' },
+  { value: 'hitbox-plank', label: 'Plank' },
+  { value: 'hitbox-merc', label: 'Merc' },
+];
 
 export interface HitboxSpec {
   name: string;
@@ -92,24 +100,38 @@ export const HitboxAlignTab: React.FC<HitboxAlignTabProps> = ({
           <span className="font-bold text-[11px]">Rocket League Hitbox Preset</span>
           <span className="text-[10px] font-mono text-amber-500">{hitboxSpec.name}</span>
         </div>
-        <SegmentedSwitch
-          value={descriptor.hitboxPreset}
-          onValueChange={(val) => {
-            descriptor.hitboxPreset = val;
-            notifyAndRefresh(selectedCar, val);
-          }}
-          options={[
-            { value: 'hitbox-octane', label: 'Octane' },
-            { value: 'hitbox-hybrid', label: 'Hybrid' },
-            { value: 'hitbox-dominus', label: 'Dominus' },
-            { value: 'hitbox-breakout', label: 'Breakout' },
-            { value: 'hitbox-plank', label: 'Plank' },
-            { value: 'hitbox-merc', label: 'Merc' },
-          ]}
-          size="sm"
-          fullWidth
-          isLight={isLight}
-        />
+        <div
+          role="radiogroup"
+          aria-label="Rocket League Hitbox Preset"
+          className="flex flex-wrap gap-1"
+        >
+          {HITBOX_PRESET_BUTTONS.map((opt) => {
+            const isSelected = descriptor.hitboxPreset === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => {
+                  descriptor.hitboxPreset = opt.value;
+                  notifyAndRefresh(selectedCar, opt.value);
+                }}
+                className={`px-2 py-1 rounded-md border text-[11px] font-semibold leading-tight whitespace-nowrap cursor-pointer transition-colors flex-auto text-center ${
+                  isSelected
+                    ? isLight
+                      ? 'bg-amber-500 border-amber-600 text-white shadow-xs'
+                      : 'bg-amber-500/25 border-amber-400 text-amber-200 shadow-xs'
+                    : isLight
+                    ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
+                    : 'bg-neutral-900/80 hover:bg-neutral-800 border-neutral-700/80 text-neutral-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
 
         {/* Live Top-Surface & 6-Face Bounds Readout */}
         <div

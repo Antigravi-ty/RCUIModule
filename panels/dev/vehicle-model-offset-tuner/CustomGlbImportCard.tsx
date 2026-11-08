@@ -5,6 +5,7 @@ import type { VehicleDescriptor } from '../../../config/vehicleTunerConfig';
 
 export interface ImportedGlbReportSummary {
   vehicleId: string;
+  label?: string;
   fileName: string;
   alignPreset: string;
   appliedGeometryScale: number;
@@ -41,6 +42,19 @@ export interface CustomGlbImportCardProps {
   cardClass: string;
 }
 
+const SHORT_PRESET_LABELS: Readonly<Record<string, string>> = {
+  auto: 'Auto-Fit',
+  fennec: 'Fennec',
+  insidio: 'Insidio',
+  ryza: 'Ryza',
+  dominus: 'Dominus',
+  'breakout-mini': 'Breakout',
+  sentinel: 'Sentinel',
+  merc: 'Merc',
+  trioctane: 'TriOctane4',
+  'trioctane-threewheel': 'TriOctane3',
+};
+
 export const CustomGlbImportCard: React.FC<CustomGlbImportCardProps> = ({
   selectedCar,
   descriptor,
@@ -50,10 +64,13 @@ export const CustomGlbImportCard: React.FC<CustomGlbImportCardProps> = ({
   cardClass,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [alignPreset, setAlignPreset] = useState<string>('auto');
+  const [presetByCar, setPresetByCar] = useState<Record<string, string>>({});
+  const [reportsByCar, setReportsByCar] = useState<Record<string, ImportedGlbReportSummary>>({});
   const [isImporting, setIsImporting] = useState(false);
-  const [lastReport, setLastReport] = useState<ImportedGlbReportSummary | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const activePreset = presetByCar[selectedCar] || (selectedCar.startsWith('custom-') ? 'auto' : selectedCar);
+  const activeReport = reportsByCar[selectedCar] || null;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,10 +82,16 @@ export const CustomGlbImportCard: React.FC<CustomGlbImportCardProps> = ({
     try {
       const buffer = await file.arrayBuffer();
       const defaultPresetOnImport = 'auto';
-      setAlignPreset(defaultPresetOnImport);
-      const report = await onImportGlb(selectedCar, buffer, file.name, defaultPresetOnImport);
+      const report = await onImportGlb('new', buffer, file.name, defaultPresetOnImport);
       if (report) {
-        setLastReport(report);
+        setPresetByCar((prev) => ({
+          ...prev,
+          [report.vehicleId]: report.alignPreset || defaultPresetOnImport,
+        }));
+        setReportsByCar((prev) => ({
+          ...prev,
+          [report.vehicleId]: report,
+        }));
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -80,36 +103,39 @@ export const CustomGlbImportCard: React.FC<CustomGlbImportCardProps> = ({
   };
 
   const handlePresetChange = (nextPreset: string) => {
-    setAlignPreset(nextPreset);
+    setPresetByCar((prev) => ({
+      ...prev,
+      [selectedCar]: nextPreset,
+    }));
     onApplyAlignPreset(selectedCar, nextPreset);
-    if (lastReport && lastReport.vehicleId === selectedCar) {
-      setLastReport({
-        ...lastReport,
-        alignPreset: nextPreset,
-      });
+    if (activeReport) {
+      setReportsByCar((prev) => ({
+        ...prev,
+        [selectedCar]: {
+          ...activeReport,
+          alignPreset: nextPreset,
+        },
+      }));
     }
   };
 
   const activePresetMeta =
-    VEHICLE_ALIGN_PRESET_OPTIONS.find((opt) => opt.id === alignPreset) ||
+    VEHICLE_ALIGN_PRESET_OPTIONS.find((opt) => opt.id === activePreset) ||
     VEHICLE_ALIGN_PRESET_OPTIONS[0];
 
-  const fallbackCount = lastReport?.fallbackMaterials?.length ?? 0;
+  const fallbackCount = activeReport?.fallbackMaterials?.length ?? 0;
 
   return (
     <div className={cardClass} data-ui-element="custom-glb-import-card">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-bold text-[11px] uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5" />
-          Experimental GLB Import & Align Presets
+          <Sparkles className="h-3.5 w-3.5 shrink-0" />
+          <span>GLB Import & Align Presets</span>
         </span>
-        <span className="text-[10px] font-mono opacity-75">
-          Target: <strong>{descriptor.name}</strong>
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
-        <div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono opacity-75">
+            Active: <strong>{descriptor.name}</strong>
+          </span>
           <input
             ref={fileInputRef}
             type="file"
@@ -121,45 +147,63 @@ export const CustomGlbImportCard: React.FC<CustomGlbImportCardProps> = ({
             type="button"
             disabled={isImporting}
             onClick={() => fileInputRef.current?.click()}
-            className={`w-full px-2.5 py-1.5 rounded-lg border text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${
+            className={`px-2.5 py-1 rounded-md border text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap ${
               isLight
                 ? 'bg-sky-600 hover:bg-sky-500 border-sky-700 text-white'
                 : 'bg-sky-500/20 hover:bg-sky-500/30 border-sky-500/50 text-sky-200'
             }`}
           >
-            <Upload className="h-3.5 w-3.5" />
-            <span>{isImporting ? 'Importing GLB...' : 'Import / Replace .GLB'}</span>
+            <Upload className="h-3 w-3 shrink-0" />
+            <span>{isImporting ? 'Importing...' : '+ Import New .GLB'}</span>
           </button>
         </div>
+      </div>
 
-        <div className="flex flex-col gap-0.5">
-          <label className="text-[10px] font-semibold opacity-75">
-            Align Preset (Default: Auto-Fit)
-          </label>
-          <select
-            value={alignPreset}
-            onChange={(e) => handlePresetChange(e.target.value)}
-            aria-label="Align Preset"
-            className={`w-full px-2 py-1 rounded-lg border text-[11px] font-medium outline-none ${
-              isLight
-                ? 'bg-white border-neutral-300 text-neutral-900'
-                : 'bg-neutral-900 border-neutral-700 text-neutral-100'
-            }`}
-          >
-            {VEHICLE_ALIGN_PRESET_OPTIONS.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold opacity-75">
+            Align Preset (Applies to <strong>{descriptor.name}</strong>)
+          </span>
+          <span className="text-[10px] font-mono opacity-65 truncate">
+            {activePresetMeta.label}
+          </span>
+        </div>
+        <div
+          role="radiogroup"
+          aria-label="Align Preset"
+          className="flex flex-wrap gap-1"
+        >
+          {VEHICLE_ALIGN_PRESET_OPTIONS.map((opt) => {
+            const isSelected = activePreset === opt.id;
+            const shortLabel = SHORT_PRESET_LABELS[opt.id] || opt.label;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                title={`${opt.label} — ${opt.description}`}
+                onClick={() => handlePresetChange(opt.id)}
+                className={`px-2 py-1 rounded-md border text-[10px] font-semibold leading-tight whitespace-nowrap cursor-pointer transition-colors flex-auto text-center ${
+                  isSelected
+                    ? isLight
+                      ? 'bg-sky-600 border-sky-700 text-white shadow-xs'
+                      : 'bg-sky-500/25 border-sky-400 text-sky-200 shadow-xs'
+                    : isLight
+                    ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
+                    : 'bg-neutral-900/80 hover:bg-neutral-800 border-neutral-700/80 text-neutral-300'
+                }`}
+              >
+                {shortLabel}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="text-[10px] opacity-75 leading-snug">
-        {activePresetMeta.description}. Standard 7 material slots (<code>body</code>,{' '}
-        <code>window</code>, <code>border</code>, <code>bottom</code>, <code>metal</code>,{' '}
-        <code>front</code>, <code>back</code>) auto-bind by substring; unrecognized names fall back
-        to <code>body</code> and warn in console.
+        {activePresetMeta.description}. Imported <code>.glb</code> files are added as new selectable
+        vehicle buttons above for instant side-by-side comparison.
       </div>
 
       {errorMessage && (
@@ -168,26 +212,26 @@ export const CustomGlbImportCard: React.FC<CustomGlbImportCardProps> = ({
         </div>
       )}
 
-      {lastReport && lastReport.vehicleId === selectedCar && (
+      {activeReport && (
         <div
           className={`p-2 rounded-lg border font-mono text-[10px] flex flex-col gap-1 ${
             isLight ? 'bg-white border-neutral-200' : 'bg-neutral-950/60 border-neutral-800'
           }`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-1">
             <span className="font-bold text-sky-400 truncate max-w-[230px]">
-              File: {lastReport.fileName}
+              File: {activeReport.fileName}
             </span>
             <span>
-              Preset: <strong>{lastReport.alignPreset}</strong> ({lastReport.appliedGeometryScale}x)
+              Preset: <strong>{activeReport.alignPreset}</strong> ({activeReport.appliedGeometryScale}x)
             </span>
           </div>
 
-          {lastReport.unscaledBounds && lastReport.scaledBounds && (
+          {activeReport.unscaledBounds && activeReport.scaledBounds && (
             <div className="opacity-80">
-              Raw L/H/W: [{lastReport.unscaledBounds.length}, {lastReport.unscaledBounds.height},{' '}
-              {lastReport.unscaledBounds.width}] → UU: [{lastReport.scaledBounds.length.toFixed(1)},{' '}
-              {lastReport.scaledBounds.height.toFixed(1)}, {lastReport.scaledBounds.width.toFixed(1)}
+              Raw L/H/W: [{activeReport.unscaledBounds.length}, {activeReport.unscaledBounds.height},{' '}
+              {activeReport.unscaledBounds.width}] → UU: [{activeReport.scaledBounds.length.toFixed(1)},{' '}
+              {activeReport.scaledBounds.height.toFixed(1)}, {activeReport.scaledBounds.width.toFixed(1)}
               ]
             </div>
           )}
@@ -198,7 +242,7 @@ export const CustomGlbImportCard: React.FC<CustomGlbImportCardProps> = ({
               <span>
                 Fallback to <strong>body</strong> ({fallbackCount} unrecognized material
                 {fallbackCount > 1 ? 's' : ''}, logged to console):{' '}
-                {lastReport.fallbackMaterials?.join(', ')}
+                {activeReport.fallbackMaterials?.join(', ')}
               </span>
             </div>
           ) : (

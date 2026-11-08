@@ -96,11 +96,21 @@ export const PLAYER_ROLE_CODES = Object.freeze({
   SPECTATOR: 2
 });
 
+const dynamicCustomVisualHitboxes = new Map<string, string>();
+
+export function registerDynamicVisualId(visualId: string, hitboxId = 'hitbox-octane'): void {
+  const raw = String(visualId || '').toLowerCase().trim();
+  if (raw) {
+    dynamicCustomVisualHitboxes.set(raw, String(hitboxId || 'hitbox-octane').toLowerCase().trim());
+  }
+}
+
 export function normalizeVisualId(visualId: unknown): string {
   if (!visualId) return 'fennec';
   const raw = String(visualId).toLowerCase().trim();
   if (CAR_VISUAL_IDS.includes(raw)) return raw;
   if (SHORT_VISUAL_ALIAS_MAP[raw]) return SHORT_VISUAL_ALIAS_MAP[raw];
+  if (dynamicCustomVisualHitboxes.has(raw)) return raw;
   return 'fennec';
 }
 
@@ -126,7 +136,8 @@ export function resolveHitboxIndex(hitboxOrVisual: unknown): number {
     return (hitboxOrVisual >= 0 && hitboxOrVisual <= 6) ? hitboxOrVisual : 0;
   }
   if (!hitboxOrVisual) return 0;
-  const lower = String(hitboxOrVisual).toLowerCase().trim();
+  const rawLower = String(hitboxOrVisual).toLowerCase().trim();
+  const lower = dynamicCustomVisualHitboxes.get(rawLower) || rawLower;
   if (
     lower.includes('psyclops') ||
     lower.includes('tricycle') ||

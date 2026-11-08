@@ -25,6 +25,7 @@ import {
   VEHICLE_ALIGN_PRESET_OPTIONS,
   type VehicleAlignPresetOption,
 } from './vehicleExtendedDescriptorsConfig';
+import { registerDynamicVisualId } from './vehicleConstants';
 
 export type {
   VehicleSurfaceMaterialSlot,
@@ -157,7 +158,12 @@ export function registerVehicleDescriptor(descriptor: VehicleDescriptor): void {
   if (!descriptor || !descriptor.id) {
     throw new Error("Vehicle descriptor must include a valid unique 'id'");
   }
-  vehicleRegistry.set(descriptor.id, descriptor);
+  const normalizedId = descriptor.id.toLowerCase().trim();
+  vehicleRegistry.set(normalizedId, descriptor);
+  registerDynamicVisualId(
+    normalizedId,
+    descriptor.threeWheels ? 'hitbox-psyclops' : descriptor.hitboxPreset
+  );
   if (descriptor.aliases && Array.isArray(descriptor.aliases)) {
     for (const alias of descriptor.aliases) {
       vehicleRegistry.set(alias, descriptor);
@@ -170,7 +176,7 @@ for (const extDesc of EXTENDED_VEHICLE_DESCRIPTORS) {
 }
 
 export function getVehicleDescriptor(id: string): VehicleDescriptor | null {
-  return vehicleRegistry.get(id) || null;
+  return vehicleRegistry.get(String(id || '').toLowerCase().trim()) || null;
 }
 
 export function getAllVehicleDescriptors(): VehicleDescriptor[] {
@@ -179,13 +185,18 @@ export function getAllVehicleDescriptors(): VehicleDescriptor[] {
 }
 
 export function hasVehicleDescriptor(id: string): boolean {
-  return vehicleRegistry.has(id);
+  return vehicleRegistry.has(String(id || '').toLowerCase().trim());
 }
 
 export function recomputeDescriptorBoostOutlets(
   descriptor: VehicleDescriptor | null | undefined
 ): [number, number, number][] | undefined {
-  if (!descriptor || !descriptor.boostNozzleParams) return descriptor?.boostOutlets;
+  if (!descriptor) return undefined;
+  registerDynamicVisualId(
+    descriptor.id,
+    descriptor.threeWheels ? 'hitbox-psyclops' : descriptor.hitboxPreset
+  );
+  if (!descriptor.boostNozzleParams) return descriptor.boostOutlets;
   const { x, y, z, followChassisOffset } = descriptor.boostNozzleParams;
   const offsetX = followChassisOffset ? (descriptor.alignment?.centerOffset?.[0] ?? 0) : 0;
   const offsetY = followChassisOffset ? (descriptor.alignment?.centerOffset?.[1] ?? 0) : 0;
