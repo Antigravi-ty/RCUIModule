@@ -9,6 +9,7 @@ import {
 import { ReferenceOverlayCard } from './ReferenceOverlayCard';
 import { CameraSwivelSimulatorCard } from '../../../compounds/CameraSwivelSimulatorCard';
 import type { VehicleDescriptor } from '../../../config/vehicleTunerConfig';
+import type { CustomVehicleId } from './VehicleOffsetFooterActions';
 
 export interface HitboxSpec {
   name: string;
@@ -22,8 +23,8 @@ export interface HitboxSpec {
 export interface HitboxAlignTabProps {
   descriptor: VehicleDescriptor;
   hitboxSpec: HitboxSpec;
-  selectedCar: 'fennec' | 'insidio' | 'ryza';
-  notifyAndRefresh: (carId?: 'fennec' | 'insidio' | 'ryza', nextHitboxPreset?: string) => void;
+  selectedCar: CustomVehicleId;
+  notifyAndRefresh: (carId?: CustomVehicleId, nextHitboxPreset?: string) => void;
   handleCenterOffsetAxis: (axisIndex: 0 | 1 | 2, val: number) => void;
   handleAlignmentChange: (patch: Partial<VehicleDescriptor['alignment']>) => void;
   handleAlignTopToRLHitbox: () => void;
@@ -102,6 +103,8 @@ export const HitboxAlignTab: React.FC<HitboxAlignTabProps> = ({
             { value: 'hitbox-hybrid', label: 'Hybrid' },
             { value: 'hitbox-dominus', label: 'Dominus' },
             { value: 'hitbox-breakout', label: 'Breakout' },
+            { value: 'hitbox-plank', label: 'Plank' },
+            { value: 'hitbox-merc', label: 'Merc' },
           ]}
           size="sm"
           fullWidth

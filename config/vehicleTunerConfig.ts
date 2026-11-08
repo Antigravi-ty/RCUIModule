@@ -3,105 +3,47 @@
  * Pure configuration data, descriptors, and runtime tuning state for vehicles, wheels, anodized paint, and boost particles.
  */
 
-import { INSIDIO_DESCRIPTOR, RYZA_DESCRIPTOR, normalizeWheelModifierPatch, type VehicleSurfaceMaterialSlot, type VehicleLampsConfig, type VehicleDescriptor, type WheelModifierConfig } from './vehicleDescriptorsConfig';
+import {
+  DEFAULT_LAMPS_CONFIG,
+  DEFAULT_SURFACE_MATERIALS,
+  INSIDIO_DESCRIPTOR,
+  RYZA_DESCRIPTOR,
+  normalizeWheelModifierPatch,
+  type VehicleSurfaceMaterialSlot,
+  type VehicleLampsConfig,
+  type VehicleDescriptor,
+  type WheelModifierConfig,
+} from './vehicleDescriptorsConfig';
+import {
+  BREAKOUT_MINI_DESCRIPTOR,
+  DOMINUS_DESCRIPTOR,
+  EXTENDED_VEHICLE_DESCRIPTORS,
+  MERC_DESCRIPTOR,
+  SENTINEL_DESCRIPTOR,
+  TRIOCTANE_DESCRIPTOR,
+  TRIOCTANE_THREEWHEEL_DESCRIPTOR,
+  VEHICLE_ALIGN_PRESET_OPTIONS,
+  type VehicleAlignPresetOption,
+} from './vehicleExtendedDescriptorsConfig';
 
 export type {
   VehicleSurfaceMaterialSlot,
   VehicleLampsConfig,
   VehicleDescriptor,
   WheelModifierConfig,
+  VehicleAlignPresetOption,
 };
 
 export const GLOBAL_VEHICLE_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {
-  body: {
-    slotName: 'body',
-    label: 'Body Shell (body)',
-    mode: 'standard',
-    color: '#bc8100',
-    pearlColor: '#ff2a60',
-    metalness: 0.7,
-    roughness: 0.45,
-    clearcoat: 1,
-    clearcoatRoughness: 0.11,
-    sheen: 0.7,
-    envMapIntensity: 1,
-    toonSteps: 4,
-    toonShadowMin: 0.11,
-    toonHighlightMax: 1,
-    toonSmooth: false,
-    glbDefaultMetalness: 0,
-    glbDefaultRoughness: 0.5,
-  },
-  window: {
-    slotName: 'window',
-    label: 'Windshield & Glass (window)',
-    mode: 'standard',
-    color: '#727272',
-    pearlColor: '#243044',
-    metalness: 1,
-    roughness: 0,
-    clearcoat: 0.9,
-    clearcoatRoughness: 0.1,
-    sheen: 0.2,
-    envMapIntensity: 1,
-    toonSteps: 3,
-    toonShadowMin: 0.08,
-    toonHighlightMax: 0.85,
-    toonSmooth: false,
-    glbDefaultMetalness: 0,
-    glbDefaultRoughness: 0.5,
-  },
-  border: {
-    slotName: 'border',
-    label: 'Trim & Chassis Skirt (border)',
-    mode: 'standard',
-    color: '#262626',
-    pearlColor: '#282e38',
-    metalness: 0,
-    roughness: 0.7,
-    clearcoat: 0,
-    clearcoatRoughness: 0.3,
-    sheen: 0.1,
-    envMapIntensity: 0.9,
-    toonSteps: 3,
-    toonShadowMin: 0.1,
-    toonHighlightMax: 0.8,
-    toonSmooth: false,
-    glbDefaultMetalness: 0,
-    glbDefaultRoughness: 0.5,
-  },
-  metal: {
-    slotName: 'metal',
-    label: 'Rear Exhaust & Trim Metal (metal)',
-    mode: 'standard',
-    color: '#c9c9c9',
-    pearlColor: '#6d788a',
-    metalness: 1,
-    roughness: 0.5,
-    clearcoat: 0.3,
-    clearcoatRoughness: 0.2,
-    sheen: 0.1,
-    envMapIntensity: 1,
-    toonSteps: 4,
-    toonShadowMin: 0.15,
-    toonHighlightMax: 1,
-    toonSmooth: false,
-    glbDefaultMetalness: 0,
-    glbDefaultRoughness: 0.5,
-  },
+  body: { ...DEFAULT_SURFACE_MATERIALS.body },
+  window: { ...DEFAULT_SURFACE_MATERIALS.window },
+  border: { ...DEFAULT_SURFACE_MATERIALS.border },
+  bottom: { ...DEFAULT_SURFACE_MATERIALS.bottom },
+  metal: { ...DEFAULT_SURFACE_MATERIALS.metal },
 };
 
 export const GLOBAL_VEHICLE_LAMPS_CONFIG: VehicleLampsConfig = {
-  frontColor: '#ffefd5',
-  frontIntensity: 1,
-  frontToneMapped: false,
-  tailIdleColor: '#5c0a0a',
-  tailIdleIntensity: 0.85,
-  brakeColor: '#ff2200',
-  brakeIntensity: 1,
-  brakeMinSpeed: 30,
-  brakeDecelEpsilon: 0.25,
-  tailToneMapped: false,
+  ...DEFAULT_LAMPS_CONFIG,
 };
 
 export const FENNEC_DESCRIPTOR: VehicleDescriptor = {
@@ -109,6 +51,7 @@ export const FENNEC_DESCRIPTOR: VehicleDescriptor = {
   name: 'Fennec',
   hitboxPreset: 'hitbox-octane',
   modelUrl: '/assets/vehicles/Fennec.glb',
+  unitScale: 1,
   rawBounds: {
     min: [-62.3896, -13.8302, -35.7124],
     max: [78.0319, 33.4147, 35.7124],
@@ -220,6 +163,10 @@ export function registerVehicleDescriptor(descriptor: VehicleDescriptor): void {
       vehicleRegistry.set(alias, descriptor);
     }
   }
+}
+
+for (const extDesc of EXTENDED_VEHICLE_DESCRIPTORS) {
+  registerVehicleDescriptor(extDesc);
 }
 
 export function getVehicleDescriptor(id: string): VehicleDescriptor | null {

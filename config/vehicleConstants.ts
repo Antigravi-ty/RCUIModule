@@ -46,12 +46,13 @@ export interface CarVisualCatalogItem {
 export const CAR_VISUAL_CATALOG: readonly Readonly<CarVisualCatalogItem>[] = Object.freeze([
   Object.freeze({ index: 0, id: 'fennec', label: 'Fennec', isPreset: false, defaultHitboxId: 'hitbox-octane' }),
   Object.freeze({ index: 1, id: 'insidio', label: 'Insidio', isPreset: false, defaultHitboxId: 'hitbox-hybrid' }),
-  Object.freeze({ index: 2, id: 'hitbox-octane', label: 'Octane (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-octane' }),
-  Object.freeze({ index: 3, id: 'hitbox-dominus', label: 'Dominus (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-dominus' }),
-  Object.freeze({ index: 4, id: 'hitbox-breakout', label: 'Breakout (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-breakout' }),
-  Object.freeze({ index: 5, id: 'hitbox-plank', label: 'Batmobile/Plank (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-plank' }),
-  Object.freeze({ index: 6, id: 'hitbox-merc', label: 'Merc (Whitebox)', isPreset: true, defaultHitboxId: 'hitbox-merc' }),
-  Object.freeze({ index: 7, id: 'ryza', label: 'Ryza', isPreset: false, defaultHitboxId: 'hitbox-octane' })
+  Object.freeze({ index: 2, id: 'trioctane', label: 'TriOctane (Octane)', isPreset: false, defaultHitboxId: 'hitbox-octane' }),
+  Object.freeze({ index: 3, id: 'dominus', label: 'Dominus', isPreset: false, defaultHitboxId: 'hitbox-dominus' }),
+  Object.freeze({ index: 4, id: 'breakout-mini', label: 'Breakout Mini', isPreset: false, defaultHitboxId: 'hitbox-breakout' }),
+  Object.freeze({ index: 5, id: 'sentinel', label: 'Sentinel', isPreset: false, defaultHitboxId: 'hitbox-plank' }),
+  Object.freeze({ index: 6, id: 'merc', label: 'Merc', isPreset: false, defaultHitboxId: 'hitbox-merc' }),
+  Object.freeze({ index: 7, id: 'ryza', label: 'Ryza', isPreset: false, defaultHitboxId: 'hitbox-octane' }),
+  Object.freeze({ index: 8, id: 'trioctane-threewheel', label: 'TriOctane (Three-Wheeler)', isPreset: false, defaultHitboxId: 'hitbox-octane' })
 ]);
 
 export const CAR_VISUAL_IDS: readonly string[] = Object.freeze(CAR_VISUAL_CATALOG.map((item) => item.id));
@@ -62,14 +63,28 @@ export const CAR_VISUAL_OPTIONS = Object.freeze(
 
 export const SHORT_VISUAL_ALIAS_MAP: Readonly<Record<string, string>> = Object.freeze({
   octane: 'fennec',
-  dominus: 'hitbox-dominus',
-  breakout: 'hitbox-breakout',
+  dominus: 'dominus',
+  breakout: 'breakout-mini',
+  'breakout-mini': 'breakout-mini',
   hybrid: 'insidio',
-  plank: 'hitbox-plank',
-  batmobile: 'hitbox-plank',
-  merc: 'hitbox-merc',
+  plank: 'sentinel',
+  batmobile: 'sentinel',
+  sentinel: 'sentinel',
+  merc: 'merc',
+  trioctane: 'trioctane',
+  'trioctane-octane': 'trioctane',
+  'trioctane-threewheel': 'trioctane-threewheel',
+  'trioctane-3w': 'trioctane-threewheel',
+  psyclops: 'trioctane-threewheel',
+  tricycle: 'trioctane-threewheel',
   default: 'fennec',
+  'hitbox-octane': 'trioctane',
+  'hitbox-dominus': 'dominus',
+  'hitbox-breakout': 'breakout-mini',
+  'hitbox-plank': 'sentinel',
+  'hitbox-merc': 'merc',
   'hitbox-hybrid': 'insidio',
+  'hitbox-psyclops': 'trioctane-threewheel',
   fennec: 'fennec',
   insidio: 'insidio',
   ryza: 'ryza'
@@ -119,25 +134,19 @@ export function decodeVisualIdIndex(index: unknown): string {
   return 'fennec';
 }
 
-/**
- * Resolves WASM hitbox index (0..5) from a hitboxId, visualId, or numeric index.
- */
 export function resolveHitboxIndex(hitboxOrVisual: unknown): number {
   if (typeof hitboxOrVisual === 'number' && Number.isFinite(hitboxOrVisual)) {
-    if (hitboxOrVisual >= 0 && hitboxOrVisual <= 6) {
-      return hitboxOrVisual;
-    }
-    return 0;
+    return (hitboxOrVisual >= 0 && hitboxOrVisual <= 6) ? hitboxOrVisual : 0;
   }
   if (!hitboxOrVisual) return 0;
   const lower = String(hitboxOrVisual).toLowerCase().trim();
   if (lower.includes('psyclops') || lower.includes('tricycle') || lower.includes('threewheel') || lower.includes('three-wheel')) return 6;
   if (lower.includes('dominus')) return 1;
-  if (lower.includes('plank') || lower.includes('batmobile')) return 2;
+  if (lower.includes('plank') || lower.includes('batmobile') || lower.includes('sentinel')) return 2;
   if (lower.includes('breakout')) return 3;
   if (lower.includes('hybrid') || lower.includes('insidio')) return 4;
   if (lower.includes('merc')) return 5;
-  if (lower.includes('octane') || lower.includes('fennec') || lower.includes('ryza') || lower === 'default') return 0;
+  if (lower.includes('octane') || lower.includes('fennec') || lower.includes('ryza') || lower.includes('trioctane') || lower === 'default') return 0;
   return 0;
 }
 

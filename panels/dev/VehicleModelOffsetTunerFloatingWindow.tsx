@@ -23,10 +23,18 @@ import { HitboxAlignTab } from './vehicle-model-offset-tuner/HitboxAlignTab';
 import { BoostNozzlesTab } from './vehicle-model-offset-tuner/BoostNozzlesTab';
 import { WheelOffsetsTab } from './vehicle-model-offset-tuner/WheelOffsetsTab';
 import {
+  CustomGlbImportCard,
+  type ImportedGlbReportSummary,
+} from './vehicle-model-offset-tuner/CustomGlbImportCard';
+import {
   INITIAL_VEHICLE_OFFSET_SNAPSHOT,
+  TUNER_VEHICLE_OPTIONS,
   VehicleOffsetFooterActions,
+  type CustomVehicleId,
 } from './vehicle-model-offset-tuner/VehicleOffsetFooterActions';
 import type { SurfaceMeta, StandardSurfaceProps } from '../../manifest/surfaceMetaTypes';
+
+export type { CustomVehicleId };
 
 export const SURFACE_META: SurfaceMeta = {
   id: 'vehicle-model-offset-tuner',
@@ -54,15 +62,9 @@ export interface VehicleModelOffsetTunerFloatingWindowProps extends StandardSurf
 }
 
 export type VehicleTunerTab = 'hitbox' | 'wheels' | 'boost';
-export type CustomVehicleId = 'fennec' | 'insidio' | 'ryza';
 
-/**
- * Per-Vehicle Model & Spatial Offset Tuner Floating Window (Active Tuner)
- * Dedicated exclusively to per-model / per-hitbox spatial registration:
- * 1. Hitbox & Align (Hitbox archetype, Chassis Center Offset, Scale, Reference PNG Overlay)
- * 2. Wheel Offsets (Per-vehicle Front/Rear Axle X, Track Half-Width Z, Radius, Suspension Rest Y)
- * 3. Boost Nozzles (Per-vehicle Dual Exhaust Nozzle X/Y/Z offsets)
- */
+const VALID_CUSTOM_VEHICLE_IDS = new Set<string>(TUNER_VEHICLE_OPTIONS.map((o) => o.value));
+
 export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetTunerFloatingWindowProps> = ({
   isLight = false,
   activeTab: controlledTab,
@@ -77,7 +79,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   const setPrecisionStep = useAppStore((s) => s.setPrecisionStep);
 
   const [selectedCar, setSelectedCar] = useState<CustomVehicleId>(() =>
-    activeCar === 'insidio' ? 'insidio' : activeCar === 'ryza' ? 'ryza' : 'fennec'
+    VALID_CUSTOM_VEHICLE_IDS.has(activeCar) ? (activeCar as CustomVehicleId) : 'fennec'
   );
   const [internalTab, setInternalTab] = useState<VehicleTunerTab>(() =>
     controlledTab && ['hitbox', 'wheels', 'boost'].includes(controlledTab)
@@ -126,6 +128,29 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
     bridge.onVehicleChange?.(carId);
   };
 
+  const handleImportCustomGlb = async (
+    vehicleId: string,
+    arrayBuffer: ArrayBuffer,
+    fileName: string,
+    alignPreset: string
+  ): Promise<ImportedGlbReportSummary | null> => {
+    const res = (await bridge.onImportCustomVehicleGlb?.(
+      vehicleId,
+      arrayBuffer,
+      fileName,
+      alignPreset
+    )) as ImportedGlbReportSummary | undefined;
+    const desc = getVehicleDescriptor(vehicleId);
+    notifyAndRefresh(vehicleId as CustomVehicleId, desc?.hitboxPreset);
+    return res || null;
+  };
+
+  const handleApplyAlignPreset = (vehicleId: string, alignPreset: string) => {
+    bridge.onApplyVehicleAlignPreset?.(vehicleId, alignPreset);
+    const desc = getVehicleDescriptor(vehicleId);
+    notifyAndRefresh(vehicleId as CustomVehicleId, desc?.hitboxPreset);
+  };
+
   const handleToggleRuntimeFlag = (patch: Partial<typeof runtimeFlags>) => {
     const next = setVehicleTunerRuntimeFlags(patch);
     setRuntimeFlagsState(next);
@@ -164,11 +189,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   };
 
   const handleAlignToWheelArches = () => {
-    if (selectedCar === 'fennec') {
-      descriptor.alignment.centerOffset = [0, 1.75, 0];
-    } else {
-      descriptor.alignment.centerOffset = [0, 0, 0];
-    }
+    descriptor.alignment.centerOffset = selectedCar === 'fennec' ? [0, 1.75, 0] : [0, 0, 0];
     notifyAndRefresh(selectedCar);
   };
 
@@ -240,18 +261,22 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
             </span>
           </div>
 
-          <SegmentedSwitch
+          <select
             value={selectedCar}
-            onValueChange={(v) => handleSelectVehicle(v as CustomVehicleId)}
-            options={[
-              { value: 'fennec', label: 'Fennec (Fennec.glb)' },
-              { value: 'insidio', label: 'Insidio (Insidio.glb)' },
-              { value: 'ryza', label: 'Ryza (Ryza.glb)' },
-            ]}
-            size="sm"
-            fullWidth
-            isLight={isLight}
-          />
+            onChange={(e) => handleSelectVehicle(e.target.value as CustomVehicleId)}
+            aria-label="Target Vehicle Model"
+            className={`w-full px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold outline-none ${
+              isLight
+                ? 'bg-white border-neutral-300 text-neutral-900'
+                : 'bg-neutral-900 border-neutral-700 text-neutral-100'
+            }`}
+          >
+            {TUNER_VEHICLE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
 
           <div className="grid grid-cols-3 gap-1.5 pt-0.5">
             <div className="flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
@@ -282,6 +307,16 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
             </div>
           </div>
         </div>
+
+        {/* Experimental Custom GLB Upload & Align Presets */}
+        <CustomGlbImportCard
+          selectedCar={selectedCar}
+          descriptor={descriptor}
+          onImportGlb={handleImportCustomGlb}
+          onApplyAlignPreset={handleApplyAlignPreset}
+          isLight={isLight}
+          cardClass={cardClass}
+        />
 
         {/* Navigation Tabs */}
         <UnderlineTabs

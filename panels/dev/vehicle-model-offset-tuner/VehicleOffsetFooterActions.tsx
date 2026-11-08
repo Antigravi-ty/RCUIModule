@@ -14,11 +14,41 @@ import {
   INSIDIO_DESCRIPTOR,
   RYZA_DESCRIPTOR,
 } from '../../../config/vehicleDescriptorsConfig';
+import {
+  DOMINUS_DESCRIPTOR,
+  BREAKOUT_MINI_DESCRIPTOR,
+  SENTINEL_DESCRIPTOR,
+  MERC_DESCRIPTOR,
+  TRIOCTANE_DESCRIPTOR,
+  TRIOCTANE_THREEWHEEL_DESCRIPTOR,
+} from '../../../config/vehicleExtendedDescriptorsConfig';
 
-export type CustomVehicleId = 'fennec' | 'insidio' | 'ryza';
+export type CustomVehicleId =
+  | 'fennec'
+  | 'insidio'
+  | 'ryza'
+  | 'dominus'
+  | 'breakout-mini'
+  | 'sentinel'
+  | 'merc'
+  | 'trioctane'
+  | 'trioctane-threewheel';
+
+export const TUNER_VEHICLE_OPTIONS: ReadonlyArray<{ value: CustomVehicleId; label: string }> = [
+  { value: 'fennec', label: 'Fennec (Fennec.glb)' },
+  { value: 'insidio', label: 'Insidio (Insidio.glb)' },
+  { value: 'ryza', label: 'Ryza (Ryza.glb)' },
+  { value: 'dominus', label: 'Dominus (Dominus.glb)' },
+  { value: 'breakout-mini', label: 'Breakout Mini (BreakoutMini.glb)' },
+  { value: 'sentinel', label: 'Sentinel (Sentinel.glb)' },
+  { value: 'merc', label: 'Merc (Merc.glb)' },
+  { value: 'trioctane', label: 'TriOctane (Octane)' },
+  { value: 'trioctane-threewheel', label: 'TriOctane (Three-Wheeler)' },
+];
 
 const pickVehicleOffsets = (d: VehicleDescriptor) => ({
   hitboxPreset: d.hitboxPreset,
+  threeWheels: Boolean(d.threeWheels),
   alignment: d.alignment,
   wheelAnchors: d.wheelAnchors,
   suspensionHeights: d.suspensionHeights,
@@ -34,6 +64,12 @@ export const INITIAL_VEHICLE_OFFSET_SNAPSHOT: Record<
     fennec: pickVehicleOffsets(FENNEC_DESCRIPTOR),
     insidio: pickVehicleOffsets(INSIDIO_DESCRIPTOR),
     ryza: pickVehicleOffsets(RYZA_DESCRIPTOR),
+    dominus: pickVehicleOffsets(DOMINUS_DESCRIPTOR),
+    'breakout-mini': pickVehicleOffsets(BREAKOUT_MINI_DESCRIPTOR),
+    sentinel: pickVehicleOffsets(SENTINEL_DESCRIPTOR),
+    merc: pickVehicleOffsets(MERC_DESCRIPTOR),
+    trioctane: pickVehicleOffsets(TRIOCTANE_DESCRIPTOR),
+    'trioctane-threewheel': pickVehicleOffsets(TRIOCTANE_THREEWHEEL_DESCRIPTOR),
   })
 );
 
@@ -45,6 +81,12 @@ export const buildVehicleOffsetsExportJson = () => ({
     fennec: pickVehicleOffsets(FENNEC_DESCRIPTOR),
     insidio: pickVehicleOffsets(INSIDIO_DESCRIPTOR),
     ryza: pickVehicleOffsets(RYZA_DESCRIPTOR),
+    dominus: pickVehicleOffsets(DOMINUS_DESCRIPTOR),
+    'breakout-mini': pickVehicleOffsets(BREAKOUT_MINI_DESCRIPTOR),
+    sentinel: pickVehicleOffsets(SENTINEL_DESCRIPTOR),
+    merc: pickVehicleOffsets(MERC_DESCRIPTOR),
+    trioctane: pickVehicleOffsets(TRIOCTANE_DESCRIPTOR),
+    'trioctane-threewheel': pickVehicleOffsets(TRIOCTANE_THREEWHEEL_DESCRIPTOR),
   },
 });
 
