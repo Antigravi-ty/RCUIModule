@@ -21,6 +21,7 @@ import {
   ATMOSPHERE_FX_TUNER_PRESET,
   BOOST_PAD_TUNER_PRESET,
   BOTS_LOADOUT_TUNER_PRESET,
+  DEMOLISH_SHOCKWAVE_TUNER_PRESET,
   DIAGNOSTIC_DUMP_PRESET,
   DRIFTWOODS_TUNER_PRESET,
   ENGINE_AUDIO_TUNER_PRESET,
@@ -185,6 +186,19 @@ export const ACTIVE_TUNER_SPECS: DevFloatingLauncherSpec[] = [
       'Goal Volume Hitbox 3D wireframe overlay (default off), Standard & Throwback AABB calibration & JSON export',
     hoverTooltip:
       'Goal Volume Hitbox Active Tuner: Toggle the 3D Goal Volume & Ball-Center Trigger wireframe overlay, tune Standard & Throwback goal bounds, and export/import JSON.',
+    section: 'primary',
+  },
+  {
+    id: DEMOLISH_SHOCKWAVE_TUNER_PRESET.id,
+    preset: DEMOLISH_SHOCKWAVE_TUNER_PRESET,
+    icon: Sparkles,
+    iconColor: 'text-amber-400',
+    badge: 'Shockwave Ring · 3D XYZ Sim',
+    badgeTone: 'amber',
+    description:
+      'Camera-facing radial shockwave ring (Outer Radius + Inner Hole % + 6-stop thermal fade), 120 FPS scrubber & 3D XYZ coordinate simulation',
+    hoverTooltip:
+      'Demolish Shockwave Active Tuner: Tune outer radius expansion, inner hole burn-through %, 6-stop color evolution, and trigger/scrub simulated explosions at any 3D Arena coordinate.',
     section: 'primary',
   },
   ...EXPERIMENTAL_AND_DIAGNOSTIC_TUNER_SPECS,

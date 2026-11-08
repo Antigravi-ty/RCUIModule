@@ -26,7 +26,7 @@ export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
 export const DEFAULT_VISUAL_MATERIALS: VisualMaterialsConfig = {
   ballStyle: 'football',
   carPaint: 'anodized',
-  demolishedEffect: 'smoke',
+  demolishedEffect: 'shockwave',
   boostVisual: 'gold-rush',
   boostAudio: 'rush',
   boostFlameLuminance: 'balanced',
@@ -76,18 +76,14 @@ export const GarageLoadoutTab: React.FC<GarageLoadoutTabProps> = ({
         icon={Flame}
         iconColor="text-rose-400"
         title="Demolition Effect"
-        value={materials.demolishedEffect}
-        onValueChange={(val) =>
-          updateMaterials({ demolishedEffect: val as 'toon' | 'smoke' })
-        }
-        options={[
-          { value: 'toon', label: 'Toon' },
-          { value: 'smoke', label: 'Smoke' },
-        ]}
+        value="shockwave"
+        onValueChange={() => {}}
+        options={[{ value: 'shockwave', label: 'Shockwave' }]}
+        disabled={true}
         isLight={isLight}
         onMouseEnter={() =>
           setHoveredDesc(
-            'Selects supersonic collision demolition aesthetic (toon burst vs volumetric smoke plume).'
+            'High-performance camera-facing radial shockwave ring with inner-hole burn-through and thermal color fade.'
           )
         }
         onMouseLeave={onLeave}
