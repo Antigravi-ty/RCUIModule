@@ -146,6 +146,10 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
   const {
     goBack: storeGoBack,
     navigate,
+    closeMenu,
+    setMatchMode,
+    setOnlineSession,
+    bridge,
     setSettingsTargetTab,
     setHighlightSetting,
   } = appState;
@@ -221,6 +225,48 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
     navigate('settings');
   };
 
+  const commitTrainingHostLaunch = (cleanCode: string) => {
+    const cleanName =
+      playerName.trim() || `Player${Math.floor(1000 + Math.random() * 9000)}`;
+    const finalConfig: HostTrainingConfig = {
+      playerName: cleanName,
+      roomCode: cleanCode,
+      roomKey,
+      ghostMode,
+    };
+
+    setOnlineSession({
+      playerName: cleanName,
+      roomId: cleanCode,
+      password: roomKey || undefined,
+      roomType: 'warmup',
+    });
+
+    if (overrides.onStartTraining) {
+      overrides.onStartTraining(finalConfig);
+      return;
+    }
+
+    if (bridge?.onHostOnlineWarmup) {
+      void bridge
+        .onHostOnlineWarmup({
+          roomId: cleanCode,
+          password: roomKey || undefined,
+          playerName: cleanName,
+          roomType: 'warmup',
+          lobbyMode: false,
+        })
+        .then((ok) => {
+          if (ok) {
+            setMatchMode('online-warmup');
+            closeMenu();
+          } else {
+            setProgressStatus('error');
+          }
+        });
+    }
+  };
+
   const startStepSequence = (willFail: boolean) => {
     clearStepTimer();
     const cleanCode = finalizeHostRoomCode(roomCode, hostMask);
@@ -243,12 +289,7 @@ export const Layer3HostTrainingRecipe: React.FC<Layer3HostTrainingRecipeProps> =
         if (next >= 5) {
           clearStepTimer();
           setProgressStatus('completed');
-          overrides.onStartTraining?.({
-            playerName: playerName.trim() || `Player${Math.floor(1000 + Math.random() * 9000)}`,
-            roomCode: cleanCode,
-            roomKey,
-            ghostMode,
-          });
+          commitTrainingHostLaunch(cleanCode);
           return 5;
         }
         return next;
