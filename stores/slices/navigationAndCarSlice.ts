@@ -2,6 +2,7 @@ import { type StateCreator } from 'zustand';
 import { floatingStore } from '../floatingStore';
 import { STORAGE_KEYS, safeStorage } from '../../config/storageHelpers';
 import { getInitialTheme } from '../../config/themeConfig';
+import { CAR_VISUAL_IDS } from '../../config/vehicleConstants';
 import {
   getInitialCar,
   getPreferredColorHex,
@@ -143,10 +144,12 @@ export const createNavigationAndCarSlice: StateCreator<
 
   setActiveCar: (carId) => {
     set({ activeCar: carId });
-    safeStorage.set(
-      STORAGE_KEYS.DISPLAY_SETTINGS,
-      JSON.stringify({ vehiclePreset: carId, carVisual: carId })
-    );
+    if ((CAR_VISUAL_IDS as readonly string[]).includes(carId)) {
+      safeStorage.set(
+        STORAGE_KEYS.DISPLAY_SETTINGS,
+        JSON.stringify({ vehiclePreset: carId, carVisual: carId })
+      );
+    }
     get().bridge.onVehicleChange?.(carId);
   },
 
