@@ -35,6 +35,9 @@ export const BoostNozzlesTab: React.FC<BoostNozzlesTabProps> = ({
           unit=" uu"
           onChange={(x) => handleBoostNozzleChange?.({ x })}
           isLight={isLight}
+          editable={true}
+          allowOutOfBoundsInput={true}
+          usePrecisionContext={true}
         />
         <SliderControl
           label="Nozzle Y (Vertical Height)"
@@ -45,6 +48,9 @@ export const BoostNozzlesTab: React.FC<BoostNozzlesTabProps> = ({
           unit=" uu"
           onChange={(y) => handleBoostNozzleChange?.({ y })}
           isLight={isLight}
+          editable={true}
+          allowOutOfBoundsInput={true}
+          usePrecisionContext={true}
         />
         <SliderControl
           label="Nozzle Z (Lateral Dual Spread)"
@@ -55,6 +61,9 @@ export const BoostNozzlesTab: React.FC<BoostNozzlesTabProps> = ({
           unit=" uu"
           onChange={(z) => handleBoostNozzleChange?.({ z })}
           isLight={isLight}
+          editable={true}
+          allowOutOfBoundsInput={true}
+          usePrecisionContext={true}
         />
 
         <div className="flex items-center justify-between pt-0.5">
