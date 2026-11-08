@@ -132,7 +132,7 @@ export interface VisualMaterialsConfig {
   ballStyle: 'football' | 'rocket-league';
   carPaint: 'cartoon' | 'anodized';
   paintFinish?: 'matte' | 'metallic';
-  demolishedEffect: 'toon' | 'smoke';
+  demolishedEffect: 'shockwave' | 'toon' | 'smoke';
   boostVisual: 'cartoon' | 'gold-rush';
   boostAudio?: 'rush' | 'standard' | 'flamethrower' | 'plasma';
   boostFlameLuminance: 'balanced' | 'dynamic';

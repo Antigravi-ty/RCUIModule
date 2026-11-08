@@ -13,7 +13,7 @@ export interface MaterialsConfigState {
   ballStyle: 'football' | 'rocket-league';
   carPaint: 'cartoon' | 'anodized';
   paintFinish: 'matte' | 'metallic';
-  demolishedEffect: 'toon' | 'smoke';
+  demolishedEffect: 'shockwave' | 'toon' | 'smoke';
   boostVisual: 'cartoon' | 'gold-rush';
   boostAudio: 'rush' | 'standard' | 'flamethrower' | 'plasma';
   boostFlameLuminance: 'balanced' | 'dynamic';
@@ -25,7 +25,7 @@ export const DEFAULT_MATERIALS_CONFIG: MaterialsConfigState = {
   ballStyle: 'football',
   carPaint: 'cartoon',
   paintFinish: 'metallic',
-  demolishedEffect: 'toon',
+  demolishedEffect: 'shockwave',
   boostVisual: 'gold-rush',
   boostAudio: 'rush',
   boostFlameLuminance: 'balanced',

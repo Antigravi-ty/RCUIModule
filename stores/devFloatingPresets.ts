@@ -299,8 +299,21 @@ export const REPLAY_TO_RCS_IMPORTER_PRESET: PresetConfig = makeDevPreset({
   component: 'ReplayToRcsImporterFloatingWindow',
 });
 
+export const DEMOLITION_SHOCKWAVE_TUNER_PRESET: PresetConfig = makeDevPreset({
+  id: 'demolition-shockwave-tuner',
+  title: 'Demolition Shockwave Active Tuner',
+  category: 'DemolitionShockwave',
+  width: 480,
+  height: 640,
+  minHeight: 220,
+  summary: 'Single-quad camera-facing shockwave ring (inner/outer radius, 3-stop radial gradient, far-field boost) & custom XYZ coordinate explosion simulator.',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
+  component: 'DemolitionShockwaveTunerFloatingWindow',
+});
+
 export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   DIAGNOSTIC_DUMP_PRESET,
+  DEMOLITION_SHOCKWAVE_TUNER_PRESET,
   STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
   NAME_TAG_TUNER_PRESET,
   GOAL_VOLUME_TUNER_PRESET,
