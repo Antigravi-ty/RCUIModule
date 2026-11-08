@@ -134,8 +134,8 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
     if (isBuiltInTunerVehicleId(carId)) {
       try {
         garageSettingsStore.save({ vehiclePreset: carId, carVisual: carId });
-      } catch (err) {
-        console.warn('[VehicleModelOffsetTuner] Failed to persist selected vehicle to garageSettingsStore:', err);
+      } catch {
+        // ignore storage error
       }
     }
     bridge.onVehicleChange?.(carId);
@@ -319,7 +319,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
           </div>
 
           <div className="flex flex-wrap gap-1.5 pt-0.5">
-            <div className="flex-1 min-w-[115px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
+            <div className="flex-1 min-w-[105px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
               <span className="text-[10px] font-medium">Hitbox Wire</span>
               <ToggleSwitch
                 checked={Boolean(gameplay.showAllCarHitboxes || gameplay.showCarHitbox)}
@@ -329,7 +329,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
                 isLight={isLight}
               />
             </div>
-            <div className="flex-1 min-w-[115px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
+            <div className="flex-1 min-w-[105px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
               <span className="text-[10px] font-medium">Nozzle Gizmos</span>
               <ToggleSwitch
                 checked={runtimeFlags.showNozzleGizmos}
@@ -337,11 +337,19 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
                 isLight={isLight}
               />
             </div>
-            <div className="flex-1 min-w-[115px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
+            <div className="flex-1 min-w-[105px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
               <span className="text-[10px] font-medium">Force Boost</span>
               <ToggleSwitch
                 checked={runtimeFlags.forceBoostPreview}
                 onChange={(checked) => handleToggleRuntimeFlag({ forceBoostPreview: checked })}
+                isLight={isLight}
+              />
+            </div>
+            <div className="flex-1 min-w-[115px] flex items-center justify-between px-2 py-1 rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/5">
+              <span className="text-[10px] font-semibold text-fuchsia-400">Border #ff40ff</span>
+              <ToggleSwitch
+                checked={Boolean(runtimeFlags.borderColorOverride)}
+                onChange={(checked) => handleToggleRuntimeFlag({ borderColorOverride: checked })}
                 isLight={isLight}
               />
             </div>

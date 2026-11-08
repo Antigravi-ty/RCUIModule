@@ -40,7 +40,7 @@ export const BotsCarModelPoolSection: React.FC<BotsCarModelPoolSectionProps> = (
                 : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
             }`}
           >
-            All (7)
+            All ({BOT_VISUAL_CATALOG.length})
           </button>
         </div>
       </div>

@@ -45,7 +45,8 @@ export const CAR_VISUAL_CATALOG: readonly Readonly<CarVisualCatalogItem>[] = Obj
   Object.freeze({ index: 5, id: 'sentinel', label: 'Sentinel', isPreset: false, defaultHitboxId: 'hitbox-plank' }),
   Object.freeze({ index: 6, id: 'merc', label: 'Merc', isPreset: false, defaultHitboxId: 'hitbox-merc' }),
   Object.freeze({ index: 7, id: 'ryza', label: 'Ryza', isPreset: false, defaultHitboxId: 'hitbox-octane' }),
-  Object.freeze({ index: 8, id: 'trioctane-threewheel', label: 'TriOctane3', isPreset: false, defaultHitboxId: 'hitbox-psyclops', playerOnly: true })
+  Object.freeze({ index: 8, id: 'trioctane-threewheel', label: 'TriOctane3', isPreset: false, defaultHitboxId: 'hitbox-psyclops', playerOnly: true }),
+  Object.freeze({ index: 9, id: 'octane', label: 'Octane', isPreset: false, defaultHitboxId: 'hitbox-octane' })
 ]);
 
 export const CAR_VISUAL_IDS: readonly string[] = Object.freeze(CAR_VISUAL_CATALOG.map((item) => item.id));
@@ -55,7 +56,7 @@ export const CAR_VISUAL_OPTIONS = Object.freeze(
 );
 
 export const SHORT_VISUAL_ALIAS_MAP: Readonly<Record<string, string>> = Object.freeze({
-  octane: 'fennec',
+  octane: 'octane',
   dominus: 'dominus',
   breakout: 'breakout-mini',
   'breakout-mini': 'breakout-mini',

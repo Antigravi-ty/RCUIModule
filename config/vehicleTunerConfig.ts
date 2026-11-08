@@ -36,11 +36,11 @@ export type {
 };
 
 export const GLOBAL_VEHICLE_SURFACE_MATERIALS: Record<string, VehicleSurfaceMaterialSlot> = {
-  body: { ...DEFAULT_SURFACE_MATERIALS.body },
-  window: { ...DEFAULT_SURFACE_MATERIALS.window },
-  border: { ...DEFAULT_SURFACE_MATERIALS.border },
-  bottom: { ...DEFAULT_SURFACE_MATERIALS.bottom },
-  metal: { ...DEFAULT_SURFACE_MATERIALS.metal },
+  body: DEFAULT_SURFACE_MATERIALS.body,
+  window: DEFAULT_SURFACE_MATERIALS.window,
+  border: DEFAULT_SURFACE_MATERIALS.border,
+  bottom: DEFAULT_SURFACE_MATERIALS.bottom,
+  metal: DEFAULT_SURFACE_MATERIALS.metal,
 };
 
 export const GLOBAL_VEHICLE_LAMPS_CONFIG: VehicleLampsConfig = {
@@ -148,16 +148,14 @@ export function getActiveVehiclePaintFinishPreset(): 'matte' | 'metallic' {
   return 'metallic';
 }
 
-const vehicleRegistry = new Map<string, VehicleDescriptor>([
-  ['fennec', FENNEC_DESCRIPTOR],
-  ['insidio', INSIDIO_DESCRIPTOR],
-  ['ryza', RYZA_DESCRIPTOR],
-]);
+const vehicleRegistry = new Map<string, VehicleDescriptor>();
 
 export function registerVehicleDescriptor(descriptor: VehicleDescriptor): void {
   if (!descriptor || !descriptor.id) {
     throw new Error("Vehicle descriptor must include a valid unique 'id'");
   }
+  descriptor.surfaceMaterials = GLOBAL_VEHICLE_SURFACE_MATERIALS;
+  descriptor.lampsConfig = GLOBAL_VEHICLE_LAMPS_CONFIG;
   const normalizedId = descriptor.id.toLowerCase().trim();
   vehicleRegistry.set(normalizedId, descriptor);
   registerDynamicVisualId(
@@ -171,8 +169,8 @@ export function registerVehicleDescriptor(descriptor: VehicleDescriptor): void {
   }
 }
 
-for (const extDesc of EXTENDED_VEHICLE_DESCRIPTORS) {
-  registerVehicleDescriptor(extDesc);
+for (const baseDesc of [FENNEC_DESCRIPTOR, INSIDIO_DESCRIPTOR, RYZA_DESCRIPTOR, ...EXTENDED_VEHICLE_DESCRIPTORS]) {
+  registerVehicleDescriptor(baseDesc);
 }
 
 export function getVehicleDescriptor(id: string): VehicleDescriptor | null {
@@ -209,9 +207,13 @@ export function recomputeDescriptorBoostOutlets(
   return descriptor.boostOutlets;
 }
 
+export const DEFAULT_BORDER_OVERRIDE_COLOR = '#ff40ff';
+
 export interface VehicleTunerRuntimeFlags {
   activeVehicleId: string;
   colorOverride: boolean;
+  borderColorOverride: boolean;
+  borderOverrideColor: string;
   forceBoostPreview: boolean;
   forceBrakeLightPreview: boolean;
   brakePreviewMode: string;
@@ -222,6 +224,8 @@ export interface VehicleTunerRuntimeFlags {
 export const DEFAULT_VEHICLE_TUNER_FLAGS_CONFIG: VehicleTunerRuntimeFlags = {
   activeVehicleId: 'fennec',
   colorOverride: false,
+  borderColorOverride: false,
+  borderOverrideColor: DEFAULT_BORDER_OVERRIDE_COLOR,
   forceBoostPreview: false,
   forceBrakeLightPreview: false,
   brakePreviewMode: 'auto',

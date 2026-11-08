@@ -11,7 +11,7 @@ export const SURFACE_VARIANT_META: SurfaceVariantMeta = {
   variantId: 'car',
   label: '1. Car Body Selection',
   description:
-    '8 vehicle chassis presets with Octane / Dominus / Plank / Hybrid hitbox archetype badges.',
+    '10 vehicle chassis presets with Octane / Dominus / Plank / Hybrid / Breakout / Merc hitbox archetype badges.',
 };
 
 export interface GarageCarTabProps {

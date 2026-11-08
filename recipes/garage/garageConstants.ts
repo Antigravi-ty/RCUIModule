@@ -7,6 +7,7 @@ export interface CarDef {
 
 export const CARS: CarDef[] = [
   { id: 'fennec', name: 'Fennec', hitbox: 'Octane' },
+  { id: 'octane', name: 'Octane', hitbox: 'Octane' },
   { id: 'insidio', name: 'Insidio', hitbox: 'Hybrid' },
   { id: 'ryza', name: 'Ryza', hitbox: 'Octane' },
   { id: 'dominus', name: 'Dominus', hitbox: 'Dominus' },

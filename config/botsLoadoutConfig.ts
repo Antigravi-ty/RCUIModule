@@ -52,7 +52,7 @@ export const BOOST_AUDIO_CATALOG: readonly { id: BotBoostAudioOption; name: stri
 ];
 
 export interface BotsLoadoutConfig {
-  /** Multi-select vehicle visual IDs (7 standard car presets across 6 hitboxes; excludes player-only TriOctane variants) */
+  /** Multi-select vehicle visual IDs (8 standard car presets across 6 hitboxes; excludes player-only TriOctane variants) */
   visualIds: string[];
   /** Multi-select paint finishes (default: ['metallic']) */
   paintFinishes: BotPaintFinishOption[];
@@ -126,7 +126,7 @@ export const ALL_BOT_ANTHEM_CATEGORIES: readonly {
 ]);
 
 export const DEFAULT_BOTS_LOADOUT_CONFIG: BotsLoadoutConfig = {
-  visualIds: [...DEFAULT_GLB_BOT_VISUAL_IDS], // ['fennec', 'insidio', 'ryza']
+  visualIds: [...DEFAULT_GLB_BOT_VISUAL_IDS], // 8 standard GLB vehicles (excludes player-only TriOctane variants)
   paintFinishes: ['metallic'],
   boostVisuals: ['cartoon'],
   boostAudios: ['standard'],
@@ -159,12 +159,16 @@ export function normalizeBotsLoadoutConfig(
     };
   }
   const allowedAnthemCats = ALL_BOT_ANTHEM_CATEGORIES.map((c) => c.id);
+  const sanitizedVisualIds = sanitizeNonEmptyPool(
+    raw.visualIds,
+    ALL_BOT_VISUAL_IDS,
+    DEFAULT_BOTS_LOADOUT_CONFIG.visualIds
+  );
+  if (sanitizedVisualIds.length === 7 && !sanitizedVisualIds.includes('octane')) {
+    sanitizedVisualIds.push('octane');
+  }
   return {
-    visualIds: sanitizeNonEmptyPool(
-      raw.visualIds,
-      ALL_BOT_VISUAL_IDS,
-      DEFAULT_BOTS_LOADOUT_CONFIG.visualIds
-    ),
+    visualIds: sanitizedVisualIds,
     paintFinishes: sanitizeNonEmptyPool(
       raw.paintFinishes,
       ALL_BOT_PAINT_FINISHES,

@@ -20,12 +20,14 @@ import {
   BREAKOUT_MINI_DESCRIPTOR,
   SENTINEL_DESCRIPTOR,
   MERC_DESCRIPTOR,
+  OCTANE_DESCRIPTOR,
   TRIOCTANE_DESCRIPTOR,
   TRIOCTANE_THREEWHEEL_DESCRIPTOR,
 } from '../../../config/vehicleExtendedDescriptorsConfig';
 
 export type BuiltInVehicleId =
   | 'fennec'
+  | 'octane'
   | 'insidio'
   | 'ryza'
   | 'dominus'
@@ -46,6 +48,7 @@ export interface TunerVehicleOption {
 
 export const TUNER_VEHICLE_OPTIONS: ReadonlyArray<TunerVehicleOption> = [
   { value: 'fennec', label: 'Fennec' },
+  { value: 'octane', label: 'Octane' },
   { value: 'insidio', label: 'Insidio' },
   { value: 'ryza', label: 'Ryza' },
   { value: 'dominus', label: 'Dominus' },
@@ -84,6 +87,7 @@ export const INITIAL_VEHICLE_OFFSET_SNAPSHOT: Record<
 > = JSON.parse(
   JSON.stringify({
     fennec: pickVehicleOffsets(FENNEC_DESCRIPTOR),
+    octane: pickVehicleOffsets(OCTANE_DESCRIPTOR),
     insidio: pickVehicleOffsets(INSIDIO_DESCRIPTOR),
     ryza: pickVehicleOffsets(RYZA_DESCRIPTOR),
     dominus: pickVehicleOffsets(DOMINUS_DESCRIPTOR),

@@ -45,6 +45,7 @@ export interface CustomGlbImportCardProps {
 const SHORT_PRESET_LABELS: Readonly<Record<string, string>> = {
   auto: 'Auto-Fit',
   fennec: 'Fennec',
+  octane: 'Octane',
   insidio: 'Insidio',
   ryza: 'Ryza',
   dominus: 'Dominus',

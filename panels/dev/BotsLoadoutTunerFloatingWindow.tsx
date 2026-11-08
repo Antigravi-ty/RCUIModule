@@ -24,7 +24,7 @@ export const SURFACE_META: SurfaceMeta = {
   title: 'Bots Loadout Tuner',
   subtitle: 'Multi-Select Randomizable Bot Loadout Pool (Car Models, Paint, Boost & Anthem)',
   description:
-    'Multi-select randomizable Bot Loadout pool (7 GLB models across 6 hitboxes default, Metallic paint, Cartoon boost, Standard boost audio, Random TrainStation anthem).',
+    'Multi-select randomizable Bot Loadout pool (8 GLB models across 6 hitboxes default, Metallic paint, Cartoon boost, Standard boost audio, Random TrainStation anthem).',
   icon: 'Bot',
   layer: 'floating-dev',
   menuGroup: 'active-tuners',

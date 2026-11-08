@@ -242,10 +242,69 @@ export const MERC_DESCRIPTOR: VehicleDescriptor = {
   },
 };
 
+export const OCTANE_DESCRIPTOR: VehicleDescriptor = {
+  id: 'octane',
+  name: 'Octane',
+  aliases: ['hitbox-octane'],
+  hitboxPreset: 'hitbox-octane',
+  modelUrl: '/assets/vehicles/Octane.glb',
+  unitScale: 100,
+  threeWheels: false,
+  rawBounds: {
+    min: [-60.3644, -11.1058, -36.2809],
+    max: [78.7407, 43.529, 36.2809],
+    length: 139.1051,
+    height: 54.6348,
+    width: 72.5618,
+    center: [9.1882, 16.2116, 0],
+    roofTopY: 43.529,
+    rlHitboxTopY: 38.8346,
+  },
+  alignment: {
+    scale: 1.0,
+    scaleX: 1.0,
+    scaleY: 1.0,
+    scaleZ: 1.0,
+    centerOffset: [0, 0, 0],
+  },
+  wheelNames: [
+    'wheel-front-right',
+    'wheel-front-left',
+    'wheel-rear-right',
+    'wheel-rear-left',
+  ],
+  wheelAnchors: [
+    [51.25, 25.9, 12.5],
+    [51.25, -25.9, 12.5],
+    [-33.75, 29.5, 15.0],
+    [-33.75, -29.5, 15.0],
+  ],
+  suspensionHeights: [-4.5, -4.5, -2.0, -2.0],
+  boostOutlets: [
+    [-50.5, 14.5, 10.0],
+    [-50.5, 14.5, -10.0],
+  ],
+  boostNozzleParams: {
+    x: -50.5,
+    y: 14.5,
+    z: 10.0,
+    followChassisOffset: true,
+  },
+  surfaceMaterials: DEFAULT_SURFACE_MATERIALS,
+  lampsConfig: DEFAULT_LAMPS_CONFIG,
+  colors: {
+    default: {
+      primary: 16734742,
+      realisticPrimary: 16555020,
+      pearl: 16724660,
+    },
+  },
+};
+
 export const TRIOCTANE_DESCRIPTOR: VehicleDescriptor = {
   id: 'trioctane',
   name: 'TriOctane4',
-  aliases: ['hitbox-octane', 'trioctane4', 'trioctane-4w', 'trioctane-octane'],
+  aliases: ['trioctane4', 'trioctane-4w', 'trioctane-octane'],
   hitboxPreset: 'hitbox-octane',
   modelUrl: '/assets/vehicles/TriOctane.glb',
   unitScale: 100,
@@ -361,6 +420,7 @@ export const TRIOCTANE_THREEWHEEL_DESCRIPTOR: VehicleDescriptor = {
 };
 
 export const EXTENDED_VEHICLE_DESCRIPTORS: readonly VehicleDescriptor[] = [
+  OCTANE_DESCRIPTOR,
   DOMINUS_DESCRIPTOR,
   BREAKOUT_MINI_DESCRIPTOR,
   SENTINEL_DESCRIPTOR,
@@ -385,6 +445,11 @@ export const VEHICLE_ALIGN_PRESET_OPTIONS: readonly VehicleAlignPresetOption[] =
     id: 'fennec',
     label: 'Fennec (Octane, 1 UU)',
     description: 'Applies Fennec native UU scale (1x) and calibrated Octane offsets',
+  },
+  {
+    id: 'octane',
+    label: 'Octane (Octane, 100x Meter)',
+    description: 'Applies Octane meter scale (100x) and calibrated Octane offsets',
   },
   {
     id: 'insidio',
