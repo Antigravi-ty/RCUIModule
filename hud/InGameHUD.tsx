@@ -36,8 +36,8 @@ import {
   deriveInGameScoreboardState,
   useWindowFocusAndPowerSave,
   useCenterUpperCountdownChoreography,
-  useReplayPovSlotHotkeys,
 } from './useInGameHudChoreography';
+import { useReplayPovSlotHotkeys } from './useReplayPovSlotHotkeys';
 
 export interface InGameHUDProps {
   className?: string;
