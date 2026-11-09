@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import type { VehicleDescriptor } from '../../../config/vehicleTunerConfig';
 
@@ -19,15 +20,48 @@ export const WheelOffsetsTab: React.FC<WheelOffsetsTabProps> = ({
   isLight,
   cardClass,
 }) => {
+  const [copiedWheels, setCopiedWheels] = useState(false);
   if (!descriptor) return null;
+
+  const handleCopyWheels = async () => {
+    try {
+      const payload = {
+        vehicleId: descriptor.id,
+        wheelAnchors: descriptor.wheelAnchors,
+        suspensionHeights: descriptor.suspensionHeights,
+      };
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      setCopiedWheels(true);
+      setTimeout(() => setCopiedWheels(false), 1800);
+    } catch (err) {
+      console.warn('[WheelOffsetsTab] Copy wheels JSON failed:', err);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-2.5">
       <div className={cardClass}>
-        <div className="flex flex-col">
-          <span className="font-bold text-[11px] text-sky-400">
-            Wheel Hub Anchors & Suspension Rest Offset ({descriptor.name})
-          </span>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-bold text-[11px] text-sky-400">
+              Wheel Hub Anchors & Suspension Rest Offset ({descriptor.name})
+            </span>
+            <button
+              type="button"
+              onClick={handleCopyWheels}
+              title="Copy only this vehicle's wheel anchors and suspension heights"
+              className={`px-2 py-0.5 rounded border text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                copiedWheels
+                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                  : isLight
+                  ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
+                  : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
+              }`}
+            >
+              {copiedWheels ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              <span>{copiedWheels ? 'Copied' : 'Copy Wheels'}</span>
+            </button>
+          </div>
           <span className="text-[10px] opacity-70">
             Visual wheel hubs are attached to carRoot (not baked in GLB); RocketSim WASM physics raycasts & flip-reset checks stay bound to the Hitbox preset
           </span>

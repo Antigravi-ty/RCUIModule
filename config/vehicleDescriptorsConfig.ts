@@ -31,6 +31,8 @@ export interface VehicleLampsConfig {
   tailToneMapped: boolean;
 }
 
+export type BoostNozzleArrangement = 'horizontal' | 'vertical';
+
 export interface VehicleDescriptor {
   id: string;
   name: string;
@@ -65,6 +67,8 @@ export interface VehicleDescriptor {
     y: number;
     z: number;
     followChassisOffset: boolean;
+    arrangement?: BoostNozzleArrangement;
+    verticalSpacing?: number;
   };
   surfaceMaterials: Record<string, VehicleSurfaceMaterialSlot>;
   lampsConfig: VehicleLampsConfig;

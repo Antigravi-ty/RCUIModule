@@ -9,6 +9,7 @@ import {
   INSIDIO_DESCRIPTOR,
   RYZA_DESCRIPTOR,
   normalizeWheelModifierPatch,
+  type BoostNozzleArrangement,
   type VehicleSurfaceMaterialSlot,
   type VehicleLampsConfig,
   type VehicleDescriptor,
@@ -28,6 +29,7 @@ import {
 import { registerDynamicVisualId } from './vehicleConstants';
 
 export type {
+  BoostNozzleArrangement,
   VehicleSurfaceMaterialSlot,
   VehicleLampsConfig,
   VehicleDescriptor,
@@ -195,15 +197,24 @@ export function recomputeDescriptorBoostOutlets(
     descriptor.threeWheels ? 'hitbox-psyclops' : descriptor.hitboxPreset
   );
   if (!descriptor.boostNozzleParams) return descriptor.boostOutlets;
-  const { x, y, z, followChassisOffset } = descriptor.boostNozzleParams;
+  const { x, y, z, followChassisOffset, arrangement = 'horizontal', verticalSpacing = 16.2 } =
+    descriptor.boostNozzleParams;
   const offsetX = followChassisOffset ? (descriptor.alignment?.centerOffset?.[0] ?? 0) : 0;
   const offsetY = followChassisOffset ? (descriptor.alignment?.centerOffset?.[1] ?? 0) : 0;
   const offsetZ = followChassisOffset ? (descriptor.alignment?.centerOffset?.[2] ?? 0) : 0;
 
-  descriptor.boostOutlets = [
-    [Number((x + offsetX).toFixed(3)), Number((y + offsetY).toFixed(3)), Number((z + offsetZ).toFixed(3))],
-    [Number((x + offsetX).toFixed(3)), Number((y + offsetY).toFixed(3)), Number((-z + offsetZ).toFixed(3))],
-  ];
+  if (arrangement === 'vertical') {
+    const spacing = Number.isFinite(verticalSpacing) ? verticalSpacing : 16.2;
+    descriptor.boostOutlets = [
+      [Number((x + offsetX).toFixed(3)), Number((y + offsetY).toFixed(3)), Number((z + offsetZ).toFixed(3))],
+      [Number((x + offsetX).toFixed(3)), Number((y + spacing + offsetY).toFixed(3)), Number((z + offsetZ).toFixed(3))],
+    ];
+  } else {
+    descriptor.boostOutlets = [
+      [Number((x + offsetX).toFixed(3)), Number((y + offsetY).toFixed(3)), Number((z + offsetZ).toFixed(3))],
+      [Number((x + offsetX).toFixed(3)), Number((y + offsetY).toFixed(3)), Number((-z + offsetZ).toFixed(3))],
+    ];
+  }
   return descriptor.boostOutlets;
 }
 
@@ -218,6 +229,7 @@ export interface VehicleTunerRuntimeFlags {
   forceBrakeLightPreview: boolean;
   brakePreviewMode: string;
   showNozzleGizmos: boolean;
+  showWheelWire: boolean;
   [key: string]: unknown;
 }
 
@@ -230,6 +242,7 @@ export const DEFAULT_VEHICLE_TUNER_FLAGS_CONFIG: VehicleTunerRuntimeFlags = {
   forceBrakeLightPreview: false,
   brakePreviewMode: 'auto',
   showNozzleGizmos: false,
+  showWheelWire: false,
 };
 
 export const vehicleTunerRuntimeFlags: VehicleTunerRuntimeFlags = {

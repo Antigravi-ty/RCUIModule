@@ -44,16 +44,16 @@ export interface CustomGlbImportCardProps {
 
 const SHORT_PRESET_LABELS: Readonly<Record<string, string>> = {
   auto: 'Auto-Fit',
-  fennec: 'Fennec',
-  octane: 'Octane',
-  insidio: 'Insidio',
-  ryza: 'Ryza',
-  dominus: 'Dominus',
-  'breakout-mini': 'Breakout',
-  sentinel: 'Sentinel',
-  merc: 'Merc',
-  trioctane: 'TriOctane4',
-  'trioctane-threewheel': 'TriOctane3',
+  fennec: 'Tpl: Fennec',
+  octane: 'Tpl: Octane',
+  insidio: 'Tpl: Insidio',
+  ryza: 'Tpl: Ryza',
+  dominus: 'Tpl: Dominus',
+  'breakout-mini': 'Tpl: Breakout',
+  sentinel: 'Tpl: Sentinel',
+  merc: 'Tpl: Merc',
+  trioctane: 'Tpl: TriOctane4',
+  'trioctane-threewheel': 'Tpl: TriOctane3',
 };
 
 export const CustomGlbImportCard: React.FC<CustomGlbImportCardProps> = ({

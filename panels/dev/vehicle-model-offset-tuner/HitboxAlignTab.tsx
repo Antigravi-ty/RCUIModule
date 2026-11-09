@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowDownToLine, Crosshair } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowDownToLine, Crosshair, Copy, Check } from 'lucide-react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import {
   PrecisionDigitPicker,
@@ -56,6 +56,22 @@ export const HitboxAlignTab: React.FC<HitboxAlignTabProps> = ({
   cardClass,
 }) => {
   const { step: precisionStep, setStep: setPrecisionStep } = useTunerPrecision();
+  const [copiedAlign, setCopiedAlign] = useState(false);
+
+  const handleCopyAlign = async () => {
+    try {
+      const payload = {
+        vehicleId: descriptor.id,
+        hitboxPreset: descriptor.hitboxPreset,
+        alignment: descriptor.alignment,
+      };
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      setCopiedAlign(true);
+      setTimeout(() => setCopiedAlign(false), 1800);
+    } catch (err) {
+      console.warn('[HitboxAlignTab] Copy align JSON failed:', err);
+    }
+  };
 
   const raw = descriptor.rawBounds;
   const s = descriptor.alignment.scale ?? 1;
@@ -216,7 +232,24 @@ export const HitboxAlignTab: React.FC<HitboxAlignTabProps> = ({
 
       {/* 2. Spatial Offset & Scale Sliders (All editable & connected to PrecisionDigitPicker) */}
       <div className={cardClass}>
-        <span className="font-bold text-[11px]">Chassis Center Offset & Scale</span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-bold text-[11px]">Chassis Center Offset & Scale</span>
+          <button
+            type="button"
+            onClick={handleCopyAlign}
+            title="Copy only this vehicle's hitbox preset and chassis alignment"
+            className={`px-2 py-0.5 rounded border text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+              copiedAlign
+                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                : isLight
+                ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
+                : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
+            }`}
+          >
+            {copiedAlign ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            <span>{copiedAlign ? 'Copied' : 'Copy Align'}</span>
+          </button>
+        </div>
         <SliderControl
           label="Offset X (Forward / Back)"
           value={descriptor.alignment.centerOffset[0]}

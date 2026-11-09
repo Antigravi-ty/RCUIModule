@@ -24,13 +24,7 @@ export interface ResolutionCalibrationProfile {
   invertImage: boolean;
 }
 
-export type CameraLookOverridePreset =
-  | 'none'
-  | 'left'
-  | 'right'
-  | 'up'
-  | 'down'
-  | 'rearView';
+export type CameraLookOverridePreset = 'none' | 'left' | 'right' | 'up' | 'down' | 'rearView';
 
 export const DEFAULT_LOOK_HORIZONTAL_MAGNITUDE = 0.95;
 export const DEFAULT_LOOK_VERTICAL_MAGNITUDE = 0.81;
@@ -48,19 +42,15 @@ export interface ReferenceOverlayState {
   folderName: string;
   images: ReferenceImageItem[];
   activeIndex: number;
-  activeResolutionKey: string; // e.g. "4112x2658" or "ALL"
+  activeResolutionKey: string;
   profiles: Record<string, ResolutionCalibrationProfile>;
-
-  // Camera Look / Rear-View simulation override
   cameraLookPreset: CameraLookOverridePreset;
-  cameraLookStrength: number; // active preset magnitude (0.95 for L/R, 0.81 for U/D)
-  cameraLookHorizontalStrength: number; // default 0.95 for Left/Right
-  cameraLookVerticalStrength: number; // default 0.81 for Up/Down
-  cameraLookXOverride: number; // -1..1 (default 0)
-  cameraLookYOverride: number; // -1..1 (default 0)
+  cameraLookStrength: number;
+  cameraLookHorizontalStrength: number;
+  cameraLookVerticalStrength: number;
+  cameraLookXOverride: number;
+  cameraLookYOverride: number;
   rearViewOverride: boolean;
-
-  // Actions
   setEnabled: (enabled: boolean) => void;
   setFolderImages: (folderName: string, images: ReferenceImageItem[]) => void;
   clearImages: () => void;
@@ -72,8 +62,7 @@ export interface ReferenceOverlayState {
   resetProfile: (resKey?: string) => void;
   importProfilesJson: (data: unknown) => boolean;
   exportProfilesJson: () => ReferenceOverlayProfilesExport;
-
-  // Camera Look Override Actions
+  exportActiveProfileJson: (resKey?: string) => ResolutionCalibrationProfile;
   setCameraLookPreset: (preset: CameraLookOverridePreset) => void;
   setCameraLookStrength: (strength: number) => void;
   setCameraLookAxes: (lookX: number, lookY: number) => void;
@@ -82,24 +71,45 @@ export interface ReferenceOverlayState {
 const STORAGE_KEY_REF_OVERLAY_PROFILES = STORAGE_KEYS.REF_OVERLAY_PROFILES;
 
 export const DEFAULT_REFERENCE_RESOLUTION = '4112x2658';
+export const REFERENCE_RESOLUTION_REF_SPEC = '4112x2658-ref';
+
+export function normalizeResolutionDimensionsKey(resKey: string): string {
+  const match = String(resKey || '').match(/^(\d+)x(\d+)/);
+  return match ? `${match[1]}x${match[2]}` : resKey;
+}
 
 export function createDefaultResolutionProfile(
   resKey = DEFAULT_REFERENCE_RESOLUTION
 ): ResolutionCalibrationProfile {
-  const [wStr, hStr] = resKey.split('x');
+  const dimsKey = normalizeResolutionDimensionsKey(resKey);
+  const [wStr, hStr] = dimsKey.split('x');
   const width = parseInt(wStr, 10) || 4112;
   const height = parseInt(hStr, 10) || 2658;
-  const isDefaultRef = `${width}x${height}` === DEFAULT_REFERENCE_RESOLUTION;
+  if (resKey === REFERENCE_RESOLUTION_REF_SPEC) {
+    return {
+      resolutionKey: REFERENCE_RESOLUTION_REF_SPEC,
+      width,
+      height,
+      scaleLinked: true,
+      scaleX: 0.42,
+      scaleY: 0.42,
+      offsetX: 0,
+      offsetY: 15,
+      opacity: 0.2,
+      invertImage: false,
+    };
+  }
+  const isDefaultBig = resKey === DEFAULT_REFERENCE_RESOLUTION || dimsKey === DEFAULT_REFERENCE_RESOLUTION;
   return {
-    resolutionKey: `${width}x${height}`,
+    resolutionKey: isDefaultBig ? DEFAULT_REFERENCE_RESOLUTION : `${width}x${height}`,
     width,
     height,
     scaleLinked: true,
-    scaleX: isDefaultRef ? 0.42 : 1.0,
-    scaleY: isDefaultRef ? 0.42 : 1.0,
+    scaleX: isDefaultBig ? 0.414 : 1.0,
+    scaleY: isDefaultBig ? 0.414 : 1.0,
     offsetX: 0,
-    offsetY: isDefaultRef ? 15 : 0,
-    opacity: isDefaultRef ? 0.2 : 0.5,
+    offsetY: isDefaultBig ? 12.5 : 0,
+    opacity: isDefaultBig ? 0.25 : 0.5,
     invertImage: false,
   };
 }
@@ -126,6 +136,7 @@ function sanitizeProfile(
 function loadSavedProfiles(): Record<string, ResolutionCalibrationProfile> {
   const defaultMap: Record<string, ResolutionCalibrationProfile> = {
     [DEFAULT_REFERENCE_RESOLUTION]: createDefaultResolutionProfile(DEFAULT_REFERENCE_RESOLUTION),
+    [REFERENCE_RESOLUTION_REF_SPEC]: createDefaultResolutionProfile(REFERENCE_RESOLUTION_REF_SPEC),
   };
   try {
     const raw = safeStorage.get(STORAGE_KEY_REF_OVERLAY_PROFILES);
@@ -135,7 +146,11 @@ function loadSavedProfiles(): Record<string, ResolutionCalibrationProfile> {
       const src = parsed.profiles || parsed;
       for (const [k, v] of Object.entries(src)) {
         if (v && typeof v === 'object') {
-          defaultMap[k] = sanitizeProfile(k, v as Partial<ResolutionCalibrationProfile>);
+          const s = sanitizeProfile(k, v as Partial<ResolutionCalibrationProfile>);
+          if (k === DEFAULT_REFERENCE_RESOLUTION && s.scaleX === 0.42 && s.offsetY === 15 && s.opacity === 0.2) {
+            continue;
+          }
+          defaultMap[k] = s;
         }
       }
     }
@@ -147,6 +162,25 @@ function loadSavedProfiles(): Record<string, ResolutionCalibrationProfile> {
 
 function saveProfilesToStorage(profiles: Record<string, ResolutionCalibrationProfile>) {
   safeStorage.set(STORAGE_KEY_REF_OVERLAY_PROFILES, JSON.stringify({ profiles }));
+}
+
+function resolveEffectiveKey(state: ReferenceOverlayState, resKey?: string): string {
+  if (resKey) return resKey;
+  if (state.activeResolutionKey !== 'ALL') return state.activeResolutionKey;
+  const img = state.images[state.activeIndex];
+  return img ? `${img.width}x${img.height}` : DEFAULT_REFERENCE_RESOLUTION;
+}
+
+function revokeBlobImages(images: ReferenceImageItem[]): void {
+  for (const img of images) {
+    if (img.url.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(img.url);
+      } catch (err) {
+        console.warn('[referenceOverlayStore] Failed to revoke blob URL:', err);
+      }
+    }
+  }
 }
 
 export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get) => ({
@@ -168,64 +202,45 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
   setEnabled: (enabled) => set({ enabled }),
 
   setFolderImages: (folderName, images) => {
-    const prevImages = get().images;
-    prevImages.forEach((img) => {
-      if (img.url.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(img.url);
-        } catch (err) {
-          console.warn('[referenceOverlayStore] Failed to revoke previous blob URL:', err);
-        }
-      }
-    });
-
+    revokeBlobImages(get().images);
     if (images.length === 0) {
       set({ folderName: '', images: [], activeIndex: 0 });
       return;
     }
 
-    const hasRefRes = images.some(
-      (img) => `${img.width}x${img.height}` === DEFAULT_REFERENCE_RESOLUTION
-    );
-    const firstImg = images[0];
-    const targetResKey = hasRefRes
-      ? DEFAULT_REFERENCE_RESOLUTION
-      : `${firstImg.width}x${firstImg.height}`;
+    const hasRefRes = images.some((img) => `${img.width}x${img.height}` === DEFAULT_REFERENCE_RESOLUTION);
+    const currentKey = get().activeResolutionKey;
+    const targetResKey =
+      hasRefRes && currentKey === REFERENCE_RESOLUTION_REF_SPEC
+        ? REFERENCE_RESOLUTION_REF_SPEC
+        : hasRefRes
+        ? DEFAULT_REFERENCE_RESOLUTION
+        : `${images[0].width}x${images[0].height}`;
 
     const profiles = { ...get().profiles };
     for (const img of images) {
       const rk = `${img.width}x${img.height}`;
-      if (!profiles[rk]) {
-        profiles[rk] = createDefaultResolutionProfile(rk);
-      }
+      if (!profiles[rk]) profiles[rk] = createDefaultResolutionProfile(rk);
+    }
+    if (!profiles[REFERENCE_RESOLUTION_REF_SPEC]) {
+      profiles[REFERENCE_RESOLUTION_REF_SPEC] = createDefaultResolutionProfile(REFERENCE_RESOLUTION_REF_SPEC);
     }
     saveProfilesToStorage(profiles);
 
-    const firstMatchingIdx = images.findIndex(
-      (img) => `${img.width}x${img.height}` === targetResKey
-    );
-
+    const targetDims = normalizeResolutionDimensionsKey(targetResKey);
+    const firstIdx = images.findIndex((img) => `${img.width}x${img.height}` === targetDims);
     set({
       enabled: true,
       folderName,
       images,
       activeResolutionKey: targetResKey,
-      activeIndex: firstMatchingIdx >= 0 ? firstMatchingIdx : 0,
+      activeIndex: firstIdx >= 0 ? firstIdx : 0,
       profiles,
     });
   },
 
   clearImages: () => {
-    const prevImages = get().images;
-    prevImages.forEach((img) => {
-      if (img.url.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(img.url);
-        } catch (err) {
-          console.warn('[referenceOverlayStore] Failed to revoke blob URL during clearImages:', err);
-        }
-      }
-    });
+    revokeBlobImages(get().images);
     set({ folderName: '', images: [], activeIndex: 0 });
   },
 
@@ -234,35 +249,39 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
     if (imgs.length === 0) return;
     const clamped = ((index % imgs.length) + imgs.length) % imgs.length;
     const img = imgs[clamped];
-    const resKey = img ? `${img.width}x${img.height}` : get().activeResolutionKey;
+    const currentKey = get().activeResolutionKey;
+    const imgDims = img ? `${img.width}x${img.height}` : '';
+    const resKey =
+      currentKey === 'ALL'
+        ? 'ALL'
+        : imgDims && normalizeResolutionDimensionsKey(currentKey) === imgDims
+        ? currentKey
+        : imgDims || currentKey;
     set({ activeIndex: clamped, activeResolutionKey: resKey });
   },
 
   stepImage: (delta) => {
     const { images, activeIndex, activeResolutionKey } = get();
     if (images.length === 0) return;
+    const activeDims = normalizeResolutionDimensionsKey(activeResolutionKey);
     const matchingIndices = images
       .map((img, idx) => ({ img, idx }))
-      .filter(({ img }) =>
-        activeResolutionKey === 'ALL'
-          ? true
-          : `${img.width}x${img.height}` === activeResolutionKey
-      )
+      .filter(({ img }) => (activeResolutionKey === 'ALL' ? true : `${img.width}x${img.height}` === activeDims))
       .map((item) => item.idx);
 
     const pool = matchingIndices.length > 0 ? matchingIndices : images.map((_, i) => i);
     const currentPos = Math.max(0, pool.indexOf(activeIndex));
-    const nextPos = ((currentPos + delta) % pool.length + pool.length) % pool.length;
-    const nextIdx = pool[nextPos];
+    const nextIdx = pool[((currentPos + delta) % pool.length + pool.length) % pool.length];
     const nextImg = images[nextIdx];
+    const nextImgDims = nextImg ? `${nextImg.width}x${nextImg.height}` : '';
     set({
       activeIndex: nextIdx,
       activeResolutionKey:
         activeResolutionKey === 'ALL'
           ? 'ALL'
-          : nextImg
-          ? `${nextImg.width}x${nextImg.height}`
-          : activeResolutionKey,
+          : nextImgDims && normalizeResolutionDimensionsKey(activeResolutionKey) === nextImgDims
+          ? activeResolutionKey
+          : nextImgDims || activeResolutionKey,
     });
   },
 
@@ -273,9 +292,8 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
       nextProfiles[resKey] = createDefaultResolutionProfile(resKey);
       saveProfilesToStorage(nextProfiles);
     }
-    const firstIdx = images.findIndex((img) =>
-      resKey === 'ALL' ? true : `${img.width}x${img.height}` === resKey
-    );
+    const targetDims = normalizeResolutionDimensionsKey(resKey);
+    const firstIdx = images.findIndex((img) => (resKey === 'ALL' ? true : `${img.width}x${img.height}` === targetDims));
     set({
       activeResolutionKey: resKey,
       activeIndex: firstIdx >= 0 ? firstIdx : 0,
@@ -285,71 +303,31 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
 
   getProfile: (resKey) => {
     const state = get();
-    const currentImg = state.images[state.activeIndex];
-    const effectiveKey =
-      resKey ||
-      (state.activeResolutionKey !== 'ALL'
-        ? state.activeResolutionKey
-        : currentImg
-        ? `${currentImg.width}x${currentImg.height}`
-        : DEFAULT_REFERENCE_RESOLUTION);
-    return (
-      state.profiles[effectiveKey] || createDefaultResolutionProfile(effectiveKey)
-    );
+    const effectiveKey = resolveEffectiveKey(state, resKey);
+    return state.profiles[effectiveKey] || createDefaultResolutionProfile(effectiveKey);
   },
 
   updateProfile: (patch, resKey) => {
     const state = get();
-    const currentImg = state.images[state.activeIndex];
-    const effectiveKey =
-      resKey ||
-      (state.activeResolutionKey !== 'ALL'
-        ? state.activeResolutionKey
-        : currentImg
-        ? `${currentImg.width}x${currentImg.height}`
-        : DEFAULT_REFERENCE_RESOLUTION);
+    const effectiveKey = resolveEffectiveKey(state, resKey);
+    const existing = state.profiles[effectiveKey] || createDefaultResolutionProfile(effectiveKey);
+    const next: ResolutionCalibrationProfile = sanitizeProfile(effectiveKey, { ...existing, ...patch });
 
-    const existing =
-      state.profiles[effectiveKey] || createDefaultResolutionProfile(effectiveKey);
-    const next: ResolutionCalibrationProfile = sanitizeProfile(effectiveKey, {
-      ...existing,
-      ...patch,
-    });
-
-    // Enforce linked scale X & Y when scaleLinked is true
     if (next.scaleLinked) {
-      if (patch.scaleX !== undefined && patch.scaleY === undefined) {
-        next.scaleY = patch.scaleX;
-      } else if (patch.scaleY !== undefined && patch.scaleX === undefined) {
-        next.scaleX = patch.scaleY;
-      } else if (patch.scaleLinked === true) {
-        next.scaleY = next.scaleX;
-      }
+      if (patch.scaleX !== undefined && patch.scaleY === undefined) next.scaleY = patch.scaleX;
+      else if (patch.scaleY !== undefined && patch.scaleX === undefined) next.scaleX = patch.scaleY;
+      else if (patch.scaleLinked === true) next.scaleY = next.scaleX;
     }
 
-    const nextProfiles = {
-      ...state.profiles,
-      [effectiveKey]: next,
-    };
+    const nextProfiles = { ...state.profiles, [effectiveKey]: next };
     saveProfilesToStorage(nextProfiles);
     set({ profiles: nextProfiles });
   },
 
   resetProfile: (resKey) => {
     const state = get();
-    const currentImg = state.images[state.activeIndex];
-    const effectiveKey =
-      resKey ||
-      (state.activeResolutionKey !== 'ALL'
-        ? state.activeResolutionKey
-        : currentImg
-        ? `${currentImg.width}x${currentImg.height}`
-        : DEFAULT_REFERENCE_RESOLUTION);
-    const fresh = createDefaultResolutionProfile(effectiveKey);
-    const nextProfiles = {
-      ...state.profiles,
-      [effectiveKey]: fresh,
-    };
+    const effectiveKey = resolveEffectiveKey(state, resKey);
+    const nextProfiles = { ...state.profiles, [effectiveKey]: createDefaultResolutionProfile(effectiveKey) };
     saveProfilesToStorage(nextProfiles);
     set({ profiles: nextProfiles });
   },
@@ -357,12 +335,21 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
   importProfilesJson: (data) => {
     if (!data || typeof data !== 'object') return false;
     const obj = data as Record<string, unknown>;
+    if (typeof obj.resolutionKey === 'string' && typeof obj.scaleX === 'number' && typeof obj.scaleY === 'number') {
+      const k = obj.resolutionKey;
+      const nextProfiles = { ...get().profiles, [k]: sanitizeProfile(k, obj as Partial<ResolutionCalibrationProfile>) };
+      saveProfilesToStorage(nextProfiles);
+      set({ profiles: nextProfiles });
+      return true;
+    }
     const rawProfiles = obj.referenceOverlayProfiles || obj.profiles || obj;
     if (!rawProfiles || typeof rawProfiles !== 'object') return false;
+    const mapSource = (rawProfiles as Record<string, unknown>).profiles || rawProfiles;
+    if (!mapSource || typeof mapSource !== 'object') return false;
     const nextProfiles = { ...get().profiles };
     let importedCount = 0;
-    for (const [k, v] of Object.entries(rawProfiles)) {
-      if (v && typeof v === 'object' && /^\d+x\d+$/.test(k)) {
+    for (const [k, v] of Object.entries(mapSource)) {
+      if (v && typeof v === 'object' && /^\d+x\d+/.test(k)) {
         nextProfiles[k] = sanitizeProfile(k, v as Partial<ResolutionCalibrationProfile>);
         importedCount++;
       }
@@ -387,6 +374,8 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
     };
   },
 
+  exportActiveProfileJson: (resKey) => get().getProfile(resKey),
+
   setCameraLookPreset: (preset) => {
     const state = get();
     let lookX = 0;
@@ -394,18 +383,12 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
     let rearView = false;
     let nextStrength = state.cameraLookStrength;
 
-    if (preset === 'left') {
+    if (preset === 'left' || preset === 'right') {
       nextStrength = state.cameraLookHorizontalStrength || DEFAULT_LOOK_HORIZONTAL_MAGNITUDE;
-      lookX = -nextStrength;
-    } else if (preset === 'right') {
-      nextStrength = state.cameraLookHorizontalStrength || DEFAULT_LOOK_HORIZONTAL_MAGNITUDE;
-      lookX = nextStrength;
-    } else if (preset === 'up') {
+      lookX = preset === 'left' ? -nextStrength : nextStrength;
+    } else if (preset === 'up' || preset === 'down') {
       nextStrength = state.cameraLookVerticalStrength || DEFAULT_LOOK_VERTICAL_MAGNITUDE;
-      lookY = -nextStrength;
-    } else if (preset === 'down') {
-      nextStrength = state.cameraLookVerticalStrength || DEFAULT_LOOK_VERTICAL_MAGNITUDE;
-      lookY = nextStrength;
+      lookY = preset === 'up' ? -nextStrength : nextStrength;
     } else if (preset === 'rearView') {
       rearView = true;
     }
@@ -428,21 +411,13 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
     let nextH = state.cameraLookHorizontalStrength;
     let nextV = state.cameraLookVerticalStrength;
 
-    if (preset === 'left') {
-      lookX = -clamped;
+    if (preset === 'left' || preset === 'right') {
+      lookX = preset === 'left' ? -clamped : clamped;
       lookY = 0;
       nextH = clamped;
-    } else if (preset === 'right') {
-      lookX = clamped;
-      lookY = 0;
-      nextH = clamped;
-    } else if (preset === 'up') {
+    } else if (preset === 'up' || preset === 'down') {
       lookX = 0;
-      lookY = -clamped;
-      nextV = clamped;
-    } else if (preset === 'down') {
-      lookX = 0;
-      lookY = clamped;
+      lookY = preset === 'up' ? -clamped : clamped;
       nextV = clamped;
     }
     set({
@@ -455,11 +430,9 @@ export const useReferenceOverlayStore = create<ReferenceOverlayState>((set, get)
   },
 
   setCameraLookAxes: (lookX, lookY) => {
-    const cx = Math.max(-1, Math.min(1, Number(lookX) || 0));
-    const cy = Math.max(-1, Math.min(1, Number(lookY) || 0));
     set({
-      cameraLookXOverride: cx,
-      cameraLookYOverride: cy,
+      cameraLookXOverride: Math.max(-1, Math.min(1, Number(lookX) || 0)),
+      cameraLookYOverride: Math.max(-1, Math.min(1, Number(lookY) || 0)),
       rearViewOverride: false,
     });
   },

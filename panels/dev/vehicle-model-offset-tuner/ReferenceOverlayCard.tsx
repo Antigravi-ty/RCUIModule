@@ -15,6 +15,8 @@ import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import {
   useReferenceOverlayStore,
   DEFAULT_REFERENCE_RESOLUTION,
+  REFERENCE_RESOLUTION_REF_SPEC,
+  normalizeResolutionDimensionsKey,
   type ReferenceImageItem,
 } from '../../../stores/referenceOverlayStore';
 import { ReferenceOverlayTransformSliders } from './ReferenceOverlayTransformSliders';
@@ -49,6 +51,7 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
   const updateProfile = useReferenceOverlayStore((s) => s.updateProfile);
   const resetProfile = useReferenceOverlayStore((s) => s.resetProfile);
   const exportProfilesJson = useReferenceOverlayStore((s) => s.exportProfilesJson);
+  const exportActiveProfileJson = useReferenceOverlayStore((s) => s.exportActiveProfileJson);
   const importProfilesJson = useReferenceOverlayStore((s) => s.importProfilesJson);
 
   const activeImage = images[activeIndex] || null;
@@ -61,23 +64,29 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
 
   const activeProfile = useReferenceOverlayStore((s) => s.getProfile(effectiveResKey));
 
-  const resolutionGroups = React.useMemo(() => {
+  const resolutionCounts = React.useMemo(() => {
     const counts = new Map<string, number>();
     for (const img of images) {
       const k = `${img.width}x${img.height}`;
       counts.set(k, (counts.get(k) || 0) + 1);
     }
-    if (!counts.has(DEFAULT_REFERENCE_RESOLUTION)) {
-      counts.set(DEFAULT_REFERENCE_RESOLUTION, 0);
-    }
-    return Array.from(counts.entries());
+    return counts;
   }, [images]);
+
+  const extraResolutions = React.useMemo(() => {
+    return Array.from(resolutionCounts.entries()).filter(
+      ([rk]) => rk !== DEFAULT_REFERENCE_RESOLUTION
+    );
+  }, [resolutionCounts]);
+
+  const defaultResCount = resolutionCounts.get(DEFAULT_REFERENCE_RESOLUTION) || 0;
 
   const filteredImages = React.useMemo(() => {
     if (activeResolutionKey === 'ALL') return images.map((img, idx) => ({ img, idx }));
+    const targetDims = normalizeResolutionDimensionsKey(activeResolutionKey);
     const matched = images
       .map((img, idx) => ({ img, idx }))
-      .filter(({ img }) => `${img.width}x${img.height}` === activeResolutionKey);
+      .filter(({ img }) => `${img.width}x${img.height}` === targetDims);
     return matched.length > 0 ? matched : images.map((img, idx) => ({ img, idx }));
   }, [images, activeResolutionKey]);
 
@@ -88,19 +97,13 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
     setLoadingImages(true);
     try {
       const pngFiles = Array.from<File>(fileList)
-        .filter(
-          (f) =>
-            f.type === 'image/png' ||
-            f.name.toLowerCase().endsWith('.png')
-        )
+        .filter((f) => f.type === 'image/png' || f.name.toLowerCase().endsWith('.png'))
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
       let detectedFolder = 'Selected Folder';
       if (pngFiles.length > 0) {
         const rel = (pngFiles[0] as FileWithRelativePath).webkitRelativePath || '';
-        if (rel.includes('/')) {
-          detectedFolder = rel.split('/')[0];
-        }
+        if (rel.includes('/')) detectedFolder = rel.split('/')[0];
       }
 
       const loadedItems: ReferenceImageItem[] = [];
@@ -110,10 +113,7 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
         const dims = await new Promise<{ width: number; height: number }>((resolve) => {
           const img = new Image();
           img.onload = () =>
-            resolve({
-              width: img.naturalWidth || 4112,
-              height: img.naturalHeight || 2658,
-            });
+            resolve({ width: img.naturalWidth || 4112, height: img.naturalHeight || 2658 });
           img.onerror = () => resolve({ width: 4112, height: 2658 });
           img.src = url;
         });
@@ -138,20 +138,19 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
 
   const handleCopyOverlayJson = async () => {
     try {
-      const payload = exportProfilesJson();
+      const payload = exportActiveProfileJson(effectiveResKey);
       await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
       setCopiedOverlayJson(true);
       setTimeout(() => setCopiedOverlayJson(false), 2000);
     } catch (err) {
-      console.warn('[ReferenceOverlayCard] Copy overlay JSON failed:', err);
+      console.warn('[ReferenceOverlayCard] Copy overlay profile JSON failed:', err);
     }
   };
 
   const handleDownloadOverlayJson = () => {
     try {
       const payload = exportProfilesJson();
-      const jsonStr = JSON.stringify(payload, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -169,15 +168,17 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      importProfilesJson(parsed);
+      importProfilesJson(JSON.parse(await file.text()));
     } catch (err) {
       console.warn('[ReferenceOverlayCard] Failed to import overlay JSON:', err);
     } finally {
       e.target.value = '';
     }
   };
+
+  const btnNeutral = isLight
+    ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
+    : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200';
 
   return (
     <div className={cardClass}>
@@ -263,28 +264,22 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
         <button
           type="button"
           onClick={handleCopyOverlayJson}
-          title="Copy resolution-specific overlay calibration JSON"
+          title="Copy active resolution overlay calibration profile JSON"
           className={`px-2 py-1.5 rounded-lg border text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
             copiedOverlayJson
               ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-              : isLight
-              ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
-              : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
+              : btnNeutral
           }`}
         >
           {copiedOverlayJson ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-          <span>{copiedOverlayJson ? 'Copied' : 'Copy Overlay JSON'}</span>
+          <span>{copiedOverlayJson ? 'Copied' : 'Copy Profile JSON'}</span>
         </button>
 
         <button
           type="button"
           onClick={handleDownloadOverlayJson}
-          title="Export resolution-specific overlay calibration .JSON"
-          className={`px-2 py-1.5 rounded-lg border text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
-            isLight
-              ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
-              : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-          }`}
+          title="Export overlay calibration profiles .JSON"
+          className={`px-2 py-1.5 rounded-lg border text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-colors ${btnNeutral}`}
         >
           <Download className="h-3 w-3" />
           <span>Export</span>
@@ -294,11 +289,7 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
           type="button"
           onClick={() => importJsonInputRef.current?.click()}
           title="Import overlay calibration .JSON"
-          className={`px-2 py-1.5 rounded-lg border text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
-            isLight
-              ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700'
-              : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-200'
-          }`}
+          className={`px-2 py-1.5 rounded-lg border text-[10px] font-semibold flex items-center gap-1 cursor-pointer transition-colors ${btnNeutral}`}
         >
           <Upload className="h-3 w-3" />
           <span>Import</span>
@@ -313,11 +304,11 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
       >
         <div className="flex items-center justify-between gap-2 text-[10px]">
           <span className="font-semibold opacity-80">
-            Target Resolution Profile (Default Spec: 4112×2658):
+            Target Resolution Profile (Default: 4112×2658 Big):
           </span>
           <div className="flex items-center gap-1">
             <select
-              value={effectiveResKey}
+              value={activeResolutionKey}
               onChange={(e) => setActiveResolutionKey(e.target.value)}
               className={`px-1.5 py-0.5 rounded border font-mono text-[10px] outline-none ${
                 isLight
@@ -325,12 +316,18 @@ export const ReferenceOverlayCard: React.FC<ReferenceOverlayCardProps> = ({
                   : 'bg-neutral-900 border-neutral-700 text-amber-400'
               }`}
             >
-              {resolutionGroups.map(([rk, count]) => (
+              <option value={DEFAULT_REFERENCE_RESOLUTION}>
+                4112x2658 (Big) [{defaultResCount}]
+              </option>
+              <option value={REFERENCE_RESOLUTION_REF_SPEC}>
+                4112x2658 (Ref Spec) [{defaultResCount}]
+              </option>
+              {extraResolutions.map(([rk, count]) => (
                 <option key={rk} value={rk}>
-                  {rk} {rk === DEFAULT_REFERENCE_RESOLUTION ? '(Ref Spec)' : ''} [{count}]
+                  {rk} [{count}]
                 </option>
               ))}
-              {images.length > 0 && <option value="ALL">All Resolutions [{images.length}]</option>}
+              <option value="ALL">All Resolutions [{images.length}]</option>
             </select>
 
             <button

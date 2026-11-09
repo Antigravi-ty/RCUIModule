@@ -287,6 +287,18 @@ export const SUPERSONIC_TRAIL_TUNER_PRESET: PresetConfig = makeDevPreset({
   component: 'SupersonicTrailTunerFloatingWindow',
 });
 
+export const DEMOLISH_SHOCKWAVE_TUNER_PRESET: PresetConfig = makeDevPreset({
+  id: 'demolish-shockwave-tuner',
+  title: 'Demolish Shockwave Active Tuner',
+  category: 'DemolishShockwave',
+  width: 470,
+  height: 640,
+  minHeight: 220,
+  summary: 'Camera-facing radial shockwave ring (Outer Radius + Inner Hole % + 6-stop thermal fade), 120 FPS scrubber & 3D XYZ coordinate simulation.',
+  menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
+  component: 'DemolishShockwaveTunerFloatingWindow',
+});
+
 export const REPLAY_TO_RCS_IMPORTER_PRESET: PresetConfig = makeDevPreset({
   id: 'replay-to-rcs-importer',
   title: 'Replay to RCS Replay Importer',
@@ -304,6 +316,7 @@ export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
   NAME_TAG_TUNER_PRESET,
   GOAL_VOLUME_TUNER_PRESET,
+  DEMOLISH_SHOCKWAVE_TUNER_PRESET,
   REPLAY_DIRECTOR_TUNER_PRESET,
   REACHABILITY_TUNER_PRESET,
   BALL_TRAJECTORY_TUNER_PRESET,

@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Car,
-  Box,
-  Flame,
-  Disc,
-} from 'lucide-react';
+import { Car, Box, Flame, Disc } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { garageSettingsStore, HITBOX_PRESETS } from '../../config/vehiclePresets';
 import { UnderlineTabs, type TabItem } from '../../primitives/UnderlineTabs';
@@ -45,14 +40,7 @@ export const SURFACE_META: SurfaceMeta = {
   layer: 'floating-dev',
   menuGroup: 'active-tuners',
   icon: 'Car',
-  defaultSizing: {
-    width: 540,
-    height: 620,
-    minWidth: 340,
-    minHeight: 220,
-    maxHeight: 820,
-    mode: 'adaptive',
-  },
+  defaultSizing: { width: 540, height: 620, minWidth: 340, minHeight: 220, maxHeight: 820, mode: 'adaptive' },
   variants: [
     { variantId: 'hitbox', label: 'Hitbox & Align' },
     { variantId: 'wheels', label: 'Wheel Offsets' },
@@ -105,9 +93,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
 
   const notifyAndRefresh = (carId: CustomVehicleId = selectedCar, nextHitboxPreset?: string) => {
     const desc = getVehicleDescriptor(carId);
-    if (desc) {
-      recomputeDescriptorBoostOutlets(desc);
-    }
+    if (desc) recomputeDescriptorBoostOutlets(desc);
     setRevision((r) => r + 1);
     bridge.onCustomVehicleTunerChange?.(carId, nextHitboxPreset);
   };
@@ -120,17 +106,14 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   React.useEffect(() => {
     if (activeCar && hasVehicleDescriptor(activeCar) && activeCar !== selectedCar) {
       setSelectedCar(activeCar as CustomVehicleId);
-      const nextFlags = setVehicleTunerRuntimeFlags({ activeVehicleId: activeCar });
-      setRuntimeFlagsState(nextFlags);
+      setRuntimeFlagsState(setVehicleTunerRuntimeFlags({ activeVehicleId: activeCar }));
     }
   }, [activeCar, selectedCar]);
 
   const handleSelectVehicle = (carId: CustomVehicleId) => {
     if (!carId) return;
     setSelectedCar(carId);
-    const nextFlags = setVehicleTunerRuntimeFlags({ activeVehicleId: carId });
-    setRuntimeFlagsState(nextFlags);
-    setActiveCar(carId);
+    setRuntimeFlagsState(setVehicleTunerRuntimeFlags({ activeVehicleId: carId }));
     if (isBuiltInTunerVehicleId(carId)) {
       try {
         garageSettingsStore.save({ vehiclePreset: carId, carVisual: carId });
@@ -138,7 +121,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
         // ignore storage error
       }
     }
-    bridge.onVehicleChange?.(carId);
+    setActiveCar(carId);
   };
 
   const handleImportCustomGlb = async (
@@ -183,12 +166,8 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   };
 
   const handleCenterOffsetAxis = (axisIndex: 0 | 1 | 2, val: number) => {
-    const baseOffset = descriptor.alignment.centerOffset || [0, 0, 0];
-    const nextOffset: [number, number, number] = [
-      baseOffset[0] ?? 0,
-      baseOffset[1] ?? 0,
-      baseOffset[2] ?? 0,
-    ];
+    const [ox = 0, oy = 0, oz = 0] = descriptor.alignment.centerOffset || [0, 0, 0];
+    const nextOffset: [number, number, number] = [ox, oy, oz];
     nextOffset[axisIndex] = Number(val.toFixed(6));
     descriptor.alignment.centerOffset = nextOffset;
     notifyAndRefresh(selectedCar);
@@ -201,10 +180,11 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
     const sx = s * (descriptor.alignment.scaleX ?? 1);
     const sy = s * (descriptor.alignment.scaleY ?? 1);
     const rlTopY = raw.rlHitboxTopY ?? (hitboxSpec.up + (hitboxSpec.height - 2.5) * 0.5);
-    const visualRawTopY = raw.roofTopY * sy;
-    const targetOffsetY = Number((rlTopY - visualRawTopY).toFixed(3));
-    const targetOffsetX = Number((hitboxSpec.forward - raw.center[0] * sx).toFixed(3));
-    descriptor.alignment.centerOffset = [targetOffsetX, targetOffsetY, 0];
+    descriptor.alignment.centerOffset = [
+      Number((hitboxSpec.forward - raw.center[0] * sx).toFixed(3)),
+      Number((rlTopY - raw.roofTopY * sy).toFixed(3)),
+      0,
+    ];
     notifyAndRefresh(selectedCar);
   };
 
@@ -214,11 +194,13 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
   };
 
   const handleAlignRawOrigin = () => {
-    descriptor.alignment.scale = 1.0;
-    descriptor.alignment.scaleX = 1.0;
-    descriptor.alignment.scaleY = 1.0;
-    descriptor.alignment.scaleZ = 1.0;
-    descriptor.alignment.centerOffset = [0, 0, 0];
+    Object.assign(descriptor.alignment, {
+      scale: 1,
+      scaleX: 1,
+      scaleY: 1,
+      scaleZ: 1,
+      centerOffset: [0, 0, 0] as [number, number, number],
+    });
     notifyAndRefresh(selectedCar);
   };
 
@@ -227,8 +209,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
     field: 'x' | 'z' | 'radius' | 'restY',
     val: number
   ) => {
-    const i0 = pair === 'front' ? 0 : 2;
-    const i1 = pair === 'front' ? 1 : 3;
+    const [i0, i1] = pair === 'front' ? [0, 1] : [2, 3];
     if (field === 'x') {
       descriptor.wheelAnchors[i0][0] = val;
       descriptor.wheelAnchors[i1][0] = val;
@@ -238,7 +219,7 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
     } else if (field === 'radius') {
       descriptor.wheelAnchors[i0][2] = val;
       descriptor.wheelAnchors[i1][2] = val;
-    } else if (field === 'restY') {
+    } else {
       descriptor.suspensionHeights[i0] = val;
       descriptor.suspensionHeights[i1] = val;
     }
@@ -252,9 +233,14 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
 
   const handleResetVehicle = () => {
     const initialSnap = INITIAL_VEHICLE_OFFSET_SNAPSHOT[selectedCar];
-    if (!initialSnap) return;
-    const snap = JSON.parse(JSON.stringify(initialSnap));
-    Object.assign(descriptor, snap);
+    bridge.onApplyVehicleAlignPreset?.(
+      selectedCar,
+      isBuiltInTunerVehicleId(selectedCar) ? selectedCar : 'auto'
+    );
+    if (initialSnap) {
+      const snap = JSON.parse(JSON.stringify(initialSnap));
+      Object.assign(descriptor, snap);
+    }
     notifyAndRefresh(selectedCar, descriptor.hitboxPreset);
   };
 
@@ -319,40 +305,46 @@ export const VehicleModelOffsetTunerFloatingWindow: React.FC<VehicleModelOffsetT
           </div>
 
           <div className="flex flex-wrap gap-1.5 pt-0.5">
-            <div className="flex-1 min-w-[105px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
-              <span className="text-[10px] font-medium">Hitbox Wire</span>
-              <ToggleSwitch
-                checked={Boolean(gameplay.showAllCarHitboxes || gameplay.showCarHitbox)}
-                onChange={(checked) =>
-                  updateGameplay({ showCarHitbox: checked, showAllCarHitboxes: checked })
-                }
-                isLight={isLight}
-              />
-            </div>
-            <div className="flex-1 min-w-[105px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
-              <span className="text-[10px] font-medium">Nozzle Gizmos</span>
-              <ToggleSwitch
-                checked={runtimeFlags.showNozzleGizmos}
-                onChange={(checked) => handleToggleRuntimeFlag({ showNozzleGizmos: checked })}
-                isLight={isLight}
-              />
-            </div>
-            <div className="flex-1 min-w-[105px] flex items-center justify-between px-2 py-1 rounded-lg border border-neutral-500/20">
-              <span className="text-[10px] font-medium">Force Boost</span>
-              <ToggleSwitch
-                checked={runtimeFlags.forceBoostPreview}
-                onChange={(checked) => handleToggleRuntimeFlag({ forceBoostPreview: checked })}
-                isLight={isLight}
-              />
-            </div>
-            <div className="flex-1 min-w-[115px] flex items-center justify-between px-2 py-1 rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/5">
-              <span className="text-[10px] font-semibold text-fuchsia-400">Border #ff40ff</span>
-              <ToggleSwitch
-                checked={Boolean(runtimeFlags.borderColorOverride)}
-                onChange={(checked) => handleToggleRuntimeFlag({ borderColorOverride: checked })}
-                isLight={isLight}
-              />
-            </div>
+            {[
+              {
+                label: 'Hitbox Wire',
+                checked: Boolean(gameplay.showAllCarHitboxes || gameplay.showCarHitbox),
+                onChange: (c: boolean) => updateGameplay({ showCarHitbox: c, showAllCarHitboxes: c }),
+              },
+              {
+                label: 'Wheel Wire',
+                checked: Boolean(runtimeFlags.showWheelWire),
+                onChange: (c: boolean) => handleToggleRuntimeFlag({ showWheelWire: c }),
+              },
+              {
+                label: 'Nozzle Gizmos',
+                checked: Boolean(runtimeFlags.showNozzleGizmos),
+                onChange: (c: boolean) => handleToggleRuntimeFlag({ showNozzleGizmos: c }),
+              },
+              {
+                label: 'Force Boost',
+                checked: Boolean(runtimeFlags.forceBoostPreview),
+                onChange: (c: boolean) => handleToggleRuntimeFlag({ forceBoostPreview: c }),
+              },
+              {
+                label: 'Border #ff40ff',
+                checked: Boolean(runtimeFlags.borderColorOverride),
+                onChange: (c: boolean) => handleToggleRuntimeFlag({ borderColorOverride: c }),
+                accent: true,
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className={`flex-1 min-w-[98px] flex items-center justify-between px-2 py-1 rounded-lg border ${
+                  item.accent ? 'border-fuchsia-500/30 bg-fuchsia-500/5' : 'border-neutral-500/20'
+                }`}
+              >
+                <span className={`text-[10px] ${item.accent ? 'font-semibold text-fuchsia-400' : 'font-medium'}`}>
+                  {item.label}
+                </span>
+                <ToggleSwitch checked={item.checked} onChange={item.onChange} isLight={isLight} />
+              </div>
+            ))}
           </div>
         </div>
 

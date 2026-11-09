@@ -120,6 +120,15 @@ export function registerImportedTunerVehicleOption(
   return entry;
 }
 
+export const buildSingleVehicleOffsetExportJson = (vehicleId: string) => {
+  const desc =
+    getAllVehicleDescriptors().find((d) => d.id === vehicleId) || FENNEC_DESCRIPTOR;
+  return {
+    vehicleId: desc.id,
+    ...pickVehicleOffsets(desc),
+  };
+};
+
 export const buildVehicleOffsetsExportJson = () => {
   const vehicles: Record<string, ReturnType<typeof pickVehicleOffsets>> = {};
   for (const desc of getAllVehicleDescriptors()) {
@@ -146,16 +155,28 @@ export const VehicleOffsetFooterActions: React.FC<VehicleOffsetFooterActionsProp
   onResetVehicle,
   isLight = false,
 }) => {
-  const [copiedJson, setCopiedJson] = useState(false);
+  const [copiedSingle, setCopiedSingle] = useState(false);
+  const [copiedFull, setCopiedFull] = useState(false);
 
-  const handleCopyJson = async () => {
+  const handleCopySingleVehicleJson = async () => {
+    try {
+      const jsonStr = JSON.stringify(buildSingleVehicleOffsetExportJson(selectedCar), null, 2);
+      await navigator.clipboard.writeText(jsonStr);
+      setCopiedSingle(true);
+      setTimeout(() => setCopiedSingle(false), 2000);
+    } catch (err) {
+      console.warn('[VehicleModelOffsetTuner] Single vehicle clipboard copy failed:', err);
+    }
+  };
+
+  const handleCopyFullJson = async () => {
     try {
       const jsonStr = JSON.stringify(buildVehicleOffsetsExportJson(), null, 2);
       await navigator.clipboard.writeText(jsonStr);
-      setCopiedJson(true);
-      setTimeout(() => setCopiedJson(false), 2000);
+      setCopiedFull(true);
+      setTimeout(() => setCopiedFull(false), 2000);
     } catch (err) {
-      console.warn('[VehicleModelOffsetTuner] Clipboard copy failed:', err);
+      console.warn('[VehicleModelOffsetTuner] Full clipboard copy failed:', err);
     }
   };
 
@@ -177,7 +198,7 @@ export const VehicleOffsetFooterActions: React.FC<VehicleOffsetFooterActionsProp
   };
 
   return (
-    <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-500/20">
+    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-500/20">
       <button
         type="button"
         onClick={onResetVehicle}
@@ -188,35 +209,53 @@ export const VehicleOffsetFooterActions: React.FC<VehicleOffsetFooterActionsProp
         }`}
       >
         <RotateCcw className="h-3.5 w-3.5" />
-        <span>Reset {descriptorName} Offsets</span>
+        <span>Reset {descriptorName}</span>
       </button>
 
       <div className="flex items-center gap-1.5">
         <button
           type="button"
-          onClick={handleCopyJson}
+          onClick={handleCopySingleVehicleJson}
+          title={`Copy only ${descriptorName} offset parameters`}
           className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition-colors ${
-            copiedJson
+            copiedSingle
               ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
               : isLight
               ? 'bg-neutral-900 hover:bg-neutral-800 border-neutral-900 text-white'
               : 'bg-amber-500 hover:bg-amber-400 border-amber-400 text-neutral-950'
           }`}
         >
-          {copiedJson ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-          <span>{copiedJson ? 'Copied JSON' : 'Copy JSON'}</span>
+          {copiedSingle ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+          <span>{copiedSingle ? `Copied ${descriptorName}` : `Copy ${descriptorName} JSON`}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCopyFullJson}
+          title="Copy full export JSON (all vehicles and overlay profiles)"
+          className={`px-2 py-1.5 rounded-lg border text-[10px] font-medium flex items-center gap-1 cursor-pointer transition-opacity opacity-65 hover:opacity-100 ${
+            copiedFull
+              ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 opacity-100'
+              : isLight
+              ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-600'
+              : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-700/80 text-neutral-400'
+          }`}
+        >
+          {copiedFull ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          <span>{copiedFull ? 'Copied All' : 'Copy Full JSON'}</span>
         </button>
 
         <button
           type="button"
           onClick={handleDownloadJson}
-          className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
+          title="Download full vehicle offsets .JSON"
+          className={`px-2 py-1.5 rounded-lg border text-[10px] font-medium flex items-center gap-1 cursor-pointer transition-opacity opacity-65 hover:opacity-100 ${
             isLight
-              ? 'bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-800'
-              : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-600 text-neutral-100'
+              ? 'bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-600'
+              : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-700/80 text-neutral-400'
           }`}
         >
-          <Download className="h-3.5 w-3.5" />
+          <Download className="h-3 w-3" />
           <span>.JSON</span>
         </button>
       </div>
