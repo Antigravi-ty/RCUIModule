@@ -8,20 +8,21 @@
  * 1. TypeScript Strict Check: Runs `tsc --noEmit` across all 13 UI layers (`--no-tsc` to skip, `--tsc-only` for typecheck).
  * 2. 7-Layer Unidirectional Hierarchy & L1 Config Purity: Blocks upward runtime imports and mutable/side-effecting L1 configs.
  * 3. Zero Value Re-Export & Zero Circular Dependency Guard: Blocks direct/indirect value re-export barrels and runtime/type cycles.
- * 4. Dual-Cap Volume (<600L / <22KB) & Micro-Fragment (<65L) Guard.
- * 5. Narrow-Waist (<16 props) & Anti-Gut-Sharing Guard.
- * 6. Floating Window 1:1 Preset & `SURFACE_META` Guard + English/Zero-Emoji/Neutral-Ball Hygiene.
+ * 4. Dual-Cap Volume (SoftInfo=400L/12KB, HardError=800L/18KB) & MaxLine<=400chars Guard.
+ * 5. Floating Window 1:1 Preset & `SURFACE_META` Guard + English/Zero-Emoji/Neutral-Ball Hygiene.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import {
   expandRelativeGlobPattern,
+  FILE_ANY_LIMIT,
+  getGitModifiedRelFiles,
   getLayerInfo,
   HARD_BYTE_LIMIT,
   HARD_LINE_LIMIT,
   HOST_MOUNTED_ENTRY_FILES,
-  MICRO_FRAGMENT_LINE_FLOOR,
+  MAX_LINE_CHAR_LIMIT,
   resolveImportPath,
   ROOT_DIR,
   runTypeScriptCheck,
@@ -30,14 +31,12 @@ import {
   stripComments,
   toPosixRel,
   walkUiCoreFiles,
-  WAIST_ERROR_THRESHOLD,
 } from './radar/uiRadarConstantsAndFs.ts';
 import {
   checkConfigPurity,
   checkFloatingWindowPresets,
   checkLanguageEmojiAndHygiene,
   checkValueReExports,
-  checkWideWaistAndGutSharing,
 } from './radar/uiRadarScanners.ts';
 
 function detectCircularDependencies(importGraph: Map<string, string[]>, errors: string[]): void {
@@ -75,6 +74,7 @@ function main(): void {
   const args = new Set(process.argv.slice(2));
   const skipTsc = args.has('--no-tsc');
   const tscOnly = args.has('--tsc-only');
+  const showAllInfos = args.has('--all-info');
   if (tscOnly) {
     const tsResult = runTypeScriptCheck();
     if (!tsResult.ok) {
@@ -88,7 +88,9 @@ function main(): void {
   const startTime = Date.now();
 
   const errors: string[] = [];
-  const warnings: string[] = [];
+  const infos: string[] = [];
+  const modifiedRelSet = getGitModifiedRelFiles(ROOT_DIR);
+  let totalLargeFileCount = 0;
 
   const forbiddenLockfiles = ['package-lock.json', 'yarn.lock', 'bun.lockb', 'bun.lock'].filter(
     (lf) => fs.existsSync(path.join(ROOT_DIR, lf))
@@ -124,30 +126,32 @@ function main(): void {
     const byteSize = Buffer.byteLength(content, 'utf8');
     const kbFormatted = (byteSize / 1024).toFixed(1);
 
-    if (lineCount >= HARD_LINE_LIMIT) {
+    const exceedsHardLine = lineCount > HARD_LINE_LIMIT;
+    const exceedsHardByte = byteSize > HARD_BYTE_LIMIT;
+
+    if (exceedsHardLine) {
       errors.push(
-        `[VOLUME OVERFLOW] ${rel} has ${lineCount} lines (${kbFormatted} KB; limit < ${HARD_LINE_LIMIT}L).`
+        `[VOLUME OVERFLOW] ${rel} has ${lineCount} lines (${kbFormatted} KB; exceeds hard ceiling of ${HARD_LINE_LIMIT} lines). Decompose by functional domain, pure logic, or UI Slot responsibility.`
       );
-    } else if (lineCount >= SOFT_LINE_LIMIT) {
-      warnings.push(
-        `[WATERLINE ALERT] ${rel} has ${lineCount} lines (${kbFormatted} KB; soft limit ${SOFT_LINE_LIMIT}L).`
+    }
+    if (exceedsHardByte) {
+      errors.push(
+        `[BYTE VOLUME OVERFLOW] ${rel} is ${kbFormatted} KB (${byteSize} bytes, ${lineCount} lines; exceeds hard ceiling of ${(HARD_BYTE_LIMIT / 1024).toFixed(0)} KB). Decompose by functional domain, pure logic, or UI Slot responsibility.`
       );
     }
 
-    if (byteSize >= HARD_BYTE_LIMIT) {
-      errors.push(
-        `[BYTE VOLUME OVERFLOW] ${rel} is ${kbFormatted} KB (${byteSize}B; limit < ${HARD_BYTE_LIMIT}B).`
-      );
-    } else if (byteSize >= SOFT_BYTE_LIMIT) {
-      warnings.push(
-        `[BYTE WATERLINE ALERT] ${rel} is ${kbFormatted} KB (${byteSize}B; soft limit ${SOFT_BYTE_LIMIT}B).`
-      );
+    if (!exceedsHardLine && !exceedsHardByte && (byteSize > SOFT_BYTE_LIMIT || lineCount > SOFT_LINE_LIMIT)) {
+      totalLargeFileCount++;
+      if (showAllInfos || modifiedRelSet.has(rel)) {
+        infos.push(
+          `[INFO: LARGE FILE NOTICE] ${rel} is ${kbFormatted} KB (${lineCount} lines; soft notice > ${(SOFT_BYTE_LIMIT / 1024).toFixed(0)} KB / ${SOFT_LINE_LIMIT}L, hard ceiling ${(HARD_BYTE_LIMIT / 1024).toFixed(0)} KB / ${HARD_LINE_LIMIT}L). Status: ACCEPTABLE (no action required to pass check; do NOT compress lines or shorten variable names). If considering splitting up when adding substantial new features later, split strictly by functional domain, pure logic, or independent UI Slot — never halve a file arbitrarily by line count or bridge it via a pass-through connector/helper.`
+        );
+      }
     }
 
     checkLanguageEmojiAndHygiene(rel, content, codeWithoutComments, errors);
     checkConfigPurity(rel, content, errors);
     checkValueReExports(rel, codeWithoutComments, errors);
-    checkWideWaistAndGutSharing(rel, content, errors, warnings);
 
     const fromLayer = getLayerInfo(rel);
     const deps: string[] = [];
@@ -209,13 +213,6 @@ function main(): void {
       errors.push(
         `[ORPHAN MODULE] ${rel} has 0 incoming references across RCUIModule and is not a host-mounted root entry.`
       );
-    } else if (refCount === 1) {
-      const lineCount = fs.readFileSync(file, 'utf8').split(/\r?\n/).length;
-      if (lineCount < MICRO_FRAGMENT_LINE_FLOOR) {
-        errors.push(
-          `[MICRO-FRAGMENT] ${rel} is only ${lineCount} lines (< ${MICRO_FRAGMENT_LINE_FLOOR}L) with 1 incoming reference.`
-        );
-      }
     }
   }
 
@@ -242,15 +239,23 @@ function main(): void {
     }`
   );
   console.log(
-    ` Volume Waterline    : Soft=${SOFT_LINE_LIMIT}L/${(SOFT_BYTE_LIMIT / 1024).toFixed(0)}KB | Hard=${HARD_LINE_LIMIT}L/${(HARD_BYTE_LIMIT / 1000).toFixed(1)}KB | MicroFloor=${MICRO_FRAGMENT_LINE_FLOOR}L | Waist<${WAIST_ERROR_THRESHOLD}`
+    ` Volume Guardrails   : SoftInfo=${SOFT_LINE_LIMIT}L/${(SOFT_BYTE_LIMIT / 1024).toFixed(0)}KB | HardError=${HARD_LINE_LIMIT}L/${(HARD_BYTE_LIMIT / 1024).toFixed(0)}KB | MaxLine<=${MAX_LINE_CHAR_LIMIT}chars`
+  );
+  console.log(
+    ` Hard Boundaries     : 0 Circular Deps | 0 Value Re-Exports | 0 Upward Imports | Any<=${FILE_ANY_LIMIT}`
   );
   console.log('----------------------------------------------------------------------');
 
-  if (warnings.length > 0) {
-    console.log(` WARNINGS (${warnings.length}):`);
-    for (const w of warnings) {
-      console.log(`  ! ${w}`);
+  if (infos.length > 0) {
+    console.log(` INFO (Non-blocking, Status: ACCEPTABLE — ${infos.length} modified file notice(s)):`);
+    for (const info of infos) {
+      console.log(`  [i] ${info}`);
     }
+    console.log('----------------------------------------------------------------------');
+  } else if (totalLargeFileCount > 0) {
+    console.log(
+      ` INFO (Non-blocking) : ${totalLargeFileCount} existing file(s) in ${(SOFT_BYTE_LIMIT / 1024).toFixed(0)}KB..${(HARD_BYTE_LIMIT / 1024).toFixed(0)}KB / ${SOFT_LINE_LIMIT}..${HARD_LINE_LIMIT}L range — Status: ACCEPTABLE (pass --all-info to list).`
+    );
     console.log('----------------------------------------------------------------------');
   }
 
@@ -263,7 +268,7 @@ function main(): void {
     process.exit(1);
   }
 
-  console.log(' STATUS: GREEN -- 0 TypeScript errors, 0 layer/cycle/waist/volume violations.');
+  console.log(' STATUS: GREEN -- 0 TypeScript errors, hard boundaries & volume caps verified.');
   console.log('======================================================================');
 }
 

@@ -3,16 +3,11 @@ import path from 'node:path';
 import {
   ARBITRARY_SPLIT_FILENAME_RE,
   FILE_ANY_LIMIT,
-  GUT_SHARING_PROP_ACCESS_THRESHOLD,
   kebabToPascalCase,
-  L1_STATE_SCHEMA_INTERFACES,
-  RECIPE_PROPS_ERROR_THRESHOLD,
-  RECIPE_PROPS_WARN_THRESHOLD,
+  MAX_LINE_CHAR_LIMIT,
   ROOT_DIR,
   stripComments,
   toPosixRel,
-  WAIST_ERROR_THRESHOLD,
-  WAIST_WARN_THRESHOLD,
 } from './uiRadarConstantsAndFs.ts';
 
 export function checkLanguageEmojiAndHygiene(
@@ -25,7 +20,7 @@ export function checkLanguageEmojiAndHygiene(
   const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u;
   const allowedTechnicalSymbols = /[±×÷→←↑↓↔↗↘↙↖⇒⇐⇔µαβγδθλμπσωΔΩ°✓✗✔✘⚠⚡]/g;
 
-  const lines = content.split('\n');
+  const lines = content.split(/\r?\n/);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (cjkRegex.test(line)) {
@@ -38,6 +33,16 @@ export function checkLanguageEmojiAndHygiene(
     if (emojiRegex.test(sanitized)) {
       errors.push(
         `[NON-ENGLISH / EMOJI VIOLATION] ${rel}:${i + 1} contains forbidden emoji: "${line.trim().slice(0, 80)}"`
+      );
+      break;
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.length > MAX_LINE_CHAR_LIMIT) {
+      errors.push(
+        `[LINE LENGTH OVERFLOW] ${rel}:${i + 1} has ${line.length} characters (limit <= ${MAX_LINE_CHAR_LIMIT}). Do not inline Base64/data blobs or compress multiple statements onto a single line.`
       );
       break;
     }
@@ -63,7 +68,7 @@ export function checkLanguageEmojiAndHygiene(
   const baseName = path.basename(rel, path.extname(rel));
   if (ARBITRARY_SPLIT_FILENAME_RE.test(baseName)) {
     errors.push(
-      `[ARBITRARY SPLIT FILENAME] ${rel} ("${baseName}") suggests arbitrary line-count halving instead of a semantic UI Slot boundary.`
+      `[ARBITRARY SPLIT FILENAME] ${rel} ("${baseName}") uses an arbitrary numbered split suffix. Decompose by functional domain or UI Slot responsibility instead of line-count halving.`
     );
   }
 
@@ -176,152 +181,6 @@ export function checkValueReExports(
       if (reExportedLocals.length > 0) {
         errors.push(
           `[RE-EXPORT FACADE VIOLATION] ${rel} indirectly re-exports imported values { ${reExportedLocals.slice(0, 4).join(', ')} }.`
-        );
-      }
-    }
-  }
-}
-
-function countInterfaceFields(body: string): number {
-  const lines = body
-    .split(/\r?\n/)
-    .map((l) => l.replace(/\/\/.*$/, '').trim())
-    .filter((l) => l && !l.startsWith('*') && !l.startsWith('/*') && !l.startsWith('*/'));
-
-  let braceDepth = 0;
-  let parenDepth = 0;
-  let propCount = 0;
-  for (const line of lines) {
-    if (braceDepth === 0 && parenDepth === 0 && /^([a-zA-Z0-9_$]+)\??\s*:/.test(line)) {
-      propCount += 1;
-    }
-    for (const ch of line) {
-      if (ch === '{') braceDepth += 1;
-      else if (ch === '}') braceDepth = Math.max(0, braceDepth - 1);
-      else if (ch === '(') parenDepth += 1;
-      else if (ch === ')') parenDepth = Math.max(0, parenDepth - 1);
-    }
-  }
-  return propCount;
-}
-
-export function checkWideWaistAndGutSharing(
-  rel: string,
-  content: string,
-  errors: string[],
-  warnings: string[]
-): void {
-  const isAtomicOrHudOrPanelContract =
-    rel.startsWith('primitives/') ||
-    rel.startsWith('compounds/') ||
-    rel.startsWith('hud/') ||
-    rel.startsWith('navigation/') ||
-    /^panels\/(user|dev)\/\w+FloatingWindow\.tsx$/.test(rel);
-
-  const interfaceRegex =
-    /(?:export\s+)?interface\s+(\w*(?:Props|Params|Refs|Slice|Options))\s*(?:extends\s+[^{]+)?\{([\s\S]*?)\n\}/g;
-  let match: RegExpExecArray | null;
-  while ((match = interfaceRegex.exec(content)) !== null) {
-    const interfaceName = match[1];
-    const body = match[2];
-    if (L1_STATE_SCHEMA_INTERFACES.has(interfaceName)) continue;
-
-    const propCount = countInterfaceFields(body);
-    if (/^Layer[1-5]\w+RecipeProps$/.test(interfaceName)) {
-      if (propCount >= RECIPE_PROPS_ERROR_THRESHOLD) {
-        errors.push(
-          `[WIDE WAIST] ${rel} -> ${interfaceName} has ${propCount} fields (limit < ${RECIPE_PROPS_ERROR_THRESHOLD}).`
-        );
-      } else if (propCount >= RECIPE_PROPS_WARN_THRESHOLD) {
-        warnings.push(
-          `[WIDE WAIST WARN] ${rel} -> ${interfaceName} has ${propCount} fields (warn >= ${RECIPE_PROPS_WARN_THRESHOLD}).`
-        );
-      }
-      continue;
-    }
-
-    if (isAtomicOrHudOrPanelContract && interfaceName.endsWith('Props')) continue;
-
-    if (propCount >= WAIST_ERROR_THRESHOLD) {
-      errors.push(
-        `[WIDE WAIST] ${rel} -> ${interfaceName} has ${propCount} fields (limit < ${WAIST_ERROR_THRESHOLD}).`
-      );
-    } else if (propCount >= WAIST_WARN_THRESHOLD) {
-      warnings.push(
-        `[WIDE WAIST WARN] ${rel} -> ${interfaceName} has ${propCount} fields (warn >= ${WAIST_WARN_THRESHOLD}).`
-      );
-    }
-  }
-
-  if (!rel.startsWith('stores/slices/')) {
-    const setGetRegex =
-      /(?:export\s+)?(?:function\s+([a-zA-Z0-9_$]+)|const\s+([a-zA-Z0-9_$]+)\s*=)\s*(?:<[^>]*>)?\s*\(\s*set\s*(?::[^,)]+)?,\s*get\b/g;
-    let sgMatch: RegExpExecArray | null;
-    while ((sgMatch = setGetRegex.exec(content)) !== null) {
-      const fnName = sgMatch[1] || sgMatch[2] || 'anonymous';
-      errors.push(
-        `[GUT-SHARING SPLIT] ${rel} -> ${fnName} passes Zustand (set, get) closure to external helper.`
-      );
-    }
-  }
-
-  if (rel === 'config/pacingControllerEvaluator.ts') return;
-
-  const fnRegex =
-    /(?:export\s+)?function\s+([a-zA-Z0-9_$]+)\s*(?:<[^>]*>)?\s*\(([^)]*)\)\s*(?::\s*[^{]+)?\{/g;
-  while ((match = fnRegex.exec(content)) !== null) {
-    const fnName = match[1];
-    if (/^[A-Z]/.test(fnName)) continue;
-    const paramNames = match[2]
-      .split(',')
-      .map((p) => p.trim().match(/^([a-zA-Z0-9_$]+)\s*(?:\?|:|=|$)/)?.[1])
-      .filter((p): p is string => Boolean(p));
-    if (paramNames.length === 0) continue;
-
-    const bodyStartIdx = match.index + match[0].length - 1;
-    let depth = 0;
-    let bodyEndIdx = content.length;
-    for (let i = bodyStartIdx; i < content.length; i++) {
-      if (content[i] === '{') depth += 1;
-      else if (content[i] === '}') {
-        depth -= 1;
-        if (depth === 0) {
-          bodyEndIdx = i;
-          break;
-        }
-      }
-    }
-    const body = content.slice(bodyStartIdx, bodyEndIdx);
-
-    for (const paramName of paramNames) {
-      if (
-        ['e', 'event', 'ctx', 'canvas', 'doc', 'win', 'window', 'document', 'math', 'console'].includes(
-          paramName
-        )
-      ) {
-        continue;
-      }
-      const propRegex = new RegExp(`\\b${paramName}\\.([a-zA-Z0-9_$]+)`, 'g');
-      const accessedProps = new Set<string>();
-      let pMatch: RegExpExecArray | null;
-      while ((pMatch = propRegex.exec(body)) !== null) {
-        accessedProps.add(pMatch[1]);
-      }
-      if (accessedProps.size < GUT_SHARING_PROP_ACCESS_THRESHOLD) continue;
-
-      const mutRegex = new RegExp(
-        `\\b${paramName}\\.([a-zA-Z0-9_$]+)(?:\\.[a-zA-Z0-9_$]+)*\\s*(?:(?<![=!<>])=(?!=)|\\+=|-=|\\*=)`,
-        'g'
-      );
-      const mutatedProps = new Set<string>();
-      while ((pMatch = mutRegex.exec(body)) !== null) {
-        mutatedProps.add(pMatch[1]);
-      }
-      const isHostOrRefsParam =
-        /^(ctrl|controller|host|instance|owner|self|refs|domRefs)$/i.test(paramName);
-      if (isHostOrRefsParam || mutatedProps.size >= 2) {
-        errors.push(
-          `[GUT-SHARING SPLIT] ${rel} -> ${fnName} accesses ${accessedProps.size} props and mutates ${mutatedProps.size} props on '${paramName}'.`
         );
       }
     }

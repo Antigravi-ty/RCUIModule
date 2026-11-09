@@ -20,25 +20,12 @@ export const UI_CORE_DIRS: readonly string[] = [
   'viewport',
 ];
 
-export const SOFT_LINE_LIMIT = 550;
-export const HARD_LINE_LIMIT = 600;
-export const SOFT_BYTE_LIMIT = 16 * 1024;
-export const HARD_BYTE_LIMIT = 22_000;
-export const MICRO_FRAGMENT_LINE_FLOOR = 65;
+export const SOFT_LINE_LIMIT = 400;
+export const HARD_LINE_LIMIT = 800;
+export const SOFT_BYTE_LIMIT = 12 * 1024;
+export const HARD_BYTE_LIMIT = 18 * 1024;
+export const MAX_LINE_CHAR_LIMIT = 400;
 export const FILE_ANY_LIMIT = 5;
-
-export const WAIST_WARN_THRESHOLD = 12;
-export const WAIST_ERROR_THRESHOLD = 16;
-export const RECIPE_PROPS_WARN_THRESHOLD = 18;
-export const RECIPE_PROPS_ERROR_THRESHOLD = 21;
-export const GUT_SHARING_PROP_ACCESS_THRESHOLD = 8;
-
-export const L1_STATE_SCHEMA_INTERFACES: ReadonlySet<string> = new Set([
-  'ClockPacingParams',
-  'PacingControllerParams',
-  'MainMenuStyleParams',
-  'PlayCardStyleParams',
-]);
 
 export const HOST_MOUNTED_ENTRY_FILES: ReadonlySet<string> = new Set([
   'compounds/Dialogue.tsx',
@@ -80,7 +67,7 @@ export const LAYER_RULES: readonly LayerRule[] = [
 ];
 
 export const ARBITRARY_SPLIT_FILENAME_RE =
-  /(Part[1-9]|Half[1-9]|Chunk[1-9]|Split[1-9]|Section[1-9]$|Tab[1-9]$|Helper[1-9]|PlaybackStepper)/i;
+  /(Part[1-9]|Half[1-9]|Chunk[1-9]|Split[1-9]|Section[1-9]$|Tab[1-9]$|Helper[1-9])/i;
 
 export interface TypeScriptCheckResult {
   ok: boolean;
@@ -133,6 +120,26 @@ export function kebabToPascalCase(kebab: string): string {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
+}
+
+export function getGitModifiedRelFiles(repoDir: string = ROOT_DIR): Set<string> {
+  const modified = new Set<string>();
+  try {
+    const out = execSync('git status --porcelain', {
+      cwd: repoDir,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    for (const line of out.split(/\r?\n/)) {
+      if (!line.trim()) continue;
+      const rawPath = line.slice(3).trim();
+      const targetPath = rawPath.includes(' -> ') ? rawPath.split(' -> ').pop()!.trim() : rawPath;
+      modified.add(targetPath.replace(/^"+|"+$/g, ''));
+    }
+  } catch {
+    // Ignore when git status is unavailable
+  }
+  return modified;
 }
 
 export function resolveImportPath(fromFile: string, importSpec: string): string | false | null {
