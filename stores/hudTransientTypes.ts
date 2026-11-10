@@ -148,16 +148,36 @@ export interface HudTransientChannel {
     slotKey: 1 | 2 | 3 | 4 | 5 | 6,
     patch: Partial<Omit<EdgePlayerSlotState, 'slotKey' | 'team'>>
   ) => void;
-  setFlip: (state: Partial<FlipTransientState>) => void;
-  setFlipState: (state: Partial<FlipTransientState>) => void;
+  setFlip: (
+    patchOrHasFlip: Partial<FlipTransientState> | boolean,
+    status?: FlipTransientState['status'],
+    remainingSeconds?: number,
+    maxSeconds?: number,
+    flipsRemaining?: number
+  ) => void;
+  setFlipState: (
+    patchOrHasFlip: Partial<FlipTransientState> | boolean,
+    status?: FlipTransientState['status'],
+    remainingSeconds?: number,
+    maxSeconds?: number,
+    flipsRemaining?: number
+  ) => void;
   setTelemetry: (snap: Partial<CompactTelemetryTransientSnapshot>) => void;
   setTelemetrySnapshot: (snap: Partial<CompactTelemetryTransientSnapshot>) => void;
   setKickoffFrame: (frame: Partial<KickoffTransientFrame>) => void;
   setReplayBannerState: (patch: Partial<ReplayBannerTransientState>) => void;
   setReplayFooter: (patch: Partial<TemporalReplayFooterTransientState>) => void;
   setReplayFooterState: (patch: Partial<TemporalReplayFooterTransientState>) => void;
-  setRespawnTimer: (patch: Partial<DemolishHourglassTransientState>) => void;
-  setRespawnTimerState: (patch: Partial<DemolishHourglassTransientState>) => void;
+  setRespawnTimer: (
+    patchOrRem: Partial<DemolishHourglassTransientState> | number,
+    totalSeconds?: number,
+    active?: boolean
+  ) => void;
+  setRespawnTimerState: (
+    patchOrRem: Partial<DemolishHourglassTransientState> | number,
+    totalSeconds?: number,
+    active?: boolean
+  ) => void;
   setMiniMap: (patch: Partial<PitchMiniMapTransientState>) => void;
   setMiniMapState: (patch: Partial<PitchMiniMapTransientState>) => void;
   triggerMiniMapBallHit: (

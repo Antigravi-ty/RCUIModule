@@ -276,26 +276,21 @@ export const useHudStore = create<HudStoreState>((set, get) => ({
     const val = Boolean(hasFlip);
     const roundedRem = Math.max(0, Math.round((Number(flipRemainingSeconds) || 0) * 1000) / 1000);
     const flipsCount = Math.trunc(Number(flipsRemaining) || 0);
-    globalHudTransientChannel.setFlip({
-      hasFlip: val,
-      status: flipStatus,
-      remainingSeconds: roundedRem,
-      maxSeconds: 1.25,
-      flipsRemaining: flipsCount,
-    });
+    globalHudTransientChannel.setFlip(val, flipStatus, roundedRem, 1.25, flipsCount);
     const cur = get();
-    cur.flipRemainingSeconds = roundedRem;
+    const quantizedRem = Math.round(roundedRem * 20) / 20;
     if (
       cur.hasFlip === val &&
       cur.flipStatus === flipStatus &&
-      cur.flipsRemaining === flipsCount
+      cur.flipsRemaining === flipsCount &&
+      Math.abs(quantizedRem - cur.flipRemainingSeconds) < 1e-6
     ) {
       return;
     }
     set({
       hasFlip: val,
       flipStatus,
-      flipRemainingSeconds: roundedRem,
+      flipRemainingSeconds: quantizedRem,
       flipsRemaining: flipsCount,
     });
   },
@@ -311,19 +306,19 @@ export const useHudStore = create<HudStoreState>((set, get) => ({
       : 0;
     const selection = demoed ? Math.trunc(Number(demoSpawnSelection) ?? -1) : -1;
     const isActive = demoed && roundedTimer > 0;
-    globalHudTransientChannel.setRespawnTimer({
-      remainingSeconds: isActive ? roundedTimer : 0,
-      totalSeconds: 3.0,
-      active: isActive,
-    });
+    globalHudTransientChannel.setRespawnTimer(isActive ? roundedTimer : 0, 3.0, isActive);
     const cur = get();
-    cur.demoRespawnTimer = roundedTimer;
-    if (cur.isDemoed === demoed && cur.demoSpawnSelection === selection) {
+    const quantizedTimer = demoed ? Math.round(roundedTimer * 20) / 20 : 0;
+    if (
+      cur.isDemoed === demoed &&
+      cur.demoSpawnSelection === selection &&
+      Math.abs(quantizedTimer - cur.demoRespawnTimer) < 1e-6
+    ) {
       return;
     }
     set({
       isDemoed: demoed,
-      demoRespawnTimer: roundedTimer,
+      demoRespawnTimer: quantizedTimer,
       demoSpawnSelection: selection,
     });
   },
@@ -331,7 +326,6 @@ export const useHudStore = create<HudStoreState>((set, get) => ({
   setCarSpeed: (rawSpeed: number) => {
     const v = Math.max(0, Math.min(2300, Math.round(Math.abs(rawSpeed || 0) * 10) / 10));
     globalHudTransientChannel.setSpeed(v);
-    get().carSpeed = v;
   },
 
   setChoreographySignal: (signal: MatchHudChoreographySignal) => {

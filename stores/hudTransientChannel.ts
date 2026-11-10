@@ -60,6 +60,7 @@ export function createHudTransientChannel(initial?: {
   const speedListeners = new Set<SpeedTransientListener>();
   const boostListeners = new Set<BoostTransientListener>();
   const ballCamListeners = new Set<BallCamTransientListener>();
+  const boostSnapshot = { amount: currentBoost, isUnlimited: currentUnlimited };
 
   const scoreboard = createTopic('hud:scoreboard', buildInitialScoreboardState(initial?.scoreboard));
   const roster = createTopic('hud:roster', buildInitialRosterState(initial?.roster));
@@ -84,9 +85,44 @@ export function createHudTransientChannel(initial?: {
     buildInitialCountdownFlashState(initial?.countdownFlash)
   );
 
-  const setFlipImpl = (patch: Partial<FlipTransientState>) => {
+  const setFlipImpl = (
+    patchOrHasFlip: Partial<FlipTransientState> | boolean,
+    status?: FlipTransientState['status'],
+    remainingSeconds?: number,
+    maxSeconds?: number,
+    flipsRemaining?: number
+  ) => {
     const s = flip.state;
     let dirty = false;
+    if (typeof patchOrHasFlip === 'boolean') {
+      if (patchOrHasFlip !== s.hasFlip) {
+        s.hasFlip = patchOrHasFlip;
+        dirty = true;
+      }
+      if (status !== undefined && status !== s.status) {
+        s.status = status;
+        dirty = true;
+      }
+      if (remainingSeconds !== undefined) {
+        const rounded = Math.max(0, Math.round(remainingSeconds * 1000) / 1000);
+        if (Math.abs(rounded - s.remainingSeconds) >= 0.002) {
+          s.remainingSeconds = rounded;
+          dirty = true;
+        }
+      }
+      if (maxSeconds !== undefined && maxSeconds !== s.maxSeconds) {
+        s.maxSeconds = maxSeconds;
+        dirty = true;
+      }
+      if (flipsRemaining !== undefined && flipsRemaining !== s.flipsRemaining) {
+        s.flipsRemaining = flipsRemaining;
+        dirty = true;
+      }
+      if (dirty) flip.notify();
+      return;
+    }
+
+    const patch = patchOrHasFlip;
     if (patch.hasFlip !== undefined && patch.hasFlip !== s.hasFlip) {
       s.hasFlip = patch.hasFlip;
       dirty = true;
@@ -120,7 +156,14 @@ export function createHudTransientChannel(initial?: {
         prev[2] !== next[2] ||
         prev[3] !== next[3]
       ) {
-        s.wheelContacts = [next[0], next[1], next[2], next[3]];
+        if (prev) {
+          prev[0] = next[0];
+          prev[1] = next[1];
+          prev[2] = next[2];
+          prev[3] = next[3];
+        } else {
+          s.wheelContacts = [next[0], next[1], next[2], next[3]];
+        }
         dirty = true;
       }
     }
@@ -156,9 +199,32 @@ export function createHudTransientChannel(initial?: {
     if (dirty) telemetry.notify();
   };
 
-  const setRespawnTimerImpl = (patch: Partial<DemolishHourglassTransientState>) => {
+  const setRespawnTimerImpl = (
+    patchOrRem: Partial<DemolishHourglassTransientState> | number,
+    totalSeconds?: number,
+    active?: boolean
+  ) => {
     const s = respawnTimer.state;
     let dirty = false;
+    if (typeof patchOrRem === 'number') {
+      const clamped = Math.max(0, Math.round(patchOrRem * 1000) / 1000);
+      if (Math.abs(clamped - s.remainingSeconds) >= 0.002) {
+        s.remainingSeconds = clamped;
+        dirty = true;
+      }
+      if (totalSeconds !== undefined && totalSeconds !== s.totalSeconds) {
+        s.totalSeconds = totalSeconds;
+        dirty = true;
+      }
+      if (active !== undefined && active !== s.active) {
+        s.active = active;
+        dirty = true;
+      }
+      if (dirty) respawnTimer.notify();
+      return;
+    }
+
+    const patch = patchOrRem;
     if (patch.remainingSeconds !== undefined) {
       const clamped = Math.max(0, Math.round(patch.remainingSeconds * 1000) / 1000);
       if (Math.abs(clamped - s.remainingSeconds) >= 0.002) {
@@ -201,7 +267,11 @@ export function createHudTransientChannel(initial?: {
 
   return {
     getSpeed: () => currentSpeed,
-    getBoost: () => ({ amount: currentBoost, isUnlimited: currentUnlimited }),
+    getBoost: () => {
+      boostSnapshot.amount = currentBoost;
+      boostSnapshot.isUnlimited = currentUnlimited;
+      return boostSnapshot;
+    },
     getBallCamActive: () => currentBallCam,
     getScoreboard: () => scoreboard.state,
     getRoster: () => roster.state,
