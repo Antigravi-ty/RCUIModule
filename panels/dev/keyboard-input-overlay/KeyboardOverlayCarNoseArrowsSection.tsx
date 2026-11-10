@@ -31,6 +31,7 @@ export const KeyboardOverlayCarNoseArrowsSection: React.FC<
     noseAArrowTotalLengthUu,
     noseSArrowTotalLengthUu,
     noseDArrowTotalLengthUu,
+    nosePressScaleMultiplier,
     noseConeLengthUu,
     noseConeRadiusUu,
     noseTipRadiusUu,
@@ -214,6 +215,21 @@ export const KeyboardOverlayCarNoseArrowsSection: React.FC<
           step={1}
           isLight={isLight}
           onChange={(v) => updateConfig({ noseDArrowTotalLengthUu: v })}
+        />
+
+        <SliderControl
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={false}
+          colorScheme="emerald"
+          label="Key-Press Scale Multiplier (Cone & Arrow Expansion)"
+          unit="x"
+          value={nosePressScaleMultiplier}
+          min={0.5}
+          max={2.5}
+          step={0.02}
+          isLight={isLight}
+          onChange={(v) => updateConfig({ nosePressScaleMultiplier: v })}
         />
 
         <SliderControl

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Zap, Shield, History, CircleSlash2, FlipHorizontal2, Download, Info, Keyboard } from 'lucide-react';
+import { Zap, Shield, History, CircleSlash2, FlipHorizontal2, Download, Info, Keyboard, Compass } from 'lucide-react';
 import type { StandardSurfaceProps, SurfaceMeta } from '../manifest/surfaceMetaTypes';
 import {
   resolveCalibratedDefaultConfig,
@@ -13,6 +13,7 @@ import { SettingToggleRow } from '../compounds/SettingToggleRow';
 import { FloatingWindowCard } from './settings/components/FloatingWindowCard';
 import { useAppStore } from '../stores/appStore';
 import { useStaticTrainingPackStore } from '../stores/staticTrainingPackStore';
+import { useKeyboardInputOverlayStore } from '../stores/keyboardInputOverlayStore';
 import { useMenuLayoutStore } from '../stores/menuLayoutStore';
 import { DEFAULT_PANEL_SIZING } from '../tokens/menuLayoutTokens';
 import { useSettingActionRowStore } from '../stores/settingRowStore';
@@ -49,7 +50,7 @@ export const SURFACE_META: SurfaceMeta = {
   menuGroup: 'menu-layer',
   defaultSizing: {
     width: 480,
-    height: 460,
+    height: 500,
     minHeight: 200,
     maxHeight: 960,
     mode: 'adaptive',
@@ -98,9 +99,10 @@ export interface Layer3TrainingConfigRecipeProps extends StandardSurfaceProps {}
  *   5. Enable F to Mirror: ToggleSwitch (default ON)
  *   6. Goal Barrier Configurator: FloatingWindowCard spawner
  *   7. Keyboard Input Overlay: FloatingWindowCard spawner
+ *   8. Car Nose Direction Arrows: ToggleSwitch (default OFF, synced with Keyboard Input Overlay Tuner)
  *
  * Store-First contract (`StandardSurfaceProps` <= 4 props), reading directly from
- * `useAppStore` and `useStaticTrainingPackStore` via `useScopedStore`.
+ * `useAppStore`, `useStaticTrainingPackStore`, and `useKeyboardInputOverlayStore` via `useScopedStore`.
  */
 export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProps> = React.memo(({
   isLight = false,
@@ -119,6 +121,16 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
     'staticTrainingPackStore',
     useStaticTrainingPackStore,
     (s) => s.setVariationToggles
+  );
+  const enableNoseArrowRendering = useScopedStore(
+    'keyboardInputOverlayStore',
+    useKeyboardInputOverlayStore,
+    (s) => s.enableNoseArrowRendering
+  );
+  const updateKeyboardOverlayConfig = useScopedStore(
+    'keyboardInputOverlayStore',
+    useKeyboardInputOverlayStore,
+    (s) => s.updateConfig
   );
 
   const onBack = propOnBack ?? goBack;
@@ -328,6 +340,24 @@ export const Layer3TrainingConfigRecipe: React.FC<Layer3TrainingConfigRecipeProp
             showDescription={false}
             hoverTooltip="Training Scope: Spawn the resizable 3x3 Keyboard Input Overlay floating window (Q/W/E, A/S/D, Slide/Boost/Jump) with 3D camera-relative WASD attitude arrows."
             onHover={setHoveredDesc}
+            onLeave={() => setHoveredDesc(null)}
+            isLight={isLight}
+          />
+
+          {/* 8. Car Nose Direction Arrows: ToggleSwitch (Default OFF, synced with Developer Tuner) */}
+          <SettingToggleRow
+            icon={Compass}
+            iconName="compass"
+            iconColor="text-emerald-400"
+            title="Car Nose Direction Arrows"
+            checked={Boolean(enableNoseArrowRendering)}
+            onChange={(next) =>
+              updateKeyboardOverlayConfig({ enableNoseArrowRendering: next })
+            }
+            bordered={false}
+            showDescription={false}
+            hoverDescription="Training Scope: Render 4-way 3D WASD direction arrows on the front nose of your car (default OFF)."
+            onHover={(desc) => desc && setHoveredDesc(desc)}
             onLeave={() => setHoveredDesc(null)}
             isLight={isLight}
           />
