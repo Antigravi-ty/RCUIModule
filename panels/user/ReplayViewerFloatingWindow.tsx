@@ -115,7 +115,7 @@ export const ReplayViewerFloatingWindow: React.FC<
       rawSignalMarkers.map((m) => ({
         frameIndex: m.frameIndex,
         type:
-          m.type === 0x91 || m.type === 0x87 || m.type === 0x88
+          m.type === 0x88
             ? 'score'
             : m.type === 0x97 || m.type === 0x99 || m.type === 0x8b
             ? 'end'

@@ -10,12 +10,19 @@ import {
   MultiTrackReplayTracksOnlyView,
   type ReplayIncidentMarker,
   type ReplaySignalMarker,
+  type ReplayNativeEventMarker,
+  type ReplayKeyframeMarker,
 } from './MultiTrackReplayTracksOnlyView';
 import { ReplayTimelineMarkersAndRuler } from './ReplayTimelineMarkersAndRuler';
 
 export const ALPHA_COMPONENT_ID = 'Alpha:MultiTrackReplayTimeline' as const;
 
-export type { ReplayIncidentMarker, ReplaySignalMarker };
+export type {
+  ReplayIncidentMarker,
+  ReplaySignalMarker,
+  ReplayNativeEventMarker,
+  ReplayKeyframeMarker,
+};
 
 export const DEFAULT_REPLAY_INCIDENT_MARKERS: ReplayIncidentMarker[] = [
   { frameIndex: 145, type: 'touch', label: 'First Touch (Diagonal Kickoff)' },
@@ -44,6 +51,9 @@ export interface MultiTrackReplayTimelineProps {
   isIntervening?: boolean;
   incidentMarkers?: ReplayIncidentMarker[];
   signalMarkers?: ReplaySignalMarker[];
+  nativeEventMarkers?: ReplayNativeEventMarker[];
+  keyframeMarkers?: ReplayKeyframeMarker[];
+  showNativeTracks?: boolean;
   variant?: 'card' | 'tracks-only';
   disabled?: boolean;
   onSeekFrame?: (frameIndex: number) => void;
@@ -61,6 +71,9 @@ export const MultiTrackReplayTimeline = React.memo(
         isIntervening = false,
         incidentMarkers = DEFAULT_REPLAY_INCIDENT_MARKERS,
         signalMarkers = DEFAULT_REPLAY_SIGNAL_MARKERS,
+        nativeEventMarkers = [],
+        keyframeMarkers = [],
+        showNativeTracks = false,
         variant = 'card',
         disabled = false,
         onSeekFrame,
@@ -81,6 +94,8 @@ export const MultiTrackReplayTimeline = React.memo(
       const trackAFillRef = useRef<HTMLDivElement | null>(null);
       const trackBCursorRef = useRef<HTMLDivElement | null>(null);
       const trackCCursorRef = useRef<HTMLDivElement | null>(null);
+      const trackDCursorRef = useRef<HTMLDivElement | null>(null);
+      const trackECursorRef = useRef<HTMLDivElement | null>(null);
 
       const effectiveFlowPct = flowPreset === 'custom' ? customFlowPct : Number(flowPreset);
       const isTracksOnly = variant === 'tracks-only';
@@ -93,6 +108,8 @@ export const MultiTrackReplayTimeline = React.memo(
             if (trackAFillRef.current) trackAFillRef.current.style.width = '0%';
             if (trackBCursorRef.current) trackBCursorRef.current.style.left = '0%';
             if (trackCCursorRef.current) trackCCursorRef.current.style.left = '0%';
+            if (trackDCursorRef.current) trackDCursorRef.current.style.left = '0%';
+            if (trackECursorRef.current) trackECursorRef.current.style.left = '0%';
             if (cursorTextRef.current) cursorTextRef.current.textContent = 'Frame #0 (0.00s)';
             return;
           }
@@ -104,6 +121,8 @@ export const MultiTrackReplayTimeline = React.memo(
           if (trackAFillRef.current) trackAFillRef.current.style.width = `${pct}%`;
           if (trackBCursorRef.current) trackBCursorRef.current.style.left = `${pct}%`;
           if (trackCCursorRef.current) trackCCursorRef.current.style.left = `${pct}%`;
+          if (trackDCursorRef.current) trackDCursorRef.current.style.left = `${pct}%`;
+          if (trackECursorRef.current) trackECursorRef.current.style.left = `${pct}%`;
           if (cursorTextRef.current) {
             const text = `Frame #${clamped} (${(clamped / 120).toFixed(2)}s)`;
             if (cursorTextRef.current.textContent !== text) {
@@ -159,7 +178,16 @@ export const MultiTrackReplayTimeline = React.memo(
             className={className}
             incidentMarkers={incidentMarkers}
             signalMarkers={signalMarkers}
-            trackRefs={{ trackAFillRef, trackBCursorRef, trackCCursorRef }}
+            nativeEventMarkers={nativeEventMarkers}
+            keyframeMarkers={keyframeMarkers}
+            showNativeTracks={showNativeTracks}
+            trackRefs={{
+              trackAFillRef,
+              trackBCursorRef,
+              trackCCursorRef,
+              trackDCursorRef,
+              trackECursorRef,
+            }}
             handleTrackSeek={handleTrackSeek}
             applyCursorToDom={applyCursorToDom}
             onSeekFrame={onSeekFrame}

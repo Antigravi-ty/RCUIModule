@@ -30,6 +30,7 @@ export function useGoalReplayAndTakeoverHudState(params: {
   const rawRvPovTeam = useReplayViewerStore((s) => s.activePovTeam);
 
   const rawImpState = useReplayToRcsImporterStore((s) => s.viewerState);
+  const rawImpWindowOpen = useReplayToRcsImporterStore((s) => s.isWindowOpen);
   const rawImpTotalFrames = useReplayToRcsImporterStore((s) => s.totalFrames);
   const rawImpFileName = useReplayToRcsImporterStore((s) => s.loadedFileName);
   const rawImpPrerollSec = useReplayToRcsImporterStore((s) => s.prerollRemainingSec);
@@ -37,7 +38,10 @@ export function useGoalReplayAndTakeoverHudState(params: {
   const rawImpPovTeam = useReplayToRcsImporterStore((s) => s.activePovTeam);
 
   const useImporterForHud =
-    rawImpState !== 'idle' && rawImpTotalFrames > 0 && Boolean(rawImpFileName);
+    rawImpWindowOpen &&
+    rawImpState !== 'idle' &&
+    rawImpTotalFrames > 0 &&
+    Boolean(rawImpFileName);
   const replayViewerState = useImporterForHud ? rawImpState : rawRvState;
   const replayViewerTotalFrames = useImporterForHud ? rawImpTotalFrames : rawRvTotalFrames;
   const replayViewerFileName = useImporterForHud ? rawImpFileName : rawRvFileName;
@@ -130,13 +134,12 @@ export const GoalReplayHudOverlay: React.FC<GoalReplayHudOverlayProps> = ({
   replayScorerTeam,
 }) => {
   const rawRvState = useReplayViewerStore((s) => s.viewerState);
-  const rawRvTotalFrames = useReplayViewerStore((s) => s.totalFrames);
-  const rawRvFileName = useReplayViewerStore((s) => s.loadedFileName);
   const rawRvPrerollSec = useReplayViewerStore((s) => s.prerollRemainingSec);
   const rawRvDownCounterSec = useReplayViewerStore((s) => s.downCounterSec);
   const rawRvPovTeam = useReplayViewerStore((s) => s.activePovTeam);
 
   const rawImpState = useReplayToRcsImporterStore((s) => s.viewerState);
+  const rawImpWindowOpen = useReplayToRcsImporterStore((s) => s.isWindowOpen);
   const rawImpTotalFrames = useReplayToRcsImporterStore((s) => s.totalFrames);
   const rawImpFileName = useReplayToRcsImporterStore((s) => s.loadedFileName);
   const rawImpPrerollSec = useReplayToRcsImporterStore((s) => s.prerollRemainingSec);
@@ -144,7 +147,10 @@ export const GoalReplayHudOverlay: React.FC<GoalReplayHudOverlayProps> = ({
   const rawImpPovTeam = useReplayToRcsImporterStore((s) => s.activePovTeam);
 
   const useImporterForHud =
-    rawImpState !== 'idle' && rawImpTotalFrames > 0 && Boolean(rawImpFileName);
+    rawImpWindowOpen &&
+    rawImpState !== 'idle' &&
+    rawImpTotalFrames > 0 &&
+    Boolean(rawImpFileName);
   const replayViewerState = useImporterForHud ? rawImpState : rawRvState;
   const replayPrerollSec = useImporterForHud ? rawImpPrerollSec : rawRvPrerollSec;
   const replayDownCounterSec = useImporterForHud ? rawImpDownCounterSec : rawRvDownCounterSec;
@@ -172,8 +178,14 @@ export const GoalReplayHudOverlay: React.FC<GoalReplayHudOverlayProps> = ({
     takeoverTeam,
   });
 
+  const hasGoalReplayMetadata =
+    Boolean(replayScorerName && replayScorerName.trim().length > 0) ||
+    (typeof replayBallSpeedKph === 'number' && Number.isFinite(replayBallSpeedKph));
+
   const replayFooterVisible =
-    choreographySignal === 'goal-replay-started' && matchPhase === 'replay';
+    choreographySignal === 'goal-replay-started' &&
+    matchPhase === 'replay' &&
+    hasGoalReplayMetadata;
 
   useEffect(() => {
     if (choreographySignal === 'kickoff-will-start') {
@@ -189,8 +201,8 @@ export const GoalReplayHudOverlay: React.FC<GoalReplayHudOverlayProps> = ({
   useEffect(() => {
     hudChannel.setReplayFooter({
       visible: replayFooterVisible,
-      scorerName: replayScorerName || 'SCORER',
-      goalSpeed: replayBallSpeedKph ?? 100,
+      scorerName: replayScorerName ?? '',
+      goalSpeed: typeof replayBallSpeedKph === 'number' ? replayBallSpeedKph : '',
       assisterName: replayAssistName,
       teamAccentColor: replayScorerTeam === 1 ? '#F97316' : '#3B82F6',
     });

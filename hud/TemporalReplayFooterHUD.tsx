@@ -98,7 +98,8 @@ export const TemporalReplayFooterHUD = React.memo(
       const [midR, midG, midB] = hexToRgbTuple(midColor);
 
       const formatSpeed = useCallback((gs: string | number) => {
-        if (typeof gs === 'number') return `${Math.floor(gs)}KPH`;
+        if (gs === '' || gs === null || gs === undefined) return '';
+        if (typeof gs === 'number') return Number.isFinite(gs) ? `${Math.floor(gs)}KPH` : '';
         return gs.endsWith('KPH') ? gs : `${gs}KPH`;
       }, []);
 
@@ -113,7 +114,7 @@ export const TemporalReplayFooterHUD = React.memo(
               : `transform ${exitDurationSec}s cubic-bezier(0.7, 0, 0.84, 0)`;
           }
           if (scorerTextRef.current) {
-            const nextScorer = st.scorerName || 'Player';
+            const nextScorer = st.scorerName || '';
             if (scorerTextRef.current.textContent !== nextScorer) {
               scorerTextRef.current.textContent = nextScorer;
             }

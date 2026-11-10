@@ -63,6 +63,8 @@ export const ReplayToRcsImporterFloatingWindow: React.FC<ReplayToRcsImporterFloa
       cursorFrame,
       incidentMarkers,
       signalMarkers,
+      nativeEventMarkers,
+      keyframeMarkers,
       interpolationMethod,
       nonPovInterventionMode,
       downCounterSec,
@@ -109,7 +111,7 @@ export const ReplayToRcsImporterFloatingWindow: React.FC<ReplayToRcsImporterFloa
         signalMarkers.map((m) => ({
           frameIndex: m.frameIndex,
           type:
-            m.type === 0x91 || m.type === 0x87 || m.type === 0x88
+            m.type === 0x88
               ? 'score'
               : m.type === 0x97 || m.type === 0x99 || m.type === 0x8b
               ? 'end'
@@ -144,9 +146,10 @@ export const ReplayToRcsImporterFloatingWindow: React.FC<ReplayToRcsImporterFloa
           controlsDisabled={controlsDisabled}
         />
 
-        {/* 2. L5 MultiTrackReplayTimeline */}
+        {/* 2. L5 MultiTrackReplayTimeline (5-Track Importer View) */}
         <MultiTrackReplayTimeline
           variant="tracks-only"
+          showNativeTracks
           disabled={controlsDisabled}
           fileName={hasLoadedReplay && loadedFileName ? loadedFileName : 'No .replay file imported'}
           totalFrames={hasLoadedReplay ? totalFrames : 0}
@@ -154,6 +157,8 @@ export const ReplayToRcsImporterFloatingWindow: React.FC<ReplayToRcsImporterFloa
           isIntervening={isIntervening}
           incidentMarkers={hasLoadedReplay ? mappedIncidentMarkers : []}
           signalMarkers={hasLoadedReplay ? mappedSignalMarkers : []}
+          nativeEventMarkers={hasLoadedReplay ? nativeEventMarkers : []}
+          keyframeMarkers={hasLoadedReplay ? keyframeMarkers : []}
           onSeekFrame={(nextFrame) => runtimeHandlers.onSeekFrame?.(nextFrame)}
           isLight={isLight}
         />

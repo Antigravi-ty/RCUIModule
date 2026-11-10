@@ -10,6 +10,21 @@ import type {
 export type RLReplayInterpolationMethod = 'hermite-clamped' | 'linear';
 export type RLReplayNonPovInterventionMode = 'disappear' | 'trajectory' | 'nexto' | 'necto';
 
+export interface ReplayNativeEventMarker {
+  frameIndex: number;
+  kind: 'goal' | 'save' | 'demolish' | 'user-mark';
+  slotIndex: number;
+  team: -1 | 0 | 1;
+  label: string;
+}
+
+export interface ReplayKeyframeMarker {
+  frameIndex: number;
+  kind: 'ue-keyframe' | 'kickoff';
+  sourceFrame30Hz: number;
+  label: string;
+}
+
 export interface RLReplayTrackDeltaSummary {
   part1CrcValid: boolean;
   part2CrcValid: boolean;
@@ -34,10 +49,14 @@ export interface ReplayToRcsImporterStoreState {
   stateTrackCount: number;
   incidentTrackCount: number;
   signalTrackCount: number;
+  nativeEventTrackCount: number;
+  keyframeTrackCount: number;
   recordedSignalCount: number;
   synthesizedSignalCount: number;
   incidentMarkers: ReplayIncidentMarker[];
   signalMarkers: ReplaySignalMarker[];
+  nativeEventMarkers: ReplayNativeEventMarker[];
+  keyframeMarkers: ReplayKeyframeMarker[];
   interpolationMethod: RLReplayInterpolationMethod;
   nonPovInterventionMode: RLReplayNonPovInterventionMode;
   trackDeltaSummary: RLReplayTrackDeltaSummary | null;
@@ -113,10 +132,14 @@ export const useReplayToRcsImporterStore = create<ReplayToRcsImporterStoreState>
   stateTrackCount: 0,
   incidentTrackCount: 0,
   signalTrackCount: 0,
+  nativeEventTrackCount: 0,
+  keyframeTrackCount: 0,
   recordedSignalCount: 0,
   synthesizedSignalCount: 0,
   incidentMarkers: [],
   signalMarkers: [],
+  nativeEventMarkers: [],
+  keyframeMarkers: [],
   interpolationMethod: 'hermite-clamped',
   nonPovInterventionMode: 'trajectory',
   trackDeltaSummary: null,

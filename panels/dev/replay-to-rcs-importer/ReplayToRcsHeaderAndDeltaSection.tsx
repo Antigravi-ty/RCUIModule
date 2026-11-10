@@ -24,6 +24,8 @@ export const ReplayToRcsHeaderAndDeltaSection: React.FC<ReplayToRcsHeaderAndDelt
     sourceRecordFps,
     incidentTrackCount,
     signalTrackCount,
+    nativeEventTrackCount,
+    keyframeTrackCount,
     trackDeltaSummary,
     errorMessage,
     isLoadingReplay,
@@ -174,9 +176,9 @@ export const ReplayToRcsHeaderAndDeltaSection: React.FC<ReplayToRcsHeaderAndDelt
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Tracks B / C Events:</span>
+                <span>Tracks 2–5 Events:</span>
                 <span className="font-mono">
-                  {incidentTrackCount} Incidents · {signalTrackCount} Signals (0 Synthesized)
+                  {incidentTrackCount} Inc · {signalTrackCount} Sig · {nativeEventTrackCount} Nat · {keyframeTrackCount} KF
                 </span>
               </div>
               {trackDeltaSummary.unmappedPropertyNames.length > 0 && (

@@ -17,10 +17,24 @@ export interface ReplaySignalMarker {
   synthesized?: boolean;
 }
 
+export interface ReplayNativeEventMarker {
+  frameIndex: number;
+  kind: 'goal' | 'save' | 'demolish' | 'user-mark';
+  label: string;
+}
+
+export interface ReplayKeyframeMarker {
+  frameIndex: number;
+  kind: 'ue-keyframe' | 'kickoff';
+  label: string;
+}
+
 export interface MultiTrackReplayDomRefs {
   trackAFillRef: React.RefObject<HTMLDivElement | null>;
   trackBCursorRef: React.RefObject<HTMLDivElement | null>;
   trackCCursorRef: React.RefObject<HTMLDivElement | null>;
+  trackDCursorRef?: React.RefObject<HTMLDivElement | null>;
+  trackECursorRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export interface MultiTrackReplayTracksOnlyViewProps {
@@ -34,6 +48,9 @@ export interface MultiTrackReplayTracksOnlyViewProps {
   className: string;
   incidentMarkers: ReplayIncidentMarker[];
   signalMarkers: ReplaySignalMarker[];
+  nativeEventMarkers?: ReplayNativeEventMarker[];
+  keyframeMarkers?: ReplayKeyframeMarker[];
+  showNativeTracks?: boolean;
   trackRefs: MultiTrackReplayDomRefs;
   handleTrackSeek: (e: React.MouseEvent<HTMLDivElement>) => void;
   applyCursorToDom: (frameIndex: number) => void;
@@ -51,7 +68,10 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
   className,
   incidentMarkers,
   signalMarkers,
-  trackRefs: { trackAFillRef, trackBCursorRef, trackCCursorRef },
+  nativeEventMarkers = [],
+  keyframeMarkers = [],
+  showNativeTracks = false,
+  trackRefs: { trackAFillRef, trackBCursorRef, trackCCursorRef, trackDCursorRef, trackECursorRef },
   handleTrackSeek,
   applyCursorToDom,
   onSeekFrame,
@@ -119,6 +139,55 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
       );
     });
   }, [isTrackDisabled, signalMarkers, denomFrames, applyCursorToDom, onSeekFrame]);
+
+  const renderedNativeEventMarkers = useMemo(() => {
+    if (isTrackDisabled || !showNativeTracks) return null;
+    return nativeEventMarkers.map((n, idx) => {
+      const leftPct = (n.frameIndex / denomFrames) * 100;
+      const colorCls =
+        n.kind === 'goal'
+          ? 'bg-amber-400 w-1.5 z-10'
+          : n.kind === 'save'
+          ? 'bg-emerald-400 w-1'
+          : n.kind === 'demolish'
+          ? 'bg-rose-500 w-1'
+          : 'bg-fuchsia-400 w-1';
+      return (
+        <div
+          key={`native-${n.frameIndex}-${idx}`}
+          style={{ left: `${leftPct}%` }}
+          onClick={(e) => {
+            e.stopPropagation();
+            applyCursorToDom(n.frameIndex);
+            onSeekFrame?.(n.frameIndex);
+          }}
+          className={`absolute top-0 bottom-0 ${colorCls}`}
+          title={`${n.label} @ #${n.frameIndex}`}
+        />
+      );
+    });
+  }, [isTrackDisabled, showNativeTracks, nativeEventMarkers, denomFrames, applyCursorToDom, onSeekFrame]);
+
+  const renderedKeyframeMarkers = useMemo(() => {
+    if (isTrackDisabled || !showNativeTracks) return null;
+    return keyframeMarkers.map((k, idx) => {
+      const leftPct = (k.frameIndex / denomFrames) * 100;
+      const colorCls = k.kind === 'kickoff' ? 'bg-sky-400 w-1 z-10' : 'bg-cyan-500/80 w-0.5';
+      return (
+        <div
+          key={`kf-${k.frameIndex}-${idx}`}
+          style={{ left: `${leftPct}%` }}
+          onClick={(e) => {
+            e.stopPropagation();
+            applyCursorToDom(k.frameIndex);
+            onSeekFrame?.(k.frameIndex);
+          }}
+          className={`absolute top-0 bottom-0 ${colorCls}`}
+          title={`${k.label} @ #${k.frameIndex}`}
+        />
+      );
+    });
+  }, [isTrackDisabled, showNativeTracks, keyframeMarkers, denomFrames, applyCursorToDom, onSeekFrame]);
 
   return (
     <div
@@ -189,6 +258,40 @@ export const MultiTrackReplayTracksOnlyView: React.FC<MultiTrackReplayTracksOnly
             />
           )}
         </div>
+
+        {showNativeTracks && (
+          <>
+            <div
+              onClick={handleTrackSeek}
+              title="Track 4 · Native Replay Events (Goal / Save / Demolish / User Mark)"
+              className={`w-full h-3 rounded-full overflow-hidden relative ${trackInteractiveCls} ${trackBgClass}`}
+            >
+              {renderedNativeEventMarkers}
+              {!isTrackDisabled && (
+                <div
+                  ref={trackDCursorRef}
+                  style={{ left: `${cursorPct}%` }}
+                  className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`}
+                />
+              )}
+            </div>
+
+            <div
+              onClick={handleTrackSeek}
+              title="Track 5 · Native UE KeyFrames & Kickoff Bookmarks"
+              className={`w-full h-3 rounded-full overflow-hidden relative ${trackInteractiveCls} ${trackBgClass}`}
+            >
+              {renderedKeyframeMarkers}
+              {!isTrackDisabled && (
+                <div
+                  ref={trackECursorRef}
+                  style={{ left: `${cursorPct}%` }}
+                  className={`absolute top-0 bottom-0 w-0.5 pointer-events-none ${cursorLineClass}`}
+                />
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
