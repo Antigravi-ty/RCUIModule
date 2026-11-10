@@ -190,7 +190,7 @@ export const FloatingStackIcon: React.FC<FloatingStackIconProps> = ({
               animate={bounceTrigger > 0 ? { scale: [1, 1.15, 1] } : { scale: 1 }}
               transition={{ duration: 0.22, ease: [0.2, 0.8, 0.25, 1] }}
               type="button"
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.stopPropagation();
                 if (isMenuOpen) {
                   onBlockedClick?.();
@@ -240,7 +240,7 @@ export const FloatingStackIcon: React.FC<FloatingStackIconProps> = ({
                 exit={{ scale: 0, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 22 }}
                 type="button"
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   dismissStack();
                 }}
@@ -308,7 +308,7 @@ export const FloatingStackIcon: React.FC<FloatingStackIconProps> = ({
                       {/* Main Pill: shifts left by 34px on hover, equal-width 4-sided shadow */}
                       <motion.button
                         type="button"
-                        onClick={(e) => handleRestoreClick(win, e)}
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleRestoreClick(win, e)}
                         animate={{ x: isHovered ? -34 : 0 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 28 }}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border cursor-pointer select-none transition-colors shadow-md ${
@@ -342,7 +342,7 @@ export const FloatingStackIcon: React.FC<FloatingStackIconProps> = ({
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            onClick={(e) => {
+                            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                               e.stopPropagation();
                               if (onCloseWindowItem) {
                                 onCloseWindowItem(win, () => closeWindow(win.id));

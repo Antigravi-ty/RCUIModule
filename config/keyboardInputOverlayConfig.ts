@@ -67,6 +67,7 @@ export interface KeyboardInputOverlayConfig {
   noseAArrowTotalLengthUu: number;
   noseSArrowTotalLengthUu: number;
   noseDArrowTotalLengthUu: number;
+  nosePressScaleMultiplier: number;
   noseConeLengthUu: number;
   noseConeRadiusUu: number;
   noseTipRadiusUu: number;
@@ -120,7 +121,7 @@ export const DEFAULT_KEYBOARD_INPUT_OVERLAY_CONFIG: Readonly<KeyboardInputOverla
     sArrowColor: '#fff1f2',
     dArrowColor: '#f0f9ff',
 
-    enableNoseArrowRendering: true,
+    enableNoseArrowRendering: false,
     noseArrowColorSource: 'key-bg',
     noseWCustomColor: '#10b981',
     noseACustomColor: '#f59e0b',
@@ -131,8 +132,9 @@ export const DEFAULT_KEYBOARD_INPUT_OVERLAY_CONFIG: Readonly<KeyboardInputOverla
     noseArrowTotalLengthUu: 25,
     noseWArrowTotalLengthUu: 25,
     noseAArrowTotalLengthUu: 25,
-    noseSArrowTotalLengthUu: 25,
+    noseSArrowTotalLengthUu: 15,
     noseDArrowTotalLengthUu: 25,
+    nosePressScaleMultiplier: 1.12,
     noseConeLengthUu: 9,
     noseConeRadiusUu: 5.5,
     noseTipRadiusUu: 1,
@@ -234,10 +236,11 @@ export function normalizeKeyboardInputOverlayConfig(
     noseForwardOffsetUu: numOr(p.noseForwardOffsetUu, d.noseForwardOffsetUu),
     noseVerticalOffsetUu: numOr(p.noseVerticalOffsetUu, d.noseVerticalOffsetUu),
     noseArrowTotalLengthUu: baseTotalLen,
-    noseWArrowTotalLengthUu: numOr(p.noseWArrowTotalLengthUu, baseTotalLen),
-    noseAArrowTotalLengthUu: numOr(p.noseAArrowTotalLengthUu, baseTotalLen),
-    noseSArrowTotalLengthUu: numOr(p.noseSArrowTotalLengthUu, baseTotalLen),
-    noseDArrowTotalLengthUu: numOr(p.noseDArrowTotalLengthUu, baseTotalLen),
+    noseWArrowTotalLengthUu: numOr(p.noseWArrowTotalLengthUu, d.noseWArrowTotalLengthUu),
+    noseAArrowTotalLengthUu: numOr(p.noseAArrowTotalLengthUu, d.noseAArrowTotalLengthUu),
+    noseSArrowTotalLengthUu: numOr(p.noseSArrowTotalLengthUu, d.noseSArrowTotalLengthUu),
+    noseDArrowTotalLengthUu: numOr(p.noseDArrowTotalLengthUu, d.noseDArrowTotalLengthUu),
+    nosePressScaleMultiplier: numOr(p.nosePressScaleMultiplier, d.nosePressScaleMultiplier),
     noseConeLengthUu: numOr(p.noseConeLengthUu, d.noseConeLengthUu),
     noseConeRadiusUu: numOr(p.noseConeRadiusUu, d.noseConeRadiusUu),
     noseTipRadiusUu: numOr(p.noseTipRadiusUu, d.noseTipRadiusUu),
