@@ -198,6 +198,9 @@ export interface TelemetryHookResult {
  */
 export function useTelemetryData(intervalMs = 180, active = true): TelemetryHookResult {
   const [result, setResult] = useState<TelemetryHookResult>(() => {
+    if (!activeSamplerSource) {
+      return { data: null, error: null };
+    }
     try {
       return { data: sampleTelemetry(), error: null };
     } catch (err: any) {
@@ -209,6 +212,12 @@ export function useTelemetryData(intervalMs = 180, active = true): TelemetryHook
   useEffect(() => {
     if (!active) return;
     const poll = () => {
+      if (!activeSamplerSource) {
+        setResult((prev) =>
+          prev.data === null && prev.error === null ? prev : { data: null, error: null }
+        );
+        return;
+      }
       try {
         const snap = sampleTelemetry();
         setResult({ data: snap, error: null });
@@ -225,3 +234,4 @@ export function useTelemetryData(intervalMs = 180, active = true): TelemetryHook
 
   return result;
 }
+

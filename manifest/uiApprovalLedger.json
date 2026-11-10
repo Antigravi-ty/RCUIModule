@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-08T08:31:23.408Z",
+  "updatedAt": "2026-11-10T08:48:20.206Z",
   "templateHash": "2457f99820e9a4a6",
   "surfaces": {
     "floating:atmosphere-fx-tuner": {
@@ -378,7 +378,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/BotsLoadoutTunerFloatingWindow.tsx",
       "templateHash": "2457f99820e9a4a6",
-      "sizingAndConfigHash": "8eb5647b26709198",
+      "sizingAndConfigHash": "d4c5e26c5ceec8ef",
       "visualAstHash": "288f9ed044cc30ae",
       "fileVisualHashes": {
         "src/ui-core/panels/dev/BotsLoadoutTunerFloatingWindow.tsx": "4c01126ea3ff7c8f",
@@ -457,6 +457,38 @@
         "src/ui-core/tokens/radius.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.300Z"
+    },
+    "floating:demolish-shockwave-tuner": {
+      "status": "approved",
+      "surfaceKind": "floating-window",
+      "entryFile": "src/ui-core/panels/dev/DemolishShockwaveTunerFloatingWindow.tsx",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "d6d19850f4634819",
+      "visualAstHash": "81eb873e10ab32ec",
+      "fileVisualHashes": {
+        "src/ui-core/panels/dev/DemolishShockwaveTunerFloatingWindow.tsx": "ad00d9acdad9d5cf",
+        "src/ui-core/panels/dev/demolish-shockwave-tuner/DemolishShockwaveArenaCoordCard.tsx": "c6367fe283ccbf3f",
+        "src/ui-core/panels/dev/demolish-shockwave-tuner/DemolishShockwaveOpacityAndFeatherCard.tsx": "f51bba9254b1a8b9",
+        "src/ui-core/panels/dev/demolish-shockwave-tuner/DemolishShockwaveSimAndScrubberSection.tsx": "657dcf11ed6f4b99",
+        "src/ui-core/panels/dev/demolish-shockwave-tuner/DemolishShockwaveTracksSection.tsx": "866a48684b7e3bb6",
+        "src/ui-core/primitives/ToggleSwitch.tsx": "6cc1ee7e1446f982"
+      },
+      "alphaDeps": [
+        "src/ui-core/config/demolishShockwaveConfig.ts",
+        "src/ui-core/stores/quickNotificationStore.ts",
+        "src/ui-core/tokens/colors.ts",
+        "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/radius.ts"
+      ],
+      "alphaDependencies": [
+        "Alpha:ToggleSwitch",
+        "src/ui-core/config/demolishShockwaveConfig.ts",
+        "src/ui-core/stores/quickNotificationStore.ts",
+        "src/ui-core/tokens/colors.ts",
+        "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/radius.ts"
+      ],
+      "approvedAt": "2026-11-10T08:05:44.646Z"
     },
     "floating:diagnostic-dump": {
       "status": "approved",
@@ -840,6 +872,45 @@
         "src/ui-core/tokens/radius.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.311Z"
+    },
+    "floating:keyboard-input-overlay-tuner": {
+      "status": "approved",
+      "surfaceKind": "floating-window",
+      "entryFile": "src/ui-core/panels/dev/KeyboardInputOverlayTunerFloatingWindow.tsx",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "2fd834752619df25",
+      "visualAstHash": "ee5331690bba602f",
+      "fileVisualHashes": {
+        "src/ui-core/compounds/TunerControls.tsx": "0abd1b63c8e01451",
+        "src/ui-core/panels/dev/KeyboardInputOverlayTunerFloatingWindow.tsx": "3b7efb0a3d117a6d",
+        "src/ui-core/panels/dev/keyboard-input-overlay/KeyboardOverlayCarNoseArrowsSection.tsx": "c080785fa406e2c0",
+        "src/ui-core/panels/dev/keyboard-input-overlay/KeyboardOverlayColorsAndArrowsSection.tsx": "8774396261a1f24c",
+        "src/ui-core/panels/dev/keyboard-input-overlay/KeyboardOverlayGeometryAndOpacitySection.tsx": "19b7422b49ec2e0d",
+        "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c",
+        "src/ui-core/primitives/SliderControl.tsx": "6bb73313d44a2563",
+        "src/ui-core/primitives/ToggleSwitch.tsx": "6cc1ee7e1446f982"
+      },
+      "alphaDeps": [
+        "src/ui-core/stores/floatingStore.ts",
+        "src/ui-core/stores/keyboardInputOverlayStore.ts",
+        "src/ui-core/stores/quickNotificationStore.ts",
+        "src/ui-core/tokens/colors.ts",
+        "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/radius.ts"
+      ],
+      "alphaDependencies": [
+        "Alpha:PrecisionDigitPicker",
+        "Alpha:SliderControl",
+        "Alpha:ToggleSwitch",
+        "Alpha:TunerControls",
+        "src/ui-core/stores/floatingStore.ts",
+        "src/ui-core/stores/keyboardInputOverlayStore.ts",
+        "src/ui-core/stores/quickNotificationStore.ts",
+        "src/ui-core/tokens/colors.ts",
+        "src/ui-core/tokens/easing.ts",
+        "src/ui-core/tokens/radius.ts"
+      ],
+      "approvedAt": "2026-11-10T08:05:44.659Z"
     },
     "floating:kickoff-training-tuner": {
       "status": "approved",
@@ -1534,7 +1605,7 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/VehicleGlobalFxTunerFloatingWindow.tsx",
       "templateHash": "2457f99820e9a4a6",
-      "sizingAndConfigHash": "bf2fee9a7ef39266",
+      "sizingAndConfigHash": "a3f53c282c6c1b37",
       "visualAstHash": "e1841ba94c7b3f31",
       "fileVisualHashes": {
         "src/ui-core/compounds/TunerControls.tsx": "0abd1b63c8e01451",
@@ -1687,18 +1758,18 @@
       "surfaceKind": "floating-window",
       "entryFile": "src/ui-core/panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx",
       "templateHash": "2457f99820e9a4a6",
-      "sizingAndConfigHash": "4516a9a72983df55",
-      "visualAstHash": "87f379751fc30544",
+      "sizingAndConfigHash": "16a55b06ad543573",
+      "visualAstHash": "377d5ed4af6ccf68",
       "fileVisualHashes": {
         "src/ui-core/compounds/CameraSwivelSimulatorCard.tsx": "accb6b2600f083a2",
-        "src/ui-core/panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx": "8278137f5f4d0161",
-        "src/ui-core/panels/dev/vehicle-model-offset-tuner/BoostNozzlesTab.tsx": "5e94d4e61ae405a2",
+        "src/ui-core/panels/dev/VehicleModelOffsetTunerFloatingWindow.tsx": "6e4b96a58377ad96",
+        "src/ui-core/panels/dev/vehicle-model-offset-tuner/BoostNozzlesTab.tsx": "1d02b25ab18cdb20",
         "src/ui-core/panels/dev/vehicle-model-offset-tuner/CustomGlbImportCard.tsx": "aa7d078545998c78",
-        "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx": "05d5652500970b96",
-        "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayCard.tsx": "fadbad62da56e9fe",
+        "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx": "325d996b3a347828",
+        "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayCard.tsx": "4d5b2155d334f998",
         "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayTransformSliders.tsx": "7a8e4e52a3577624",
-        "src/ui-core/panels/dev/vehicle-model-offset-tuner/VehicleOffsetFooterActions.tsx": "8846056ec69d47d2",
-        "src/ui-core/panels/dev/vehicle-model-offset-tuner/WheelOffsetsTab.tsx": "eac96cb5bb0a51b3",
+        "src/ui-core/panels/dev/vehicle-model-offset-tuner/VehicleOffsetFooterActions.tsx": "280c857419ce808d",
+        "src/ui-core/panels/dev/vehicle-model-offset-tuner/WheelOffsetsTab.tsx": "090782c82370d2ec",
         "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c",
         "src/ui-core/primitives/SegmentedSwitch.tsx": "46135c4b0e6e9b46",
         "src/ui-core/primitives/SliderControl.tsx": "6bb73313d44a2563",
@@ -1744,11 +1815,11 @@
           "label": "Hitbox Align",
           "entryFile": "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx",
           "status": "approved",
-          "visualAstHash": "81f7559cc3e382a1",
+          "visualAstHash": "f57751071255f8d0",
           "fileVisualHashes": {
             "src/ui-core/compounds/CameraSwivelSimulatorCard.tsx": "accb6b2600f083a2",
-            "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx": "05d5652500970b96",
-            "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayCard.tsx": "fadbad62da56e9fe",
+            "src/ui-core/panels/dev/vehicle-model-offset-tuner/HitboxAlignTab.tsx": "325d996b3a347828",
+            "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayCard.tsx": "4d5b2155d334f998",
             "src/ui-core/panels/dev/vehicle-model-offset-tuner/ReferenceOverlayTransformSliders.tsx": "7a8e4e52a3577624",
             "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c",
             "src/ui-core/primitives/SegmentedSwitch.tsx": "46135c4b0e6e9b46",
@@ -1774,9 +1845,9 @@
           "label": "Boost Nozzles",
           "entryFile": "src/ui-core/panels/dev/vehicle-model-offset-tuner/BoostNozzlesTab.tsx",
           "status": "approved",
-          "visualAstHash": "3a5f37f7e2d138bb",
+          "visualAstHash": "ab692ecfc19ae2d6",
           "fileVisualHashes": {
-            "src/ui-core/panels/dev/vehicle-model-offset-tuner/BoostNozzlesTab.tsx": "5e94d4e61ae405a2",
+            "src/ui-core/panels/dev/vehicle-model-offset-tuner/BoostNozzlesTab.tsx": "1d02b25ab18cdb20",
             "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c",
             "src/ui-core/primitives/SliderControl.tsx": "6bb73313d44a2563",
             "src/ui-core/primitives/ToggleSwitch.tsx": "6cc1ee7e1446f982"
@@ -1797,9 +1868,9 @@
           "label": "Wheel Offsets",
           "entryFile": "src/ui-core/panels/dev/vehicle-model-offset-tuner/WheelOffsetsTab.tsx",
           "status": "approved",
-          "visualAstHash": "6a85bcc95885fdb2",
+          "visualAstHash": "228f19660eabdd48",
           "fileVisualHashes": {
-            "src/ui-core/panels/dev/vehicle-model-offset-tuner/WheelOffsetsTab.tsx": "eac96cb5bb0a51b3",
+            "src/ui-core/panels/dev/vehicle-model-offset-tuner/WheelOffsetsTab.tsx": "090782c82370d2ec",
             "src/ui-core/primitives/PrecisionDigitPicker.tsx": "701ecf104b1abd1c",
             "src/ui-core/primitives/SliderControl.tsx": "6bb73313d44a2563"
           },
@@ -1904,6 +1975,34 @@
         "src/ui-core/tokens/radius.ts"
       ],
       "approvedAt": "2026-11-06T12:15:46.339Z"
+    },
+    "floating:keyboard-input-overlay": {
+      "status": "approved",
+      "surfaceKind": "floating-window",
+      "entryFile": "src/ui-core/panels/user/KeyboardInputOverlayFloatingWindow.tsx",
+      "templateHash": "2457f99820e9a4a6",
+      "sizingAndConfigHash": "b867010c986a8879",
+      "visualAstHash": "a89da4ebb92e9582",
+      "fileVisualHashes": {
+        "src/ui-core/panels/dev/keyboard-input-overlay/Beveled3DArrowSvg.tsx": "0487273642aab664",
+        "src/ui-core/panels/dev/keyboard-input-overlay/KeyboardInputOverlayMatrixStage.tsx": "3961f27832d6e5f4",
+        "src/ui-core/panels/dev/keyboard-input-overlay/RetroTrapezoidKeycap.tsx": "89bc8b7dcffaaf95",
+        "src/ui-core/panels/dev/keyboard-input-overlay/useKeyboardOverlayLiveInputs.ts": "020b73ec994a1c37",
+        "src/ui-core/panels/user/KeyboardInputOverlayFloatingWindow.tsx": "b416004856a6acd7",
+        "src/ui-core/primitives/svg/SlideWaveIcon.tsx": "2cdeaa2271850f14"
+      },
+      "alphaDeps": [
+        "src/ui-core/config/keyboardInputOverlayTelemetry.ts",
+        "src/ui-core/stores/floatingStore.ts",
+        "src/ui-core/stores/keyboardInputOverlayStore.ts"
+      ],
+      "alphaDependencies": [
+        "Alpha:SlideWaveIcon",
+        "src/ui-core/config/keyboardInputOverlayTelemetry.ts",
+        "src/ui-core/stores/floatingStore.ts",
+        "src/ui-core/stores/keyboardInputOverlayStore.ts"
+      ],
+      "approvedAt": "2026-11-10T08:05:44.686Z"
     },
     "floating:network-monitor": {
       "status": "approved",
@@ -2145,7 +2244,7 @@
       "entryFile": "src/ui-core/recipes/Layer2GarageRecipe.tsx",
       "templateHash": "2457f99820e9a4a6",
       "sizingAndConfigHash": "e3f1d86b3b796df3",
-      "visualAstHash": "9bde664a732dd06e",
+      "visualAstHash": "c228d84ce103b4cc",
       "fileVisualHashes": {
         "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
         "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -2171,7 +2270,7 @@
         "src/ui-core/recipes/garage/GarageLoadoutTab.tsx": "656b14c55c4248e3",
         "src/ui-core/recipes/garage/GaragePaintTab.tsx": "81a4d88780c73e46",
         "src/ui-core/recipes/garage/GarageSyncTab.tsx": "8d15d0866dd4bf1f",
-        "src/ui-core/recipes/garage/garageConstants.ts": "5d69b7c0489113d1"
+        "src/ui-core/recipes/garage/garageConstants.ts": "34fd6d362725ea9a"
       },
       "alphaDeps": [
         "src/ui-core/config/anthemCatalogConfig.ts",
@@ -2223,11 +2322,11 @@
           "label": "Car",
           "entryFile": "src/ui-core/recipes/garage/GarageCarTab.tsx",
           "status": "approved",
-          "visualAstHash": "eab03ef6f499c98c",
+          "visualAstHash": "b794fa1e0c7e3b0a",
           "fileVisualHashes": {
             "src/ui-core/primitives/Badge.tsx": "2c13f7eccf5b1baf",
             "src/ui-core/recipes/garage/GarageCarTab.tsx": "c06be88adfd634e6",
-            "src/ui-core/recipes/garage/garageConstants.ts": "5d69b7c0489113d1"
+            "src/ui-core/recipes/garage/garageConstants.ts": "34fd6d362725ea9a"
           },
           "alphaDependencies": [
             "Alpha:Badge",
@@ -2245,7 +2344,7 @@
           "label": "Paint",
           "entryFile": "src/ui-core/recipes/garage/GaragePaintTab.tsx",
           "status": "approved",
-          "visualAstHash": "1db15f25a834e9fb",
+          "visualAstHash": "a6c13b7f2ccfb49d",
           "fileVisualHashes": {
             "src/ui-core/compounds/DropdownMenu.tsx": "d5f95cfae43a0ca6",
             "src/ui-core/compounds/SettingActionRow.tsx": "ac96d06c3a09e750",
@@ -2259,7 +2358,7 @@
             "src/ui-core/primitives/svg/packagedSvgHudAndDevicePaths.ts": "e891e97816c8dc85",
             "src/ui-core/primitives/svg/packagedSvgVectorPaths.ts": "9d023a002c2be660",
             "src/ui-core/recipes/garage/GaragePaintTab.tsx": "81a4d88780c73e46",
-            "src/ui-core/recipes/garage/garageConstants.ts": "5d69b7c0489113d1"
+            "src/ui-core/recipes/garage/garageConstants.ts": "34fd6d362725ea9a"
           },
           "alphaDependencies": [
             "Alpha:Badge",

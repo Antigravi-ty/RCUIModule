@@ -57,6 +57,12 @@ export function createExperimentalMultiBotsRuntimeHandlersProxy(
       }
       if (typeof prop === 'string' && prop.startsWith('on')) {
         return (..._args: unknown[]) => {
+          const hasAnyRegisteredHostHandler = Object.values(target).some(
+            (fn) => typeof fn === 'function'
+          );
+          if (!hasAnyRegisteredHostHandler || prop === 'onPreloadEngines') {
+            return;
+          }
           console.warn(
             `[experimentalMultiBotsStore] Runtime handler "${prop}" ${unregisteredReason}`
           );

@@ -59,7 +59,7 @@ export const QuickNotificationBellCluster: React.FC<QuickNotificationToastCardPr
                 >
                   <motion.button
                     type="button"
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                       e.stopPropagation();
                       onToggleStack();
                     }}
