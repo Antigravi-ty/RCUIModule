@@ -10,6 +10,7 @@ import {
   Database,
   Film,
   History,
+  Keyboard,
   Palette,
   PencilRuler,
   Router,
@@ -47,11 +48,15 @@ export interface FloatingWindowIconProps {
 
 /**
  * Canonical unified icon resolver for floating windows, ghost flights, and minimized stack tray items.
- * Supports all 26 RocketCompanion floating windows (6 User + 20 Developer).
+ * Supports all RocketCompanion floating windows (User + Developer).
  */
 export const getFloatingWindowIcon = (category?: string, id?: string, extraClass: string = 'h-4 w-4 shrink-0') => {
   const normId = (id || '').toLowerCase();
   const normCat = (category || '').toLowerCase();
+
+  if (normId.includes('keyboard-input') || normCat.includes('keyboard')) {
+    return <Keyboard className={`${extraClass} text-emerald-500 dark:text-emerald-400`} />;
+  }
 
   if (normId.includes('spatial-audio') || normCat.includes('audio')) {
     return <Volume2 className={`${extraClass} text-amber-500 dark:text-amber-400`} />;

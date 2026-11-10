@@ -7,6 +7,7 @@ import {
   Crosshair,
   Database,
   Film,
+  Keyboard,
   Palette,
   PencilRuler,
   Router,
@@ -26,6 +27,7 @@ import {
   DRIFTWOODS_TUNER_PRESET,
   ENGINE_AUDIO_TUNER_PRESET,
   GOAL_VOLUME_TUNER_PRESET,
+  KEYBOARD_INPUT_OVERLAY_PRESET,
   NAME_TAG_TUNER_PRESET,
   SPATIAL_AUDIO_TUNER_PRESET,
   STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
@@ -56,6 +58,7 @@ export const DEV_ICON_BY_NAME: Record<string, DevIconComponent> = {
   crosshair: Crosshair,
   database: Database,
   film: Film,
+  keyboard: Keyboard,
   palette: Palette,
   'pencil-ruler': PencilRuler,
   router: Router,
@@ -108,6 +111,19 @@ export const ACTIVE_TUNER_SPECS: DevFloatingLauncherSpec[] = [
       'Live Client Replay, Reconcile & Pacing Telemetry, and Authoritative Server Replay gauges + anytime mid-match dump',
     hoverTooltip:
       'Export Diagnostic Dump: Real-time buffer usage monitor with configurable capacity and one-click unified .zip export anytime via ESC.',
+    section: 'primary',
+  },
+  {
+    id: KEYBOARD_INPUT_OVERLAY_PRESET.id,
+    preset: KEYBOARD_INPUT_OVERLAY_PRESET,
+    icon: Keyboard,
+    iconColor: 'text-emerald-400',
+    badge: '3x3 Retro · 3D Nose Arrows',
+    badgeTone: 'emerald',
+    description:
+      'Adaptive 3x3 retro trapezoid keycap overlay (Q/W/E, A/S/D, Slide/Boost/Jump), opacity superposition, 3D attitude WASD arrows & Car Nose Arrows',
+    hoverTooltip:
+      'Keyboard Input Overlay: 3x3 square retro keycap display with convex/concave trapezoid bevel pressing mechanics, camera-relative 3D WASD arrows, and 3D Car Nose Arrow rendering.',
     section: 'primary',
   },
   {
