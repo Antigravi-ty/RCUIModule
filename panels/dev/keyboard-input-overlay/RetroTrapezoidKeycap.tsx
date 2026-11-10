@@ -2,7 +2,6 @@ import React from 'react';
 
 export interface RetroTrapezoidKeycapProps {
   keyId: string;
-  label: string;
   isPressed: boolean;
   sizePx: number;
   borderRadiusPx: number;
@@ -13,8 +12,6 @@ export interface RetroTrapezoidKeycapProps {
   bevelContrast: number;
   idleBgColor: string;
   pressedBgColor: string;
-  showCornerLabel: boolean;
-  labelColor?: string;
   onMouseDown?: () => void;
   onMouseUp?: () => void;
   onMouseLeave?: () => void;
@@ -33,7 +30,6 @@ export interface RetroTrapezoidKeycapProps {
 export const RetroTrapezoidKeycap: React.FC<RetroTrapezoidKeycapProps> = React.memo(
   ({
     keyId,
-    label,
     isPressed,
     sizePx,
     borderRadiusPx,
@@ -44,8 +40,6 @@ export const RetroTrapezoidKeycap: React.FC<RetroTrapezoidKeycapProps> = React.m
     bevelContrast,
     idleBgColor,
     pressedBgColor,
-    showCornerLabel,
-    labelColor = 'rgba(255,255,255,0.78)',
     onMouseDown,
     onMouseUp,
     onMouseLeave,
@@ -191,20 +185,6 @@ export const RetroTrapezoidKeycap: React.FC<RetroTrapezoidKeycapProps> = React.m
           >
             {children}
           </div>
-
-          {/* Optional Corner Key Label */}
-          {showCornerLabel && sizePx >= 34 && (
-            <span
-              className="absolute top-0.5 left-1 font-mono font-bold leading-none tracking-tighter pointer-events-none"
-              style={{
-                fontSize: `${Math.max(7, Math.min(12, Math.round(sizePx * 0.14)))}px`,
-                color: labelColor,
-                textShadow: '0 1px 2px rgba(0,0,0,0.45)',
-              }}
-            >
-              {label}
-            </span>
-          )}
         </div>
       </div>
     );

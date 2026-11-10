@@ -26,7 +26,11 @@ export const KeyboardOverlayCarNoseArrowsSection: React.FC<
     noseSCustomColor,
     noseDCustomColor,
     noseForwardOffsetUu,
-    noseArrowTotalLengthUu,
+    noseVerticalOffsetUu,
+    noseWArrowTotalLengthUu,
+    noseAArrowTotalLengthUu,
+    noseSArrowTotalLengthUu,
+    noseDArrowTotalLengthUu,
     noseConeLengthUu,
     noseConeRadiusUu,
     noseTipRadiusUu,
@@ -142,14 +146,74 @@ export const KeyboardOverlayCarNoseArrowsSection: React.FC<
           allowOutOfBoundsInput={true}
           showStepper={false}
           colorScheme="sky"
-          label="Total Arrow Length"
+          label="Nose Anchor Vertical Offset (Car Roof +Z / Bottom -Z)"
           unit="UU"
-          value={noseArrowTotalLengthUu}
-          min={25}
-          max={220}
-          step={2}
+          value={noseVerticalOffsetUu}
+          min={-60}
+          max={60}
+          step={1}
           isLight={isLight}
-          onChange={(v) => updateConfig({ noseArrowTotalLengthUu: v })}
+          onChange={(v) => updateConfig({ noseVerticalOffsetUu: v })}
+        />
+
+        <SliderControl
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={false}
+          colorScheme="sky"
+          label="W Arrow Total Length (Car Bottom -Z)"
+          unit="UU"
+          value={noseWArrowTotalLengthUu}
+          min={10}
+          max={220}
+          step={1}
+          isLight={isLight}
+          onChange={(v) => updateConfig({ noseWArrowTotalLengthUu: v })}
+        />
+
+        <SliderControl
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={false}
+          colorScheme="sky"
+          label="A Arrow Total Length (Car Left -Y)"
+          unit="UU"
+          value={noseAArrowTotalLengthUu}
+          min={10}
+          max={220}
+          step={1}
+          isLight={isLight}
+          onChange={(v) => updateConfig({ noseAArrowTotalLengthUu: v })}
+        />
+
+        <SliderControl
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={false}
+          colorScheme="sky"
+          label="S Arrow Total Length (Car Top +Z)"
+          unit="UU"
+          value={noseSArrowTotalLengthUu}
+          min={10}
+          max={220}
+          step={1}
+          isLight={isLight}
+          onChange={(v) => updateConfig({ noseSArrowTotalLengthUu: v })}
+        />
+
+        <SliderControl
+          editable={true}
+          allowOutOfBoundsInput={true}
+          showStepper={false}
+          colorScheme="sky"
+          label="D Arrow Total Length (Car Right +Y)"
+          unit="UU"
+          value={noseDArrowTotalLengthUu}
+          min={10}
+          max={220}
+          step={1}
+          isLight={isLight}
+          onChange={(v) => updateConfig({ noseDArrowTotalLengthUu: v })}
         />
 
         <SliderControl
@@ -160,7 +224,7 @@ export const KeyboardOverlayCarNoseArrowsSection: React.FC<
           label="Cone Tip Length"
           unit="UU"
           value={noseConeLengthUu}
-          min={8}
+          min={4}
           max={100}
           step={1}
           isLight={isLight}
@@ -175,7 +239,7 @@ export const KeyboardOverlayCarNoseArrowsSection: React.FC<
           label="Cone Base Radius (Head Thickness)"
           unit="UU"
           value={noseConeRadiusUu}
-          min={3}
+          min={1}
           max={40}
           step={0.5}
           isLight={isLight}
@@ -205,7 +269,7 @@ export const KeyboardOverlayCarNoseArrowsSection: React.FC<
           label="Shaft Cylinder Radius (Stem Thickness)"
           unit="UU"
           value={noseShaftRadiusUu}
-          min={1}
+          min={0.5}
           max={20}
           step={0.25}
           isLight={isLight}
@@ -214,13 +278,13 @@ export const KeyboardOverlayCarNoseArrowsSection: React.FC<
 
         <SliderControl
           editable={true}
-          allowOutOfBoundsInput={false}
+          allowOutOfBoundsInput={true}
           showStepper={false}
           colorScheme="sky"
           label="Arrow Body Opacity"
           unit=""
           value={noseArrowOpacity}
-          min={0.1}
+          min={0.05}
           max={1.0}
           step={0.02}
           isLight={isLight}
@@ -229,7 +293,7 @@ export const KeyboardOverlayCarNoseArrowsSection: React.FC<
 
         <SliderControl
           editable={true}
-          allowOutOfBoundsInput={false}
+          allowOutOfBoundsInput={true}
           showStepper={false}
           colorScheme="sky"
           label="Silhouette Shadow Shell Opacity"

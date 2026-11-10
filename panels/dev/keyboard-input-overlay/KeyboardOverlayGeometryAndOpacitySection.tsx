@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Layers, Square } from 'lucide-react';
+import { Eye, Square } from 'lucide-react';
 import { SliderControl } from '../../../primitives/SliderControl';
 import { ToggleSwitch } from '../../../primitives/ToggleSwitch';
 import { useFloatingStore } from '../../../stores/floatingStore';
@@ -23,7 +23,6 @@ export const KeyboardOverlayGeometryAndOpacitySection: React.FC<
     pressShrinkXPct,
     pressShrinkYPct,
     bevelContrast,
-    showKeyCornerLabels,
     updateConfig,
   } = useKeyboardInputOverlayStore();
 
@@ -193,7 +192,7 @@ export const KeyboardOverlayGeometryAndOpacitySection: React.FC<
 
         <SliderControl
           editable={true}
-          allowOutOfBoundsInput={false}
+          allowOutOfBoundsInput={true}
           showStepper={false}
           colorScheme="amber"
           label="Convex / Concave Bevel Shadow Contrast"
@@ -205,22 +204,6 @@ export const KeyboardOverlayGeometryAndOpacitySection: React.FC<
           isLight={isLight}
           onChange={(v) => updateConfig({ bevelContrast: v })}
         />
-
-        <div className="flex items-center justify-between gap-2 pt-0.5">
-          <div className="flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-[11px] font-semibold">
-              Show Key Corner Labels (Q/W/E/A/S/D/SLIDE/BOOST/JUMP)
-            </span>
-          </div>
-          <ToggleSwitch
-            checked={showKeyCornerLabels}
-            onCheckedChange={(checked) =>
-              updateConfig({ showKeyCornerLabels: checked })
-            }
-            isLight={isLight}
-          />
-        </div>
       </div>
     </div>
   );

@@ -16,26 +16,29 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
   const cfg = useKeyboardInputOverlayStore();
   const stageContainerRef = useRef<HTMLDivElement | null>(null);
   const [stageDims, setStageDims] = useState<{ w: number; h: number }>({
-    w: 270,
-    h: 270,
+    w: 240,
+    h: 240,
   });
   const { telemetry, isKeyPressed, setPointerHeld } = useKeyboardOverlayLiveInputs();
 
-  // Measure adaptive available width & height so the 3x3 square keys scale dynamically as the user resizes the floating window
+  // Measure adaptive available width & height from the enclosing floating window without shrinking feedback
   useEffect(() => {
     const el = stageContainerRef.current;
     if (!el) return;
     const floatingRoot = el.closest('[data-floating-window-id]') as HTMLElement | null;
 
     const measure = () => {
-      const w = el.clientWidth || 260;
+      const w = Math.max(120, (floatingRoot ? floatingRoot.clientWidth - 20 : el.clientWidth) || 240);
       let availH = w;
       if (floatingRoot) {
         const rootH = floatingRoot.clientHeight;
-        // Reserve space for header (~39px), top toolbar (~44px), footer (~29px), and padding (~24px)
-        const reservedVerticalPx = 136;
-        if (rootH > reservedVerticalPx + 96) {
-          availH = rootH - reservedVerticalPx;
+        const headerEl = floatingRoot.querySelector('[data-floating-stage="header"]') as HTMLElement | null;
+        const footerEl = floatingRoot.querySelector('[data-floating-stage="footer"]') as HTMLElement | null;
+        const headerH = headerEl ? headerEl.offsetHeight : 39;
+        const footerH = footerEl ? footerEl.offsetHeight : 0;
+        const computedH = rootH - headerH - footerH - 20;
+        if (computedH > 80) {
+          availH = computedH;
         }
       }
       setStageDims((prev) =>
@@ -48,8 +51,11 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
     measure();
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(measure);
-      ro.observe(el);
-      if (floatingRoot) ro.observe(floatingRoot);
+      if (floatingRoot) {
+        ro.observe(floatingRoot);
+      } else {
+        ro.observe(el);
+      }
       window.addEventListener('resize', measure);
       return () => {
         ro.disconnect();
@@ -61,24 +67,25 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
   }, []);
 
   const gap = Math.max(0, cfg.keyGapPx);
-  const availSide = Math.max(120, Math.min(stageDims.w, stageDims.h));
-  const keySizePx = Math.max(36, Math.floor((availSide - gap * 2 - 4) / 3));
+  const availSide = Math.max(96, Math.min(stageDims.w, stageDims.h));
+  const keySizePx = Math.max(28, Math.floor((availSide - gap * 2) / 3));
   const gridTotalPx = keySizePx * 3 + gap * 2;
 
   const actionIdleBg = isLight ? cfg.actionIdleBgLight : cfg.actionIdleBgDark;
   const actionPressedBg = isLight ? cfg.actionPressedBgLight : cfg.actionPressedBgDark;
   const actionIconColor = isLight ? cfg.actionIconColorLight : cfg.actionIconColorDark;
-  const actionLabelColor = isLight ? 'rgba(23,23,23,0.68)' : 'rgba(245,245,245,0.68)';
 
   const rotOffset = cfg.overlayArrowRotationOffsetDeg || 0;
-  const wAngle =
-    (cfg.overlayArrowFollowsCarAttitude ? telemetry.wAngleDeg : 0) + rotOffset;
-  const sAngle =
-    (cfg.overlayArrowFollowsCarAttitude ? telemetry.sAngleDeg : 180) + rotOffset;
-  const aAngle =
-    (cfg.overlayArrowFollowsCarAttitude ? telemetry.aAngleDeg : -90) + rotOffset;
-  const dAngle =
-    (cfg.overlayArrowFollowsCarAttitude ? telemetry.dAngleDeg : 90) + rotOffset;
+  const followAttitude = cfg.overlayArrowFollowsCarAttitude;
+  const wAngle = followAttitude ? telemetry.wAngleDeg : 0;
+  const sAngle = followAttitude ? telemetry.sAngleDeg : 180;
+  const aAngle = followAttitude ? telemetry.aAngleDeg : -90;
+  const dAngle = followAttitude ? telemetry.dAngleDeg : 90;
+
+  const wDir = followAttitude ? telemetry.wDir : ([0, 1, 0] as const);
+  const sDir = followAttitude ? telemetry.sDir : ([0, -1, 0] as const);
+  const aDir = followAttitude ? telemetry.aDir : ([-1, 0, 0] as const);
+  const dDir = followAttitude ? telemetry.dDir : ([1, 0, 0] as const);
 
   const wArrowCol = cfg.overlayArrowUseDistinctColors
     ? cfg.wArrowColor
@@ -101,7 +108,6 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
     pressShrinkXPct: cfg.pressShrinkXPct,
     pressShrinkYPct: cfg.pressShrinkYPct,
     bevelContrast: cfg.bevelContrast,
-    showCornerLabel: cfg.showKeyCornerLabels,
   };
 
   const iconStrokeWidth = 2.2;
@@ -110,7 +116,10 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
     <div
       ref={stageContainerRef}
       data-stage="keyboard-overlay-3x3-matrix"
-      className="w-full flex items-center justify-center py-1 select-none"
+      className="w-full flex items-center justify-center select-none"
+      style={{
+        minHeight: `${stageDims.h}px`,
+      }}
     >
       <div
         className="grid grid-cols-3"
@@ -120,58 +129,16 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
           gap: `${gap}px`,
         }}
       >
-        {/* ROW 1: Q (rotate-3d), W (3D Arrow Nose->Bottom), E (rotate-3d Horizontal mirror) */}
+        {/* ROW 1: Q (rotate-3d horizontal mirror), W (3D Arrow Nose->Bottom), E (rotate-3d) */}
         <RetroTrapezoidKeycap
           {...commonKeycapProps}
           keyId="q"
-          label="Q"
           isPressed={isKeyPressed('q')}
           idleBgColor={actionIdleBg}
           pressedBgColor={actionPressedBg}
-          labelColor={actionLabelColor}
           onMouseDown={() => setPointerHeld('q', true)}
           onMouseUp={() => setPointerHeld('q', false)}
           onMouseLeave={() => setPointerHeld('q', false)}
-        >
-          <Rotate3d
-            className="w-[78%] h-[78%]"
-            strokeWidth={iconStrokeWidth}
-            style={{ color: actionIconColor }}
-          />
-        </RetroTrapezoidKeycap>
-
-        <RetroTrapezoidKeycap
-          {...commonKeycapProps}
-          keyId="w"
-          label="W"
-          isPressed={isKeyPressed('w')}
-          idleBgColor={cfg.wIdleBgColor}
-          pressedBgColor={cfg.wPressedBgColor}
-          onMouseDown={() => setPointerHeld('w', true)}
-          onMouseUp={() => setPointerHeld('w', false)}
-          onMouseLeave={() => setPointerHeld('w', false)}
-        >
-          <Beveled3DArrowSvg
-            angleDeg={wAngle}
-            color={wArrowCol}
-            scale={cfg.overlayArrowScale}
-            extrudeDepth={cfg.overlayArrowExtrudeDepth}
-            shadowIntensity={cfg.overlayArrowShadowIntensity}
-            isPressed={isKeyPressed('w')}
-          />
-        </RetroTrapezoidKeycap>
-
-        <RetroTrapezoidKeycap
-          {...commonKeycapProps}
-          keyId="e"
-          label="E"
-          isPressed={isKeyPressed('e')}
-          idleBgColor={actionIdleBg}
-          pressedBgColor={actionPressedBg}
-          labelColor={actionLabelColor}
-          onMouseDown={() => setPointerHeld('e', true)}
-          onMouseUp={() => setPointerHeld('e', false)}
-          onMouseLeave={() => setPointerHeld('e', false)}
         >
           <Rotate3d
             className="w-[78%] h-[78%]"
@@ -183,11 +150,49 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
           />
         </RetroTrapezoidKeycap>
 
+        <RetroTrapezoidKeycap
+          {...commonKeycapProps}
+          keyId="w"
+          isPressed={isKeyPressed('w')}
+          idleBgColor={cfg.wIdleBgColor}
+          pressedBgColor={cfg.wPressedBgColor}
+          onMouseDown={() => setPointerHeld('w', true)}
+          onMouseUp={() => setPointerHeld('w', false)}
+          onMouseLeave={() => setPointerHeld('w', false)}
+        >
+          <Beveled3DArrowSvg
+            angleDeg={wAngle}
+            dir3d={wDir}
+            rotationOffsetDeg={rotOffset}
+            color={wArrowCol}
+            scale={cfg.overlayArrowScale}
+            extrudeDepth={cfg.overlayArrowExtrudeDepth}
+            shadowIntensity={cfg.overlayArrowShadowIntensity}
+            isPressed={isKeyPressed('w')}
+          />
+        </RetroTrapezoidKeycap>
+
+        <RetroTrapezoidKeycap
+          {...commonKeycapProps}
+          keyId="e"
+          isPressed={isKeyPressed('e')}
+          idleBgColor={actionIdleBg}
+          pressedBgColor={actionPressedBg}
+          onMouseDown={() => setPointerHeld('e', true)}
+          onMouseUp={() => setPointerHeld('e', false)}
+          onMouseLeave={() => setPointerHeld('e', false)}
+        >
+          <Rotate3d
+            className="w-[78%] h-[78%]"
+            strokeWidth={iconStrokeWidth}
+            style={{ color: actionIconColor }}
+          />
+        </RetroTrapezoidKeycap>
+
         {/* ROW 2: A (3D Arrow Nose->Left), S (3D Arrow Nose->Top), D (3D Arrow Nose->Right) */}
         <RetroTrapezoidKeycap
           {...commonKeycapProps}
           keyId="a"
-          label="A"
           isPressed={isKeyPressed('a')}
           idleBgColor={cfg.aIdleBgColor}
           pressedBgColor={cfg.aPressedBgColor}
@@ -197,6 +202,8 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
         >
           <Beveled3DArrowSvg
             angleDeg={aAngle}
+            dir3d={aDir}
+            rotationOffsetDeg={rotOffset}
             color={aArrowCol}
             scale={cfg.overlayArrowScale}
             extrudeDepth={cfg.overlayArrowExtrudeDepth}
@@ -208,7 +215,6 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
         <RetroTrapezoidKeycap
           {...commonKeycapProps}
           keyId="s"
-          label="S"
           isPressed={isKeyPressed('s')}
           idleBgColor={cfg.sIdleBgColor}
           pressedBgColor={cfg.sPressedBgColor}
@@ -218,6 +224,8 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
         >
           <Beveled3DArrowSvg
             angleDeg={sAngle}
+            dir3d={sDir}
+            rotationOffsetDeg={rotOffset}
             color={sArrowCol}
             scale={cfg.overlayArrowScale}
             extrudeDepth={cfg.overlayArrowExtrudeDepth}
@@ -229,7 +237,6 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
         <RetroTrapezoidKeycap
           {...commonKeycapProps}
           keyId="d"
-          label="D"
           isPressed={isKeyPressed('d')}
           idleBgColor={cfg.dIdleBgColor}
           pressedBgColor={cfg.dPressedBgColor}
@@ -239,6 +246,8 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
         >
           <Beveled3DArrowSvg
             angleDeg={dAngle}
+            dir3d={dDir}
+            rotationOffsetDeg={rotOffset}
             color={dArrowCol}
             scale={cfg.overlayArrowScale}
             extrudeDepth={cfg.overlayArrowExtrudeDepth}
@@ -251,11 +260,9 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
         <RetroTrapezoidKeycap
           {...commonKeycapProps}
           keyId="slide"
-          label="SLIDE"
           isPressed={isKeyPressed('slide')}
           idleBgColor={actionIdleBg}
           pressedBgColor={actionPressedBg}
-          labelColor={actionLabelColor}
           onMouseDown={() => setPointerHeld('slide', true)}
           onMouseUp={() => setPointerHeld('slide', false)}
           onMouseLeave={() => setPointerHeld('slide', false)}
@@ -270,11 +277,9 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
         <RetroTrapezoidKeycap
           {...commonKeycapProps}
           keyId="boost"
-          label="BOOST"
           isPressed={isKeyPressed('boost')}
           idleBgColor={actionIdleBg}
           pressedBgColor={actionPressedBg}
-          labelColor={actionLabelColor}
           onMouseDown={() => setPointerHeld('boost', true)}
           onMouseUp={() => setPointerHeld('boost', false)}
           onMouseLeave={() => setPointerHeld('boost', false)}
@@ -292,11 +297,9 @@ export const KeyboardInputOverlayMatrixStage: React.FC<
         <RetroTrapezoidKeycap
           {...commonKeycapProps}
           keyId="jump"
-          label="JUMP"
           isPressed={isKeyPressed('jump')}
           idleBgColor={actionIdleBg}
           pressedBgColor={actionPressedBg}
-          labelColor={actionLabelColor}
           onMouseDown={() => setPointerHeld('jump', true)}
           onMouseUp={() => setPointerHeld('jump', false)}
           onMouseLeave={() => setPointerHeld('jump', false)}

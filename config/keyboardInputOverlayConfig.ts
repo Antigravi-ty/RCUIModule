@@ -61,7 +61,12 @@ export interface KeyboardInputOverlayConfig {
   noseSCustomColor: string;
   noseDCustomColor: string;
   noseForwardOffsetUu: number;
+  noseVerticalOffsetUu: number;
   noseArrowTotalLengthUu: number;
+  noseWArrowTotalLengthUu: number;
+  noseAArrowTotalLengthUu: number;
+  noseSArrowTotalLengthUu: number;
+  noseDArrowTotalLengthUu: number;
   noseConeLengthUu: number;
   noseConeRadiusUu: number;
   noseTipRadiusUu: number;
@@ -74,8 +79,8 @@ export interface KeyboardInputOverlayConfig {
 
 export const DEFAULT_KEYBOARD_INPUT_OVERLAY_CONFIG: Readonly<KeyboardInputOverlayConfig> =
   Object.freeze({
-    keyboardOpacityPct: 100,
-    compensateGlobalOpacity: true,
+    keyboardOpacityPct: 230,
+    compensateGlobalOpacity: false,
 
     keyGapPx: 6,
     keyBorderRadiusPx: 0,
@@ -84,7 +89,7 @@ export const DEFAULT_KEYBOARD_INPUT_OVERLAY_CONFIG: Readonly<KeyboardInputOverla
     pressShrinkXPct: 6,
     pressShrinkYPct: 5,
     bevelContrast: 0.58,
-    showKeyCornerLabels: true,
+    showKeyCornerLabels: false,
 
     // 4 distinctly differentiated colors for W (Emerald), A (Amber), S (Rose), D (Sky)
     wIdleBgColor: '#10b981',
@@ -105,9 +110,9 @@ export const DEFAULT_KEYBOARD_INPUT_OVERLAY_CONFIG: Readonly<KeyboardInputOverla
 
     overlayArrowRotationOffsetDeg: 0,
     overlayArrowFollowsCarAttitude: true,
-    overlayArrowScale: 0.78,
-    overlayArrowExtrudeDepth: 3.2,
-    overlayArrowShadowIntensity: 0.68,
+    overlayArrowScale: 1.35,
+    overlayArrowExtrudeDepth: 1,
+    overlayArrowShadowIntensity: 0.4,
     overlayArrowUseDistinctColors: false,
     overlayArrowUnifiedColor: '#ffffff',
     wArrowColor: '#ecfdf5',
@@ -115,30 +120,32 @@ export const DEFAULT_KEYBOARD_INPUT_OVERLAY_CONFIG: Readonly<KeyboardInputOverla
     sArrowColor: '#fff1f2',
     dArrowColor: '#f0f9ff',
 
-    enableNoseArrowRendering: false,
+    enableNoseArrowRendering: true,
     noseArrowColorSource: 'key-bg',
     noseWCustomColor: '#10b981',
     noseACustomColor: '#f59e0b',
     noseSCustomColor: '#f43f5e',
     noseDCustomColor: '#0ea5e9',
-    noseForwardOffsetUu: 0,
-    noseArrowTotalLengthUu: 85,
-    noseConeLengthUu: 28,
-    noseConeRadiusUu: 10,
-    noseTipRadiusUu: 1.5,
-    noseShaftRadiusUu: 3.8,
-    noseArrowOpacity: 0.88,
-    noseShadowOpacity: 0.55,
-    noseShadowScale: 1.18,
-    noseHaloScaleUu: 42,
+    noseForwardOffsetUu: 23,
+    noseVerticalOffsetUu: 0,
+    noseArrowTotalLengthUu: 25,
+    noseWArrowTotalLengthUu: 25,
+    noseAArrowTotalLengthUu: 25,
+    noseSArrowTotalLengthUu: 25,
+    noseDArrowTotalLengthUu: 25,
+    noseConeLengthUu: 9,
+    noseConeRadiusUu: 5.5,
+    noseTipRadiusUu: 1,
+    noseShaftRadiusUu: 1,
+    noseArrowOpacity: 0.3,
+    noseShadowOpacity: 0.2,
+    noseShadowScale: 1.4,
+    noseHaloScaleUu: 24,
   });
 
-function numOr(val: unknown, fallback: number, min?: number, max?: number): number {
+function numOr(val: unknown, fallback: number): number {
   if (typeof val !== 'number' || !Number.isFinite(val)) return fallback;
-  let n = val;
-  if (min !== undefined) n = Math.max(min, n);
-  if (max !== undefined) n = Math.min(max, n);
-  return n;
+  return val;
 }
 
 function strOr(val: unknown, fallback: string): string {
@@ -160,17 +167,19 @@ export function normalizeKeyboardInputOverlayConfig(
       ? sourceRaw
       : d.noseArrowColorSource;
 
+  const baseTotalLen = numOr(p.noseArrowTotalLengthUu, d.noseArrowTotalLengthUu);
+
   return {
-    keyboardOpacityPct: numOr(p.keyboardOpacityPct, d.keyboardOpacityPct, 1, 1000),
+    keyboardOpacityPct: numOr(p.keyboardOpacityPct, d.keyboardOpacityPct),
     compensateGlobalOpacity: boolOr(p.compensateGlobalOpacity, d.compensateGlobalOpacity),
 
-    keyGapPx: numOr(p.keyGapPx, d.keyGapPx, 0, 48),
-    keyBorderRadiusPx: numOr(p.keyBorderRadiusPx, d.keyBorderRadiusPx, 0, 64),
-    trapezoidInsetXPct: numOr(p.trapezoidInsetXPct, d.trapezoidInsetXPct, 0, 45),
-    trapezoidInsetYPct: numOr(p.trapezoidInsetYPct, d.trapezoidInsetYPct, 0, 45),
-    pressShrinkXPct: numOr(p.pressShrinkXPct, d.pressShrinkXPct, -20, 35),
-    pressShrinkYPct: numOr(p.pressShrinkYPct, d.pressShrinkYPct, -20, 35),
-    bevelContrast: numOr(p.bevelContrast, d.bevelContrast, 0, 1),
+    keyGapPx: numOr(p.keyGapPx, d.keyGapPx),
+    keyBorderRadiusPx: numOr(p.keyBorderRadiusPx, d.keyBorderRadiusPx),
+    trapezoidInsetXPct: numOr(p.trapezoidInsetXPct, d.trapezoidInsetXPct),
+    trapezoidInsetYPct: numOr(p.trapezoidInsetYPct, d.trapezoidInsetYPct),
+    pressShrinkXPct: numOr(p.pressShrinkXPct, d.pressShrinkXPct),
+    pressShrinkYPct: numOr(p.pressShrinkYPct, d.pressShrinkYPct),
+    bevelContrast: numOr(p.bevelContrast, d.bevelContrast),
     showKeyCornerLabels: boolOr(p.showKeyCornerLabels, d.showKeyCornerLabels),
 
     wIdleBgColor: strOr(p.wIdleBgColor, d.wIdleBgColor),
@@ -191,26 +200,20 @@ export function normalizeKeyboardInputOverlayConfig(
 
     overlayArrowRotationOffsetDeg: numOr(
       p.overlayArrowRotationOffsetDeg,
-      d.overlayArrowRotationOffsetDeg,
-      -360,
-      360
+      d.overlayArrowRotationOffsetDeg
     ),
     overlayArrowFollowsCarAttitude: boolOr(
       p.overlayArrowFollowsCarAttitude,
       d.overlayArrowFollowsCarAttitude
     ),
-    overlayArrowScale: numOr(p.overlayArrowScale, d.overlayArrowScale, 0.2, 2.0),
+    overlayArrowScale: numOr(p.overlayArrowScale, d.overlayArrowScale),
     overlayArrowExtrudeDepth: numOr(
       p.overlayArrowExtrudeDepth,
-      d.overlayArrowExtrudeDepth,
-      0,
-      12
+      d.overlayArrowExtrudeDepth
     ),
     overlayArrowShadowIntensity: numOr(
       p.overlayArrowShadowIntensity,
-      d.overlayArrowShadowIntensity,
-      0,
-      1
+      d.overlayArrowShadowIntensity
     ),
     overlayArrowUseDistinctColors: boolOr(
       p.overlayArrowUseDistinctColors,
@@ -228,16 +231,21 @@ export function normalizeKeyboardInputOverlayConfig(
     noseACustomColor: strOr(p.noseACustomColor, d.noseACustomColor),
     noseSCustomColor: strOr(p.noseSCustomColor, d.noseSCustomColor),
     noseDCustomColor: strOr(p.noseDCustomColor, d.noseDCustomColor),
-    noseForwardOffsetUu: numOr(p.noseForwardOffsetUu, d.noseForwardOffsetUu, -200, 300),
-    noseArrowTotalLengthUu: numOr(p.noseArrowTotalLengthUu, d.noseArrowTotalLengthUu, 15, 400),
-    noseConeLengthUu: numOr(p.noseConeLengthUu, d.noseConeLengthUu, 6, 200),
-    noseConeRadiusUu: numOr(p.noseConeRadiusUu, d.noseConeRadiusUu, 2, 80),
-    noseTipRadiusUu: numOr(p.noseTipRadiusUu, d.noseTipRadiusUu, 0, 30),
-    noseShaftRadiusUu: numOr(p.noseShaftRadiusUu, d.noseShaftRadiusUu, 0.5, 40),
-    noseArrowOpacity: numOr(p.noseArrowOpacity, d.noseArrowOpacity, 0.05, 1.0),
-    noseShadowOpacity: numOr(p.noseShadowOpacity, d.noseShadowOpacity, 0.0, 1.0),
-    noseShadowScale: numOr(p.noseShadowScale, d.noseShadowScale, 1.01, 2.0),
-    noseHaloScaleUu: numOr(p.noseHaloScaleUu, d.noseHaloScaleUu, 0, 250),
+    noseForwardOffsetUu: numOr(p.noseForwardOffsetUu, d.noseForwardOffsetUu),
+    noseVerticalOffsetUu: numOr(p.noseVerticalOffsetUu, d.noseVerticalOffsetUu),
+    noseArrowTotalLengthUu: baseTotalLen,
+    noseWArrowTotalLengthUu: numOr(p.noseWArrowTotalLengthUu, baseTotalLen),
+    noseAArrowTotalLengthUu: numOr(p.noseAArrowTotalLengthUu, baseTotalLen),
+    noseSArrowTotalLengthUu: numOr(p.noseSArrowTotalLengthUu, baseTotalLen),
+    noseDArrowTotalLengthUu: numOr(p.noseDArrowTotalLengthUu, baseTotalLen),
+    noseConeLengthUu: numOr(p.noseConeLengthUu, d.noseConeLengthUu),
+    noseConeRadiusUu: numOr(p.noseConeRadiusUu, d.noseConeRadiusUu),
+    noseTipRadiusUu: numOr(p.noseTipRadiusUu, d.noseTipRadiusUu),
+    noseShaftRadiusUu: numOr(p.noseShaftRadiusUu, d.noseShaftRadiusUu),
+    noseArrowOpacity: numOr(p.noseArrowOpacity, d.noseArrowOpacity),
+    noseShadowOpacity: numOr(p.noseShadowOpacity, d.noseShadowOpacity),
+    noseShadowScale: numOr(p.noseShadowScale, d.noseShadowScale),
+    noseHaloScaleUu: numOr(p.noseHaloScaleUu, d.noseHaloScaleUu),
   };
 }
 

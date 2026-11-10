@@ -124,7 +124,7 @@ export const KeyboardOverlayColorsAndArrowsSection: React.FC<
 
         <SliderControl
           editable={true}
-          allowOutOfBoundsInput={false}
+          allowOutOfBoundsInput={true}
           showStepper={false}
           colorScheme="amber"
           label="3D Shadow &amp; Specular Relief Intensity"

@@ -143,10 +143,30 @@ export const FLOATING_WINDOW_OPACITY_PRESET: PresetConfig = {
   sourcePath: 'panels/user/FloatingWindowOpacityFloatingWindow.tsx',
 };
 
+export const KEYBOARD_INPUT_OVERLAY_PRESET: PresetConfig = {
+  id: 'keyboard-input-overlay',
+  title: 'Keyboard Input Overlay',
+  category: 'KeyboardInputOverlay',
+  width: 280,
+  height: 320,
+  minWidth: 180,
+  minHeight: 210,
+  maxHeight: 2400,
+  autoFitHeight: false,
+  resizable: true,
+  singleton: true,
+  tier: 'user',
+  summary: 'Resizable 3x3 retro trapezoid keycap overlay (Q/W/E, A/S/D, Slide/Boost/Jump) with 3D camera-relative WASD attitude arrows.',
+  menuEntryPath: 'Settings -> Gameplay -> Training Mode Configuration',
+  component: 'KeyboardInputOverlayFloatingWindow',
+  sourcePath: 'panels/user/KeyboardInputOverlayFloatingWindow.tsx',
+};
+
 export const USER_PRESET_WINDOWS: PresetConfig[] = [
   REPLAY_VIEWER_PRESET,
   GOAL_BARRIER_CONFIGURATOR_PRESET,
   REWINDER_CONFIGURATOR_PRESET,
+  KEYBOARD_INPUT_OVERLAY_PRESET,
   NETWORK_MONITOR_PRESET,
   PERFORMANCE_MONITOR_PRESET,
   FLOATING_WINDOW_OPACITY_PRESET,

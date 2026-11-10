@@ -311,22 +311,22 @@ export const REPLAY_TO_RCS_IMPORTER_PRESET: PresetConfig = makeDevPreset({
   component: 'ReplayToRcsImporterFloatingWindow',
 });
 
-export const KEYBOARD_INPUT_OVERLAY_PRESET: PresetConfig = makeDevPreset({
-  id: 'keyboard-input-overlay',
-  title: 'Keyboard Input Overlay',
-  category: 'KeyboardInputOverlay',
-  width: 340,
-  height: 410,
-  minWidth: 240,
+export const KEYBOARD_INPUT_OVERLAY_TUNER_PRESET: PresetConfig = makeDevPreset({
+  id: 'keyboard-input-overlay-tuner',
+  title: 'Keyboard Input Overlay Tuner',
+  category: 'KeyboardInputOverlayTuner',
+  width: 470,
+  height: 640,
+  minWidth: 340,
   minHeight: 240,
-  summary: 'Adaptive 3x3 retro trapezoid keycap overlay (Q/W/E, A/S/D, Slide/Boost/Jump) with independent opacity superposition, camera-relative 3D WASD arrows, and 3D Car Nose Arrow rendering.',
+  summary: 'Developer tuner for the 3x3 Keyboard Input Overlay (opacity superposition, trapezoid bevels, 3D WASD attitude arrows) and 4-way 3D Car Nose Arrows.',
   menuEntryPath: DEV_ENTRY_PATHS.ACTIVE_TUNERS,
-  component: 'KeyboardInputOverlayFloatingWindow',
+  component: 'KeyboardInputOverlayTunerFloatingWindow',
 });
 
 export const DEV_PRESET_WINDOWS: PresetConfig[] = [
   DIAGNOSTIC_DUMP_PRESET,
-  KEYBOARD_INPUT_OVERLAY_PRESET,
+  KEYBOARD_INPUT_OVERLAY_TUNER_PRESET,
   STATIC_TRAINING_BALL_CAM_TUNER_PRESET,
   NAME_TAG_TUNER_PRESET,
   GOAL_VOLUME_TUNER_PRESET,
